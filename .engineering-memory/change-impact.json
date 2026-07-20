@@ -678,6 +678,49 @@
         "apps/optimus-desktop/e2e/**",
         "scripts/test_engineering_memory.py"
       ]
+    },
+    {
+      "covers": [
+        "crates/optimus-packs/src/**",
+        "crates/optimus-packs/tests/**",
+        "crates/optimus-kernel/src/**",
+        "crates/optimus-kernel/tests/**",
+        "docs/architecture/**",
+        "docs/contracts/**",
+        "docs/decisions/**",
+        "docs/maps/**",
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py"
+      ],
+      "depends_on": [
+        "docs/specifications/priority-1-integrity-100-nanotasks.md",
+        "docs/contracts/high-risk-contracts.md",
+        "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+        "docs/decisions/0022-versioned-agent-and-workflow-contracts.md"
+      ],
+      "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 93,
+      "resolved_tests": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/browser_live.rs",
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/openai_http.rs",
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "scripts/test_engineering_memory.py"
+      ],
+      "status": "current",
+      "validated_by": [
+        "crates/optimus-packs/tests/**",
+        "crates/optimus-kernel/tests/**",
+        "scripts/test_engineering_memory.py"
+      ]
     }
   ],
   "generated_by": "scripts/engineering_memory.py",
@@ -877,7 +920,8 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/browser.rs": [
       "docs/architecture/system-overview.md",
@@ -885,7 +929,8 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/codex_oauth.rs": [
       "docs/architecture/system-overview.md",
@@ -895,14 +940,16 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/compress.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/credential.rs": [
       "docs/architecture/system-overview.md",
@@ -910,7 +957,8 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/cron.rs": [
       "docs/architecture/system-overview.md",
@@ -919,7 +967,8 @@
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/eval.rs": [
       "docs/architecture/system-overview.md",
@@ -928,7 +977,8 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/execution.rs": [
       "docs/architecture/system-overview.md",
@@ -936,7 +986,8 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/fs_sandbox.rs": [
       "docs/architecture/system-overview.md",
@@ -945,7 +996,8 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/gateway.rs": [
       "docs/architecture/system-overview.md",
@@ -954,7 +1006,8 @@
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/lib.rs": [
       "docs/architecture/system-overview.md",
@@ -964,7 +1017,8 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/openai_compat.rs": [
       "docs/architecture/system-overview.md",
@@ -972,7 +1026,8 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/routing.rs": [
       "docs/architecture/system-overview.md",
@@ -980,7 +1035,8 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/session.rs": [
       "docs/architecture/system-overview.md",
@@ -989,14 +1045,16 @@
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/web_search.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/src/workflow.rs": [
       "docs/architecture/system-overview.md",
@@ -1005,40 +1063,51 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/agent_contracts.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/browser_live.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/codex_oauth.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/compression_turn.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/integrity_integration.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/kernel_turn.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/openai_http.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/session_resume.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/web_search_live.rs": [
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/workflow_contracts.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-memory/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -1061,7 +1130,11 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "crates/optimus-packs/tests/packs_budget.rs": [
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-runtime/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -1132,129 +1205,160 @@
     ],
     "docs/architecture/desktop-0-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/desktop-1-daily-use.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/desktop-2-streaming.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/desktop-install-relaunch.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/desktop-playwright-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/optimus-exceeds-hermes.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/parity-capability-ledger.json": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-0-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-1-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-10-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-11-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-12-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-13-approvals.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-14-gateway-eval.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-15-campaigns.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-16-gateway-http.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-17-search-thinking-models.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-17b-codex-oauth-models-search.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-18-hermes-parity-shell.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-19-sidebars-preview-browser.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-2-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-3-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-4-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-5-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-6-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-7-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-8-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/phase-9-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/sandbox-functional-verification.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/sota-scorecard.md": [
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/architecture/system-overview.md": [
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/contracts/high-risk-contracts.md": [
       "docs/decisions/0018-fail-closed-runtime-safety.md",
@@ -1263,7 +1367,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0000-locked-defaults.md": [
       "docs/architecture/system-overview.md",
@@ -1271,7 +1376,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0001-kernel-and-work-graph.md": [
       "docs/architecture/system-overview.md",
@@ -1280,7 +1386,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0002-memory-invariants.md": [
       "docs/architecture/system-overview.md",
@@ -1289,7 +1396,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0003-phase1-policy-budgets.md": [
       "docs/architecture/system-overview.md",
@@ -1298,7 +1406,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0004-metamemory-mvp.md": [
       "docs/architecture/system-overview.md",
@@ -1307,7 +1416,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0005-skills-2.md": [
       "docs/architecture/system-overview.md",
@@ -1315,7 +1425,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0006-capability-packs.md": [
       "docs/architecture/system-overview.md",
@@ -1323,7 +1434,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0007-kernel-turn-loop.md": [
       "docs/architecture/system-overview.md",
@@ -1331,7 +1443,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0008-openai-compat-provider.md": [
       "docs/architecture/system-overview.md",
@@ -1339,7 +1452,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0009-durable-sessions.md": [
       "docs/architecture/system-overview.md",
@@ -1347,7 +1461,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0010-context-compression.md": [
       "docs/architecture/system-overview.md",
@@ -1355,7 +1470,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0011-codex-oauth.md": [
       "docs/architecture/system-overview.md",
@@ -1364,7 +1480,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/model-routing.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0012-kernel-effectors.md": [
       "docs/architecture/system-overview.md",
@@ -1372,7 +1489,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0013-command-capture.md": [
       "docs/architecture/system-overview.md",
@@ -1380,7 +1498,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0014-native-webview-ipc-mode.md": [
       "docs/architecture/system-overview.md",
@@ -1388,7 +1507,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0015-preview-browser-cdp.md": [
       "docs/architecture/system-overview.md",
@@ -1396,7 +1516,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0016-canonical-tool-contract.md": [
       "docs/architecture/system-overview.md",
@@ -1405,7 +1526,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0016-fs-sandbox-allowlist.md": [
       "docs/architecture/system-overview.md",
@@ -1414,7 +1536,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0017-engineering-memory-separation.md": [
       "docs/architecture/system-overview.md",
@@ -1422,7 +1545,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0018-fail-closed-runtime-safety.md": [
       "docs/architecture/system-overview.md",
@@ -1431,7 +1555,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0019-capability-files-and-unified-campaign-authority.md": [
       "docs/architecture/system-overview.md",
@@ -1440,7 +1565,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0020-work-graph-integrity-and-loopback-security.md": [
       "docs/architecture/system-overview.md",
@@ -1449,7 +1575,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0021-owned-execution-and-causal-delivery.md": [
       "docs/architecture/system-overview.md",
@@ -1459,7 +1586,8 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/0022-versioned-agent-and-workflow-contracts.md": [
       "docs/architecture/system-overview.md",
@@ -1467,7 +1595,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/README.md": [
       "docs/architecture/system-overview.md",
@@ -1475,27 +1604,36 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/maps/memory-and-retrieval.md": [
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/maps/model-routing.md": [
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/maps/observability-and-evaluations.md": [
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/maps/repository-and-ownership.md": [
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/maps/security-and-approvals.md": [
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/specifications/priority-1-integrity-100-nanotasks.md": [
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/specifications/priority-1-integrity-next-30-microtasks.md": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md"
@@ -1506,12 +1644,14 @@
       "docs/engineering-memory/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "scripts/test_engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
-      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "skills/update-engineering-memory/SKILL.md": [
       "docs/decisions/0017-engineering-memory-separation.md",

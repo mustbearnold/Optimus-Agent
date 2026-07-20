@@ -4099,6 +4099,669 @@
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
       "verified_tree_sha256": "d0b99eead49e41b069cf96b1123914cfa44c0116ae942a1236ad59a9524401ad"
+    },
+    {
+      "covered_files": [
+        {
+          "bytes": 31081,
+          "language": "Rust",
+          "lines": 885,
+          "path": "crates/optimus-kernel/src/agent.rs",
+          "sha256": "283ef174c05c474e648e01756314e619f651fea4d121786d92c27e818f501072"
+        },
+        {
+          "bytes": 12909,
+          "language": "Rust",
+          "lines": 437,
+          "path": "crates/optimus-kernel/src/browser.rs",
+          "sha256": "cf08b60b1c497cfcd35a5dacd844245e7079aa71f81e312fff937f3384f4920c"
+        },
+        {
+          "bytes": 55349,
+          "language": "Rust",
+          "lines": 1531,
+          "path": "crates/optimus-kernel/src/codex_oauth.rs",
+          "sha256": "e23d3e68beb2fbd1ab6f533d4054ad2903ae2e9c458fe640b8bd20af883c5ff0"
+        },
+        {
+          "bytes": 4507,
+          "language": "Rust",
+          "lines": 156,
+          "path": "crates/optimus-kernel/src/compress.rs",
+          "sha256": "57a523a49d8b896f6ecb6e3b9b5f73b006e8dc25b1ec22794bdb8439526b35e6"
+        },
+        {
+          "bytes": 9274,
+          "language": "Rust",
+          "lines": 298,
+          "path": "crates/optimus-kernel/src/credential.rs",
+          "sha256": "5495a2a2a1b7789e021f7f82741db9d58d126b1cc6290aa9a4e79d3d16560e56"
+        },
+        {
+          "bytes": 25083,
+          "language": "Rust",
+          "lines": 690,
+          "path": "crates/optimus-kernel/src/cron.rs",
+          "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
+        },
+        {
+          "bytes": 9223,
+          "language": "Rust",
+          "lines": 292,
+          "path": "crates/optimus-kernel/src/eval.rs",
+          "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
+        },
+        {
+          "bytes": 15597,
+          "language": "Rust",
+          "lines": 440,
+          "path": "crates/optimus-kernel/src/execution.rs",
+          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+        },
+        {
+          "bytes": 18952,
+          "language": "Rust",
+          "lines": 565,
+          "path": "crates/optimus-kernel/src/fs_sandbox.rs",
+          "sha256": "ddfd26f79b8451de843330e64a0cdd0362162726355d315d2e573ed12c9569fb"
+        },
+        {
+          "bytes": 34816,
+          "language": "Rust",
+          "lines": 1002,
+          "path": "crates/optimus-kernel/src/gateway.rs",
+          "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
+        },
+        {
+          "bytes": 50546,
+          "language": "Rust",
+          "lines": 1329,
+          "path": "crates/optimus-kernel/src/lib.rs",
+          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+        },
+        {
+          "bytes": 13305,
+          "language": "Rust",
+          "lines": 391,
+          "path": "crates/optimus-kernel/src/openai_compat.rs",
+          "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
+        },
+        {
+          "bytes": 13531,
+          "language": "Rust",
+          "lines": 420,
+          "path": "crates/optimus-kernel/src/routing.rs",
+          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+        },
+        {
+          "bytes": 18867,
+          "language": "Rust",
+          "lines": 526,
+          "path": "crates/optimus-kernel/src/session.rs",
+          "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 11686,
+          "language": "Rust",
+          "lines": 381,
+          "path": "crates/optimus-kernel/src/web_search.rs",
+          "sha256": "25555c3eff921d4ab7b1af76277c061fb26cd565a767f068f061857f699865f5"
+        },
+        {
+          "bytes": 20646,
+          "language": "Rust",
+          "lines": 645,
+          "path": "crates/optimus-kernel/src/workflow.rs",
+          "sha256": "75b380c0364685861a452afa9864233acf74fa9fb052f758c53adac231010fce"
+        },
+        {
+          "bytes": 16016,
+          "language": "Rust",
+          "lines": 455,
+          "path": "crates/optimus-kernel/tests/agent_contracts.rs",
+          "sha256": "172fdafaada0f25425a790ea0ef16f46fc8dca49fb371760223c62d22814e3f5"
+        },
+        {
+          "bytes": 1469,
+          "language": "Rust",
+          "lines": 43,
+          "path": "crates/optimus-kernel/tests/browser_live.rs",
+          "sha256": "a4d01096aaa4954219ad22f5cdcae7cd7d917f630a0392fbd6651058af287420"
+        },
+        {
+          "bytes": 12532,
+          "language": "Rust",
+          "lines": 363,
+          "path": "crates/optimus-kernel/tests/codex_oauth.rs",
+          "sha256": "4b8c9c5e9a73bdec30d7b6b959b79479935200b492c6a54d32cb67424ef01d38"
+        },
+        {
+          "bytes": 1979,
+          "language": "Rust",
+          "lines": 60,
+          "path": "crates/optimus-kernel/tests/compression_turn.rs",
+          "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
+        },
+        {
+          "bytes": 14917,
+          "language": "Rust",
+          "lines": 406,
+          "path": "crates/optimus-kernel/tests/integrity_integration.rs",
+          "sha256": "ff94bb38ebda4b415ea0b8dd6237f84e357344d67c7f9cdc7d4e91b5f58389b4"
+        },
+        {
+          "bytes": 18788,
+          "language": "Rust",
+          "lines": 544,
+          "path": "crates/optimus-kernel/tests/kernel_turn.rs",
+          "sha256": "d3794bb85796aa52bb596a08811cf0bdc9208785f232fd9f95a2e13b0e37067b"
+        },
+        {
+          "bytes": 5004,
+          "language": "Rust",
+          "lines": 158,
+          "path": "crates/optimus-kernel/tests/openai_http.rs",
+          "sha256": "50d7534187cec10d9e58a2437dd5844a39ee92abedb91406b25c8963fed08340"
+        },
+        {
+          "bytes": 10530,
+          "language": "Rust",
+          "lines": 298,
+          "path": "crates/optimus-kernel/tests/session_resume.rs",
+          "sha256": "d19ff7fb858d30e2125c9f99e2564d0408058a06ae518866a18344bb4612075f"
+        },
+        {
+          "bytes": 1327,
+          "language": "Rust",
+          "lines": 39,
+          "path": "crates/optimus-kernel/tests/web_search_live.rs",
+          "sha256": "168586628a839f483b1f3cf388c4f363eb80539ee78bfc680a612e3d9f385230"
+        },
+        {
+          "bytes": 8564,
+          "language": "Rust",
+          "lines": 243,
+          "path": "crates/optimus-kernel/tests/workflow_contracts.rs",
+          "sha256": "0729cee1c9a96963583c451d318c05c04664ca11c853eda6a7fcbed494730361"
+        },
+        {
+          "bytes": 40910,
+          "language": "Rust",
+          "lines": 1189,
+          "path": "crates/optimus-packs/src/lib.rs",
+          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+        },
+        {
+          "bytes": 16636,
+          "language": "Rust",
+          "lines": 487,
+          "path": "crates/optimus-packs/tests/packs_budget.rs",
+          "sha256": "cc9ca6174db0295eb0b08e559f65e6eff96f0ba2beb2374f415ee6573922a169"
+        },
+        {
+          "bytes": 958,
+          "language": "Markdown",
+          "lines": 31,
+          "path": "docs/architecture/desktop-0-verification.md",
+          "sha256": "281031369bcb328bb7f86a6a0d8012f885cd3b88531e6df86fc327d32eb61982"
+        },
+        {
+          "bytes": 1156,
+          "language": "Markdown",
+          "lines": 40,
+          "path": "docs/architecture/desktop-1-daily-use.md",
+          "sha256": "8edb23ec4c36dafdb3b2c2c95b35f4e487c462c4d25bd04441038e6d6818fdc9"
+        },
+        {
+          "bytes": 1432,
+          "language": "Markdown",
+          "lines": 53,
+          "path": "docs/architecture/desktop-2-streaming.md",
+          "sha256": "a89cfb2f1c660a4c0a414e453fb95db9ac391eb9c67d39d31c0532e91e3fbe76"
+        },
+        {
+          "bytes": 1605,
+          "language": "Markdown",
+          "lines": 59,
+          "path": "docs/architecture/desktop-install-relaunch.md",
+          "sha256": "797349df172f0ff017f3a94c929cc92b4cb28bd732cb6aebea5904ed44508f8e"
+        },
+        {
+          "bytes": 2173,
+          "language": "Markdown",
+          "lines": 75,
+          "path": "docs/architecture/desktop-playwright-verification.md",
+          "sha256": "fdba545aea5b15427402eb8decf0886cf6ec6632e0786063375e3ecab1006492"
+        },
+        {
+          "bytes": 27994,
+          "language": "Markdown",
+          "lines": 599,
+          "path": "docs/architecture/optimus-exceeds-hermes.md",
+          "sha256": "4afdd78f5cf8767392fd10120d8340fe62d3350f0353ca0e9d103fa3492a99bf"
+        },
+        {
+          "bytes": 12894,
+          "language": "JSON",
+          "lines": 60,
+          "path": "docs/architecture/parity-capability-ledger.json",
+          "sha256": "823a82c256f126df3efdc3c553ac50a7795831f3e57d5e0cbdf91596846b4d14"
+        },
+        {
+          "bytes": 1512,
+          "language": "Markdown",
+          "lines": 51,
+          "path": "docs/architecture/phase-0-verification.md",
+          "sha256": "65debc2ed06f91e3c9fee4fb2fdbd7b389bcf62d6a64cfc2c0196ca75f97e148"
+        },
+        {
+          "bytes": 1318,
+          "language": "Markdown",
+          "lines": 39,
+          "path": "docs/architecture/phase-1-verification.md",
+          "sha256": "90425e8e9578dff670cc6eb4024f44886adb4180206132b77b61f0517a691753"
+        },
+        {
+          "bytes": 849,
+          "language": "Markdown",
+          "lines": 32,
+          "path": "docs/architecture/phase-10-verification.md",
+          "sha256": "0c7123980b0b0181b7d0a48aa78b5a8214551e5dec9391b463f18ac4e878363e"
+        },
+        {
+          "bytes": 987,
+          "language": "Markdown",
+          "lines": 29,
+          "path": "docs/architecture/phase-11-verification.md",
+          "sha256": "4920538eb2c2006e395a52f3be338f1a9f7b0b6ded56de16e158d67eaa3a91ae"
+        },
+        {
+          "bytes": 915,
+          "language": "Markdown",
+          "lines": 30,
+          "path": "docs/architecture/phase-12-verification.md",
+          "sha256": "379aa4137ec9da3a50b9c04b369627b6cb867d86bd698e2bb47a4b3ada529609"
+        },
+        {
+          "bytes": 1116,
+          "language": "Markdown",
+          "lines": 40,
+          "path": "docs/architecture/phase-13-approvals.md",
+          "sha256": "34c54c1070c9681cc38ef00b96ceeec728907382af32e187e1501fa7e81d8e48"
+        },
+        {
+          "bytes": 1270,
+          "language": "Markdown",
+          "lines": 46,
+          "path": "docs/architecture/phase-14-gateway-eval.md",
+          "sha256": "ec6b2266a48ea70211dc18e85d0a71a9b0f1e57904250c49d49a6238082cd673"
+        },
+        {
+          "bytes": 1854,
+          "language": "Markdown",
+          "lines": 54,
+          "path": "docs/architecture/phase-15-campaigns.md",
+          "sha256": "b8fe097763f675ca35314a5149832a80bc5a55cd0ea5b9a116a840d5c6edac02"
+        },
+        {
+          "bytes": 1280,
+          "language": "Markdown",
+          "lines": 38,
+          "path": "docs/architecture/phase-16-gateway-http.md",
+          "sha256": "9aa166e9705894ac6a68e222d3aeaa83f443c9f7ec4754d85093fc1ec4f8cc57"
+        },
+        {
+          "bytes": 567,
+          "language": "Markdown",
+          "lines": 15,
+          "path": "docs/architecture/phase-17-search-thinking-models.md",
+          "sha256": "5ee7b50e0500f8d023a620de440cc07f4349f632a4f82627b4f63f103868ac53"
+        },
+        {
+          "bytes": 976,
+          "language": "Markdown",
+          "lines": 26,
+          "path": "docs/architecture/phase-17b-codex-oauth-models-search.md",
+          "sha256": "336fada5003e9f718d31156259eeafd5f6a655e24a70f1e2472b577d364292e9"
+        },
+        {
+          "bytes": 1921,
+          "language": "Markdown",
+          "lines": 49,
+          "path": "docs/architecture/phase-18-hermes-parity-shell.md",
+          "sha256": "ba3f1bae155e7b9a88a2d8876ba6342363bd46d5a6bacf5d237c765a8d5c0863"
+        },
+        {
+          "bytes": 779,
+          "language": "Markdown",
+          "lines": 20,
+          "path": "docs/architecture/phase-19-sidebars-preview-browser.md",
+          "sha256": "7c44e79f16a2c66634ec149b0087ee76b44ca309ce53324e1e2b8c8adb60918d"
+        },
+        {
+          "bytes": 1721,
+          "language": "Markdown",
+          "lines": 45,
+          "path": "docs/architecture/phase-2-verification.md",
+          "sha256": "f73b8d5ef70b99d5cf22b6a0f3d07ae4bcc38acb7a89e19919c1ac8539329a83"
+        },
+        {
+          "bytes": 1347,
+          "language": "Markdown",
+          "lines": 47,
+          "path": "docs/architecture/phase-3-verification.md",
+          "sha256": "4ac5030b22a1a1945157de80c8b63af3e433139c7ed49540684b32a6be469268"
+        },
+        {
+          "bytes": 1283,
+          "language": "Markdown",
+          "lines": 44,
+          "path": "docs/architecture/phase-4-verification.md",
+          "sha256": "6cbb35e4115a2393563fc5f9818244765b99a266d8995042eff267fd417b9407"
+        },
+        {
+          "bytes": 1536,
+          "language": "Markdown",
+          "lines": 44,
+          "path": "docs/architecture/phase-5-verification.md",
+          "sha256": "0eb52d319a2c6b23cac6f563618fc267c4b8c965ea13fe8f7c3d4c8047860bd9"
+        },
+        {
+          "bytes": 1493,
+          "language": "Markdown",
+          "lines": 48,
+          "path": "docs/architecture/phase-6-verification.md",
+          "sha256": "2a0827804a3a48692f360beafa837eb52ea9d070e3c448f95482878e41d870e1"
+        },
+        {
+          "bytes": 1085,
+          "language": "Markdown",
+          "lines": 36,
+          "path": "docs/architecture/phase-7-verification.md",
+          "sha256": "1d66f7f612a5df58a8750022f1f9f46151300a5f3d8139d855a41e68dedec567"
+        },
+        {
+          "bytes": 1100,
+          "language": "Markdown",
+          "lines": 33,
+          "path": "docs/architecture/phase-8-verification.md",
+          "sha256": "64eaf6b1df1ee99a11ed996026db6495004f0a211ea215dd5fb53b5f9563d2ae"
+        },
+        {
+          "bytes": 1764,
+          "language": "Markdown",
+          "lines": 50,
+          "path": "docs/architecture/phase-9-verification.md",
+          "sha256": "e0565275ab5bf5ce8c32bd96935f69e65a76630cf15b65329f2de1f5b9f518f1"
+        },
+        {
+          "bytes": 1435,
+          "language": "Markdown",
+          "lines": 46,
+          "path": "docs/architecture/sandbox-functional-verification.md",
+          "sha256": "656c16c7b45427f6a36a727b57c369c9012c017ffbd856198c9da93504f0e0a8"
+        },
+        {
+          "bytes": 3951,
+          "language": "Markdown",
+          "lines": 88,
+          "path": "docs/architecture/sota-scorecard.md",
+          "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
+        },
+        {
+          "bytes": 20063,
+          "language": "Markdown",
+          "lines": 357,
+          "path": "docs/architecture/system-overview.md",
+          "sha256": "563d4fcc8c9cfc8a6acffac543c85205f4f88c9ebc6d6280ed2c1528ca46a894"
+        },
+        {
+          "bytes": 12215,
+          "language": "Markdown",
+          "lines": 242,
+          "path": "docs/contracts/high-risk-contracts.md",
+          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+        },
+        {
+          "bytes": 1191,
+          "language": "Markdown",
+          "lines": 18,
+          "path": "docs/decisions/0000-locked-defaults.md",
+          "sha256": "2bbcb416a5e4e24097ff16719d12e583c37a557130b3ca29adb7457b53c516d8"
+        },
+        {
+          "bytes": 1817,
+          "language": "Markdown",
+          "lines": 34,
+          "path": "docs/decisions/0001-kernel-and-work-graph.md",
+          "sha256": "a8e14190e299f3cd84b44ee51b0ad8a7eb5b0aef9434eae02e6dc05cb0300dab"
+        },
+        {
+          "bytes": 2348,
+          "language": "Markdown",
+          "lines": 51,
+          "path": "docs/decisions/0002-memory-invariants.md",
+          "sha256": "e8c37a3e0ccc1d9ee1a3426a9cf5d5ffa7eeae5b4f4c1187ea225af58091297a"
+        },
+        {
+          "bytes": 2094,
+          "language": "Markdown",
+          "lines": 54,
+          "path": "docs/decisions/0003-phase1-policy-budgets.md",
+          "sha256": "6ea1e9432a585adf90cf5977c04874f39fc234c5e42e9db52b54884fd6112017"
+        },
+        {
+          "bytes": 2019,
+          "language": "Markdown",
+          "lines": 45,
+          "path": "docs/decisions/0004-metamemory-mvp.md",
+          "sha256": "6c77334ca2aeca1457a28c4bc38351fdebe177e0f6bf8c8d63d6043f8c05e18b"
+        },
+        {
+          "bytes": 1860,
+          "language": "Markdown",
+          "lines": 46,
+          "path": "docs/decisions/0005-skills-2.md",
+          "sha256": "67917399477155046d6a28810ec930e3f954423792b253f5b551f8508fdb75bd"
+        },
+        {
+          "bytes": 1917,
+          "language": "Markdown",
+          "lines": 46,
+          "path": "docs/decisions/0006-capability-packs.md",
+          "sha256": "cc64e0a529a7d4092a0bf4308fbd13e1cd4a64a3b7723c09f681ca53b3c93f90"
+        },
+        {
+          "bytes": 1521,
+          "language": "Markdown",
+          "lines": 43,
+          "path": "docs/decisions/0007-kernel-turn-loop.md",
+          "sha256": "eee5e5ea879c10434b8fe45773edf4634bc0bfdc6fb2621053101ffb044effc1"
+        },
+        {
+          "bytes": 1640,
+          "language": "Markdown",
+          "lines": 38,
+          "path": "docs/decisions/0008-openai-compat-provider.md",
+          "sha256": "f67898925c35a28379529c01d352a1977456ce07f546818c590117ed5626a151"
+        },
+        {
+          "bytes": 1308,
+          "language": "Markdown",
+          "lines": 36,
+          "path": "docs/decisions/0009-durable-sessions.md",
+          "sha256": "19a5d0f29f7325baf9e62c01727645d57948aee3a6fe608d4d3c513a1171d6b8"
+        },
+        {
+          "bytes": 1521,
+          "language": "Markdown",
+          "lines": 38,
+          "path": "docs/decisions/0010-context-compression.md",
+          "sha256": "9d9fa74afeb100170889898e6bb69486f511d290919d96e955a152608bf7efbb"
+        },
+        {
+          "bytes": 1859,
+          "language": "Markdown",
+          "lines": 39,
+          "path": "docs/decisions/0011-codex-oauth.md",
+          "sha256": "6969955e2238e5a1fd02eac4b5334f9869473c01db1bc830d0c49945aea27a92"
+        },
+        {
+          "bytes": 1123,
+          "language": "Markdown",
+          "lines": 28,
+          "path": "docs/decisions/0012-kernel-effectors.md",
+          "sha256": "f92ed2d048c69f8035d510113c0ba16ae00177454061f3c641fb2d97f60fa572"
+        },
+        {
+          "bytes": 990,
+          "language": "Markdown",
+          "lines": 24,
+          "path": "docs/decisions/0013-command-capture.md",
+          "sha256": "23c13d8b6984c3274d4188c5c80e49383d0c78d278886adc257f607b2ae8054f"
+        },
+        {
+          "bytes": 1091,
+          "language": "Markdown",
+          "lines": 31,
+          "path": "docs/decisions/0014-native-webview-ipc-mode.md",
+          "sha256": "84a5abea7fef62b73fa38aef2e158c5347d6532789a23af9b8c6a4fe82119caa"
+        },
+        {
+          "bytes": 1134,
+          "language": "Markdown",
+          "lines": 27,
+          "path": "docs/decisions/0015-preview-browser-cdp.md",
+          "sha256": "ff6b539f6518ff1ddbb89bdee1573b9956b84b73dcc080ae813720a889b56f7d"
+        },
+        {
+          "bytes": 5312,
+          "language": "Markdown",
+          "lines": 51,
+          "path": "docs/decisions/0016-canonical-tool-contract.md",
+          "sha256": "c3856b46afd24fbda91d53dfdbeebd755d28e6c645b2253dc8f5e815bb208d1e"
+        },
+        {
+          "bytes": 914,
+          "language": "Markdown",
+          "lines": 24,
+          "path": "docs/decisions/0016-fs-sandbox-allowlist.md",
+          "sha256": "ec10c5509f7a67ce28d7eb42d38d9c8877cf38fc6c0d09bea096ee039a12b9de"
+        },
+        {
+          "bytes": 4791,
+          "language": "Markdown",
+          "lines": 131,
+          "path": "docs/decisions/0017-engineering-memory-separation.md",
+          "sha256": "52a9f60415530b90b082a48d59fc26a324929c8802158f1f217657aa251438c0"
+        },
+        {
+          "bytes": 6721,
+          "language": "Markdown",
+          "lines": 161,
+          "path": "docs/decisions/0018-fail-closed-runtime-safety.md",
+          "sha256": "19412ab5b78f9f905f67b01658f4c32052ff3fd84908781cc7658dc267a8f6f2"
+        },
+        {
+          "bytes": 7862,
+          "language": "Markdown",
+          "lines": 175,
+          "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
+          "sha256": "11b8ce44f707c483adc28d9a64e4c7c507f1461b6d8b6809775eee43c7d3f8e6"
+        },
+        {
+          "bytes": 7547,
+          "language": "Markdown",
+          "lines": 168,
+          "path": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+          "sha256": "d5db5a9b7a85090a84ba032f0474eb638c1aa970699d165c1ab35c56ff6cae1e"
+        },
+        {
+          "bytes": 6769,
+          "language": "Markdown",
+          "lines": 144,
+          "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+          "sha256": "dd103c434c822ecf1bb6b2751c882892c89d23511812fa455c73d0134568bf65"
+        },
+        {
+          "bytes": 7477,
+          "language": "Markdown",
+          "lines": 147,
+          "path": "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+          "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
+        },
+        {
+          "bytes": 4125,
+          "language": "Markdown",
+          "lines": 56,
+          "path": "docs/decisions/README.md",
+          "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
+        },
+        {
+          "bytes": 6916,
+          "language": "Markdown",
+          "lines": 110,
+          "path": "docs/maps/memory-and-retrieval.md",
+          "sha256": "710b7b0fa6da0d3094184f44e30789ee52c1f994c7a8861924200257a722ad67"
+        },
+        {
+          "bytes": 5474,
+          "language": "Markdown",
+          "lines": 111,
+          "path": "docs/maps/model-routing.md",
+          "sha256": "233e68b55ff4a0e77cd02338fcbfa31086efd58f4dbdd3eb749c329414a09ce5"
+        },
+        {
+          "bytes": 8404,
+          "language": "Markdown",
+          "lines": 151,
+          "path": "docs/maps/observability-and-evaluations.md",
+          "sha256": "92d4b124a3be5c6e9220d95d42bdd216309e3b70c835fea688ab845fe20b4937"
+        },
+        {
+          "bytes": 5348,
+          "language": "Markdown",
+          "lines": 128,
+          "path": "docs/maps/repository-and-ownership.md",
+          "sha256": "92ae00b4b176501da240c3ec802467ede4ab79ee3374e8037386694d76b535a7"
+        },
+        {
+          "bytes": 7557,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/maps/security-and-approvals.md",
+          "sha256": "8ad7d302ed247a98a423e68922a740498587823c19b5416e272849f8c100180e"
+        },
+        {
+          "bytes": 25330,
+          "language": "Markdown",
+          "lines": 272,
+          "path": "docs/specifications/priority-1-integrity-100-nanotasks.md",
+          "sha256": "906359380d463a76f18eb1dfaa04d631d92184dbc609787f824db71b5da06998"
+        },
+        {
+          "bytes": 69918,
+          "language": "Python",
+          "lines": 1497,
+          "path": "scripts/engineering_memory.py",
+          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+        },
+        {
+          "bytes": 9654,
+          "language": "Python",
+          "lines": 236,
+          "path": "scripts/test_engineering_memory.py",
+          "sha256": "86c15876919b3ad130fd229d2df08084a1140315f4432ebaf179527e307e1602"
+        }
+      ],
+      "current_tree_sha256": "f5565a874e9fc48dde71641c39deda304b3f64cdb43a8b48d18598a74a5164ac",
+      "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "knowledge_status": "current",
+      "knowledge_type": "specification",
+      "last_verified_commit": "7a06d3fca68a9a7f5ebfa8ca2535a09f88f65507",
+      "stale": false,
+      "verification_basis": "git_and_sha256_tree",
+      "verified_tree_sha256": "f5565a874e9fc48dde71641c39deda304b3f64cdb43a8b48d18598a74a5164ac"
     }
   ],
   "generated_by": "scripts/engineering_memory.py",
