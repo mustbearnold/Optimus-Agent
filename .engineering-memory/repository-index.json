@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 187,
+  "file_count": 188,
   "files": [
     {
       "bytes": 152,
@@ -371,11 +371,11 @@
       "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
     },
     {
-      "bytes": 18740,
+      "bytes": 22409,
       "language": "Rust",
-      "lines": 549,
+      "lines": 642,
       "path": "crates/optimus-kernel/src/evaluation.rs",
-      "sha256": "60e1f7c2a6aadb924190671e0679c1b2ba4d96aa5c9b3866a266e4889dfb6f24"
+      "sha256": "a8bb9666dc976784e47fabb5888622c70c9a585d5a2000792e423494be55b3bf"
     },
     {
       "bytes": 17310,
@@ -490,11 +490,11 @@
       "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
     },
     {
-      "bytes": 7150,
+      "bytes": 10004,
       "language": "Rust",
-      "lines": 200,
+      "lines": 281,
       "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
-      "sha256": "8af75935ae0d4ce0263d92586361db9f675c4e53e671377fcab425a13c148646"
+      "sha256": "00b5cf85bd5c9a151299f47e524ae461162ae8683346c6e4cbae88852063af17"
     },
     {
       "bytes": 14917,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 22298,
+      "bytes": 22544,
       "language": "Markdown",
-      "lines": 385,
+      "lines": 388,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "2a9a0f9341530018d44090b6669cbbb05ca391b70aaea64b6d467e7beac3caed"
+      "sha256": "cd877988ebac60629d7636632311adfe6b024a80040c393d3e60a6696a461ab7"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1148,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 10322,
+      "bytes": 10563,
       "language": "Markdown",
-      "lines": 179,
+      "lines": 182,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "dff394aeb7bb7cb21cdd98324e8ddba36d02f871625e3047313d52222a2d446c"
+      "sha256": "02361395929968211d56b1f81cf626bef2e217ec727f865de1bb13c1110e9b88"
     },
     {
       "bytes": 5802,
@@ -1188,6 +1188,13 @@
       "lines": 219,
       "path": "docs/specifications/desktop-turn-cancellation.md",
       "sha256": "516355a607ae3bc91997272d71df0b1ca07182ab13f1d9a89bbf7bf6b5908988"
+    },
+    {
+      "bytes": 7081,
+      "language": "Markdown",
+      "lines": 164,
+      "path": "docs/specifications/fail-closed-evaluation-report-validation.md",
+      "sha256": "2e1f489fdce1d2c0e45e792a1d034a926c686f7c61ea47b7ed877b992ce1401f"
     },
     {
       "bytes": 8545,
@@ -1345,8 +1352,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 446357,
-      "files": 80
+      "bytes": 453925,
+      "files": 81
     },
     "Other": {
       "bytes": 156778,
@@ -1361,7 +1368,7 @@
       "files": 3
     },
     "Rust": {
-      "bytes": 1109012,
+      "bytes": 1115535,
       "files": 70
     },
     "Shell": {
@@ -1399,7 +1406,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "6ae932c326ebd8f7dd7c698bec4c00b72bc01def4c138b8a77cc40958eb2ddee",
+  "tree_sha256": "fc4486fee0221485bd5ca861341915902b62d5b86c45245feb325fa5cdb69627",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {

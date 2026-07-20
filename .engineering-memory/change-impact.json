@@ -712,6 +712,27 @@
     },
     {
       "covers": [
+        "crates/optimus-kernel/src/evaluation.rs",
+        "crates/optimus-kernel/tests/evaluation_contracts.rs",
+        "docs/maps/observability-and-evaluations.md"
+      ],
+      "depends_on": [
+        "docs/specifications/candidate-aware-evaluation-comparison.md",
+        "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md"
+      ],
+      "document": "docs/specifications/fail-closed-evaluation-report-validation.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 5,
+      "resolved_tests": [
+        "crates/optimus-kernel/tests/evaluation_contracts.rs"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "crates/optimus-kernel/tests/evaluation_contracts.rs"
+      ]
+    },
+    {
+      "covers": [
         "scripts/engineering_memory.py",
         "scripts/test_engineering_memory.py",
         "docs/engineering-memory/README.md",
@@ -1215,6 +1236,7 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
+      "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1356,6 +1378,7 @@
     "crates/optimus-kernel/tests/evaluation_contracts.rs": [
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
+      "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1909,6 +1932,7 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
+      "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1937,6 +1961,7 @@
     "docs/maps/observability-and-evaluations.md": [
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
+      "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/stream-delivery-cancellation.md"
@@ -1951,6 +1976,9 @@
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/specifications/candidate-aware-evaluation-comparison.md": [
+      "docs/specifications/fail-closed-evaluation-report-validation.md"
     ],
     "docs/specifications/priority-1-integrity-100-nanotasks.md": [
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"

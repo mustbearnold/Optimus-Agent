@@ -201,7 +201,11 @@
             "comparison_rejects_tampered_report_hashes",
             "comparison_rejects_threshold_policy_drift",
             "comparison_rejects_metric_set_drift_even_with_a_valid_hash",
-            "comparison_rejects_non_source_binding_drift"
+            "comparison_rejects_non_source_binding_drift",
+            "baseline_store_rejects_rehashed_report_with_missing_metric_before_insert",
+            "baseline_store_rejects_rehashed_inconsistent_metric_arithmetic",
+            "baseline_store_rejects_rehashed_inconsistent_threshold_outcome",
+            "report_validation_rejects_invalid_binding_and_duplicate_threshold_dimensions"
           ],
           "path": "crates/optimus-kernel/tests/evaluation_contracts.rs"
         },
@@ -349,7 +353,11 @@
             "comparison_rejects_tampered_report_hashes",
             "comparison_rejects_threshold_policy_drift",
             "comparison_rejects_metric_set_drift_even_with_a_valid_hash",
-            "comparison_rejects_non_source_binding_drift"
+            "comparison_rejects_non_source_binding_drift",
+            "baseline_store_rejects_rehashed_report_with_missing_metric_before_insert",
+            "baseline_store_rejects_rehashed_inconsistent_metric_arithmetic",
+            "baseline_store_rejects_rehashed_inconsistent_threshold_outcome",
+            "report_validation_rejects_invalid_binding_and_duplicate_threshold_dimensions"
           ],
           "path": "crates/optimus-kernel/tests/evaluation_contracts.rs"
         },

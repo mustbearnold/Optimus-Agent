@@ -177,6 +177,18 @@ pub enum EvaluationMetric {
     CostMicrounits,
 }
 
+impl EvaluationMetric {
+    const ALL: [Self; 7] = [
+        Self::ExactText,
+        Self::ToolPrecision,
+        Self::ToolRecall,
+        Self::TerminalAccuracy,
+        Self::ReplayAccuracy,
+        Self::LatencyMillis,
+        Self::CostMicrounits,
+    ];
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum MetricDirection {
@@ -277,6 +289,38 @@ pub struct MetricScore {
     pub denominator: u64,
     pub samples: usize,
     pub value: u64,
+}
+
+fn evaluate_thresholds(
+    metrics: &BTreeMap<EvaluationMetric, MetricScore>,
+    thresholds: &[MetricThreshold],
+) -> Result<Vec<EvaluationMetric>> {
+    let mut dimensions = BTreeSet::new();
+    let mut failures = Vec::new();
+    for threshold in thresholds {
+        let checked = MetricThreshold::new(
+            threshold.metric,
+            threshold.direction,
+            threshold.value,
+            threshold.min_samples,
+        )?;
+        if !dimensions.insert(checked.metric) {
+            return Err(invalid("duplicate evaluation threshold metric"));
+        }
+        let score = metrics
+            .get(&checked.metric)
+            .ok_or_else(|| invalid("evaluation threshold metric is missing"))?;
+        let failed = score.samples < checked.min_samples
+            || match checked.direction {
+                MetricDirection::Minimum => score.value < checked.value,
+                MetricDirection::Maximum => score.value > checked.value,
+            };
+        if failed {
+            failures.push(checked.metric);
+        }
+    }
+    failures.sort();
+    Ok(failures)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -392,26 +436,7 @@ pub fn build_evaluation_report(
     ] {
         metrics.insert(score.metric, score);
     }
-    let mut threshold_failures = Vec::new();
-    for threshold in thresholds {
-        let checked = MetricThreshold::new(
-            threshold.metric,
-            threshold.direction,
-            threshold.value,
-            threshold.min_samples,
-        )?;
-        let score = &metrics[&checked.metric];
-        let failed = score.samples < checked.min_samples
-            || match checked.direction {
-                MetricDirection::Minimum => score.value < checked.value,
-                MetricDirection::Maximum => score.value > checked.value,
-            };
-        if failed {
-            threshold_failures.push(checked.metric);
-        }
-    }
-    threshold_failures.sort();
-    threshold_failures.dedup();
+    let threshold_failures = evaluate_thresholds(&metrics, thresholds)?;
     let mut report = EvaluationReportV1 {
         version: EVALUATION_REPORT_VERSION,
         dataset_id: dataset.id.clone(),
@@ -425,6 +450,7 @@ pub fn build_evaluation_report(
         report_sha256: String::new(),
     };
     report.report_sha256 = digest(&serde_json::to_vec(&report)?);
+    verify_report(&report)?;
     Ok(report)
 }
 
@@ -539,6 +565,73 @@ impl BaselineStore {
 fn verify_report(report: &EvaluationReportV1) -> Result<()> {
     if report.version != EVALUATION_REPORT_VERSION {
         return Err(invalid("unsupported evaluation report version"));
+    }
+    validate_id(&report.dataset_id, "report dataset id")?;
+    if report.dataset_version != EVALUATION_DATASET_VERSION {
+        return Err(invalid("unsupported evaluation dataset version"));
+    }
+    validate_hash(&report.dataset_sha256, "report dataset")?;
+    report.binding.validate()?;
+    let expected_metrics = EvaluationMetric::ALL.into_iter().collect::<BTreeSet<_>>();
+    let actual_metrics = report.metrics.keys().copied().collect::<BTreeSet<_>>();
+    if actual_metrics != expected_metrics {
+        return Err(invalid("evaluation report metric set is incomplete"));
+    }
+    let samples = report
+        .metrics
+        .values()
+        .next()
+        .map(|score| score.samples)
+        .ok_or_else(|| invalid("evaluation report has no metrics"))?;
+    if samples == 0 || samples > MAX_EVALUATION_CASES {
+        return Err(invalid("evaluation report sample count is outside policy"));
+    }
+    for (metric, score) in &report.metrics {
+        if score.metric != *metric || score.samples != samples {
+            return Err(invalid("evaluation metric identity or samples differ"));
+        }
+        let expected_value = if matches!(
+            metric,
+            EvaluationMetric::LatencyMillis | EvaluationMetric::CostMicrounits
+        ) {
+            if score.denominator != samples as u64 {
+                return Err(invalid("evaluation mean denominator differs from samples"));
+            }
+            score.numerator / score.denominator
+        } else {
+            if score.numerator > score.denominator {
+                return Err(invalid("evaluation ratio numerator exceeds denominator"));
+            }
+            if matches!(
+                metric,
+                EvaluationMetric::ExactText
+                    | EvaluationMetric::TerminalAccuracy
+                    | EvaluationMetric::ReplayAccuracy
+            ) && score.denominator != samples as u64
+            {
+                return Err(invalid(
+                    "evaluation accuracy denominator differs from samples",
+                ));
+            }
+            match score.denominator {
+                0 => 10_000,
+                denominator => score
+                    .numerator
+                    .checked_mul(10_000)
+                    .and_then(|numerator| numerator.checked_div(denominator))
+                    .ok_or_else(|| invalid("evaluation ratio arithmetic failed"))?,
+            }
+        };
+        if score.value != expected_value {
+            return Err(invalid("evaluation metric value is inconsistent"));
+        }
+    }
+    let expected_failures = evaluate_thresholds(&report.metrics, &report.thresholds)?;
+    if report.threshold_failures != expected_failures {
+        return Err(invalid("evaluation threshold failures are inconsistent"));
+    }
+    if report.passed != expected_failures.is_empty() {
+        return Err(invalid("evaluation report passed state is inconsistent"));
     }
     let mut unhashed = report.clone();
     unhashed.report_sha256.clear();

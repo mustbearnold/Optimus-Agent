@@ -198,3 +198,84 @@ fn comparison_rejects_non_source_binding_drift() {
 
     assert!(compare_evaluation_reports(&baseline, &candidate).is_err());
 }
+
+#[test]
+fn baseline_store_rejects_rehashed_report_with_missing_metric_before_insert() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let mut report = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    report.metrics.remove(&EvaluationMetric::CostMicrounits);
+    rehash(&mut report);
+    let store = BaselineStore::open(directory.path().join("evaluations.db")).unwrap();
+
+    assert!(store.accept(&report).is_err());
+    assert!(store.report(&report.report_sha256).is_err());
+}
+
+#[test]
+fn baseline_store_rejects_rehashed_inconsistent_metric_arithmetic() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let mut report = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    report
+        .metrics
+        .get_mut(&EvaluationMetric::ExactText)
+        .unwrap()
+        .value = 9_999;
+    rehash(&mut report);
+    let store = BaselineStore::open(directory.path().join("evaluations.db")).unwrap();
+
+    assert!(store.accept(&report).is_err());
+}
+
+#[test]
+fn baseline_store_rejects_rehashed_inconsistent_threshold_outcome() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let thresholds = vec![MetricThreshold::new(
+        EvaluationMetric::ExactText,
+        MetricDirection::Minimum,
+        10_000,
+        dataset.cases.len(),
+    )
+    .unwrap()];
+    let mut report =
+        build_evaluation_report(&dataset, binding(), &observations, &thresholds).unwrap();
+    report.threshold_failures = vec![EvaluationMetric::ExactText];
+    report.passed = false;
+    rehash(&mut report);
+    let store = BaselineStore::open(directory.path().join("evaluations.db")).unwrap();
+
+    assert!(store.accept(&report).is_err());
+}
+
+#[test]
+fn report_validation_rejects_invalid_binding_and_duplicate_threshold_dimensions() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let mut invalid_binding =
+        build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    invalid_binding.binding.provider.clear();
+    rehash(&mut invalid_binding);
+    let store = BaselineStore::open(directory.path().join("evaluations.db")).unwrap();
+    assert!(store.accept(&invalid_binding).is_err());
+
+    let threshold = MetricThreshold::new(
+        EvaluationMetric::ExactText,
+        MetricDirection::Minimum,
+        10_000,
+        dataset.cases.len(),
+    )
+    .unwrap();
+    assert!(build_evaluation_report(
+        &dataset,
+        binding(),
+        &observations,
+        &[threshold.clone(), threshold],
+    )
+    .is_err());
+}

@@ -125,7 +125,10 @@ contract, tool catalog, route policy, provider, and model identities; checked
 integer metrics, explicit thresholds, immutable baselines, and regression
 comparisons fail closed on incompatible evidence. A baseline and candidate may
 bind different source trees, but report hashes, dataset identity, non-source
-binding context, threshold policy, and metric keys must remain exact.
+binding context, threshold policy, and metric keys must remain exact. Construction,
+baseline acceptance/loading, and comparison reject rehashed evidence with invalid
+bindings, incomplete metrics, inconsistent arithmetic, duplicate thresholds, or
+incorrect failure/pass projection before mutation or comparison.
 
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider

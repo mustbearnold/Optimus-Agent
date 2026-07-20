@@ -339,7 +339,10 @@ ten declared cases and produce deterministic candidate-bound metrics, thresholds
 reports, immutable baselines, and regression comparisons. Comparison permits a
 changed source-tree identity only while dataset, contract, tool catalog, route
 policy, provider/model, threshold policy, report hashes, and metric schema remain
-compatible.
+compatible. Report construction, baseline acceptance/loading, and comparison
+revalidate supported identities, exact metric dimensions and arithmetic, unique
+threshold policy, failure/pass projection, and content hash before returning or
+persisting evidence.
 
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
