@@ -18,7 +18,8 @@ memory or turning documentation into speculative architecture.
 - Do not register a specialist agent, workflow, tool, model, prompt, GPU path, or
   integration that is not present in source.
 - Do not mark a gap resolved because code compiles.
-- If Git is absent, use generated tree hashes; never invent a commit SHA.
+- Use generated source-tree hashes in Git checkouts, worktrees, and archives;
+  never embed or invent a commit SHA as generated self-identity.
 - Keep tiny changes cheap: update only impacted knowledge.
 
 ## Procedure
@@ -34,8 +35,8 @@ python scripts/engineering_memory.py check
 A nonzero result is expected when covered source changed. Save the listed
 `CHANGED`, `STALE`, and `IMPACT` paths before doing anything else.
 
-If Git exists, also inspect its exact status/diff. If it does not, rely on the
-repository index and direct file comparison.
+Inspect Git status/diff when available, but use the repository index and direct
+file comparison as deterministic generated identity in every environment.
 
 ### 2. Trace ownership and evidence
 
@@ -65,13 +66,14 @@ depends_on:
   - docs/decisions/NNNN-decision.md
 validated_by:
   - crates/owner/tests/**
-last_verified_commit: null
+last_verified_commit: <historical source commit or null>
 ---
 ```
 
-Use `last_verified_commit: null` only while the repository has no Git identity.
-Record reusable lessons only when they can change future implementation or
-validation behavior.
+`last_verified_commit` is curated historical provenance, not the SHA of the
+commit containing the document. A commit cannot embed its own identity; keep
+remote/commit receipts in external delivery evidence. Record reusable lessons
+only when they can change future implementation or validation behavior.
 
 ### 4. Reconcile deterministic extractors
 
@@ -139,6 +141,8 @@ Report:
   ownership.
 - **Missing tests disguised as docs:** a contract documents behavior; it does not
   enforce it.
+- **Ambient archive conversion:** use `git -c core.autocrlf=false archive` for
+  staged-tree verification so exported bytes match Git blobs on every machine.
 - **Empty agent registry “fixed” with aspirational entries:** absence is the
   correct current fact.
 - **GPU dependency without fallback evidence:** record it as a blocking gap.

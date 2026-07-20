@@ -338,9 +338,10 @@ immutable execution-manifest trace links. Versioned evaluation datasets retain
 ten declared cases and produce deterministic candidate-bound metrics, thresholds,
 reports, immutable baselines, and regression comparisons.
 
-**Known observability debt:** event-stream receiver failure stops delivery but
-does not cancel the underlying model/tool turn. A turn can also commit a durable
-effect and then fail before the session transcript is saved.
+**Confirmed bounded behaviour:** desktop stream delivery loss requests the same
+cooperative token used by active providers and tool-loop boundaries. A turn can
+still commit a durable effect and then fail before the session transcript is
+saved.
 
 **Unknown or unresolved behaviour:** there is no OpenTelemetry export,
 structured security-denial stream, token accounting, artifact publication
@@ -370,14 +371,12 @@ availability mandatory.
 5. **Partially implemented:** policy and telemetry routing exist; evaluation-driven routing does not.
 6. **Confirmed bounded behaviour:** fixture replay and local causal traces exist; live-effect replay and distributed tracing do not.
 7. **Unknown/unresolved:** provenance and artifact publishing contracts.
-8. **Known debt:** unauthenticated wildcard-CORS loopback desktop test API.
-9. **Known boundary:** approved arbitrary child processes are not governed by
+8. **Known boundary:** approved arbitrary child processes are not governed by
    the built-in file-effect directory capability.
-10. **Known debt:** later Work Graph projection/event transitions and terminal
-    event uniqueness are not atomic storage invariants; campaign ownership has
-    no lease.
-11. **Known debt:** cron and gateway have no claim/lease or exactly-once contract.
-12. **Known debt:** durable effects and session transcript persistence can diverge.
-13. **Known debt:** duplicate ADR number `0016`.
-14. **Known debt:** existing blueprint and phase notes mix future targets with
+9. **Confirmed bounded behaviour:** Work Graph terminal uniqueness and campaign,
+   cron, and gateway owner/generation/token/deadline fencing are implemented;
+   external exactly-once delivery remains unresolved.
+10. **Known debt:** durable effects and session transcript persistence can diverge.
+11. **Known debt:** duplicate ADR number `0016`.
+12. **Known debt:** existing blueprint and phase notes mix future targets with
     historical/current claims; they require gradual labeling, not deletion.

@@ -124,5 +124,11 @@ docs/
   knowledge-staleness.json
 ```
 
+**Confirmed current behaviour:** generated repository identity is the sorted
+source-record `tree_sha256`; UTF-8 text uses canonical LF and binary bytes remain
+exact. Generated maps deliberately exclude ambient Git
+commit, branch, worktree, and remote metadata so identical indexed bytes produce
+identical authority in a checkout or source archive.
+
 The JSON files are generated and factual. Human interpretation remains in
 versioned Markdown with coverage frontmatter.

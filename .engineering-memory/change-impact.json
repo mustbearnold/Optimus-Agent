@@ -691,6 +691,30 @@
     },
     {
       "covers": [
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py",
+        "docs/engineering-memory/README.md",
+        "docs/architecture/system-overview.md",
+        "docs/maps/repository-and-ownership.md",
+        "skills/update-engineering-memory/**"
+      ],
+      "depends_on": [
+        "docs/decisions/0017-engineering-memory-separation.md",
+        "docs/contracts/high-risk-contracts.md"
+      ],
+      "document": "docs/specifications/git-stable-engineering-memory.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 8,
+      "resolved_tests": [
+        "scripts/test_engineering_memory.py"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
         "crates/optimus-memory/src/**",
         "crates/optimus-memory/tests/**",
         "crates/optimus-kernel/src/**",
@@ -1603,6 +1627,7 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1614,6 +1639,7 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1794,6 +1820,7 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1869,6 +1896,9 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
+    "docs/engineering-memory/README.md": [
+      "docs/specifications/git-stable-engineering-memory.md"
+    ],
     "docs/maps/memory-and-retrieval.md": [
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -1887,6 +1917,7 @@
     ],
     "docs/maps/repository-and-ownership.md": [
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1910,19 +1941,22 @@
       "docs/engineering-memory/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "scripts/test_engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
+      "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "skills/update-engineering-memory/SKILL.md": [
       "docs/decisions/0017-engineering-memory-separation.md",
       "docs/engineering-memory/README.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/git-stable-engineering-memory.md"
     ]
   }
 }

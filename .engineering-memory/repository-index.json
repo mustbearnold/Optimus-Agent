@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 185,
+  "file_count": 186,
   "files": [
     {
       "bytes": 152,
@@ -287,11 +287,11 @@
       "sha256": "44767ac1af31257a9e62f2da0d3ece098db7194a21600e72463a73a8f06760bc"
     },
     {
-      "bytes": 18783,
+      "bytes": 18459,
       "language": "HTML",
       "lines": 324,
       "path": "apps/optimus-desktop/ui/index.html",
-      "sha256": "ee10246788c12faa4fa38539b28c3b38d1ecacc5604dca356d28b8702750a4bf"
+      "sha256": "240b6755331f0fd75c49194fc76bdb761ba1c92da0fe42f9dc4e368ce4dd6779"
     },
     {
       "bytes": 43395,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 22199,
+      "bytes": 22104,
       "language": "Markdown",
-      "lines": 383,
+      "lines": 382,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "d011796034034c992acd4f130aae1834abe429862815a6d9628b70baf6d0d850"
+      "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
     },
     {
       "bytes": 13027,
@@ -1120,11 +1120,11 @@
       "sha256": "8129080fb13111fc9aa91fe974705cf9a167e7c7382dd02498348f5499a4193d"
     },
     {
-      "bytes": 3002,
+      "bytes": 3433,
       "language": "Markdown",
-      "lines": 83,
+      "lines": 90,
       "path": "docs/engineering-memory/README.md",
-      "sha256": "5b70c0a1feea9e47a924840604db80c0c3809e43c14a6ff51db0c460f859649a"
+      "sha256": "6fc0fb738ac682b216ab0e35fdfdd321986fd3a64de0a81b88bec7fd4ae08d6d"
     },
     {
       "bytes": 5062,
@@ -1155,11 +1155,11 @@
       "sha256": "6a66d00fa14c2bf7648f3e0b869b6b081329e07544038276e1453a8b1629534d"
     },
     {
-      "bytes": 5453,
+      "bytes": 5802,
       "language": "Markdown",
-      "lines": 128,
+      "lines": 134,
       "path": "docs/maps/repository-and-ownership.md",
-      "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
+      "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
     },
     {
       "bytes": 7557,
@@ -1181,6 +1181,13 @@
       "lines": 219,
       "path": "docs/specifications/desktop-turn-cancellation.md",
       "sha256": "516355a607ae3bc91997272d71df0b1ca07182ab13f1d9a89bbf7bf6b5908988"
+    },
+    {
+      "bytes": 8545,
+      "language": "Markdown",
+      "lines": 174,
+      "path": "docs/specifications/git-stable-engineering-memory.md",
+      "sha256": "d0a70a9d05fbb41a7776d30ec2144d394c77f79272a39ca2c2a74f0928da57d0"
     },
     {
       "bytes": 25330,
@@ -1218,11 +1225,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 72091,
+      "bytes": 71848,
       "language": "Python",
-      "lines": 1533,
+      "lines": 1523,
       "path": "scripts/engineering_memory.py",
-      "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+      "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
     },
     {
       "bytes": 9185,
@@ -1239,18 +1246,18 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 10875,
+      "bytes": 13618,
       "language": "Python",
-      "lines": 264,
+      "lines": 323,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "b9a1b62c7d19ec4f5ba48dec59797b5efd5eafc37de1b30bc560b291a76a8c7b"
+      "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
     },
     {
-      "bytes": 4980,
+      "bytes": 5394,
       "language": "Markdown",
-      "lines": 146,
+      "lines": 150,
       "path": "skills/update-engineering-memory/SKILL.md",
-      "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
+      "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
     },
     {
       "bytes": 46574,
@@ -1310,11 +1317,6 @@
     }
   ],
   "generated_by": "scripts/engineering_memory.py",
-  "git": {
-    "available": true,
-    "head": "28b0e96ac73ddedb8387478b63c8edaa0a385ac5",
-    "verification_basis": "git_head_and_sha256_tree"
-  },
   "independent_workspaces": [
     "spikes/001-leptos-wry-csr"
   ],
@@ -1324,7 +1326,7 @@
       "files": 2
     },
     "HTML": {
-      "bytes": 58340,
+      "bytes": 58016,
       "files": 3
     },
     "JSON": {
@@ -1336,8 +1338,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 429480,
-      "files": 78
+      "bytes": 439124,
+      "files": 79
     },
     "Other": {
       "bytes": 156778,
@@ -1348,7 +1350,7 @@
       "files": 1
     },
     "Python": {
-      "bytes": 88290,
+      "bytes": 90790,
       "files": 3
     },
     "Rust": {
@@ -1367,7 +1369,6 @@
   "root_entries": [
     ".gitignore",
     ".hermes",
-    ".optimus",
     "AGENTS.md",
     "CONTEXT.md",
     "Cargo.lock",
@@ -1391,7 +1392,8 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "43d4e2330657d9afaf1308a77e94e8c8f46f9626c0e83ea845034e4278b58fbb",
+  "tree_sha256": "aa252ba05d2e377fad98f5ef6bfd0029e865ab470a0fab513e6c61398ee55426",
+  "verification_basis": "sha256_tree",
   "workspace_packages": [
     {
       "application": true,

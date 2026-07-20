@@ -70,10 +70,17 @@ anything. `generate` refreshes deterministic maps. `validate` checks generated
 integrity, frontmatter, local links, duplicate IDs, registry completeness, ADR
 shape, contract/evaluation gaps, and staleness.
 
-**Confirmed current behaviour:** this repository has no `.git` directory, so
-`last_verified_commit` is `null` and tree SHA-256 values are the verification
-basis. If Git is introduced, the generator must begin recording HEAD and stale
-commit markers.
+**Confirmed current behaviour:** generated indexes use sorted source-file
+SHA-256 records and an aggregate `tree_sha256` as their deterministic identity.
+UTF-8 text is canonicalized to LF for cross-platform identity; binary bytes are
+retained exactly.
+They do not embed ambient `.git`, branch, worktree, `HEAD`, or remote state, so
+the same indexed bytes validate in a Git checkout and a source archive.
+
+Curated `last_verified_commit` values are historical provenance only. They may
+name an earlier source commit or remain `null`; they are not a generated
+self-identity because a commit cannot embed its own SHA. Commit and remote
+identities belong in external delivery evidence.
 
 ## Cost boundary
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -211,6 +212,22 @@ class EngineeringMemoryTests(unittest.TestCase):
             for claim in stale_claims:
                 self.assertNotIn(claim, text, f"{path}: {claim}")
 
+    def test_current_authority_does_not_resurrect_fixed_repository_debt(self) -> None:
+        current_docs = [
+            ROOT / "docs/engineering-memory/README.md",
+            ROOT / "docs/architecture/system-overview.md",
+        ]
+        obsolete_claims = [
+            "this repository has no `.git` directory",
+            "unauthenticated wildcard-cors loopback desktop test api",
+            "campaign ownership has no lease",
+            "cron and gateway have no claim/lease",
+            "event-stream receiver failure stops delivery but does not cancel",
+        ]
+        combined = "\n".join(path.read_text(encoding="utf-8").lower() for path in current_docs)
+        for claim in obsolete_claims:
+            self.assertNotIn(claim, combined, claim)
+
     def test_validation_rejects_resurrected_split_campaign_store(self) -> None:
         workflows = EM.build_workflow_registry()["workflows"]
         contracts = EM.build_contract_coverage()["contracts"]
@@ -242,6 +259,48 @@ class EngineeringMemoryTests(unittest.TestCase):
             {name: EM.canonical_json(value) for name, value in first.items()},
             {name: EM.canonical_json(value) for name, value in second.items()},
         )
+
+    def test_generated_identity_is_independent_of_ambient_git_state(self) -> None:
+        repository = EM.build_repository_index(EM.cargo_metadata())
+        self.assertNotIn("git", repository)
+        self.assertEqual(repository["verification_basis"], "sha256_tree")
+        indexed_roots = sorted({row["path"].split("/", 1)[0] for row in repository["files"]})
+        self.assertEqual(repository["root_entries"], indexed_roots)
+        for domain, present in repository["top_level_domains"].items():
+            self.assertEqual(
+                present,
+                any(
+                    row["path"] == domain or row["path"].startswith(f"{domain}/")
+                    for row in repository["files"]
+                ),
+            )
+
+        staleness = EM.build_knowledge_staleness(refresh=True)
+        self.assertTrue(staleness["documents"])
+        self.assertTrue(
+            all(
+                document["verification_basis"] == "sha256_tree"
+                for document in staleness["documents"]
+            )
+        )
+
+    def test_file_records_canonicalize_text_eol_and_preserve_binary_bytes(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="engineering-memory-test-", dir=ROOT
+        ) as directory:
+            text_path = Path(directory) / "fixture.html"
+            text_path.write_bytes(b"a\r\nb\r\n")
+            text_record = EM.file_record(text_path)
+            self.assertEqual(text_record["sha256"], EM.sha256_bytes(b"a\nb\n"))
+            self.assertEqual(text_record["bytes"], 4)
+            self.assertEqual(text_record["lines"], 2)
+
+            binary_path = Path(directory) / "fixture.bin"
+            binary_path.write_bytes(b"\xff\r\n")
+            binary_record = EM.file_record(binary_path)
+            self.assertEqual(binary_record["sha256"], EM.sha256_bytes(b"\xff\r\n"))
+            self.assertEqual(binary_record["bytes"], 3)
+            self.assertIsNone(binary_record["lines"])
 
     def test_checked_in_generated_files_have_markers(self) -> None:
         for name in EM.GENERATED_NAMES:

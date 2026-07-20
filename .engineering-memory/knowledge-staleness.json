@@ -507,7 +507,7 @@
       "knowledge_type": "architecture",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "01a97b5666fd5bf3f5d08022fb3f81c53586d5f2d5b058afa7ff76295d910170"
     },
     {
@@ -988,7 +988,7 @@
       "knowledge_type": "contract-risk-register",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "0ac17313e2e27fc648a74429c1b8ae78961241a6a89b74230fc10ccf222748f8"
     },
     {
@@ -1008,35 +1008,35 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         },
         {
-          "bytes": 10875,
+          "bytes": 13618,
           "language": "Python",
-          "lines": 264,
+          "lines": 323,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "b9a1b62c7d19ec4f5ba48dec59797b5efd5eafc37de1b30bc560b291a76a8c7b"
+          "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
         },
         {
-          "bytes": 4980,
+          "bytes": 5394,
           "language": "Markdown",
-          "lines": 146,
+          "lines": 150,
           "path": "skills/update-engineering-memory/SKILL.md",
-          "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
+          "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "dc4c8713b407eba7b2c6a3bd447c20c7610c1772db3ca9eeed121d395f94b605",
+      "current_tree_sha256": "9ff126b19a05ae8215aa0b1c6dc255157c6f5b7f1a15a705e6e40c8ad0ac0b14",
       "document": "docs/decisions/0017-engineering-memory-separation.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "dc4c8713b407eba7b2c6a3bd447c20c7610c1772db3ca9eeed121d395f94b605"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "9ff126b19a05ae8215aa0b1c6dc255157c6f5b7f1a15a705e6e40c8ad0ac0b14"
     },
     {
       "covered_files": [
@@ -1082,7 +1082,7 @@
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "1bd8854f51907d712bf080eb696e6436405b16a3c0cb6d8a6bede590e6a9516c"
     },
     {
@@ -1158,28 +1158,28 @@
           "sha256": "19412ab5b78f9f905f67b01658f4c32052ff3fd84908781cc7658dc267a8f6f2"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         },
         {
-          "bytes": 10875,
+          "bytes": 13618,
           "language": "Python",
-          "lines": 264,
+          "lines": 323,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "b9a1b62c7d19ec4f5ba48dec59797b5efd5eafc37de1b30bc560b291a76a8c7b"
+          "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
         }
       ],
-      "current_tree_sha256": "42272858ef230d2345aba94e664ae35700233713c4d99ed25bcbc29b900f48b3",
+      "current_tree_sha256": "22450f7f6483053b4ad9f640163e422519bd71bf495529b6b8eccae6429e7411",
       "document": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "42272858ef230d2345aba94e664ae35700233713c4d99ed25bcbc29b900f48b3"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "22450f7f6483053b4ad9f640163e422519bd71bf495529b6b8eccae6429e7411"
     },
     {
       "covered_files": [
@@ -1309,7 +1309,7 @@
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "4679f0ae90f8177edcca122a18385c7538c508f6813c2802c9374523c93ddde4"
     },
     {
@@ -1426,7 +1426,7 @@
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "ed6161c85cf05a96f879fa01302f6597dfb849c2495df89af36edc6991c3cf6e"
     },
     {
@@ -1487,7 +1487,7 @@
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "23e8f6893165929a3672687d7c992b1e8d75a7ebc274747d5e7e2c3543ae8fd9"
     },
     {
@@ -1597,17 +1597,17 @@
       "knowledge_type": "decision",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "e3ce07cc4ed9ed1dfdc703ff4fe504515146d1452e697b6f9cc6e424abbb3be3"
     },
     {
       "covered_files": [
         {
-          "bytes": 22199,
+          "bytes": 22104,
           "language": "Markdown",
-          "lines": 383,
+          "lines": 382,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "d011796034034c992acd4f130aae1834abe429862815a6d9628b70baf6d0d850"
+          "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
         },
         {
           "bytes": 1191,
@@ -1792,14 +1792,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "97a26aa3b8aeed063485583a8f3ab28ecdcdce9195636ccfe6cbf1564174a1bc",
+      "current_tree_sha256": "e38a95ae6801e8a6be7af8082b5355cacfbf42c361e14828c0a42120cd79078c",
       "document": "docs/decisions/README.md",
       "knowledge_status": "current",
       "knowledge_type": "decision-index",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "97a26aa3b8aeed063485583a8f3ab28ecdcdce9195636ccfe6cbf1564174a1bc"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "e38a95ae6801e8a6be7af8082b5355cacfbf42c361e14828c0a42120cd79078c"
     },
     {
       "covered_files": [
@@ -1818,28 +1818,28 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         },
         {
-          "bytes": 4980,
+          "bytes": 5394,
           "language": "Markdown",
-          "lines": 146,
+          "lines": 150,
           "path": "skills/update-engineering-memory/SKILL.md",
-          "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
+          "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "97f0203369446aacfdb9f0dfcebe5e4cdf7335c85eb67212eefc3209d1a05a4b",
+      "current_tree_sha256": "61da221832e8e44e573d67d0cbe236e6eccf2f1eeee500924648c43a91d12da1",
       "document": "docs/engineering-memory/README.md",
       "knowledge_status": "current",
       "knowledge_type": "engineering-memory-guide",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "97f0203369446aacfdb9f0dfcebe5e4cdf7335c85eb67212eefc3209d1a05a4b"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "61da221832e8e44e573d67d0cbe236e6eccf2f1eeee500924648c43a91d12da1"
     },
     {
       "covered_files": [
@@ -2061,11 +2061,11 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 22199,
+          "bytes": 22104,
           "language": "Markdown",
-          "lines": 383,
+          "lines": 382,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "d011796034034c992acd4f130aae1834abe429862815a6d9628b70baf6d0d850"
+          "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
         },
         {
           "bytes": 13027,
@@ -2257,21 +2257,21 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         }
       ],
-      "current_tree_sha256": "4ed14bdac5c226c1b55f0a5b30fe3e95ae729f0030a02905ec1147c2385040b7",
+      "current_tree_sha256": "cf3d00996f4559a964fbb4525c37d867a1b69ab28e943da031e7bfe6bc02277b",
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_status": "current",
       "knowledge_type": "lesson-ledger",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "4ed14bdac5c226c1b55f0a5b30fe3e95ae729f0030a02905ec1147c2385040b7"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "cf3d00996f4559a964fbb4525c37d867a1b69ab28e943da031e7bfe6bc02277b"
     },
     {
       "covered_files": [
@@ -2338,7 +2338,7 @@
       "knowledge_type": "memory-map",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "cd99a3e1101778e7c9d4373ee0a10bb509374e5072ebc619ead0053c2631d1cf"
     },
     {
@@ -2406,7 +2406,7 @@
       "knowledge_type": "model-routing-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "795a1ca0031731daad213a0cf88074c6546f6de15d33925f51427afb86e573a8"
     },
     {
@@ -2572,7 +2572,7 @@
       "knowledge_type": "observability-evaluation-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "428b28b08b3cd7d53ccea117a0e8b08b4dee88aa97e0618fbd36d9f11b8c9596"
     },
     {
@@ -2969,7 +2969,7 @@
       "knowledge_type": "repository-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "4277ac403b6fc17b69c37f59d42645137e111a33e35afc1ac76ad8b58d76ec1d"
     },
     {
@@ -3149,7 +3149,7 @@
       "knowledge_type": "security-map",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "53db909e7c87cfc92dc523ee86ca220b3bfa8204d1939d8ed0d06a8f8586e6d7"
     },
     {
@@ -3169,11 +3169,11 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 22199,
+          "bytes": 22104,
           "language": "Markdown",
-          "lines": 383,
+          "lines": 382,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "d011796034034c992acd4f130aae1834abe429862815a6d9628b70baf6d0d850"
+          "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
         },
         {
           "bytes": 13027,
@@ -3386,11 +3386,11 @@
           "sha256": "6a66d00fa14c2bf7648f3e0b869b6b081329e07544038276e1453a8b1629534d"
         },
         {
-          "bytes": 5453,
+          "bytes": 5802,
           "language": "Markdown",
-          "lines": 128,
+          "lines": 134,
           "path": "docs/maps/repository-and-ownership.md",
-          "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
+          "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
         },
         {
           "bytes": 7557,
@@ -3400,28 +3400,28 @@
           "sha256": "8ad7d302ed247a98a423e68922a740498587823c19b5416e272849f8c100180e"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         },
         {
-          "bytes": 4980,
+          "bytes": 5394,
           "language": "Markdown",
-          "lines": 146,
+          "lines": 150,
           "path": "skills/update-engineering-memory/SKILL.md",
-          "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
+          "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "0fe34a7dff8ef8e0d360fc260df4b91eb584b31c0c81f46305977cfc0217295a",
+      "current_tree_sha256": "8940161efa750d9974780376bbb4168fdcad803546ef5b7256dd2b23e41ebef2",
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "0fe34a7dff8ef8e0d360fc260df4b91eb584b31c0c81f46305977cfc0217295a"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "8940161efa750d9974780376bbb4168fdcad803546ef5b7256dd2b23e41ebef2"
     },
     {
       "covered_files": [
@@ -3461,11 +3461,11 @@
           "sha256": "44767ac1af31257a9e62f2da0d3ece098db7194a21600e72463a73a8f06760bc"
         },
         {
-          "bytes": 18783,
+          "bytes": 18459,
           "language": "HTML",
           "lines": 324,
           "path": "apps/optimus-desktop/ui/index.html",
-          "sha256": "ee10246788c12faa4fa38539b28c3b38d1ecacc5604dca356d28b8702750a4bf"
+          "sha256": "240b6755331f0fd75c49194fc76bdb761ba1c92da0fe42f9dc4e368ce4dd6779"
         },
         {
           "bytes": 43395,
@@ -3503,14 +3503,82 @@
           "sha256": "bce85584e1d71d8a5a2bf15189f9a7df18460fadb9ea55ff3f88b7ccae159ca2"
         }
       ],
-      "current_tree_sha256": "79ee6761e02c69a9a194325e95d0f01c771f2352ceffbb11a3557eda86ca2678",
+      "current_tree_sha256": "3656e5613ae1eec6006f75102fb900e90a2aae05052fbbf64599af78b7f356fb",
       "document": "docs/specifications/desktop-turn-cancellation.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "28b0e96ac73ddedb8387478b63c8edaa0a385ac5",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "79ee6761e02c69a9a194325e95d0f01c771f2352ceffbb11a3557eda86ca2678"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "3656e5613ae1eec6006f75102fb900e90a2aae05052fbbf64599af78b7f356fb"
+    },
+    {
+      "covered_files": [
+        {
+          "bytes": 22104,
+          "language": "Markdown",
+          "lines": 382,
+          "path": "docs/architecture/system-overview.md",
+          "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
+        },
+        {
+          "bytes": 13027,
+          "language": "Markdown",
+          "lines": 252,
+          "path": "docs/contracts/high-risk-contracts.md",
+          "sha256": "f7c9840781442a0f7817074bc698bc7e19e74e6c99c73cf9a4a8cf03e034cd31"
+        },
+        {
+          "bytes": 4791,
+          "language": "Markdown",
+          "lines": 131,
+          "path": "docs/decisions/0017-engineering-memory-separation.md",
+          "sha256": "52a9f60415530b90b082a48d59fc26a324929c8802158f1f217657aa251438c0"
+        },
+        {
+          "bytes": 3433,
+          "language": "Markdown",
+          "lines": 90,
+          "path": "docs/engineering-memory/README.md",
+          "sha256": "6fc0fb738ac682b216ab0e35fdfdd321986fd3a64de0a81b88bec7fd4ae08d6d"
+        },
+        {
+          "bytes": 5802,
+          "language": "Markdown",
+          "lines": 134,
+          "path": "docs/maps/repository-and-ownership.md",
+          "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
+        },
+        {
+          "bytes": 71848,
+          "language": "Python",
+          "lines": 1523,
+          "path": "scripts/engineering_memory.py",
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
+        },
+        {
+          "bytes": 13618,
+          "language": "Python",
+          "lines": 323,
+          "path": "scripts/test_engineering_memory.py",
+          "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
+        },
+        {
+          "bytes": 5394,
+          "language": "Markdown",
+          "lines": 150,
+          "path": "skills/update-engineering-memory/SKILL.md",
+          "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
+        }
+      ],
+      "current_tree_sha256": "ef7fa20123b31abb34bd72d374bf679167e6b739c9be36850fbeea2392162698",
+      "document": "docs/specifications/git-stable-engineering-memory.md",
+      "knowledge_status": "historical",
+      "knowledge_type": "specification",
+      "last_verified_commit": "7bb604883362d2e9ccbf0a950422e6c6d7c5b081",
+      "stale": false,
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "ef7fa20123b31abb34bd72d374bf679167e6b739c9be36850fbeea2392162698"
     },
     {
       "covered_files": [
@@ -3998,11 +4066,11 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 22199,
+          "bytes": 22104,
           "language": "Markdown",
-          "lines": 383,
+          "lines": 382,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "d011796034034c992acd4f130aae1834abe429862815a6d9628b70baf6d0d850"
+          "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
         },
         {
           "bytes": 13027,
@@ -4215,11 +4283,11 @@
           "sha256": "6a66d00fa14c2bf7648f3e0b869b6b081329e07544038276e1453a8b1629534d"
         },
         {
-          "bytes": 5453,
+          "bytes": 5802,
           "language": "Markdown",
-          "lines": 128,
+          "lines": 134,
           "path": "docs/maps/repository-and-ownership.md",
-          "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
+          "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
         },
         {
           "bytes": 7557,
@@ -4236,28 +4304,28 @@
           "sha256": "e7bfa1aa561c14116e0894ccf9163cdb56cd725753335f9905de9385a2907d02"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         },
         {
-          "bytes": 10875,
+          "bytes": 13618,
           "language": "Python",
-          "lines": 264,
+          "lines": 323,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "b9a1b62c7d19ec4f5ba48dec59797b5efd5eafc37de1b30bc560b291a76a8c7b"
+          "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
         }
       ],
-      "current_tree_sha256": "fb9e17f14c7a9b5ecbc4e94b311afd0cdb6677817b706f6516de551360503317",
+      "current_tree_sha256": "ac2d99a0614565897526ea62353a564b24c775c3c1d9a10b0b13de4eabd2cf0f",
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "fb9e17f14c7a9b5ecbc4e94b311afd0cdb6677817b706f6516de551360503317"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "ac2d99a0614565897526ea62353a564b24c775c3c1d9a10b0b13de4eabd2cf0f"
     },
     {
       "covered_files": [
@@ -4583,7 +4651,7 @@
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "2567e064765ba23b4417e2e380c41d0ae62488706cb4d5f513309828f2591dcb"
     },
     {
@@ -5051,11 +5119,11 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 22199,
+          "bytes": 22104,
           "language": "Markdown",
-          "lines": 383,
+          "lines": 382,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "d011796034034c992acd4f130aae1834abe429862815a6d9628b70baf6d0d850"
+          "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
         },
         {
           "bytes": 13027,
@@ -5268,11 +5336,11 @@
           "sha256": "6a66d00fa14c2bf7648f3e0b869b6b081329e07544038276e1453a8b1629534d"
         },
         {
-          "bytes": 5453,
+          "bytes": 5802,
           "language": "Markdown",
-          "lines": 128,
+          "lines": 134,
           "path": "docs/maps/repository-and-ownership.md",
-          "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
+          "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
         },
         {
           "bytes": 7557,
@@ -5289,28 +5357,28 @@
           "sha256": "906359380d463a76f18eb1dfaa04d631d92184dbc609787f824db71b5da06998"
         },
         {
-          "bytes": 72091,
+          "bytes": 71848,
           "language": "Python",
-          "lines": 1533,
+          "lines": 1523,
           "path": "scripts/engineering_memory.py",
-          "sha256": "a04be461bb8aa714c1e3adcfb245a3cddecb08a34958a4a16fb09711b0dd7340"
+          "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
         },
         {
-          "bytes": 10875,
+          "bytes": 13618,
           "language": "Python",
-          "lines": 264,
+          "lines": 323,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "b9a1b62c7d19ec4f5ba48dec59797b5efd5eafc37de1b30bc560b291a76a8c7b"
+          "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
         }
       ],
-      "current_tree_sha256": "eef6e5770a283741876fa1cd6759536935ba62ea8a2ce60b2ea936d1d64b890c",
+      "current_tree_sha256": "d0c0bed1ce5538250a58b6d0fca0cad526478a873118c72b6205fc37092569e0",
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "eef6e5770a283741876fa1cd6759536935ba62ea8a2ce60b2ea936d1d64b890c"
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "d0c0bed1ce5538250a58b6d0fca0cad526478a873118c72b6205fc37092569e0"
     },
     {
       "covered_files": [
@@ -5377,7 +5445,7 @@
       "knowledge_type": "specification",
       "last_verified_commit": "28b0e96ac73ddedb8387478b63c8edaa0a385ac5",
       "stale": false,
-      "verification_basis": "git_and_sha256_tree",
+      "verification_basis": "sha256_tree",
       "verified_tree_sha256": "01c811479a6d19ab99b4b8ddd42af05de86d17ae8b3a3e1424e1f671d240aeb6"
     }
   ],

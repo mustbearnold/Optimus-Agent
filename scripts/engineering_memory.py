@@ -103,8 +103,19 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def canonical_file_bytes(path: Path) -> bytes:
+    data = path.read_bytes()
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        return data
+    if "\0" in text:
+        return data
+    return text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+
+
 def sha256_file(path: Path) -> str:
-    return sha256_bytes(path.read_bytes())
+    return sha256_bytes(canonical_file_bytes(path))
 
 
 def generated_header() -> dict[str, Any]:
@@ -143,7 +154,7 @@ def repository_files() -> tuple[Path, ...]:
 
 
 def file_record(path: Path) -> dict[str, Any]:
-    data = path.read_bytes()
+    data = canonical_file_bytes(path)
     try:
         lines = len(data.decode("utf-8").splitlines())
     except UnicodeDecodeError:
@@ -213,28 +224,6 @@ def package_records(metadata: dict[str, Any]) -> list[dict[str, Any]]:
     return sorted(packages, key=lambda item: item["name"])
 
 
-def git_identity() -> dict[str, Any]:
-    if not (ROOT / ".git").exists():
-        return {
-            "available": False,
-            "head": None,
-            "verification_basis": "sha256_tree_no_git",
-        }
-    proc = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        timeout=15,
-        check=False,
-    )
-    return {
-        "available": proc.returncode == 0,
-        "head": proc.stdout.strip() if proc.returncode == 0 else None,
-        "verification_basis": "git_head_and_sha256_tree",
-    }
-
-
 def build_repository_index(metadata: dict[str, Any]) -> dict[str, Any]:
     records = [file_record(path) for path in repository_files()]
     language_counts: dict[str, dict[str, int]] = defaultdict(lambda: {"files": 0, "bytes": 0})
@@ -242,7 +231,8 @@ def build_repository_index(metadata: dict[str, Any]) -> dict[str, Any]:
         bucket = language_counts[record["language"]]
         bucket["files"] += 1
         bucket["bytes"] += record["bytes"]
-    top_entries = sorted(path.name for path in ROOT.iterdir() if path.name not in EXCLUDED_PARTS)
+    indexed_paths = [record["path"] for record in records]
+    top_entries = sorted({path.split("/", 1)[0] for path in indexed_paths})
     independent = []
     for manifest in (path for path in repository_files() if path.name == "Cargo.toml"):
         if manifest == ROOT / "Cargo.toml" or is_excluded(manifest):
@@ -252,10 +242,10 @@ def build_repository_index(metadata: dict[str, Any]) -> dict[str, Any]:
             independent.append(relative(manifest.parent))
     domains = {}
     for name in ("agents", "workflows", "tools", "prompts", "evals", "fixtures", "packages"):
-        domains[name] = (ROOT / name).is_dir()
+        domains[name] = any(path == name or path.startswith(f"{name}/") for path in indexed_paths)
     return {
         **generated_header(),
-        "git": git_identity(),
+        "verification_basis": "sha256_tree",
         "tree_sha256": records_tree_hash(records),
         "root_entries": top_entries,
         "workspace_packages": package_records(metadata),
@@ -1164,7 +1154,7 @@ def build_knowledge_staleness(refresh: bool) -> dict[str, Any]:
                 "knowledge_type": frontmatter["knowledge_type"],
                 "knowledge_status": frontmatter.get("status"),
                 "last_verified_commit": frontmatter.get("last_verified_commit"),
-                "verification_basis": "sha256_tree_no_git" if not (ROOT / ".git").exists() else "git_and_sha256_tree",
+                "verification_basis": "sha256_tree",
                 "verified_tree_sha256": baseline_hash,
                 "current_tree_sha256": current_hash,
                 "stale": baseline_hash != current_hash,
