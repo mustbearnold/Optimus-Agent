@@ -260,6 +260,14 @@ impl CandidateBinding {
         }
         Ok(())
     }
+
+    fn same_evaluation_context(&self, other: &Self) -> bool {
+        self.contract_sha256 == other.contract_sha256
+            && self.tool_catalog_sha256 == other.tool_catalog_sha256
+            && self.route_policy_sha256 == other.route_policy_sha256
+            && self.provider == other.provider
+            && self.model == other.model
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -433,12 +441,20 @@ pub fn compare_evaluation_reports(
     baseline: &EvaluationReportV1,
     candidate: &EvaluationReportV1,
 ) -> Result<EvaluationComparison> {
+    verify_report(baseline)?;
+    verify_report(candidate)?;
     if baseline.dataset_id != candidate.dataset_id
         || baseline.dataset_version != candidate.dataset_version
         || baseline.dataset_sha256 != candidate.dataset_sha256
-        || baseline.binding != candidate.binding
+        || !baseline.binding.same_evaluation_context(&candidate.binding)
     {
         return Err(invalid("baseline and candidate bindings differ"));
+    }
+    if baseline.thresholds != candidate.thresholds {
+        return Err(invalid("baseline and candidate threshold policies differ"));
+    }
+    if baseline.metrics.keys().ne(candidate.metrics.keys()) {
+        return Err(invalid("baseline and candidate metric sets differ"));
     }
     let mut comparison = EvaluationComparison {
         baseline_sha256: baseline.report_sha256.clone(),

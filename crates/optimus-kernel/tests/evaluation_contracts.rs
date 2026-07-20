@@ -1,8 +1,9 @@
 use optimus_kernel::{
     build_evaluation_report, compare_evaluation_reports, priority2_dataset, BaselineStore,
-    CandidateBinding, EvaluationDataset, EvaluationMetric, EvaluationObservation, MetricDirection,
-    MetricThreshold,
+    CandidateBinding, EvaluationDataset, EvaluationMetric, EvaluationObservation,
+    EvaluationReportV1, MetricDirection, MetricThreshold,
 };
+use sha2::{Digest, Sha256};
 use tempfile::tempdir;
 
 fn hash(byte: char) -> String {
@@ -18,6 +19,11 @@ fn binding() -> CandidateBinding {
         provider: "offline".into(),
         model: "offline-scripted".into(),
     }
+}
+
+fn rehash(report: &mut EvaluationReportV1) {
+    report.report_sha256.clear();
+    report.report_sha256 = format!("{:x}", Sha256::digest(serde_json::to_vec(report).unwrap()));
 }
 
 fn passing_observations(dataset: &EvaluationDataset) -> Vec<EvaluationObservation> {
@@ -124,11 +130,71 @@ fn immutable_baseline_comparison_reports_regression_without_rewriting_history() 
     let mut degraded = observations;
     degraded[0].exact_text = false;
     degraded[0].latency_millis = 100;
-    let candidate = build_evaluation_report(&dataset, binding(), &degraded, &[]).unwrap();
+    let mut candidate_binding = binding();
+    candidate_binding.source_tree_sha256 = hash('e');
+    let candidate = build_evaluation_report(&dataset, candidate_binding, &degraded, &[]).unwrap();
+    assert_ne!(
+        baseline.binding.source_tree_sha256,
+        candidate.binding.source_tree_sha256
+    );
     let comparison = compare_evaluation_reports(&baseline, &candidate).unwrap();
     assert_eq!(
         comparison.regressed,
         vec![EvaluationMetric::ExactText, EvaluationMetric::LatencyMillis]
     );
     assert!(comparison.improved.is_empty());
+}
+
+#[test]
+fn comparison_rejects_tampered_report_hashes() {
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let baseline = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    let mut candidate = baseline.clone();
+    candidate.report_sha256 = hash('f');
+
+    assert!(compare_evaluation_reports(&baseline, &candidate).is_err());
+}
+
+#[test]
+fn comparison_rejects_threshold_policy_drift() {
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let baseline = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    let changed_thresholds = vec![MetricThreshold::new(
+        EvaluationMetric::ExactText,
+        MetricDirection::Minimum,
+        9_000,
+        dataset.cases.len(),
+    )
+    .unwrap()];
+    let candidate =
+        build_evaluation_report(&dataset, binding(), &observations, &changed_thresholds).unwrap();
+
+    assert!(compare_evaluation_reports(&baseline, &candidate).is_err());
+}
+
+#[test]
+fn comparison_rejects_metric_set_drift_even_with_a_valid_hash() {
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let mut baseline = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    baseline.metrics.remove(&EvaluationMetric::CostMicrounits);
+    rehash(&mut baseline);
+    let candidate = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+
+    assert!(compare_evaluation_reports(&baseline, &candidate).is_err());
+}
+
+#[test]
+fn comparison_rejects_non_source_binding_drift() {
+    let dataset = priority2_dataset();
+    let observations = passing_observations(&dataset);
+    let baseline = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    let mut incompatible_binding = binding();
+    incompatible_binding.contract_sha256 = hash('f');
+    let candidate =
+        build_evaluation_report(&dataset, incompatible_binding, &observations, &[]).unwrap();
+
+    assert!(compare_evaluation_reports(&baseline, &candidate).is_err());
 }

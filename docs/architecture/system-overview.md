@@ -336,7 +336,10 @@ stages and one immutable replay report records the terminal comparison.
 append-only events, one terminal span outcome, traced route decisions, and
 immutable execution-manifest trace links. Versioned evaluation datasets retain
 ten declared cases and produce deterministic candidate-bound metrics, thresholds,
-reports, immutable baselines, and regression comparisons.
+reports, immutable baselines, and regression comparisons. Comparison permits a
+changed source-tree identity only while dataset, contract, tool catalog, route
+policy, provider/model, threshold policy, report hashes, and metric schema remain
+compatible.
 
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can

@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 186,
+  "file_count": 187,
   "files": [
     {
       "bytes": 152,
@@ -371,11 +371,11 @@
       "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
     },
     {
-      "bytes": 18024,
+      "bytes": 18740,
       "language": "Rust",
-      "lines": 533,
+      "lines": 549,
       "path": "crates/optimus-kernel/src/evaluation.rs",
-      "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+      "sha256": "60e1f7c2a6aadb924190671e0679c1b2ba4d96aa5c9b3866a266e4889dfb6f24"
     },
     {
       "bytes": 17310,
@@ -490,11 +490,11 @@
       "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
     },
     {
-      "bytes": 4599,
+      "bytes": 7150,
       "language": "Rust",
-      "lines": 134,
+      "lines": 200,
       "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
-      "sha256": "b2f262df232c7bbccb1bd1927fac0634c2f5771087e48922509cf040a8816cbd"
+      "sha256": "8af75935ae0d4ce0263d92586361db9f675c4e53e671377fcab425a13c148646"
     },
     {
       "bytes": 14917,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 22104,
+      "bytes": 22298,
       "language": "Markdown",
-      "lines": 382,
+      "lines": 385,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "8eb07e7e845b60449ae8c27d63c52d845a65f9fd5f95c07bb00411d46d553eee"
+      "sha256": "2a9a0f9341530018d44090b6669cbbb05ca391b70aaea64b6d467e7beac3caed"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1148,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 10142,
+      "bytes": 10322,
       "language": "Markdown",
-      "lines": 177,
+      "lines": 179,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "6a66d00fa14c2bf7648f3e0b869b6b081329e07544038276e1453a8b1629534d"
+      "sha256": "dff394aeb7bb7cb21cdd98324e8ddba36d02f871625e3047313d52222a2d446c"
     },
     {
       "bytes": 5802,
@@ -1174,6 +1174,13 @@
       "lines": 114,
       "path": "docs/plans/engineering-memory-phases.md",
       "sha256": "ae056a7bd8ea7804a898480d4b051e0ed9a06dd45d9d3500080748ccd5424c0b"
+    },
+    {
+      "bytes": 6859,
+      "language": "Markdown",
+      "lines": 161,
+      "path": "docs/specifications/candidate-aware-evaluation-comparison.md",
+      "sha256": "c1dc6ce2a5c3282bfde3d3184daa5501f440f4e0198fd0192bcc9a06f85b5c51"
     },
     {
       "bytes": 10602,
@@ -1338,8 +1345,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 439124,
-      "files": 79
+      "bytes": 446357,
+      "files": 80
     },
     "Other": {
       "bytes": 156778,
@@ -1354,7 +1361,7 @@
       "files": 3
     },
     "Rust": {
-      "bytes": 1105745,
+      "bytes": 1109012,
       "files": 70
     },
     "Shell": {
@@ -1392,7 +1399,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "aa252ba05d2e377fad98f5ef6bfd0029e865ab470a0fab513e6c61398ee55426",
+  "tree_sha256": "6ae932c326ebd8f7dd7c698bec4c00b72bc01def4c138b8a77cc40958eb2ddee",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {

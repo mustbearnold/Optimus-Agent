@@ -197,7 +197,11 @@
           "cases": [
             "priority2_dataset_is_exact_versioned_bounded_and_source_backed",
             "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
-            "immutable_baseline_comparison_reports_regression_without_rewriting_history"
+            "immutable_baseline_comparison_reports_regression_without_rewriting_history",
+            "comparison_rejects_tampered_report_hashes",
+            "comparison_rejects_threshold_policy_drift",
+            "comparison_rejects_metric_set_drift_even_with_a_valid_hash",
+            "comparison_rejects_non_source_binding_drift"
           ],
           "path": "crates/optimus-kernel/tests/evaluation_contracts.rs"
         },
@@ -341,7 +345,11 @@
           "cases": [
             "priority2_dataset_is_exact_versioned_bounded_and_source_backed",
             "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
-            "immutable_baseline_comparison_reports_regression_without_rewriting_history"
+            "immutable_baseline_comparison_reports_regression_without_rewriting_history",
+            "comparison_rejects_tampered_report_hashes",
+            "comparison_rejects_threshold_policy_drift",
+            "comparison_rejects_metric_set_drift_even_with_a_valid_hash",
+            "comparison_rejects_non_source_binding_drift"
           ],
           "path": "crates/optimus-kernel/tests/evaluation_contracts.rs"
         },

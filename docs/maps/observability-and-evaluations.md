@@ -123,7 +123,9 @@ those six cases and four trajectories with exact case/tool/terminal/replay/trace
 contracts and provenance. Deterministic reports bind dataset, source tree,
 contract, tool catalog, route policy, provider, and model identities; checked
 integer metrics, explicit thresholds, immutable baselines, and regression
-comparisons fail closed on incompatible evidence.
+comparisons fail closed on incompatible evidence. A baseline and candidate may
+bind different source trees, but report hashes, dataset identity, non-source
+binding context, threshold policy, and metric keys must remain exact.
 
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider
@@ -170,7 +172,7 @@ The following are **unknown or unresolved behaviour**:
 
 ## Planned evaluation gate
 
-**Planned behaviour:** wire the implemented versioned baseline contract into
+**Planned behaviour:** wire the candidate-aware versioned baseline contract into
 default-change delivery for prompts, workflows, tools, model routing, retrieval,
 and memory. The
 result must separate quality, reliability, cost, latency, security, and human
