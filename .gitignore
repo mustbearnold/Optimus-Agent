@@ -4,6 +4,8 @@
 **/test-results/
 **/playwright-report/
 spikes/**/dist/
+**/__pycache__/
+*.pyc
 **/*.rs.bk
 .DS_Store
 *.pdb
