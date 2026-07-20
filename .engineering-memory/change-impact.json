@@ -20,7 +20,7 @@
       ],
       "document": "docs/architecture/system-overview.md",
       "knowledge_type": "architecture",
-      "resolved_source_count": 60,
+      "resolved_source_count": 66,
       "resolved_tests": [
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -29,13 +29,16 @@
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
         "apps/optimus-desktop/e2e/support.js",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
         "crates/optimus-kernel/tests/codex_oauth.rs",
         "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/openai_http.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
         "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
         "crates/optimus-memory/tests/metamemory_mvp.rs",
         "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/approvals_surface.rs",
@@ -69,7 +72,7 @@
       ],
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_type": "contract-risk-register",
-      "resolved_source_count": 56,
+      "resolved_source_count": 62,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -77,13 +80,16 @@
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
         "apps/optimus-desktop/e2e/support.js",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
         "crates/optimus-kernel/tests/codex_oauth.rs",
         "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/openai_http.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
         "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
         "crates/optimus-memory/tests/metamemory_mvp.rs",
         "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/approvals_surface.rs",
@@ -262,6 +268,33 @@
     },
     {
       "covers": [
+        "crates/optimus-kernel/src/agent.rs",
+        "crates/optimus-kernel/src/workflow.rs",
+        "crates/optimus-kernel/src/eval.rs",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
+      ],
+      "depends_on": [
+        "docs/decisions/0021-owned-execution-and-causal-delivery.md"
+      ],
+      "document": "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "knowledge_type": "decision",
+      "resolved_source_count": 7,
+      "resolved_tests": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs"
+      ],
+      "status": "current",
+      "validated_by": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
+      ]
+    },
+    {
+      "covers": [
         "docs/decisions/*.md"
       ],
       "depends_on": [
@@ -269,7 +302,7 @@
       ],
       "document": "docs/decisions/README.md",
       "knowledge_type": "decision-index",
-      "resolved_source_count": 25,
+      "resolved_source_count": 26,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -310,7 +343,7 @@
       ],
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_type": "lesson-ledger",
-      "resolved_source_count": 58,
+      "resolved_source_count": 59,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -354,6 +387,7 @@
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/src/openai_compat.rs",
         "crates/optimus-kernel/src/codex_oauth.rs",
+        "crates/optimus-kernel/src/routing.rs",
         "apps/optimus-cli/src/main.rs",
         "apps/optimus-cli/src/gateway_http.rs",
         "apps/optimus-desktop/src/ipc/chat.rs"
@@ -364,7 +398,7 @@
       ],
       "document": "docs/maps/model-routing.md",
       "knowledge_type": "model-routing-map",
-      "resolved_source_count": 7,
+      "resolved_source_count": 8,
       "resolved_tests": [
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -374,12 +408,14 @@
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs"
       ],
       "status": "current",
       "validated_by": [
         "crates/optimus-kernel/tests/codex_oauth.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "apps/optimus-cli/tests/**",
         "apps/optimus-desktop/e2e/**"
       ]
@@ -390,6 +426,9 @@
         "crates/optimus-graph/src/**",
         "crates/optimus-runtime/src/**",
         "crates/optimus-kernel/src/eval.rs",
+        "crates/optimus-kernel/src/execution.rs",
+        "crates/optimus-kernel/src/agent.rs",
+        "crates/optimus-kernel/src/workflow.rs",
         "crates/optimus-kernel/src/lib.rs",
         "apps/optimus-desktop/src/server.rs",
         "apps/optimus-desktop/e2e/**"
@@ -400,7 +439,7 @@
       ],
       "document": "docs/maps/observability-and-evaluations.md",
       "knowledge_type": "observability-evaluation-map",
-      "resolved_source_count": 14,
+      "resolved_source_count": 17,
       "resolved_tests": [
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -409,13 +448,16 @@
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
         "apps/optimus-desktop/e2e/support.js",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
         "crates/optimus-kernel/tests/codex_oauth.rs",
         "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/openai_http.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
         "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
         "crates/optimus-memory/tests/metamemory_mvp.rs",
         "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/approvals_surface.rs",
@@ -447,7 +489,7 @@
       ],
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_type": "repository-map",
-      "resolved_source_count": 46,
+      "resolved_source_count": 51,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -463,6 +505,8 @@
         "crates/optimus-kernel/src/fs_sandbox.rs",
         "crates/optimus-kernel/src/browser.rs",
         "crates/optimus-kernel/src/codex_oauth.rs",
+        "crates/optimus-kernel/src/credential.rs",
+        "crates/optimus-kernel/src/agent.rs",
         "crates/optimus-packs/src/**",
         "apps/optimus-desktop/src/bridge.rs",
         "apps/optimus-desktop/src/server.rs",
@@ -476,7 +520,7 @@
       ],
       "document": "docs/maps/security-and-approvals.md",
       "knowledge_type": "security-map",
-      "resolved_source_count": 22,
+      "resolved_source_count": 24,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -484,13 +528,16 @@
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
         "apps/optimus-desktop/e2e/support.js",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
         "crates/optimus-kernel/tests/codex_oauth.rs",
         "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/openai_http.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
         "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
         "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/approvals_surface.rs",
         "crates/optimus-runtime/tests/cancellation.rs",
@@ -523,12 +570,112 @@
       ],
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_type": "implementation-plan",
-      "resolved_source_count": 35,
+      "resolved_source_count": 36,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
       "status": "current",
       "validated_by": [
+        "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "crates/optimus-memory/src/**",
+        "crates/optimus-memory/tests/**",
+        "crates/optimus-kernel/src/**",
+        "crates/optimus-kernel/tests/**",
+        "crates/optimus-runtime/src/**",
+        "crates/optimus-store/src/**",
+        "docs/architecture/**",
+        "docs/contracts/**",
+        "docs/decisions/**",
+        "docs/maps/**",
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py"
+      ],
+      "depends_on": [
+        "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+        "docs/contracts/high-risk-contracts.md",
+        "docs/decisions/0021-owned-execution-and-causal-delivery.md"
+      ],
+      "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 96,
+      "resolved_tests": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/browser_live.rs",
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/openai_http.rs",
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
+        "crates/optimus-memory/tests/metamemory_mvp.rs",
+        "scripts/test_engineering_memory.py"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "crates/optimus-memory/tests/**",
+        "crates/optimus-kernel/tests/**",
+        "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "Cargo.toml",
+        "crates/optimus-packs/src/**",
+        "crates/optimus-kernel/src/**",
+        "crates/optimus-memory/src/**",
+        "crates/optimus-runtime/src/**",
+        "crates/optimus-store/src/**",
+        "apps/optimus-cli/src/**",
+        "apps/optimus-desktop/src/**"
+      ],
+      "depends_on": [
+        "docs/contracts/high-risk-contracts.md",
+        "docs/decisions/0021-owned-execution-and-causal-delivery.md"
+      ],
+      "document": "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 41,
+      "resolved_tests": [
+        "apps/optimus-cli/tests/gateway_http.rs",
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/support.js",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/browser_live.rs",
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/compression_turn.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/openai_http.rs",
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
+        "crates/optimus-memory/tests/metamemory_mvp.rs",
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "crates/optimus-runtime/tests/approvals_surface.rs",
+        "crates/optimus-runtime/tests/cancellation.rs",
+        "crates/optimus-runtime/tests/command_capture.rs",
+        "crates/optimus-runtime/tests/crash_resume.rs",
+        "crates/optimus-runtime/tests/path_confinement.rs",
+        "crates/optimus-runtime/tests/phase1_policy_budget.rs",
+        "crates/optimus-runtime/tests/skill_bridge.rs",
+        "crates/optimus-skills/tests/skills_lifecycle.rs",
+        "scripts/test_engineering_memory.py"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "crates/**/tests/**",
+        "apps/optimus-cli/tests/**",
+        "apps/optimus-desktop/e2e/**",
         "scripts/test_engineering_memory.py"
       ]
     }
@@ -550,7 +697,8 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/engineering-memory/README.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "README.md": [
       "docs/maps/repository-and-ownership.md"
@@ -564,13 +712,15 @@
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-cli/src/main.rs": [
       "docs/architecture/system-overview.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/maps/model-routing.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-cli/tests/gateway_http.rs": [
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
@@ -602,79 +752,92 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/chat.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/contract.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/files.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/mod.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/os.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/router.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/runtime_ops.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/scheduling.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/sessions.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/system.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/main.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/native_workers.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/server.rs": [
       "docs/architecture/system-overview.md",
@@ -682,12 +845,14 @@
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ui.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-graph/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -704,11 +869,23 @@
     "crates/optimus-kernel/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
     ],
+    "crates/optimus-kernel/src/agent.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/maps/observability-and-evaluations.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
     "crates/optimus-kernel/src/browser.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/codex_oauth.rs": [
       "docs/architecture/system-overview.md",
@@ -716,39 +893,68 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/compress.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "crates/optimus-kernel/src/credential.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/cron.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/eval.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/maps/observability-and-evaluations.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "crates/optimus-kernel/src/execution.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/maps/observability-and-evaluations.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/fs_sandbox.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/gateway.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/lib.rs": [
       "docs/architecture/system-overview.md",
@@ -756,25 +962,83 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/model-routing.md",
       "docs/maps/observability-and-evaluations.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/openai_compat.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/model-routing.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "crates/optimus-kernel/src/routing.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/maps/model-routing.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/session.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-kernel/src/web_search.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "crates/optimus-kernel/src/workflow.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/maps/observability-and-evaluations.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "crates/optimus-kernel/tests/agent_contracts.rs": [
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/browser_live.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/codex_oauth.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/compression_turn.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/integrity_integration.rs": [
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/kernel_turn.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/openai_http.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/session_resume.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/web_search_live.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/tests/workflow_contracts.rs": [
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "crates/optimus-memory/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -782,7 +1046,12 @@
     "crates/optimus-memory/src/lib.rs": [
       "docs/architecture/system-overview.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "crates/optimus-memory/tests/metamemory_mvp.rs": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "crates/optimus-packs/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -791,7 +1060,8 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-runtime/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -805,7 +1075,9 @@
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-runtime/src/lib.rs": [
       "docs/architecture/system-overview.md",
@@ -816,7 +1088,9 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/maps/security-and-approvals.md"
+      "docs/maps/security-and-approvals.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-runtime/tests/approvals_surface.rs": [
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
@@ -852,116 +1126,152 @@
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/observability-and-evaluations.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "docs/architecture/desktop-0-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/desktop-1-daily-use.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/desktop-2-streaming.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/desktop-install-relaunch.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/desktop-playwright-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/optimus-exceeds-hermes.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/parity-capability-ledger.json": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-0-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-1-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-10-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-11-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-12-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-13-approvals.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-14-gateway-eval.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-15-campaigns.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-16-gateway-http.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-17-search-thinking-models.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-17b-codex-oauth-models-search.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-18-hermes-parity-shell.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-19-sidebars-preview-browser.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-2-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-3-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-4-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-5-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-6-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-7-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-8-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/phase-9-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/sandbox-functional-verification.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/sota-scorecard.md": [
-      "docs/lessons/ai-agent-mistakes.md"
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/architecture/system-overview.md": [
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/contracts/high-risk-contracts.md": [
       "docs/decisions/0018-fail-closed-runtime-safety.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "docs/decisions/0000-locked-defaults.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0001-kernel-and-work-graph.md": [
       "docs/architecture/system-overview.md",
@@ -969,7 +1279,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/observability-and-evaluations.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0002-memory-invariants.md": [
       "docs/architecture/system-overview.md",
@@ -977,7 +1288,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0003-phase1-policy-budgets.md": [
       "docs/architecture/system-overview.md",
@@ -985,7 +1297,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/security-and-approvals.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0004-metamemory-mvp.md": [
       "docs/architecture/system-overview.md",
@@ -993,49 +1306,56 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0005-skills-2.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0006-capability-packs.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0007-kernel-turn-loop.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0008-openai-compat-provider.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0009-durable-sessions.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0010-context-compression.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0011-codex-oauth.md": [
       "docs/architecture/system-overview.md",
@@ -1043,35 +1363,40 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/model-routing.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0012-kernel-effectors.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0013-command-capture.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0014-native-webview-ipc-mode.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0015-preview-browser-cdp.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0016-canonical-tool-contract.md": [
       "docs/architecture/system-overview.md",
@@ -1079,7 +1404,8 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/security-and-approvals.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0016-fs-sandbox-allowlist.md": [
       "docs/architecture/system-overview.md",
@@ -1087,14 +1413,16 @@
       "docs/decisions/0018-fail-closed-runtime-safety.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0017-engineering-memory-separation.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0018-fail-closed-runtime-safety.md": [
       "docs/architecture/system-overview.md",
@@ -1102,7 +1430,8 @@
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0019-capability-files-and-unified-campaign-authority.md": [
       "docs/architecture/system-overview.md",
@@ -1110,7 +1439,8 @@
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0020-work-graph-integrity-and-loopback-security.md": [
       "docs/architecture/system-overview.md",
@@ -1118,47 +1448,70 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/0021-owned-execution-and-causal-delivery.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "docs/decisions/0022-versioned-agent-and-workflow-contracts.md": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/README.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/decisions/README.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/maps/memory-and-retrieval.md": [
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/maps/model-routing.md": [
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/maps/observability-and-evaluations.md": [
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/maps/repository-and-ownership.md": [
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "docs/maps/security-and-approvals.md": [
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "docs/specifications/priority-1-integrity-next-30-microtasks.md": [
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "scripts/engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/engineering-memory/README.md",
       "docs/lessons/ai-agent-mistakes.md",
-      "docs/plans/engineering-memory-phases.md"
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "scripts/test_engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",
-      "docs/decisions/0019-capability-files-and-unified-campaign-authority.md"
+      "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "skills/update-engineering-memory/SKILL.md": [
       "docs/decisions/0017-engineering-memory-separation.md",

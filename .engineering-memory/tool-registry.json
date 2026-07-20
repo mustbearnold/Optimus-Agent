@@ -118,11 +118,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -191,11 +197,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -261,11 +273,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -329,11 +347,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -798,11 +822,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -918,11 +948,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -950,7 +986,9 @@
       },
       "validated_by": [
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-packs/tests/packs_budget.rs"
       ],
@@ -991,11 +1029,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -1068,11 +1112,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -1101,8 +1151,11 @@
         "status": "confirmed_current_behaviour"
       },
       "validated_by": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
         "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/cancellation.rs",
         "crates/optimus-runtime/tests/skill_bridge.rs"
@@ -1246,11 +1299,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -1324,11 +1383,17 @@
         "status": "kernel_trace_and_or_runtime_events"
       },
       "output_schema": {
-        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
-        "semantic_schema": null,
-        "status": "partially_implemented_behaviour",
+        "envelope_schema": "optimus_packs::ToolOutcome/v1",
+        "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+        "status": "confirmed_current_behaviour",
+        "terminal_kinds": [
+          "succeeded",
+          "failed",
+          "cancelled",
+          "ambiguous"
+        ],
         "transport": {
-          "type": "string"
+          "type": "json_string"
         }
       },
       "owner": "optimus-packs",
@@ -1355,8 +1420,11 @@
         "status": "unknown_or_unresolved"
       },
       "validated_by": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/crash_resume.rs"
       ],
       "version": 1

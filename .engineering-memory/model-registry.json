@@ -1,15 +1,23 @@
 {
-  "capability_routing": [],
-  "cost_latency_context_metadata": null,
+  "capability_routing": [
+    "text",
+    "tools",
+    "streaming",
+    "reasoning",
+    "local"
+  ],
+  "cost_policy": "static estimated microunit ceiling",
+  "decision_ledger": "routing.db",
   "do_not_edit": true,
   "generated_by": "scripts/engineering_memory.py",
   "gpu_adapters": [],
   "known_gaps": [
-    "Provider interpretation differs across CLI, desktop, gateway, and cron.",
-    "No capability, cost, latency, privacy, health, or evaluation-driven router exists."
+    "No provider health, measured latency/cost, or evaluation-driven selection exists.",
+    "No local-model or GPU adapter exists."
   ],
+  "latency_context_metadata": null,
   "local_model_adapters": [],
-  "privacy_policy": null,
+  "privacy_policy": "local_only_or_remote_allowed",
   "providers": [
     {
       "adapter": "optimus_kernel::ScriptedModel",
@@ -20,10 +28,10 @@
       "fallback": null,
       "id": "offline",
       "models": [
-        "scripted"
+        "offline-scripted"
       ],
       "network": false,
-      "selection": "surface_explicit"
+      "selection": "canonical_route_resolver"
     },
     {
       "adapter": "optimus_kernel::OpenAiCompatModel",
@@ -34,7 +42,7 @@
       "id": "openai-compatible",
       "models": "OPTIMUS_OPENAI_MODEL environment value",
       "network": true,
-      "selection": "surface_explicit"
+      "selection": "canonical_route_resolver"
     },
     {
       "adapter": "optimus_kernel::CodexOAuthModel",
@@ -55,10 +63,12 @@
         "gpt-5.6-terra"
       ],
       "network": true,
-      "selection": "surface_explicit",
+      "selection": "canonical_route_resolver",
       "unknown_model_behavior": "gpt-5.6-terra"
     }
   ],
-  "router_status": "not_implemented",
+  "router_source": "crates/optimus-kernel/src/routing.rs",
+  "router_source_sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e",
+  "router_status": "implemented_canonical_policy_resolver",
   "schema_version": 1
 }

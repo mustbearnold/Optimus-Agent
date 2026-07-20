@@ -128,21 +128,42 @@
       "mapping_kind": "package_default_coarse",
       "package": "optimus-kernel",
       "sources": [
+        "crates/optimus-kernel/src/agent.rs",
         "crates/optimus-kernel/src/browser.rs",
         "crates/optimus-kernel/src/codex_oauth.rs",
         "crates/optimus-kernel/src/compress.rs",
+        "crates/optimus-kernel/src/credential.rs",
         "crates/optimus-kernel/src/cron.rs",
         "crates/optimus-kernel/src/eval.rs",
+        "crates/optimus-kernel/src/execution.rs",
         "crates/optimus-kernel/src/fs_sandbox.rs",
         "crates/optimus-kernel/src/gateway.rs",
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/src/openai_compat.rs",
+        "crates/optimus-kernel/src/routing.rs",
         "crates/optimus-kernel/src/session.rs",
-        "crates/optimus-kernel/src/web_search.rs"
+        "crates/optimus-kernel/src/web_search.rs",
+        "crates/optimus-kernel/src/workflow.rs"
       ],
       "tests": [
         {
           "cases": [
+            "canonical_agent_identity_and_version_reject_noncanonical_values",
+            "request_is_versioned_bounded_catalog_aware_and_roundtrips",
+            "result_terminal_kind_and_evidence_are_consistent",
+            "registry_is_immutable_catalog_checked_ordered_and_reopenable",
+            "registry_rejects_unavailable_tools_broader_permissions_and_corruption",
+            "invocation_persists_ordered_events_and_exactly_one_terminal_result",
+            "cancellation_fences_late_completion_syncs_token_and_retry_has_new_identity",
+            "ambiguous_is_a_distinct_terminal_outcome",
+            "registry_membership_does_not_broaden_request_permissions",
+            "effect_link_requires_exact_terminal_runtime_provenance",
+            "registered_agent_cannot_bypass_smart_deny"
+          ],
+          "path": "crates/optimus-kernel/tests/agent_contracts.rs"
+        },
+        {
+          "cases": [
             "browser_navigate_example_com"
           ],
           "path": "crates/optimus-kernel/tests/browser_live.rs"
@@ -150,6 +171,7 @@
         {
           "cases": [
             "codex_store_roundtrip_and_status",
+            "legacy_plaintext_migrates_once_and_corruption_fails_without_rewrite",
             "codex_responses_http_roundtrip",
             "production_streaming_rejects_malformed_completed_tool_call",
             "production_streaming_validates_completed_output_after_item_call",
@@ -167,11 +189,20 @@
         },
         {
           "cases": [
+            "tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity",
+            "session_and_agent_terminal_outcomes_agree_after_independent_reopen",
+            "offline_integrity_evaluation_executes_all_required_contract_cases"
+          ],
+          "path": "crates/optimus-kernel/tests/integrity_integration.rs"
+        },
+        {
+          "cases": [
             "active_model_completion_observes_turn_cancellation",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
             "skill_resolve_returns_body",
             "write_file_tool_uses_durable_job",
+            "valid_tool_execution_error_becomes_canonical_failed_outcome",
             "max_steps_trips",
             "terminal_tool_requires_approval_before_process_effect",
             "browser_tools_http_effector_when_pack_active",
@@ -199,7 +230,10 @@
             "new_session_ids_differ",
             "session_resume_rejects_unknown_persisted_pack",
             "durable_tool_message_is_bound_to_terminal_effect_attempt",
-            "conflicting_effect_link_rolls_back_session_snapshot"
+            "conflicting_effect_link_rolls_back_session_snapshot",
+            "failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event",
+            "interrupted_turn_resumes_without_duplicating_user_segment",
+            "kernel_turn_persists_versioned_manifest_and_replay_report"
           ],
           "path": "crates/optimus-kernel/tests/session_resume.rs"
         },
@@ -212,6 +246,34 @@
         },
         {
           "cases": [
+            "workflow_identity_version_and_definition_roundtrip",
+            "workflow_rejects_invalid_ports_triggers_and_schema_version",
+            "workflow_rejects_missing_self_duplicate_and_cyclic_dependencies",
+            "workflow_rejects_unbounded_retry_timeout_approval_and_terminal_contracts",
+            "workflow_registry_is_immutable_ordered_reopenable_and_corruption_safe",
+            "builtin_adapters_are_complete_and_preserve_unsupported_capabilities",
+            "adapter_status_mappings_are_exact_and_unknown_strings_fail_closed"
+          ],
+          "path": "crates/optimus-kernel/tests/workflow_contracts.rs"
+        },
+        {
+          "cases": [
+            "canonical_agent_identity_and_version_reject_noncanonical_values",
+            "request_is_versioned_bounded_catalog_aware_and_roundtrips",
+            "result_terminal_kind_and_evidence_are_consistent",
+            "registry_is_immutable_catalog_checked_ordered_and_reopenable",
+            "registry_rejects_unavailable_tools_broader_permissions_and_corruption",
+            "invocation_persists_ordered_events_and_exactly_one_terminal_result",
+            "cancellation_fences_late_completion_syncs_token_and_retry_has_new_identity",
+            "ambiguous_is_a_distinct_terminal_outcome",
+            "registry_membership_does_not_broaden_request_permissions",
+            "effect_link_requires_exact_terminal_runtime_provenance",
+            "registered_agent_cannot_bypass_smart_deny"
+          ],
+          "path": "crates/optimus-kernel/tests/agent_contracts.rs"
+        },
+        {
+          "cases": [
             "browser_navigate_example_com"
           ],
           "path": "crates/optimus-kernel/tests/browser_live.rs"
@@ -219,6 +281,7 @@
         {
           "cases": [
             "codex_store_roundtrip_and_status",
+            "legacy_plaintext_migrates_once_and_corruption_fails_without_rewrite",
             "codex_responses_http_roundtrip",
             "production_streaming_rejects_malformed_completed_tool_call",
             "production_streaming_validates_completed_output_after_item_call",
@@ -236,11 +299,20 @@
         },
         {
           "cases": [
+            "tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity",
+            "session_and_agent_terminal_outcomes_agree_after_independent_reopen",
+            "offline_integrity_evaluation_executes_all_required_contract_cases"
+          ],
+          "path": "crates/optimus-kernel/tests/integrity_integration.rs"
+        },
+        {
+          "cases": [
             "active_model_completion_observes_turn_cancellation",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
             "skill_resolve_returns_body",
             "write_file_tool_uses_durable_job",
+            "valid_tool_execution_error_becomes_canonical_failed_outcome",
             "max_steps_trips",
             "terminal_tool_requires_approval_before_process_effect",
             "browser_tools_http_effector_when_pack_active",
@@ -268,7 +340,10 @@
             "new_session_ids_differ",
             "session_resume_rejects_unknown_persisted_pack",
             "durable_tool_message_is_bound_to_terminal_effect_attempt",
-            "conflicting_effect_link_rolls_back_session_snapshot"
+            "conflicting_effect_link_rolls_back_session_snapshot",
+            "failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event",
+            "interrupted_turn_resumes_without_duplicating_user_segment",
+            "kernel_turn_persists_versioned_manifest_and_replay_report"
           ],
           "path": "crates/optimus-kernel/tests/session_resume.rs"
         },
@@ -278,6 +353,18 @@
             "kernel_web_search_tool_via_scripted_turn"
           ],
           "path": "crates/optimus-kernel/tests/web_search_live.rs"
+        },
+        {
+          "cases": [
+            "workflow_identity_version_and_definition_roundtrip",
+            "workflow_rejects_invalid_ports_triggers_and_schema_version",
+            "workflow_rejects_missing_self_duplicate_and_cyclic_dependencies",
+            "workflow_rejects_unbounded_retry_timeout_approval_and_terminal_contracts",
+            "workflow_registry_is_immutable_ordered_reopenable_and_corruption_safe",
+            "builtin_adapters_are_complete_and_preserve_unsupported_capabilities",
+            "adapter_status_mappings_are_exact_and_unknown_strings_fail_closed"
+          ],
+          "path": "crates/optimus-kernel/tests/workflow_contracts.rs"
         }
       ]
     },
@@ -290,25 +377,45 @@
       "tests": [
         {
           "cases": [
+            "injected_clock_owns_default_transaction_and_ledger_times",
+            "system_clock_observations_are_utc_and_strictly_monotonic",
             "remember_and_recall_current_claim",
             "bitemporal_correction_preserves_pre_correction_view",
             "conflicting_claims_are_not_last_write_wins",
             "action_authorize_purpose_fails_closed",
             "untrusted_origin_cannot_self_elevate_trust_or_action_use",
             "scope_filter_excludes_other_project_before_limit",
-            "empty_recall_abstains"
+            "empty_recall_abstains",
+            "sensitivity_write_ceiling_denies_without_row_or_event",
+            "sensitivity_recall_ceiling_filters_before_limit",
+            "allowed_use_filters_recall_purpose",
+            "correction_requires_clearance_and_preserves_sensitivity",
+            "tombstone_is_scoped_hidden_audited_and_idempotent",
+            "privacy_erase_removes_payload_and_is_idempotent",
+            "retention_applies_at_exact_boundary_once",
+            "legacy_and_partial_schemas_migrate_conservatively_without_loss"
           ],
           "path": "crates/optimus-memory/tests/metamemory_mvp.rs"
         },
         {
           "cases": [
+            "injected_clock_owns_default_transaction_and_ledger_times",
+            "system_clock_observations_are_utc_and_strictly_monotonic",
             "remember_and_recall_current_claim",
             "bitemporal_correction_preserves_pre_correction_view",
             "conflicting_claims_are_not_last_write_wins",
             "action_authorize_purpose_fails_closed",
             "untrusted_origin_cannot_self_elevate_trust_or_action_use",
             "scope_filter_excludes_other_project_before_limit",
-            "empty_recall_abstains"
+            "empty_recall_abstains",
+            "sensitivity_write_ceiling_denies_without_row_or_event",
+            "sensitivity_recall_ceiling_filters_before_limit",
+            "allowed_use_filters_recall_purpose",
+            "correction_requires_clearance_and_preserves_sensitivity",
+            "tombstone_is_scoped_hidden_audited_and_idempotent",
+            "privacy_erase_removes_payload_and_is_idempotent",
+            "retention_applies_at_exact_boundary_once",
+            "legacy_and_partial_schemas_migrate_conservatively_without_loss"
           ],
           "path": "crates/optimus-memory/tests/metamemory_mvp.rs"
         }
@@ -330,9 +437,15 @@
             "cannot_deactivate_core",
             "deactivate_on_demand_frees_slot",
             "canonical_descriptor_owns_schema_policy_and_invocation",
+            "canonical_tool_outcome_roundtrips_and_validates",
+            "canonical_tool_outcome_rejects_inconsistent_or_unbounded_values",
+            "ambiguous_outcome_requires_ambiguous_replay_class",
             "tool_resolution_fails_closed_for_unknown_unloaded_and_unavailable",
             "catalog_rejects_duplicate_tool_identity",
             "catalog_rejects_policy_or_invocation_identity_drift",
+            "canonical_descriptor_owns_output_schema_and_replay_class",
+            "descriptor_rejects_outcome_identity_or_replay_drift",
+            "catalog_rejects_output_schema_or_replay_drift",
             "catalog_rejects_schema_constraints_runtime_does_not_enforce",
             "catalog_rejects_malformed_required_properties",
             "catalog_rejects_availability_schema_token_drift",
@@ -354,9 +467,15 @@
             "cannot_deactivate_core",
             "deactivate_on_demand_frees_slot",
             "canonical_descriptor_owns_schema_policy_and_invocation",
+            "canonical_tool_outcome_roundtrips_and_validates",
+            "canonical_tool_outcome_rejects_inconsistent_or_unbounded_values",
+            "ambiguous_outcome_requires_ambiguous_replay_class",
             "tool_resolution_fails_closed_for_unknown_unloaded_and_unavailable",
             "catalog_rejects_duplicate_tool_identity",
             "catalog_rejects_policy_or_invocation_identity_drift",
+            "canonical_descriptor_owns_output_schema_and_replay_class",
+            "descriptor_rejects_outcome_identity_or_replay_drift",
+            "catalog_rejects_output_schema_or_replay_drift",
             "catalog_rejects_schema_constraints_runtime_does_not_enforce",
             "catalog_rejects_malformed_required_properties",
             "catalog_rejects_availability_schema_token_drift",

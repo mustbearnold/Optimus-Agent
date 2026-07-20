@@ -96,54 +96,73 @@
     },
     {
       "id": "C-08",
-      "implementation_status": "missing",
+      "implementation_status": "implemented",
       "name": "canonical-tool-result",
       "sources": [
-        "crates/optimus-packs/src/lib.rs"
+        "crates/optimus-packs/src/lib.rs",
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/src/execution.rs"
       ],
-      "validated_by": []
+      "validated_by": [
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/session_resume.rs"
+      ]
     },
     {
       "id": "C-09",
-      "implementation_status": "missing",
+      "implementation_status": "implemented",
       "name": "agent-lifecycle",
-      "sources": [],
-      "validated_by": []
+      "sources": [
+        "crates/optimus-kernel/src/agent.rs"
+      ],
+      "validated_by": [
+        "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
+      ]
     },
     {
       "id": "C-10",
-      "implementation_status": "partial",
+      "implementation_status": "implemented",
       "name": "workflow-lifecycle",
       "sources": [
+        "crates/optimus-kernel/src/workflow.rs",
         "crates/optimus-runtime/src/campaign.rs",
         "crates/optimus-kernel/src/cron.rs",
         "crates/optimus-kernel/src/gateway.rs"
       ],
       "validated_by": [
-        "crates/optimus-runtime/src/campaign.rs",
-        "crates/optimus-kernel/src/cron.rs",
-        "crates/optimus-kernel/src/gateway.rs"
+        "crates/optimus-kernel/tests/workflow_contracts.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
       ]
     },
     {
       "id": "C-11",
-      "implementation_status": "missing",
+      "implementation_status": "implemented",
       "name": "model-routing",
       "sources": [
+        "crates/optimus-kernel/src/routing.rs",
         "apps/optimus-cli/src/main.rs",
         "apps/optimus-desktop/src/ipc/chat.rs"
       ],
-      "validated_by": []
+      "validated_by": [
+        "crates/optimus-kernel/src/routing.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
+      ]
     },
     {
       "id": "C-12",
-      "implementation_status": "missing",
+      "implementation_status": "implemented",
       "name": "credential-and-local-transport-security",
       "sources": [
+        "crates/optimus-kernel/src/credential.rs",
         "crates/optimus-kernel/src/codex_oauth.rs",
         "apps/optimus-desktop/src/server.rs"
       ],
-      "validated_by": []
+      "validated_by": [
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "apps/optimus-cli/tests/gateway_http.rs"
+      ]
     },
     {
       "id": "C-13",
@@ -159,13 +178,14 @@
     },
     {
       "id": "C-14",
-      "implementation_status": "partial",
+      "implementation_status": "implemented",
       "name": "memory-clock-retention-erasure",
       "sources": [
         "crates/optimus-memory/src/lib.rs"
       ],
       "validated_by": [
-        "crates/optimus-memory/tests/metamemory_mvp.rs"
+        "crates/optimus-memory/tests/metamemory_mvp.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
       ]
     },
     {
@@ -211,7 +231,7 @@
     },
     {
       "id": "C-18",
-      "implementation_status": "partial",
+      "implementation_status": "implemented",
       "name": "session-causality-around-durable-effects",
       "sources": [
         "crates/optimus-store/src/lib.rs",
@@ -220,7 +240,8 @@
         "crates/optimus-kernel/src/session.rs"
       ],
       "validated_by": [
-        "crates/optimus-kernel/tests/session_resume.rs"
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs"
       ]
     }
   ],

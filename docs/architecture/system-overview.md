@@ -18,7 +18,7 @@ validated_by:
   - crates/**/tests/**
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Optimus Agent system overview
@@ -71,12 +71,12 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 |---|---|---|
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
 | `apps/optimus-desktop` | Confirmed current behaviour | Windows-first Wry/Tao desktop shell, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
-| `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, sessions, context compression, OpenAI-compatible and Codex OAuth adapters, cron, gateway, browser/search effectors, filesystem sandbox, and a small offline eval harness. |
+| `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, cron, gateway, browser/search effectors, filesystem sandbox, and offline eval harnesses. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
 | `crates/optimus-graph` | Confirmed current behaviour | Job/node/effect domain and state-transition helpers. |
 | `crates/optimus-store` | Confirmed current behaviour | Versioned SQLite jobs, nodes, exact-action approval decisions, cancellation requests, effect attempts, atomic transitions, quarantine state, and ordered append-only events. |
-| `crates/optimus-memory` | Confirmed current behaviour | SQLite evidence-native claim ledger, bitemporal correction, scoped recall, conflict sets, trust/allowed-use gates, and evidence packets. |
+| `crates/optimus-memory` | Confirmed current behaviour | SQLite evidence-native claim ledger, bitemporal correction, scoped recall, conflict sets, injected monotonic clock, sensitivity/allowed-use gates, retention, tombstone/privacy erase, sanitized audit events, and evidence packets. |
 | `crates/optimus-skills` | Confirmed current behaviour | SQLite versioned procedural-skill registry with closed permissions, outcome counts, promotion, pinning, and deprecation. |
 
 ## Control plane and orchestration
@@ -92,15 +92,16 @@ so crash recovery and SmartDeny apply. Exact live owner/token/generation leases
 fence concurrent runners. Campaigns can end `succeeded`, `failed`, `cancelled`,
 or `awaiting_approval`.
 
-**Unknown or unresolved behaviour:** campaigns are described in a module comment
-as multi-agent, but there is no specialist-agent contract, child-agent runtime,
-agent registry, parallel scheduler, typed agent result, or agent version in the
-current code. Campaign steps are deterministic effect specifications, not
-implemented specialist-agent invocations.
+**Confirmed current behaviour:** versioned agent and workflow contract
+substrates and immutable registries exist in `optimus-kernel`. They are library
+boundaries, not a new control-plane process. No built-in specialist definition
+is registered, and campaign steps remain deterministic effect specifications,
+not specialist-agent invocations.
 
-**Planned behaviour:** a dedicated control plane, typed orchestrator, general
-workflow scheduler, specialist agents, child-agent hierarchy, and reusable
-workflow schemas are targets. They must not be treated as shipped.
+**Planned behaviour:** a dedicated control plane, specialist routing, parallel
+child hierarchy, and general workflow executor remain targets. The implemented
+schemas, invocation ledger, and adapters must not be described as those
+executors.
 
 ## Workflow runtime and terminal outcomes
 
@@ -125,13 +126,20 @@ token and cancellable turn/provider seam. A provider can observe cancellation
 during an active call; Codex SSE checks at bounded read intervals after the
 response stream opens.
 
+**Confirmed current behaviour:** agent invocations have durable cancellation
+requests, cooperative token synchronization, retry lineage with new identities,
+and one storage-enforced terminal result. General workflow definitions require
+explicit cancellation/retry/timeout/approval/rollback and exact terminal
+declarations; owner adapters state unsupported capabilities rather than
+inventing them.
+
 **Unknown or unresolved behaviour:** synchronous `ureq` connection/write cannot
 be force-aborted, and cancellation has no general future child-agent hierarchy.
 
-**Unknown or unresolved behaviour:** generic retries are not represented in the
-Work Graph. Interrupted nodes are resumable; consecutive failure budgets exist;
-Codex separately performs one adapter retry with slimmed context. These are not
-a unified retry policy.
+**Unknown or unresolved behaviour:** workflow retry policies are declarations,
+not a universal retry scheduler. Work Graph interruption recovery, subsystem
+leases, Codex adapter retry, and agent retry lineage retain owner-specific
+semantics.
 
 ## Agent execution
 
@@ -140,10 +148,16 @@ adapter interface. `ScriptedModel` is a deterministic test/offline adapter.
 `Kernel::turn_with_sink` loops over model responses and canonical tools until a
 non-empty final assistant response or a bounded error.
 
-**Unknown or unresolved behaviour:** no universal typed `Agent` input/output
-contract is implemented. There are no current specialist-agent definitions,
-ownership declarations, permission envelopes, confidence categories, agent
-version fields, or agent-level evaluation registry.
+**Confirmed current behaviour:** canonical agent IDs/versions, descriptors,
+typed bounded requests/results, context/evidence references, budgets, tool sets,
+permission envelopes, immutable registration, durable invocation events,
+cancellation, retry lineage, and exact runtime-effect provenance links are
+implemented. Descriptor and request validation use canonical available
+`ToolId`s and exact permission ceilings.
+
+**Unknown or unresolved behaviour:** there are no built-in specialist-agent
+definitions, specialist router, parallel scheduler, or child hierarchy. The
+agent contract does not bypass runtime SmartDeny or filesystem confinement.
 
 ## Tool system
 
@@ -182,12 +196,15 @@ Optimus home:
 | `sessions.db` | kernel/session | Session title, loaded pack names, serialized messages, and hash-only durable effect causal links. |
 | `cron.db` | kernel/cron | Interval schedules, exact lease owner/generation/token/deadline state, and latest status. |
 | `gateway/gateway.db` plus files | kernel/gateway | Authoritative message claims/attempts/terminal outbox JSON plus reconciled inbox/outbox/processed/failed adapter files. |
+| caller-selected agent registry/invocation DBs | kernel/agent | Immutable descriptor versions plus accepted invocation projections, ordered events, retry lineage, cancellation, terminal results, and validated effect links. |
+| caller-selected workflow registry DB | kernel/workflow | Immutable validated workflow definitions; not workflow execution state. |
 | `workspace/.optimus/browser_state.json` | kernel/browser | Last HTTP page and bounded navigation history. |
 
 **Unknown or unresolved behaviour:** the remaining stores do not share a
-transaction, trace ID, migration framework, retention policy, backup policy, or
-unified schema registry. Campaigns and Work Graph jobs are the exception: both
-now live in `optimus.db`.
+transaction, migration framework, backup policy, or universal trace/retention
+contract. Campaigns and Work Graph jobs are the exception: both live in
+`optimus.db`. Cross-contract agent/session links reconcile committed identities;
+they are not distributed transactions.
 
 **Confirmed current behaviour:** complete Work Graph job creation and later
 projection/event transitions are transactional. Legacy partial state is
@@ -218,16 +235,18 @@ filtering and ordering by scope, optional exact subject/predicate, and temporal
 fields. There is no embedding, vector search, reranker, knowledge graph, or GPU
 retrieval implementation in the workspace.
 
-**Known architectural debt:** memory ledger events currently use a fixed
-`2026-01-01T00:00:00Z` timestamp rather than an injected or real clock.
+**Confirmed current behaviour:** memory default transaction and event times use
+an injected UTC monotonic clock. Sensitivity and allowed-use filters apply before
+recall limiting; correction preserves sensitivity; retention, tombstone, and
+privacy erase are idempotent scoped transitions with sanitized audit records.
 
 ## Model routing
 
-**Confirmed current behaviour:** the current system has adapters, not a
-capability-based model router. Surfaces choose `offline`, `openai`/
-`openai-compat`, or Codex. OpenAI-compatible defaults come from environment
-variables; Codex model IDs are sanitized against a compiled catalog and unknown
-IDs collapse to `gpt-5.6-terra`.
+**Confirmed current behaviour:** a canonical typed route resolver validates
+provider/model ownership, required capabilities, local-only privacy, cost
+budget, and explicitly bounded fallback, then persists route decisions. CLI,
+desktop, cron, and gateway use the same resolver. Provider-specific wire parsing
+remains in the adapters.
 
 **Confirmed current behaviour:** Codex retries once after an HTTP failure with
 system plus last-user messages and no reasoning effort. There is no provider
@@ -237,9 +256,8 @@ evaluation-driven routing.
 **Known routing debt:** normalized reasoning effort and fast mode are sent by the
 Codex adapter; the OpenAI-compatible request mapper does not transmit them.
 
-**Known architectural debt:** CLI rejects unknown providers, while desktop sends
-any provider string other than offline/OpenAI to the Codex branch. Gateway and
-cron support different provider subsets. Routing semantics are not uniform.
+**Unknown or unresolved behaviour:** provider health, measured latency/cost,
+evaluation-driven selection, and local-model/GPU adapters are not implemented.
 
 ## Security and approvals
 

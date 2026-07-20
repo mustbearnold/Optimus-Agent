@@ -28,13 +28,45 @@
     "memory_precision_recall": "missing",
     "replay": "scripted_only",
     "retrieval_relevance": "missing",
-    "security": "focused_tests_not_metric_suite",
+    "security": "six_case_observed_integrity_suite_plus_focused_tests",
     "source_grounding": "missing",
-    "workflow_completion": "partial_tests_only"
+    "workflow_completion": "contract_adapter_and_cross_contract_tests"
   },
   "do_not_edit": true,
   "framework_status": "small_offline_trajectory_harness",
   "generated_by": "scripts/engineering_memory.py",
+  "integrity_cases": [
+    {
+      "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+      "id": "sensitivity_denial",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+      "id": "smartdeny_approval",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+      "id": "route_policy_denial",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+      "id": "cooperative_cancellation",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+      "id": "stale_completion_fence",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+      "id": "gateway_dead_letter",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    }
+  ],
   "schema_version": 1,
   "version_binding": false
 }

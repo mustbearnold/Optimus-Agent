@@ -7,6 +7,8 @@ covers:
   - crates/optimus-kernel/src/fs_sandbox.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-kernel/src/codex_oauth.rs
+  - crates/optimus-kernel/src/credential.rs
+  - crates/optimus-kernel/src/agent.rs
   - crates/optimus-packs/src/**
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/server.rs
@@ -21,7 +23,7 @@ validated_by:
   - crates/optimus-kernel/tests/**
   - crates/optimus-packs/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Security and approval boundaries
@@ -135,22 +137,25 @@ and public errors are stable/redacted while internal detail is logged locally.
 
 ## Credentials
 
-**Confirmed current behaviour:** Codex access/refresh/id tokens are serialized
-as plain JSON at `<optimus-home>/auth.json`; refresh updates the same file.
-Import reads Hermes or Codex CLI credential files. Status responses omit token
-values but expose account/base metadata.
+**Confirmed current behaviour:** Codex credentials are serialized through
+`SystemCredentialProtector`. Windows stores a DPAPI-protected versioned envelope
+and migrates legacy plaintext once; corruption fails without rewrite. Other
+platforms retain a versioned plaintext fallback but apply user-only file
+permissions where the platform supports them. Import reads Hermes or Codex CLI
+credential files. Status responses omit token values.
 
-**Unknown or unresolved behaviour:** no encryption-at-rest, OS credential vault,
-explicit file ACL hardening, redaction audit, credential expiry/revocation
-policy, or local IPC authorization contract is implemented.
+**Unknown or unresolved behaviour:** non-Windows encryption-at-rest, backup/key
+recovery, credential expiry/revocation automation, comprehensive redaction
+audit, and local IPC process authorization remain absent.
 
 ## Security ownership gaps
 
-- **Unknown/unresolved:** there is no dedicated security-policy package or typed
-  permission envelope spanning agents, workflows, tools, network, files, and
-  publishing.
-- **Unknown/unresolved:** no specialist agent permission isolation exists because
-  specialist agents are not implemented.
+- **Confirmed current behaviour:** agent descriptors and requests carry exact
+  filesystem-root, network-host, effect, and canonical-tool sets. Registry and
+  invocation validation require host and descriptor subset closure. These are
+  declarations and admission gates; runtime SmartDeny remains effect authority.
+- **Unknown/unresolved:** no built-in specialist definitions or OS sandbox per
+  agent exists, and no dedicated policy package spans publishing/desktop control.
 - **Unknown/unresolved:** publishing, Git, browser mutation, desktop control, and
   network-write tools are unavailable placeholders rather than implemented
   approval contracts.

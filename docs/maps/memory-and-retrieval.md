@@ -16,7 +16,7 @@ validated_by:
   - crates/optimus-kernel/tests/kernel_turn.rs
   - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
   - crates/optimus-skills/tests/**
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Memory and retrieval map
@@ -38,23 +38,28 @@ last_verified_commit: null
 ## Runtime memory contract
 
 **Confirmed current behaviour:** claims carry tenant/user/project scope, subject,
-predicate, object JSON, memory type, origin, trust, allowed use, valid-time and
-transaction-time bounds, evidence records, provenance, and optional correction
-links.
+predicate, object JSON, memory type, origin, trust, allowed use, sensitivity,
+optional retention deadline, valid-time and transaction-time bounds, evidence
+records, provenance, correction links, tombstone state, and erase state.
 
-**Confirmed current behaviour:** a `MemoryWriteContext` supplies authenticated
-scope, source class, and a maximum trust ceiling. Claimed trust is derived from
-origin and capped by the context. Unknown tenant/user/project fields cannot be
-selected during recall.
+**Confirmed current behaviour:** `WriteContext` supplies authenticated scope,
+principal, maximum trust, and maximum sensitivity. Claimed trust is derived from
+origin and capped by the context. Writes above sensitivity clearance fail before
+row/event creation. Unknown tenant/user/project fields cannot be selected during
+recall.
 
 **Confirmed current behaviour:** recall performs exact optional
 subject/predicate filtering, applies the requested valid-time and
 transaction-time view, groups live claims by fact key, exposes conflict sets,
-and returns an evidence packet with citation IDs. Action authorization is
-denied as an allowed use.
+and returns an evidence packet with citation IDs. Purpose and sensitivity are
+filtered before limiting/conflict recomputation. Action authorization is denied
+as an allowed use.
 
 **Confirmed current behaviour:** correction closes the superseded claim's
-transaction-time interval and inserts a new claim linked to the old one.
+transaction-time interval and inserts a new claim linked to the old one while
+preserving sensitivity. Tombstone hides payloads from recall; privacy erase
+overwrites user content fields. Retention applies at an explicit `as_of`
+boundary. These transitions are scoped, audited, and idempotent.
 Feedback records external outcomes; it does not silently rewrite the claim.
 
 ## Retrieval behavior
@@ -81,21 +86,20 @@ CPU results need tolerance/equivalence tests and explicit fallback telemetry.
 | Writes | Confirmed: typed ledger operations enforce authenticated scope/trust ceilings. |
 | Reads | Confirmed: scoped recall with temporal modes and allowed-use filtering. |
 | Provenance | Confirmed: claim origin/evidence/citation IDs are retained. |
-| Sensitivity | Unknown: no field-level sensitivity or encryption policy is implemented. |
-| Retention | Unknown: no retention, compaction, archival, or quota policy is implemented. |
+| Sensitivity | Confirmed: ordered sensitivity labels gate write/correction/recall; encryption policy remains separate and unresolved. |
+| Retention | Confirmed: optional per-claim UTC deadline and explicit deterministic retention application; compaction, archival, and quota remain absent. |
 | Invalidation | Partial: corrections are bitemporal; source-driven invalidation is absent. |
 | Deduplication | Partial: exact claim identity/conflict grouping exists; semantic deduplication is absent. |
-| Deletion | Partial: tombstone/privacy erase operations exist; repository-wide deletion guarantees are not documented. |
+| Deletion | Confirmed for memory claims: scoped idempotent tombstone and payload-overwriting privacy erase with sanitized audit events. Repository-wide deletion remains unresolved. |
 | Evaluation | Partial: memory unit/integration tests exist; precision/recall/temporal benchmark suites do not. |
 
 ## Known risks and debt
 
-1. **Confirmed current behaviour:** memory ledger events are stamped with the
-   fixed value `2026-01-01T00:00:00Z`; this is unsuitable for production audit
-   chronology.
-2. **Unknown or unresolved behaviour:** SQLite files, sessions, and `auth.json`
-   have no documented at-rest encryption, OS ACL hardening, backup, or retention
-   contract.
+1. **Confirmed current behaviour:** default transaction and audit timestamps use
+   an injected UTC clock with monotonic clamping. Calendar-boundary fixtures and
+   injected-clock tests cover deterministic behavior.
+2. **Unknown or unresolved behaviour:** SQLite files and sessions have no
+   documented at-rest encryption, OS ACL hardening, or backup contract.
 3. **Unknown or unresolved behaviour:** no transaction spans memory, sessions,
    workflow state, and tool effects. Session progression after a successful
    durable tool result atomically includes an exact attempt/effect/receipt-hash

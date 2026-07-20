@@ -5,6 +5,7 @@ covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/openai_compat.rs
   - crates/optimus-kernel/src/codex_oauth.rs
+  - crates/optimus-kernel/src/routing.rs
   - apps/optimus-cli/src/main.rs
   - apps/optimus-cli/src/gateway_http.rs
   - apps/optimus-desktop/src/ipc/chat.rs
@@ -14,18 +15,21 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/tests/codex_oauth.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
+  - crates/optimus-kernel/tests/integrity_integration.rs
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Model-routing map
 
 ## Current conclusion
 
-**Confirmed current behaviour:** Optimus currently implements provider adapters
-and surface-level selection. It does not implement a capability-, cost-,
-privacy-, or evaluation-driven model router.
+**Confirmed current behaviour:** Optimus implements a canonical typed route
+resolver for provider/model ownership, required capabilities, privacy, bounded
+cost, explicit fallback, and durable decision records. Provider health,
+measurement-driven cost/latency, and evaluation-driven selection are not
+implemented.
 
 ## Provider adapters
 
@@ -54,14 +58,14 @@ its request; the OpenAI-compatible request mapper currently omits both.
 
 | Surface | Confirmed current behaviour |
 |---|---|
-| CLI chat/cron | Explicit match for `offline`, `openai`/`openai-compat`, and `codex`; unknown values fail. |
-| Desktop chat | `offline` and OpenAI aliases are explicit; every other provider string enters the Codex branch. |
-| Gateway HTTP | Supports only `offline` and `codex`; unknown values fail. |
-| Cron tick | Supports its own explicit subset in CLI/desktop handlers; it is not a shared routing service. |
+| CLI chat/cron | Builds a `RouteRequest`; canonical resolver rejects unknown provider/model identities and policy violations. |
+| Desktop chat | Uses the same resolver; misspelled providers no longer enter a catch-all Codex branch. |
+| Gateway HTTP | Uses the same resolver before constructing an adapter. |
+| Cron tick | Uses the same resolver while retaining cron-owned scheduling/claim semantics. |
 
-**Known architectural debt:** provider interpretation differs by surface.
-Desktop's catch-all Codex branch can turn a misspelled provider into a networked
-Codex request while CLI/gateway reject it.
+**Confirmed current behaviour:** all four surfaces share canonical provider
+identity, model ownership, privacy, capability, and budget evaluation. Adapter
+construction and transport remain surface-owned.
 
 ## Cancellation boundary
 
@@ -74,35 +78,34 @@ checks the token between reads/events.
 and request writes are not force-abortable. The OpenAI-compatible adapter therefore
 cannot guarantee bounded mid-request cancellation beyond its HTTP timeout.
 
-## Missing router contract
+## Router contract and remaining gaps
 
-The following are **unknown or unresolved behaviour** because no shared router
-or registry owns them:
+**Confirmed current behaviour:** `RouteRequest` includes surface, requested
+provider/model, required capabilities, privacy, optional maximum cost, and an
+explicit fallback flag. `RouteDecision` has stable identity, selected canonical
+provider/model, fallback source, reasons, and timestamp; accepted decisions are
+persisted in `routing.db`. Unknown identities, wrong model ownership, local-only
+privacy violations, missing capabilities, and cost violations fail closed.
 
-- capability requests such as coding, visual understanding, extraction, or
-  local-private processing;
-- provider/model health and fallback order;
-- cost, latency, token, and budget policy;
-- privacy/data-residency restrictions;
+The following remain **unknown or unresolved behaviour**:
+
+- provider/model health and measured fallback order;
+- measured latency, token, and actual billing cost;
+- data residency beyond local-versus-remote classification;
 - context-window and structured-output capability metadata;
-- per-model tool-use reliability and evaluation evidence;
-- local-model adapters;
-- routing decision traces and stable decision IDs;
-- automatic fallback criteria and loop bounds.
+- per-model tool-use reliability and evaluation-driven selection;
+- local-model adapters and GPU/CPU fallback;
+- automatic fallback based on runtime provider failure.
 
 ## Planned direction
 
-**Planned behaviour:** agents request capabilities, and a versioned router
-resolves them using policy plus evaluation evidence. Routing must be centralized
-without moving provider-specific wire parsing out of the current adapters.
+**Planned behaviour:** extend the canonical resolver with health and evaluation
+evidence without moving provider-specific wire parsing out of current adapters.
 
-A first router contract should:
+Future router extensions must preserve the current fail-closed contract and:
 
-1. reject unknown provider/model identities;
-2. record requested capability, selected provider/model, policy version, and
-   reason;
-3. bound retries/fallbacks;
-4. separate provider retry from cross-provider fallback;
-5. enforce privacy and budget before network calls;
-6. retain the exact model parameters in the execution trace;
-7. use CPU-capable operation when local GPU adapters are unavailable.
+1. retain explicit provider retry versus cross-provider fallback;
+2. bind policy/evaluation versions to each decision;
+3. record measured cost, latency, and health inputs;
+4. retain exact model parameters in the execution manifest;
+5. use CPU-capable operation when local GPU adapters are unavailable.

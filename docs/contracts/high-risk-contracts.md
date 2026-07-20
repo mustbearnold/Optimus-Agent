@@ -14,7 +14,7 @@ depends_on:
 validated_by:
   - crates/**/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Highest-risk behavioural contracts
@@ -34,8 +34,9 @@ it does not replace executable enforcement.
   tree; campaign cancellation propagates to created jobs and uncreated steps.
   Active providers receive a cooperative token and Codex SSE checks it on
   bounded read intervals.
-- **Boundary:** synchronous transport connect/write abort and future child-agent
-  propagation remain unresolved.
+- **Boundary:** synchronous transport connect/write abort and a future parallel
+  child hierarchy remain unresolved. Durable agent invocations can synchronize
+  cancellation to cooperative tokens at bounded owner-controlled loop points.
 - **Required contract:** idempotent cancellation; propagation to child work and
   running tools; bounded graceful/forced stop; no new stages; inspectable partial
   artifacts; lock/lease release; exactly one terminal event.
@@ -138,44 +139,60 @@ it does not replace executable enforcement.
 
 ### C-08 Canonical tool output/error/cancel/replay schema
 
-- **State:** Unknown or unresolved behaviour.
-- **Risk:** model and UI consumers receive tool-specific strings/JSON without a
-  canonical typed output/error envelope.
+- **State:** Confirmed current behaviour.
+- **Evidence:** versioned `ToolOutcome` envelopes carry exact call/tool identity,
+  success/failure/cancelled/ambiguous kind, bounded summary/data/artifacts,
+  structured error, replay class, and optional durable provenance. Kernel tool
+  messages serialize the envelope and execution manifests retain it.
+- **Boundary:** the `data` JSON value remains tool-specific rather than a
+  per-tool static output schema.
 - **Owner:** packs/protocol/kernel/runtime.
 
 ### C-09 Universal agent lifecycle
 
-- **State:** Unknown or unresolved behaviour; no specialist agent abstraction.
-- **Required fields:** typed task/context/constraints/permissions/tools/
-  completion/cancellation input and typed result/evidence/artifacts/actions/
-  unresolved/confidence/cost/trace output.
-- **Owner:** future protocol/orchestrator/agent SDK.
+- **State:** Confirmed current behaviour for the typed contract, immutable
+  registry, and durable invocation lifecycle; no built-in specialists exist.
+- **Evidence:** bounded versioned requests/results, canonical tools, permission
+  subset closure, context/evidence/artifact references, cancellation, retry
+  lineage, exactly one terminal result, ambiguity, reopen validation, and exact
+  runtime-effect provenance.
+- **Boundary:** no specialist router, parallel scheduler, or child hierarchy.
+- **Owner:** kernel agent module; runtime remains effect authority.
 
 ### C-10 General workflow lifecycle
 
-- **State:** Partially implemented through jobs/campaigns/cron/gateway.
-- **Required fields:** versioned trigger, typed I/O, states, dependencies,
-  retries, timeouts, cancellation, approvals, validation, terminal outcomes,
-  rollback, observability, and eval coverage.
-- **Owner:** runtime plus future workflow package.
+- **State:** Confirmed current behaviour for versioned definitions, immutable
+  registry, capability conformance, and owner adapters.
+- **Evidence:** typed triggers/JSON-schema I/O, acyclic dependencies, bounded
+  retries/timeouts, cancellation, approvals, rollback declaration,
+  observability, exact terminal outcomes, optional agent references, and
+  fail-closed adapters for jobs/campaigns/cron/gateway.
+- **Boundary:** there is no universal workflow executor or cross-store
+  transaction; execution remains adapter-owned.
+- **Owner:** kernel workflow contract plus existing subsystem owners.
 
 ### C-11 Model routing and fallback
 
-- **State:** Unknown or unresolved behaviour.
-- **Risk:** provider semantics differ by surface; costs/privacy/capabilities are
-  not policy inputs.
-- **Owner:** future model router with current adapters retained.
+- **State:** Confirmed current behaviour for canonical provider/model ownership,
+  capabilities, local-only privacy, bounded cost, explicit fallback, and
+  persisted decisions across CLI/desktop/cron/gateway.
+- **Boundary:** health, measured cost/latency, evaluation-driven selection, and
+  runtime-failure fallback remain unresolved.
+- **Owner:** kernel routing with provider adapters retained.
 
 ### C-12 Credential storage and local transport
 
-- **State:** Unknown or unresolved behaviour.
-- **Evidence:** OAuth tokens are stored as plain JSON; local effectful transports
-  have no user/process authorization contract.
-- **Owner:** auth/security/desktop/gateway.
+- **State:** Confirmed current behaviour for Windows DPAPI credential envelopes,
+  one-time plaintext migration, corruption fencing, user-only fallback file
+  permissions, and bounded authenticated loopback transports.
+- **Boundary:** non-Windows encrypted storage and local IPC process identity are
+  unresolved.
+- **Owner:** kernel credential boundary plus desktop/gateway transports.
 
 ### C-13 Deterministic replay and provenance
 
-- **State:** Partially implemented effect/event persistence only.
+- **State:** Partially implemented with versioned execution manifests, hashes,
+  exact tool outcomes, causal links, and honest replay classification.
 - **Required contract:** version and hash every execution dependency, classify
   nondeterminism, retain stable references, and never claim exact replay for
   model/external stages.
@@ -183,8 +200,12 @@ it does not replace executable enforcement.
 
 ### C-14 Memory clock, sensitivity, retention, and erasure
 
-- **State:** Partially implemented temporal claims and erase modes; fixed event
-  timestamps and no end-to-end policy.
+- **State:** Confirmed current behaviour for injected monotonic UTC time,
+  sensitivity/allowed-use gates, conservative migration, correction
+  preservation, deterministic retention, scoped tombstone/privacy erase,
+  idempotency, and sanitized audit inspection.
+- **Boundary:** at-rest encryption, repository-wide erasure, compaction, archival,
+  and quota remain unresolved.
 - **Owner:** memory plus security/observability.
 
 ### C-17 Cron and gateway claim/delivery semantics
@@ -194,20 +215,23 @@ it does not replace executable enforcement.
   and completion compare exact owner/generation/token/deadline state. Gateway
   SQLite owns idempotent message ingestion, leases, attempt history, terminal
   outcome and outbound JSON; files are deterministic reconciled materializations.
-- **Boundary:** external channel delivery acknowledgements and a dead-letter
-  retry policy do not yet exist.
+- **Evidence:** bounded gateway retries dead-letter the third failed attempt;
+  delivery acknowledgement states are persisted and queryable.
+- **Boundary:** guarantees of an external channel broker remain unresolved.
 - **Owner:** kernel cron/gateway plus future scheduler/delivery runtime.
 
 ### C-18 Session causality around durable effects
 
-- **State:** Confirmed current behaviour for successful durable tool-result
-  progression.
+- **State:** Confirmed current behaviour for accepted-turn lifecycle and durable
+  tool-result progression.
 - **Evidence:** before another model step, the tool message and a normalized link
   to provider call ID, job, node, attempt, effect hash, terminal outcome, and
   receipt hash commit in one `sessions.db` transaction. Conflicting call/attempt
   provenance rolls back the snapshot update.
-- **Boundary:** no transaction spans `optimus.db` and `sessions.db`; failed turns
-  before a durable tool result and general restart continuation remain partial.
+- **Evidence:** accepted turns settle exactly once as success/failure/cancelled;
+  interrupted accepted turns resume without duplicating the user segment.
+- **Boundary:** no transaction spans `optimus.db`, `sessions.db`, or agent stores;
+  causal links reference previously committed authoritative attempts.
 - **Owner:** kernel/session/runtime.
 
 ## Coverage rule

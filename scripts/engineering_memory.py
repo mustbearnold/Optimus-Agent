@@ -482,10 +482,11 @@ def parse_tool_catalog() -> dict[str, Any]:
                 "policy": policy,
                 "input_schema": schema,
                 "output_schema": {
-                    "status": "partially_implemented_behaviour",
-                    "transport": {"type": "string"},
-                    "semantic_schema": None,
-                    "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+                    "status": "confirmed_current_behaviour",
+                    "transport": {"type": "json_string"},
+                    "envelope_schema": "optimus_packs::ToolOutcome/v1",
+                    "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
+                    "terminal_kinds": ["succeeded", "failed", "cancelled", "ambiguous"],
                 },
                 "schema_tokens": int(desc_match.group(2)),
                 "validated_by": source_test_hits(tool_id),
@@ -554,23 +555,50 @@ def build_agent_registry() -> dict[str, Any]:
         for name in pattern.findall(path.read_text(encoding="utf-8", errors="replace")):
             definitions.append({"name": name, "source": relative(path)})
     if definitions:
-        raise MemoryError(f"agent-like Rust definitions require registry review: {definitions}")
+        raise MemoryError(f"specialist agent definitions require registry review: {definitions}")
+    contract = ROOT / "crates/optimus-kernel/src/agent.rs"
+    required_symbols = [
+        "pub struct AgentDescriptor",
+        "pub struct AgentRequest",
+        "pub struct AgentResult",
+        "pub struct AgentRegistry",
+        "pub struct AgentInvocationStore",
+    ]
+    text = contract.read_text(encoding="utf-8")
+    missing = [symbol for symbol in required_symbols if symbol not in text]
+    if missing:
+        raise MemoryError(f"agent contract extraction is stale; missing symbols: {missing}")
     return {
         **generated_header(),
         "agents": [],
         "implemented_specialist_agent_count": 0,
-        "status": "unknown_or_unresolved_behaviour",
-        "statement": "No universal specialist-agent abstraction or canonical specialist-agent definition exists in the current repository.",
+        "contract_substrate": {
+            "id": "specialist-agent-contract",
+            "version": 1,
+            "status": "implemented",
+            "source": relative(contract),
+            "source_file_sha256": sha256_file(contract),
+            "contracts": [
+                "versioned descriptor/request/result",
+                "canonical tool and permission closure",
+                "immutable descriptor registry",
+                "durable invocation/cancellation/retry/terminal ledger",
+                "runtime-validated durable effect provenance",
+            ],
+            "validated_by": [
+                "crates/optimus-kernel/tests/agent_contracts.rs",
+                "crates/optimus-kernel/tests/integrity_integration.rs",
+            ],
+        },
+        "status": "implemented_contract_no_builtin_specialists",
+        "statement": "A universal typed agent contract and durable invocation substrate exist; no built-in specialist definition is registered.",
         "not_agents": [
             {"symbol": "optimus_kernel::ModelProvider", "reason": "provider adapter interface"},
             {"symbol": "optimus_kernel::ScriptedModel", "reason": "offline/test model adapter"},
             {"symbol": "optimus_runtime::CampaignStep", "reason": "deterministic effect step, not typed agent invocation"},
         ],
         "required_before_first_agent": [
-            "typed universal input/output contract",
             "purpose and non-responsibilities",
-            "tool and permission envelope",
-            "failure, escalation, and cancellation behavior",
             "version, owner, status, and evaluation cases",
             "overlap/routing check",
         ],
@@ -660,6 +688,7 @@ def build_workflow_registry() -> dict[str, Any]:
             retry={"status": "expiry takeover with stale-owner fencing; no general attempt policy"},
             timeout="provider/turn specific",
             approvals="inherits tool/runtime boundary",
+            cancellation={"status": "implemented", "contract": "disable fences a live claim; explicit cancellation terminalizes the exact attempt and rejects stale completion"},
             validation="minimum interval, exact lease capability, legacy schema migration, and surface-specific provider match",
             completion=["tick reports each due job status"],
             failure=["provider or kernel error recorded as last status", "expired or stale owner cannot commit completion"],
@@ -676,23 +705,45 @@ def build_workflow_registry() -> dict[str, Any]:
             stages=["idempotently ingest inbox UUID", "transactionally claim attempt", "run kernel turn", "atomically commit terminal outcome/outbound JSON", "reconcile outbox/archive files"],
             dependencies=["gateway/gateway.db", "gateway adapter directories", "kernel-turn"],
             state_transitions="pending/claimed/succeeded/failed with owner/generation/token/deadline and attempt history",
-            retry={"status": "expiry takeover and explicit release; external dead-letter policy absent"},
+            retry={"status": "bounded three-attempt retry plus dead letter; expiry takeover and explicit release"},
             timeout="turn specific",
             approvals="inherits tool/runtime boundary",
+            cancellation={"status": "implemented", "contract": "exact claim cancellation is terminal and fences late completion"},
             validation="canonical UUID/file identity, typed JSON, exact lease capability, deterministic conflict-checked materialization; malformed inbox files are skipped",
-            completion=["processed", "failed", "no message"],
+            completion=["processed", "dead_lettered", "cancelled", "no message"],
             failure=["turn error commits one failed attempt/outbound", "stale owners are fenced", "materialization conflict fails closed"],
             observability=["SQLite claims/attempts/terminal outbox JSON", "reconciled files", "kernel/runtime evidence"],
             validated_by=["crates/optimus-kernel/src/gateway.rs", "apps/optimus-cli/tests/gateway_http.rs"],
             source=["crates/optimus-kernel/src/gateway.rs", "apps/optimus-cli/src/gateway_http.rs"],
+        ),
+        workflow_record(
+            id="general-workflow-contract",
+            owner="optimus-kernel",
+            trigger="immutable WorkflowDefinition registration; execution is adapter-owned",
+            inputs=["versioned triggers", "typed JSON-schema ports", "dependency graph", "optional agent references", "policy declarations"],
+            outputs=["validated immutable definition", "adapter capability/status mapping"],
+            stages=["validate identity/schema", "validate ports and acyclic graph", "validate retry/timeout/approval/terminal policy", "persist immutable definition", "map owner lifecycle without coercion"],
+            dependencies=["kernel workflow contract", "job/campaign/cron/gateway owner adapters"],
+            state_transitions="definition registry only; owner adapters preserve execution state",
+            retry={"status": "bounded declaration; execution support explicitly reported per adapter"},
+            timeout="required bounded declaration per node",
+            approvals="explicit declaration; owner capability may be unsupported",
+            cancellation={"status": "implemented", "contract": "declaration and adapter capability conformance; execution remains owner-specific"},
+            rollback={"status": "explicit_supported_compensating_or_unsupported"},
+            validation="versioned fail-closed schema, canonical IDs, unique ports/nodes, DAG, bounded policies, exact terminal declarations, immutable reopen/corruption checks",
+            completion=["succeeded", "failed", "cancelled", "ambiguous"],
+            failure=["invalid/cyclic/unbounded definition", "duplicate identity/version", "unknown persisted adapter status", "unsupported capability remains explicit"],
+            observability=["immutable registry definition", "adapter capability matrix", "owner event stores"],
+            validated_by=["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"],
+            source=["crates/optimus-kernel/src/workflow.rs"],
         ),
     ]
     return {
         **generated_header(),
         "workflows": workflows,
         "known_gaps": [
-            "No general typed workflow definition/schema or registry exists in production code.",
-            "Cancellation and rollback are not generally implemented.",
+            "No universal workflow executor or cross-store transaction exists; execution remains adapter-owned.",
+            "Rollback and retry execution are subsystem-specific even though declarations are typed.",
             "No implemented Aipedia, publishing, SEO, content, or project-specific workflows exist.",
         ],
     }
@@ -728,24 +779,27 @@ def build_prompt_registry() -> dict[str, Any]:
 
 
 def build_model_registry() -> dict[str, Any]:
-    kernel = (ROOT / "crates/optimus-kernel/src/lib.rs").read_text(encoding="utf-8")
-    catalog_start = kernel.find("pub const CODEX_MODEL_CATALOG")
-    catalog_end = kernel.find("pub const DEFAULT_CODEX_MODEL")
+    routing_path = ROOT / "crates/optimus-kernel/src/routing.rs"
+    routing = routing_path.read_text(encoding="utf-8")
+    catalog_start = routing.find("pub const CODEX_MODEL_CATALOG")
+    catalog_end = routing.find("pub const DEFAULT_CODEX_MODEL")
     if catalog_start < 0 or catalog_end < 0:
         raise MemoryError("cannot locate canonical Codex model catalog")
-    ids = sorted(set(re.findall(r'\"(gpt-5\.6-(?:terra|luna|sol))\"', kernel[catalog_start:catalog_end])))
+    ids = sorted(set(re.findall(r'\"(gpt-5\.6-(?:terra|luna|sol))\"', routing[catalog_start:catalog_end])))
     if ids != ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"]:
         raise MemoryError(f"unexpected Codex catalog: {ids}")
     return {
         **generated_header(),
-        "router_status": "not_implemented",
+        "router_status": "implemented_canonical_policy_resolver",
+        "router_source": relative(routing_path),
+        "router_source_sha256": sha256_file(routing_path),
         "providers": [
             {
                 "id": "offline",
                 "adapter": "optimus_kernel::ScriptedModel",
                 "network": False,
-                "selection": "surface_explicit",
-                "models": ["scripted"],
+                "selection": "canonical_route_resolver",
+                "models": ["offline-scripted"],
                 "fallback": None,
                 "evidence": ["crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/eval.rs"],
             },
@@ -753,7 +807,7 @@ def build_model_registry() -> dict[str, Any]:
                 "id": "openai-compatible",
                 "adapter": "optimus_kernel::OpenAiCompatModel",
                 "network": True,
-                "selection": "surface_explicit",
+                "selection": "canonical_route_resolver",
                 "models": "OPTIMUS_OPENAI_MODEL environment value",
                 "fallback": None,
                 "evidence": ["crates/optimus-kernel/src/openai_compat.rs"],
@@ -762,7 +816,7 @@ def build_model_registry() -> dict[str, Any]:
                 "id": "codex-oauth",
                 "adapter": "optimus_kernel::CodexOAuthModel",
                 "network": True,
-                "selection": "surface_explicit",
+                "selection": "canonical_route_resolver",
                 "models": ids,
                 "aliases": ["terra", "luna", "sol"],
                 "unknown_model_behavior": "gpt-5.6-terra",
@@ -770,14 +824,16 @@ def build_model_registry() -> dict[str, Any]:
                 "evidence": ["crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/codex_oauth.rs"],
             },
         ],
-        "capability_routing": [],
-        "cost_latency_context_metadata": None,
-        "privacy_policy": None,
+        "capability_routing": ["text", "tools", "streaming", "reasoning", "local"],
+        "cost_policy": "static estimated microunit ceiling",
+        "latency_context_metadata": None,
+        "privacy_policy": "local_only_or_remote_allowed",
+        "decision_ledger": "routing.db",
         "local_model_adapters": [],
         "gpu_adapters": [],
         "known_gaps": [
-            "Provider interpretation differs across CLI, desktop, gateway, and cron.",
-            "No capability, cost, latency, privacy, health, or evaluation-driven router exists.",
+            "No provider health, measured latency/cost, or evaluation-driven selection exists.",
+            "No local-model or GPU adapter exists.",
         ],
     }
 
@@ -852,17 +908,17 @@ def build_contract_coverage() -> dict[str, Any]:
         ("C-05", "loopback-api-authorization", "implemented", ["apps/optimus-desktop/src/server.rs", "apps/optimus-cli/src/gateway_http.rs"], ["apps/optimus-desktop/src/server.rs", "apps/optimus-cli/tests/gateway_http.rs", "apps/optimus-desktop/e2e"]),
         ("C-06", "fail-closed-workflow-decoding", "implemented", ["crates/optimus-runtime/src/campaign.rs"], ["crates/optimus-runtime/src/campaign.rs"]),
         ("C-07", "provider-call-envelope-and-batch-authorization", "implemented", ["crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/openai_compat.rs", "crates/optimus-kernel/src/codex_oauth.rs", "crates/optimus-packs/src/lib.rs"], ["crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/codex_oauth.rs", "crates/optimus-packs/tests/packs_budget.rs"]),
-        ("C-08", "canonical-tool-result", "missing", ["crates/optimus-packs/src/lib.rs"], []),
-        ("C-09", "agent-lifecycle", "missing", [], []),
-        ("C-10", "workflow-lifecycle", "partial", ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"]),
-        ("C-11", "model-routing", "missing", ["apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], []),
-        ("C-12", "credential-and-local-transport-security", "missing", ["crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], []),
+        ("C-08", "canonical-tool-result", "implemented", ["crates/optimus-packs/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/execution.rs"], ["crates/optimus-packs/tests/packs_budget.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
+        ("C-09", "agent-lifecycle", "implemented", ["crates/optimus-kernel/src/agent.rs"], ["crates/optimus-kernel/tests/agent_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
+        ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-kernel/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
+        ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
+        ("C-12", "credential-and-local-transport-security", "implemented", ["crates/optimus-kernel/src/credential.rs", "crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], ["crates/optimus-kernel/tests/codex_oauth.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
         ("C-13", "deterministic-replay-and-provenance", "partial", ["crates/optimus-store/src/lib.rs", "crates/optimus-kernel/src/eval.rs"], ["crates/optimus-kernel/src/eval.rs"]),
-        ("C-14", "memory-clock-retention-erasure", "partial", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs"]),
+        ("C-14", "memory-clock-retention-erasure", "implemented", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-15", "atomic-projection-and-event-transitions", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-graph/src/lib.rs"], ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/tests/cancellation.rs"]),
         ("C-16", "campaign-job-consistency-and-recovery", "implemented", ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-store/src/lib.rs"], ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-store/src/lib.rs"]),
         ("C-17", "cron-gateway-claim-and-delivery", "implemented", ["crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
-        ("C-18", "session-causality-around-durable-effects", "partial", ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/session.rs"], ["crates/optimus-kernel/tests/session_resume.rs"]),
+        ("C-18", "session-causality-around-durable-effects", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/session.rs"], ["crates/optimus-kernel/tests/session_resume.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
     ]
     return {
         **generated_header(),
@@ -894,6 +950,21 @@ def build_evaluation_coverage() -> dict[str, Any]:
     )
     if ids != ["offline-echo", "memory-then-answer", "pack-activate-browser", "write-file-job"]:
         raise MemoryError(f"unexpected built-in eval IDs: {ids}")
+    required_start = text.find("pub const REQUIRED_INTEGRITY_EVALS")
+    required_end = text.find("pub fn evaluate_integrity_observations")
+    if required_start < 0 or required_end < 0:
+        raise MemoryError("cannot locate required integrity eval catalog")
+    integrity_ids = re.findall(r'"([a-z_]+)"', text[required_start:required_end])
+    expected_integrity = [
+        "sensitivity_denial",
+        "smartdeny_approval",
+        "route_policy_denial",
+        "cooperative_cancellation",
+        "stale_completion_fence",
+        "gateway_dead_letter",
+    ]
+    if integrity_ids != expected_integrity:
+        raise MemoryError(f"unexpected integrity eval IDs: {integrity_ids}")
     return {
         **generated_header(),
         "framework_status": "small_offline_trajectory_harness",
@@ -901,11 +972,19 @@ def build_evaluation_coverage() -> dict[str, Any]:
             {"id": case_id, "source": "crates/optimus-kernel/src/eval.rs"}
             for case_id in ids
         ],
+        "integrity_cases": [
+            {
+                "id": case_id,
+                "source": "crates/optimus-kernel/src/eval.rs",
+                "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+            }
+            for case_id in integrity_ids
+        ],
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
             "assistant_text": "substring_only",
-            "workflow_completion": "partial_tests_only",
-            "security": "focused_tests_not_metric_suite",
+            "workflow_completion": "contract_adapter_and_cross_contract_tests",
+            "security": "six_case_observed_integrity_suite_plus_focused_tests",
             "memory_precision_recall": "missing",
             "retrieval_relevance": "missing",
             "source_grounding": "missing",
@@ -1148,6 +1227,8 @@ def adr_warnings() -> list[str]:
     numbers: dict[str, list[str]] = defaultdict(list)
     for path in sorted((ROOT / "docs/decisions").glob("*.md")):
         number = path.name.split("-", 1)[0]
+        if not number.isdigit() or int(number) < 17:
+            continue
         numbers[number].append(path.name)
         text = path.read_text(encoding="utf-8", errors="replace")
         missing = [section for section in required if f"## {section}" not in text]
@@ -1278,8 +1359,8 @@ def validate_maps(strict: bool = False) -> dict[str, Any]:
                 errors.append(f"tool {tool.get('id')} missing field {field}")
         if tool["available"] and tool["input_schema"] is None:
             errors.append(f"available tool {tool['id']} missing input schema")
-        if tool["available"] and tool["output_schema"].get("semantic_schema") is None:
-            warnings.append(f"available tool {tool['id']} lacks canonical semantic output schema")
+        if tool["available"] and tool["output_schema"].get("envelope_schema") is None:
+            warnings.append(f"available tool {tool['id']} lacks canonical ToolOutcome envelope")
         if tool["policy"] == "process" and tool["available"] and tool["approval"].get("status") != "required":
             errors.append(f"high-risk process tool {tool['id']} lacks approval requirement")
 
@@ -1292,9 +1373,10 @@ def validate_maps(strict: bool = False) -> dict[str, Any]:
         ids = [row.get("id") for row in rows]
         if len(ids) != len(set(ids)):
             errors.append(f"duplicate IDs in {registry_name}")
-    agents = loaded.get("agent-registry.json", expected["agent-registry.json"])["agents"]
-    if not agents:
-        warnings.append("no implemented specialist agents or universal agent schemas")
+    agent_registry = loaded.get("agent-registry.json", expected["agent-registry.json"])
+    agents = agent_registry["agents"]
+    if not agents and agent_registry.get("contract_substrate", {}).get("status") != "implemented":
+        warnings.append("no implemented specialist agents or universal agent schema")
     workflows = loaded.get("workflow-registry.json", expected["workflow-registry.json"])["workflows"]
     for workflow in workflows:
         if workflow.get("cancellation", {}).get("status") != "implemented":

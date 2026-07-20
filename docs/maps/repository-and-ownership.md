@@ -11,7 +11,7 @@ depends_on:
   - README.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Repository and ownership map
@@ -23,9 +23,9 @@ the declared minimum. `cargo metadata --no-deps` reports nine workspace
 packages: seven libraries and two applications. The desktop application is not
 a default workspace member, but it is a workspace member.
 
-**Confirmed current behaviour:** the working directory is not a Git repository.
-Engineering Memory records file/tree SHA-256 values and leaves commit fields
-`null` rather than inventing a revision.
+**Confirmed current behaviour:** the repository is a Git checkout on `main` with
+GitHub `origin`; Engineering Memory records both commit identity and deterministic
+file/tree SHA-256 values.
 
 **Confirmed current behaviour:** a standalone Leptos CSR experiment exists at
 `spikes/001-leptos-wry-csr`. It declares its own workspace and is not a member of
@@ -41,7 +41,7 @@ the root Cargo workspace.
 | `optimus-memory` | library | Evidence-native runtime memory and temporal recall | none |
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
 | `optimus-packs` | library | Canonical tool/pack descriptor and capability budgets | none |
-| `optimus-kernel` | library | Model/tool turn loop and high-level operator services | graph, runtime, memory, skills, packs |
+| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution manifests, routing, credentials, and high-level operator services | graph, runtime, memory, skills, packs |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Wry/Tao desktop shell, native IPC, UI, HTTP test harness | kernel, graph, runtime, packs |
 
@@ -71,17 +71,19 @@ system, sessions, scheduling, runtime, files, chat, and OS modules.
 - **Confirmed:** runtime procedural skills belong to `optimus-skills`.
 - **Confirmed:** desktop transport and presentation belong to
   `apps/optimus-desktop`; domain behavior should remain in libraries.
-- **Unknown/unresolved:** no package owns a universal specialist-agent contract,
-  general workflow schema, model router, observability, provenance, eval
-  framework, or GPU adapters yet.
+- **Confirmed:** `optimus-kernel` owns typed agent/workflow contracts,
+  registries/adapters, invocation evidence, canonical routing, execution
+  manifests, and offline integrity evaluation.
+- **Unknown/unresolved:** no package owns built-in specialist definitions,
+  specialist routing/general workflow execution, OpenTelemetry, or GPU adapters.
 
 ## Missing top-level domains
 
 **Confirmed current behaviour:** there are no root `agents/`, `workflows/`,
 `tools/`, `prompts/`, `evals/`, `fixtures/`, or `packages/` directories. Their
-absence is not proof the concepts are absent: tools are currently in
-`optimus-packs`/kernel, workflows are represented by jobs/campaigns/cron/gateway,
-and prompts are inline.
+absence is not proof the concepts are absent: tools are in
+`optimus-packs`/kernel; general workflow and agent contracts are kernel modules;
+execution remains in jobs/campaigns/cron/gateway; prompts are inline.
 
 **Planned behaviour:** add a top-level domain only when it has an implemented,
 typed artifact that cannot live clearly in the established Rust package. Do not

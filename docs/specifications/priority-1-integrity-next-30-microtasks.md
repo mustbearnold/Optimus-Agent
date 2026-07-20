@@ -1,6 +1,6 @@
 ---
 knowledge_type: specification
-status: current
+status: historical
 covers:
   - Cargo.toml
   - crates/optimus-packs/src/**
@@ -18,15 +18,17 @@ validated_by:
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
   - scripts/test_engineering_memory.py
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Priority-1 integrity tranche: next 30 micro-tasks
 
-- **Status:** Accepted for implementation
+- **Status:** Completed through m56; decomposed execution recorded in the 100-nano-task specification
 - **Task range:** m27–m56
 - **Execution authority:** complete all thirty tasks locally, in order, without
-  subagents, commits, pushes, installation, deployment, or publication.
+  subagents. The later explicit GitHub workflow authorization superseded the
+  original no-commit/no-push delivery restriction; verified milestones were
+  pushed directly to `main` without branches or pull requests.
 - **Baseline tree:**
   `3e5c42b15665724596084cf21f40720bea3e9e133ccb0db96d470bba0677f769`
   over 162 indexed files.

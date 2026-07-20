@@ -1,6 +1,6 @@
 ---
 knowledge_type: specification
-status: current
+status: historical
 covers:
   - crates/optimus-memory/src/**
   - crates/optimus-memory/tests/**
@@ -22,16 +22,26 @@ validated_by:
   - crates/optimus-memory/tests/**
   - crates/optimus-kernel/tests/**
   - scripts/test_engineering_memory.py
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Priority-1 integrity completion: 100 nano-tasks
 
-- **Status:** Accepted for implementation
+- **Status:** Completed upon verified delivery of the exact commit containing this disposition
 - **Task range:** n001–n100, exactly 100 tasks
 - **Parent contract:** m45–m56 of the accepted 30-micro-task specification
 - **Repository:** `mustbearnold/Optimus-Agent`
 - **Delivery:** verified commits pushed directly to `origin/main`; GitHub Issues are the work ledger; no branches or pull requests
+
+## Execution disposition
+
+n001–n100 were executed in dependency order. Memory, agent, workflow,
+integration, and documentation milestones were verified before delivery.
+Milestone commits are `f99d789` (agent substrate) and `b59b907` (workflow
+contracts/integrity evaluations), following the initial memory and Priority-1
+baseline. n100 is completed by the verified `main` delivery and GitHub issue
+reconciliation of the exact commit containing this disposition; no scope item
+is silently deferred.
 - **Execution:** one writer, no subagents, ordered RED–GREEN packets, generated Engineering Memory never edited manually
 - **Starting condition:** local `main` has no commits; m45–m47 are interrupted and `cargo check -p optimus-memory` reports six compile errors
 

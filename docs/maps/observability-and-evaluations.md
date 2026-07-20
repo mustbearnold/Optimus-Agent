@@ -6,6 +6,9 @@ covers:
   - crates/optimus-graph/src/**
   - crates/optimus-runtime/src/**
   - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-kernel/src/execution.rs
+  - crates/optimus-kernel/src/agent.rs
+  - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-kernel/src/lib.rs
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/e2e/**
@@ -16,7 +19,7 @@ validated_by:
   - crates/**/tests/**
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # Observability, replay, and evaluation map
@@ -29,6 +32,9 @@ last_verified_commit: null
 | Job/node projections | Confirmed current behaviour | Status, budgets, effect JSON, durable attempts/receipts, cancellation requests, exact-action approval decisions, steps, and bounded command output. |
 | Kernel turn sink | Confirmed current behaviour | In-process text delta, tool started/finished, status, final, and error events. |
 | Sessions | Confirmed current behaviour | Serialized transcript, loaded packs, and normalized tool-call → job/node/effect-attempt/effect/receipt-hash links. |
+| Execution manifests | Confirmed current behaviour | Versioned manifest identity, turn, provider/model, prompt/tool/policy/input hashes, terminal status, exact tool outcomes, replay classification, and non-replayability reasons. |
+| Agent invocations | Confirmed current behaviour | Immutable descriptor version, accepted request, retry lineage, cancellation request, ordered events, one terminal result, and runtime-validated effect links. |
+| Workflow registry/adapters | Confirmed current behaviour | Versioned validated definitions, exact terminal declarations, owner capability matrices, and fail-closed status mappings; not universal run state. |
 | Campaign/cron/gateway | Confirmed current behaviour | Campaign and cron leases; gateway message claims, generation/token/deadline state, attempt history, terminal outbox JSON, and reconciled files. |
 | Memory/skills | Confirmed current behaviour | Dedicated event/evidence tables and outcome records. |
 | Desktop logs | Confirmed current behaviour | Process stderr and browser console messages; not durable operational truth. |
@@ -50,10 +56,10 @@ cancellation, command output capture, campaign/cron/gateway lease fencing,
 gateway crash reconciliation, session effect causality, timeouts, queue overload,
 and stream cancellation on backpressure.
 
-**Unknown or unresolved behaviour:** no global terminal-outcome record combines
-workflow, agent, tool, model, artifact, approval, cost, and error data. Work Graph
-job terminal uniqueness is established, but no universal cross-subsystem outcome
-envelope exists.
+**Partially implemented behaviour:** agent invocations and Work Graph jobs each
+enforce one terminal result; sessions and execution manifests retain exact
+causal/tool outcomes. No global record atomically combines workflow, agent,
+tool, model, artifact, approval, cost, and error data across stores.
 
 **Unknown or unresolved behaviour:** HTTP/native stream delivery failure does not
 propagate cancellation into the running turn. Event loss and execution lifetime
@@ -65,10 +71,12 @@ are therefore decoupled.
 support inspection and bounded resume. `ScriptedModel` lets tests replay a fixed
 model trajectory.
 
-**Unknown or unresolved behaviour:** Optimus does not retain a complete replay
-envelope containing workflow/agent/prompt/tool/model versions, model parameters,
-input hashes, provider responses, artifact hashes, external
-fixtures, timing, and cost. The current system must not claim exact replay.
+**Confirmed current behaviour:** versioned execution manifests retain provider,
+model, prompt/tool/policy/input hashes, ordered canonical tool outcomes, and
+explicit replay classification. Model calls remain honestly non-replayable;
+deterministic/convergent tools may be fixture-replayable. Optimus does not retain
+all provider responses, external fixtures, timing, or cost and must not claim
+exact replay for arbitrary runs.
 
 **Confirmed current behaviour:** exact approval actors/times/effect hashes and
 effect-attempt intent/outcome receipts are retained, and interrupted commands are
@@ -85,6 +93,12 @@ Suggested future stage labels are **planned behaviour**:
 cases: echo, memory recall, pack activation, and durable file writing. It checks
 expected canonical tool IDs and an assistant-text substring.
 
+**Confirmed current behaviour:** the integrity evaluation requires exactly six
+observed, evidence-bearing cases: sensitivity denial, SmartDeny approval,
+route-policy denial, cooperative cancellation, stale-completion fencing, and
+gateway dead letter. Missing, duplicate, or evidence-free observations fail the
+evaluation contract.
+
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider
 parsing, sessions, memory, skills, cron, gateway, and campaigns. Desktop
@@ -100,8 +114,9 @@ comparisons.
 
 The following are **unknown or unresolved behaviour**:
 
-- cross-subsystem trace, workflow-run, agent-invocation, tool-call, model-call,
-  artifact, approval-request, and memory-write IDs;
+- universal cross-subsystem trace/workflow-run/model-call/artifact correlation;
+  agent invocation, session turn, tool call, job/node/effect attempt, route
+  decision, approval, and memory IDs exist in their owning stores;
 - model tokens, cost, latency, retries, fallback reasons, and cache telemetry;
 - retrieval candidate/rank evidence;
 - security-denial and policy-decision records across all boundaries;
@@ -110,15 +125,15 @@ The following are **unknown or unresolved behaviour**:
 - OpenTelemetry export, retention, sampling, and redaction policy;
 - production dashboards, SLOs, alerts, and incident correlation;
 - reconciliation for failed turns that never reached a durable tool result;
-- external-channel delivery acknowledgements, dead-letter attempts, and
-  duplicate-delivery records beyond the local transactional outbox.
+- delivery acknowledgements/dead-letter attempts exist for the local gateway;
+  external-channel broker guarantees remain unresolved.
 
 ## Missing evaluation dimensions
 
 | Dimension | Current state |
 |---|---|
-| Agent routing and ownership | Missing; no specialist-agent system. |
-| Workflow completion/retry/cancel | Partial job/campaign tests; no general workflow evals. |
+| Agent routing and ownership | Contract/invocation/effect-link tests exist; no built-in specialists or router. |
+| Workflow completion/retry/cancel | General schema/adapter conformance plus cross-contract tests; no universal executor. |
 | Tool correctness/security | Strong focused tests for implemented subset; no canonical output-schema conformance. |
 | Retrieval precision/recall | Missing. |
 | Memory temporal/trust correctness | Unit/integration coverage; no benchmark metrics. |

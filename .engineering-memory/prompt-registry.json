@@ -12,10 +12,10 @@
         "loaded pack names",
         "session capability state"
       ],
-      "line": 884,
+      "line": 1134,
       "owner": "optimus-kernel",
       "source": "crates/optimus-kernel/src/lib.rs",
-      "source_file_sha256": "64ca3c1229d1becc5d0a2572b5992e87a6c044a9c3ee1c422c753253c2ddd3b7",
+      "source_file_sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3",
       "status": "active_unversioned",
       "validated_by": [
         "crates/optimus-kernel/tests/kernel_turn.rs"

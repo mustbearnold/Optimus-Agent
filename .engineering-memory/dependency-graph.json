@@ -32,11 +32,13 @@
       "rusqlite",
       "serde",
       "serde_json",
+      "sha2",
       "tempfile",
       "thiserror",
       "ureq",
       "url",
-      "uuid"
+      "uuid",
+      "windows-sys"
     ],
     "optimus-memory": [
       "rusqlite",
@@ -50,7 +52,8 @@
       "serde",
       "serde_json",
       "tempfile",
-      "thiserror"
+      "thiserror",
+      "uuid"
     ],
     "optimus-runtime": [
       "cap-std",

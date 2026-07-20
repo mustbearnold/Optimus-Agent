@@ -68,6 +68,11 @@ class EngineeringMemoryTests(unittest.TestCase):
         registry = EM.build_agent_registry()
         self.assertEqual(registry["agents"], [])
         self.assertEqual(registry["implemented_specialist_agent_count"], 0)
+        self.assertEqual(registry["contract_substrate"]["status"], "implemented")
+        self.assertEqual(
+            registry["contract_substrate"]["source"],
+            "crates/optimus-kernel/src/agent.rs",
+        )
 
     def test_implemented_workflows_have_terminal_declarations(self) -> None:
         workflows = EM.build_workflow_registry()["workflows"]
@@ -79,6 +84,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "durable-campaign",
                 "interval-cron-tick",
                 "gateway-inbox-drain",
+                "general-workflow-contract",
             },
         )
         required = {
@@ -131,7 +137,10 @@ class EngineeringMemoryTests(unittest.TestCase):
         for contract_id in ("C-01", "C-02", "C-03", "C-05", "C-15", "C-16", "C-17"):
             self.assertEqual(by_id[contract_id]["implementation_status"], "implemented")
             self.assertTrue(by_id[contract_id]["validated_by"])
-        self.assertEqual(by_id["C-18"]["implementation_status"], "partial")
+        for contract_id in ("C-08", "C-09", "C-10", "C-11", "C-12", "C-14", "C-18"):
+            self.assertEqual(by_id[contract_id]["implementation_status"], "implemented")
+            self.assertTrue(by_id[contract_id]["validated_by"])
+        self.assertEqual(by_id["C-13"]["implementation_status"], "partial")
         self.assertTrue(by_id["C-18"]["validated_by"])
 
         workflows = {row["id"]: row for row in EM.build_workflow_registry()["workflows"]}
@@ -141,6 +150,21 @@ class EngineeringMemoryTests(unittest.TestCase):
             " ".join(workflows["gateway-inbox-drain"]["observability"]),
         )
         self.assertEqual(workflows["kernel-turn"]["cancellation"]["status"], "implemented")
+
+    def test_integrity_evaluation_catalog_is_exact_and_executed(self) -> None:
+        coverage = EM.build_evaluation_coverage()
+        self.assertEqual(
+            [case["id"] for case in coverage["integrity_cases"]],
+            [
+                "sensitivity_denial",
+                "smartdeny_approval",
+                "route_policy_denial",
+                "cooperative_cancellation",
+                "stale_completion_fence",
+                "gateway_dead_letter",
+            ],
+        )
+        self.assertTrue(all(case["executed_by"] for case in coverage["integrity_cases"]))
 
     def test_current_docs_do_not_resurrect_adr_0019_superseded_debt(self) -> None:
         current_docs = [

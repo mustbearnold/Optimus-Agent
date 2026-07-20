@@ -18,7 +18,7 @@ validated_by:
   - crates/optimus-kernel/tests/session_resume.rs
   - crates/optimus-kernel/src/cron.rs
   - crates/optimus-kernel/src/gateway.rs
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # ADR-0021: Owned execution and causal delivery

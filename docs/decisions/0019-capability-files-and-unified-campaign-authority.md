@@ -20,7 +20,7 @@ validated_by:
   - crates/optimus-runtime/src/campaign.rs
   - crates/optimus-store/src/lib.rs
   - scripts/test_engineering_memory.py
-last_verified_commit: null
+last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
 # ADR-0019: Capability files and unified campaign authority
