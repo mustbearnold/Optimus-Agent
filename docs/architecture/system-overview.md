@@ -344,6 +344,13 @@ revalidate supported identities, exact metric dimensions and arithmetic, unique
 threshold policy, failure/pass projection, and content hash before returning or
 persisting evidence.
 
+**Confirmed current behaviour:** production kernel turns create the execution
+manifest and one parentless trace link atomically in the execution database.
+Successful results expose that exact context; interrupted turns reuse it after
+validating manifest identity and running status. Missing, malformed, mismatched,
+or already-terminal resume evidence fails before model or tool execution. The
+execution link does not claim that a corresponding `TraceStore` span exists.
+
 **Confirmed current behaviour:** a public offline integrity executor exercises
 the six required memory, SmartDeny, routing, cancellation/fencing, and gateway
 cases against isolated local run state. It requires run-directory ownership

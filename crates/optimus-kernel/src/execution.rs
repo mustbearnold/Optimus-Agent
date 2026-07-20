@@ -72,6 +72,44 @@ pub struct ExecutionStore {
     conn: Connection,
 }
 
+#[allow(clippy::too_many_arguments)]
+fn insert_manifest(
+    connection: &Connection,
+    id: Uuid,
+    session_id: Uuid,
+    turn_id: Uuid,
+    provider: &str,
+    model: &str,
+    prompt: &[u8],
+    tool_catalog: &[u8],
+    policy: &[u8],
+) -> Result<()> {
+    if provider.trim().is_empty() || model.trim().is_empty() {
+        return Err(KernelError::Model(
+            "execution manifest requires provider and model identity".into(),
+        ));
+    }
+    connection.execute(
+        "INSERT INTO execution_manifests(
+           id,version,session_id,turn_id,provider,model,prompt_sha256,
+           tool_catalog_sha256,policy_sha256,status,created_unix
+         ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,'running',?10)",
+        params![
+            id.to_string(),
+            EXECUTION_MANIFEST_VERSION as i64,
+            session_id.to_string(),
+            turn_id.to_string(),
+            provider,
+            model,
+            sha256(prompt),
+            sha256(tool_catalog),
+            sha256(policy),
+            now_unix() as i64
+        ],
+    )?;
+    Ok(())
+}
+
 impl ExecutionStore {
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         if let Some(parent) = path.as_ref().parent() {
@@ -126,31 +164,57 @@ impl ExecutionStore {
         tool_catalog: &[u8],
         policy: &[u8],
     ) -> Result<Uuid> {
-        if provider.trim().is_empty() || model.trim().is_empty() {
-            return Err(KernelError::Model(
-                "execution manifest requires provider and model identity".into(),
-            ));
-        }
         let id = Uuid::new_v4();
-        self.conn.execute(
-            "INSERT INTO execution_manifests(
-               id,version,session_id,turn_id,provider,model,prompt_sha256,
-               tool_catalog_sha256,policy_sha256,status,created_unix
-             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,'running',?10)",
-            params![
-                id.to_string(),
-                EXECUTION_MANIFEST_VERSION as i64,
-                session_id.to_string(),
-                turn_id.to_string(),
-                provider,
-                model,
-                sha256(prompt),
-                sha256(tool_catalog),
-                sha256(policy),
-                now_unix() as i64
-            ],
+        insert_manifest(
+            &self.conn,
+            id,
+            session_id,
+            turn_id,
+            provider,
+            model,
+            prompt,
+            tool_catalog,
+            policy,
         )?;
         Ok(id)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn begin_traced(
+        &self,
+        session_id: Uuid,
+        turn_id: Uuid,
+        provider: &str,
+        model: &str,
+        prompt: &[u8],
+        tool_catalog: &[u8],
+        policy: &[u8],
+    ) -> Result<(Uuid, TraceContext)> {
+        let id = Uuid::new_v4();
+        let context = TraceContext::new(TraceId::new(), SpanId::new(), None);
+        let transaction = self.conn.unchecked_transaction()?;
+        insert_manifest(
+            &transaction,
+            id,
+            session_id,
+            turn_id,
+            provider,
+            model,
+            prompt,
+            tool_catalog,
+            policy,
+        )?;
+        transaction.execute(
+            "INSERT INTO execution_trace_links(manifest_id,trace_id,span_id,parent_span_id)
+             VALUES(?1,?2,?3,NULL)",
+            params![
+                id.to_string(),
+                context.trace_id.to_string(),
+                context.span_id.to_string()
+            ],
+        )?;
+        transaction.commit()?;
+        Ok((id, context))
     }
 
     pub fn find_by_turn(&self, turn_id: Uuid) -> Result<Option<Uuid>> {

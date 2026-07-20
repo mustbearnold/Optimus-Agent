@@ -233,6 +233,19 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
             start_message_count,
         )
         .unwrap();
+    let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
+    let (manifest_id, original_trace) = executions
+        .begin_traced(
+            session_id,
+            turn_id,
+            "offline",
+            "offline-scripted",
+            b"resume this once",
+            b"tools",
+            b"policy",
+        )
+        .unwrap();
+    drop(executions);
     drop(store);
     drop(kernel);
 
@@ -245,6 +258,7 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
     let result = resumed.resume_pending_turn(&mut model).unwrap();
 
     assert_eq!(result.assistant_text, "continued");
+    assert_eq!(result.trace_context, original_trace);
     assert_eq!(
         resumed
             .messages
@@ -262,6 +276,133 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
         .unwrap();
     assert_eq!(turn.status, TurnStatus::Succeeded);
     assert_eq!(store.turn_event_count(turn_id).unwrap(), 2);
+    let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
+    assert_eq!(executions.find_by_turn(turn_id).unwrap(), Some(manifest_id));
+    assert_eq!(
+        executions.trace_context(manifest_id).unwrap(),
+        Some(original_trace)
+    );
+}
+
+#[test]
+fn resume_rejects_terminal_traced_manifest_before_model_execution() {
+    let directory = tempdir().unwrap();
+    let kernel = Kernel::open(directory.path(), KernelConfig::default()).unwrap();
+    let session_id = kernel.session_id();
+    let start_message_count = kernel.messages.len();
+    let mut accepted_messages = kernel.messages.clone();
+    accepted_messages.push(Message {
+        role: optimus_kernel::Role::User,
+        content: "must not rerun".into(),
+        tool_call_id: None,
+        name: None,
+    });
+    let sessions = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    let turn_id = sessions
+        .begin_turn(
+            session_id,
+            "must not rerun",
+            &["core".into()],
+            &accepted_messages,
+            start_message_count,
+        )
+        .unwrap();
+    let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
+    let (manifest_id, _) = executions
+        .begin_traced(
+            session_id,
+            turn_id,
+            "offline",
+            "offline-scripted",
+            b"must not rerun",
+            b"tools",
+            b"policy",
+        )
+        .unwrap();
+    executions
+        .finish(manifest_id, ExecutionStatus::Succeeded)
+        .unwrap();
+    drop(executions);
+    drop(sessions);
+    drop(kernel);
+
+    let mut resumed =
+        Kernel::open_session(directory.path(), KernelConfig::default(), Some(session_id)).unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: Some("should not run".into()),
+        tool_calls: vec![],
+    }]);
+
+    assert!(resumed.resume_pending_turn(&mut model).is_err());
+    let sessions = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    assert!(sessions.active_turn(session_id).unwrap().is_some());
+    let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
+    assert_eq!(
+        executions
+            .replay_report(manifest_id)
+            .unwrap()
+            .model_call_count,
+        0
+    );
+}
+
+#[test]
+fn resume_rejects_untraced_manifest_before_model_execution() {
+    let directory = tempdir().unwrap();
+    let kernel = Kernel::open(directory.path(), KernelConfig::default()).unwrap();
+    let session_id = kernel.session_id();
+    let mut accepted_messages = kernel.messages.clone();
+    accepted_messages.push(Message {
+        role: optimus_kernel::Role::User,
+        content: "missing trace".into(),
+        tool_call_id: None,
+        name: None,
+    });
+    let sessions = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    let turn_id = sessions
+        .begin_turn(
+            session_id,
+            "missing trace",
+            &["core".into()],
+            &accepted_messages,
+            kernel.messages.len(),
+        )
+        .unwrap();
+    let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
+    let manifest_id = executions
+        .begin(
+            session_id,
+            turn_id,
+            "offline",
+            "offline-scripted",
+            b"missing trace",
+            b"tools",
+            b"policy",
+        )
+        .unwrap();
+    drop(executions);
+    drop(sessions);
+    drop(kernel);
+
+    let mut resumed =
+        Kernel::open_session(directory.path(), KernelConfig::default(), Some(session_id)).unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: Some("should not run".into()),
+        tool_calls: vec![],
+    }]);
+
+    assert!(resumed.resume_pending_turn(&mut model).is_err());
+    let sessions = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    assert!(sessions.active_turn(session_id).unwrap().is_some());
+    let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
+    assert_eq!(
+        executions
+            .replay_report(manifest_id)
+            .unwrap()
+            .model_call_count,
+        0
+    );
+    assert_eq!(executions.trace_context(manifest_id).unwrap(), None);
 }
 
 #[test]

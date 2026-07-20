@@ -124,6 +124,27 @@ fn stream_delivery_rejection_cancels_turn_and_execution_once() {
         executions.manifest(manifest_id).unwrap().status,
         ExecutionStatus::Cancelled
     );
+    assert!(executions.trace_context(manifest_id).unwrap().is_some());
+}
+
+#[test]
+fn successful_turn_returns_exact_persisted_root_trace() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: Some("pong".into()),
+        tool_calls: vec![],
+    }]);
+
+    let result = kernel.turn(&mut model, "ping").unwrap();
+    let sessions = SessionStore::open(dir.path().join("sessions.db")).unwrap();
+    let turn = sessions.turns(kernel.session_id()).unwrap().remove(0);
+    let executions = ExecutionStore::open(dir.path().join("execution.db")).unwrap();
+    let manifest_id = executions.find_by_turn(turn.id).unwrap().unwrap();
+    let persisted = executions.trace_context(manifest_id).unwrap().unwrap();
+
+    assert_eq!(result.trace_context, persisted);
+    assert!(persisted.parent_span_id.is_none());
 }
 
 #[test]

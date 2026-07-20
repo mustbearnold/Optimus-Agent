@@ -379,10 +379,17 @@ pub struct TurnResult {
     pub steps: u32,
     pub tool_trace: Vec<String>,
     pub invoked_tools: Vec<ToolId>,
+    pub trace_context: TraceContext,
     pub schema_tokens_final: u32,
     pub loaded_packs: Vec<String>,
     /// True if extractive compression ran at least once this turn.
     pub compressed: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct RecordedExecution {
+    manifest_id: Uuid,
+    trace_context: TraceContext,
 }
 
 pub struct Kernel {
@@ -580,8 +587,8 @@ impl Kernel {
             &self.messages,
             start_message_count,
         )?;
-        let manifest_id = self.begin_execution_manifest(turn_id, model, user_text)?;
-        self.run_recorded_turn(model, sink, cancellation, turn_id, manifest_id)
+        let execution = self.begin_execution_manifest(turn_id, model, user_text)?;
+        self.run_recorded_turn(model, sink, cancellation, turn_id, execution)
     }
 
     pub fn resume_pending_turn(&mut self, model: &mut dyn ModelProvider) -> Result<TurnResult> {
@@ -604,8 +611,27 @@ impl Kernel {
                 "interrupted turn transcript is shorter than its accepted boundary".into(),
             ));
         }
-        let manifest_id = if let Some(id) = self.executions.find_by_turn(turn.id)? {
-            id
+        let execution = if let Some(manifest_id) = self.executions.find_by_turn(turn.id)? {
+            let manifest = self.executions.manifest(manifest_id)?;
+            if manifest.session_id != self.session_id || manifest.turn_id != turn.id {
+                return Err(KernelError::Model(
+                    "interrupted execution manifest identity does not match session turn".into(),
+                ));
+            }
+            if manifest.status != ExecutionStatus::Running {
+                return Err(KernelError::Model(
+                    "interrupted execution manifest is already terminal".into(),
+                ));
+            }
+            let trace_context = self.executions.trace_context(manifest_id)?.ok_or_else(|| {
+                KernelError::Model(
+                    "interrupted execution manifest is missing trace evidence".into(),
+                )
+            })?;
+            RecordedExecution {
+                manifest_id,
+                trace_context,
+            }
         } else {
             let prompt = self
                 .messages
@@ -618,7 +644,7 @@ impl Kernel {
                 })?;
             self.begin_execution_manifest(turn.id, model, &prompt)?
         };
-        self.run_recorded_turn(model, sink, cancellation, turn.id, manifest_id)
+        self.run_recorded_turn(model, sink, cancellation, turn.id, execution)
     }
 
     fn begin_execution_manifest(
@@ -626,7 +652,7 @@ impl Kernel {
         turn_id: Uuid,
         model: &dyn ModelProvider,
         prompt: &str,
-    ) -> Result<Uuid> {
+    ) -> Result<RecordedExecution> {
         let (provider, model_id) = model.identity();
         let tools = serde_json::to_vec(&self.tool_schemas())?;
         let policy = format!(
@@ -636,7 +662,7 @@ impl Kernel {
             self.config.fast_mode,
             self.config.thinking_level
         );
-        self.executions.begin(
+        let (manifest_id, trace_context) = self.executions.begin_traced(
             self.session_id,
             turn_id,
             &provider,
@@ -644,7 +670,11 @@ impl Kernel {
             prompt.as_bytes(),
             &tools,
             policy.as_bytes(),
-        )
+        )?;
+        Ok(RecordedExecution {
+            manifest_id,
+            trace_context,
+        })
     }
 
     fn run_recorded_turn(
@@ -653,9 +683,9 @@ impl Kernel {
         sink: &mut dyn FnMut(StreamEvent),
         cancellation: &CancellationToken,
         turn_id: Uuid,
-        manifest_id: Uuid,
+        execution: RecordedExecution,
     ) -> Result<TurnResult> {
-        let result = self.run_turn_loop(model, sink, cancellation, manifest_id);
+        let result = self.run_turn_loop(model, sink, cancellation, execution);
         let (status, error_code) = match &result {
             Ok(_) => (TurnStatus::Succeeded, None),
             Err(KernelError::Cancelled) => (TurnStatus::Cancelled, Some("turn_cancelled")),
@@ -671,7 +701,7 @@ impl Kernel {
             error_code,
         )?;
         self.executions.finish(
-            manifest_id,
+            execution.manifest_id,
             match status {
                 TurnStatus::Succeeded => ExecutionStatus::Succeeded,
                 TurnStatus::Failed => ExecutionStatus::Failed,
@@ -687,7 +717,7 @@ impl Kernel {
         model: &mut dyn ModelProvider,
         sink: &mut dyn FnMut(StreamEvent),
         cancellation: &CancellationToken,
-        manifest_id: Uuid,
+        execution: RecordedExecution,
     ) -> Result<TurnResult> {
         let mut steps = 0u32;
         let mut tool_trace = Vec::new();
@@ -724,7 +754,7 @@ impl Kernel {
             let resp = model.complete_streaming_cancellable(req, sink, cancellation)?;
             let (provider, model_id) = model.identity();
             self.executions.record_model_call(
-                manifest_id,
+                execution.manifest_id,
                 steps,
                 &provider,
                 &model_id,
@@ -838,7 +868,7 @@ impl Kernel {
                     }
                     descriptor.validate_outcome(&outcome)?;
                     self.executions
-                        .record_tool_call(manifest_id, &call, &outcome)?;
+                        .record_tool_call(execution.manifest_id, &call, &outcome)?;
                     let result = serde_json::to_string(&outcome)?;
                     let effect_link = self.effect_link_for_tool_result(&call, &result)?;
                     invoked_tools.push(tool_id);
@@ -884,6 +914,7 @@ impl Kernel {
                 steps,
                 tool_trace,
                 invoked_tools,
+                trace_context: execution.trace_context,
                 schema_tokens_final: self.packs.schema_tokens(),
                 loaded_packs: self
                     .packs

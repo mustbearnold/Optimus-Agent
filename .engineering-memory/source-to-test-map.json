@@ -223,6 +223,7 @@
           "cases": [
             "active_model_completion_observes_turn_cancellation",
             "stream_delivery_rejection_cancels_turn_and_execution_once",
+            "successful_turn_returns_exact_persisted_root_trace",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
             "skill_resolve_returns_body",
@@ -275,6 +276,8 @@
             "conflicting_effect_link_rolls_back_session_snapshot",
             "failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event",
             "interrupted_turn_resumes_without_duplicating_user_segment",
+            "resume_rejects_terminal_traced_manifest_before_model_execution",
+            "resume_rejects_untraced_manifest_before_model_execution",
             "kernel_turn_persists_versioned_manifest_and_replay_report"
           ],
           "path": "crates/optimus-kernel/tests/session_resume.rs"
@@ -283,7 +286,8 @@
           "cases": [
             "trace_tree_events_and_terminal_outcomes_are_ordered_and_durable",
             "trace_context_rejects_missing_parent_cross_trace_and_cycles",
-            "route_decision_retains_exact_trace_and_span_identity"
+            "route_decision_retains_exact_trace_and_span_identity",
+            "traced_manifest_creation_rolls_back_when_link_insert_fails"
           ],
           "path": "crates/optimus-kernel/tests/trace_contracts.rs"
         },
@@ -377,6 +381,7 @@
           "cases": [
             "active_model_completion_observes_turn_cancellation",
             "stream_delivery_rejection_cancels_turn_and_execution_once",
+            "successful_turn_returns_exact_persisted_root_trace",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
             "skill_resolve_returns_body",
@@ -429,6 +434,8 @@
             "conflicting_effect_link_rolls_back_session_snapshot",
             "failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event",
             "interrupted_turn_resumes_without_duplicating_user_segment",
+            "resume_rejects_terminal_traced_manifest_before_model_execution",
+            "resume_rejects_untraced_manifest_before_model_execution",
             "kernel_turn_persists_versioned_manifest_and_replay_report"
           ],
           "path": "crates/optimus-kernel/tests/session_resume.rs"
@@ -437,7 +444,8 @@
           "cases": [
             "trace_tree_events_and_terminal_outcomes_are_ordered_and_durable",
             "trace_context_rejects_missing_parent_cross_trace_and_cycles",
-            "route_decision_retains_exact_trace_and_span_identity"
+            "route_decision_retains_exact_trace_and_span_identity",
+            "traced_manifest_creation_rolls_back_when_link_insert_fails"
           ],
           "path": "crates/optimus-kernel/tests/trace_contracts.rs"
         },

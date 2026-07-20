@@ -37,7 +37,7 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 | Job/node projections | Confirmed current behaviour | Status, budgets, effect JSON, durable attempts/receipts, cancellation requests, exact-action approval decisions, steps, and bounded command output. |
 | Kernel turn sink | Confirmed current behaviour | In-process text delta, tool started/finished, status, final, and error events. |
 | Sessions | Confirmed current behaviour | Serialized transcript, loaded packs, and normalized tool-call → job/node/effect-attempt/effect/receipt-hash links. |
-| Execution manifests | Confirmed current behaviour | Versioned manifest identity, turn, provider/model, prompt/tool/policy/input hashes, terminal status, exact tool outcomes, replay classification, and non-replayability reasons. |
+| Execution manifests | Confirmed current behaviour | Versioned manifest identity, turn, provider/model, prompt/tool/policy/input hashes, atomic root trace link, terminal status, exact tool outcomes, replay classification, and non-replayability reasons. |
 | Agent invocations | Confirmed current behaviour | Immutable descriptor version, accepted request, retry lineage, cancellation request, ordered events, one terminal result, and runtime-validated effect links. |
 | Workflow registry/adapters | Confirmed current behaviour | Versioned validated definitions, exact terminal declarations, owner capability matrices, and fail-closed status mappings; not universal run state. |
 | Campaign/cron/gateway | Confirmed current behaviour | Campaign and cron leases; gateway message claims, generation/token/deadline state, attempt history, terminal outbox JSON, and reconciled files. |
@@ -95,7 +95,13 @@ terminal report; it never reruns a provider or external effect.
 **Confirmed current behaviour:** canonical local trace/span stores retain parent
 relationships, ordered bounded events, one terminal span outcome, traced route
 decisions, and immutable execution-manifest links. No distributed transaction
-or OpenTelemetry exporter is implied.
+or external exporter is claimed.
+
+**Confirmed current behaviour:** every newly recorded production kernel turn has
+one parentless execution trace link committed atomically with its manifest.
+Successful turn results expose it, and interrupted-turn resume preserves it
+exactly after fail-closed manifest/link preflight. This causal link does not by
+itself assert a `TraceStore` span lifecycle or child-span propagation.
 
 **Confirmed current behaviour:** exact approval actors/times/effect hashes and
 effect-attempt intent/outcome receipts are retained, and interrupted commands are
@@ -140,18 +146,19 @@ Playwright tests cover bootstrap, shell/composer behavior, session/runtime
 interactions, capabilities/tools, drag, and browser UI contracts.
 
 **Partially implemented behaviour:** the six integrity cases are executable and
-the four trajectories have a separate scripted runner, but they are not yet
-combined into one produced `EvaluationReportV1`. The framework is not a universal
-workflow runner or automatic release gate and does not establish factual
-correctness beyond declared cases.
+the four trajectories have a separate scripted runner whose successful results
+now carry persisted root execution traces, but those results are not yet combined
+into one produced `EvaluationReportV1`. The framework is not a universal workflow
+runner or automatic release gate and does not establish factual correctness
+beyond declared cases.
 
 ## Missing observability
 
 The following are **unknown or unresolved behaviour**:
 
 - universal transactionally-coupled workflow-run/model-call/artifact correlation;
-  canonical traces and selected route/execution links exist, while other owner
-  IDs remain in their stores;
+  every production kernel execution has a root link and selected routes are
+  traced, while child spans and other owner IDs remain incomplete;
 - model tokens, cache telemetry, and live billing integration;
 - retrieval candidate/rank evidence;
 - security-denial and policy-decision records across all boundaries;

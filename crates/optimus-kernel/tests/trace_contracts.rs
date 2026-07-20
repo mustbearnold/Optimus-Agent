@@ -82,3 +82,34 @@ fn route_decision_retains_exact_trace_and_span_identity() {
     assert_eq!(executions.trace_context(manifest).unwrap(), Some(root));
     assert!(executions.bind_trace(manifest, route).is_err());
 }
+
+#[test]
+fn traced_manifest_creation_rolls_back_when_link_insert_fails() {
+    let directory = tempdir().unwrap();
+    let path = directory.path().join("execution.db");
+    let executions = ExecutionStore::open(&path).unwrap();
+    let connection = rusqlite::Connection::open(&path).unwrap();
+    connection
+        .execute_batch(
+            "CREATE TRIGGER reject_trace_link
+             BEFORE INSERT ON execution_trace_links
+             BEGIN
+               SELECT RAISE(ABORT, 'forced trace-link failure');
+             END;",
+        )
+        .unwrap();
+    let turn_id = uuid::Uuid::new_v4();
+
+    assert!(executions
+        .begin_traced(
+            uuid::Uuid::new_v4(),
+            turn_id,
+            "offline",
+            "offline-scripted",
+            b"prompt",
+            b"tools",
+            b"policy",
+        )
+        .is_err());
+    assert_eq!(executions.find_by_turn(turn_id).unwrap(), None);
+}

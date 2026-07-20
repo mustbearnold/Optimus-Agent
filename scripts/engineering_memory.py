@@ -904,6 +904,21 @@ def build_source_to_test_map(metadata: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_contract_coverage() -> dict[str, Any]:
+    execution_source = (ROOT / "crates/optimus-kernel/src/execution.rs").read_text(
+        encoding="utf-8"
+    )
+    kernel_source = (ROOT / "crates/optimus-kernel/src/lib.rs").read_text(
+        encoding="utf-8"
+    )
+    for symbol in ["pub fn begin_traced", "execution_trace_links"]:
+        if symbol not in execution_source:
+            raise MemoryError(f"execution trace authority is missing {symbol}")
+    for symbol in [
+        "pub trace_context: TraceContext",
+        "interrupted execution manifest is missing trace evidence",
+    ]:
+        if symbol not in kernel_source:
+            raise MemoryError(f"kernel trace authority is missing {symbol}")
     contracts = [
         ("C-01", "cancellation", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-runtime/src/campaign.rs"], ["crates/optimus-runtime/tests/cancellation.rs", "crates/optimus-runtime/src/campaign.rs"]),
         ("C-02", "exactly-one-terminal-outcome", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-graph/src/lib.rs"], ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/tests/cancellation.rs"]),
@@ -917,7 +932,7 @@ def build_contract_coverage() -> dict[str, Any]:
         ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-kernel/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-12", "credential-and-local-transport-security", "implemented", ["crates/optimus-kernel/src/credential.rs", "crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], ["crates/optimus-kernel/tests/codex_oauth.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
-        ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-kernel/src/replay.rs", "crates/optimus-kernel/src/trace.rs"], ["crates/optimus-kernel/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs"]),
+        ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-kernel/src/replay.rs", "crates/optimus-kernel/src/trace.rs", "crates/optimus-kernel/src/lib.rs"], ["crates/optimus-kernel/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
         ("C-14", "memory-clock-retention-erasure", "implemented", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-15", "atomic-projection-and-event-transitions", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-graph/src/lib.rs"], ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/tests/cancellation.rs"]),
         ("C-16", "campaign-job-consistency-and-recovery", "implemented", ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-store/src/lib.rs"], ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-store/src/lib.rs"]),

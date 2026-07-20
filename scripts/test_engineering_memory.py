@@ -147,6 +147,15 @@ class EngineeringMemoryTests(unittest.TestCase):
             self.assertEqual(by_id[contract_id]["implementation_status"], "implemented")
             self.assertTrue(by_id[contract_id]["validated_by"])
         self.assertIn("crates/optimus-kernel/src/replay.rs", by_id["C-13"]["sources"])
+        self.assertIn("crates/optimus-kernel/src/lib.rs", by_id["C-13"]["sources"])
+        self.assertIn(
+            "crates/optimus-kernel/tests/kernel_turn.rs",
+            by_id["C-13"]["validated_by"],
+        )
+        self.assertIn(
+            "crates/optimus-kernel/tests/session_resume.rs",
+            by_id["C-13"]["validated_by"],
+        )
         self.assertTrue(by_id["C-18"]["validated_by"])
 
         workflows = {row["id"]: row for row in EM.build_workflow_registry()["workflows"]}
