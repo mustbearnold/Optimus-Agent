@@ -2,8 +2,8 @@
 
 use optimus_packs::{
     builtin_catalog, ArtifactRef, CapabilitySession, DurableEffectProvenance, PackBudgetConfig,
-    PackError, PackId, ReplayClass, ToolErrorDetail, ToolInvocation, ToolOutcome, ToolOutcomeKind,
-    ToolPolicy,
+    PackError, PackId, ReplayClass, ToolCancellation, ToolErrorDetail, ToolInvocation, ToolOutcome,
+    ToolOutcomeKind, ToolPolicy,
 };
 use serde_json::json;
 use uuid::Uuid;
@@ -305,6 +305,29 @@ fn catalog_rejects_output_schema_or_replay_drift() {
     assert!(matches!(
         CapabilitySession::try_from_catalog(PackBudgetConfig::default(), bad_replay).unwrap_err(),
         PackError::DescriptorReplayMismatch { tool, .. } if tool == "read_file"
+    ));
+}
+
+#[test]
+fn canonical_descriptor_owns_operational_metadata() {
+    let catalog = builtin_catalog();
+    let core = &catalog[&PackId::Core].tools;
+    let terminal = core
+        .iter()
+        .find(|tool| tool.id.as_str() == "terminal")
+        .unwrap();
+    assert_eq!(terminal.operations.cancellation, ToolCancellation::Terminal);
+    assert!(terminal.operations.observability.call_identity);
+    assert!(terminal.operations.observability.trace_span);
+    assert!(terminal.operations.observability.effect_provenance);
+
+    let mut drifted = catalog;
+    drifted.get_mut(&PackId::Core).unwrap().tools[0]
+        .operations
+        .cancellation = ToolCancellation::Cooperative;
+    assert!(matches!(
+        CapabilitySession::try_from_catalog(PackBudgetConfig::default(), drifted).unwrap_err(),
+        PackError::DescriptorOperationsMismatch { tool } if tool == "read_file"
     ));
 }
 

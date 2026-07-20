@@ -9,7 +9,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::{CompletionRequest, CompletionResponse, KernelError, Result, ToolCall};
+use crate::{
+    CompletionRequest, CompletionResponse, KernelError, Result, SpanId, ToolCall, TraceContext,
+    TraceId,
+};
 
 pub const EXECUTION_MANIFEST_VERSION: u16 = 1;
 
@@ -103,6 +106,10 @@ impl ExecutionStore {
                replay_class TEXT NOT NULL,effect_attempt_id TEXT,effect_sha256 TEXT,
                receipt_sha256 TEXT,
                PRIMARY KEY(manifest_id,call_id)
+             );
+             CREATE TABLE IF NOT EXISTS execution_trace_links(
+               manifest_id TEXT PRIMARY KEY REFERENCES execution_manifests(id) ON DELETE CASCADE,
+               trace_id TEXT NOT NULL,span_id TEXT NOT NULL UNIQUE,parent_span_id TEXT
              );",
         )?;
         Ok(Self { conn })
@@ -155,6 +162,45 @@ impl ExecutionStore {
             )
             .optional()?
             .map(|id| Uuid::parse_str(&id).map_err(KernelError::Uuid))
+            .transpose()
+    }
+
+    pub fn bind_trace(&self, manifest_id: Uuid, context: TraceContext) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO execution_trace_links(manifest_id,trace_id,span_id,parent_span_id)
+             VALUES(?1,?2,?3,?4)",
+            params![
+                manifest_id.to_string(),
+                context.trace_id.to_string(),
+                context.span_id.to_string(),
+                context.parent_span_id.map(|value| value.to_string())
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn trace_context(&self, manifest_id: Uuid) -> Result<Option<TraceContext>> {
+        self.conn
+            .query_row(
+                "SELECT trace_id,span_id,parent_span_id FROM execution_trace_links
+                 WHERE manifest_id=?1",
+                params![manifest_id.to_string()],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, Option<String>>(2)?,
+                    ))
+                },
+            )
+            .optional()?
+            .map(|(trace, span, parent)| {
+                Ok(TraceContext::new(
+                    TraceId::parse(&trace)?,
+                    SpanId::parse(&span)?,
+                    parent.as_deref().map(SpanId::parse).transpose()?,
+                ))
+            })
             .transpose()
     }
 

@@ -7,12 +7,16 @@ mod compress;
 mod credential;
 mod cron;
 mod eval;
+mod evaluation;
 mod execution;
 mod fs_sandbox;
 mod gateway;
 mod openai_compat;
+mod replay;
 mod routing;
 mod session;
+mod telemetry;
+mod trace;
 mod web_search;
 mod workflow;
 
@@ -60,6 +64,13 @@ pub use eval::{
     builtin_suite, evaluate_integrity_observations, run_case, run_suite, EvalCase, EvalCaseResult,
     EvalReport, IntegrityObservation, REQUIRED_INTEGRITY_EVALS,
 };
+pub use evaluation::{
+    build_evaluation_report, compare_evaluation_reports, priority2_dataset, BaselineStore,
+    CandidateBinding, EvaluationCaseContract, EvaluationComparison, EvaluationDataset,
+    EvaluationMetric, EvaluationObservation, EvaluationReportV1, MetricDirection, MetricScore,
+    MetricThreshold, EVALUATION_DATASET_VERSION, EVALUATION_REPORT_VERSION, MAX_EVALUATION_CASES,
+    MAX_EVALUATION_DATASET_BYTES,
+};
 pub use execution::{
     ExecutionManifest, ExecutionStatus, ExecutionStore, ReplayClassification, ReplayReport,
     EXECUTION_MANIFEST_VERSION,
@@ -76,13 +87,27 @@ pub use openai_compat::{
     from_openai_response, to_openai_request, OpenAiCompatConfig, OpenAiCompatModel,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;
+pub use replay::{
+    FixtureId, FixtureKind, ReplayBundle, ReplayBundleId, ReplayExecutionReport,
+    ReplayExecutionStatus, ReplayFixture, ReplayPlan, ReplayStage, ReplayStore,
+    MAX_REPLAY_BUNDLE_BYTES, MAX_REPLAY_FIXTURES, MAX_REPLAY_FIXTURE_BYTES, REPLAY_BUNDLE_VERSION,
+    REPLAY_REPORT_VERSION,
+};
 pub use routing::{
-    is_known_codex_model, provider_catalog, resolve_route, route_decision_count,
-    sanitize_codex_oauth_model, ModelCapability, ModelId, PrivacyPolicy, ProviderDescriptor,
-    ProviderId, RouteDecision, RouteRequest, RouteSurface, CODEX_MODEL_CATALOG,
-    DEFAULT_CODEX_MODEL,
+    is_known_codex_model, provider_catalog, resolve_route, resolve_route_traced,
+    route_decision_count, sanitize_codex_oauth_model, ModelCapability, ModelId, PrivacyPolicy,
+    ProviderDescriptor, ProviderId, RouteDecision, RouteRequest, RouteSurface,
+    RouteTelemetryPolicy, CODEX_MODEL_CATALOG, DEFAULT_CODEX_MODEL,
 };
 pub use session::{SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus};
+pub use telemetry::{
+    record_route_telemetry, route_telemetry_aggregate, RouteTelemetryAggregate,
+    RouteTelemetryObservation, RouteTelemetryOutcome, MAX_TELEMETRY_LATENCY_MILLIS,
+    MAX_TELEMETRY_SAMPLES,
+};
+pub use trace::{
+    SpanId, SpanStatus, TraceContext, TraceEvent, TraceEventKind, TraceId, TraceSpan, TraceStore,
+};
 pub use web_search::{web_search, web_search_json, SearchError, SearchHit};
 pub use workflow::{
     adapt_campaign_status, adapt_cron_attempt_status, adapt_gateway_status, adapt_job_status,

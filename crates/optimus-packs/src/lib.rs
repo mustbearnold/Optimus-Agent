@@ -62,6 +62,8 @@ pub enum PackError {
         expected: ReplayClass,
         actual: ReplayClass,
     },
+    #[error("descriptor operational metadata mismatch for {tool}")]
+    DescriptorOperationsMismatch { tool: String },
     #[error("invalid arguments for {tool}: {reason}")]
     InvalidArguments { tool: String, reason: String },
     #[error("invalid canonical tool outcome for {tool}: {reason}")]
@@ -387,6 +389,52 @@ pub enum ToolInvocation {
     Unavailable,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolRetry {
+    Never,
+    Bounded { max_attempts: u8 },
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolIdempotency {
+    None,
+    Keyed,
+    Convergent,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolTimeout {
+    CallerBounded,
+    FixedMillis(u64),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolCancellation {
+    Unsupported,
+    Cooperative,
+    Terminal,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ToolObservability {
+    pub call_identity: bool,
+    pub trace_span: bool,
+    pub effect_provenance: bool,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ToolOperations {
+    pub retry: ToolRetry,
+    pub idempotency: ToolIdempotency,
+    pub timeout: ToolTimeout,
+    pub cancellation: ToolCancellation,
+    pub observability: ToolObservability,
+}
+
 impl ToolInvocation {
     fn id(self) -> Option<&'static str> {
         match self {
@@ -434,6 +482,30 @@ impl ToolInvocation {
             }
         }
     }
+
+    fn operations(self) -> ToolOperations {
+        let replay = self.replay();
+        ToolOperations {
+            retry: ToolRetry::Never,
+            idempotency: match replay {
+                ReplayClass::Deterministic | ReplayClass::FixtureReplayable => {
+                    ToolIdempotency::Keyed
+                }
+                ReplayClass::Convergent => ToolIdempotency::Convergent,
+                _ => ToolIdempotency::None,
+            },
+            timeout: ToolTimeout::CallerBounded,
+            cancellation: match self {
+                Self::WriteFile | Self::Terminal => ToolCancellation::Terminal,
+                _ => ToolCancellation::Unsupported,
+            },
+            observability: ToolObservability {
+                call_identity: true,
+                trace_span: true,
+                effect_provenance: matches!(self, Self::WriteFile | Self::Terminal),
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -445,6 +517,7 @@ pub struct ToolDesc {
     pub replay: ReplayClass,
     pub policy: ToolPolicy,
     pub invocation: ToolInvocation,
+    pub operations: ToolOperations,
     /// Estimated provider-visible schema tokens when this tool is available.
     pub schema_tokens: u32,
 }
@@ -908,6 +981,7 @@ fn tool(
             .policy()
             .expect("available tool invocation has a policy"),
         invocation,
+        operations: invocation.operations(),
         schema_tokens,
     }
 }
@@ -921,6 +995,7 @@ fn unavailable(id: &str, description: &str, policy: ToolPolicy) -> ToolDesc {
         replay: ToolInvocation::Unavailable.replay(),
         policy,
         invocation: ToolInvocation::Unavailable,
+        operations: ToolInvocation::Unavailable.operations(),
         schema_tokens: 0,
     }
 }
@@ -1009,6 +1084,11 @@ impl CapabilitySession {
                         tool: tool.id.as_str().into(),
                         expected: expected_replay,
                         actual: tool.replay,
+                    });
+                }
+                if tool.operations != tool.invocation.operations() {
+                    return Err(PackError::DescriptorOperationsMismatch {
+                        tool: tool.id.as_str().into(),
                     });
                 }
             }

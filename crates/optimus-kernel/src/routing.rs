@@ -6,9 +6,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::{KernelError, Result};
+use crate::telemetry::{route_telemetry_aggregate, RouteTelemetryAggregate};
+use crate::{KernelError, Result, TraceContext};
 
 pub const CODEX_MODEL_CATALOG: &[(&str, &str)] = &[
     ("gpt-5.6-sol", "GPT-5.6 Sol"),
@@ -128,6 +130,34 @@ pub struct RouteRequest {
     pub privacy: PrivacyPolicy,
     pub max_cost_microunits: Option<u64>,
     pub allow_fallback: bool,
+    pub telemetry_policy: Option<RouteTelemetryPolicy>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RouteTelemetryPolicy {
+    pub evaluated_unix: u64,
+    pub max_age_seconds: u64,
+    pub min_samples: usize,
+    pub min_success_basis_points: u16,
+    pub max_p95_latency_millis: u64,
+    pub allow_missing: bool,
+}
+
+impl RouteTelemetryPolicy {
+    fn validate(&self) -> Result<()> {
+        if self.evaluated_unix == 0
+            || self.max_age_seconds == 0
+            || self.min_samples == 0
+            || self.min_samples > crate::MAX_TELEMETRY_SAMPLES
+            || self.min_success_basis_points > 10_000
+            || self.max_p95_latency_millis == 0
+        {
+            return Err(KernelError::Model(
+                "invalid bounded route telemetry policy".into(),
+            ));
+        }
+        Ok(())
+    }
 }
 
 impl RouteRequest {
@@ -146,6 +176,7 @@ impl RouteRequest {
             privacy: PrivacyPolicy::RemoteAllowed,
             max_cost_microunits: None,
             allow_fallback: false,
+            telemetry_policy: None,
         }
     }
 }
@@ -159,6 +190,8 @@ pub struct RouteDecision {
     pub fallback_from: Option<ProviderId>,
     pub reasons: Vec<String>,
     pub created_unix: u64,
+    pub trace_id: Option<String>,
+    pub span_id: Option<String>,
 }
 
 pub fn provider_catalog() -> Vec<ProviderDescriptor> {
@@ -230,6 +263,22 @@ pub fn sanitize_codex_oauth_model(model: &str) -> String {
 }
 
 pub fn resolve_route(home: impl AsRef<Path>, request: &RouteRequest) -> Result<RouteDecision> {
+    resolve_route_internal(home, request, None)
+}
+
+pub fn resolve_route_traced(
+    home: impl AsRef<Path>,
+    request: &RouteRequest,
+    trace: TraceContext,
+) -> Result<RouteDecision> {
+    resolve_route_internal(home, request, Some(trace))
+}
+
+fn resolve_route_internal(
+    home: impl AsRef<Path>,
+    request: &RouteRequest,
+    trace: Option<TraceContext>,
+) -> Result<RouteDecision> {
     let requested = ProviderId::parse(&request.requested_provider).ok_or_else(|| {
         KernelError::Model(format!(
             "unknown provider identity: {}",
@@ -249,33 +298,105 @@ pub fn resolve_route(home: impl AsRef<Path>, request: &RouteRequest) -> Result<R
                 .filter(|descriptor| descriptor.id != requested),
         );
     }
+    if let Some(policy) = &request.telemetry_policy {
+        policy.validate()?;
+    }
+    let home = home.as_ref();
     let mut rejected = Vec::new();
+    let mut approved = Vec::new();
     for descriptor in candidates {
         match evaluate_candidate(descriptor, request) {
             Ok(model) => {
-                let decision = RouteDecision {
-                    id: Uuid::new_v4(),
-                    surface: request.surface,
-                    provider: descriptor.id,
-                    model,
-                    fallback_from: (descriptor.id != requested).then_some(requested),
-                    reasons: if descriptor.id == requested {
-                        vec!["requested provider satisfies policy".into()]
-                    } else {
-                        vec!["explicit bounded fallback satisfies policy".into()]
-                    },
-                    created_unix: now_unix(),
-                };
-                persist_decision(home, request, &decision)?;
-                return Ok(decision);
+                let aggregate = request
+                    .telemetry_policy
+                    .as_ref()
+                    .map(|policy| {
+                        let since = policy.evaluated_unix.saturating_sub(policy.max_age_seconds);
+                        route_telemetry_aggregate(
+                            home,
+                            descriptor.id,
+                            model.as_str(),
+                            since,
+                            crate::MAX_TELEMETRY_SAMPLES,
+                        )
+                    })
+                    .transpose()?
+                    .flatten();
+                if let Some(policy) = &request.telemetry_policy {
+                    let accepted = match &aggregate {
+                        None => policy.allow_missing,
+                        Some(value) => {
+                            value.samples >= policy.min_samples
+                                && value.success_basis_points >= policy.min_success_basis_points
+                                && value.p95_latency_millis <= policy.max_p95_latency_millis
+                        }
+                    };
+                    if !accepted {
+                        rejected.push(format!(
+                            "{}:telemetry_policy_rejected",
+                            descriptor.id.as_str()
+                        ));
+                        continue;
+                    }
+                }
+                approved.push((descriptor, model, aggregate));
             }
             Err(reason) => rejected.push(format!("{}:{reason}", descriptor.id.as_str())),
         }
+    }
+    if request.telemetry_policy.is_some() {
+        approved.sort_by_key(telemetry_rank);
+    }
+    if let Some((descriptor, model, aggregate)) = approved.into_iter().next() {
+        let mut reasons = if descriptor.id == requested {
+            vec!["requested provider satisfies policy".into()]
+        } else {
+            vec!["explicit bounded fallback satisfies policy".into()]
+        };
+        if let Some(value) = aggregate {
+            reasons.push(format!(
+                "telemetry_snapshot_sha256={:x}",
+                Sha256::digest(serde_json::to_vec(&value)?)
+            ));
+        } else if request.telemetry_policy.is_some() {
+            reasons.push("telemetry_missing_explicitly_allowed".into());
+        }
+        let decision = RouteDecision {
+            id: Uuid::new_v4(),
+            surface: request.surface,
+            provider: descriptor.id,
+            model,
+            fallback_from: (descriptor.id != requested).then_some(requested),
+            reasons,
+            created_unix: now_unix(),
+            trace_id: trace.map(|value| value.trace_id.to_string()),
+            span_id: trace.map(|value| value.span_id.to_string()),
+        };
+        persist_decision(home, request, &decision)?;
+        return Ok(decision);
     }
     Err(KernelError::Model(format!(
         "no policy-approved provider route: {}",
         rejected.join(",")
     )))
+}
+
+fn telemetry_rank(
+    candidate: &(
+        &ProviderDescriptor,
+        ModelId,
+        Option<RouteTelemetryAggregate>,
+    ),
+) -> (std::cmp::Reverse<u16>, u64, u64, ProviderId) {
+    match &candidate.2 {
+        Some(value) => (
+            std::cmp::Reverse(value.success_basis_points),
+            value.p95_latency_millis,
+            value.mean_cost_microunits,
+            candidate.0.id,
+        ),
+        None => (std::cmp::Reverse(0), u64::MAX, u64::MAX, candidate.0.id),
+    }
 }
 
 fn evaluate_candidate(
@@ -326,14 +447,16 @@ fn persist_decision(
            id TEXT PRIMARY KEY,surface TEXT NOT NULL,requested_provider TEXT NOT NULL,
            selected_provider TEXT NOT NULL,selected_model TEXT NOT NULL,
            fallback_from TEXT,reasons_json TEXT NOT NULL,request_json TEXT NOT NULL,
-           created_unix INTEGER NOT NULL
+           created_unix INTEGER NOT NULL,trace_id TEXT,span_id TEXT
          );",
     )?;
+    ensure_route_column(&connection, "trace_id", "TEXT")?;
+    ensure_route_column(&connection, "span_id", "TEXT")?;
     connection.execute(
         "INSERT INTO route_decisions(
            id,surface,requested_provider,selected_provider,selected_model,fallback_from,
-           reasons_json,request_json,created_unix
-         ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+           reasons_json,request_json,created_unix,trace_id,span_id
+         ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
         params![
             decision.id.to_string(),
             decision.surface.as_str(),
@@ -343,9 +466,25 @@ fn persist_decision(
             decision.fallback_from.map(ProviderId::as_str),
             serde_json::to_string(&decision.reasons)?,
             serde_json::to_string(request)?,
-            decision.created_unix as i64
+            decision.created_unix as i64,
+            decision.trace_id,
+            decision.span_id
         ],
     )?;
+    Ok(())
+}
+
+fn ensure_route_column(connection: &Connection, column: &str, declaration: &str) -> Result<()> {
+    let mut statement = connection.prepare("PRAGMA table_info(route_decisions)")?;
+    let names = statement
+        .query_map([], |row| row.get::<_, String>(1))?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    if !names.iter().any(|name| name == column) {
+        connection.execute(
+            &format!("ALTER TABLE route_decisions ADD COLUMN {column} {declaration}"),
+            [],
+        )?;
+    }
     Ok(())
 }
 
