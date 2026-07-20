@@ -924,6 +924,7 @@
       },
       "validated_by": [
         "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/evaluation_contracts.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/openai_http.rs"
       ],

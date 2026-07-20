@@ -15,9 +15,10 @@ use uuid::Uuid;
 use crate::{
     delivery_state, drain_one, enqueue, resolve_route, AgentBudget, AgentDescriptor, AgentFailure,
     AgentId, AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
-    AgentResultKind, AgentVersion, CancellationToken, CompletionResponse, Kernel, KernelConfig,
-    KernelError, PrivacyPolicy, RouteRequest, RouteSurface, ScriptedModel, ToolCall, TurnResult,
-    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
+    AgentResultKind, AgentVersion, CancellationToken, CompletionResponse, ExecutionStatus, Kernel,
+    KernelConfig, KernelError, PrivacyPolicy, ReplayClassification, RouteRequest, RouteSurface,
+    ScriptedModel, ToolCall, TraceContext, TurnResult, AGENT_REQUEST_SCHEMA_VERSION,
+    AGENT_RESULT_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,6 +51,14 @@ pub struct EvalCaseResult {
     pub tool_trace: Vec<String>,
     #[serde(default)]
     pub assistant_text: String,
+    #[serde(default)]
+    pub invoked_tools: Vec<ToolId>,
+    #[serde(default)]
+    pub terminal_status: Option<ExecutionStatus>,
+    #[serde(default)]
+    pub replay: Option<ReplayClassification>,
+    #[serde(default)]
+    pub trace_context: Option<TraceContext>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,6 +115,10 @@ pub fn evaluate_integrity_observations(
                 detail: observation.evidence.clone(),
                 tool_trace: vec![],
                 assistant_text: String::new(),
+                invoked_tools: vec![],
+                terminal_status: None,
+                replay: None,
+                trace_context: None,
             }
         })
         .collect::<Vec<_>>();
@@ -519,6 +532,31 @@ pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResul
     let mut model = ScriptedModel::new(case.steps.clone());
     model.stream_chunks = case.stream_chunks;
     let result: TurnResult = k.turn(&mut model, &case.user)?;
+    let turn = k
+        .sessions
+        .turns(k.session_id())?
+        .pop()
+        .ok_or_else(|| KernelError::Model("evaluation turn evidence is missing".into()))?;
+    let manifest_id = k
+        .executions
+        .find_by_turn(turn.id)?
+        .ok_or_else(|| KernelError::Model("evaluation execution manifest is missing".into()))?;
+    let manifest = k.executions.manifest(manifest_id)?;
+    if manifest.status != ExecutionStatus::Succeeded {
+        return Err(KernelError::Model(
+            "evaluation execution manifest is not successful".into(),
+        ));
+    }
+    let persisted_trace = k
+        .executions
+        .trace_context(manifest_id)?
+        .ok_or_else(|| KernelError::Model("evaluation execution trace is missing".into()))?;
+    if persisted_trace != result.trace_context {
+        return Err(KernelError::Model(
+            "evaluation result trace does not match persisted execution".into(),
+        ));
+    }
+    let replay = k.executions.replay_report(manifest_id)?.classification;
 
     let mut problems = Vec::new();
     for tool in &case.expect_tools {
@@ -545,7 +583,25 @@ pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResul
         },
         tool_trace: result.tool_trace,
         assistant_text: result.assistant_text,
+        invoked_tools: result.invoked_tools,
+        terminal_status: Some(manifest.status),
+        replay: Some(replay),
+        trace_context: Some(persisted_trace),
     })
+}
+
+fn failed_case(id: &str, detail: String) -> EvalCaseResult {
+    EvalCaseResult {
+        id: id.into(),
+        ok: false,
+        detail,
+        tool_trace: vec![],
+        assistant_text: String::new(),
+        invoked_tools: vec![],
+        terminal_status: None,
+        replay: None,
+        trace_context: None,
+    }
 }
 
 pub fn run_suite(home: impl AsRef<Path>, cases: &[EvalCase]) -> EvalReport {
@@ -555,7 +611,11 @@ pub fn run_suite(home: impl AsRef<Path>, cases: &[EvalCase]) -> EvalReport {
     for (i, case) in cases.iter().enumerate() {
         // Isolate each case under a subdir for determinism / no cross-talk.
         let case_home = home.as_ref().join(format!("case-{i}-{}", case.id));
-        let _ = std::fs::create_dir_all(&case_home);
+        if let Err(error) = std::fs::create_dir_all(&case_home) {
+            failed += 1;
+            cases_out.push(failed_case(&case.id, format!("case setup error: {error}")));
+            continue;
+        }
         match run_case(&case_home, case) {
             Ok(r) => {
                 if r.ok {
@@ -567,13 +627,7 @@ pub fn run_suite(home: impl AsRef<Path>, cases: &[EvalCase]) -> EvalReport {
             }
             Err(e) => {
                 failed += 1;
-                cases_out.push(EvalCaseResult {
-                    id: case.id.clone(),
-                    ok: false,
-                    detail: format!("kernel error: {e}"),
-                    tool_trace: vec![],
-                    assistant_text: String::new(),
-                });
+                cases_out.push(failed_case(&case.id, format!("kernel error: {e}")));
             }
         }
     }
@@ -582,6 +636,11 @@ pub fn run_suite(home: impl AsRef<Path>, cases: &[EvalCase]) -> EvalReport {
         failed,
         cases: cases_out,
     }
+}
+
+/// Execute the exact built-in four-case offline trajectory suite.
+pub fn run_offline_trajectory_suite(home: impl AsRef<Path>) -> EvalReport {
+    run_suite(home, &builtin_suite())
 }
 
 #[cfg(test)]

@@ -15,7 +15,7 @@
       "line": 1232,
       "owner": "optimus-kernel",
       "source": "crates/optimus-kernel/src/lib.rs",
-      "source_file_sha256": "3dda98f3a1ec9d4284db3b112b28021078510f93adcf5c09021a142457aa017c",
+      "source_file_sha256": "c9d0f50cdbc950fe8a63be371e531b2fc026b97467a0cc452fcc8fdb0b378469",
       "status": "active_unversioned",
       "validated_by": [
         "crates/optimus-kernel/tests/kernel_turn.rs"

@@ -1,8 +1,10 @@
 use optimus_kernel::{
-    build_evaluation_report, compare_evaluation_reports, priority2_dataset, BaselineStore,
-    CandidateBinding, EvaluationDataset, EvaluationMetric, EvaluationObservation,
-    EvaluationReportV1, MetricDirection, MetricThreshold,
+    build_evaluation_report, compare_evaluation_reports, priority2_dataset,
+    run_offline_trajectory_suite, BaselineStore, CandidateBinding, EvaluationDataset,
+    EvaluationMetric, EvaluationObservation, EvaluationReportV1, ExecutionStatus, MetricDirection,
+    MetricThreshold, ReplayClassification,
 };
+use optimus_packs::ToolId;
 use sha2::{Digest, Sha256};
 use tempfile::tempdir;
 
@@ -77,6 +79,52 @@ fn priority2_dataset_is_exact_versioned_bounded_and_source_backed() {
     let mut untrusted = dataset;
     untrusted.provenance_sha256 = "bad".into();
     assert!(untrusted.validate().is_err());
+}
+
+#[test]
+fn offline_trajectory_runner_returns_exact_typed_persisted_evidence() {
+    let directory = tempdir().unwrap();
+    let report = run_offline_trajectory_suite(directory.path());
+    assert!(report.all_ok(), "{:#?}", report.cases);
+    assert_eq!(report.passed, 4);
+
+    let dataset = priority2_dataset();
+    for (result, contract) in report.cases.iter().zip(dataset.cases.iter().take(4)) {
+        assert_eq!(result.id, contract.id);
+        assert_eq!(
+            result.assistant_text,
+            contract.exact_assistant_text.as_deref().unwrap()
+        );
+        assert_eq!(result.invoked_tools, contract.expected_tools);
+        assert_eq!(result.terminal_status, Some(ExecutionStatus::Succeeded));
+        assert_eq!(result.replay, Some(ReplayClassification::FixtureReplayable));
+        let trace = result.trace_context.expect("passing case retains trace");
+        assert!(trace.parent_span_id.is_none());
+    }
+    assert_eq!(
+        report.cases[1].invoked_tools,
+        vec![ToolId::new("memory_recall")]
+    );
+}
+
+#[test]
+fn offline_trajectory_runner_never_fabricates_evidence_for_unusable_home() {
+    let directory = tempdir().unwrap();
+    let blocked_home = directory.path().join("not-a-directory");
+    std::fs::write(&blocked_home, b"blocked").unwrap();
+
+    let report = run_offline_trajectory_suite(&blocked_home);
+
+    assert_eq!(report.passed, 0);
+    assert_eq!(report.failed, 4);
+    assert!(report.cases.iter().all(|result| {
+        !result.ok
+            && result.invoked_tools.is_empty()
+            && result.terminal_status.is_none()
+            && result.replay.is_none()
+            && result.trace_context.is_none()
+    }));
+    assert_eq!(std::fs::read(&blocked_home).unwrap(), b"blocked");
 }
 
 #[test]

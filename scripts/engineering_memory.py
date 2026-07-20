@@ -969,6 +969,20 @@ def build_evaluation_coverage() -> dict[str, Any]:
     )
     if ids != ["offline-echo", "memory-then-answer", "pack-activate-browser", "write-file-job"]:
         raise MemoryError(f"unexpected built-in eval IDs: {ids}")
+    trajectory_test_path = ROOT / "crates/optimus-kernel/tests/evaluation_contracts.rs"
+    trajectory_test = trajectory_test_path.read_text(encoding="utf-8")
+    trajectory_symbols = [
+        "pub fn run_offline_trajectory_suite",
+        "pub invoked_tools: Vec<ToolId>",
+        "pub terminal_status: Option<ExecutionStatus>",
+        "pub replay: Option<ReplayClassification>",
+        "pub trace_context: Option<TraceContext>",
+    ]
+    missing_trajectory = [symbol for symbol in trajectory_symbols if symbol not in text]
+    if missing_trajectory or "run_offline_trajectory_suite(" not in trajectory_test:
+        raise MemoryError(
+            f"typed offline trajectory evidence is stale; missing: {missing_trajectory}"
+        )
     required_start = text.find("pub const REQUIRED_INTEGRITY_EVALS")
     required_end = text.find("pub fn evaluate_integrity_observations")
     if required_start < 0 or required_end < 0:
@@ -1005,7 +1019,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
         raise MemoryError(f"typed evaluation extraction is stale; missing symbols: {missing}")
     return {
         **generated_header(),
-        "framework_status": "versioned_offline_evaluation_and_immutable_baselines",
+        "framework_status": "typed_offline_execution_evidence_and_immutable_baselines",
         "builtin_cases": [
             {"id": case_id, "source": "crates/optimus-kernel/src/eval.rs"}
             for case_id in ids
@@ -1024,9 +1038,21 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "case_count": len(integrity_ids),
             "isolated_runs": True,
         },
+        "trajectory_executor": {
+            "source": "crates/optimus-kernel/src/eval.rs",
+            "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+            "case_count": len(ids),
+            "typed_evidence": [
+                "assistant_text",
+                "invoked_tools",
+                "terminal_status",
+                "replay",
+                "trace_context",
+            ],
+        },
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
-            "assistant_text": "exact_text_metric_in_versioned_dataset; legacy harness remains substring-based",
+            "assistant_text": "exact_output_retained_by_typed_trajectory_executor; dataset_metric_is_exact",
             "workflow_completion": "contract_adapter_and_cross_contract_tests",
             "security": "six_case_observed_integrity_suite_plus_focused_tests",
             "memory_precision_recall": "missing",
@@ -1035,7 +1061,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "citation_correctness": "missing",
             "cost": "checked_integer_mean",
             "latency": "checked_integer_mean",
-            "replay": "fixture_replay_accuracy_plus_legacy_scripted_trajectories",
+            "replay": "persisted_fixture_replay_classification_plus_accuracy_metric",
             "gpu_cpu_correctness": "not_applicable_no_gpu_component",
         },
         "typed_dataset": {

@@ -116,7 +116,10 @@ Suggested future stage labels are **planned behaviour**:
 
 **Confirmed current behaviour:** the built-in offline trajectory suite has four
 cases: echo, memory recall, pack activation, and durable file writing. It checks
-expected canonical tool IDs and an assistant-text substring.
+expected canonical tool IDs and an assistant-text substring. The exact public
+runner additionally retains exact assistant output, canonical invoked-tool IDs,
+terminal manifest status, persisted replay classification, and the root execution
+trace. Failed cases expose no typed success evidence.
 
 **Confirmed current behaviour:** the integrity evaluation requires exactly six
 observed, evidence-bearing cases: sensitivity denial, SmartDeny approval,
@@ -145,12 +148,11 @@ parsing, sessions, memory, skills, cron, gateway, and campaigns. Desktop
 Playwright tests cover bootstrap, shell/composer behavior, session/runtime
 interactions, capabilities/tools, drag, and browser UI contracts.
 
-**Partially implemented behaviour:** the six integrity cases are executable and
-the four trajectories have a separate scripted runner whose successful results
-now carry persisted root execution traces, but those results are not yet combined
-into one produced `EvaluationReportV1`. The framework is not a universal workflow
-runner or automatic release gate and does not establish factual correctness
-beyond declared cases.
+**Partially implemented behaviour:** the six integrity cases and four typed
+trajectories are executable through separate exact runners, but their results are
+not yet combined into one produced `EvaluationReportV1`. The framework is not a
+universal workflow runner or automatic release gate and does not establish
+factual correctness beyond declared cases.
 
 ## Missing observability
 

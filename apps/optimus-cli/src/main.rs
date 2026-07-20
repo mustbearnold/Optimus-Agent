@@ -5,11 +5,11 @@ mod gateway_http;
 
 use clap::{Parser, Subcommand};
 use optimus_kernel::{
-    builtin_suite, device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_sessions,
-    open_cron, resolve_route, run_suite, sanitize_codex_oauth_model, tick_cron, BrowserSession,
-    CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel, KernelConfig,
-    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
-    ToolCall,
+    device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_sessions, open_cron,
+    resolve_route, run_offline_trajectory_suite, sanitize_codex_oauth_model, tick_cron,
+    BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
+    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface,
+    ScriptedModel, ToolCall,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{
@@ -943,7 +943,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         .unwrap_or_else(|_| "run".into()),
                 );
                 std::fs::create_dir_all(&dir)?;
-                let report = run_suite(&dir, &builtin_suite());
+                let report = run_offline_trajectory_suite(&dir);
                 if json {
                     println!("{}", serde_json::to_string_pretty(&report)?);
                 } else {

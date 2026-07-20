@@ -196,6 +196,8 @@
         {
           "cases": [
             "priority2_dataset_is_exact_versioned_bounded_and_source_backed",
+            "offline_trajectory_runner_returns_exact_typed_persisted_evidence",
+            "offline_trajectory_runner_never_fabricates_evidence_for_unusable_home",
             "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
             "immutable_baseline_comparison_reports_regression_without_rewriting_history",
             "comparison_rejects_tampered_report_hashes",
@@ -354,6 +356,8 @@
         {
           "cases": [
             "priority2_dataset_is_exact_versioned_bounded_and_source_backed",
+            "offline_trajectory_runner_returns_exact_typed_persisted_evidence",
+            "offline_trajectory_runner_never_fabricates_evidence_for_unusable_home",
             "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
             "immutable_baseline_comparison_reports_regression_without_rewriting_history",
             "comparison_rejects_tampered_report_hashes",

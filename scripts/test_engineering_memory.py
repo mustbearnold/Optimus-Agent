@@ -197,6 +197,21 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "isolated_runs": True,
             },
         )
+        self.assertEqual(
+            coverage["trajectory_executor"],
+            {
+                "source": "crates/optimus-kernel/src/eval.rs",
+                "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+                "case_count": 4,
+                "typed_evidence": [
+                    "assistant_text",
+                    "invoked_tools",
+                    "terminal_status",
+                    "replay",
+                    "trace_context",
+                ],
+            },
+        )
         self.assertEqual(coverage["typed_dataset"]["case_count"], 10)
         self.assertTrue(coverage["baseline_comparison"])
         self.assertTrue(coverage["version_binding"])

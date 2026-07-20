@@ -358,6 +358,12 @@ before execution, matches policy-specific denial outcomes, and returns a complet
 deterministic failed report when setup is unavailable. It does not execute an
 approved command or access the network.
 
+**Confirmed current behaviour:** a separate exact four-case offline trajectory
+runner reloads each successful turn's execution evidence and returns exact
+assistant text, canonical invoked tools, terminal status, replay classification,
+and root trace. Missing or mismatched persisted evidence fails the case; failed
+cases carry no typed success evidence.
+
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is
