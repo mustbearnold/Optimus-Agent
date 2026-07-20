@@ -1,5 +1,6 @@
 //! Provider-agnostic Kernel turn loop.
 
+mod agent;
 mod browser;
 mod codex_oauth;
 mod compress;
@@ -34,6 +35,12 @@ use serde_json::{json, Value};
 use thiserror::Error;
 use uuid::Uuid;
 
+pub use agent::{
+    AgentArtifactRef, AgentBudget, AgentContextRef, AgentDescriptor, AgentFailure, AgentId,
+    AgentInvocation, AgentInvocationEvent, AgentInvocationStatus, AgentInvocationStore,
+    AgentPermissions, AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion,
+    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
+};
 pub use browser::{
     page_to_tool_json, BrowserError, BrowserLink, BrowserPage, BrowserSession, BrowserState,
 };
