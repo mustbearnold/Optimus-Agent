@@ -3,15 +3,23 @@
 use std::path::PathBuf;
 
 use optimus_kernel::{
-    CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel, KernelConfig,
+    CancellationToken, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel, KernelConfig,
     OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
-    StreamEvent, ToolCall,
+    StreamControl, StreamEvent, ToolCall,
 };
 use serde_json::json;
 
 #[cfg(test)]
 pub(super) fn owns(method: &str) -> bool {
     matches!(method, "chat" | "chat_offline")
+}
+
+pub(crate) fn stream_delivery_control(delivered: bool) -> StreamControl {
+    if delivered {
+        StreamControl::Continue
+    } else {
+        StreamControl::Cancel
+    }
 }
 
 pub(super) fn handle(
@@ -29,7 +37,17 @@ pub(super) fn handle(
 pub(crate) fn chat_turn(
     home: &PathBuf,
     params: serde_json::Value,
-    mut on_event: Option<&mut dyn FnMut(StreamEvent)>,
+    on_event: Option<&mut dyn FnMut(StreamEvent) -> StreamControl>,
+) -> Result<serde_json::Value, String> {
+    let cancellation = CancellationToken::new();
+    chat_turn_cancellable(home, params, on_event, &cancellation)
+}
+
+pub(crate) fn chat_turn_cancellable(
+    home: &PathBuf,
+    params: serde_json::Value,
+    mut on_event: Option<&mut dyn FnMut(StreamEvent) -> StreamControl>,
+    cancellation: &CancellationToken,
 ) -> Result<serde_json::Value, String> {
     let message = params
         .get("message")
@@ -92,9 +110,9 @@ pub(crate) fn chat_turn(
     .map_err(|error| error.to_string())?;
     let used_provider = route.provider.as_str().to_string();
     let mut sink = |ev: StreamEvent| {
-        if let Some(cb) = on_event.as_mut() {
-            cb(ev);
-        }
+        on_event
+            .as_mut()
+            .map_or(StreamControl::Continue, |callback| callback(ev))
     };
 
     let result = match route.provider {
@@ -128,7 +146,12 @@ pub(crate) fn chat_turn(
                 }])
             };
             kernel
-                .turn_with_sink(&mut model, &message, &mut sink)
+                .turn_with_controlled_sink_cancellable(
+                    &mut model,
+                    &message,
+                    &mut sink,
+                    cancellation,
+                )
                 .map_err(|e| e.to_string())?
         }
         ProviderId::OpenAiCompat => {
@@ -138,7 +161,12 @@ pub(crate) fn chat_turn(
             }
             let mut provider = OpenAiCompatModel::new(cfg);
             kernel
-                .turn_with_sink(&mut provider, &message, &mut sink)
+                .turn_with_controlled_sink_cancellable(
+                    &mut provider,
+                    &message,
+                    &mut sink,
+                    cancellation,
+                )
                 .map_err(|e| e.to_string())?
         }
         ProviderId::Codex => {
@@ -146,7 +174,12 @@ pub(crate) fn chat_turn(
             cfg.model = route.model.as_str().into();
             let mut provider = CodexOAuthModel::new(cfg).map_err(|e| e.to_string())?;
             kernel
-                .turn_with_sink(&mut provider, &message, &mut sink)
+                .turn_with_controlled_sink_cancellable(
+                    &mut provider,
+                    &message,
+                    &mut sink,
+                    cancellation,
+                )
                 .map_err(|e| e.to_string())?
         }
     };

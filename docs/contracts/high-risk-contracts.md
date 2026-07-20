@@ -30,10 +30,14 @@ it does not replace executable enforcement.
 - **State:** Confirmed current behaviour for Work Graph jobs, commands,
   campaigns, and cooperative model-provider calls.
 - **Evidence:** durable idempotent requests cancel pending work atomically;
-  running commands observe cancellation and terminate/reap their Windows process
-  tree; campaign cancellation propagates to created jobs and uncreated steps.
-  Active providers receive a cooperative token and Codex SSE checks it on
-  bounded read intervals.
+  runtime polling stops new nodes, terminates and reaps active commands, and
+  propagates through campaign-created jobs/uncreated steps. Active providers
+  receive a cooperative token and Codex SSE checks it on bounded read intervals.
+  Desktop native/HTTP stream delivery failure requests the same token;
+  full/disconnected bounded channels stop later progression and settle the
+  accepted turn/execution as cancelled. Explicit desktop Stop is capability-local:
+  HTTP aborts only its fetch, while native mode signals one exact bounded active
+  stream ID without queueing behind chat workers.
 - **Boundary:** synchronous transport connect/write abort and a future parallel
   child hierarchy remain unresolved. Durable agent invocations can synchronize
   cancellation to cooperative tokens at bounded owner-controlled loop points.

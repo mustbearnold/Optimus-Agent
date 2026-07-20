@@ -1,8 +1,9 @@
 //! Kernel turn loop offline tests.
 
 use optimus_kernel::{
-    CancellationToken, CompletionRequest, CompletionResponse, Kernel, KernelConfig, KernelError,
-    ModelProvider, ScriptedModel, SessionStore, StreamEvent, ToolCall, TurnStatus,
+    CancellationToken, CompletionRequest, CompletionResponse, ExecutionStatus, ExecutionStore,
+    Kernel, KernelConfig, KernelError, ModelProvider, ScriptedModel, SessionStore, StreamControl,
+    StreamEvent, ToolCall, TurnStatus,
 };
 use optimus_packs::{PackError, ToolId, ToolOutcome, ToolOutcomeKind};
 use optimus_runtime::RuntimeError;
@@ -34,6 +35,31 @@ impl ModelProvider for BlockingCancellableModel {
             std::thread::sleep(std::time::Duration::from_millis(5));
         }
         Err(KernelError::Cancelled)
+    }
+}
+
+struct DeliveryAwareModel;
+
+impl ModelProvider for DeliveryAwareModel {
+    fn complete(
+        &mut self,
+        _request: CompletionRequest,
+    ) -> optimus_kernel::Result<CompletionResponse> {
+        panic!("cancellable completion seam was bypassed");
+    }
+
+    fn complete_streaming_cancellable(
+        &mut self,
+        _request: CompletionRequest,
+        sink: &mut dyn FnMut(StreamEvent),
+        cancellation: &CancellationToken,
+    ) -> optimus_kernel::Result<CompletionResponse> {
+        sink(StreamEvent::TextDelta("unconsumed".into()));
+        if cancellation.is_cancelled() {
+            Err(KernelError::Cancelled)
+        } else {
+            panic!("stream delivery rejection did not cancel the shared token");
+        }
     }
 }
 
@@ -70,6 +96,34 @@ fn active_model_completion_observes_turn_cancellation() {
     assert_eq!(turns.len(), 1);
     assert_eq!(turns[0].status, TurnStatus::Cancelled);
     assert_eq!(turns[0].error_code.as_deref(), Some("turn_cancelled"));
+}
+
+#[test]
+fn stream_delivery_rejection_cancels_turn_and_execution_once() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = DeliveryAwareModel;
+
+    let result = kernel.turn_with_controlled_sink(
+        &mut model,
+        "cancel when the stream consumer is lost",
+        &mut |_| StreamControl::Cancel,
+    );
+
+    assert!(matches!(result, Err(KernelError::Cancelled)));
+    let sessions = SessionStore::open(dir.path().join("sessions.db")).unwrap();
+    let turns = sessions.turns(kernel.session_id()).unwrap();
+    assert_eq!(turns.len(), 1);
+    assert_eq!(turns[0].status, TurnStatus::Cancelled);
+    assert_eq!(turns[0].error_code.as_deref(), Some("turn_cancelled"));
+    assert_eq!(sessions.turn_event_count(turns[0].id).unwrap(), 2);
+
+    let executions = ExecutionStore::open(dir.path().join("execution.db")).unwrap();
+    let manifest_id = executions.find_by_turn(turns[0].id).unwrap().unwrap();
+    assert_eq!(
+        executions.manifest(manifest_id).unwrap().status,
+        ExecutionStatus::Cancelled
+    );
 }
 
 #[test]

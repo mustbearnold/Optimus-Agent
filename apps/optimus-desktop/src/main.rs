@@ -340,7 +340,27 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                     let _ = eval_reply(&webview, &reply);
                     return;
                 }
-                if method == "chat_stream" {
+                if method == "chat_cancel" {
+                    let stream_id = params.get("stream_id").and_then(|value| value.as_u64());
+                    let reply = match stream_id {
+                        Some(stream_id) => IpcReply {
+                            id,
+                            ok: true,
+                            result: Some(json!({
+                                "requested": workers.cancel_stream(stream_id),
+                                "stream_id": stream_id,
+                            })),
+                            error: None,
+                        },
+                        None => IpcReply {
+                            id,
+                            ok: false,
+                            result: None,
+                            error: Some("stream_id required".into()),
+                        },
+                    };
+                    let _ = eval_reply(&webview, &reply);
+                } else if method == "chat_stream" {
                     if let Err(error) = workers.enqueue_stream(id, params) {
                         let _ = proxy_bg.send_event(UserEvent::Stream {
                             id,

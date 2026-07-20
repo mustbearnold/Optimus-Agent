@@ -10,7 +10,9 @@ mod scheduling;
 mod sessions;
 mod system;
 
-pub(crate) use chat::{chat_turn, stream_event_to_json};
+pub(crate) use chat::{
+    chat_turn, chat_turn_cancellable, stream_delivery_control, stream_event_to_json,
+};
 pub(crate) use contract::{IpcEnvelope, IpcReply};
 pub(crate) use os::pick_folder_dialog;
 pub(crate) use router::handle_ipc;

@@ -11,7 +11,9 @@ use std::time::{Duration, Instant};
 
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
-use crate::ipc::{chat_turn, handle_ipc, stream_event_to_json, IpcEnvelope, IpcReply};
+use crate::ipc::{
+    chat_turn, handle_ipc, stream_delivery_control, stream_event_to_json, IpcEnvelope, IpcReply,
+};
 
 const HTTP_STREAM_RESPONSE_WORKERS: usize = 2;
 const HTTP_STREAM_RESPONSE_QUEUE_CAPACITY: usize = 8;
@@ -425,9 +427,10 @@ fn run_producer_worker(home: Arc<PathBuf>, rx: Arc<Mutex<mpsc::Receiver<HttpStre
         };
         let mut accepting = true;
         let mut on_event = |event| {
-            if accepting {
-                accepting = try_send_sse_json(&tx, stream_event_to_json(&event)).is_ok();
-            }
+            let delivered =
+                accepting && try_send_sse_json(&tx, stream_event_to_json(&event)).is_ok();
+            accepting = delivered;
+            stream_delivery_control(delivered)
         };
         let terminal = match chat_turn(&home, params, Some(&mut on_event)) {
             Ok(result) => serde_json::json!({"type":"done","result": result}),
@@ -529,6 +532,8 @@ mod tests {
         HTTP_STREAM_PRODUCER_QUEUE_CAPACITY, HTTP_STREAM_PRODUCER_WORKERS,
         HTTP_STREAM_RESPONSE_QUEUE_CAPACITY, HTTP_STREAM_RESPONSE_WORKERS,
     };
+    use crate::ipc::stream_delivery_control;
+    use optimus_kernel::StreamControl;
     use tiny_http::{Header, Method};
 
     fn header(name: &str, value: &str) -> Header {
@@ -636,15 +641,20 @@ mod tests {
     #[test]
     fn stream_event_delivery_cancels_instead_of_blocking() {
         let (tx, _rx) = mpsc::sync_channel(1);
-        try_send_sse_json(&tx, serde_json::json!({"type":"delta"})).expect("first event");
+        let delivered = try_send_sse_json(&tx, serde_json::json!({"type":"delta"}));
         assert_eq!(
-            try_send_sse_json(&tx, serde_json::json!({"type":"delta"})),
-            Err(StreamEnqueueError::Full)
+            stream_delivery_control(delivered.is_ok()),
+            StreamControl::Continue
         );
+        let full = try_send_sse_json(&tx, serde_json::json!({"type":"delta"}));
+        assert_eq!(full, Err(StreamEnqueueError::Full));
+        assert_eq!(stream_delivery_control(full.is_ok()), StreamControl::Cancel);
         drop(_rx);
+        let disconnected = try_send_sse_json(&tx, serde_json::json!({"type":"delta"}));
+        assert_eq!(disconnected, Err(StreamEnqueueError::Disconnected));
         assert_eq!(
-            try_send_sse_json(&tx, serde_json::json!({"type":"delta"})),
-            Err(StreamEnqueueError::Disconnected)
+            stream_delivery_control(disconnected.is_ok()),
+            StreamControl::Cancel
         );
     }
 }

@@ -11,6 +11,11 @@ covers:
   - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-kernel/src/lib.rs
   - apps/optimus-desktop/src/server.rs
+  - apps/optimus-desktop/src/native_workers.rs
+  - apps/optimus-desktop/src/ipc/chat.rs
+  - apps/optimus-desktop/src/bridge.rs
+  - apps/optimus-desktop/src/main.rs
+  - apps/optimus-desktop/ui/app.js
   - apps/optimus-desktop/e2e/**
 depends_on:
   - docs/decisions/0001-kernel-and-work-graph.md
@@ -61,9 +66,13 @@ enforce one terminal result; sessions and execution manifests retain exact
 causal/tool outcomes. No global record atomically combines workflow, agent,
 tool, model, artifact, approval, cost, and error data across stores.
 
-**Unknown or unresolved behaviour:** HTTP/native stream delivery failure does not
-propagate cancellation into the running turn. Event loss and execution lifetime
-are therefore decoupled.
+**Confirmed current behaviour:** desktop HTTP/native stream delivery failure
+propagates through the kernel's cooperative token. HTTP full/disconnected
+bounded channels and native event-loop closure stop further callback delivery;
+the accepted session turn and execution manifest settle as cancelled. Terminal
+transport notification after settlement remains best-effort. Explicit desktop
+Stop is one-shot and local to the active composer stream: HTTP aborts its own
+fetch, and native mode signals an exact active request ID from a bounded registry.
 
 ## Replay
 

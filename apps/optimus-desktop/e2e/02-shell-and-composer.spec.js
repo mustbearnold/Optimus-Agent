@@ -343,3 +343,36 @@ test('theme toggle switches data-theme', async ({ page }) => {
   await page.click('#themeToggle');
   await expect(html).toHaveAttribute('data-theme', before || 'dark');
 });
+
+test('active composer turn exposes Stop and preserves partial text on cancellation', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+  await page.evaluate(() => {
+    window.optimus.chatStream = function (_message, _opts, onEvent) {
+      let rejectTask;
+      let open = true;
+      const task = new Promise((_resolve, reject) => { rejectTask = reject; });
+      task.cancel = function () {
+        if (!open) return false;
+        open = false;
+        const error = new Error('turn cancelled');
+        error.name = 'AbortError';
+        rejectTask(error);
+        return true;
+      };
+      setTimeout(() => onEvent({ type: 'delta', text: 'partial answer' }), 0);
+      return task;
+    };
+  });
+
+  await page.locator('#input').fill('cancel this turn');
+  await page.locator('#send').click();
+  await expect(page.locator('#send')).toHaveAttribute('aria-label', 'Stop');
+  await expect(page.locator('.msg.assistant').last()).toContainText('partial answer');
+  await page.locator('#send').click();
+
+  await expect(page.locator('#send')).toHaveAttribute('aria-label', 'Send');
+  await expect(page.locator('.msg.assistant').last()).toContainText('partial answer');
+  await expect(page.locator('.msg.assistant').last()).toContainText('cancelled');
+  await expect(page.locator('.msg.assistant').last()).not.toContainText('Error:');
+});

@@ -746,6 +746,8 @@
     sessions: [],
     messages: [],
     busy: false,
+    activeCancel: null,
+    cancelRequested: false,
     filter: '',
     booted: false,
     tasks: [],
@@ -1532,12 +1534,27 @@
   }
   function setBusy(b) {
     state.busy = b;
-    $('send').disabled = b;
+    const button = $('send');
+    button.classList.toggle('stop', b);
+    button.disabled = b && state.cancelRequested;
+    button.setAttribute('aria-label', b ? (state.cancelRequested ? 'Stopping' : 'Stop') : 'Send');
+    button.title = b ? (state.cancelRequested ? 'Stopping…' : 'Stop generation') : 'Send (Enter)';
+    button.innerHTML = b
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" fill="currentColor"/></svg>'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
     // Keep input enabled so Enter feels responsive; only block double-send via busy flag
   }
   async function send() {
     const text = $('input').value.trim();
-    if (!text || state.busy) return;
+    if (state.busy) {
+      state.cancelRequested = true;
+      if (state.activeCancel) state.activeCancel();
+      setBusy(true);
+      return;
+    }
+    if (!text) return;
+    state.cancelRequested = false;
+    state.activeCancel = null;
     $('input').value = '';
     autoGrow();
     if (!hasNative()) {
@@ -1632,7 +1649,10 @@
       };
       let res;
       if (window.optimus.chatStream) {
-        res = await window.optimus.chatStream(text, opts, onEvent);
+        const stream = window.optimus.chatStream(text, opts, onEvent);
+        state.activeCancel = typeof stream.cancel === 'function' ? stream.cancel.bind(stream) : null;
+        if (state.cancelRequested && state.activeCancel) state.activeCancel();
+        res = await stream;
       } else {
         res = await api('chat', text, opts);
         state.messages[asstIdx].content = res.assistant_text || '';
@@ -1667,13 +1687,24 @@
       paintStreamBubble(asstIdx);
       await refreshSessions();
     } catch (e) {
-      state.messages[asstIdx] = {
-        role: 'assistant',
-        content: `Error: ${e.message || e}`,
-        meta: `<span class="pill err"><em>failed</em></span>`,
-      };
+      const cancelled = state.cancelRequested || e?.name === 'AbortError' || /\bcancelled?\b/i.test(String(e?.message || e));
+      if (cancelled) {
+        const partial = state.messages[asstIdx] || { role: 'assistant', content: '' };
+        partial.streaming = false;
+        partial.content = stripToolCallNoise(partial.content || '') || 'Cancelled.';
+        partial.meta = `<span class="pill amber"><em>cancelled</em></span>`;
+        state.messages[asstIdx] = partial;
+      } else {
+        state.messages[asstIdx] = {
+          role: 'assistant',
+          content: `Error: ${e.message || e}`,
+          meta: `<span class="pill err"><em>failed</em></span>`,
+        };
+      }
       finishTasks();
     } finally {
+      state.activeCancel = null;
+      state.cancelRequested = false;
       setBusy(false);
       renderMessages({ forceScroll: true });
       $('input').focus();

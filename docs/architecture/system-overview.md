@@ -124,7 +124,13 @@ resume, run, recovery, and recomputation.
 **Confirmed current behaviour:** the kernel has a typed cooperative cancellation
 token and cancellable turn/provider seam. A provider can observe cancellation
 during an active call; Codex SSE checks at bounded read intervals after the
-response stream opens.
+response stream opens. A cancellation-aware sink is additive to the legacy sink
+API. Desktop native event-loop closure and HTTP event-channel full/disconnected
+results request cancellation through that seam; later stream callbacks are
+suppressed and existing session/execution terminal stores settle cancellation.
+Explicit desktop Stop uses a one-shot bridge handle. HTTP cancellation aborts
+only the owning fetch; native mode uses a bounded process-local exact-ID token
+registry registered before queue admission and removed after terminal settlement.
 
 **Confirmed current behaviour:** agent invocations have durable cancellation
 requests, cooperative token synchronization, retry lineage with new identities,
@@ -135,6 +141,8 @@ inventing them.
 
 **Unknown or unresolved behaviour:** synchronous `ureq` connection/write cannot
 be force-aborted, and cancellation has no general future child-agent hierarchy.
+Native cancellation acknowledgement means the cooperative token was signalled;
+the persisted stream terminal outcome remains authoritative in a completion race.
 
 **Unknown or unresolved behaviour:** workflow retry policies are declarations,
 not a universal retry scheduler. Work Graph interruption recovery, subsystem
@@ -145,8 +153,9 @@ semantics.
 
 **Confirmed current behaviour:** `ModelProvider` is a synchronous provider
 adapter interface. `ScriptedModel` is a deterministic test/offline adapter.
-`Kernel::turn_with_sink` loops over model responses and canonical tools until a
-non-empty final assistant response or a bounded error.
+`Kernel::turn_with_sink` and `turn_with_controlled_sink` loop over model responses
+and canonical tools until a non-empty final assistant response, cancellation, or
+a bounded error.
 
 **Confirmed current behaviour:** canonical agent IDs/versions, descriptors,
 typed bounded requests/results, context/evidence references, budgets, tool sets,

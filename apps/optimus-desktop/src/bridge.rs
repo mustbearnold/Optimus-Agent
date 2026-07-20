@@ -137,53 +137,74 @@ pub const BRIDGE_JS: &str = r#"
     }
   };
 
-  async function chatStreamHttp(message, opts, onEvent) {
-    const body = Object.assign({ message: message }, opts || {});
-    const r = await fetch('/api/chat/stream', {
-      method: 'POST',
-      headers: httpHeaders(),
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) {
-      const t = await r.text();
-      throw new Error('stream HTTP ' + r.status + ': ' + t);
-    }
-    const reader = r.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-    let finalResult = null;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      let idx;
-      while ((idx = buf.indexOf('\n\n')) >= 0) {
-        const block = buf.slice(0, idx);
-        buf = buf.slice(idx + 2);
-        const lines = block.split('\n');
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6).trim();
-          if (!data || data.startsWith(':')) continue;
-          let ev;
-          try { ev = JSON.parse(data); } catch (e) { continue; }
-          if (ev.type === 'done') {
-            finalResult = ev.result || {};
-          } else if (ev.type === 'error') {
-            throw new Error(ev.error || 'stream error');
-          } else if (onEvent) {
-            onEvent(ev);
+  function attachCancel(task, action) {
+    let cancelOpen = true;
+    task.then(
+      function () { cancelOpen = false; },
+      function () { cancelOpen = false; }
+    );
+    const cancelOnce = function () {
+      if (!cancelOpen) return false;
+      cancelOpen = false;
+      action();
+      return true;
+    };
+    task.cancel = cancelOnce;
+    return task;
+  }
+
+  function chatStreamHttp(message, opts, onEvent) {
+    const controller = new AbortController();
+    const task = (async function () {
+      const body = Object.assign({ message: message }, opts || {});
+      const r = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: httpHeaders(),
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error('stream HTTP ' + r.status + ': ' + t);
+      }
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let finalResult = null;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const lines = block.split('\n');
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (!data || data.startsWith(':')) continue;
+            let ev;
+            try { ev = JSON.parse(data); } catch (e) { continue; }
+            if (ev.type === 'done') {
+              finalResult = ev.result || {};
+            } else if (ev.type === 'error') {
+              throw new Error(ev.error || 'stream error');
+            } else if (onEvent) {
+              onEvent(ev);
+            }
           }
         }
       }
-    }
-    if (!finalResult) throw new Error('stream ended without done');
-    return finalResult;
+      if (!finalResult) throw new Error('stream ended without done');
+      return finalResult;
+    })();
+    return attachCancel(task, function () { controller.abort(); });
   }
 
   function chatStreamNative(message, opts, onEvent) {
     const id = seq++;
-    return new Promise((resolve, reject) => {
+    const task = new Promise((resolve, reject) => {
       streamHandlers.set(id, { resolve, reject, onEvent });
       const payload = JSON.stringify({
         id: id,
@@ -194,6 +215,14 @@ pub const BRIDGE_JS: &str = r#"
         streamHandlers.delete(id);
         reject(new Error('Native bridge missing'));
       }
+    });
+    return attachCancel(task, function () {
+      post('chat_cancel', { stream_id: id }).catch(function (error) {
+        const handler = streamHandlers.get(id);
+        if (!handler) return;
+        streamHandlers.delete(id);
+        handler.reject(error);
+      });
     });
   }
 
@@ -265,4 +294,17 @@ pub fn inject_bridge(html: &str) -> String {
         out.insert_str(idx, &head_tag);
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BRIDGE_JS;
+
+    #[test]
+    fn stream_promises_expose_local_idempotent_cancellation() {
+        assert!(BRIDGE_JS.contains("const controller = new AbortController();"));
+        assert!(BRIDGE_JS.contains("signal: controller.signal"));
+        assert!(BRIDGE_JS.contains("task.cancel = cancelOnce"));
+        assert!(BRIDGE_JS.contains("post('chat_cancel', { stream_id: id })"));
+    }
 }

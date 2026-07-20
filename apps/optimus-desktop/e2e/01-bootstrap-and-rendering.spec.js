@@ -100,6 +100,33 @@ test('two held SSE responses do not block the HTTP accept loop', async () => {
   await Promise.all([first.body.cancel(), second.body.cancel()]);
 });
 
+test('bridge HTTP stream cancellation is local and one-shot', async ({ page }) => {
+  await page.route('**/api/chat/stream', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: 'data: {"type":"done","result":{}}\n\n',
+    }).catch(() => {});
+  });
+  await page.goto('/');
+  await waitForReady(page);
+
+  const observed = await page.evaluate(async () => {
+    const stream = window.optimus.chatStream('cancel locally', { provider: 'offline' }, () => {});
+    const first = stream.cancel();
+    const second = stream.cancel();
+    try {
+      await stream;
+      return { first, second, settled: 'resolved' };
+    } catch (error) {
+      return { first, second, settled: error && error.name };
+    }
+  });
+
+  expect(observed).toEqual({ first: true, second: false, settled: 'AbortError' });
+});
+
 test('coalesceTools merges repeated web_search', async ({ page }) => {
   await page.goto('/');
   await waitForReady(page);

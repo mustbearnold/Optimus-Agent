@@ -10,6 +10,12 @@ covers:
   - crates/optimus-kernel/src/cron.rs
   - crates/optimus-kernel/src/gateway.rs
   - crates/optimus-kernel/src/session.rs
+  - apps/optimus-desktop/src/ipc/chat.rs
+  - apps/optimus-desktop/src/bridge.rs
+  - apps/optimus-desktop/src/main.rs
+  - apps/optimus-desktop/src/native_workers.rs
+  - apps/optimus-desktop/src/server.rs
+  - apps/optimus-desktop/ui/app.js
 depends_on:
   - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
 validated_by:
@@ -18,6 +24,8 @@ validated_by:
   - crates/optimus-kernel/tests/session_resume.rs
   - crates/optimus-kernel/src/cron.rs
   - crates/optimus-kernel/src/gateway.rs
+  - apps/optimus-desktop/src/server.rs
+  - apps/optimus-desktop/e2e/**
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
@@ -48,7 +56,12 @@ caused an effect.
 2. `ModelProvider` receives a cloneable cooperative cancellation token through a
    cancellable streaming seam. Existing turn APIs create a never-cancelled token;
    callers that own cancellation use `turn_with_sink_cancellable`. Codex SSE uses
-   bounded read intervals and checks the token between reads/events.
+   bounded read intervals and checks the token between reads/events. An additive
+   controlled-sink API converts consumer delivery loss into the same token;
+   desktop native/HTTP stream adapters use it for event-loop closure and bounded
+   channel full/disconnected outcomes. Explicit desktop cancellation remains
+   capability-local: HTTP aborts the owning fetch, while native mode uses a
+   bounded process-local exact-stream-ID registry and an event-loop fast path.
 3. Cron uses transactional owner/generation/token/deadline claims. Claim,
    renewal, release, disable fencing, expiry takeover, and exact completion are
    storage-enforced. `tick_cron` executes only claimed rows.
@@ -95,6 +108,12 @@ typed capabilities instead of broad process/job grants.
   without another model turn.
 - Tool-heavy sessions persist intermediate causal segments before the next model
   step, rather than only at final assistant text.
+- Desktop stream loss no longer leaves a consumerless provider/tool turn running;
+  existing durable terminal stores record cancellation and terminal notification
+  to the lost transport remains best-effort.
+- The composer exposes one Stop action for its single active stream. Native
+  registration precedes queue admission, failed admission rolls back registration,
+  and generation fencing prevents stale completion from removing a reused ID.
 
 ## Risks
 

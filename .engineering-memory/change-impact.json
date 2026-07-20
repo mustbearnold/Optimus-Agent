@@ -250,15 +250,28 @@
         "crates/optimus-kernel/src/codex_oauth.rs",
         "crates/optimus-kernel/src/cron.rs",
         "crates/optimus-kernel/src/gateway.rs",
-        "crates/optimus-kernel/src/session.rs"
+        "crates/optimus-kernel/src/session.rs",
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-desktop/src/bridge.rs",
+        "apps/optimus-desktop/src/main.rs",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/src/server.rs",
+        "apps/optimus-desktop/ui/app.js"
       ],
       "depends_on": [
         "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
       ],
       "document": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "knowledge_type": "decision",
-      "resolved_source_count": 9,
+      "resolved_source_count": 15,
       "resolved_tests": [
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/support.js",
+        "apps/optimus-desktop/src/server.rs",
         "crates/optimus-kernel/src/cron.rs",
         "crates/optimus-kernel/src/gateway.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
@@ -271,7 +284,9 @@
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
         "crates/optimus-kernel/src/cron.rs",
-        "crates/optimus-kernel/src/gateway.rs"
+        "crates/optimus-kernel/src/gateway.rs",
+        "apps/optimus-desktop/src/server.rs",
+        "apps/optimus-desktop/e2e/**"
       ]
     },
     {
@@ -477,6 +492,11 @@
         "crates/optimus-kernel/src/workflow.rs",
         "crates/optimus-kernel/src/lib.rs",
         "apps/optimus-desktop/src/server.rs",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-desktop/src/bridge.rs",
+        "apps/optimus-desktop/src/main.rs",
+        "apps/optimus-desktop/ui/app.js",
         "apps/optimus-desktop/e2e/**"
       ],
       "depends_on": [
@@ -485,7 +505,7 @@
       ],
       "document": "docs/maps/observability-and-evaluations.md",
       "knowledge_type": "observability-evaluation-map",
-      "resolved_source_count": 17,
+      "resolved_source_count": 22,
       "resolved_tests": [
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -631,6 +651,42 @@
       "status": "current",
       "validated_by": [
         "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "crates/optimus-kernel/src/lib.rs",
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/src/main.rs",
+        "apps/optimus-desktop/src/bridge.rs",
+        "apps/optimus-desktop/ui/app.js",
+        "apps/optimus-desktop/ui/index.html",
+        "apps/optimus-desktop/ui/style.css"
+      ],
+      "depends_on": [
+        "docs/specifications/stream-delivery-cancellation.md",
+        "docs/contracts/high-risk-contracts.md",
+        "docs/decisions/0021-owned-execution-and-causal-delivery.md"
+      ],
+      "document": "docs/specifications/desktop-turn-cancellation.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 11,
+      "resolved_tests": [
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/support.js",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/e2e/**"
       ]
     },
     {
@@ -787,6 +843,41 @@
         "crates/optimus-kernel/tests/**",
         "scripts/test_engineering_memory.py"
       ]
+    },
+    {
+      "covers": [
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/src/server.rs"
+      ],
+      "depends_on": [
+        "docs/contracts/high-risk-contracts.md",
+        "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+        "docs/maps/observability-and-evaluations.md"
+      ],
+      "document": "docs/specifications/stream-delivery-cancellation.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 8,
+      "resolved_tests": [
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/support.js",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/src/server.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "apps/optimus-desktop/src/server.rs",
+        "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/e2e/**"
+      ]
     }
   ],
   "generated_by": "scripts/engineering_memory.py",
@@ -860,17 +951,24 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+      "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/chat.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/model-routing.md",
+      "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "apps/optimus-desktop/src/ipc/contract.rs": [
       "docs/architecture/system-overview.md",
@@ -939,29 +1037,49 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+      "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/native_workers.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+      "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "apps/optimus-desktop/src/server.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
-      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "apps/optimus-desktop/src/ui.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "apps/optimus-desktop/ui/app.js": [
+      "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/desktop-turn-cancellation.md"
+    ],
+    "apps/optimus-desktop/ui/index.html": [
+      "docs/specifications/desktop-turn-cancellation.md"
+    ],
+    "apps/optimus-desktop/ui/style.css": [
+      "docs/specifications/desktop-turn-cancellation.md"
     ],
     "crates/optimus-graph/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -1092,9 +1210,11 @@
       "docs/maps/model-routing.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "crates/optimus-kernel/src/openai_compat.rs": [
       "docs/architecture/system-overview.md",
@@ -1199,7 +1319,8 @@
     ],
     "crates/optimus-kernel/tests/kernel_turn.rs": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "crates/optimus-kernel/tests/openai_http.rs": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -1492,9 +1613,11 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "docs/decisions/0000-locked-defaults.md": [
       "docs/architecture/system-overview.md",
@@ -1712,9 +1835,11 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "docs/decisions/0022-versioned-agent-and-workflow-contracts.md": [
       "docs/architecture/system-overview.md",
@@ -1757,7 +1882,8 @@
     "docs/maps/observability-and-evaluations.md": [
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/stream-delivery-cancellation.md"
     ],
     "docs/maps/repository-and-ownership.md": [
       "docs/plans/engineering-memory-phases.md",
@@ -1774,6 +1900,9 @@
     ],
     "docs/specifications/priority-1-integrity-next-30-microtasks.md": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "docs/specifications/stream-delivery-cancellation.md": [
+      "docs/specifications/desktop-turn-cancellation.md"
     ],
     "scripts/engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",

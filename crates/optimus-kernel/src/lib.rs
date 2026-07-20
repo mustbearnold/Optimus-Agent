@@ -211,6 +211,13 @@ pub enum StreamEvent {
     Status(String),
 }
 
+/// Control returned by a streaming consumer after each event delivery attempt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StreamControl {
+    Continue,
+    Cancel,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct CancellationToken(Arc<AtomicBool>);
 
@@ -495,6 +502,40 @@ impl Kernel {
     ) -> Result<TurnResult> {
         let cancellation = CancellationToken::new();
         self.turn_with_sink_cancellable(model, user_text, sink, &cancellation)
+    }
+
+    /// Stream a turn while allowing the consumer to cancel when delivery is lost.
+    ///
+    /// The first [`StreamControl::Cancel`] sets the same cooperative token observed
+    /// by providers and tool-loop boundaries. Later events are not forwarded.
+    pub fn turn_with_controlled_sink(
+        &mut self,
+        model: &mut dyn ModelProvider,
+        user_text: &str,
+        sink: &mut dyn FnMut(StreamEvent) -> StreamControl,
+    ) -> Result<TurnResult> {
+        let cancellation = CancellationToken::new();
+        self.turn_with_controlled_sink_cancellable(model, user_text, sink, &cancellation)
+    }
+
+    /// Stream a turn with consumer control and a caller-owned cancellation token.
+    pub fn turn_with_controlled_sink_cancellable(
+        &mut self,
+        model: &mut dyn ModelProvider,
+        user_text: &str,
+        sink: &mut dyn FnMut(StreamEvent) -> StreamControl,
+        cancellation: &CancellationToken,
+    ) -> Result<TurnResult> {
+        let delivery_cancellation = cancellation.clone();
+        let mut adapting_sink = |event| {
+            if delivery_cancellation.is_cancelled() {
+                return;
+            }
+            if sink(event) == StreamControl::Cancel {
+                delivery_cancellation.cancel();
+            }
+        };
+        self.turn_with_sink_cancellable(model, user_text, &mut adapting_sink, cancellation)
     }
 
     pub fn turn_with_sink_cancellable(

@@ -56,6 +56,7 @@
             "Enter streams offline reply progressively",
             "SSE stream endpoint emits delta then done",
             "two held SSE responses do not block the HTTP accept loop",
+            "bridge HTTP stream cancellation is local and one-shot",
             "coalesceTools merges repeated web_search",
             "formatRich hides tool JSON and keeps prose"
           ],
@@ -71,7 +72,8 @@
             "custom titlebar shell and send absolute position",
             "send button stays on composer bar baseline",
             "chat pane scrolls and composer controls exist",
-            "theme toggle switches data-theme"
+            "theme toggle switches data-theme",
+            "active composer turn exposes Stop and preserves partial text on cancellation"
           ],
           "path": "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js"
         },
@@ -210,6 +212,7 @@
         {
           "cases": [
             "active_model_completion_observes_turn_cancellation",
+            "stream_delivery_rejection_cancels_turn_and_execution_once",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
             "skill_resolve_returns_body",
@@ -353,6 +356,7 @@
         {
           "cases": [
             "active_model_completion_observes_turn_cancellation",
+            "stream_delivery_rejection_cancels_turn_and_execution_once",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
             "skill_resolve_returns_body",

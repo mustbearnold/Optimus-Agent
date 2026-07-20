@@ -155,6 +155,14 @@ class EngineeringMemoryTests(unittest.TestCase):
             " ".join(workflows["gateway-inbox-drain"]["observability"]),
         )
         self.assertEqual(workflows["kernel-turn"]["cancellation"]["status"], "implemented")
+        self.assertIn(
+            "stream delivery loss",
+            workflows["kernel-turn"]["cancellation"]["contract"],
+        )
+        self.assertIn(
+            "explicit capability-local Stop",
+            workflows["kernel-turn"]["cancellation"]["contract"],
+        )
 
     def test_integrity_evaluation_catalog_is_exact_and_executed(self) -> None:
         coverage = EM.build_evaluation_coverage()

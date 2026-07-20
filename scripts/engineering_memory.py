@@ -646,7 +646,7 @@ def build_workflow_registry() -> dict[str, Any]:
             approvals="durable runtime jobs for terminal",
             validation="strict provider and canonical tool schemas",
             completion=["non-empty assistant final response"],
-            cancellation={"status": "implemented", "contract": "cloneable cooperative token reaches active providers and every model/tool loop boundary; Codex SSE polls on bounded reads"},
+            cancellation={"status": "implemented", "contract": "cloneable cooperative token reaches active providers and every model/tool loop boundary; Codex SSE polls on bounded reads; desktop native/HTTP stream delivery loss and explicit capability-local Stop request the same token; native ownership is exact-ID and bounded"},
             failure=["model/provider error", "invalid tool batch", "turn budget exceeded", "effect error", "synchronous transport connect/write is not force-abortable"],
             observability=["TurnEvent sink", "session transcript", "session tool-call to effect-attempt hash links", "runtime events for durable effects"],
             validated_by=["crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/src/eval.rs"],

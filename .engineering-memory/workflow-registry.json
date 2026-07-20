@@ -11,7 +11,7 @@
     {
       "approvals": "durable runtime jobs for terminal",
       "cancellation": {
-        "contract": "cloneable cooperative token reaches active providers and every model/tool loop boundary; Codex SSE polls on bounded reads",
+        "contract": "cloneable cooperative token reaches active providers and every model/tool loop boundary; Codex SSE polls on bounded reads; desktop native/HTTP stream delivery loss and explicit capability-local Stop request the same token; native ownership is exact-ID and bounded",
         "status": "implemented"
       },
       "completion": [
