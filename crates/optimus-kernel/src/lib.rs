@@ -61,8 +61,9 @@ pub use credential::{
 };
 pub use cron::{CronClaim, CronJob, CronStore};
 pub use eval::{
-    builtin_suite, evaluate_integrity_observations, run_case, run_suite, EvalCase, EvalCaseResult,
-    EvalReport, IntegrityObservation, REQUIRED_INTEGRITY_EVALS,
+    builtin_suite, evaluate_integrity_observations, run_case, run_offline_integrity_suite,
+    run_suite, EvalCase, EvalCaseResult, EvalReport, IntegrityObservation,
+    REQUIRED_INTEGRITY_EVALS,
 };
 pub use evaluation::{
     build_evaluation_report, compare_evaluation_reports, priority2_dataset, BaselineStore,

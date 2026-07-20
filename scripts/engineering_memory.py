@@ -969,6 +969,12 @@ def build_evaluation_coverage() -> dict[str, Any]:
     ]
     if integrity_ids != expected_integrity:
         raise MemoryError(f"unexpected integrity eval IDs: {integrity_ids}")
+    integration_path = ROOT / "crates/optimus-kernel/tests/integrity_integration.rs"
+    integration = integration_path.read_text(encoding="utf-8")
+    if "pub fn run_offline_integrity_suite" not in text or not re.search(
+        r"run_offline_integrity_suite\s*\(", integration
+    ):
+        raise MemoryError("reusable offline integrity executor is not implemented and exercised")
     typed_path = ROOT / "crates/optimus-kernel/src/evaluation.rs"
     typed = typed_path.read_text(encoding="utf-8")
     required_typed_symbols = [
@@ -997,6 +1003,12 @@ def build_evaluation_coverage() -> dict[str, Any]:
             }
             for case_id in integrity_ids
         ],
+        "integrity_executor": {
+            "source": "crates/optimus-kernel/src/eval.rs",
+            "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+            "case_count": len(integrity_ids),
+            "isolated_runs": True,
+        },
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
             "assistant_text": "exact_text_metric_in_versioned_dataset; legacy harness remains substring-based",

@@ -116,7 +116,10 @@ expected canonical tool IDs and an assistant-text substring.
 observed, evidence-bearing cases: sensitivity denial, SmartDeny approval,
 route-policy denial, cooperative cancellation, stale-completion fencing, and
 gateway dead letter. Missing, duplicate, or evidence-free observations fail the
-evaluation contract.
+evaluation contract. The public offline executor runs those real local subsystem
+boundaries in an isolated per-run directory, matches policy-specific denial
+outcomes, and returns six deterministic failed observations when run ownership
+cannot be established.
 
 **Confirmed current behaviour:** the versioned Priority-2 dataset represents
 those six cases and four trajectories with exact case/tool/terminal/replay/trace
@@ -136,9 +139,11 @@ parsing, sessions, memory, skills, cron, gateway, and campaigns. Desktop
 Playwright tests cover bootstrap, shell/composer behavior, session/runtime
 interactions, capabilities/tools, drag, and browser UI contracts.
 
-**Partially implemented behaviour:** the typed framework evaluates supplied
-offline observations; it is not yet a universal workflow runner or automatic
-release gate and does not establish factual correctness beyond declared cases.
+**Partially implemented behaviour:** the six integrity cases are executable and
+the four trajectories have a separate scripted runner, but they are not yet
+combined into one produced `EvaluationReportV1`. The framework is not a universal
+workflow runner or automatic release gate and does not establish factual
+correctness beyond declared cases.
 
 ## Missing observability
 

@@ -213,7 +213,9 @@
           "cases": [
             "tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity",
             "session_and_agent_terminal_outcomes_agree_after_independent_reopen",
-            "offline_integrity_evaluation_executes_all_required_contract_cases"
+            "offline_integrity_executor_executes_all_required_contract_cases",
+            "offline_integrity_executor_isolates_deterministic_retries",
+            "offline_integrity_executor_reports_stable_failures_for_unusable_home"
           ],
           "path": "crates/optimus-kernel/tests/integrity_integration.rs"
         },
@@ -365,7 +367,9 @@
           "cases": [
             "tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity",
             "session_and_agent_terminal_outcomes_agree_after_independent_reopen",
-            "offline_integrity_evaluation_executes_all_required_contract_cases"
+            "offline_integrity_executor_executes_all_required_contract_cases",
+            "offline_integrity_executor_isolates_deterministic_retries",
+            "offline_integrity_executor_reports_stable_failures_for_unusable_home"
           ],
           "path": "crates/optimus-kernel/tests/integrity_integration.rs"
         },

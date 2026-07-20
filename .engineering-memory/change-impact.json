@@ -912,6 +912,30 @@
     },
     {
       "covers": [
+        "crates/optimus-kernel/src/eval.rs",
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
+        "docs/maps/observability-and-evaluations.md",
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py"
+      ],
+      "depends_on": [
+        "docs/specifications/fail-closed-evaluation-report-validation.md",
+        "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md"
+      ],
+      "document": "docs/specifications/reusable-offline-integrity-executor.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 8,
+      "resolved_tests": [
+        "crates/optimus-kernel/tests/integrity_integration.rs"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "crates/optimus-kernel/tests/integrity_integration.rs"
+      ]
+    },
+    {
+      "covers": [
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "apps/optimus-desktop/src/ipc/chat.rs",
@@ -1228,7 +1252,8 @@
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "crates/optimus-kernel/src/evaluation.rs": [
       "docs/architecture/system-overview.md",
@@ -1282,6 +1307,7 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md",
       "docs/specifications/stream-delivery-cancellation.md"
     ],
     "crates/optimus-kernel/src/openai_compat.rs": [
@@ -1385,7 +1411,8 @@
     "crates/optimus-kernel/tests/integrity_integration.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "crates/optimus-kernel/tests/kernel_turn.rs": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -1934,7 +1961,8 @@
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "docs/decisions/README.md": [
       "docs/architecture/system-overview.md",
@@ -1964,6 +1992,7 @@
       "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md",
       "docs/specifications/stream-delivery-cancellation.md"
     ],
     "docs/maps/repository-and-ownership.md": [
@@ -1979,6 +2008,9 @@
     ],
     "docs/specifications/candidate-aware-evaluation-comparison.md": [
       "docs/specifications/fail-closed-evaluation-report-validation.md"
+    ],
+    "docs/specifications/fail-closed-evaluation-report-validation.md": [
+      "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "docs/specifications/priority-1-integrity-100-nanotasks.md": [
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1997,14 +2029,16 @@
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "scripts/test_engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "skills/update-engineering-memory/SKILL.md": [
       "docs/decisions/0017-engineering-memory-separation.md",

@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 188,
+  "file_count": 189,
   "files": [
     {
       "bytes": 152,
@@ -364,11 +364,11 @@
       "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
     },
     {
-      "bytes": 9223,
+      "bytes": 21142,
       "language": "Rust",
-      "lines": 292,
+      "lines": 603,
       "path": "crates/optimus-kernel/src/eval.rs",
-      "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
+      "sha256": "ac4581bfa6e3c86bf565dd644bd931fde03f03a8f444df360024c5a5e0d2dc29"
     },
     {
       "bytes": 22409,
@@ -399,11 +399,11 @@
       "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
     },
     {
-      "bytes": 53276,
+      "bytes": 53309,
       "language": "Rust",
-      "lines": 1395,
+      "lines": 1396,
       "path": "crates/optimus-kernel/src/lib.rs",
-      "sha256": "e330c8569585881f3ce08e8f4929a165a689b4253729c6e0b6070f63212702b7"
+      "sha256": "88fcff530f1c18c8349484703741dce4ca5e83799968e55190500afea8c2ac38"
     },
     {
       "bytes": 13305,
@@ -497,11 +497,11 @@
       "sha256": "00b5cf85bd5c9a151299f47e524ae461162ae8683346c6e4cbae88852063af17"
     },
     {
-      "bytes": 14917,
+      "bytes": 11369,
       "language": "Rust",
-      "lines": 406,
+      "lines": 322,
       "path": "crates/optimus-kernel/tests/integrity_integration.rs",
-      "sha256": "ff94bb38ebda4b415ea0b8dd6237f84e357344d67c7f9cdc7d4e91b5f58389b4"
+      "sha256": "1f1130c35aca10fc8cf05d0daa710c30919a0802915a9c5b3641d4994385e1a2"
     },
     {
       "bytes": 20709,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 22544,
+      "bytes": 22979,
       "language": "Markdown",
-      "lines": 388,
+      "lines": 395,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "cd877988ebac60629d7636632311adfe6b024a80040c393d3e60a6696a461ab7"
+      "sha256": "873f9cb95f2201ba5eb40fd20d5064e52bcbc9546b19f9b28b0b98dc16a9d04d"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1148,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 10563,
+      "bytes": 10915,
       "language": "Markdown",
-      "lines": 182,
+      "lines": 187,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "02361395929968211d56b1f81cf626bef2e217ec727f865de1bb13c1110e9b88"
+      "sha256": "4989f26f07fb99f5962e1c37379e44941e8b460a6484e579b96878a41e4d807d"
     },
     {
       "bytes": 5802,
@@ -1225,6 +1225,13 @@
       "sha256": "d4e75a949c4b9f9543b6b1138e1ea1bdbc0921e96b5d8f57f61d5ef4c28f889d"
     },
     {
+      "bytes": 8848,
+      "language": "Markdown",
+      "lines": 192,
+      "path": "docs/specifications/reusable-offline-integrity-executor.md",
+      "sha256": "308a025be5e659f5869815eedad82dbf1228c065d45b7da9c1dcda363bfb361f"
+    },
+    {
       "bytes": 8397,
       "language": "Markdown",
       "lines": 186,
@@ -1239,11 +1246,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 71848,
+      "bytes": 72499,
       "language": "Python",
-      "lines": 1523,
+      "lines": 1535,
       "path": "scripts/engineering_memory.py",
-      "sha256": "06f8ad788809dd5e3cdc818ec9b02e6717aedf079d0a2c203f7ce92c3d9564cf"
+      "sha256": "aa4fa15937ce8da544db3be42bce016ddeb371f29b77a8303577c6b65f305ee8"
     },
     {
       "bytes": 9185,
@@ -1260,11 +1267,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 13618,
+      "bytes": 13950,
       "language": "Python",
-      "lines": 323,
+      "lines": 332,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "3a434065f7ac801142b5133d9c930356e007bf6dd0142a8cb6cb969b30798748"
+      "sha256": "feca9a077b4e33d6867fe53e2f612eb5a2006322af82e4fcbbd2657a94565fa2"
     },
     {
       "bytes": 5394,
@@ -1352,8 +1359,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 453925,
-      "files": 81
+      "bytes": 463560,
+      "files": 82
     },
     "Other": {
       "bytes": 156778,
@@ -1364,11 +1371,11 @@
       "files": 1
     },
     "Python": {
-      "bytes": 90790,
+      "bytes": 91773,
       "files": 3
     },
     "Rust": {
-      "bytes": 1115535,
+      "bytes": 1123939,
       "files": 70
     },
     "Shell": {
@@ -1406,7 +1413,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "fc4486fee0221485bd5ca861341915902b62d5b86c45245feb325fa5cdb69627",
+  "tree_sha256": "a8acfd03774f3be64100e95d3f92506105ca3fbcd5d5835ba4c736e95b597785",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {

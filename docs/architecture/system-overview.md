@@ -344,6 +344,13 @@ revalidate supported identities, exact metric dimensions and arithmetic, unique
 threshold policy, failure/pass projection, and content hash before returning or
 persisting evidence.
 
+**Confirmed current behaviour:** a public offline integrity executor exercises
+the six required memory, SmartDeny, routing, cancellation/fencing, and gateway
+cases against isolated local run state. It requires run-directory ownership
+before execution, matches policy-specific denial outcomes, and returns a complete
+deterministic failed report when setup is unavailable. It does not execute an
+approved command or access the network.
+
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is

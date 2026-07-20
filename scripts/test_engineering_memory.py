@@ -179,6 +179,15 @@ class EngineeringMemoryTests(unittest.TestCase):
             ],
         )
         self.assertTrue(all(case["executed_by"] for case in coverage["integrity_cases"]))
+        self.assertEqual(
+            coverage["integrity_executor"],
+            {
+                "source": "crates/optimus-kernel/src/eval.rs",
+                "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+                "case_count": 6,
+                "isolated_runs": True,
+            },
+        )
         self.assertEqual(coverage["typed_dataset"]["case_count"], 10)
         self.assertTrue(coverage["baseline_comparison"])
         self.assertTrue(coverage["version_binding"])

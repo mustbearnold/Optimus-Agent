@@ -75,6 +75,12 @@
       "source": "crates/optimus-kernel/src/eval.rs"
     }
   ],
+  "integrity_executor": {
+    "case_count": 6,
+    "isolated_runs": true,
+    "source": "crates/optimus-kernel/src/eval.rs",
+    "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs"
+  },
   "metrics": [
     "exact_text",
     "tool_precision",

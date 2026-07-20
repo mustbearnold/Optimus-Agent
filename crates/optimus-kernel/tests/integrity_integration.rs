@@ -1,19 +1,16 @@
 use std::collections::BTreeSet;
 
-use optimus_graph::{Effect, JobId, JobSpec, NodeSpec, PolicyMode, RuntimeConfig};
+use optimus_graph::JobId;
 use optimus_kernel::{
-    delivery_state, drain_one, enqueue, evaluate_integrity_observations, resolve_route,
-    AgentBudget, AgentDescriptor, AgentFailure, AgentId, AgentInvocationStatus,
-    AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
-    AgentResultKind, AgentVersion, CancellationToken, CompletionResponse, ExecutionStatus,
-    ExecutionStore, IntegrityObservation, Kernel, KernelConfig, Message, PrivacyPolicy, Role,
-    RouteRequest, RouteSurface, ScriptedModel, SessionStore, ToolCall, TurnStatus,
-    WorkflowAdapterKind, WorkflowAgentRef, WorkflowNode, AGENT_REQUEST_SCHEMA_VERSION,
+    run_offline_integrity_suite, AgentBudget, AgentDescriptor, AgentFailure, AgentId,
+    AgentInvocationStatus, AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest,
+    AgentResult, AgentResultKind, AgentVersion, CompletionResponse, ExecutionStatus,
+    ExecutionStore, Kernel, KernelConfig, Message, Role, ScriptedModel, SessionStore, ToolCall,
+    TurnStatus, WorkflowAdapterKind, WorkflowAgentRef, WorkflowNode, AGENT_REQUEST_SCHEMA_VERSION,
     AGENT_RESULT_SCHEMA_VERSION,
 };
-use optimus_memory::{ClaimDraft, Memory, Origin, Sensitivity, TrustDomain, WriteContext};
 use optimus_packs::{builtin_catalog, DurableEffectProvenance, ToolId};
-use optimus_runtime::{Runtime, RuntimeError};
+use optimus_runtime::Runtime;
 use serde_json::json;
 use tempfile::tempdir;
 use uuid::Uuid;
@@ -269,138 +266,57 @@ fn session_and_agent_terminal_outcomes_agree_after_independent_reopen() {
 }
 
 #[test]
-fn offline_integrity_evaluation_executes_all_required_contract_cases() {
+fn offline_integrity_executor_executes_all_required_contract_cases() {
     let dir = tempdir().unwrap();
-
-    let memory = Memory::open(dir.path().join("memory.db")).unwrap();
-    let context = WriteContext {
-        tenant: "local".into(),
-        user: "alice".into(),
-        agent: "optimus".into(),
-        project: "eval".into(),
-        principal: "user:alice".into(),
-        max_trust: TrustDomain::User,
-        max_sensitivity: Sensitivity::Personal,
-    };
-    let sensitivity_denied = memory
-        .remember(
-            &context,
-            ClaimDraft {
-                subject: "secret".into(),
-                predicate: "value".into(),
-                object: "must-not-persist".into(),
-                valid_from: "2026-01-01T00:00:00Z".into(),
-                valid_to: None,
-                confidence: 1.0,
-                origin: Origin::UserStatement,
-                learned_at: Some("2026-01-01T00:00:00Z".into()),
-                sensitivity: Sensitivity::Restricted,
-                retention_until: None,
-            },
-        )
-        .is_err();
-
-    let workspace = dir.path().join("policy-workspace");
-    std::fs::create_dir_all(&workspace).unwrap();
-    let policy_runtime = Runtime::open_with_config(
-        &dir.path().join("policy.db"),
-        &workspace,
-        RuntimeConfig {
-            policy: PolicyMode::SmartDeny,
-        },
-    )
-    .unwrap();
-    let denied_job = policy_runtime
-        .create_job(JobSpec {
-            label: "eval-smartdeny".into(),
-            budget: Default::default(),
-            nodes: vec![NodeSpec {
-                label: "command".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo forbidden>forbidden.txt".into()],
-                },
-            }],
-        })
-        .unwrap();
-    let smartdeny = matches!(
-        policy_runtime.run_next(denied_job),
-        Err(RuntimeError::NeedsApproval { .. })
-    ) && !workspace.join("forbidden.txt").exists();
-
-    let mut route = RouteRequest::standard(RouteSurface::Gateway, "codex", None);
-    route.privacy = PrivacyPolicy::LocalOnly;
-    let route_denied = resolve_route(dir.path().join("route"), &route).is_err();
-
-    let registry = AgentRegistry::open(
-        dir.path().join("eval-agents.db"),
-        available_tools(),
-        permissions(),
-    )
-    .unwrap();
-    registry.register(&descriptor()).unwrap();
-    let invocations = AgentInvocationStore::open(dir.path().join("eval-invocations.db")).unwrap();
-    let invocation = invocations.begin(&registry, &request()).unwrap();
-    invocations
-        .request_cancellation(invocation, "operator_request")
-        .unwrap();
-    let token = CancellationToken::new();
-    let cooperative_cancellation =
-        invocations.sync_cancellation(invocation, &token).unwrap() && token.is_cancelled();
-    let stale_completion_fenced = invocations
-        .settle(&result(invocation, AgentResultKind::Succeeded))
-        .is_err();
-    invocations
-        .settle(&result(invocation, AgentResultKind::Cancelled))
-        .unwrap();
-
-    let gateway_home = dir.path().join("gateway-eval");
-    let message = enqueue(&gateway_home, "local", "fail", "offline", None).unwrap();
-    for _ in 0..3 {
-        drain_one(&gateway_home, |_| Err("provider_unavailable".into()))
-            .unwrap()
-            .unwrap();
-    }
-    let gateway_dead_letter = delivery_state(&gateway_home, &message.id)
-        .unwrap()
-        .unwrap()
-        .0
-        .as_deref()
-        == Some("dead_lettered");
-
-    let report = evaluate_integrity_observations(vec![
-        IntegrityObservation {
-            id: "sensitivity_denial".into(),
-            passed: sensitivity_denied,
-            evidence: "restricted write rejected under personal clearance".into(),
-        },
-        IntegrityObservation {
-            id: "smartdeny_approval".into(),
-            passed: smartdeny,
-            evidence: "RunCommand awaited approval and created no file".into(),
-        },
-        IntegrityObservation {
-            id: "route_policy_denial".into(),
-            passed: route_denied,
-            evidence: "remote Codex route rejected under local-only privacy".into(),
-        },
-        IntegrityObservation {
-            id: "cooperative_cancellation".into(),
-            passed: cooperative_cancellation,
-            evidence: "durable cancellation synchronized to kernel token".into(),
-        },
-        IntegrityObservation {
-            id: "stale_completion_fence".into(),
-            passed: stale_completion_fenced,
-            evidence: "late success rejected after cancellation request".into(),
-        },
-        IntegrityObservation {
-            id: "gateway_dead_letter".into(),
-            passed: gateway_dead_letter,
-            evidence: "third bounded failure produced dead-letter state".into(),
-        },
-    ])
-    .unwrap();
+    let report = run_offline_integrity_suite(dir.path()).unwrap();
     assert!(report.all_ok(), "{:#?}", report.cases);
     assert_eq!(report.passed, 6);
+    assert_eq!(
+        report
+            .cases
+            .iter()
+            .map(|case| case.id.as_str())
+            .collect::<Vec<_>>(),
+        optimus_kernel::REQUIRED_INTEGRITY_EVALS
+    );
+}
+
+#[test]
+fn offline_integrity_executor_isolates_deterministic_retries() {
+    let dir = tempdir().unwrap();
+    let first = run_offline_integrity_suite(dir.path()).unwrap();
+    let second = run_offline_integrity_suite(dir.path()).unwrap();
+
+    assert_eq!(
+        serde_json::to_value(first).unwrap(),
+        serde_json::to_value(second).unwrap()
+    );
+    assert_eq!(
+        std::fs::read_dir(dir.path().join("integrity-runs"))
+            .unwrap()
+            .count(),
+        2
+    );
+}
+
+#[test]
+fn offline_integrity_executor_reports_stable_failures_for_unusable_home() {
+    let dir = tempdir().unwrap();
+    let blocked_home = dir.path().join("not-a-directory");
+    std::fs::write(&blocked_home, b"blocked").unwrap();
+
+    let first = run_offline_integrity_suite(&blocked_home).unwrap();
+    let second = run_offline_integrity_suite(&blocked_home).unwrap();
+
+    assert_eq!(first.passed, 0);
+    assert_eq!(first.failed, optimus_kernel::REQUIRED_INTEGRITY_EVALS.len());
+    assert!(first
+        .cases
+        .iter()
+        .all(|case| { !case.ok && case.detail.starts_with("integrity_case_failed:") }));
+    assert_eq!(
+        serde_json::to_value(first).unwrap(),
+        serde_json::to_value(second).unwrap()
+    );
+    assert_eq!(std::fs::read(&blocked_home).unwrap(), b"blocked");
 }
