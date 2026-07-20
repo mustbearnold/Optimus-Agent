@@ -19,7 +19,7 @@ validated_by:
   - crates/**/tests/**
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
+last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
 # Observability, replay, and evaluation map
@@ -75,8 +75,18 @@ model trajectory.
 model, prompt/tool/policy/input hashes, ordered canonical tool outcomes, and
 explicit replay classification. Model calls remain honestly non-replayable;
 deterministic/convergent tools may be fixture-replayable. Optimus does not retain
-all provider responses, external fixtures, timing, or cost and must not claim
-exact replay for arbitrary runs.
+all provider responses and must not claim exact replay for arbitrary runs.
+
+**Confirmed current behaviour:** immutable bounded replay bundles retain
+content-addressed fixture bytes, source manifest/trace/dependency hashes,
+ordered stages, and expected terminal evidence. Planning validates completeness
+and drift. A zero-effect executor compares exact inputs/fixtures and appends one
+terminal report; it never reruns a provider or external effect.
+
+**Confirmed current behaviour:** canonical local trace/span stores retain parent
+relationships, ordered bounded events, one terminal span outcome, traced route
+decisions, and immutable execution-manifest links. No distributed transaction
+or OpenTelemetry exporter is implied.
 
 **Confirmed current behaviour:** exact approval actors/times/effect hashes and
 effect-attempt intent/outcome receipts are retained, and interrupted commands are
@@ -99,25 +109,31 @@ route-policy denial, cooperative cancellation, stale-completion fencing, and
 gateway dead letter. Missing, duplicate, or evidence-free observations fail the
 evaluation contract.
 
+**Confirmed current behaviour:** the versioned Priority-2 dataset represents
+those six cases and four trajectories with exact case/tool/terminal/replay/trace
+contracts and provenance. Deterministic reports bind dataset, source tree,
+contract, tool catalog, route policy, provider, and model identities; checked
+integer metrics, explicit thresholds, immutable baselines, and regression
+comparisons fail closed on incompatible evidence.
+
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider
 parsing, sessions, memory, skills, cron, gateway, and campaigns. Desktop
 Playwright tests cover bootstrap, shell/composer behavior, session/runtime
 interactions, capabilities/tools, drag, and browser UI contracts.
 
-**Partially implemented behaviour:** these are tests plus a small trajectory
-harness, not a general evaluation framework. Results do not currently record
-model/prompt/workflow/tool versions, quality/cost/latency dimensions, or baseline
-comparisons.
+**Partially implemented behaviour:** the typed framework evaluates supplied
+offline observations; it is not yet a universal workflow runner or automatic
+release gate and does not establish factual correctness beyond declared cases.
 
 ## Missing observability
 
 The following are **unknown or unresolved behaviour**:
 
-- universal cross-subsystem trace/workflow-run/model-call/artifact correlation;
-  agent invocation, session turn, tool call, job/node/effect attempt, route
-  decision, approval, and memory IDs exist in their owning stores;
-- model tokens, cost, latency, retries, fallback reasons, and cache telemetry;
+- universal transactionally-coupled workflow-run/model-call/artifact correlation;
+  canonical traces and selected route/execution links exist, while other owner
+  IDs remain in their stores;
+- model tokens, cache telemetry, and live billing integration;
 - retrieval candidate/rank evidence;
 - security-denial and policy-decision records across all boundaries;
 - artifact lineage and source provenance from input to publish;
@@ -139,13 +155,14 @@ The following are **unknown or unresolved behaviour**:
 | Memory temporal/trust correctness | Unit/integration coverage; no benchmark metrics. |
 | Source grounding/citations | Memory citation structure tested; end-to-end factual grounding eval missing. |
 | Browser reliability | HTTP effector and UI tests exist; no real-browser CDP reliability benchmark. |
-| Cost/latency | Missing. |
-| Deterministic replay | Missing beyond scripted trajectories. |
+| Cost/latency | Synthetic provenance-bound route observations and evaluation means exist; live billing/token integration is missing. |
+| Deterministic replay | Bounded immutable fixture comparison exists; live providers/external effects are deliberately not rerun. |
 | GPU versus CPU | Not applicable until a GPU adapter exists. |
 
 ## Planned evaluation gate
 
-**Planned behaviour:** a prompt, workflow, tool, model-routing, retrieval, or
-memory change becomes default only after a versioned baseline comparison. The
+**Planned behaviour:** wire the implemented versioned baseline contract into
+default-change delivery for prompts, workflows, tools, model routing, retrieval,
+and memory. The
 result must separate quality, reliability, cost, latency, security, and human
 correction rather than collapsing them into one score.

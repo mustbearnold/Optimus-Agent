@@ -18,7 +18,7 @@ validated_by:
   - crates/**/tests/**
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
+last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
 # Optimus Agent system overview
@@ -162,9 +162,10 @@ agent contract does not bypass runtime SmartDeny or filesystem confinement.
 ## Tool system
 
 **Confirmed current behaviour:** `optimus-packs::ToolDesc` is the canonical
-implemented tool contract. It owns stable ID, description, provider input
-schema, policy identity, invocation identity, availability, pack ownership, and
-schema-token cost. Available tool calls are validated against the exact set
+implemented tool contract. It owns stable ID, description, provider input and
+output schemas, policy and invocation identity, replay class, retry,
+idempotency, timeout ownership, cancellation, observability declarations,
+availability, pack ownership, and schema-token cost. Available tool calls are validated against the exact set
 advertised for that model step, including non-empty unique call IDs, before any
 sibling effect runs.
 
@@ -179,9 +180,9 @@ job/node/SHA-256 effect identity. Browser tools use an HTTP text/link effector,
 not CDP. `read_file`
 uses the filesystem sandbox and denies secret basenames.
 
-**Unknown or unresolved behaviour:** canonical output schemas, per-tool retry
-rules, general cancellation, idempotency declarations, replay declarations,
-and stable per-call observability IDs are not implemented in `ToolDesc`.
+**Unknown or unresolved behaviour:** owner-specific runtime paths do not yet
+implement universal cooperative cancellation or retries merely because the
+descriptor declares their support boundary.
 
 ## State and persistence
 
@@ -198,10 +199,14 @@ Optimus home:
 | `gateway/gateway.db` plus files | kernel/gateway | Authoritative message claims/attempts/terminal outbox JSON plus reconciled inbox/outbox/processed/failed adapter files. |
 | caller-selected agent registry/invocation DBs | kernel/agent | Immutable descriptor versions plus accepted invocation projections, ordered events, retry lineage, cancellation, terminal results, and validated effect links. |
 | caller-selected workflow registry DB | kernel/workflow | Immutable validated workflow definitions; not workflow execution state. |
+| caller-selected replay DB | kernel/replay | Immutable content-addressed fixture bundles and one terminal replay report per bundle. |
+| caller-selected trace DB | kernel/trace | Canonical spans, ordered events, and one terminal span outcome. |
+| `routing.db` telemetry tables | kernel/telemetry | Provenance-bound provider/model outcome, latency, and cost observations. |
+| caller-selected evaluation DB | kernel/evaluation | Immutable candidate-bound baseline reports. |
 | `workspace/.optimus/browser_state.json` | kernel/browser | Last HTTP page and bounded navigation history. |
 
 **Unknown or unresolved behaviour:** the remaining stores do not share a
-transaction, migration framework, backup policy, or universal trace/retention
+transaction, migration framework, backup policy, or universal retention
 contract. Campaigns and Work Graph jobs are the exception: both live in
 `optimus.db`. Cross-contract agent/session links reconcile committed identities;
 they are not distributed transactions.
@@ -244,20 +249,23 @@ privacy erase are idempotent scoped transitions with sanitized audit records.
 
 **Confirmed current behaviour:** a canonical typed route resolver validates
 provider/model ownership, required capabilities, local-only privacy, cost
-budget, and explicitly bounded fallback, then persists route decisions. CLI,
+budget, and explicitly bounded fallback before optional fresh telemetry
+filtering/ranking, then persists route decisions. Telemetry is tied to exact
+route provider/model/trace identity and cannot authorize a statically denied
+candidate. CLI,
 desktop, cron, and gateway use the same resolver. Provider-specific wire parsing
 remains in the adapters.
 
 **Confirmed current behaviour:** Codex retries once after an HTTP failure with
-system plus last-user messages and no reasoning effort. There is no provider
-fallback, cost/latency policy, privacy policy, capability resolution, or
-evaluation-driven routing.
+system plus last-user messages and no reasoning effort. This provider-local
+retry is distinct from cross-provider fallback.
 
 **Known routing debt:** normalized reasoning effort and fast mode are sent by the
 Codex adapter; the OpenAI-compatible request mapper does not transmit them.
 
-**Unknown or unresolved behaviour:** provider health, measured latency/cost,
-evaluation-driven selection, and local-model/GPU adapters are not implemented.
+**Unknown or unresolved behaviour:** token accounting, live billing integration,
+automatic runtime-failure fallback, evaluation-report-driven selection, and
+local-model/GPU adapters are not implemented.
 
 ## Security and approvals
 
@@ -309,19 +317,28 @@ sequence and optional job/node IDs. Model turns expose in-process text, tool,
 and status stream events. Sessions, cron, campaigns, gateway, skills, and memory
 also retain subsystem-specific state.
 
-**Partially implemented behaviour:** job effects and command results support
-inspection and crash resume. The offline eval harness replays scripted model
-responses against four deterministic cases.
+**Confirmed current behaviour:** versioned execution manifests and immutable,
+bounded, content-addressed fixture bundles support zero-effect offline replay.
+Planning binds exact source manifest, trace, policy, tool catalog, stage order,
+fixture hashes, and terminal evidence. Input or fixture drift fails before later
+stages and one immutable replay report records the terminal comparison.
+
+**Confirmed current behaviour:** canonical trace/span identities support ordered
+append-only events, one terminal span outcome, traced route decisions, and
+immutable execution-manifest trace links. Versioned evaluation datasets retain
+ten declared cases and produce deterministic candidate-bound metrics, thresholds,
+reports, immutable baselines, and regression comparisons.
 
 **Known observability debt:** event-stream receiver failure stops delivery but
 does not cancel the underlying model/tool turn. A turn can also commit a durable
 effect and then fail before the session transcript is saved.
 
-**Unknown or unresolved behaviour:** there is no cross-subsystem trace/span
-model, stable model-call/tool-call/artifact IDs, token/cost/latency telemetry,
-OpenTelemetry integration, structured security-denial stream, GPU/fallback
-telemetry, or deterministic replay bundle containing versions, inputs, outputs,
-approvals, and artifacts. Logs are not a complete source of operational truth.
+**Unknown or unresolved behaviour:** there is no OpenTelemetry export,
+structured security-denial stream, token accounting, artifact publication
+lineage, GPU/fallback telemetry, or transaction spanning trace, route,
+execution, runtime, agent, workflow, and session stores. Fixture replay does not
+rerun live providers or external effects. Logs are not a complete source of
+operational truth.
 
 ## GPU and CPU fallback
 
@@ -337,12 +354,12 @@ availability mandatory.
 
 ## Current architectural debt and open decisions
 
-1. **Unknown/unresolved:** universal agent contract and specialist ownership.
-2. **Unknown/unresolved:** explicit workflow schema and lifecycle contract.
-3. **Partially implemented:** cancellation and exactly-one terminal outcome.
-4. **Unknown/unresolved:** canonical tool output/error/replay/cancellation fields.
-5. **Unknown/unresolved:** capability/eval/cost/privacy model router.
-6. **Unknown/unresolved:** trace and deterministic replay envelope.
+1. **Confirmed contract, unresolved product:** no built-in specialists or router.
+2. **Confirmed contract, unresolved product:** no universal workflow executor.
+3. **Partially implemented:** cancellation remains owner-specific.
+4. **Confirmed contract, unresolved product:** metadata declarations do not create universal runtime cancellation/retry.
+5. **Partially implemented:** policy and telemetry routing exist; evaluation-driven routing does not.
+6. **Confirmed bounded behaviour:** fixture replay and local causal traces exist; live-effect replay and distributed tracing do not.
 7. **Unknown/unresolved:** provenance and artifact publishing contracts.
 8. **Known debt:** unauthenticated wildcard-CORS loopback desktop test API.
 9. **Known boundary:** approved arbitrary child processes are not governed by

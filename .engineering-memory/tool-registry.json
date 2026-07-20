@@ -4,8 +4,8 @@
   "do_not_edit": true,
   "generated_by": "scripts/engineering_memory.py",
   "known_gaps": [
-    "Canonical semantic output schemas are absent.",
-    "Cancellation, retry, idempotency, determinism, and replay are not ToolDesc fields.",
+    "ToolOutcome.data remains tool-specific rather than one universal semantic data schema.",
+    "Operational declarations do not create universal runtime cancellation or retry implementations.",
     "Unavailable placeholders are catalog entries but are not provider-advertised tools."
   ],
   "packs": [
@@ -81,10 +81,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Load an on-demand capability pack",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -92,7 +92,7 @@
       },
       "id": "activate_pack",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "keyed"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -117,6 +117,11 @@
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
       },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
+      },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
         "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
@@ -138,10 +143,10 @@
       },
       "policy": "capability",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 100,
       "side_effects": [
@@ -166,10 +171,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Click element",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -177,7 +182,7 @@
       },
       "id": "browser_click",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "none"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -195,6 +200,11 @@
       "invocation": "BrowserClick",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -218,10 +228,10 @@
       },
       "policy": "browser",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 180,
       "side_effects": [
@@ -243,10 +253,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Navigate URL",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -254,7 +264,7 @@
       },
       "id": "browser_navigate",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "none"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -271,6 +281,11 @@
       "invocation": "BrowserNavigate",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -294,10 +309,10 @@
       },
       "policy": "browser",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 200,
       "side_effects": [
@@ -323,10 +338,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "A11y snapshot",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -334,7 +349,7 @@
       },
       "id": "browser_snapshot",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "none"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -345,6 +360,11 @@
       "invocation": "BrowserSnapshot",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -368,10 +388,10 @@
       },
       "policy": "browser",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 220,
       "side_effects": [
@@ -410,6 +430,11 @@
       "invocation": "Unavailable",
       "logging": {
         "status": "not_applicable_unavailable"
+      },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
       },
       "output_schema": null,
       "owner": "optimus-packs",
@@ -459,6 +484,11 @@
       "invocation": "Unavailable",
       "logging": {
         "status": "not_applicable_unavailable"
+      },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
       },
       "output_schema": null,
       "owner": "optimus-packs",
@@ -511,6 +541,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "desktop",
@@ -562,6 +597,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "desktop",
@@ -611,6 +651,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "devex",
@@ -659,6 +704,11 @@
       "invocation": "Unavailable",
       "logging": {
         "status": "not_applicable_unavailable"
+      },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
       },
       "output_schema": null,
       "owner": "optimus-packs",
@@ -710,6 +760,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "media",
@@ -759,6 +814,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "core",
@@ -791,10 +851,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Recall EvidencePacket",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -802,7 +862,7 @@
       },
       "id": "memory_recall",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "keyed"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -820,6 +880,11 @@
       "invocation": "MemoryRecall",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -842,10 +907,10 @@
       },
       "policy": "memory_read",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 130,
       "side_effects": [
@@ -887,6 +952,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "social",
@@ -918,10 +988,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Read workspace file",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -929,7 +999,7 @@
       },
       "id": "read_file",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "keyed"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -946,6 +1016,11 @@
       "invocation": "ReadFile",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -969,10 +1044,10 @@
       },
       "policy": "workspace_read",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 120,
       "side_effects": [
@@ -999,10 +1074,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Resolve procedural skill by name",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -1010,7 +1085,7 @@
       },
       "id": "skill_resolve",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "keyed"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -1027,6 +1102,11 @@
       "invocation": "SkillResolve",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -1049,10 +1129,10 @@
       },
       "policy": "skill_read",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 120,
       "side_effects": [
@@ -1076,10 +1156,10 @@
         "status": "required"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "terminal_owner",
       "description": "Run bounded shell command",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-runtime",
       "error_taxonomy": {
@@ -1087,7 +1167,7 @@
       },
       "id": "terminal",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "none"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -1111,6 +1191,11 @@
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
       },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
+      },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
         "semantic_schema": "ToolOutcome.data JSON value is tool-specific",
@@ -1133,10 +1218,10 @@
       },
       "policy": "process",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 150,
       "side_effects": [
@@ -1144,7 +1229,7 @@
         "filesystem_and_external_effects_possible"
       ],
       "source": "crates/optimus-packs/src/lib.rs",
-      "supports_cancellation": false,
+      "supports_cancellation": true,
       "timeout": {
         "seconds": 30,
         "source": "JobBudget::default",
@@ -1152,9 +1237,12 @@
       },
       "validated_by": [
         "crates/optimus-kernel/tests/agent_contracts.rs",
+        "crates/optimus-kernel/tests/evaluation_contracts.rs",
         "crates/optimus-kernel/tests/integrity_integration.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/replay_contracts.rs",
         "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-kernel/tests/trace_contracts.rs",
         "crates/optimus-kernel/tests/workflow_contracts.rs",
         "crates/optimus-packs/tests/packs_budget.rs",
         "crates/optimus-runtime/tests/cancellation.rs",
@@ -1184,6 +1272,11 @@
       "invocation": "Unavailable",
       "logging": {
         "status": "not_applicable_unavailable"
+      },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
       },
       "output_schema": null,
       "owner": "optimus-packs",
@@ -1234,6 +1327,11 @@
       "logging": {
         "status": "not_applicable_unavailable"
       },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
+      },
       "output_schema": null,
       "owner": "optimus-packs",
       "pack": "media",
@@ -1265,10 +1363,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "unsupported",
       "description": "Search the web",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-kernel",
       "error_taxonomy": {
@@ -1276,7 +1374,7 @@
       },
       "id": "web_search",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "none"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -1297,6 +1395,11 @@
       "invocation": "WebSearch",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -1319,10 +1422,10 @@
       },
       "policy": "network_read",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 140,
       "side_effects": [
@@ -1349,10 +1452,10 @@
         "status": "not_required_current_policy"
       },
       "available": true,
-      "cancellation_status": "unknown_or_unresolved",
+      "cancellation_status": "terminal_owner",
       "description": "Write workspace file",
       "determinism": {
-        "status": "external_or_state_dependent"
+        "status": "declared_by_replay_class"
       },
       "effector_owner": "optimus-runtime",
       "error_taxonomy": {
@@ -1360,7 +1463,7 @@
       },
       "id": "write_file",
       "idempotency": {
-        "status": "unknown_or_unresolved"
+        "status": "convergent"
       },
       "input_schema": {
         "additionalProperties": false,
@@ -1381,6 +1484,11 @@
       "invocation": "WriteFile",
       "logging": {
         "status": "kernel_trace_and_or_runtime_events"
+      },
+      "observability_contract": {
+        "call_identity_required": true,
+        "provenance_required": true,
+        "trace_span_required": true
       },
       "output_schema": {
         "envelope_schema": "optimus_packs::ToolOutcome/v1",
@@ -1404,17 +1512,17 @@
       },
       "policy": "workspace_write",
       "replay": {
-        "status": "not_declared"
+        "status": "canonical_tool_descriptor"
       },
       "retry": {
-        "status": "none_at_tool_contract"
+        "status": "never"
       },
       "schema_tokens": 120,
       "side_effects": [
         "filesystem_write"
       ],
       "source": "crates/optimus-packs/src/lib.rs",
-      "supports_cancellation": false,
+      "supports_cancellation": true,
       "timeout": {
         "seconds": null,
         "status": "unknown_or_unresolved"
@@ -1451,6 +1559,11 @@
       "invocation": "Unavailable",
       "logging": {
         "status": "not_applicable_unavailable"
+      },
+      "observability_contract": {
+        "call_identity_required": false,
+        "provenance_required": false,
+        "trace_span_required": false
       },
       "output_schema": null,
       "owner": "optimus-packs",

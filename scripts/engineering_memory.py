@@ -404,12 +404,26 @@ def tool_operational_metadata(tool_id: str, policy: str, available: bool) -> dic
         "side_effects": side_effects,
         "permissions": permissions,
         "timeout": timeout,
-        "supports_cancellation": False,
-        "cancellation_status": "unknown_or_unresolved" if available else "not_applicable_unavailable",
-        "retry": {"status": "none_at_tool_contract" if available else "not_applicable_unavailable"},
-        "idempotency": {"status": "unknown_or_unresolved" if available else "not_applicable_unavailable"},
-        "determinism": {"status": "external_or_state_dependent" if available else "not_applicable_unavailable"},
-        "replay": {"status": "not_declared" if available else "not_applicable_unavailable"},
+        "supports_cancellation": available and tool_id in {"write_file", "terminal"},
+        "cancellation_status": (
+            "terminal_owner" if available and tool_id in {"write_file", "terminal"}
+            else "unsupported" if available else "not_applicable_unavailable"
+        ),
+        "retry": {"status": "never" if available else "not_applicable_unavailable"},
+        "idempotency": {
+            "status": (
+                "convergent" if tool_id == "write_file"
+                else "keyed" if available and tool_id in {"read_file", "memory_recall", "skill_resolve", "activate_pack"}
+                else "none" if available else "not_applicable_unavailable"
+            )
+        },
+        "determinism": {"status": "declared_by_replay_class" if available else "not_applicable_unavailable"},
+        "replay": {"status": "canonical_tool_descriptor" if available else "not_applicable_unavailable"},
+        "observability_contract": {
+            "call_identity_required": available,
+            "trace_span_required": available,
+            "provenance_required": available,
+        },
         "approval": approval,
         "error_taxonomy": {"status": "tool_specific_not_canonical" if available else "not_applicable_unavailable"},
         "logging": {"status": "kernel_trace_and_or_runtime_events" if available else "not_applicable_unavailable"},
@@ -539,8 +553,8 @@ def parse_tool_catalog() -> dict[str, Any]:
         "packs": packs,
         "tools": sorted(tools, key=lambda item: item["id"]),
         "known_gaps": [
-            "Canonical semantic output schemas are absent.",
-            "Cancellation, retry, idempotency, determinism, and replay are not ToolDesc fields.",
+            "ToolOutcome.data remains tool-specific rather than one universal semantic data schema.",
+            "Operational declarations do not create universal runtime cancellation or retry implementations.",
             "Unavailable placeholders are catalog entries but are not provider-advertised tools.",
         ],
     }
@@ -913,7 +927,7 @@ def build_contract_coverage() -> dict[str, Any]:
         ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-kernel/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-12", "credential-and-local-transport-security", "implemented", ["crates/optimus-kernel/src/credential.rs", "crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], ["crates/optimus-kernel/tests/codex_oauth.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
-        ("C-13", "deterministic-replay-and-provenance", "partial", ["crates/optimus-store/src/lib.rs", "crates/optimus-kernel/src/eval.rs"], ["crates/optimus-kernel/src/eval.rs"]),
+        ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-kernel/src/replay.rs", "crates/optimus-kernel/src/trace.rs"], ["crates/optimus-kernel/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs"]),
         ("C-14", "memory-clock-retention-erasure", "implemented", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
         ("C-15", "atomic-projection-and-event-transitions", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-graph/src/lib.rs"], ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/tests/cancellation.rs"]),
         ("C-16", "campaign-job-consistency-and-recovery", "implemented", ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-store/src/lib.rs"], ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-store/src/lib.rs"]),
@@ -965,9 +979,22 @@ def build_evaluation_coverage() -> dict[str, Any]:
     ]
     if integrity_ids != expected_integrity:
         raise MemoryError(f"unexpected integrity eval IDs: {integrity_ids}")
+    typed_path = ROOT / "crates/optimus-kernel/src/evaluation.rs"
+    typed = typed_path.read_text(encoding="utf-8")
+    required_typed_symbols = [
+        "pub struct EvaluationDataset",
+        "pub struct CandidateBinding",
+        "pub struct EvaluationReportV1",
+        "pub struct BaselineStore",
+        "pub fn build_evaluation_report",
+        "pub fn compare_evaluation_reports",
+    ]
+    missing = [symbol for symbol in required_typed_symbols if symbol not in typed]
+    if missing:
+        raise MemoryError(f"typed evaluation extraction is stale; missing symbols: {missing}")
     return {
         **generated_header(),
-        "framework_status": "small_offline_trajectory_harness",
+        "framework_status": "versioned_offline_evaluation_and_immutable_baselines",
         "builtin_cases": [
             {"id": case_id, "source": "crates/optimus-kernel/src/eval.rs"}
             for case_id in ids
@@ -982,20 +1009,29 @@ def build_evaluation_coverage() -> dict[str, Any]:
         ],
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
-            "assistant_text": "substring_only",
+            "assistant_text": "exact_text_metric_in_versioned_dataset; legacy harness remains substring-based",
             "workflow_completion": "contract_adapter_and_cross_contract_tests",
             "security": "six_case_observed_integrity_suite_plus_focused_tests",
             "memory_precision_recall": "missing",
             "retrieval_relevance": "missing",
             "source_grounding": "missing",
             "citation_correctness": "missing",
-            "cost": "missing",
-            "latency": "missing",
-            "replay": "scripted_only",
+            "cost": "checked_integer_mean",
+            "latency": "checked_integer_mean",
+            "replay": "fixture_replay_accuracy_plus_legacy_scripted_trajectories",
             "gpu_cpu_correctness": "not_applicable_no_gpu_component",
         },
-        "baseline_comparison": False,
-        "version_binding": False,
+        "typed_dataset": {
+            "id": "priority2-integrity",
+            "version": 1,
+            "case_count": 10,
+            "source": "crates/optimus-kernel/src/evaluation.rs",
+            "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+        },
+        "metrics": ["exact_text", "tool_precision", "tool_recall", "terminal_accuracy", "replay_accuracy", "latency_millis", "cost_microunits"],
+        "baseline_comparison": True,
+        "version_binding": True,
+        "candidate_bindings": ["source_tree_sha256", "contract_sha256", "tool_catalog_sha256", "route_policy_sha256", "provider", "model"],
     }
 
 

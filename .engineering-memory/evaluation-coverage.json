@@ -1,5 +1,5 @@
 {
-  "baseline_comparison": false,
+  "baseline_comparison": true,
   "builtin_cases": [
     {
       "id": "offline-echo",
@@ -18,22 +18,30 @@
       "source": "crates/optimus-kernel/src/eval.rs"
     }
   ],
+  "candidate_bindings": [
+    "source_tree_sha256",
+    "contract_sha256",
+    "tool_catalog_sha256",
+    "route_policy_sha256",
+    "provider",
+    "model"
+  ],
   "dimensions": {
-    "assistant_text": "substring_only",
+    "assistant_text": "exact_text_metric_in_versioned_dataset; legacy harness remains substring-based",
     "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
     "citation_correctness": "missing",
-    "cost": "missing",
+    "cost": "checked_integer_mean",
     "gpu_cpu_correctness": "not_applicable_no_gpu_component",
-    "latency": "missing",
+    "latency": "checked_integer_mean",
     "memory_precision_recall": "missing",
-    "replay": "scripted_only",
+    "replay": "fixture_replay_accuracy_plus_legacy_scripted_trajectories",
     "retrieval_relevance": "missing",
     "security": "six_case_observed_integrity_suite_plus_focused_tests",
     "source_grounding": "missing",
     "workflow_completion": "contract_adapter_and_cross_contract_tests"
   },
   "do_not_edit": true,
-  "framework_status": "small_offline_trajectory_harness",
+  "framework_status": "versioned_offline_evaluation_and_immutable_baselines",
   "generated_by": "scripts/engineering_memory.py",
   "integrity_cases": [
     {
@@ -67,6 +75,22 @@
       "source": "crates/optimus-kernel/src/eval.rs"
     }
   ],
+  "metrics": [
+    "exact_text",
+    "tool_precision",
+    "tool_recall",
+    "terminal_accuracy",
+    "replay_accuracy",
+    "latency_millis",
+    "cost_microunits"
+  ],
   "schema_version": 1,
-  "version_binding": false
+  "typed_dataset": {
+    "case_count": 10,
+    "id": "priority2-integrity",
+    "source": "crates/optimus-kernel/src/evaluation.rs",
+    "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+    "version": 1
+  },
+  "version_binding": true
 }

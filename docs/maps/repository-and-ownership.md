@@ -11,7 +11,7 @@ depends_on:
   - README.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
+last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
 # Repository and ownership map
@@ -40,8 +40,8 @@ the root Cargo workspace.
 | `optimus-runtime` | library | Job execution, SmartDeny, process bounds/capture, crash resume, campaigns | graph, store, skills |
 | `optimus-memory` | library | Evidence-native runtime memory and temporal recall | none |
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
-| `optimus-packs` | library | Canonical tool/pack descriptor and capability budgets | none |
-| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution manifests, routing, credentials, and high-level operator services | graph, runtime, memory, skills, packs |
+| `optimus-packs` | library | Canonical tool/pack descriptor, operational metadata, and capability budgets | none |
+| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution/replay/trace manifests, routing telemetry, versioned evaluation, credentials, and high-level operator services | graph, runtime, memory, skills, packs |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Wry/Tao desktop shell, native IPC, UI, HTTP test harness | kernel, graph, runtime, packs |
 
@@ -72,8 +72,8 @@ system, sessions, scheduling, runtime, files, chat, and OS modules.
 - **Confirmed:** desktop transport and presentation belong to
   `apps/optimus-desktop`; domain behavior should remain in libraries.
 - **Confirmed:** `optimus-kernel` owns typed agent/workflow contracts,
-  registries/adapters, invocation evidence, canonical routing, execution
-  manifests, and offline integrity evaluation.
+  registries/adapters, invocation evidence, canonical routing and telemetry,
+  execution/replay/trace contracts, and versioned offline evaluation/baselines.
 - **Unknown/unresolved:** no package owns built-in specialist definitions,
   specialist routing/general workflow execution, OpenTelemetry, or GPU adapters.
 

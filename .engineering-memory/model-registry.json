@@ -68,7 +68,7 @@
     }
   ],
   "router_source": "crates/optimus-kernel/src/routing.rs",
-  "router_source_sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e",
+  "router_source_sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6",
   "router_status": "implemented_canonical_policy_resolver",
   "schema_version": 1
 }

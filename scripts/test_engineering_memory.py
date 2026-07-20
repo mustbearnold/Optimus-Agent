@@ -63,6 +63,11 @@ class EngineeringMemoryTests(unittest.TestCase):
         terminal = next(row for row in tools if row["id"] == "terminal")
         self.assertEqual(terminal["approval"]["status"], "required")
         self.assertEqual(terminal["policy"], "process")
+        self.assertEqual(terminal["retry"]["status"], "never")
+        self.assertEqual(terminal["cancellation_status"], "terminal_owner")
+        self.assertTrue(terminal["observability_contract"]["trace_span_required"])
+        read_file = next(row for row in tools if row["id"] == "read_file")
+        self.assertEqual(read_file["idempotency"]["status"], "keyed")
 
     def test_agent_registry_does_not_invent_specialists(self) -> None:
         registry = EM.build_agent_registry()
@@ -137,10 +142,10 @@ class EngineeringMemoryTests(unittest.TestCase):
         for contract_id in ("C-01", "C-02", "C-03", "C-05", "C-15", "C-16", "C-17"):
             self.assertEqual(by_id[contract_id]["implementation_status"], "implemented")
             self.assertTrue(by_id[contract_id]["validated_by"])
-        for contract_id in ("C-08", "C-09", "C-10", "C-11", "C-12", "C-14", "C-18"):
+        for contract_id in ("C-08", "C-09", "C-10", "C-11", "C-12", "C-13", "C-14", "C-18"):
             self.assertEqual(by_id[contract_id]["implementation_status"], "implemented")
             self.assertTrue(by_id[contract_id]["validated_by"])
-        self.assertEqual(by_id["C-13"]["implementation_status"], "partial")
+        self.assertIn("crates/optimus-kernel/src/replay.rs", by_id["C-13"]["sources"])
         self.assertTrue(by_id["C-18"]["validated_by"])
 
         workflows = {row["id"]: row for row in EM.build_workflow_registry()["workflows"]}
@@ -165,6 +170,21 @@ class EngineeringMemoryTests(unittest.TestCase):
             ],
         )
         self.assertTrue(all(case["executed_by"] for case in coverage["integrity_cases"]))
+        self.assertEqual(coverage["typed_dataset"]["case_count"], 10)
+        self.assertTrue(coverage["baseline_comparison"])
+        self.assertTrue(coverage["version_binding"])
+        self.assertEqual(
+            coverage["candidate_bindings"],
+            [
+                "source_tree_sha256",
+                "contract_sha256",
+                "tool_catalog_sha256",
+                "route_policy_sha256",
+                "provider",
+                "model",
+            ],
+        )
+        self.assertIn("replay_accuracy", coverage["metrics"])
 
     def test_current_docs_do_not_resurrect_adr_0019_superseded_debt(self) -> None:
         current_docs = [

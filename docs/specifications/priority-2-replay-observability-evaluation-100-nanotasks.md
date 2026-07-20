@@ -1,6 +1,6 @@
 ---
 knowledge_type: specification
-status: current
+status: historical
 covers:
   - crates/optimus-packs/src/**
   - crates/optimus-packs/tests/**
@@ -21,7 +21,7 @@ validated_by:
   - crates/optimus-packs/tests/**
   - crates/optimus-kernel/tests/**
   - scripts/test_engineering_memory.py
-last_verified_commit: 7a06d3fca68a9a7f5ebfa8ca2535a09f88f65507
+last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
 # Priority-2 replay, observability, and evaluation: 100 nano-tasks
@@ -76,6 +76,18 @@ Implement a CPU-first, offline-verifiable replay and evaluation layer without cl
 10. As an engineer, I want source, tests, ADRs, generated memory, GitHub issues, and remote commit identity to agree.
 
 ## Ordered 100 nano-task contract
+
+## Final disposition
+
+All 100 contiguous tasks, n101 through n200, were implemented in order. Source
+implementation is frozen at `09fddbc1b60a6b37f9f80680988ea5036a9b8eec`.
+Observed final gates passed: workspace formatting, all-target/all-feature strict
+Clippy, all-feature workspace tests, strict all-feature rustdoc, 36/36 desktop
+Playwright tests, and 12/12 Engineering Memory semantic tests. ADR-0023 and the
+current architecture/contracts/maps describe the bounded implementation and its
+remaining live-effect, distributed-tracing, token/billing, retrieval, and GPU
+limits. This specification is retained as the historical execution contract;
+GitHub Issue #3 carries final delivery reconciliation.
 
 ### Phase A — Replay authority and fixture store
 

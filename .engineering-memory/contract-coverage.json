@@ -166,14 +166,16 @@
     },
     {
       "id": "C-13",
-      "implementation_status": "partial",
+      "implementation_status": "implemented",
       "name": "deterministic-replay-and-provenance",
       "sources": [
-        "crates/optimus-store/src/lib.rs",
-        "crates/optimus-kernel/src/eval.rs"
+        "crates/optimus-kernel/src/execution.rs",
+        "crates/optimus-kernel/src/replay.rs",
+        "crates/optimus-kernel/src/trace.rs"
       ],
       "validated_by": [
-        "crates/optimus-kernel/src/eval.rs"
+        "crates/optimus-kernel/tests/replay_contracts.rs",
+        "crates/optimus-kernel/tests/trace_contracts.rs"
       ]
     },
     {

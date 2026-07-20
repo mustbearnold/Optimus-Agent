@@ -14,7 +14,7 @@ depends_on:
 validated_by:
   - crates/**/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
+last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
 # Highest-risk behavioural contracts
@@ -191,12 +191,18 @@ it does not replace executable enforcement.
 
 ### C-13 Deterministic replay and provenance
 
-- **State:** Partially implemented with versioned execution manifests, hashes,
-  exact tool outcomes, causal links, and honest replay classification.
-- **Required contract:** version and hash every execution dependency, classify
-  nondeterminism, retain stable references, and never claim exact replay for
-  model/external stages.
-- **Owner:** observability/runtime/protocol.
+- **State:** Confirmed current behaviour for bounded fixture replay.
+- **Evidence:** versioned immutable bundles bind one terminal source manifest,
+  canonical trace, dependency hashes, ordered stages, content-addressed bounded
+  fixtures, and expected terminal evidence. Planning fails closed on missing,
+  duplicate, corrupt, reordered, drifted, or unsupported evidence.
+- **Evidence:** the offline executor has no provider/network/process/runtime/
+  approval/writable-workspace handle, compares exact stage inputs and fixture
+  bytes, stops at first mismatch, and persists one immutable terminal report.
+- **Boundary:** fixture comparison does not rerun or reproduce live model,
+  network, process, browser, or destructive effects; independent stores do not
+  share a transaction.
+- **Owner:** kernel replay/execution/trace plus runtime provenance.
 
 ### C-14 Memory clock, sensitivity, retention, and erasure
 

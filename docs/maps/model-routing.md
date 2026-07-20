@@ -18,7 +18,7 @@ validated_by:
   - crates/optimus-kernel/tests/integrity_integration.rs
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
-last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
+last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
 # Model-routing map
@@ -82,15 +82,20 @@ cannot guarantee bounded mid-request cancellation beyond its HTTP timeout.
 
 **Confirmed current behaviour:** `RouteRequest` includes surface, requested
 provider/model, required capabilities, privacy, optional maximum cost, and an
-explicit fallback flag. `RouteDecision` has stable identity, selected canonical
+explicit fallback flag plus optional bounded telemetry policy. `RouteDecision` has stable identity, selected canonical
 provider/model, fallback source, reasons, and timestamp; accepted decisions are
 persisted in `routing.db`. Unknown identities, wrong model ownership, local-only
 privacy violations, missing capabilities, and cost violations fail closed.
 
+**Confirmed current behaviour:** telemetry observations must match an existing
+route decision's provider, model, and optional trace. Fresh bounded aggregates
+use checked integer success, latency, and cost arithmetic. Static policy runs
+first; telemetry can filter/rank only already-approved candidates and records a
+snapshot hash in the accepted decision reason.
+
 The following remain **unknown or unresolved behaviour**:
 
-- provider/model health and measured fallback order;
-- measured latency, token, and actual billing cost;
+- token counts and actual billing integration;
 - data residency beyond local-versus-remote classification;
 - context-window and structured-output capability metadata;
 - per-model tool-use reliability and evaluation-driven selection;
@@ -99,8 +104,8 @@ The following remain **unknown or unresolved behaviour**:
 
 ## Planned direction
 
-**Planned behaviour:** extend the canonical resolver with health and evaluation
-evidence without moving provider-specific wire parsing out of current adapters.
+**Planned behaviour:** extend current bounded operational telemetry with
+evaluation evidence without moving provider-specific wire parsing out of current adapters.
 
 Future router extensions must preserve the current fail-closed contract and:
 

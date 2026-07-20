@@ -135,13 +135,17 @@
         "crates/optimus-kernel/src/credential.rs",
         "crates/optimus-kernel/src/cron.rs",
         "crates/optimus-kernel/src/eval.rs",
+        "crates/optimus-kernel/src/evaluation.rs",
         "crates/optimus-kernel/src/execution.rs",
         "crates/optimus-kernel/src/fs_sandbox.rs",
         "crates/optimus-kernel/src/gateway.rs",
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/src/openai_compat.rs",
+        "crates/optimus-kernel/src/replay.rs",
         "crates/optimus-kernel/src/routing.rs",
         "crates/optimus-kernel/src/session.rs",
+        "crates/optimus-kernel/src/telemetry.rs",
+        "crates/optimus-kernel/src/trace.rs",
         "crates/optimus-kernel/src/web_search.rs",
         "crates/optimus-kernel/src/workflow.rs"
       ],
@@ -189,6 +193,14 @@
         },
         {
           "cases": [
+            "priority2_dataset_is_exact_versioned_bounded_and_source_backed",
+            "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
+            "immutable_baseline_comparison_reports_regression_without_rewriting_history"
+          ],
+          "path": "crates/optimus-kernel/tests/evaluation_contracts.rs"
+        },
+        {
+          "cases": [
             "tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity",
             "session_and_agent_terminal_outcomes_agree_after_independent_reopen",
             "offline_integrity_evaluation_executes_all_required_contract_cases"
@@ -226,6 +238,23 @@
         },
         {
           "cases": [
+            "fixture_identity_bundle_validation_and_roundtrip_are_fail_closed",
+            "replay_store_is_atomic_immutable_bounded_reopenable_and_corruption_safe",
+            "replay_executor_consumes_verified_fixtures_without_effect_handles",
+            "replay_plan_rejects_trace_and_source_drift_before_execution",
+            "replay_input_mismatch_persists_failed_report_and_stops_later_stages"
+          ],
+          "path": "crates/optimus-kernel/tests/replay_contracts.rs"
+        },
+        {
+          "cases": [
+            "route_telemetry_is_provenance_bound_deduplicated_and_aggregated_with_integers",
+            "routing_uses_only_fresh_policy_approved_telemetry_for_explicit_fallback"
+          ],
+          "path": "crates/optimus-kernel/tests/routing_telemetry.rs"
+        },
+        {
+          "cases": [
             "session_survives_process_reopen",
             "new_session_ids_differ",
             "session_resume_rejects_unknown_persisted_pack",
@@ -236,6 +265,14 @@
             "kernel_turn_persists_versioned_manifest_and_replay_report"
           ],
           "path": "crates/optimus-kernel/tests/session_resume.rs"
+        },
+        {
+          "cases": [
+            "trace_tree_events_and_terminal_outcomes_are_ordered_and_durable",
+            "trace_context_rejects_missing_parent_cross_trace_and_cycles",
+            "route_decision_retains_exact_trace_and_span_identity"
+          ],
+          "path": "crates/optimus-kernel/tests/trace_contracts.rs"
         },
         {
           "cases": [
@@ -299,6 +336,14 @@
         },
         {
           "cases": [
+            "priority2_dataset_is_exact_versioned_bounded_and_source_backed",
+            "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
+            "immutable_baseline_comparison_reports_regression_without_rewriting_history"
+          ],
+          "path": "crates/optimus-kernel/tests/evaluation_contracts.rs"
+        },
+        {
+          "cases": [
             "tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity",
             "session_and_agent_terminal_outcomes_agree_after_independent_reopen",
             "offline_integrity_evaluation_executes_all_required_contract_cases"
@@ -336,6 +381,23 @@
         },
         {
           "cases": [
+            "fixture_identity_bundle_validation_and_roundtrip_are_fail_closed",
+            "replay_store_is_atomic_immutable_bounded_reopenable_and_corruption_safe",
+            "replay_executor_consumes_verified_fixtures_without_effect_handles",
+            "replay_plan_rejects_trace_and_source_drift_before_execution",
+            "replay_input_mismatch_persists_failed_report_and_stops_later_stages"
+          ],
+          "path": "crates/optimus-kernel/tests/replay_contracts.rs"
+        },
+        {
+          "cases": [
+            "route_telemetry_is_provenance_bound_deduplicated_and_aggregated_with_integers",
+            "routing_uses_only_fresh_policy_approved_telemetry_for_explicit_fallback"
+          ],
+          "path": "crates/optimus-kernel/tests/routing_telemetry.rs"
+        },
+        {
+          "cases": [
             "session_survives_process_reopen",
             "new_session_ids_differ",
             "session_resume_rejects_unknown_persisted_pack",
@@ -346,6 +408,14 @@
             "kernel_turn_persists_versioned_manifest_and_replay_report"
           ],
           "path": "crates/optimus-kernel/tests/session_resume.rs"
+        },
+        {
+          "cases": [
+            "trace_tree_events_and_terminal_outcomes_are_ordered_and_durable",
+            "trace_context_rejects_missing_parent_cross_trace_and_cycles",
+            "route_decision_retains_exact_trace_and_span_identity"
+          ],
+          "path": "crates/optimus-kernel/tests/trace_contracts.rs"
         },
         {
           "cases": [
@@ -446,6 +516,7 @@
             "canonical_descriptor_owns_output_schema_and_replay_class",
             "descriptor_rejects_outcome_identity_or_replay_drift",
             "catalog_rejects_output_schema_or_replay_drift",
+            "canonical_descriptor_owns_operational_metadata",
             "catalog_rejects_schema_constraints_runtime_does_not_enforce",
             "catalog_rejects_malformed_required_properties",
             "catalog_rejects_availability_schema_token_drift",
@@ -476,6 +547,7 @@
             "canonical_descriptor_owns_output_schema_and_replay_class",
             "descriptor_rejects_outcome_identity_or_replay_drift",
             "catalog_rejects_output_schema_or_replay_drift",
+            "canonical_descriptor_owns_operational_metadata",
             "catalog_rejects_schema_constraints_runtime_does_not_enforce",
             "catalog_rejects_malformed_required_properties",
             "catalog_rejects_availability_schema_token_drift",

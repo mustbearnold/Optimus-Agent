@@ -186,11 +186,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 18024,
           "language": "Rust",
-          "lines": 440,
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
           "bytes": 18952,
@@ -207,11 +214,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -221,11 +228,18 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 17227,
           "language": "Rust",
-          "lines": 420,
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 18867,
@@ -233,6 +247,20 @@
           "lines": 526,
           "path": "crates/optimus-kernel/src/session.rs",
           "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
         },
         {
           "bytes": 11686,
@@ -256,11 +284,11 @@
           "sha256": "32b9b91a06a00992af9dd15e2b2415bfb2b0b9e2c41505b588beaccb52a26278"
         },
         {
-          "bytes": 40910,
+          "bytes": 43505,
           "language": "Rust",
-          "lines": 1189,
+          "lines": 1269,
           "path": "crates/optimus-packs/src/lib.rs",
-          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
           "bytes": 89727,
@@ -459,6 +487,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -466,14 +501,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "673f1ff72478a8164774877a722b8d1d5d12cf0bb01e135d81635f2f8b5a70c2",
+      "current_tree_sha256": "ca906df14ae77993abcb427b618816598d89fb323a3c3180e8640e19347402ba",
       "document": "docs/architecture/system-overview.md",
       "knowledge_status": "current",
       "knowledge_type": "architecture",
-      "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "673f1ff72478a8164774877a722b8d1d5d12cf0bb01e135d81635f2f8b5a70c2"
+      "verified_tree_sha256": "ca906df14ae77993abcb427b618816598d89fb323a3c3180e8640e19347402ba"
     },
     {
       "covered_files": [
@@ -646,11 +681,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 18024,
           "language": "Rust",
-          "lines": 440,
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
           "bytes": 18952,
@@ -667,11 +709,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -681,11 +723,18 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 17227,
           "language": "Rust",
-          "lines": 420,
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 18867,
@@ -693,6 +742,20 @@
           "lines": 526,
           "path": "crates/optimus-kernel/src/session.rs",
           "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
         },
         {
           "bytes": 11686,
@@ -709,11 +772,11 @@
           "sha256": "75b380c0364685861a452afa9864233acf74fa9fb052f758c53adac231010fce"
         },
         {
-          "bytes": 40910,
+          "bytes": 43505,
           "language": "Rust",
-          "lines": 1189,
+          "lines": 1269,
           "path": "crates/optimus-packs/src/lib.rs",
-          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
           "bytes": 89727,
@@ -905,6 +968,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -912,14 +982,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "df6aa9c184583dd3e4ed845fb59e8c0147716828327d00cc1308a70880c2e8d0",
+      "current_tree_sha256": "88fd29f0fe6ff62b02d14039fbc12a7f2f780ee0f0ea56d3ece7db0bb2f3e28d",
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_status": "current",
       "knowledge_type": "contract-risk-register",
-      "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "df6aa9c184583dd3e4ed845fb59e8c0147716828327d00cc1308a70880c2e8d0"
+      "verified_tree_sha256": "88fd29f0fe6ff62b02d14039fbc12a7f2f780ee0f0ea56d3ece7db0bb2f3e28d"
     },
     {
       "covered_files": [
@@ -938,18 +1008,18 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         },
         {
-          "bytes": 9654,
+          "bytes": 10595,
           "language": "Python",
-          "lines": 236,
+          "lines": 256,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "86c15876919b3ad130fd229d2df08084a1140315f4432ebaf179527e307e1602"
+          "sha256": "4af06921e576cea9d0ae5a7ddbc95ae9a795752fa5405b3a55f82b88ffb4b338"
         },
         {
           "bytes": 4980,
@@ -959,14 +1029,14 @@
           "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
         }
       ],
-      "current_tree_sha256": "ee3474ed4270e16e2fbafb9af15f265c8a74c5135fa8bc717e3703d5f1684814",
+      "current_tree_sha256": "4ba13d45e004eeb78124486783322ad7700d86ee0a10608d524e457bce2457a0",
       "document": "docs/decisions/0017-engineering-memory-separation.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "ee3474ed4270e16e2fbafb9af15f265c8a74c5135fa8bc717e3703d5f1684814"
+      "verified_tree_sha256": "4ba13d45e004eeb78124486783322ad7700d86ee0a10608d524e457bce2457a0"
     },
     {
       "covered_files": [
@@ -992,11 +1062,11 @@
           "sha256": "9b111be69f9a06c296eb02a529a4bac93d3611bb9aaa127575839fa219b5dd03"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 914,
@@ -1006,14 +1076,14 @@
           "sha256": "ec10c5509f7a67ce28d7eb42d38d9c8877cf38fc6c0d09bea096ee039a12b9de"
         }
       ],
-      "current_tree_sha256": "1040f29bf080e45aefd0c99369ca6f7bfcda2579ceb44c6c2efc28cff232edf9",
+      "current_tree_sha256": "e3d605799759acecb531e50c6e03368b97930ac385927c8f95d708b16114ff4b",
       "document": "docs/decisions/0018-fail-closed-runtime-safety.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "1040f29bf080e45aefd0c99369ca6f7bfcda2579ceb44c6c2efc28cff232edf9"
+      "verified_tree_sha256": "e3d605799759acecb531e50c6e03368b97930ac385927c8f95d708b16114ff4b"
     },
     {
       "covered_files": [
@@ -1074,11 +1144,11 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 6721,
@@ -1088,28 +1158,28 @@
           "sha256": "19412ab5b78f9f905f67b01658f4c32052ff3fd84908781cc7658dc267a8f6f2"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         },
         {
-          "bytes": 9654,
+          "bytes": 10595,
           "language": "Python",
-          "lines": 236,
+          "lines": 256,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "86c15876919b3ad130fd229d2df08084a1140315f4432ebaf179527e307e1602"
+          "sha256": "4af06921e576cea9d0ae5a7ddbc95ae9a795752fa5405b3a55f82b88ffb4b338"
         }
       ],
-      "current_tree_sha256": "8e3316fe810e4f741720f3bfb5d5af71e5b404c9f66a1cc8aceb7d5d14ca70f9",
+      "current_tree_sha256": "67d492a2bc81f9a58fa63faa4c12b5143d035507d9e9783b56b7663a79d8af57",
       "document": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "8e3316fe810e4f741720f3bfb5d5af71e5b404c9f66a1cc8aceb7d5d14ca70f9"
+      "verified_tree_sha256": "67d492a2bc81f9a58fa63faa4c12b5143d035507d9e9783b56b7663a79d8af57"
     },
     {
       "covered_files": [
@@ -1219,11 +1289,11 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 7862,
@@ -1233,14 +1303,14 @@
           "sha256": "11b8ce44f707c483adc28d9a64e4c7c507f1461b6d8b6809775eee43c7d3f8e6"
         }
       ],
-      "current_tree_sha256": "9e3c3eaf399c27d3dd8e2071bbeb931f3f3ae2f68badc50a768e5964c9107d90",
+      "current_tree_sha256": "2bd9dc842b2b72db477f17f6f998aabdba9fac039f9649e2327d0b10c0fa969a",
       "document": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "9e3c3eaf399c27d3dd8e2071bbeb931f3f3ae2f68badc50a768e5964c9107d90"
+      "verified_tree_sha256": "2bd9dc842b2b72db477f17f6f998aabdba9fac039f9649e2327d0b10c0fa969a"
     },
     {
       "covered_files": [
@@ -1273,11 +1343,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 18867,
@@ -1308,14 +1378,14 @@
           "sha256": "d5db5a9b7a85090a84ba032f0474eb638c1aa970699d165c1ab35c56ff6cae1e"
         }
       ],
-      "current_tree_sha256": "800492d2ae521c3adf4736255804d10b4687fac44a80f6af795858c1ef9fde6a",
+      "current_tree_sha256": "5aa71996d257525bd209b5a9f15eb02d0f0cbf307cbab494bf4b6b62698993e8",
       "document": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "800492d2ae521c3adf4736255804d10b4687fac44a80f6af795858c1ef9fde6a"
+      "verified_tree_sha256": "5aa71996d257525bd209b5a9f15eb02d0f0cbf307cbab494bf4b6b62698993e8"
     },
     {
       "covered_files": [
@@ -1381,11 +1451,121 @@
     {
       "covered_files": [
         {
-          "bytes": 20063,
+          "bytes": 18024,
+          "language": "Rust",
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
+          "path": "crates/optimus-kernel/src/execution.rs",
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
+        },
+        {
+          "bytes": 17227,
+          "language": "Rust",
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
+          "path": "crates/optimus-kernel/src/routing.rs",
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
+        },
+        {
+          "bytes": 4599,
+          "language": "Rust",
+          "lines": 134,
+          "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+          "sha256": "b2f262df232c7bbccb1bd1927fac0634c2f5771087e48922509cf040a8816cbd"
+        },
+        {
+          "bytes": 7129,
+          "language": "Rust",
+          "lines": 204,
+          "path": "crates/optimus-kernel/tests/replay_contracts.rs",
+          "sha256": "b8c12029f93899a9d4010bf272506e90c02c684df0df5e58faadd0ac706d38d7"
+        },
+        {
+          "bytes": 5116,
+          "language": "Rust",
+          "lines": 139,
+          "path": "crates/optimus-kernel/tests/routing_telemetry.rs",
+          "sha256": "c43c932345942098a48d294111bd9b0d9570a5180721869a55076f8a48d7502b"
+        },
+        {
+          "bytes": 3341,
+          "language": "Rust",
+          "lines": 84,
+          "path": "crates/optimus-kernel/tests/trace_contracts.rs",
+          "sha256": "8d9f457e7d7b8b17915cffc28d7c2989da8d6d6f047fd44d42f00b99e17258b1"
+        },
+        {
+          "bytes": 43505,
+          "language": "Rust",
+          "lines": 1269,
+          "path": "crates/optimus-packs/src/lib.rs",
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
+        },
+        {
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 357,
+          "lines": 248,
+          "path": "docs/contracts/high-risk-contracts.md",
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
+        },
+        {
+          "bytes": 6769,
+          "language": "Markdown",
+          "lines": 144,
+          "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+          "sha256": "dd103c434c822ecf1bb6b2751c882892c89d23511812fa455c73d0134568bf65"
+        },
+        {
+          "bytes": 7477,
+          "language": "Markdown",
+          "lines": 147,
+          "path": "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+          "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
+        }
+      ],
+      "current_tree_sha256": "ff30ed09b351639df4eaf5753382b0f1ba9bd17dea9563afb8654130d051f9ed",
+      "document": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+      "knowledge_status": "current",
+      "knowledge_type": "decision",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
+      "stale": false,
+      "verification_basis": "git_and_sha256_tree",
+      "verified_tree_sha256": "ff30ed09b351639df4eaf5753382b0f1ba9bd17dea9563afb8654130d051f9ed"
+    },
+    {
+      "covered_files": [
+        {
+          "bytes": 21462,
+          "language": "Markdown",
+          "lines": 374,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "563d4fcc8c9cfc8a6acffac543c85205f4f88c9ebc6d6280ed2c1528ca46a894"
+          "sha256": "ab4da80fdf486f135d7622f71f86209ffa89df876fc884b9769fc9781006de26"
         },
         {
           "bytes": 1191,
@@ -1556,6 +1736,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -1563,14 +1750,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "39bc090de56603f35f1e77572a81215536f4063b3bd3142de643235d6a6aff49",
+      "current_tree_sha256": "d0e23f1b39be5c62f02cdff1da21cd7f8206c460ce9ff88cb88b711537c9236b",
       "document": "docs/decisions/README.md",
       "knowledge_status": "current",
       "knowledge_type": "decision-index",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "39bc090de56603f35f1e77572a81215536f4063b3bd3142de643235d6a6aff49"
+      "verified_tree_sha256": "d0e23f1b39be5c62f02cdff1da21cd7f8206c460ce9ff88cb88b711537c9236b"
     },
     {
       "covered_files": [
@@ -1589,11 +1776,11 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         },
         {
           "bytes": 4980,
@@ -1603,14 +1790,14 @@
           "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
         }
       ],
-      "current_tree_sha256": "b9e6422996c62845be4fb452358728bd54c0bf9fba64cae70eacaeeed3765500",
+      "current_tree_sha256": "dd370fb7e3432233b896c73fb0a26269c9597b0d97fdb96b7e670ae3378fb8df",
       "document": "docs/engineering-memory/README.md",
       "knowledge_status": "current",
       "knowledge_type": "engineering-memory-guide",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "b9e6422996c62845be4fb452358728bd54c0bf9fba64cae70eacaeeed3765500"
+      "verified_tree_sha256": "dd370fb7e3432233b896c73fb0a26269c9597b0d97fdb96b7e670ae3378fb8df"
     },
     {
       "covered_files": [
@@ -1832,18 +2019,18 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 20063,
+          "bytes": 21462,
           "language": "Markdown",
-          "lines": 357,
+          "lines": 374,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "563d4fcc8c9cfc8a6acffac543c85205f4f88c9ebc6d6280ed2c1528ca46a894"
+          "sha256": "ab4da80fdf486f135d7622f71f86209ffa89df876fc884b9769fc9781006de26"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 1191,
@@ -2014,6 +2201,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -2021,21 +2215,21 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         }
       ],
-      "current_tree_sha256": "17dfdd3c68185f9dcb007b4f424fdbd773523b86382946aa3bb27efb241b700e",
+      "current_tree_sha256": "fb17b7c1e61527af4b01d01bc2595993b14c6fda1a06a5013f032b68157fd1e1",
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_status": "current",
       "knowledge_type": "lesson-ledger",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "17dfdd3c68185f9dcb007b4f424fdbd773523b86382946aa3bb27efb241b700e"
+      "verified_tree_sha256": "fb17b7c1e61527af4b01d01bc2595993b14c6fda1a06a5013f032b68157fd1e1"
     },
     {
       "covered_files": [
@@ -2136,11 +2330,11 @@
           "sha256": "e23d3e68beb2fbd1ab6f533d4054ad2903ae2e9c458fe640b8bd20af883c5ff0"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -2150,11 +2344,11 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 18460,
           "language": "Rust",
-          "lines": 420,
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 1859,
@@ -2164,14 +2358,14 @@
           "sha256": "6969955e2238e5a1fd02eac4b5334f9869473c01db1bc830d0c49945aea27a92"
         }
       ],
-      "current_tree_sha256": "7fa82183f04200f585149e295c5344dfcad2214b8ff1c113d39642abd708669e",
+      "current_tree_sha256": "435419819b4b9581d3ab45d84bb929709f9e56a1afb56c7f09bb4ee7fa344305",
       "document": "docs/maps/model-routing.md",
       "knowledge_status": "current",
       "knowledge_type": "model-routing-map",
-      "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "7fa82183f04200f585149e295c5344dfcad2214b8ff1c113d39642abd708669e"
+      "verified_tree_sha256": "435419819b4b9581d3ab45d84bb929709f9e56a1afb56c7f09bb4ee7fa344305"
     },
     {
       "covered_files": [
@@ -2246,18 +2440,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 17310,
           "language": "Rust",
-          "lines": 440,
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 20646,
@@ -2295,14 +2489,14 @@
           "sha256": "a8e14190e299f3cd84b44ee51b0ad8a7eb5b0aef9434eae02e6dc05cb0300dab"
         }
       ],
-      "current_tree_sha256": "59180fa035983d757a2a0e48a785ea0f2ee52ef765f9ceaee76e92be2b192127",
+      "current_tree_sha256": "90e1625ae53e50fde8adff01c0e3a86831f34ab2555b0b5d4be39cc72627f89c",
       "document": "docs/maps/observability-and-evaluations.md",
       "knowledge_status": "current",
       "knowledge_type": "observability-evaluation-map",
-      "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "59180fa035983d757a2a0e48a785ea0f2ee52ef765f9ceaee76e92be2b192127"
+      "verified_tree_sha256": "90e1625ae53e50fde8adff01c0e3a86831f34ab2555b0b5d4be39cc72627f89c"
     },
     {
       "covered_files": [
@@ -2524,11 +2718,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 18024,
           "language": "Rust",
-          "lines": 440,
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
           "bytes": 18952,
@@ -2545,11 +2746,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -2559,11 +2760,18 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 17227,
           "language": "Rust",
-          "lines": 420,
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 18867,
@@ -2571,6 +2779,20 @@
           "lines": 526,
           "path": "crates/optimus-kernel/src/session.rs",
           "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
         },
         {
           "bytes": 11686,
@@ -2608,11 +2830,11 @@
           "sha256": "a57dd9a8a1ab57986db4c419faabc408e5106f4042e85591024186d642e1bc71"
         },
         {
-          "bytes": 40910,
+          "bytes": 43505,
           "language": "Rust",
-          "lines": 1189,
+          "lines": 1269,
           "path": "crates/optimus-packs/src/lib.rs",
-          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
           "bytes": 597,
@@ -2664,14 +2886,14 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         }
       ],
-      "current_tree_sha256": "ed85ddb7d5e8f751426681458f09091a8a0e63a468c40fcbce1d1e3267ad4a67",
+      "current_tree_sha256": "2f8809c7412c618d1a4aa1659e8c0b8f4324bbf4144c8a57143d895740d36d40",
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_status": "current",
       "knowledge_type": "repository-map",
-      "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "ed85ddb7d5e8f751426681458f09091a8a0e63a468c40fcbce1d1e3267ad4a67"
+      "verified_tree_sha256": "2f8809c7412c618d1a4aa1659e8c0b8f4324bbf4144c8a57143d895740d36d40"
     },
     {
       "covered_files": [
@@ -2809,11 +3031,11 @@
           "sha256": "ddfd26f79b8451de843330e64a0cdd0362162726355d315d2e573ed12c9569fb"
         },
         {
-          "bytes": 40910,
+          "bytes": 43505,
           "language": "Rust",
-          "lines": 1189,
+          "lines": 1269,
           "path": "crates/optimus-packs/src/lib.rs",
-          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
           "bytes": 89727,
@@ -2844,14 +3066,14 @@
           "sha256": "c3856b46afd24fbda91d53dfdbeebd755d28e6c645b2253dc8f5e815bb208d1e"
         }
       ],
-      "current_tree_sha256": "90c7816848e6db7ce67d06140640f26c3f2341ead5a2623649f20684d6bb7b0e",
+      "current_tree_sha256": "95a061665dae6b37d91a9ef82429e13e203b4d6eefc9987036469b6f0cc5c414",
       "document": "docs/maps/security-and-approvals.md",
       "knowledge_status": "current",
       "knowledge_type": "security-map",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "90c7816848e6db7ce67d06140640f26c3f2341ead5a2623649f20684d6bb7b0e"
+      "verified_tree_sha256": "95a061665dae6b37d91a9ef82429e13e203b4d6eefc9987036469b6f0cc5c414"
     },
     {
       "covered_files": [
@@ -2870,18 +3092,18 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 20063,
+          "bytes": 21462,
           "language": "Markdown",
-          "lines": 357,
+          "lines": 374,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "563d4fcc8c9cfc8a6acffac543c85205f4f88c9ebc6d6280ed2c1528ca46a894"
+          "sha256": "ab4da80fdf486f135d7622f71f86209ffa89df876fc884b9769fc9781006de26"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 1191,
@@ -3052,6 +3274,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -3066,25 +3295,25 @@
           "sha256": "710b7b0fa6da0d3094184f44e30789ee52c1f994c7a8861924200257a722ad67"
         },
         {
-          "bytes": 5474,
+          "bytes": 5823,
           "language": "Markdown",
-          "lines": 111,
+          "lines": 116,
           "path": "docs/maps/model-routing.md",
-          "sha256": "233e68b55ff4a0e77cd02338fcbfa31086efd58f4dbdd3eb749c329414a09ce5"
+          "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
         },
         {
-          "bytes": 8404,
+          "bytes": 9582,
           "language": "Markdown",
-          "lines": 151,
+          "lines": 168,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "92d4b124a3be5c6e9220d95d42bdd216309e3b70c835fea688ab845fe20b4937"
+          "sha256": "8d1d210f58d0e5c18c0366fcbc5b726317a0648e25e637cd293909ae43bd64ac"
         },
         {
-          "bytes": 5348,
+          "bytes": 5453,
           "language": "Markdown",
           "lines": 128,
           "path": "docs/maps/repository-and-ownership.md",
-          "sha256": "92ae00b4b176501da240c3ec802467ede4ab79ee3374e8037386694d76b535a7"
+          "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
         },
         {
           "bytes": 7557,
@@ -3094,11 +3323,11 @@
           "sha256": "8ad7d302ed247a98a423e68922a740498587823c19b5416e272849f8c100180e"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         },
         {
           "bytes": 4980,
@@ -3108,14 +3337,14 @@
           "sha256": "79cdda0a432232e9a03e8eea3afbfe19396f747cf3ab465823e721ca0d22b53c"
         }
       ],
-      "current_tree_sha256": "13a145c733330bb5b566591506f1f80a0f8cd1f1e2d0c0a536fde23877d16fce",
+      "current_tree_sha256": "c51bfe5891861d0e9010c40227607f2aa59eb5b223a69aa765b2ecb1cc4240a6",
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "13a145c733330bb5b566591506f1f80a0f8cd1f1e2d0c0a536fde23877d16fce"
+      "verified_tree_sha256": "c51bfe5891861d0e9010c40227607f2aa59eb5b223a69aa765b2ecb1cc4240a6"
     },
     {
       "covered_files": [
@@ -3169,11 +3398,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 18024,
           "language": "Rust",
-          "lines": 440,
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
           "bytes": 18952,
@@ -3190,11 +3426,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -3204,11 +3440,18 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 17227,
           "language": "Rust",
-          "lines": 420,
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 18867,
@@ -3216,6 +3459,20 @@
           "lines": 526,
           "path": "crates/optimus-kernel/src/session.rs",
           "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
         },
         {
           "bytes": 11686,
@@ -3260,6 +3517,13 @@
           "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
         },
         {
+          "bytes": 4599,
+          "language": "Rust",
+          "lines": 134,
+          "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+          "sha256": "b2f262df232c7bbccb1bd1927fac0634c2f5771087e48922509cf040a8816cbd"
+        },
+        {
           "bytes": 14917,
           "language": "Rust",
           "lines": 406,
@@ -3281,11 +3545,32 @@
           "sha256": "50d7534187cec10d9e58a2437dd5844a39ee92abedb91406b25c8963fed08340"
         },
         {
+          "bytes": 7129,
+          "language": "Rust",
+          "lines": 204,
+          "path": "crates/optimus-kernel/tests/replay_contracts.rs",
+          "sha256": "b8c12029f93899a9d4010bf272506e90c02c684df0df5e58faadd0ac706d38d7"
+        },
+        {
+          "bytes": 5116,
+          "language": "Rust",
+          "lines": 139,
+          "path": "crates/optimus-kernel/tests/routing_telemetry.rs",
+          "sha256": "c43c932345942098a48d294111bd9b0d9570a5180721869a55076f8a48d7502b"
+        },
+        {
           "bytes": 10530,
           "language": "Rust",
           "lines": 298,
           "path": "crates/optimus-kernel/tests/session_resume.rs",
           "sha256": "d19ff7fb858d30e2125c9f99e2564d0408058a06ae518866a18344bb4612075f"
+        },
+        {
+          "bytes": 3341,
+          "language": "Rust",
+          "lines": 84,
+          "path": "crates/optimus-kernel/tests/trace_contracts.rs",
+          "sha256": "8d9f457e7d7b8b17915cffc28d7c2989da8d6d6f047fd44d42f00b99e17258b1"
         },
         {
           "bytes": 1327,
@@ -3547,18 +3832,18 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 20063,
+          "bytes": 21462,
           "language": "Markdown",
-          "lines": 357,
+          "lines": 374,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "563d4fcc8c9cfc8a6acffac543c85205f4f88c9ebc6d6280ed2c1528ca46a894"
+          "sha256": "ab4da80fdf486f135d7622f71f86209ffa89df876fc884b9769fc9781006de26"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 1191,
@@ -3729,6 +4014,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -3743,25 +4035,25 @@
           "sha256": "710b7b0fa6da0d3094184f44e30789ee52c1f994c7a8861924200257a722ad67"
         },
         {
-          "bytes": 5474,
+          "bytes": 5823,
           "language": "Markdown",
-          "lines": 111,
+          "lines": 116,
           "path": "docs/maps/model-routing.md",
-          "sha256": "233e68b55ff4a0e77cd02338fcbfa31086efd58f4dbdd3eb749c329414a09ce5"
+          "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
         },
         {
-          "bytes": 8404,
+          "bytes": 9582,
           "language": "Markdown",
-          "lines": 151,
+          "lines": 168,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "92d4b124a3be5c6e9220d95d42bdd216309e3b70c835fea688ab845fe20b4937"
+          "sha256": "8d1d210f58d0e5c18c0366fcbc5b726317a0648e25e637cd293909ae43bd64ac"
         },
         {
-          "bytes": 5348,
+          "bytes": 5453,
           "language": "Markdown",
           "lines": 128,
           "path": "docs/maps/repository-and-ownership.md",
-          "sha256": "92ae00b4b176501da240c3ec802467ede4ab79ee3374e8037386694d76b535a7"
+          "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
         },
         {
           "bytes": 7557,
@@ -3778,28 +4070,28 @@
           "sha256": "e7bfa1aa561c14116e0894ccf9163cdb56cd725753335f9905de9385a2907d02"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         },
         {
-          "bytes": 9654,
+          "bytes": 10595,
           "language": "Python",
-          "lines": 236,
+          "lines": 256,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "86c15876919b3ad130fd229d2df08084a1140315f4432ebaf179527e307e1602"
+          "sha256": "4af06921e576cea9d0ae5a7ddbc95ae9a795752fa5405b3a55f82b88ffb4b338"
         }
       ],
-      "current_tree_sha256": "ed4c1ca4fcb017a48e16e0a8f35e4cd17290caf36742948f54f731c15dffd79a",
+      "current_tree_sha256": "737a2e4612e8357fc701da89d4b9564b779c909682cac2382366f9a2d253f5de",
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "ed4c1ca4fcb017a48e16e0a8f35e4cd17290caf36742948f54f731c15dffd79a"
+      "verified_tree_sha256": "737a2e4612e8357fc701da89d4b9564b779c909682cac2382366f9a2d253f5de"
     },
     {
       "covered_files": [
@@ -3979,11 +4271,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 18024,
           "language": "Rust",
-          "lines": 440,
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
           "bytes": 18952,
@@ -4000,11 +4299,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -4014,11 +4313,18 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 17227,
           "language": "Rust",
-          "lines": 420,
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 18867,
@@ -4026,6 +4332,20 @@
           "lines": 526,
           "path": "crates/optimus-kernel/src/session.rs",
           "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
         },
         {
           "bytes": 11686,
@@ -4049,11 +4369,11 @@
           "sha256": "32b9b91a06a00992af9dd15e2b2415bfb2b0b9e2c41505b588beaccb52a26278"
         },
         {
-          "bytes": 40910,
+          "bytes": 43505,
           "language": "Rust",
-          "lines": 1189,
+          "lines": 1269,
           "path": "crates/optimus-packs/src/lib.rs",
-          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
           "bytes": 89727,
@@ -4077,11 +4397,11 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 6769,
@@ -4091,14 +4411,14 @@
           "sha256": "dd103c434c822ecf1bb6b2751c882892c89d23511812fa455c73d0134568bf65"
         }
       ],
-      "current_tree_sha256": "d0b99eead49e41b069cf96b1123914cfa44c0116ae942a1236ad59a9524401ad",
+      "current_tree_sha256": "5f26cb0299c2c00de52dda07d11ee9a65e4f6dd0bb94b9703af9b5dee4dd4fc3",
       "document": "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "d0b99eead49e41b069cf96b1123914cfa44c0116ae942a1236ad59a9524401ad"
+      "verified_tree_sha256": "5f26cb0299c2c00de52dda07d11ee9a65e4f6dd0bb94b9703af9b5dee4dd4fc3"
     },
     {
       "covered_files": [
@@ -4152,11 +4472,18 @@
           "sha256": "8db1212dcdf1a388ec3210200da5354d956d6e626116301557e26546875c5c77"
         },
         {
-          "bytes": 15597,
+          "bytes": 18024,
           "language": "Rust",
-          "lines": 440,
+          "lines": 533,
+          "path": "crates/optimus-kernel/src/evaluation.rs",
+          "sha256": "eb255b331d2d8e6f1ef6318589c7dc9cc10ebe1fc990ff2b87a46afdb374eaad"
+        },
+        {
+          "bytes": 17310,
+          "language": "Rust",
+          "lines": 486,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "64f3fc6de1326070104556dc9a67a680e6776b3fdeff0953c1c48472dc125abd"
+          "sha256": "5e3d33ca88ca4a3bacd6f643102428284d9231d3c1dfc41fe1d95577190946f6"
         },
         {
           "bytes": 18952,
@@ -4173,11 +4500,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 50546,
+          "bytes": 51715,
           "language": "Rust",
-          "lines": 1329,
+          "lines": 1354,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "9f15c9b215f7ef39480f41df79d1d3589122413da0150e00d93f54a0a54668a3"
+          "sha256": "cb613e3b142d5d5286d1c2418fee29d582eebc9cfbcc8e36efef3acf786034f5"
         },
         {
           "bytes": 13305,
@@ -4187,11 +4514,18 @@
           "sha256": "16265ec4de6b2664556279d47934564edc25cc1124c1d649eb60a66a94d9a970"
         },
         {
-          "bytes": 13531,
+          "bytes": 17227,
           "language": "Rust",
-          "lines": 420,
+          "lines": 507,
+          "path": "crates/optimus-kernel/src/replay.rs",
+          "sha256": "968da6587676be946be9e43208a2b6d11f1eded0b1e24382e4f09aa10d73f575"
+        },
+        {
+          "bytes": 18460,
+          "language": "Rust",
+          "lines": 559,
           "path": "crates/optimus-kernel/src/routing.rs",
-          "sha256": "a19da5a8dc73628e88089b4c495d79a5a3ce5fa59ec23333f4b605b1613e255e"
+          "sha256": "03db2f90438eb9380acd7e90345d7479162b46668879d9d9064ae2a5c77062e6"
         },
         {
           "bytes": 18867,
@@ -4199,6 +4533,20 @@
           "lines": 526,
           "path": "crates/optimus-kernel/src/session.rs",
           "sha256": "e6747c4bd0e90225142fc2238acbdb49e1b45195b274407ac016798d60892994"
+        },
+        {
+          "bytes": 8125,
+          "language": "Rust",
+          "lines": 242,
+          "path": "crates/optimus-kernel/src/telemetry.rs",
+          "sha256": "2ddb102e1b544768dc2ed10596fcf65aca2c3062f99e7aef8712d8268009e5d6"
+        },
+        {
+          "bytes": 12826,
+          "language": "Rust",
+          "lines": 401,
+          "path": "crates/optimus-kernel/src/trace.rs",
+          "sha256": "b850c4b0c3d220d5047e2be60e4ee0a055e0fe7b9d21e7c9791056aa50850be1"
         },
         {
           "bytes": 11686,
@@ -4243,6 +4591,13 @@
           "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
         },
         {
+          "bytes": 4599,
+          "language": "Rust",
+          "lines": 134,
+          "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+          "sha256": "b2f262df232c7bbccb1bd1927fac0634c2f5771087e48922509cf040a8816cbd"
+        },
+        {
           "bytes": 14917,
           "language": "Rust",
           "lines": 406,
@@ -4264,11 +4619,32 @@
           "sha256": "50d7534187cec10d9e58a2437dd5844a39ee92abedb91406b25c8963fed08340"
         },
         {
+          "bytes": 7129,
+          "language": "Rust",
+          "lines": 204,
+          "path": "crates/optimus-kernel/tests/replay_contracts.rs",
+          "sha256": "b8c12029f93899a9d4010bf272506e90c02c684df0df5e58faadd0ac706d38d7"
+        },
+        {
+          "bytes": 5116,
+          "language": "Rust",
+          "lines": 139,
+          "path": "crates/optimus-kernel/tests/routing_telemetry.rs",
+          "sha256": "c43c932345942098a48d294111bd9b0d9570a5180721869a55076f8a48d7502b"
+        },
+        {
           "bytes": 10530,
           "language": "Rust",
           "lines": 298,
           "path": "crates/optimus-kernel/tests/session_resume.rs",
           "sha256": "d19ff7fb858d30e2125c9f99e2564d0408058a06ae518866a18344bb4612075f"
+        },
+        {
+          "bytes": 3341,
+          "language": "Rust",
+          "lines": 84,
+          "path": "crates/optimus-kernel/tests/trace_contracts.rs",
+          "sha256": "8d9f457e7d7b8b17915cffc28d7c2989da8d6d6f047fd44d42f00b99e17258b1"
         },
         {
           "bytes": 1327,
@@ -4285,18 +4661,18 @@
           "sha256": "0729cee1c9a96963583c451d318c05c04664ca11c853eda6a7fcbed494730361"
         },
         {
-          "bytes": 40910,
+          "bytes": 43505,
           "language": "Rust",
-          "lines": 1189,
+          "lines": 1269,
           "path": "crates/optimus-packs/src/lib.rs",
-          "sha256": "a1837ce83b9d00340a730c224ae8f935385dd237986e433f905145ce55263be7"
+          "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
-          "bytes": 16636,
+          "bytes": 17545,
           "language": "Rust",
-          "lines": 487,
+          "lines": 510,
           "path": "crates/optimus-packs/tests/packs_budget.rs",
-          "sha256": "cc9ca6174db0295eb0b08e559f65e6eff96f0ba2beb2374f415ee6573922a169"
+          "sha256": "ffad25e02079d92aa210be239c6f02f56d27d416410b1e1afe9c58a483bc707b"
         },
         {
           "bytes": 958,
@@ -4509,18 +4885,18 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 20063,
+          "bytes": 21462,
           "language": "Markdown",
-          "lines": 357,
+          "lines": 374,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "563d4fcc8c9cfc8a6acffac543c85205f4f88c9ebc6d6280ed2c1528ca46a894"
+          "sha256": "ab4da80fdf486f135d7622f71f86209ffa89df876fc884b9769fc9781006de26"
         },
         {
-          "bytes": 12215,
+          "bytes": 12691,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 248,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "d1d74d6b8c11ea55099a4bfb837783a8b85b75201d311e50042b678b77da53c1"
+          "sha256": "4c24b30b3ba940f1de856b94822edef0da52bbe9085ead0095a254856459d639"
         },
         {
           "bytes": 1191,
@@ -4691,6 +5067,13 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         },
         {
+          "bytes": 7610,
+          "language": "Markdown",
+          "lines": 164,
+          "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+          "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
+        },
+        {
           "bytes": 4125,
           "language": "Markdown",
           "lines": 56,
@@ -4705,25 +5088,25 @@
           "sha256": "710b7b0fa6da0d3094184f44e30789ee52c1f994c7a8861924200257a722ad67"
         },
         {
-          "bytes": 5474,
+          "bytes": 5823,
           "language": "Markdown",
-          "lines": 111,
+          "lines": 116,
           "path": "docs/maps/model-routing.md",
-          "sha256": "233e68b55ff4a0e77cd02338fcbfa31086efd58f4dbdd3eb749c329414a09ce5"
+          "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
         },
         {
-          "bytes": 8404,
+          "bytes": 9582,
           "language": "Markdown",
-          "lines": 151,
+          "lines": 168,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "92d4b124a3be5c6e9220d95d42bdd216309e3b70c835fea688ab845fe20b4937"
+          "sha256": "8d1d210f58d0e5c18c0366fcbc5b726317a0648e25e637cd293909ae43bd64ac"
         },
         {
-          "bytes": 5348,
+          "bytes": 5453,
           "language": "Markdown",
           "lines": 128,
           "path": "docs/maps/repository-and-ownership.md",
-          "sha256": "92ae00b4b176501da240c3ec802467ede4ab79ee3374e8037386694d76b535a7"
+          "sha256": "78034f9832a3aa419457a5c0f4abf2318699c32e583d31adc606ba21a473ad25"
         },
         {
           "bytes": 7557,
@@ -4740,28 +5123,28 @@
           "sha256": "906359380d463a76f18eb1dfaa04d631d92184dbc609787f824db71b5da06998"
         },
         {
-          "bytes": 69918,
+          "bytes": 71949,
           "language": "Python",
-          "lines": 1497,
+          "lines": 1533,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4a6668df7712592351900cf4d83f5fd3d6538c2706e2cce33089b54cb5493280"
+          "sha256": "2576c4542e199b996cc222f30ac7f67023d1bf2439e89b684266f262a27b85e7"
         },
         {
-          "bytes": 9654,
+          "bytes": 10595,
           "language": "Python",
-          "lines": 236,
+          "lines": 256,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "86c15876919b3ad130fd229d2df08084a1140315f4432ebaf179527e307e1602"
+          "sha256": "4af06921e576cea9d0ae5a7ddbc95ae9a795752fa5405b3a55f82b88ffb4b338"
         }
       ],
-      "current_tree_sha256": "f5565a874e9fc48dde71641c39deda304b3f64cdb43a8b48d18598a74a5164ac",
+      "current_tree_sha256": "d801231466cadc23b5e0ba47669c8928e328bff74ec8a7e7fbf56d779383ed10",
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
-      "knowledge_status": "current",
+      "knowledge_status": "historical",
       "knowledge_type": "specification",
-      "last_verified_commit": "7a06d3fca68a9a7f5ebfa8ca2535a09f88f65507",
+      "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "git_and_sha256_tree",
-      "verified_tree_sha256": "f5565a874e9fc48dde71641c39deda304b3f64cdb43a8b48d18598a74a5164ac"
+      "verified_tree_sha256": "d801231466cadc23b5e0ba47669c8928e328bff74ec8a7e7fbf56d779383ed10"
     }
   ],
   "generated_by": "scripts/engineering_memory.py",
