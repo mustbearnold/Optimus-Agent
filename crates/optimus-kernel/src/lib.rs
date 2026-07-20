@@ -14,6 +14,7 @@ mod openai_compat;
 mod routing;
 mod session;
 mod web_search;
+mod workflow;
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -55,7 +56,10 @@ pub use credential::{
     atomic_write_user_only, verify_user_only, CredentialProtector, SystemCredentialProtector,
 };
 pub use cron::{CronClaim, CronJob, CronStore};
-pub use eval::{builtin_suite, run_case, run_suite, EvalCase, EvalCaseResult, EvalReport};
+pub use eval::{
+    builtin_suite, evaluate_integrity_observations, run_case, run_suite, EvalCase, EvalCaseResult,
+    EvalReport, IntegrityObservation, REQUIRED_INTEGRITY_EVALS,
+};
 pub use execution::{
     ExecutionManifest, ExecutionStatus, ExecutionStore, ReplayClassification, ReplayReport,
     EXECUTION_MANIFEST_VERSION,
@@ -80,6 +84,14 @@ pub use routing::{
 };
 pub use session::{SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus};
 pub use web_search::{web_search, web_search_json, SearchError, SearchHit};
+pub use workflow::{
+    adapt_campaign_status, adapt_cron_attempt_status, adapt_gateway_status, adapt_job_status,
+    builtin_workflow_adapters, AdapterCapability, AdapterLifecycleStatus, ApprovalPolicy,
+    CancellationPolicy, CapabilitySupport, RetryPolicy, RollbackPolicy, WorkflowAdapterDescriptor,
+    WorkflowAdapterKind, WorkflowAgentRef, WorkflowDefinition, WorkflowId, WorkflowNode,
+    WorkflowObservability, WorkflowPort, WorkflowRegistry, WorkflowTerminalKind,
+    WorkflowTerminalPolicy, WorkflowTrigger, WorkflowVersion, WORKFLOW_SCHEMA_VERSION,
+};
 
 #[derive(Debug, Error)]
 pub enum KernelError {

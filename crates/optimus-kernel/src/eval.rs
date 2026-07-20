@@ -49,6 +49,64 @@ pub struct EvalReport {
     pub cases: Vec<EvalCaseResult>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct IntegrityObservation {
+    pub id: String,
+    pub passed: bool,
+    pub evidence: String,
+}
+
+pub const REQUIRED_INTEGRITY_EVALS: [&str; 6] = [
+    "sensitivity_denial",
+    "smartdeny_approval",
+    "route_policy_denial",
+    "cooperative_cancellation",
+    "stale_completion_fence",
+    "gateway_dead_letter",
+];
+
+pub fn evaluate_integrity_observations(
+    observations: Vec<IntegrityObservation>,
+) -> Result<EvalReport, KernelError> {
+    let mut by_id = std::collections::BTreeMap::new();
+    for observation in observations {
+        if observation.evidence.trim().is_empty()
+            || by_id.insert(observation.id.clone(), observation).is_some()
+        {
+            return Err(KernelError::Model(
+                "integrity evaluation requires unique observations with evidence".into(),
+            ));
+        }
+    }
+    let expected: std::collections::BTreeSet<_> =
+        REQUIRED_INTEGRITY_EVALS.iter().copied().collect();
+    let actual: std::collections::BTreeSet<_> = by_id.keys().map(String::as_str).collect();
+    if actual != expected {
+        return Err(KernelError::Model(
+            "integrity evaluation observations do not match required case set".into(),
+        ));
+    }
+    let cases = REQUIRED_INTEGRITY_EVALS
+        .iter()
+        .map(|id| {
+            let observation = &by_id[*id];
+            EvalCaseResult {
+                id: observation.id.clone(),
+                ok: observation.passed,
+                detail: observation.evidence.clone(),
+                tool_trace: vec![],
+                assistant_text: String::new(),
+            }
+        })
+        .collect::<Vec<_>>();
+    let passed = cases.iter().filter(|case| case.ok).count();
+    Ok(EvalReport {
+        passed,
+        failed: cases.len() - passed,
+        cases,
+    })
+}
+
 impl EvalReport {
     pub fn all_ok(&self) -> bool {
         self.failed == 0
