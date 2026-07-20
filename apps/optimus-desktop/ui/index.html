@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-boot-state="starting">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
+<title>Optimus Agent</title>
+<style>
+/*__OPTIMUS_CSS__*/
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="titlebar" id="titlebar">
+    <!-- Col 1 aligns with sidebar; drag strip only (no logo/name) -->
+    <div class="tb-side tb-drag" id="tbDragSide" aria-hidden="true"></div>
+    <!-- Col 2: session title + drag -->
+    <div class="tb-drag" id="tbDrag">
+      <div class="tb-title thread-heading" id="heading">New session</div>
+    </div>
+    <!-- Col 3: app actions + window chrome (the one header) -->
+    <div class="tb-actions no-drag">
+      <button class="chip" id="taskChip" type="button" title="Open task panel">Tasks <span id="taskCount">0</span></button>
+      <button class="chip" id="copySession" type="button">Copy id</button>
+      <button class="chip" id="toggleRight" type="button" title="Files pane" aria-pressed="false">Files</button>
+      <button class="chip" id="toggleTerm" type="button" title="Terminal pane" aria-pressed="false">Term</button>
+      <button class="chip" id="toggleLogs" type="button" title="Logs drawer" aria-pressed="false">Logs</button>
+      <button class="tb-btn" id="themeToggle" type="button" title="Toggle theme (D)" aria-label="Toggle theme">
+        <span class="icon icon-sun"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+        <span class="icon icon-moon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z"/></svg></span>
+      </button>
+      <div class="tb-win">
+        <button class="tb-btn" id="winMin" type="button" title="Minimize" aria-label="Minimize">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="tb-btn" id="winMax" type="button" title="Maximize" aria-label="Maximize">
+          <svg width="12" height="12" viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="tb-btn close" id="winClose" type="button" title="Close" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3L3 9" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+<div class="app-body">
+  <div class="app app-row" id="appRow">
+  <aside class="sidebar" id="leftRail">
+    <nav class="nav-primary" id="navPrimary">
+      <button class="nav-item active" id="newThread" type="button" data-route="chat" title="New session (Ctrl+N)">
+        <span class="nav-ico">+</span> New session <span class="nav-kbd">⌃N</span>
+      </button>
+      <button class="nav-item" id="navCapabilities" type="button" data-route="capabilities"><span class="nav-ico">⬡</span> Capabilities</button>
+      <button class="nav-item" id="navMessaging" type="button" data-route="messaging"><span class="nav-ico">💬</span> Messaging</button>
+      <button class="nav-item" id="navArtifacts" type="button" data-route="artifacts"><span class="nav-ico">📄</span> Artifacts</button>
+    </nav>
+    <div class="side-search">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+      <input id="sessionSearch" type="search" placeholder="Search sessions…" autocomplete="off" />
+    </div>
+    <div class="auth-banner" id="authBanner">Starting…</div>
+    <div id="railSplit">
+      <div id="pinnedPane">
+        <div id="pinnedHead"><div class="section-label" id="pinnedLabel">Pinned</div></div>
+        <div id="pinnedList"></div>
+      </div>
+      <div id="railResize" title="Drag to resize Pinned / list" role="separator" aria-orientation="horizontal"></div>
+      <div id="listPane">
+        <div id="listHead">
+          <div class="section-label" id="sessionsLabel">Projects</div>
+          <button type="button" class="proj-add" id="projectAdd" title="Add project folder from disk">+</button>
+          <div id="listModeToggle" role="tablist">
+            <button type="button" id="modeProjects" class="active" data-mode="projects" title="Projects">Projects</button>
+            <button type="button" id="modeSessions" data-mode="sessions" title="Sessions">Sessions</button>
+          </div>
+        </div>
+        <div id="sessionList" hidden></div>
+        <div id="projectList"></div>
+      </div>
+    </div>
+    <div id="leftResize" title="Drag to resize sidebar" role="separator" aria-orientation="vertical"></div>
+    <div class="side-foot">
+      <button class="settings-btn" type="button" id="settingsBtn" title="Settings">⚙ Settings</button>
+      <button class="settings-btn" type="button" id="doctorBtn" title="Status">◎</button>
+    </div>
+    <div class="settings-pop" id="settingsPop" aria-hidden="true">
+      <button class="btn-mini warn" id="importHermes" type="button">Import Codex</button>
+      <button class="btn-mini" id="refreshSessions" type="button">Refresh sessions</button>
+      <button class="btn-mini" id="cronTick" type="button">Cron tick</button>
+      <button class="btn-mini" id="cronAdd" type="button">+ Cron job</button>
+      <div id="cronList" class="cap-empty" style="max-height:80px;overflow:auto;margin-top:4px;font-size:10px"></div>
+    </div>
+    <div class="ctx-menu" id="sessionCtx" role="menu">
+      <button type="button" data-act="pin">Pin</button>
+      <button type="button" data-act="unpin">Unpin</button>
+      <button type="button" data-act="open">Open</button>
+      <button type="button" data-act="rename">Rename</button>
+      <button type="button" data-act="copy">Copy id</button>
+      <div id="ctxMoveWrap" style="border-top:1px solid var(--rome-hairline);margin-top:4px;padding-top:4px"></div>
+      <button type="button" data-act="unassign">Remove from project</button>
+      <button type="button" data-act="delete" style="color:var(--rome-danger,#b54a3c)">Delete session</button>
+    </div>
+    <div class="ctx-menu" id="projectCtx" role="menu">
+      <button type="button" data-act="open-folder">Open folder</button>
+      <button type="button" data-act="new-session">New session here</button>
+      <button type="button" data-act="pin-project">Pin project</button>
+      <button type="button" data-act="unpin-project">Unpin project</button>
+      <button type="button" data-act="remove-project" style="color:var(--rome-danger,#b54a3c)">Remove from list</button>
+    </div>
+  </aside>
+  <div class="main-stack" id="mainStack">
+  <section class="main" id="main">
+    <div class="page active" id="page-chat" data-page="chat">
+    <div class="chat" id="chat" tabindex="0"><div class="chat-inner" id="messages">
+      <div class="empty" id="emptyState">
+        <h2>Optimus is connected when this runs as desktop</h2>
+        <p>New session → pick provider/model → send a message.<br/>
+        First time: click <strong>Import Codex</strong> (reads Hermes auth, does not overwrite it).</p>
+      </div>
+    </div></div>
+    <div class="composer-wrap" id="composerWrap">
+      <div id="campaignStrip" aria-live="polite"></div>
+      <div class="task-fab">
+        <div class="task-panel" id="taskPanel" aria-hidden="true">
+          <div class="task-head"><span>Active tasks</span><button type="button" id="taskClose" style="font-size:12px;color:var(--text-3)">Close</button></div>
+          <div class="task-body" id="taskBody"><div class="task-empty">No tools running</div></div>
+        </div>
+      </div>
+      <div class="composer">
+        <textarea id="input" rows="2" placeholder="Message Optimus…"></textarea>
+        <div class="composer-bar">
+          <div class="composer-controls" id="composerControls">
+            <div class="cdd" id="cddProv" data-cdd="provider">
+              <button type="button" class="cdd-btn" id="provBtn" aria-haspopup="listbox" aria-expanded="false" title="Provider">
+                <span class="lbl">prov</span><span class="val" id="provVal">Codex</span><span class="chev">▴</span>
+              </button>
+            </div>
+            <div class="cdd" id="cddModel" data-cdd="model">
+              <button type="button" class="cdd-btn" id="modelBtn" aria-haspopup="listbox" aria-expanded="false" title="Model">
+                <span class="lbl">model</span><span class="val" id="modelVal">GPT-5.6 Terra</span><span class="chev">▴</span>
+              </button>
+            </div>
+            <div class="cdd" id="cddThink" data-cdd="think">
+              <button type="button" class="cdd-btn" id="thinkBtn" aria-haspopup="menu" aria-expanded="false" title="Thinking">
+                <span class="lbl">think</span><span class="val" id="thinkVal">medium</span><span class="chev">▴</span>
+              </button>
+            </div>
+            <div class="cdd" id="cddAccess" data-cdd="access">
+              <button type="button" class="cdd-btn" id="accessBtn" aria-haspopup="listbox" aria-expanded="false" title="Access">
+                <span class="lbl">access</span><span class="val" id="accessVal">Full</span><span class="chev">▴</span>
+              </button>
+            </div>
+          </div>
+          <!-- Hidden canonical state (tests + send path) -->
+          <div class="composer-sr" aria-hidden="true">
+            <select id="provider" tabindex="-1">
+              <option value="codex">Codex</option>
+              <option value="openai">OpenAI</option>
+              <option value="offline">Offline</option>
+            </select>
+            <select id="model" tabindex="-1">
+              <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
+              <option value="gpt-5.6-terra" selected>GPT-5.6 Terra</option>
+              <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
+              <option value="gpt-5.5">GPT-5.5</option>
+              <option value="gpt-5.4">GPT-5.4</option>
+              <option value="gpt-5.4-mini">GPT-5.4 Mini</option>
+              <option value="gpt-5.3-codex-spark">GPT-5.3 Codex Spark</option>
+              <option value="offline-echo">offline-echo</option>
+            </select>
+            <select id="thinkingLevel" tabindex="-1">
+              <option value="off">off</option>
+              <option value="minimal">minimal</option>
+              <option value="low">low</option>
+              <option value="medium" selected>medium</option>
+              <option value="high">high</option>
+              <option value="xhigh">xhigh</option>
+              <option value="max">max</option>
+              <option value="ultra">ultra→max</option>
+            </select>
+            <select id="access" tabindex="-1">
+              <option value="smart_deny">SmartDeny</option>
+              <option value="full" selected>Full</option>
+              <option value="read_only">Read-only</option>
+            </select>
+            <button type="button" id="thinkingToggle" aria-pressed="false">Thinking</button>
+            <button type="button" id="fastToggle" aria-pressed="false">Fast</button>
+          </div>
+          <button class="send" id="send" type="button" aria-label="Send" title="Send (Enter)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="foot-meta">
+        <span id="homeMeta">home…</span>
+        <span id="branchMeta">ready</span>
+      </div>
+    </div>
+    </div><!-- /page-chat -->
+    <div class="page" id="page-capabilities" data-page="capabilities" hidden>
+      <div class="cap-page page-stub">
+        <div class="section-label">Capabilities</div>
+        <h2>Operator surfaces</h2>
+        <p>Doctor budget, SmartDeny approvals, campaigns, and pack schema tokens from the live kernel.</p>
+        <div class="cap-grid">
+          <div class="cap-panel" id="doctorPanel">
+            <div class="cap-head">
+              <div class="section-label">Doctor · schema budget</div>
+              <button class="btn-mini" type="button" id="capRefreshDoctor">Refresh</button>
+            </div>
+            <div class="cap-body" id="doctorSnap">
+              <div class="cap-empty">Loading doctor…</div>
+            </div>
+          </div>
+          <div class="cap-panel" id="approvalsPanel">
+            <div class="cap-head">
+              <div class="section-label">Approvals</div>
+              <button class="btn-mini" type="button" id="approvalsRefresh">Refresh</button>
+            </div>
+            <div class="cap-body" id="approvalsList"><div class="cap-empty">No pending approvals</div></div>
+          </div>
+          <div class="cap-panel" id="campaignsPanel">
+            <div class="cap-head">
+              <div class="section-label">Campaigns</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn-mini" type="button" id="campaignCreateBtn">Create</button>
+                <button class="btn-mini" type="button" id="campaignsRefresh">Refresh</button>
+              </div>
+            </div>
+            <div class="cap-body" id="campaignsList"><div class="cap-empty">No campaigns</div></div>
+            <div class="cap-empty" id="campaignStatusLine" style="margin-top:6px"></div>
+          </div>
+          <div class="cap-panel" id="packsPanel">
+            <div class="cap-head">
+              <div class="section-label">Packs</div>
+            </div>
+            <div class="cap-body" id="packsSnap">
+              <div class="cap-empty">packs via doctor schema_tokens (no packs_list IPC)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="page" id="page-messaging" data-page="messaging" hidden>
+      <div class="page-stub">
+        <div class="section-label">Messaging</div>
+        <h2>Gateway & inbox</h2>
+        <p>Honest stub — webhook / gateway inbox will bind when the messaging adapter is wired. No fake green status.</p>
+      </div>
+    </div>
+    <div class="page" id="page-artifacts" data-page="artifacts" hidden>
+      <div class="page-stub">
+        <div class="section-label">Artifacts</div>
+        <h2>Session outputs</h2>
+        <p>Honest stub — session-scoped file outputs registry will list kernel write paths here.</p>
+      </div>
+    </div>
+  </section>
+  </div><!-- /mainStack -->
+  <aside id="rightPane" aria-label="Right sidebar" hidden>
+    <div id="rightResize" title="Drag to resize" role="separator" aria-orientation="vertical"></div>
+    <div id="rightPaneTabs" role="tablist">
+      <button type="button" role="tab" data-tab="files" class="active" id="rpTabFiles">Files</button>
+      <button type="button" role="tab" data-tab="artifacts" id="rpTabArtifacts">Artifacts</button>
+      <button type="button" role="tab" data-tab="browser" id="rpTabBrowser">Browser</button>
+    </div>
+    <div id="rightPaneBody">
+      <div class="rp-panel active" id="rpFiles" data-tab="files">
+        <div class="pane-head">
+          <div class="section-label">Files</div>
+          <button type="button" id="filesUp" title="Parent directory" disabled>Up</button>
+          <button type="button" id="filesRefresh" title="Refresh" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2)">↻</button>
+        </div>
+        <nav id="filesCrumb" aria-label="Path"></nav>
+        <div id="filesTree" role="tree" aria-label="Directory listing"></div>
+        <div id="filePreviewWrap">
+          <div id="filePreviewHead">
+            <span class="fp-path" id="filePreviewPath"></span>
+            <span class="fp-badge" id="filePreviewBadge" hidden>truncated</span>
+          </div>
+          <pre id="filePreview" aria-label="File preview"></pre>
+        </div>
+      </div>
+      <div class="rp-panel" id="rpArtifacts" data-tab="artifacts">
+        <div class="pane-head"><div class="section-label">Artifacts</div></div>
+        <div id="artifactList" style="flex:1;overflow:auto;padding:10px;font-size:12px;color:var(--text-3)">No session artifacts yet. Kernel write paths will list here.</div>
+      </div>
+      <div class="rp-panel" id="rpBrowser" data-tab="browser">
+        <div class="pane-head"><div class="section-label">Preview browser</div></div>
+        <div id="browserStub">
+          <p><strong style="color:var(--text)">Codex-class preview</strong> ships in phase P11 (CDP engine).</p>
+          <p>Planned: multi-tab localhost, device frames, screenshots, annotation pins → agent.</p>
+          <p>Status: <code>doctor.preview_browser = false</code></p>
+          <p>Open <strong>Files</strong> for the workspace tree now.</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+  </div><!-- /app-row -->
+  <div id="termPane" aria-label="Terminal" hidden>
+    <div class="term-head"><span class="section-label">TERM · job stream</span><span id="termMeta" class="term-meta">Phase A (not PTY)</span></div>
+    <pre id="termOut">$ ready — type a command and press Enter (cmd /C via Work Graph)</pre>
+    <input id="termIn" type="text" placeholder="echo hello" spellcheck="false" autocomplete="off" />
+  </div>
+  <footer id="statusBar" class="status-bar" aria-label="Status">
+    <span id="stGateway">gw <em>—</em></span>
+    <span id="stAgents">agents <em>0</em></span>
+    <span id="stCron">cron <em>0</em></span>
+    <span id="stTokens">tok <em>—</em></span>
+    <span id="stModel">model <em>—</em></span>
+    <span id="stHome">home…</span>
+    <span id="stVer">ver…</span>
+  </footer>
+</div><!-- /app-body -->
+<div id="logsDrawer" aria-label="Logs" hidden>
+  <div class="pane-head"><span>Logs</span><button type="button" id="logsClose" style="font-size:12px;color:var(--text-3)">Close</button></div>
+  <div class="logs-body">Desktop + kernel log tail placeholder.<br/>Will bind to %LOCALAPPDATA%/optimus/logs.</div>
+</div>
+</div>
+<script>
+/*__OPTIMUS_JS__*/
+</script>
+  <div id="cddPortal" role="listbox" aria-label="Composer menu"></div>
+</body>
+</html>

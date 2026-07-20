@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, "Segoe UI", sans-serif;
+  background: #09090b;
+  color: #d7d5ce;
+  --line: #292923;
+  --panel: #111113;
+  --panel-2: #161617;
+  --gold: #b7a15d;
+  --muted: #78766f;
+}
+* { box-sizing: border-box; border-radius: 0; }
+html, body { margin: 0; min-width: 420px; min-height: 320px; height: 100%; background: #09090b; }
+body { overflow: hidden; }
+button, input, textarea { font: inherit; color: inherit; }
+button { background: transparent; border: 1px solid transparent; cursor: pointer; }
+.shell { height: 100vh; display: grid; grid-template-rows: 40px 1fr 24px; }
+.titlebar { display: grid; grid-template-columns: 260px 1fr; align-items: center; border-bottom: 1px solid var(--line); background: #111113; }
+.title { padding: 0 14px; font-size: 12px; font-weight: 650; border-right: 1px solid var(--line); height: 100%; display: flex; align-items: center; }
+.title-actions { justify-self: end; display: flex; gap: 5px; align-items: center; padding-right: 8px; }
+.title-actions button, .badge { border: 1px solid var(--line); color: #9c998f; font-size: 10px; padding: 5px 8px; }
+.badge { color: #8fbd90; }
+.body { min-height: 0; display: grid; grid-template-columns: 260px 1fr; }
+.rail { min-height: 0; position: relative; border-right: 1px solid var(--line); background: #111113; display: flex; flex-direction: column; padding: 6px; }
+.nav { text-align: left; padding: 8px 10px; color: #929087; font-size: 11px; }
+.nav.active { background: #27241a; border-left: 2px solid var(--gold); color: #e4e0d5; }
+.search { margin: 8px 0; border: 1px solid var(--line); background: var(--panel-2); padding: 7px 9px; font-size: 10px; outline: none; }
+.search:focus { border-color: var(--gold); }
+.section-label { margin: 10px 4px 5px; text-transform: uppercase; letter-spacing: .14em; color: #75726b; font-size: 9px; font-weight: 700; }
+.empty { padding: 6px 4px; color: #55534e; font-size: 10px; }
+.project-block { margin-top: auto; border-top: 1px solid var(--line); padding-top: 4px; min-height: 34%; }
+.thread { display: block; width: 100%; text-align: left; padding: 7px 10px; font-size: 11px; }
+.thread.active { background: #242428; border-left: 2px solid #6f8f74; }
+.settings { text-align: left; border-top: 1px solid var(--line); padding: 9px 8px 4px; color: #8a877f; font-size: 10px; }
+.main { min-width: 0; min-height: 0; position: relative; display: grid; grid-template-rows: 1fr auto; }
+.messages { overflow: auto; padding: 28px max(28px, 12vw) 180px; }
+.message { margin: 0 0 22px; }
+.message.user { max-width: 72%; margin-left: auto; }
+.role { display: block; color: #65635d; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 5px; }
+.message.user .role { text-align: right; }
+.bubble { border: 1px solid #242420; background: #0d0d0f; padding: 12px 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.message.user .bubble { background: #1a1914; border-color: #4a4226; }
+.message.error .bubble { border-color: #733d38; color: #d18f87; }
+.composer { position: absolute; left: max(28px, 10vw); right: max(28px, 10vw); bottom: 28px; border: 1px solid #5b512f; background: #141416; box-shadow: 0 -16px 40px #09090be8; }
+textarea { width: 100%; min-height: 84px; resize: none; border: 0; outline: 0; background: transparent; padding: 14px; font-size: 13px; }
+.composer-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #24241f; padding: 7px 8px 7px 12px; color: #69675f; font-family: Consolas, monospace; font-size: 9px; }
+.send { width: 30px; height: 28px; background: #4d78d5; color: white; font-size: 16px; }
+.send:disabled { opacity: .5; }
+.statusbar { display: flex; align-items: center; gap: 7px; border-top: 1px solid var(--line); background: #101012; padding: 0 8px; color: #77746d; font: 9px Consolas, monospace; }
+.dot { width: 6px; height: 6px; background: #78a47d; }
+.status-right { margin-left: auto; }
+@media (max-width: 700px) {
+  .titlebar, .body { grid-template-columns: 190px 1fr; }
+  .title-actions .badge { display: none; }
+  .messages { padding-inline: 18px; }
+  .composer { left: 18px; right: 18px; }
+}

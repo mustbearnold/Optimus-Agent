@@ -1,0 +1,1414 @@
+{
+  "canonical_source": "crates/optimus-packs/src/lib.rs",
+  "canonical_type": "optimus_packs::ToolDesc",
+  "do_not_edit": true,
+  "generated_by": "scripts/engineering_memory.py",
+  "known_gaps": [
+    "Canonical semantic output schemas are absent.",
+    "Cancellation, retry, idempotency, determinism, and replay are not ToolDesc fields.",
+    "Unavailable placeholders are catalog entries but are not provider-advertised tools."
+  ],
+  "packs": [
+    {
+      "base_schema_tokens": 880,
+      "description": "Always-on waist: fs, terminal, web, memory, skills, packs, jobs, clarify",
+      "id": "core",
+      "tools": [
+        "read_file",
+        "write_file",
+        "terminal",
+        "web_search",
+        "memory_recall",
+        "skill_resolve",
+        "activate_pack",
+        "job_run",
+        "clarify"
+      ]
+    },
+    {
+      "base_schema_tokens": 600,
+      "description": "CDP/browser automation",
+      "id": "browser",
+      "tools": [
+        "browser_navigate",
+        "browser_click",
+        "browser_snapshot"
+      ]
+    },
+    {
+      "base_schema_tokens": 0,
+      "description": "Computer-use / OS UI automation",
+      "id": "desktop",
+      "tools": [
+        "desktop_screenshot",
+        "desktop_click",
+        "desktop_type"
+      ]
+    },
+    {
+      "base_schema_tokens": 0,
+      "description": "Vision, imagegen, TTS/STT",
+      "id": "media",
+      "tools": [
+        "vision_analyze",
+        "image_generate",
+        "tts"
+      ]
+    },
+    {
+      "base_schema_tokens": 0,
+      "description": "Git/GH/deep dev workflows",
+      "id": "devex",
+      "tools": [
+        "gh_pr",
+        "git_deep"
+      ]
+    },
+    {
+      "base_schema_tokens": 0,
+      "description": "Messaging send / X search",
+      "id": "social",
+      "tools": [
+        "x_search",
+        "message_send"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "tools": [
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Load an on-demand capability pack",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "activate_pack",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "enum": [
+              "browser",
+              "desktop",
+              "media",
+              "devex",
+              "social"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "invocation": "ActivatePack",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "capability_session": "mutate"
+      },
+      "policy": "capability",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 100,
+      "side_effects": [
+        "session_capability_state"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "unknown_or_unresolved"
+      },
+      "validated_by": [
+        "crates/optimus-kernel/tests/browser_live.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Click element",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "browser_click",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "type": "object"
+      },
+      "invocation": "BrowserClick",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "browser",
+      "permissions": {
+        "browser": "bounded_http",
+        "network": "ssrf_filtered_read"
+      },
+      "policy": "browser",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 180,
+      "side_effects": [
+        "network_read",
+        "browser_state_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "note": "effector-specific upper bound",
+        "seconds": 30,
+        "status": "confirmed_current_behaviour"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Navigate URL",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "browser_navigate",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "invocation": "BrowserNavigate",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "browser",
+      "permissions": {
+        "browser": "bounded_http",
+        "network": "ssrf_filtered_read"
+      },
+      "policy": "browser",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 200,
+      "side_effects": [
+        "network_read",
+        "browser_state_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "note": "effector-specific upper bound",
+        "seconds": 30,
+        "status": "confirmed_current_behaviour"
+      },
+      "validated_by": [
+        "crates/optimus-kernel/tests/browser_live.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "A11y snapshot",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "browser_snapshot",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "invocation": "BrowserSnapshot",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "browser",
+      "permissions": {
+        "browser": "bounded_http",
+        "network": "ssrf_filtered_read"
+      },
+      "policy": "browser",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 220,
+      "side_effects": [
+        "network_read",
+        "browser_state_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "note": "effector-specific upper bound",
+        "seconds": 30,
+        "status": "confirmed_current_behaviour"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Ask the user",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "clarify",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "user_interaction",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "user_interaction"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Click coordinates",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "desktop_click",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "desktop",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "desktop",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "desktop_control"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Capture screen",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "desktop_screenshot",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "desktop",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "desktop",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "desktop_control"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Type keys",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "desktop_type",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "desktop",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "desktop",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "desktop_control"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "GitHub PR operations",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "gh_pr",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "devex",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "network_write",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "network_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Structured git ops",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "git_deep",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "devex",
+      "permissions": {
+        "filesystem": "workspace_write",
+        "network": "none"
+      },
+      "policy": "workspace_write",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "filesystem_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Generate image",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "image_generate",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "media",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "media",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "media_generation_or_capture"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Advance durable job",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "job_run",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "filesystem": "workspace_write",
+        "network": "none"
+      },
+      "policy": "workspace_write",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "filesystem_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Recall EvidencePacket",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "memory_recall",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "predicate": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "invocation": "MemoryRecall",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "memory": "read"
+      },
+      "policy": "memory_read",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 130,
+      "side_effects": [
+        "none"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "unknown_or_unresolved"
+      },
+      "validated_by": [
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/openai_http.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Send platform message",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "message_send",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "social",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "network_write",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "network_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Read workspace file",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "read_file",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "invocation": "ReadFile",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "filesystem": "scoped_read",
+        "network": "none"
+      },
+      "policy": "workspace_read",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 120,
+      "side_effects": [
+        "none"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "unknown_or_unresolved"
+      },
+      "validated_by": [
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Resolve procedural skill by name",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "skill_resolve",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "invocation": "SkillResolve",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "skills": "read"
+      },
+      "policy": "skill_read",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 120,
+      "side_effects": [
+        "none"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "unknown_or_unresolved"
+      },
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "policy": "SmartDeny",
+        "scope": "job",
+        "status": "required"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Run bounded shell command",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-runtime",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "terminal",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "program": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "type": "object"
+      },
+      "invocation": "Terminal",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "filesystem": "workspace_cwd",
+        "process": "approval_gated"
+      },
+      "policy": "process",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 150,
+      "side_effects": [
+        "process_execution",
+        "filesystem_and_external_effects_possible"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": 30,
+        "source": "JobBudget::default",
+        "status": "confirmed_current_behaviour"
+      },
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "crates/optimus-runtime/tests/cancellation.rs",
+        "crates/optimus-runtime/tests/skill_bridge.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Text to speech",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "tts",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "media",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "media",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "media_generation_or_capture"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Analyze image",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "vision_analyze",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "media",
+      "permissions": {
+        "status": "unknown_or_unresolved"
+      },
+      "policy": "media",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "media_generation_or_capture"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Search the web",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-kernel",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "web_search",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "invocation": "WebSearch",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "network": "read"
+      },
+      "policy": "network_read",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 140,
+      "side_effects": [
+        "network_read"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "note": "effector-specific upper bound",
+        "seconds": 30,
+        "status": "confirmed_current_behaviour"
+      },
+      "validated_by": [
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "crates/optimus-kernel/tests/web_search_live.rs",
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_required_current_policy"
+      },
+      "available": true,
+      "cancellation_status": "unknown_or_unresolved",
+      "description": "Write workspace file",
+      "determinism": {
+        "status": "external_or_state_dependent"
+      },
+      "effector_owner": "optimus-runtime",
+      "error_taxonomy": {
+        "status": "tool_specific_not_canonical"
+      },
+      "id": "write_file",
+      "idempotency": {
+        "status": "unknown_or_unresolved"
+      },
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "contents": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "contents"
+        ],
+        "type": "object"
+      },
+      "invocation": "WriteFile",
+      "logging": {
+        "status": "kernel_trace_and_or_runtime_events"
+      },
+      "output_schema": {
+        "note": "Kernel tool messages are strings; canonical semantic output schema is absent.",
+        "semantic_schema": null,
+        "status": "partially_implemented_behaviour",
+        "transport": {
+          "type": "string"
+        }
+      },
+      "owner": "optimus-packs",
+      "pack": "core",
+      "permissions": {
+        "filesystem": "workspace_write",
+        "network": "none"
+      },
+      "policy": "workspace_write",
+      "replay": {
+        "status": "not_declared"
+      },
+      "retry": {
+        "status": "none_at_tool_contract"
+      },
+      "schema_tokens": 120,
+      "side_effects": [
+        "filesystem_write"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "unknown_or_unresolved"
+      },
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/tests/session_resume.rs",
+        "crates/optimus-runtime/tests/crash_resume.rs"
+      ],
+      "version": 1
+    },
+    {
+      "approval": {
+        "status": "not_applicable_unavailable"
+      },
+      "available": false,
+      "cancellation_status": "not_applicable_unavailable",
+      "description": "Search X",
+      "determinism": {
+        "status": "not_applicable_unavailable"
+      },
+      "effector_owner": null,
+      "error_taxonomy": {
+        "status": "not_applicable_unavailable"
+      },
+      "id": "x_search",
+      "idempotency": {
+        "status": "not_applicable_unavailable"
+      },
+      "input_schema": null,
+      "invocation": "Unavailable",
+      "logging": {
+        "status": "not_applicable_unavailable"
+      },
+      "output_schema": null,
+      "owner": "optimus-packs",
+      "pack": "social",
+      "permissions": {
+        "network": "read"
+      },
+      "policy": "network_read",
+      "replay": {
+        "status": "not_applicable_unavailable"
+      },
+      "retry": {
+        "status": "not_applicable_unavailable"
+      },
+      "schema_tokens": 0,
+      "side_effects": [
+        "network_read"
+      ],
+      "source": "crates/optimus-packs/src/lib.rs",
+      "supports_cancellation": false,
+      "timeout": {
+        "seconds": null,
+        "status": "not_applicable_unavailable"
+      },
+      "validated_by": [],
+      "version": 1
+    }
+  ]
+}

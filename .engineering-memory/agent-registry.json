@@ -1,0 +1,31 @@
+{
+  "agents": [],
+  "do_not_edit": true,
+  "generated_by": "scripts/engineering_memory.py",
+  "implemented_specialist_agent_count": 0,
+  "not_agents": [
+    {
+      "reason": "provider adapter interface",
+      "symbol": "optimus_kernel::ModelProvider"
+    },
+    {
+      "reason": "offline/test model adapter",
+      "symbol": "optimus_kernel::ScriptedModel"
+    },
+    {
+      "reason": "deterministic effect step, not typed agent invocation",
+      "symbol": "optimus_runtime::CampaignStep"
+    }
+  ],
+  "required_before_first_agent": [
+    "typed universal input/output contract",
+    "purpose and non-responsibilities",
+    "tool and permission envelope",
+    "failure, escalation, and cancellation behavior",
+    "version, owner, status, and evaluation cases",
+    "overlap/routing check"
+  ],
+  "schema_version": 1,
+  "statement": "No universal specialist-agent abstraction or canonical specialist-agent definition exists in the current repository.",
+  "status": "unknown_or_unresolved_behaviour"
+}

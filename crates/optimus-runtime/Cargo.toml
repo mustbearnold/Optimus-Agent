@@ -1,0 +1,25 @@
+[package]
+name = "optimus-runtime"
+description = "Work Graph executor, effectors, crash-resume"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+optimus-graph.workspace = true
+optimus-store.workspace = true
+optimus-skills.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+rusqlite.workspace = true
+cap-std.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

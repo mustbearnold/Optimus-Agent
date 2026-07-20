@@ -1,0 +1,40 @@
+{
+  "baseline_comparison": false,
+  "builtin_cases": [
+    {
+      "id": "offline-echo",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "id": "memory-then-answer",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "id": "pack-activate-browser",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    },
+    {
+      "id": "write-file-job",
+      "source": "crates/optimus-kernel/src/eval.rs"
+    }
+  ],
+  "dimensions": {
+    "assistant_text": "substring_only",
+    "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
+    "citation_correctness": "missing",
+    "cost": "missing",
+    "gpu_cpu_correctness": "not_applicable_no_gpu_component",
+    "latency": "missing",
+    "memory_precision_recall": "missing",
+    "replay": "scripted_only",
+    "retrieval_relevance": "missing",
+    "security": "focused_tests_not_metric_suite",
+    "source_grounding": "missing",
+    "workflow_completion": "partial_tests_only"
+  },
+  "do_not_edit": true,
+  "framework_status": "small_offline_trajectory_harness",
+  "generated_by": "scripts/engineering_memory.py",
+  "schema_version": 1,
+  "version_binding": false
+}

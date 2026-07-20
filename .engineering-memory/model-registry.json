@@ -1,0 +1,64 @@
+{
+  "capability_routing": [],
+  "cost_latency_context_metadata": null,
+  "do_not_edit": true,
+  "generated_by": "scripts/engineering_memory.py",
+  "gpu_adapters": [],
+  "known_gaps": [
+    "Provider interpretation differs across CLI, desktop, gateway, and cron.",
+    "No capability, cost, latency, privacy, health, or evaluation-driven router exists."
+  ],
+  "local_model_adapters": [],
+  "privacy_policy": null,
+  "providers": [
+    {
+      "adapter": "optimus_kernel::ScriptedModel",
+      "evidence": [
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/src/eval.rs"
+      ],
+      "fallback": null,
+      "id": "offline",
+      "models": [
+        "scripted"
+      ],
+      "network": false,
+      "selection": "surface_explicit"
+    },
+    {
+      "adapter": "optimus_kernel::OpenAiCompatModel",
+      "evidence": [
+        "crates/optimus-kernel/src/openai_compat.rs"
+      ],
+      "fallback": null,
+      "id": "openai-compatible",
+      "models": "OPTIMUS_OPENAI_MODEL environment value",
+      "network": true,
+      "selection": "surface_explicit"
+    },
+    {
+      "adapter": "optimus_kernel::CodexOAuthModel",
+      "aliases": [
+        "terra",
+        "luna",
+        "sol"
+      ],
+      "evidence": [
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/src/codex_oauth.rs"
+      ],
+      "fallback": "one same-provider slim-history retry after HTTP failure",
+      "id": "codex-oauth",
+      "models": [
+        "gpt-5.6-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra"
+      ],
+      "network": true,
+      "selection": "surface_explicit",
+      "unknown_model_behavior": "gpt-5.6-terra"
+    }
+  ],
+  "router_status": "not_implemented",
+  "schema_version": 1
+}

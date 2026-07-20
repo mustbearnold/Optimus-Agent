@@ -1,0 +1,10 @@
+/target
+/local/
+**/node_modules/
+**/test-results/
+**/playwright-report/
+spikes/**/dist/
+**/*.rs.bk
+.DS_Store
+*.pdb
+Cargo.lock.bak

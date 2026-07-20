@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
+<title>Optimus Agent — Desktop UI</title>
+<style>
+  /* ─── Motion budget: target 100fps (10ms/frame) ───
+     Use only transform/opacity for animated props.
+     Durations are multiples of 10ms. Easing is short & snappy. */
+  :root {
+    --fps-frame: 10ms;
+    --dur-instant: 0ms;
+    --dur-fast: 80ms;    /* 8 frames @ 100fps */
+    --dur-med: 120ms;    /* 12 frames */
+    --dur-slow: 180ms;   /* 18 frames */
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-w: 288px;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 999px;
+    --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "Cascadia Code", "SF Mono", Consolas, ui-monospace, monospace;
+
+    /* Dark (default) */
+    --bg-0: #0c0c0e;
+    --bg-1: #121214;
+    --bg-2: #18181b;
+    --bg-3: #1f1f23;
+    --bg-4: #27272a;
+    --bg-hover: #222226;
+    --border: #2a2a2e;
+    --border-soft: #232326;
+    --text: #ececef;
+    --text-2: #a1a1aa;
+    --text-3: #71717a;
+    --accent: #f59e0b;
+    --accent-dim: rgba(245, 158, 11, 0.14);
+    --accent-glow: rgba(245, 158, 11, 0.35);
+    --ok: #34d399;
+    --ok-dim: rgba(52, 211, 153, 0.12);
+    --danger: #f87171;
+    --user-bubble: #2a2a30;
+    --user-border: #333338;
+    --composer-ring: rgba(96, 165, 250, 0.55);
+    --send-bg: #3b82f6;
+    --send-bg-hover: #2563eb;
+    --shadow: 0 0 0 1px var(--border), 0 12px 40px rgba(0,0,0,.45);
+    --scrim: rgba(0,0,0,.35);
+    --brand-mark-fg: #1c1002;
+    --scroll-thumb: #2e2e33;
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg-0: #f4f4f5;
+    --bg-1: #ffffff;
+    --bg-2: #f4f4f5;
+    --bg-3: #e4e4e7;
+    --bg-4: #d4d4d8;
+    --bg-hover: #ececef;
+    --border: #d4d4d8;
+    --border-soft: #e4e4e7;
+    --text: #18181b;
+    --text-2: #52525b;
+    --text-3: #71717a;
+    --accent: #d97706;
+    --accent-dim: rgba(217, 119, 6, 0.12);
+    --accent-glow: rgba(217, 119, 6, 0.28);
+    --ok: #059669;
+    --ok-dim: rgba(5, 150, 105, 0.1);
+    --danger: #dc2626;
+    --user-bubble: #e4e4e7;
+    --user-border: #d4d4d8;
+    --composer-ring: rgba(37, 99, 235, 0.45);
+    --send-bg: #2563eb;
+    --send-bg-hover: #1d4ed8;
+    --shadow: 0 0 0 1px var(--border), 0 12px 32px rgba(24,24,27,.08);
+    --scrim: rgba(24,24,27,.08);
+    --brand-mark-fg: #1c1002;
+    --scroll-thumb: #c4c4c8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    /* Instant theme paint — no fade on color tokens (user asked for instant switch) */
+    color-scheme: dark light;
+  }
+
+  html, body {
+    margin: 0; height: 100%;
+    background: var(--bg-0);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.45;
+    overflow: hidden;
+    /* Promote root layer for smoother paints */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Compositor-friendly interactive baseline */
+  button, .thread, .chip, .ptab, .sel, .send, .hub, .settings-btn, .btn-new, .theme-toggle {
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button {
+    background: none; border: 0; cursor: pointer;
+    padding: 0; color: var(--text-2);
+  }
+  button:hover { color: var(--text); }
+  button:active { transform: scale(0.97); }
+  button:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    height: 100vh;
+    transition: grid-template-columns var(--dur-med) var(--ease-out);
+  }
+
+  /* ——— Sidebar ——— */
+  .sidebar {
+    background: var(--bg-1);
+    border-right: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    contain: layout paint;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px 10px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(145deg, #fbbf24, #d97706 55%, #92400e);
+    display: grid; place-items: center;
+    box-shadow: 0 0 0 1px rgba(251,191,36,.25), 0 4px 14px var(--accent-glow);
+    font-weight: 700; font-size: 13px; color: var(--brand-mark-fg);
+    transform: translateZ(0);
+  }
+  .brand-name {
+    font-weight: 650; letter-spacing: -0.02em; font-size: 14.5px;
+  }
+  .brand-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--accent); background: var(--accent-dim);
+    padding: 2px 6px; border-radius: 4px; margin-left: 2px;
+  }
+  .brand-spacer { flex: 1; }
+
+  .theme-toggle {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+    color: var(--text-2);
+    display: grid; place-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .theme-toggle:hover {
+    background: var(--bg-3);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .theme-toggle:active { transform: scale(0.94); }
+  .theme-toggle .icon {
+    position: absolute;
+    display: grid; place-items: center;
+    transition:
+      transform var(--dur-med) var(--ease-snap),
+      opacity var(--dur-fast) var(--ease-out);
+  }
+  .theme-toggle .icon-sun {
+    opacity: 0;
+    transform: rotate(-40deg) scale(0.6);
+  }
+  .theme-toggle .icon-moon {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+  html[data-theme="light"] .theme-toggle .icon-sun {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+  html[data-theme="light"] .theme-toggle .icon-moon {
+    opacity: 0;
+    transform: rotate(40deg) scale(0.6);
+  }
+
+  .side-tools {
+    padding: 4px 10px 10px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    color: var(--text-3);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+  }
+  .search:focus-within {
+    border-color: var(--composer-ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--composer-ring) 25%, transparent);
+  }
+  .search input {
+    flex: 1; border: 0; background: transparent; outline: none;
+    color: var(--text); min-width: 0;
+  }
+  .search kbd {
+    font-family: var(--mono); font-size: 10px;
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 5px; color: var(--text-3);
+  }
+  .btn-new {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    color: var(--text-2); text-align: left;
+  }
+  .btn-new:hover { background: var(--bg-hover); color: var(--text); }
+  .btn-new .plus {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 1px solid var(--border); display: grid; place-items: center;
+    font-size: 14px; line-height: 1;
+    transition: transform var(--dur-fast) var(--ease-snap);
+  }
+  .btn-new:hover .plus { transform: rotate(90deg); }
+
+  .project-tabs {
+    display: flex; gap: 4px; padding: 0 10px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .project-tabs::-webkit-scrollbar { display: none; }
+  .ptab {
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 12px; font-weight: 550;
+    color: var(--text-3);
+    border: 1px solid transparent;
+  }
+  .ptab:hover { background: var(--bg-2); color: var(--text-2); }
+  .ptab.active {
+    background: var(--bg-3);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .ptab .dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; margin-right: 5px; vertical-align: 0;
+  }
+  .ptab .dot.amber { background: var(--accent); }
+  .ptab .dot.green { background: var(--ok); }
+
+  .thread-scroll {
+    flex: 1; overflow-y: auto; padding: 0 8px 12px;
+    scrollbar-gutter: stable;
+    /* Smooth scrolling without janky inertia fighting 100fps target */
+    scroll-behavior: auto;
+    overscroll-behavior: contain;
+  }
+  .thread-scroll::-webkit-scrollbar { width: 8px; }
+  .thread-scroll::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb); border-radius: 8px;
+  }
+
+  .section-label {
+    font-size: 10px; font-weight: 650; letter-spacing: 0.08em;
+    color: var(--text-3); padding: 10px 8px 6px; text-transform: uppercase;
+  }
+
+  .thread {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    padding: 10px 10px 9px;
+    border-radius: 10px;
+    text-align: left;
+    border: 1px solid transparent;
+    margin-bottom: 2px;
+    transform: translateZ(0);
+  }
+  .thread:hover { background: var(--bg-2); }
+  .thread:active { transform: scale(0.985); }
+  .thread.active {
+    background: var(--bg-3);
+    border-color: var(--border);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 4%, transparent);
+  }
+  .thread-title {
+    font-size: 13.5px; font-weight: 560; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    grid-column: 1;
+  }
+  .thread-meta {
+    grid-column: 1;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--text-3);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--text-2);
+  }
+  .badge::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ok);
+  }
+  .badge.phase::before { background: var(--accent); }
+  .thread-time {
+    grid-column: 2; grid-row: 1;
+    font-size: 11px; color: var(--text-3); align-self: start;
+  }
+  .thread-ico {
+    grid-column: 2; grid-row: 2;
+    width: 16px; height: 16px; opacity: 0.35; justify-self: end;
+  }
+
+  .side-foot {
+    border-top: 1px solid var(--border-soft);
+    padding: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .settings-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 8px; width: 100%;
+    text-align: left;
+  }
+  .settings-btn:hover { background: var(--bg-2); }
+
+  /* ——— Main ——— */
+  .main {
+    display: flex; flex-direction: column;
+    min-width: 0; background: var(--bg-0);
+    contain: layout;
+  }
+  .topbar {
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-soft);
+    background: color-mix(in srgb, var(--bg-0) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translateZ(0);
+  }
+  .top-left {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+  }
+  .thread-heading {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .top-actions { display: flex; align-items: center; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+    color: var(--text-2);
+    font-size: 12.5px; font-weight: 500;
+  }
+  .chip:hover { background: var(--bg-3); color: var(--text); border-color: var(--border); }
+  .chip:active { transform: scale(0.97); }
+  .chip.primary {
+    background: var(--bg-3);
+    color: var(--text);
+  }
+  .win-dots { display: flex; gap: 4px; margin-left: 8px; opacity: 0.5; }
+  .win-dots span {
+    width: 10px; height: 10px; border-radius: 3px; background: var(--bg-4);
+  }
+
+  .chat {
+    flex: 1; overflow-y: auto;
+    padding: 28px 0 12px;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+    /* GPU layer for scroll */
+    transform: translateZ(0);
+  }
+  .chat::-webkit-scrollbar { width: 10px; }
+  .chat::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb); border-radius: 8px;
+    border: 2px solid var(--bg-0);
+  }
+  .chat-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 28px 24px;
+  }
+
+  .msg {
+    display: flex; flex-direction: column;
+    margin-bottom: 18px;
+    max-width: 100%;
+    animation: msg-in var(--dur-med) var(--ease-snap) both;
+  }
+  @keyframes msg-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 6px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+  .msg.user { align-items: flex-end; }
+  .msg.assistant { align-items: flex-start; }
+  .bubble {
+    max-width: min(560px, 92%);
+    padding: 11px 14px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .msg.user .bubble {
+    background: var(--user-bubble);
+    border: 1px solid var(--user-border);
+    border-bottom-right-radius: 6px;
+  }
+  .msg.assistant .bubble {
+    background: transparent;
+    padding-left: 0; padding-right: 0;
+    color: var(--text);
+    max-width: 100%;
+  }
+  .msg-meta {
+    margin-top: 6px;
+    font-size: 11.5px; color: var(--text-3);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .assistant-block h3 {
+    margin: 0 0 10px; font-size: 14.5px; font-weight: 600;
+  }
+  .assistant-block p { margin: 0 0 10px; }
+  .assistant-block ul {
+    margin: 6px 0 10px; padding-left: 1.2em;
+    color: var(--text);
+  }
+  .assistant-block li { margin: 4px 0; color: var(--text-2); }
+  .assistant-block li strong { color: var(--text); font-weight: 550; }
+  .assistant-block code {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px;
+  }
+  .vote {
+    margin-top: 10px; color: var(--text-2);
+    border-left: 2px solid var(--accent);
+    padding-left: 12px;
+  }
+
+  .status-strip {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 8px 0 14px;
+  }
+  .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-2);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .pill:hover { transform: translateY(-1px); }
+  .pill em { color: var(--ok); font-style: normal; }
+  .pill.amber em { color: var(--accent); }
+
+  /* ——— Composer ——— */
+  .composer-wrap {
+    padding: 8px 20px 14px;
+    background: linear-gradient(180deg, transparent, var(--bg-0) 28%);
+    transform: translateZ(0);
+  }
+  .composer {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--bg-1);
+    border: 1.5px solid var(--composer-ring);
+    border-radius: 18px;
+    box-shadow: 0 0 0 1px var(--scrim), 0 10px 40px var(--scrim);
+    padding: 12px 14px 10px;
+    transition:
+      box-shadow var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+    transform: translateZ(0);
+  }
+  .composer:focus-within {
+    box-shadow:
+      0 0 0 1px var(--scrim),
+      0 0 0 4px color-mix(in srgb, var(--composer-ring) 22%, transparent),
+      0 12px 40px var(--scrim);
+  }
+  .composer textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    resize: none;
+    outline: none;
+    min-height: 52px;
+    max-height: 180px;
+    color: var(--text);
+    line-height: 1.45;
+    font-size: 14.5px;
+  }
+  .composer textarea::placeholder { color: var(--text-3); }
+  .composer-bar {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 6px; flex-wrap: wrap;
+  }
+  .sel {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 30px; padding: 0 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+  .sel:hover { background: var(--bg-3); color: var(--text); }
+  .sel select {
+    border: 0; background: transparent; outline: none;
+    color: inherit; cursor: pointer;
+    appearance: none; padding-right: 2px;
+  }
+  .sel .ico { opacity: 0.8; font-size: 13px; }
+  .divider {
+    width: 1px; height: 16px; background: var(--border); margin: 0 2px;
+  }
+  .send {
+    margin-left: auto;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--send-bg);
+    color: white;
+    display: grid; place-items: center;
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--send-bg) 45%, transparent);
+  }
+  .send:hover { background: var(--send-bg-hover); color: white; transform: scale(1.04); }
+  .send:active { transform: scale(0.94); }
+  .send:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; transform: none; }
+
+  .foot-meta {
+    max-width: 760px;
+    margin: 8px auto 0;
+    display: flex; justify-content: space-between;
+    font-size: 11.5px; color: var(--text-3);
+    padding: 0 6px;
+  }
+  .foot-meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .branch::before {
+    content: ""; width: 8px; height: 8px;
+    border: 1.5px solid var(--text-3); border-radius: 2px;
+    transform: rotate(45deg);
+  }
+
+  .hub {
+    position: fixed; right: 18px; top: 50%;
+    transform: translate3d(0, -50%, 0);
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg-3); border: 1px solid var(--border);
+    color: var(--text-2);
+    box-shadow: var(--shadow);
+    display: grid; place-items: center;
+    z-index: 5;
+  }
+  .hub:hover {
+    color: var(--text);
+    border-color: var(--border);
+    transform: translate3d(0, -50%, 0) scale(1.05);
+  }
+  .hub:active { transform: translate3d(0, -50%, 0) scale(0.96); }
+
+  .tweaks {
+    position: fixed; right: 18px; bottom: 18px; z-index: 20;
+  }
+  .tweaks summary {
+    list-style: none; cursor: pointer;
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 8px 14px; font-size: 12px; color: var(--text-2);
+    box-shadow: var(--shadow);
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out),
+      border-radius var(--dur-fast) var(--ease-out);
+  }
+  .tweaks summary::-webkit-details-marker { display: none; }
+  .tweaks summary:hover { color: var(--text); }
+  .tweaks[open] summary { border-radius: 12px 12px 0 0; }
+  .tweaks-panel {
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-top: 0; border-radius: 0 0 12px 12px;
+    padding: 12px; width: 240px;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 10px;
+    font-size: 12px; color: var(--text-2);
+    transform-origin: bottom right;
+    animation: panel-in var(--dur-med) var(--ease-snap) both;
+  }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.98); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  .tweaks-panel label {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .tweaks-panel select, .tweaks-panel input[type="range"] {
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 6px; color: var(--text);
+  }
+
+  /* Flash ring on theme switch (transform/opacity only) */
+  .theme-flash {
+    pointer-events: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg-0);
+    opacity: 0;
+  }
+  .theme-flash.pulse {
+    animation: flash-pulse var(--dur-fast) var(--ease-out);
+  }
+  @keyframes flash-pulse {
+    0% { opacity: 0.12; }
+    100% { opacity: 0; }
+  }
+
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .hub { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="theme-flash" id="themeFlash" aria-hidden="true"></div>
+<div class="app" id="app">
+  <aside class="sidebar" aria-label="Threads">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">Ω</div>
+      <div>
+        <span class="brand-name">Optimus</span>
+        <span class="brand-tag">DEV</span>
+      </div>
+      <div class="brand-spacer"></div>
+      <button
+        class="theme-toggle"
+        id="themeToggle"
+        type="button"
+        title="Toggle light/dark (D)"
+        aria-label="Toggle color theme"
+        aria-pressed="true"
+      >
+        <span class="icon icon-sun" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+          </svg>
+        </span>
+        <span class="icon icon-moon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="side-tools">
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+        <input id="search" type="search" placeholder="Search" aria-label="Search threads" />
+        <kbd>⌘K</kbd>
+      </div>
+      <button class="btn-new" id="newThread" type="button">
+        <span class="plus">+</span> New thread
+        <span style="margin-left:auto;font-size:11px;opacity:.5">⌘N</span>
+      </button>
+    </div>
+
+    <div class="project-tabs" role="tablist">
+      <button class="ptab active" data-tab="all" type="button">ALL</button>
+      <button class="ptab" data-tab="optimus" type="button"><span class="dot amber"></span>optimus</button>
+      <button class="ptab" data-tab="work" type="button"><span class="dot green"></span>workgraph</button>
+      <button class="ptab" data-tab="+" type="button" title="Add project">+</button>
+    </div>
+
+    <div class="thread-scroll" id="threadList"></div>
+
+    <div class="side-foot">
+      <button class="settings-btn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        Settings
+      </button>
+    </div>
+  </aside>
+
+  <section class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <div class="thread-heading" id="heading">Codex live smoke</div>
+      </div>
+      <div class="top-actions">
+        <button class="chip" type="button">+ Add action</button>
+        <button class="chip primary" type="button">Open ▾</button>
+        <button class="chip" type="button">↓ Pull ▾</button>
+        <div class="win-dots" aria-hidden="true"><span></span><span></span></div>
+      </div>
+    </header>
+
+    <div class="chat" id="chat">
+      <div class="chat-inner" id="messages"></div>
+    </div>
+
+    <div class="composer-wrap">
+      <div class="composer">
+        <textarea id="input" rows="2" placeholder="Ask anything, @tag files/folders, $use skills, or / for commands"></textarea>
+        <div class="composer-bar">
+          <label class="sel" title="Model provider">
+            <span class="ico">◎</span>
+            <select id="model">
+              <option value="codex">gpt-5.4 · Codex</option>
+              <option value="openai">gpt-4.1-mini · OpenAI</option>
+              <option value="offline">Scripted · offline</option>
+            </select>
+            ▾
+          </label>
+          <label class="sel">
+            <select id="effort">
+              <option>Low · Standard</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
+            ▾
+          </label>
+          <span class="divider"></span>
+          <label class="sel">
+            <select id="access">
+              <option>Full access</option>
+              <option>SmartDeny</option>
+              <option>Read-only</option>
+            </select>
+            ▾
+          </label>
+          <label class="sel">
+            <span class="ico">⚒</span>
+            <select id="mode">
+              <option>Build</option>
+              <option>Plan</option>
+              <option>Ask</option>
+            </select>
+            ▾
+          </label>
+          <button class="send" id="send" type="button" title="Send" aria-label="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="foot-meta">
+        <span id="homeMeta">📁 .optimus · sessions.db</span>
+        <span class="branch" id="branchMeta">main · packs core · schema 1070</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<button class="hub" type="button" title="Activity" aria-label="Activity">≡</button>
+
+<details class="tweaks">
+  <summary>Tweaks</summary>
+  <div class="tweaks-panel">
+    <label>Theme
+      <select id="themePick">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="system">System</option>
+      </select>
+    </label>
+    <label>Density
+      <select id="density">
+        <option value="comfy">Comfy</option>
+        <option value="compact">Compact</option>
+      </select>
+    </label>
+    <label>Accent
+      <select id="accentPick">
+        <option value="amber">Amber</option>
+        <option value="blue">Blue</option>
+        <option value="green">Green</option>
+      </select>
+    </label>
+    <label>Sidebar
+      <input id="sidebarW" type="range" min="240" max="360" value="288" />
+    </label>
+    <label style="font-size:11px;color:var(--text-3);justify-content:flex-start">
+      Motion: 80–120ms · transform/opacity · 100fps target
+    </label>
+  </div>
+</details>
+
+<script>
+(() => {
+  const THEME_KEY = "optimus.ui.theme";
+  const html = document.documentElement;
+  const flash = document.getElementById("themeFlash");
+  const themeToggle = document.getElementById("themeToggle");
+  const themePick = document.getElementById("themePick");
+
+  function systemTheme() {
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+
+  function resolveTheme(pref) {
+    if (pref === "system") return systemTheme();
+    return pref === "light" ? "light" : "dark";
+  }
+
+  function applyTheme(pref, { instant = true } = {}) {
+    const resolved = resolveTheme(pref);
+    // Instant token swap — no color transition (feels snappy / “switch”)
+    html.setAttribute("data-theme", resolved);
+    html.style.colorScheme = resolved;
+    themeToggle.setAttribute("aria-pressed", resolved === "dark" ? "true" : "false");
+    themeToggle.title = resolved === "dark"
+      ? "Switch to light mode (D)"
+      : "Switch to dark mode (D)";
+    if (themePick.value !== pref && ["dark", "light", "system"].includes(pref)) {
+      themePick.value = pref;
+    }
+    localStorage.setItem(THEME_KEY, pref);
+    // Micro flash via opacity only (compositor) — skipped if reduced motion
+    if (!instant && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      flash.classList.remove("pulse");
+      // force reflow for restart
+      void flash.offsetWidth;
+      flash.classList.add("pulse");
+    }
+  }
+
+  function toggleTheme() {
+    const cur = html.getAttribute("data-theme") || "dark";
+    applyTheme(cur === "dark" ? "light" : "dark", { instant: false });
+  }
+
+  // Default dark; honor saved pref
+  const saved = localStorage.getItem(THEME_KEY) || "dark";
+  applyTheme(saved, { instant: true });
+
+  themeToggle.addEventListener("click", toggleTheme);
+  themePick.addEventListener("change", () => applyTheme(themePick.value, { instant: false }));
+
+  window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
+    if ((localStorage.getItem(THEME_KEY) || "dark") === "system") {
+      applyTheme("system", { instant: true });
+    }
+  });
+
+  // Hotkey D (when not typing)
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "d" || e.key === "D") {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      e.preventDefault();
+      toggleTheme();
+    }
+  });
+
+  const threads = [
+    {
+      id: "t1",
+      title: "Codex live smoke",
+      project: "optimus",
+      badge: "phase 11",
+      badgeClass: "phase",
+      time: "2m ago",
+      settled: false,
+      messages: [
+        { role: "user", text: "Go ahead — continue Optimus and add Codex OAuth.", time: "11:02 AM" },
+        { role: "assistant", html: `
+          <div class="assistant-block">
+            <p>Phase 9–11 landed. Here's the stack that exceeds Hermes on the durability axis:</p>
+            <div class="status-strip">
+              <span class="pill">provider <em>codex SSE</em></span>
+              <span class="pill amber">auth <em>import-hermes</em></span>
+              <span class="pill">tests <em>59 passed</em></span>
+              <span class="pill">terminal <em>stdout capture</em></span>
+            </div>
+            <ul>
+              <li><strong>Work Graph</strong> — crash-resume jobs</li>
+              <li><strong>MetaMemory</strong> — EvidencePackets, not RAG glue</li>
+              <li><strong>Skills 2.0</strong> — measured promotion</li>
+              <li><strong>Pack waist</strong> — core 1070 schema tokens</li>
+              <li><strong>Codex OAuth</strong> — live <code>optimus-codex-ok</code></li>
+            </ul>
+            <p class="vote">UI lane: conversation-first desktop mock → Tauri shell later.</p>
+          </div>`, time: "11:04 AM" },
+        { role: "user", text: "Can you design the frontend UI like this?", time: "11:16 AM" },
+        { role: "assistant", html: `
+          <div class="assistant-block">
+            <p>Conversation-first shell with instant light/dark and 100fps-oriented motion:</p>
+            <ul>
+              <li>Theme toggle (top-left) or press <strong>D</strong></li>
+              <li>Tokens swap instantly; icon spins on the compositor</li>
+              <li>Animations use <code>transform</code>/<code>opacity</code> only · 80–120ms</li>
+            </ul>
+          </div>`, time: "just now" },
+      ],
+    },
+    {
+      id: "t2",
+      title: "Work Graph crash-resume",
+      project: "work",
+      badge: "main",
+      time: "14m ago",
+      settled: false,
+      messages: [
+        { role: "user", text: "Prove kill -9 mid job then resume.", time: "10:40 AM" },
+        { role: "assistant", html: `<div class="assistant-block"><p>Recovered running→interrupted, resumed remaining nodes. Demo wrote <code>hello.txt</code> + <code>done.marker</code>.</p></div>`, time: "10:41 AM" },
+      ],
+    },
+    {
+      id: "t3",
+      title: "MetaMemory adversarial probes",
+      project: "optimus",
+      badge: "main",
+      time: "1h ago",
+      settled: false,
+      messages: [
+        { role: "user", text: "Poisoning + no action authority.", time: "9:00 AM" },
+        { role: "assistant", html: `<div class="assistant-block"><p>All probes green. Recalled evidence cannot authorize side effects.</p></div>`, time: "9:12 AM" },
+      ],
+    },
+    {
+      id: "t4",
+      title: "Phase 0 verification",
+      project: "optimus",
+      badge: "main",
+      time: "yesterday",
+      settled: true,
+      messages: [
+        { role: "assistant", html: `<div class="assistant-block"><p>Toolchain + crash-resume gate documented.</p></div>`, time: "yesterday" },
+      ],
+    },
+  ];
+
+  let activeId = "t1";
+  let filter = "all";
+
+  const listEl = document.getElementById("threadList");
+  const messagesEl = document.getElementById("messages");
+  const headingEl = document.getElementById("heading");
+  const chatEl = document.getElementById("chat");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+  const search = document.getElementById("search");
+
+  function threadById(id) { return threads.find(t => t.id === id); }
+
+  function renderList() {
+    const q = (search.value || "").toLowerCase();
+    const open = threads.filter(t => !t.settled);
+    const settled = threads.filter(t => t.settled);
+    const match = (t) => {
+      if (filter !== "all" && t.project !== filter && filter !== "+") return false;
+      if (!q) return true;
+      return t.title.toLowerCase().includes(q);
+    };
+
+    let htmlOut = "";
+    const renderGroup = (items) => {
+      items.filter(match).forEach(t => {
+        htmlOut += `
+          <button class="thread ${t.id === activeId ? "active" : ""}" data-id="${t.id}" type="button">
+            <div class="thread-title">${escapeHtml(t.title)}</div>
+            <div class="thread-time">${escapeHtml(t.time)}</div>
+            <div class="thread-meta">
+              <span class="badge ${t.badgeClass || ""}">${escapeHtml(t.badge || "main")}</span>
+            </div>
+            <svg class="thread-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg>
+          </button>`;
+      });
+    };
+    renderGroup(open);
+    if (settled.some(match)) {
+      htmlOut += `<div class="section-label">Settled</div>`;
+      renderGroup(settled);
+    }
+    listEl.innerHTML = htmlOut || `<div class="section-label">No threads</div>`;
+    listEl.querySelectorAll(".thread").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeId = btn.dataset.id;
+        renderList();
+        renderChat();
+      });
+    });
+  }
+
+  function renderChat() {
+    const t = threadById(activeId);
+    if (!t) return;
+    headingEl.textContent = t.title;
+    messagesEl.innerHTML = t.messages.map((m, i) => {
+      // Stagger only last few for feel without long delays
+      const delay = Math.min(i, 6) * 10; // 10ms steps = 100fps frames
+      const style = `animation-delay:${delay}ms`;
+      if (m.role === "user") {
+        return `<div class="msg user" style="${style}">
+          <div class="bubble">${escapeHtml(m.text)}</div>
+          <div class="msg-meta">${escapeHtml(m.time || "")}</div>
+        </div>`;
+      }
+      return `<div class="msg assistant" style="${style}">
+        <div class="bubble">${m.html || escapeHtml(m.text || "")}</div>
+        <div class="msg-meta">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+          ${escapeHtml(m.time || "")}
+        </div>
+      </div>`;
+    }).join("");
+    // rAF double-buffer scroll to next frame (smooth, no layout thrash mid-paint)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        chatEl.scrollTop = chatEl.scrollHeight;
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    const t = threadById(activeId);
+    t.messages.push({ role: "user", text, time: "now" });
+    const model = document.getElementById("model").value;
+    const access = document.getElementById("access").selectedOptions[0].text;
+    t.messages.push({
+      role: "assistant",
+      time: "now",
+      html: `<div class="assistant-block"><p><em>Mock reply</em> — provider <strong>${escapeHtml(model)}</strong>, policy <strong>${escapeHtml(access)}</strong>. Wire this surface to <code>optimus chat</code> / Kernel sessions next.</p>
+      <div class="status-strip">
+        <span class="pill">session <em>local</em></span>
+        <span class="pill amber">pack <em>core</em></span>
+        <span class="pill">theme <em>${escapeHtml(html.getAttribute("data-theme"))}</em></span>
+      </div></div>`,
+    });
+    input.value = "";
+    autoGrow();
+    renderChat();
+  }
+
+  function autoGrow() {
+    input.style.height = "auto";
+    input.style.height = Math.min(180, Math.max(52, input.scrollHeight)) + "px";
+  }
+
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("input", autoGrow);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+  search.addEventListener("input", renderList);
+
+  document.querySelectorAll(".ptab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".ptab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      filter = tab.dataset.tab;
+      renderList();
+    });
+  });
+
+  document.getElementById("newThread").addEventListener("click", () => {
+    const id = "t" + (threads.length + 1);
+    threads.unshift({
+      id,
+      title: "Untitled thread",
+      project: "optimus",
+      badge: "main",
+      time: "now",
+      settled: false,
+      messages: [
+        { role: "assistant", time: "now", html: `<div class="assistant-block"><p>New Optimus session. Toggle theme with <strong>D</strong> or the sun/moon control.</p></div>` },
+      ],
+    });
+    activeId = id;
+    renderList();
+    renderChat();
+  });
+
+  document.getElementById("density").addEventListener("change", (e) => {
+    document.body.style.fontSize = e.target.value === "compact" ? "13px" : "14px";
+  });
+  document.getElementById("accentPick").addEventListener("change", (e) => {
+    const map = {
+      amber: ["#f59e0b", "rgba(245,158,11,0.14)"],
+      blue: ["#3b82f6", "rgba(59,130,246,0.14)"],
+      green: ["#34d399", "rgba(52,211,153,0.14)"],
+    };
+    const [a, d] = map[e.target.value];
+    // Light theme shifts amber accent slightly via CSS; override both
+    document.documentElement.style.setProperty("--accent", a);
+    document.documentElement.style.setProperty("--accent-dim", d);
+  });
+  document.getElementById("sidebarW").addEventListener("input", (e) => {
+    document.documentElement.style.setProperty("--sidebar-w", e.target.value + "px");
+  });
+
+  renderList();
+  renderChat();
+  autoGrow();
+})();
+</script>
+</body>
+</html>

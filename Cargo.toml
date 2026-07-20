@@ -1,0 +1,52 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/optimus-store",
+    "crates/optimus-graph",
+    "crates/optimus-runtime",
+    "crates/optimus-memory",
+    "crates/optimus-skills",
+    "crates/optimus-packs",
+    "crates/optimus-kernel",
+    "apps/optimus-cli",
+    "apps/optimus-desktop",
+]
+default-members = [
+    "crates/optimus-store",
+    "crates/optimus-graph",
+    "crates/optimus-runtime",
+    "crates/optimus-memory",
+    "crates/optimus-skills",
+    "crates/optimus-packs",
+    "crates/optimus-kernel",
+    "apps/optimus-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.85"
+authors = ["Optimus Agent"]
+repository = "https://github.com/local/optimus-agent"
+
+[workspace.dependencies]
+optimus-store = { path = "crates/optimus-store" }
+optimus-graph = { path = "crates/optimus-graph" }
+optimus-runtime = { path = "crates/optimus-runtime" }
+optimus-memory = { path = "crates/optimus-memory" }
+optimus-skills = { path = "crates/optimus-skills" }
+optimus-packs = { path = "crates/optimus-packs" }
+optimus-kernel = { path = "crates/optimus-kernel" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+tempfile = "3"
+clap = { version = "4", features = ["derive"] }
+tiny_http = "0.12"
+cap-std = "4.0.2"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading"] }

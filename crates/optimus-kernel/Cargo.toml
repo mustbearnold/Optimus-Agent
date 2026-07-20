@@ -1,0 +1,28 @@
+[package]
+name = "optimus-kernel"
+description = "Provider-agnostic agent turn loop assembling packs, memory, skills, jobs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+optimus-graph.workspace = true
+optimus-runtime.workspace = true
+optimus-memory.workspace = true
+optimus-skills.workspace = true
+optimus-packs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+rusqlite.workspace = true
+sha2.workspace = true
+ureq = { version = "2", default-features = false, features = ["json", "tls"] }
+url = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_Security_Authorization", "Win32_Security_Cryptography", "Win32_Storage_FileSystem", "Win32_System_Memory"] }
+
+[dev-dependencies]
+tempfile.workspace = true
