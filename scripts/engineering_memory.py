@@ -1013,6 +1013,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
         "pub struct BaselineStore",
         "pub fn build_evaluation_report",
         "pub fn compare_evaluation_reports",
+        "pub trace_present: bool",
+        "case.trace_required && !observation.trace_present",
     ]
     missing = [symbol for symbol in required_typed_symbols if symbol not in typed]
     if missing:
@@ -1062,6 +1064,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "cost": "checked_integer_mean",
             "latency": "checked_integer_mean",
             "replay": "persisted_fixture_replay_classification_plus_accuracy_metric",
+            "trace": "required_case_trace_presence_enforced_before_metrics",
             "gpu_cpu_correctness": "not_applicable_no_gpu_component",
         },
         "typed_dataset": {

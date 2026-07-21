@@ -141,6 +141,9 @@ binding context, threshold policy, and metric keys must remain exact. Constructi
 baseline acceptance/loading, and comparison reject rehashed evidence with invalid
 bindings, incomplete metrics, inconsistent arithmetic, duplicate thresholds, or
 incorrect failure/pass projection before mutation or comparison.
+Observation input must explicitly declare trace presence; report construction
+rejects a missing trace whenever the identity-matched case requires one. Trace
+presence is evidence validity rather than a scored metric.
 
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider

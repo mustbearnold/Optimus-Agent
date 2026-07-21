@@ -342,7 +342,8 @@ policy, provider/model, threshold policy, report hashes, and metric schema remai
 compatible. Report construction, baseline acceptance/loading, and comparison
 revalidate supported identities, exact metric dimensions and arithmetic, unique
 threshold policy, failure/pass projection, and content hash before returning or
-persisting evidence.
+persisting evidence. Report construction also rejects observations without trace
+evidence when the matched dataset case declares that trace is required.
 
 **Confirmed current behaviour:** production kernel turns create the execution
 manifest and one parentless trace link atomically in the execution database.

@@ -243,6 +243,7 @@ pub struct EvaluationObservation {
     pub matched_tools: usize,
     pub terminal_correct: bool,
     pub replay_correct: bool,
+    pub trace_present: bool,
     pub latency_millis: u64,
     pub cost_microunits: u64,
 }
@@ -351,19 +352,22 @@ pub fn build_evaluation_report(
     let expected = dataset
         .cases
         .iter()
-        .map(|case| (case.id.as_str(), case.expected_tools.len()))
+        .map(|case| (case.id.as_str(), case))
         .collect::<BTreeMap<_, _>>();
     let mut seen = BTreeSet::new();
     for observation in observations {
-        let expected_tools = expected
+        let case = expected
             .get(observation.case_id.as_str())
             .ok_or_else(|| invalid("observation case is not in dataset"))?;
         if !seen.insert(observation.case_id.as_str())
-            || observation.expected_tools != *expected_tools
+            || observation.expected_tools != case.expected_tools.len()
             || observation.matched_tools > observation.expected_tools
             || observation.matched_tools > observation.observed_tools
         {
             return Err(invalid("observation identity/tool counts are inconsistent"));
+        }
+        if case.trace_required && !observation.trace_present {
+            return Err(invalid("required trace evidence is missing"));
         }
     }
     let samples = observations.len();

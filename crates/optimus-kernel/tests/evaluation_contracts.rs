@@ -40,6 +40,7 @@ fn passing_observations(dataset: &EvaluationDataset) -> Vec<EvaluationObservatio
             matched_tools: case.expected_tools.len(),
             terminal_correct: true,
             replay_correct: true,
+            trace_present: true,
             latency_millis: 10,
             cost_microunits: 0,
         })
@@ -79,6 +80,37 @@ fn priority2_dataset_is_exact_versioned_bounded_and_source_backed() {
     let mut untrusted = dataset;
     untrusted.provenance_sha256 = "bad".into();
     assert!(untrusted.validate().is_err());
+}
+
+#[test]
+fn report_rejects_observation_missing_required_trace() {
+    let dataset = priority2_dataset();
+    let mut observations = passing_observations(&dataset);
+    observations[0].trace_present = false;
+
+    let error = build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap_err();
+
+    assert!(error
+        .to_string()
+        .contains("required trace evidence is missing"));
+}
+
+#[test]
+fn trace_presence_is_required_in_json_but_optional_cases_accept_false() {
+    let mut dataset = priority2_dataset();
+    dataset.cases[0].trace_required = false;
+    let mut observations = passing_observations(&dataset);
+    let with_optional_trace =
+        build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+
+    let mut encoded = serde_json::to_value(&observations[0]).unwrap();
+    encoded.as_object_mut().unwrap().remove("trace_present");
+    assert!(serde_json::from_value::<EvaluationObservation>(encoded).is_err());
+
+    observations[0].trace_present = false;
+    let without_optional_trace =
+        build_evaluation_report(&dataset, binding(), &observations, &[]).unwrap();
+    assert_eq!(without_optional_trace, with_optional_trace);
 }
 
 #[test]

@@ -227,6 +227,10 @@ class EngineeringMemoryTests(unittest.TestCase):
             ],
         )
         self.assertIn("replay_accuracy", coverage["metrics"])
+        self.assertEqual(
+            coverage["dimensions"]["trace"],
+            "required_case_trace_presence_enforced_before_metrics",
+        )
 
     def test_current_docs_do_not_resurrect_adr_0019_superseded_debt(self) -> None:
         current_docs = [

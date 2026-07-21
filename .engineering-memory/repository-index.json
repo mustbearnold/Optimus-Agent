@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 191,
+  "file_count": 192,
   "files": [
     {
       "bytes": 152,
@@ -371,11 +371,11 @@
       "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
     },
     {
-      "bytes": 22409,
+      "bytes": 22561,
       "language": "Rust",
-      "lines": 642,
+      "lines": 646,
       "path": "crates/optimus-kernel/src/evaluation.rs",
-      "sha256": "a8bb9666dc976784e47fabb5888622c70c9a585d5a2000792e423494be55b3bf"
+      "sha256": "503f982253941217ce6571edde4df753aedfcb195da848b0a056625d3cf77f36"
     },
     {
       "bytes": 18807,
@@ -490,11 +490,11 @@
       "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
     },
     {
-      "bytes": 11846,
+      "bytes": 13062,
       "language": "Rust",
-      "lines": 329,
+      "lines": 361,
       "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
-      "sha256": "f5f76d1d0cf74c32a003396aa4ed93579b1d80bfdae0bfc8b122096322a7fe6e"
+      "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
     },
     {
       "bytes": 11369,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 23805,
+      "bytes": 23937,
       "language": "Markdown",
-      "lines": 408,
+      "lines": 409,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "fe68df148f8cb87482ce806563982eb15dd0fd2ad23d90849e228ede207b911e"
+      "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1148,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 11596,
+      "bytes": 11812,
       "language": "Markdown",
-      "lines": 196,
+      "lines": 199,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "d5148b00ac953dc0d56397eb3188a40dccac09db17b22141a78c245b1664e3ae"
+      "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
     },
     {
       "bytes": 5802,
@@ -1202,6 +1202,13 @@
       "lines": 164,
       "path": "docs/specifications/fail-closed-evaluation-report-validation.md",
       "sha256": "2e1f489fdce1d2c0e45e792a1d034a926c686f7c61ea47b7ed877b992ce1401f"
+    },
+    {
+      "bytes": 6852,
+      "language": "Markdown",
+      "lines": 142,
+      "path": "docs/specifications/fail-closed-evaluation-trace-requirement.md",
+      "sha256": "744caf4952b53e8bcb3d8f1418f9dd030493d028fc397e1a067aba02957bf585"
     },
     {
       "bytes": 8545,
@@ -1260,11 +1267,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 74471,
+      "bytes": 74644,
       "language": "Python",
-      "lines": 1576,
+      "lines": 1579,
       "path": "scripts/engineering_memory.py",
-      "sha256": "7cb812787e454362a057578b1be4a61d593ffb0f91934d47a90f2613ea1dc120"
+      "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
     },
     {
       "bytes": 9185,
@@ -1281,11 +1288,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 14834,
+      "bytes": 14983,
       "language": "Python",
-      "lines": 356,
+      "lines": 360,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "e58bc494b7bd0375b73c42aa0d16e4e7742e502151a3b2d5263d96be72ac1c41"
+      "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
     },
     {
       "bytes": 5394,
@@ -1373,8 +1380,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 482247,
-      "files": 84
+      "bytes": 489447,
+      "files": 85
     },
     "Other": {
       "bytes": 156778,
@@ -1385,11 +1392,11 @@
       "files": 1
     },
     "Python": {
-      "bytes": 94629,
+      "bytes": 94951,
       "files": 3
     },
     "Rust": {
-      "bytes": 1137391,
+      "bytes": 1138759,
       "files": 70
     },
     "Shell": {
@@ -1427,7 +1434,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "04af10bc1be3d4e7afe6e864141222d35bb29711ee6f28058df40f417c7af7c4",
+  "tree_sha256": "f8c6950469c4f3d848bfa91fd38f923a315804a7e4630458a8c24717b40081b3",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {
