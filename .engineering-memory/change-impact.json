@@ -22,6 +22,7 @@
       "knowledge_type": "architecture",
       "resolved_source_count": 71,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -462,6 +463,7 @@
       "knowledge_type": "model-routing-map",
       "resolved_source_count": 8,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -509,6 +511,7 @@
       "knowledge_type": "observability-evaluation-map",
       "resolved_source_count": 22,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -915,6 +918,7 @@
       "knowledge_type": "specification",
       "resolved_source_count": 45,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
@@ -1002,6 +1006,27 @@
         "crates/optimus-packs/tests/**",
         "crates/optimus-kernel/tests/**",
         "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "apps/optimus-cli/src/main.rs",
+        "apps/optimus-cli/tests/eval_compare.rs",
+        "scripts/engineering_memory.py"
+      ],
+      "depends_on": [
+        "docs/specifications/candidate-aware-evaluation-comparison.md",
+        "docs/specifications/authoritative-offline-candidate-binding.md"
+      ],
+      "document": "docs/specifications/read-only-cli-evaluation-comparison.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 5,
+      "resolved_tests": [
+        "apps/optimus-cli/tests/eval_compare.rs"
+      ],
+      "status": "historical",
+      "validated_by": [
+        "apps/optimus-cli/tests/eval_compare.rs"
       ]
     },
     {
@@ -1144,8 +1169,12 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/read-only-cli-evaluation-comparison.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
+    ],
+    "apps/optimus-cli/tests/eval_compare.rs": [
+      "docs/specifications/read-only-cli-evaluation-comparison.md"
     ],
     "apps/optimus-cli/tests/eval_report.rs": [
       "docs/specifications/authoritative-offline-candidate-binding.md",
@@ -2179,8 +2208,12 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
+    "docs/specifications/authoritative-offline-candidate-binding.md": [
+      "docs/specifications/read-only-cli-evaluation-comparison.md"
+    ],
     "docs/specifications/candidate-aware-evaluation-comparison.md": [
-      "docs/specifications/fail-closed-evaluation-report-validation.md"
+      "docs/specifications/fail-closed-evaluation-report-validation.md",
+      "docs/specifications/read-only-cli-evaluation-comparison.md"
     ],
     "docs/specifications/fail-closed-evaluation-report-validation.md": [
       "docs/specifications/reusable-offline-integrity-executor.md"
@@ -2208,6 +2241,7 @@
       "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/read-only-cli-evaluation-comparison.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"

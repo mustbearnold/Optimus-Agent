@@ -235,6 +235,17 @@ class EngineeringMemoryTests(unittest.TestCase):
             },
         )
         self.assertEqual(coverage["typed_dataset"]["case_count"], 10)
+        self.assertEqual(
+            coverage["comparison_cli"],
+            {
+                "command": "optimus eval compare",
+                "source": "apps/optimus-cli/src/main.rs",
+                "validated_by": "apps/optimus-cli/tests/eval_compare.rs",
+                "json_input_limit_bytes": 1048576,
+                "mutation": "none_including_home",
+                "valid_regressions_exit": "success_with_complete_comparison",
+            },
+        )
         self.assertTrue(coverage["baseline_comparison"])
         self.assertTrue(coverage["version_binding"])
         self.assertEqual(

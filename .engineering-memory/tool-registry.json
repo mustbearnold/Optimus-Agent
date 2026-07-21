@@ -1237,6 +1237,7 @@
         "status": "confirmed_current_behaviour"
       },
       "validated_by": [
+        "apps/optimus-cli/tests/eval_compare.rs",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/evaluation_contracts.rs",
         "crates/optimus-kernel/tests/integrity_integration.rs",

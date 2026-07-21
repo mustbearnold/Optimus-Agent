@@ -26,6 +26,14 @@
     "provider",
     "model"
   ],
+  "comparison_cli": {
+    "command": "optimus eval compare",
+    "json_input_limit_bytes": 1048576,
+    "mutation": "none_including_home",
+    "source": "apps/optimus-cli/src/main.rs",
+    "valid_regressions_exit": "success_with_complete_comparison",
+    "validated_by": "apps/optimus-cli/tests/eval_compare.rs"
+  },
   "dimensions": {
     "assistant_text": "exact_output_retained_by_typed_trajectory_executor; dataset_metric_is_exact",
     "canonical_tool_trace": "covered_by_builtin_cases_and_tests",

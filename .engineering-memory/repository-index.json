@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 197,
+  "file_count": 199,
   "files": [
     {
       "bytes": 152,
@@ -91,11 +91,18 @@
       "sha256": "f6fc2db66f6edc6f5e14389e9073f931b609927fa42c1776e367de6ad4d07d73"
     },
     {
-      "bytes": 44187,
+      "bytes": 45241,
       "language": "Rust",
-      "lines": 1203,
+      "lines": 1234,
       "path": "apps/optimus-cli/src/main.rs",
-      "sha256": "7b49b1e340aa774dcb602b77a80da6d5889789ac09072a3c50eea3df3297c75d"
+      "sha256": "b3a0bf32190025ae1e4ae935626c66ccbdf8eab8777acd251f192ab23d1045b6"
+    },
+    {
+      "bytes": 5668,
+      "language": "Rust",
+      "lines": 157,
+      "path": "apps/optimus-cli/tests/eval_compare.rs",
+      "sha256": "7b067bfe766f3d1f6bbe54d46db70077c836c9698075a6ce32a5a3356719eb35"
     },
     {
       "bytes": 7803,
@@ -805,11 +812,11 @@
       "sha256": "34c54c1070c9681cc38ef00b96ceeec728907382af32e187e1501fa7e81d8e48"
     },
     {
-      "bytes": 1768,
+      "bytes": 1841,
       "language": "Markdown",
-      "lines": 53,
+      "lines": 54,
       "path": "docs/architecture/phase-14-gateway-eval.md",
-      "sha256": "46c2e1a402e408b6fee6d9e9f4c905d0e7e9335e1f9cb1fcb67f06880335942d"
+      "sha256": "cb5d235bd0f65deac286b520bb0bb27d3bd649218abb02b6d80a8c9787d77c49"
     },
     {
       "bytes": 1854,
@@ -924,11 +931,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 25394,
+      "bytes": 25724,
       "language": "Markdown",
-      "lines": 431,
+      "lines": 436,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "1b9d9350817a9e186d761dfc42f49f607cd5cefab1638da8abecccc1cda9ed88"
+      "sha256": "b9987c04edb53995936ebee73fe84a3a7d1fcaab212d533da65b049850e60ba0"
     },
     {
       "bytes": 13027,
@@ -1155,11 +1162,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 13165,
+      "bytes": 13512,
       "language": "Markdown",
-      "lines": 217,
+      "lines": 222,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "04c11b1922bc07047790b6d823c97f0124f18fdf9511aaa332f9b6044652854f"
+      "sha256": "74ca5c780d6fa466fb6f17a9f3f1dd9c52736241ba840459e07d1c254d6161d2"
     },
     {
       "bytes": 5802,
@@ -1267,6 +1274,13 @@
       "sha256": "d4e75a949c4b9f9543b6b1138e1ea1bdbc0921e96b5d8f57f61d5ef4c28f889d"
     },
     {
+      "bytes": 7200,
+      "language": "Markdown",
+      "lines": 162,
+      "path": "docs/specifications/read-only-cli-evaluation-comparison.md",
+      "sha256": "c45bd25de2ea95faa13216175290c80d35274db4f03843fc6362d4bde760f400"
+    },
+    {
       "bytes": 8848,
       "language": "Markdown",
       "lines": 192,
@@ -1302,11 +1316,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 79213,
+      "bytes": 80554,
       "language": "Python",
-      "lines": 1667,
+      "lines": 1694,
       "path": "scripts/engineering_memory.py",
-      "sha256": "4f00b1fbe1c9f1ddfdb0bb86c320a756574d067f95bd4a92e08c472a427dd274"
+      "sha256": "e998662e188b2c6db403edce148ea2dca61ffcce820291190f90fbd8debc0cb5"
     },
     {
       "bytes": 9185,
@@ -1323,11 +1337,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 17638,
+      "bytes": 18106,
       "language": "Python",
-      "lines": 418,
+      "lines": 429,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "31a4fa65b46559eb832dc48f7f90f323fd269f764edbe549e68eb10aa602e934"
+      "sha256": "03ed88a0d252d5a7e9776855cceae89c01c268d7adb2dc32a4502f211540a55c"
     },
     {
       "bytes": 5394,
@@ -1415,8 +1429,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 535262,
-      "files": 89
+      "bytes": 543212,
+      "files": 90
     },
     "Other": {
       "bytes": 156778,
@@ -1427,12 +1441,12 @@
       "files": 1
     },
     "Python": {
-      "bytes": 102175,
+      "bytes": 103984,
       "files": 3
     },
     "Rust": {
-      "bytes": 1171100,
-      "files": 71
+      "bytes": 1177822,
+      "files": 72
     },
     "Shell": {
       "bytes": 1226,
@@ -1469,7 +1483,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "5661310a2e95e4ebc2e480cb383863db0b6a2494f6e0f90ce8f14294e3ea52d4",
+  "tree_sha256": "32ed0467945e1ea6fec08537fae4c49ed3693e7a96ac4535596c16ac017ffdbb",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {
@@ -1487,6 +1501,16 @@
           ],
           "name": "optimus",
           "src_path": "apps/optimus-cli/src/main.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "test"
+          ],
+          "name": "eval_compare",
+          "src_path": "apps/optimus-cli/tests/eval_compare.rs"
         },
         {
           "crate_types": [

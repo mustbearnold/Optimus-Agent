@@ -16,6 +16,13 @@
       "tests": [
         {
           "cases": [
+            "eval_compare_prints_exact_read_only_comparison_for_distinct_source_trees",
+            "eval_compare_rejects_bounded_invalid_or_incompatible_evidence_without_mutation"
+          ],
+          "path": "apps/optimus-cli/tests/eval_compare.rs"
+        },
+        {
+          "cases": [
             "eval_report_command_prints_the_exact_candidate_report",
             "eval_report_command_prints_failing_report_before_nonzero_exit",
             "eval_report_command_bounds_json_before_execution_without_echoing_content",
@@ -28,6 +35,13 @@
             "webhook_inbound_drain_outbox"
           ],
           "path": "apps/optimus-cli/tests/gateway_http.rs"
+        },
+        {
+          "cases": [
+            "eval_compare_prints_exact_read_only_comparison_for_distinct_source_trees",
+            "eval_compare_rejects_bounded_invalid_or_incompatible_evidence_without_mutation"
+          ],
+          "path": "apps/optimus-cli/tests/eval_compare.rs"
         },
         {
           "cases": [

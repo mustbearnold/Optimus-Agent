@@ -387,6 +387,11 @@ the exact offline runner: the current canonical source-tree identity, canonical
 evaluation/tool/routing source hashes, and fixed `offline/offline-scripted`
 provider/model identity. The runner rejects context drift before creating run state.
 
+**Confirmed current behaviour:** `optimus eval compare` reads two bounded exact
+reports, invokes the canonical candidate-aware comparator, and prints one comparison
+without creating the configured home. A valid regression is comparison evidence,
+not an implicit release gate; invalid or incompatible reports fail without output.
+
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is

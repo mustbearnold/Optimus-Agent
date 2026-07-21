@@ -6,12 +6,13 @@ mod gateway_http;
 
 use clap::{Parser, Subcommand};
 use optimus_kernel::{
-    device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_sessions, open_cron,
-    resolve_route, run_offline_trajectory_suite, run_priority2_offline_evaluation,
-    sanitize_codex_oauth_model, tick_cron, BrowserSession, CandidateBinding, CodexAuthStore,
-    CodexOAuthConfig, CodexOAuthModel, CompletionResponse, EvaluationResourceMeasurement, Kernel,
-    KernelConfig, MetricThreshold, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest,
-    RouteSurface, ScriptedModel, ToolCall, MAX_EVALUATION_DATASET_BYTES,
+    compare_evaluation_reports, device_code_login, drain_one, enqueue, list_inbox, list_outbox,
+    list_sessions, open_cron, resolve_route, run_offline_trajectory_suite,
+    run_priority2_offline_evaluation, sanitize_codex_oauth_model, tick_cron, BrowserSession,
+    CandidateBinding, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse,
+    EvaluationReportV1, EvaluationResourceMeasurement, Kernel, KernelConfig, MetricThreshold,
+    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
+    ToolCall, MAX_EVALUATION_DATASET_BYTES,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{
@@ -310,6 +311,13 @@ enum EvalCmd {
         #[arg(long)]
         thresholds: Option<PathBuf>,
     },
+    /// Compare two exact reports without changing evaluation state
+    Compare {
+        #[arg(long)]
+        baseline: PathBuf,
+        #[arg(long)]
+        candidate: PathBuf,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -384,7 +392,29 @@ fn read_bounded_json<T: serde::de::DeserializeOwned>(
     serde_json::from_slice(&bytes).map_err(Into::into)
 }
 
+fn run_read_only_eval(cli: &Cli) -> Option<Result<(), Box<dyn std::error::Error>>> {
+    let Commands::Eval {
+        cmd: EvalCmd::Compare {
+            baseline,
+            candidate,
+        },
+    } = &cli.command
+    else {
+        return None;
+    };
+    Some((|| {
+        let baseline: EvaluationReportV1 = read_bounded_json(baseline, "baseline report")?;
+        let candidate: EvaluationReportV1 = read_bounded_json(candidate, "candidate report")?;
+        let comparison = compare_evaluation_reports(&baseline, &candidate)?;
+        println!("{}", serde_json::to_string_pretty(&comparison)?);
+        Ok(())
+    })())
+}
+
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(result) = run_read_only_eval(&cli) {
+        return result;
+    }
     std::fs::create_dir_all(&cli.home)?;
     let db = cli.home.join("optimus.db");
     let skills_db = cli.home.join("skills.db");
@@ -1016,6 +1046,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Ok(())
             }
+            EvalCmd::Compare { .. } => unreachable!("read-only evaluation dispatch is preflighted"),
         },
         Commands::Campaign { cmd } => {
             let store = CampaignStore::open(&cli.home)?;

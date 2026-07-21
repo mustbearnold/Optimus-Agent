@@ -163,6 +163,11 @@ is printed before the command returns non-zero.
 fresh canonical source traversal. The kernel independently derives its compiled
 evaluation/tool/routing hashes and rejects provider, model, or context mismatch
 before evaluation run ownership.
+`optimus eval compare --baseline BASELINE --candidate CANDIDATE` exposes the
+canonical comparator through independently one-megabyte-bounded report inputs.
+It dispatches before home initialization, writes no state, and prints one complete
+comparison even when metrics regress; invalid or incompatible evidence prints no
+comparison JSON and fails.
 
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider

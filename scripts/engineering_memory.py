@@ -1073,6 +1073,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
     cli = cli_path.read_text(encoding="utf-8")
     cli_test_path = ROOT / "apps/optimus-cli/tests/eval_report.rs"
     cli_test = cli_test_path.read_text(encoding="utf-8")
+    compare_test_path = ROOT / "apps/optimus-cli/tests/eval_compare.rs"
+    compare_test = compare_test_path.read_text(encoding="utf-8")
     if (
         "EvalCmd::Report" not in cli
         or "fn read_bounded_json" not in cli
@@ -1080,6 +1082,23 @@ def build_evaluation_coverage() -> dict[str, Any]:
         or "eval_report_command_prints_the_exact_candidate_report" not in cli_test
     ):
         raise MemoryError("bounded Priority-2 CLI report operation is not implemented and exercised")
+    comparison_symbols = [
+        "EvalCmd::Compare",
+        "fn run_read_only_eval",
+        'read_bounded_json(baseline, "baseline report")?',
+        'read_bounded_json(candidate, "candidate report")?',
+        "compare_evaluation_reports(&baseline, &candidate)?",
+    ]
+    if (
+        any(symbol not in cli for symbol in comparison_symbols)
+        or cli.index("if let Some(result) = run_read_only_eval(&cli)")
+        > cli.index("std::fs::create_dir_all(&cli.home)?")
+        or "eval_compare_prints_exact_read_only_comparison_for_distinct_source_trees"
+        not in compare_test
+        or "eval_compare_rejects_bounded_invalid_or_incompatible_evidence_without_mutation"
+        not in compare_test
+    ):
+        raise MemoryError("read-only bounded evaluation comparison CLI is not implemented and exercised")
     if (
         "def build_priority2_candidate_binding" not in Path(__file__).read_text(encoding="utf-8")
         or 'choices=("generate", "check", "validate", "binding")' not in Path(__file__).read_text(encoding="utf-8")
@@ -1133,6 +1152,14 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "json_input_limit_bytes": 1048576,
             "binding_generator": "python scripts/engineering_memory.py binding",
             "binding_context": "compiled_offline_sources_enforced_before_mutation",
+        },
+        "comparison_cli": {
+            "command": "optimus eval compare",
+            "source": "apps/optimus-cli/src/main.rs",
+            "validated_by": "apps/optimus-cli/tests/eval_compare.rs",
+            "json_input_limit_bytes": 1048576,
+            "mutation": "none_including_home",
+            "valid_regressions_exit": "success_with_complete_comparison",
         },
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",

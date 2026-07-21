@@ -49,5 +49,6 @@ optimus gateway drain
 optimus eval run
 python scripts/engineering_memory.py binding > ../optimus-binding.json
 optimus eval report --binding ../optimus-binding.json --measurements measurements.json --thresholds thresholds.json
+optimus eval compare --baseline baseline.json --candidate candidate.json
 optimus cron serve --interval 5 --with-gateway
 ```
