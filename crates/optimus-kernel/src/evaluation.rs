@@ -27,6 +27,10 @@ fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
+fn canonical_source_digest(source: &str) -> String {
+    digest(source.replace("\r\n", "\n").replace('\r', "\n").as_bytes())
+}
+
 fn validate_hash(value: &str, field: &str) -> Result<()> {
     if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         return Err(invalid(format!("{field} must be a SHA-256 hex digest")));
@@ -371,6 +375,12 @@ pub fn run_priority2_offline_evaluation(
     let dataset = priority2_dataset();
     dataset.validate()?;
     binding.validate()?;
+    let expected_binding = priority2_offline_candidate_binding(binding.source_tree_sha256.clone())?;
+    if binding != expected_binding {
+        return Err(invalid(
+            "candidate binding does not match the compiled offline evaluation context",
+        ));
+    }
     validated_measurements(&dataset, measurements)?;
     validate_threshold_policy(thresholds)?;
     let run_home = home
@@ -422,6 +432,23 @@ impl CandidateBinding {
             && self.provider == other.provider
             && self.model == other.model
     }
+}
+
+pub fn priority2_offline_candidate_binding(
+    source_tree_sha256: impl Into<String>,
+) -> Result<CandidateBinding> {
+    let binding = CandidateBinding {
+        source_tree_sha256: source_tree_sha256.into(),
+        contract_sha256: canonical_source_digest(include_str!("evaluation.rs")),
+        tool_catalog_sha256: canonical_source_digest(include_str!(
+            "../../optimus-packs/src/lib.rs"
+        )),
+        route_policy_sha256: canonical_source_digest(include_str!("routing.rs")),
+        provider: "offline".into(),
+        model: "offline-scripted".into(),
+    };
+    binding.validate()?;
+    Ok(binding)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

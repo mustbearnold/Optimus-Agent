@@ -99,6 +99,8 @@
     "cost_microunits"
   ],
   "priority2_report_executor": {
+    "binding_context": "compiled_offline_sources_enforced_before_mutation",
+    "binding_generator": "python scripts/engineering_memory.py binding",
     "case_count": 10,
     "cli": "optimus eval report",
     "cli_validated_by": "apps/optimus-cli/tests/eval_report.rs",

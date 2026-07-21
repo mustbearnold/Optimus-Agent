@@ -47,6 +47,7 @@ install/relaunch pid on Programs\OptimusAgent
 optimus gateway send "hi" --channel local
 optimus gateway drain
 optimus eval run
-optimus eval report --binding binding.json --measurements measurements.json --thresholds thresholds.json
+python scripts/engineering_memory.py binding > ../optimus-binding.json
+optimus eval report --binding ../optimus-binding.json --measurements measurements.json --thresholds thresholds.json
 optimus cron serve --interval 5 --with-gateway
 ```

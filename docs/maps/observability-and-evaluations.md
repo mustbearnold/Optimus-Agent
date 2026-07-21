@@ -159,6 +159,10 @@ The CLI exposes this path as `optimus eval report` using separate one-megabyte-
 bounded JSON inputs for binding, measurements, and optional thresholds. Typed
 caller contracts are preflighted before run mutation; a threshold-failing report
 is printed before the command returns non-zero.
+`python scripts/engineering_memory.py binding` derives the required binding from a
+fresh canonical source traversal. The kernel independently derives its compiled
+evaluation/tool/routing hashes and rejects provider, model, or context mismatch
+before evaluation run ownership.
 
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider

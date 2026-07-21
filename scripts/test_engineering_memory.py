@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -227,6 +230,8 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "cli": "optimus eval report",
                 "cli_validated_by": "apps/optimus-cli/tests/eval_report.rs",
                 "json_input_limit_bytes": 1048576,
+                "binding_generator": "python scripts/engineering_memory.py binding",
+                "binding_context": "compiled_offline_sources_enforced_before_mutation",
             },
         )
         self.assertEqual(coverage["typed_dataset"]["case_count"], 10)
@@ -248,6 +253,42 @@ class EngineeringMemoryTests(unittest.TestCase):
             coverage["dimensions"]["trace"],
             "required_case_trace_presence_enforced_before_metrics",
         )
+
+    def test_priority2_candidate_binding_uses_current_canonical_sources(self) -> None:
+        binding = EM.build_priority2_candidate_binding()
+        repository = EM.build_repository_index(EM.cargo_metadata())
+        self.assertEqual(binding["source_tree_sha256"], repository["tree_sha256"])
+        self.assertEqual(
+            binding["contract_sha256"],
+            EM.sha256_file(ROOT / "crates/optimus-kernel/src/evaluation.rs"),
+        )
+        self.assertEqual(
+            binding["tool_catalog_sha256"],
+            EM.sha256_file(ROOT / "crates/optimus-packs/src/lib.rs"),
+        )
+        self.assertEqual(
+            binding["route_policy_sha256"],
+            EM.sha256_file(ROOT / "crates/optimus-kernel/src/routing.rs"),
+        )
+        self.assertEqual(binding["provider"], "offline")
+        self.assertEqual(binding["model"], "offline-scripted")
+
+    def test_priority2_binding_command_failure_keeps_stdout_empty(self) -> None:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with (
+            mock.patch.object(
+                EM,
+                "build_priority2_candidate_binding",
+                side_effect=EM.MemoryError("binding unavailable"),
+            ),
+            contextlib.redirect_stdout(stdout),
+            contextlib.redirect_stderr(stderr),
+        ):
+            code = EM.main(["binding"])
+        self.assertEqual(code, 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("binding unavailable", stderr.getvalue())
 
     def test_current_docs_do_not_resurrect_adr_0019_superseded_debt(self) -> None:
         current_docs = [

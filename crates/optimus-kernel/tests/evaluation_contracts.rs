@@ -1,9 +1,10 @@
 use optimus_kernel::{
     build_evaluation_report, compare_evaluation_reports, priority2_dataset,
-    project_evaluation_observations, run_offline_integrity_suite, run_offline_trajectory_suite,
-    run_priority2_offline_evaluation, BaselineStore, CandidateBinding, EvaluationDataset,
-    EvaluationMetric, EvaluationObservation, EvaluationReportV1, EvaluationResourceMeasurement,
-    ExecutionStatus, MetricDirection, MetricThreshold, ReplayClassification,
+    priority2_offline_candidate_binding, project_evaluation_observations,
+    run_offline_integrity_suite, run_offline_trajectory_suite, run_priority2_offline_evaluation,
+    BaselineStore, CandidateBinding, EvaluationDataset, EvaluationMetric, EvaluationObservation,
+    EvaluationReportV1, EvaluationResourceMeasurement, ExecutionStatus, MetricDirection,
+    MetricThreshold, ReplayClassification,
 };
 use optimus_packs::ToolId;
 use sha2::{Digest, Sha256};
@@ -14,14 +15,7 @@ fn hash(byte: char) -> String {
 }
 
 fn binding() -> CandidateBinding {
-    CandidateBinding {
-        source_tree_sha256: hash('a'),
-        contract_sha256: hash('b'),
-        tool_catalog_sha256: hash('c'),
-        route_policy_sha256: hash('d'),
-        provider: "offline".into(),
-        model: "offline-scripted".into(),
-    }
+    priority2_offline_candidate_binding(hash('a')).unwrap()
 }
 
 fn rehash(report: &mut EvaluationReportV1) {
@@ -377,6 +371,63 @@ fn exact_offline_runner_preflights_caller_contracts_before_mutation() {
     )
     .is_err());
     assert!(!duplicate_threshold_home.join("evaluation-runs").exists());
+}
+
+#[test]
+fn exact_offline_runner_accepts_only_the_derived_compiled_context() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let measurements = dataset
+        .cases
+        .iter()
+        .map(|case| EvaluationResourceMeasurement {
+            case_id: case.id.clone(),
+            latency_millis: 1,
+            cost_microunits: 0,
+        })
+        .collect::<Vec<_>>();
+    let derived = priority2_offline_candidate_binding(hash('a')).unwrap();
+    assert_eq!(derived.provider, "offline");
+    assert_eq!(derived.model, "offline-scripted");
+    assert_eq!(derived.source_tree_sha256, hash('a'));
+    assert_eq!(
+        derived,
+        priority2_offline_candidate_binding(hash('a')).unwrap()
+    );
+    assert!(priority2_offline_candidate_binding("not-a-hash").is_err());
+
+    let mutations = [
+        ("contract", {
+            let mut value = derived.clone();
+            value.contract_sha256 = hash('b');
+            value
+        }),
+        ("tools", {
+            let mut value = derived.clone();
+            value.tool_catalog_sha256 = hash('c');
+            value
+        }),
+        ("route", {
+            let mut value = derived.clone();
+            value.route_policy_sha256 = hash('d');
+            value
+        }),
+        ("provider", {
+            let mut value = derived.clone();
+            value.provider = "codex".into();
+            value
+        }),
+        ("model", {
+            let mut value = derived;
+            value.model = "gpt-5.6-terra".into();
+            value
+        }),
+    ];
+    for (name, binding) in mutations {
+        let home = directory.path().join(name);
+        assert!(run_priority2_offline_evaluation(&home, binding, &measurements, &[],).is_err());
+        assert!(!home.join("evaluation-runs").exists());
+    }
 }
 
 #[test]

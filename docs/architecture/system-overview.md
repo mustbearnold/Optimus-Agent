@@ -381,6 +381,12 @@ Typed policies are preflighted before evaluation run state. Success and threshol
 failure both print the complete report; threshold failure exits non-zero. The
 legacy four-case `eval run` command remains available.
 
+**Confirmed current behaviour:**
+`python scripts/engineering_memory.py binding` emits the only context accepted by
+the exact offline runner: the current canonical source-tree identity, canonical
+evaluation/tool/routing source hashes, and fixed `offline/offline-scripted`
+provider/model identity. The runner rejects context drift before creating run state.
+
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is

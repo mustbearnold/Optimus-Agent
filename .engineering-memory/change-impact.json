@@ -678,6 +678,25 @@
     {
       "covers": [
         "crates/optimus-kernel/src/evaluation.rs",
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/tests/evaluation_contracts.rs",
+        "apps/optimus-cli/tests/eval_report.rs",
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py",
+        "docs/architecture/system-overview.md",
+        "docs/maps/observability-and-evaluations.md"
+      ],
+      "depends_on": [],
+      "document": "docs/specifications/authoritative-offline-candidate-binding.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 8,
+      "resolved_tests": [],
+      "status": "historical",
+      "validated_by": []
+    },
+    {
+      "covers": [
+        "crates/optimus-kernel/src/evaluation.rs",
         "crates/optimus-kernel/tests/evaluation_contracts.rs",
         "docs/maps/observability-and-evaluations.md"
       ],
@@ -1129,6 +1148,7 @@
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "apps/optimus-cli/tests/eval_report.rs": [
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md"
     ],
     "apps/optimus-cli/tests/gateway_http.rs": [
@@ -1381,6 +1401,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-report-validation.md",
@@ -1429,6 +1450,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -1531,6 +1553,7 @@
     ],
     "crates/optimus-kernel/tests/evaluation_contracts.rs": [
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-report-validation.md",
@@ -1837,6 +1860,7 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",
@@ -2131,6 +2155,7 @@
     "docs/maps/observability-and-evaluations.md": [
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-report-validation.md",
@@ -2176,6 +2201,7 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",
@@ -2190,6 +2216,7 @@
       "docs/decisions/0017-engineering-memory-separation.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",

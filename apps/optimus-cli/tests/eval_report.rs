@@ -1,4 +1,5 @@
 use std::process::Command;
+use std::sync::OnceLock;
 
 use optimus_kernel::{
     priority2_dataset, CandidateBinding, EvalReport, EvaluationMetric, EvaluationReportV1,
@@ -6,19 +7,28 @@ use optimus_kernel::{
 };
 use tempfile::tempdir;
 
-fn hash(byte: char) -> String {
-    byte.to_string().repeat(64)
-}
-
 fn binding() -> CandidateBinding {
-    CandidateBinding {
-        source_tree_sha256: hash('a'),
-        contract_sha256: hash('b'),
-        tool_catalog_sha256: hash('c'),
-        route_policy_sha256: hash('d'),
-        provider: "offline".into(),
-        model: "offline-scripted".into(),
-    }
+    static BINDING: OnceLock<CandidateBinding> = OnceLock::new();
+    BINDING
+        .get_or_init(|| {
+            let workspace = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .and_then(std::path::Path::parent)
+                .unwrap();
+            let output = Command::new("python")
+                .current_dir(workspace)
+                .arg("scripts/engineering_memory.py")
+                .arg("binding")
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "stderr: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            serde_json::from_slice(&output.stdout).unwrap()
+        })
+        .clone()
 }
 
 fn measurements() -> Vec<EvaluationResourceMeasurement> {

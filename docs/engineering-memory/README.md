@@ -63,12 +63,19 @@ Run:
 python scripts/engineering_memory.py check
 python scripts/engineering_memory.py generate
 python scripts/engineering_memory.py validate
+python scripts/engineering_memory.py binding > ../optimus-binding.json
 ```
 
 `check` compares covered code with the recorded tree hashes before changing
 anything. `generate` refreshes deterministic maps. `validate` checks generated
 integrity, frontmatter, local links, duplicate IDs, registry completeness, ADR
 shape, contract/evaluation gaps, and staleness.
+
+`binding` is read-only and emits the exact Priority-2 offline `CandidateBinding`
+for the current canonical source tree. It derives contract, tool-catalog, and route
+policy identities from the same source records and prints no JSON on failure.
+The redirected file must remain outside the indexed repository; writing it into
+the source tree would correctly change that tree immediately after hashing it.
 
 **Confirmed current behaviour:** generated indexes use sorted source-file
 SHA-256 records and an aggregate `tree_sha256` as their deterministic identity.
