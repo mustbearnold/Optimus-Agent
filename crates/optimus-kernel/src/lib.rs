@@ -20,10 +20,12 @@ mod trace;
 mod web_search;
 mod workflow;
 
+use std::cell::Cell;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
 use optimus_memory::{
@@ -75,8 +77,8 @@ pub use evaluation::{
     MAX_EVALUATION_DATASET_BYTES,
 };
 pub use execution::{
-    ExecutionManifest, ExecutionStatus, ExecutionStore, ReplayClassification, ReplayReport,
-    EXECUTION_MANIFEST_VERSION,
+    ExecutionManifest, ExecutionStatus, ExecutionStore, ExecutionTimingSummary,
+    ReplayClassification, ReplayReport, TimingEvent, TimingEventKind, EXECUTION_MANIFEST_VERSION,
 };
 pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
@@ -212,6 +214,8 @@ pub enum StreamEvent {
     ToolStatus { name: String, detail: String },
     /// Soft status line for the UI (e.g. "thinking").
     Status(String),
+    /// Typed monotonic timing evidence for the active turn.
+    Timing(TimingEvent),
 }
 
 /// Control returned by a streaming consumer after each event delivery attempt.
@@ -346,6 +350,7 @@ impl ModelProvider for ScriptedModel {
 #[derive(Debug, Clone)]
 pub struct KernelConfig {
     pub max_steps: u32,
+    pub max_tool_calls_per_step: usize,
     pub pack_budget: PackBudgetConfig,
     pub memory_ctx: WriteContext,
     pub compression: CompressionConfig,
@@ -358,6 +363,7 @@ impl Default for KernelConfig {
     fn default() -> Self {
         Self {
             max_steps: 8,
+            max_tool_calls_per_step: 8,
             pack_budget: PackBudgetConfig::default(),
             memory_ctx: WriteContext {
                 tenant: "local".into(),
@@ -386,7 +392,25 @@ pub struct TurnResult {
     pub loaded_packs: Vec<String>,
     /// True if extractive compression ran at least once this turn.
     pub compressed: bool,
+    pub timings: TurnTimings,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct TurnTimings {
+    pub total_ms: u64,
+    pub first_response_ms: Option<u64>,
+    pub model_ms: u64,
+    pub tool_ms: u64,
+}
+
+#[derive(Debug, Default)]
+struct TimingAccumulator {
+    first_response_ms: Option<u64>,
+    model_ms: u64,
+    tool_ms: u64,
+}
+
+const HARD_MAX_TOOL_CALLS_PER_STEP: usize = 64;
 
 #[derive(Debug, Clone, Copy)]
 struct RecordedExecution {
@@ -658,8 +682,9 @@ impl Kernel {
         let (provider, model_id) = model.identity();
         let tools = serde_json::to_vec(&self.tool_schemas())?;
         let policy = format!(
-            "max_steps={};schema_budget={};fast={};thinking={:?}",
+            "max_steps={};max_tool_calls_per_step={};schema_budget={};fast={};thinking={:?}",
             self.config.max_steps,
+            self.config.max_tool_calls_per_step,
             self.config.pack_budget.max_schema_tokens,
             self.config.fast_mode,
             self.config.thinking_level
@@ -687,7 +712,23 @@ impl Kernel {
         turn_id: Uuid,
         execution: RecordedExecution,
     ) -> Result<TurnResult> {
-        let result = self.run_turn_loop(model, sink, cancellation, execution);
+        let started = Instant::now();
+        let mut timings = TimingAccumulator::default();
+        let start_event = timing_event(TimingEventKind::TurnStarted, started, None, None, None);
+        self.executions
+            .record_timing_event(execution.manifest_id, &start_event)?;
+        sink(StreamEvent::Timing(start_event));
+        let mut result =
+            self.run_turn_loop(model, sink, cancellation, execution, started, &mut timings);
+        let total_ms = elapsed_ms(started);
+        if let Ok(turn) = &mut result {
+            turn.timings = TurnTimings {
+                total_ms,
+                first_response_ms: timings.first_response_ms,
+                model_ms: timings.model_ms,
+                tool_ms: timings.tool_ms,
+            };
+        }
         let (status, error_code) = match &result {
             Ok(_) => (TurnStatus::Succeeded, None),
             Err(KernelError::Cancelled) => (TurnStatus::Cancelled, Some("turn_cancelled")),
@@ -702,7 +743,7 @@ impl Kernel {
             status,
             error_code,
         )?;
-        self.executions.finish(
+        self.executions.finish_timed(
             execution.manifest_id,
             match status {
                 TurnStatus::Succeeded => ExecutionStatus::Succeeded,
@@ -710,7 +751,26 @@ impl Kernel {
                 TurnStatus::Cancelled => ExecutionStatus::Cancelled,
                 TurnStatus::Running => unreachable!("turn settlement is terminal"),
             },
+            total_ms,
         )?;
+        let terminal_status = match status {
+            TurnStatus::Succeeded => "succeeded",
+            TurnStatus::Failed => "failed",
+            TurnStatus::Cancelled => "cancelled",
+            TurnStatus::Running => unreachable!("turn settlement is terminal"),
+        }
+        .to_string();
+        let mut terminal = timing_event(
+            TimingEventKind::TurnFinished,
+            started,
+            Some(total_ms),
+            None,
+            None,
+        );
+        terminal.status = Some(terminal_status);
+        self.executions
+            .record_timing_event(execution.manifest_id, &terminal)?;
+        sink(StreamEvent::Timing(terminal));
         result
     }
 
@@ -720,11 +780,15 @@ impl Kernel {
         sink: &mut dyn FnMut(StreamEvent),
         cancellation: &CancellationToken,
         execution: RecordedExecution,
+        turn_started: Instant,
+        timings: &mut TimingAccumulator,
     ) -> Result<TurnResult> {
         let mut steps = 0u32;
         let mut tool_trace = Vec::new();
         let mut invoked_tools = Vec::new();
         let mut compressed = false;
+        let mut evidence_signatures = BTreeSet::new();
+        let mut synthesis_only = false;
 
         loop {
             cancellation.check()?;
@@ -738,33 +802,131 @@ impl Kernel {
                 compressed = true;
             }
 
-            let tools = self.tool_schemas();
+            let tools = if synthesis_only {
+                Vec::new()
+            } else {
+                self.tool_schemas()
+            };
             let advertised_tool_ids: BTreeSet<ToolId> =
                 tools.iter().map(|tool| tool.id.clone()).collect();
             let effort = apply_fast_mode(
                 normalize_thinking_level(self.config.thinking_level.as_deref()),
                 self.config.fast_mode,
             );
+            let mut request_messages = self.messages.clone();
+            if synthesis_only {
+                request_messages.push(Message {
+                    role: Role::System,
+                    content: "Tool-loop guard active: synthesis-only step. Answer from the evidence already present and do not request more tools.".into(),
+                    tool_call_id: None,
+                    name: None,
+                });
+            }
             let req = CompletionRequest {
-                messages: self.messages.clone(),
+                messages: request_messages,
                 tools,
                 reasoning_effort: effort,
                 fast_mode: self.config.fast_mode,
             };
             let recorded_request = req.clone();
             sink(StreamEvent::Status(format!("model step {steps}")));
-            let resp = model.complete_streaming_cancellable(req, sink, cancellation)?;
+            let model_started = Instant::now();
+            let model_start_event = timing_event(
+                TimingEventKind::ModelStarted,
+                turn_started,
+                None,
+                Some(steps),
+                None,
+            );
+            self.executions
+                .record_timing_event(execution.manifest_id, &model_start_event)?;
+            sink(StreamEvent::Timing(model_start_event));
+            let observe_first_response = timings.first_response_ms.is_none();
+            let first_observed = Cell::new(false);
+            let first_elapsed = Cell::new(None);
+            let mut timed_sink = |event| {
+                if observe_first_response && !first_observed.replace(true) {
+                    let elapsed = elapsed_ms(turn_started);
+                    first_elapsed.set(Some(elapsed));
+                    let first_event = timing_event(
+                        TimingEventKind::FirstResponse,
+                        turn_started,
+                        None,
+                        Some(steps),
+                        None,
+                    );
+                    sink(StreamEvent::Timing(first_event));
+                }
+                sink(event);
+            };
+            let response = model.complete_streaming_cancellable(req, &mut timed_sink, cancellation);
+            if observe_first_response && !first_observed.get() && response.is_ok() {
+                let elapsed = elapsed_ms(turn_started);
+                first_elapsed.set(Some(elapsed));
+                let first_event = timing_event(
+                    TimingEventKind::FirstResponse,
+                    turn_started,
+                    None,
+                    Some(steps),
+                    None,
+                );
+                self.executions
+                    .record_timing_event(execution.manifest_id, &first_event)?;
+                sink(StreamEvent::Timing(first_event));
+            } else if observe_first_response && first_observed.get() {
+                let mut first_event = timing_event(
+                    TimingEventKind::FirstResponse,
+                    turn_started,
+                    None,
+                    Some(steps),
+                    None,
+                );
+                first_event.elapsed_ms = first_elapsed.get().unwrap_or_default();
+                self.executions
+                    .record_timing_event(execution.manifest_id, &first_event)?;
+            }
+            if observe_first_response {
+                timings.first_response_ms = first_elapsed.get();
+            }
+            let model_duration_ms = elapsed_ms(model_started);
+            timings.model_ms = timings.model_ms.saturating_add(model_duration_ms);
+            let mut model_finish_event = timing_event(
+                TimingEventKind::ModelFinished,
+                turn_started,
+                Some(model_duration_ms),
+                Some(steps),
+                None,
+            );
+            model_finish_event.status = Some(
+                match &response {
+                    Ok(_) => "succeeded",
+                    Err(KernelError::Cancelled) => "cancelled",
+                    Err(_) => "failed",
+                }
+                .into(),
+            );
+            self.executions
+                .record_timing_event(execution.manifest_id, &model_finish_event)?;
+            sink(StreamEvent::Timing(model_finish_event));
+            let resp = response?;
             let (provider, model_id) = model.identity();
             self.executions.record_model_call(
                 execution.manifest_id,
                 steps,
-                &provider,
-                &model_id,
+                (&provider, &model_id),
                 &recorded_request,
                 &resp,
+                model_duration_ms,
             )?;
 
             if !resp.tool_calls.is_empty() {
+                if resp.tool_calls.len() > HARD_MAX_TOOL_CALLS_PER_STEP {
+                    return Err(KernelError::Model(format!(
+                        "model returned {} tool calls; hard per-step limit is {}",
+                        resp.tool_calls.len(),
+                        HARD_MAX_TOOL_CALLS_PER_STEP
+                    )));
+                }
                 // Validate the entire response against the exact schema set advertised for
                 // this model step before any sibling call can mutate state or perform effects.
                 let mut seen_call_ids = BTreeSet::new();
@@ -803,49 +965,112 @@ impl Kernel {
                     tool_call_id: None,
                     name: None,
                 });
-                for call in resp.tool_calls {
+                let execution_budget = self.config.max_tool_calls_per_step.max(1);
+                for (call_index, call) in resp.tool_calls.into_iter().enumerate() {
                     cancellation.check()?;
+                    let descriptor = self.packs.resolve_loaded_tool(&call.name)?.clone();
+                    let over_budget = call_index >= execution_budget;
+                    let duplicate = if over_budget {
+                        false
+                    } else {
+                        evidence_tool_signature(&call)
+                            .is_some_and(|value| !evidence_signatures.insert(value))
+                    };
+                    let suppressed = over_budget || duplicate;
+                    if suppressed {
+                        synthesis_only = true;
+                    }
+                    let tool_started = Instant::now();
+                    let start_event = timing_event(
+                        TimingEventKind::ToolStarted,
+                        turn_started,
+                        None,
+                        Some(steps),
+                        Some(&call),
+                    );
+                    self.executions
+                        .record_timing_event(execution.manifest_id, &start_event)?;
+                    sink(StreamEvent::Timing(start_event));
                     sink(StreamEvent::ToolStatus {
                         name: call.name.clone(),
-                        detail: "running".into(),
+                        detail: if over_budget {
+                            "budget suppressed"
+                        } else if duplicate {
+                            "duplicate suppressed"
+                        } else {
+                            "running"
+                        }
+                        .into(),
                     });
-                    let descriptor = self.packs.resolve_loaded_tool(&call.name)?.clone();
-                    let (tool_id, mut outcome) = match self.dispatch_tool(&call) {
-                        Ok((tool_id, result)) => {
-                            let summary =
-                                format!("{}: {}", descriptor.id.as_str(), summarize(&result));
-                            let data = serde_json::from_str(&result)
-                                .unwrap_or_else(|_| json!({"text": result}));
-                            (
-                                tool_id,
-                                ToolOutcome::succeeded(
-                                    call.id.clone(),
-                                    descriptor.id.clone(),
-                                    summary,
-                                    data,
-                                    descriptor.replay,
-                                ),
-                            )
-                        }
-                        Err(error @ KernelError::Runtime(RuntimeError::NeedsApproval { .. })) => {
-                            return Err(error);
-                        }
-                        Err(error) if is_control_plane_tool_error(&error) => return Err(error),
-                        Err(_) => (
+                    let (tool_id, mut outcome) = if suppressed {
+                        (
                             descriptor.id.clone(),
                             ToolOutcome::failed(
                                 call.id.clone(),
                                 descriptor.id.clone(),
-                                format!("{} failed", descriptor.id.as_str()),
+                                format!("{} call suppressed", descriptor.id.as_str()),
                                 ToolErrorDetail {
-                                    code: "tool_execution_failed".into(),
-                                    message: "tool execution failed".into(),
+                                    code: if over_budget {
+                                        "tool_call_budget_suppressed"
+                                    } else {
+                                        "duplicate_tool_call_suppressed"
+                                    }
+                                    .into(),
+                                    message: if over_budget {
+                                        "The turn has enough tool evidence; synthesize from completed calls without another effect."
+                                    } else {
+                                        "Equivalent evidence already exists in this turn; synthesize from it without another tool call."
+                                    }
+                                    .into(),
                                     retryable: false,
                                 },
                                 descriptor.replay,
                             ),
-                        ),
+                        )
+                    } else {
+                        match self.dispatch_tool(&call) {
+                            Ok((tool_id, result)) => {
+                                let summary =
+                                    format!("{}: {}", descriptor.id.as_str(), summarize(&result));
+                                let data = serde_json::from_str(&result)
+                                    .unwrap_or_else(|_| json!({"text": result}));
+                                (
+                                    tool_id,
+                                    ToolOutcome::succeeded(
+                                        call.id.clone(),
+                                        descriptor.id.clone(),
+                                        summary,
+                                        data,
+                                        descriptor.replay,
+                                    ),
+                                )
+                            }
+                            Err(
+                                error @ KernelError::Runtime(RuntimeError::NeedsApproval { .. }),
+                            ) => {
+                                return Err(error);
+                            }
+                            Err(error) if is_control_plane_tool_error(&error) => return Err(error),
+                            Err(_) => (
+                                descriptor.id.clone(),
+                                ToolOutcome::failed(
+                                    call.id.clone(),
+                                    descriptor.id.clone(),
+                                    format!("{} failed", descriptor.id.as_str()),
+                                    ToolErrorDetail {
+                                        code: "tool_execution_failed".into(),
+                                        message: "tool execution failed".into(),
+                                        retryable: false,
+                                    },
+                                    descriptor.replay,
+                                ),
+                            ),
+                        }
                     };
+                    let tool_duration_ms = elapsed_ms(tool_started);
+                    if !suppressed {
+                        timings.tool_ms = timings.tool_ms.saturating_add(tool_duration_ms);
+                    }
                     if let Some(job_id) = outcome.data.get("job").and_then(Value::as_str) {
                         let job_uuid = Uuid::parse_str(job_id).map_err(|error| {
                             KernelError::Tool(format!(
@@ -869,16 +1094,44 @@ impl Kernel {
                         });
                     }
                     descriptor.validate_outcome(&outcome)?;
+                    self.executions.record_tool_call(
+                        execution.manifest_id,
+                        &call,
+                        &outcome,
+                        tool_duration_ms,
+                        suppressed,
+                    )?;
+                    let mut finish_event = timing_event(
+                        TimingEventKind::ToolFinished,
+                        turn_started,
+                        Some(tool_duration_ms),
+                        Some(steps),
+                        Some(&call),
+                    );
+                    finish_event.suppressed = suppressed;
+                    finish_event.status = Some(
+                        if suppressed {
+                            "suppressed"
+                        } else if outcome.error.is_none() {
+                            "succeeded"
+                        } else {
+                            "failed"
+                        }
+                        .into(),
+                    );
                     self.executions
-                        .record_tool_call(execution.manifest_id, &call, &outcome)?;
+                        .record_timing_event(execution.manifest_id, &finish_event)?;
                     let result = serde_json::to_string(&outcome)?;
                     let effect_link = self.effect_link_for_tool_result(&call, &result)?;
-                    invoked_tools.push(tool_id);
+                    if !suppressed {
+                        invoked_tools.push(tool_id);
+                    }
                     tool_trace.push(format!("{} -> {}", call.name, outcome.summary));
                     sink(StreamEvent::ToolStatus {
                         name: call.name.clone(),
                         detail: outcome.summary,
                     });
+                    sink(StreamEvent::Timing(finish_event));
                     self.messages.push(Message {
                         role: Role::Tool,
                         content: result,
@@ -925,6 +1178,7 @@ impl Kernel {
                     .map(|p| p.as_str().to_string())
                     .collect(),
                 compressed,
+                timings: TurnTimings::default(),
             });
         }
     }
@@ -1250,6 +1504,58 @@ fn system_prompt(packs: &CapabilitySession) -> String {
     )
 }
 
+fn elapsed_ms(started: Instant) -> u64 {
+    started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64
+}
+
+fn timing_event(
+    kind: TimingEventKind,
+    turn_started: Instant,
+    duration_ms: Option<u64>,
+    step: Option<u32>,
+    call: Option<&ToolCall>,
+) -> TimingEvent {
+    TimingEvent {
+        kind,
+        step,
+        call_id: call.map(|value| value.id.clone()),
+        name: call.map(|value| value.name.clone()),
+        duration_ms,
+        elapsed_ms: elapsed_ms(turn_started),
+        status: None,
+        suppressed: false,
+    }
+}
+
+fn evidence_tool_signature(call: &ToolCall) -> Option<String> {
+    if !matches!(
+        call.name.as_str(),
+        "web_search" | "memory_recall" | "skill_resolve"
+    ) {
+        return None;
+    }
+    let arguments = canonical_json(&call.arguments);
+    serde_json::to_string(&arguments)
+        .ok()
+        .map(|value| format!("{}:{value}", call.name))
+}
+
+fn canonical_json(value: &Value) -> Value {
+    match value {
+        Value::Object(values) => {
+            let mut keys = values.keys().collect::<Vec<_>>();
+            keys.sort();
+            let mut normalized = serde_json::Map::new();
+            for key in keys {
+                normalized.insert(key.clone(), canonical_json(&values[key]));
+            }
+            Value::Object(normalized)
+        }
+        Value::Array(values) => Value::Array(values.iter().map(canonical_json).collect()),
+        other => other.clone(),
+    }
+}
+
 fn summarize(s: &str) -> String {
     const MAX: usize = 120;
     if s.len() <= MAX {
@@ -1426,4 +1732,39 @@ pub struct SessionDetail {
     pub title: String,
     pub packs: Vec<String>,
     pub messages: Vec<Message>,
+}
+
+#[cfg(test)]
+mod turn_guard_tests {
+    use super::*;
+
+    #[test]
+    fn web_search_signature_is_canonical_and_mutating_tools_are_excluded() {
+        let first = ToolCall {
+            id: "one".into(),
+            name: "web_search".into(),
+            arguments: json!({"query":"latest ai news","limit":5}),
+        };
+        let reordered = ToolCall {
+            id: "two".into(),
+            name: "web_search".into(),
+            arguments: json!({"limit":5,"query":"latest ai news"}),
+        };
+        assert_eq!(
+            evidence_tool_signature(&first),
+            evidence_tool_signature(&reordered)
+        );
+        assert!(evidence_tool_signature(&ToolCall {
+            id: "write".into(),
+            name: "write_file".into(),
+            arguments: json!({"path":"x","content":"y"}),
+        })
+        .is_none());
+        assert!(evidence_tool_signature(&ToolCall {
+            id: "snapshot".into(),
+            name: "browser_snapshot".into(),
+            arguments: json!({}),
+        })
+        .is_none());
+    }
 }

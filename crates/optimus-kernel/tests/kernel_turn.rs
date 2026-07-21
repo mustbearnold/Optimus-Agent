@@ -3,7 +3,7 @@
 use optimus_kernel::{
     CancellationToken, CompletionRequest, CompletionResponse, ExecutionStatus, ExecutionStore,
     Kernel, KernelConfig, KernelError, ModelProvider, ScriptedModel, SessionStore, StreamControl,
-    StreamEvent, ToolCall, TurnStatus,
+    StreamEvent, TimingEventKind, ToolCall, TurnStatus,
 };
 use optimus_packs::{PackError, ToolId, ToolOutcome, ToolOutcomeKind};
 use optimus_runtime::RuntimeError;
@@ -79,11 +79,12 @@ fn active_model_completion_observes_turn_cancellation() {
         }
         controller_token.cancel();
     });
+    let mut events = Vec::new();
 
     let result = kernel.turn_with_sink_cancellable(
         &mut model,
         "cancel this model request",
-        &mut |_| {},
+        &mut |event| events.push(event),
         &cancellation,
     );
     controller.join().unwrap();
@@ -96,6 +97,22 @@ fn active_model_completion_observes_turn_cancellation() {
     assert_eq!(turns.len(), 1);
     assert_eq!(turns[0].status, TurnStatus::Cancelled);
     assert_eq!(turns[0].error_code.as_deref(), Some("turn_cancelled"));
+    assert!(matches!(
+        events.last(),
+        Some(StreamEvent::Timing(timing))
+            if timing.kind == TimingEventKind::TurnFinished
+                && timing.status.as_deref() == Some("cancelled")
+    ));
+    let executions = ExecutionStore::open(dir.path().join("execution.db")).unwrap();
+    let manifest = executions.find_by_turn(turns[0].id).unwrap().unwrap();
+    assert_eq!(
+        executions
+            .timing_summary(manifest)
+            .unwrap()
+            .terminal_status
+            .as_deref(),
+        Some("cancelled")
+    );
 }
 
 #[test]
@@ -352,8 +369,184 @@ fn max_steps_trips() {
             tool_calls: vec![],
         },
     ]);
-    let err = k.turn(&mut model, "loop").unwrap_err();
+    let mut events = Vec::new();
+    let err = k
+        .turn_with_sink(&mut model, "loop", &mut |event| events.push(event))
+        .unwrap_err();
     assert!(matches!(err, optimus_kernel::KernelError::MaxSteps(2)));
+    assert!(matches!(
+        events.last(),
+        Some(StreamEvent::Timing(timing))
+            if timing.kind == TimingEventKind::TurnFinished
+                && timing.status.as_deref() == Some("failed")
+    ));
+}
+
+#[test]
+fn tool_call_execution_budget_suppresses_overflow_and_forces_synthesis() {
+    let dir = tempdir().unwrap();
+    let config = KernelConfig {
+        max_tool_calls_per_step: 1,
+        ..KernelConfig::default()
+    };
+    let mut kernel = Kernel::open(dir.path(), config).unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![
+                ToolCall {
+                    id: "one".into(),
+                    name: "activate_pack".into(),
+                    arguments: json!({"name":"browser"}),
+                },
+                ToolCall {
+                    id: "two".into(),
+                    name: "activate_pack".into(),
+                    arguments: json!({"name":"browser"}),
+                },
+            ],
+        },
+        CompletionResponse {
+            text: Some("Browser tools are ready.".into()),
+            tool_calls: vec![],
+        },
+    ]);
+    let mut events = Vec::new();
+
+    let result = kernel
+        .turn_with_sink(&mut model, "activate twice", &mut |event| {
+            events.push(event)
+        })
+        .unwrap();
+    assert_eq!(result.steps, 2);
+    assert!(model.seen[1].tools.is_empty());
+    assert!(kernel.messages.iter().any(|message| {
+        message.tool_call_id.as_deref() == Some("two")
+            && message.content.contains("tool_call_budget_suppressed")
+    }));
+    assert!(events.iter().any(|event| matches!(
+        event,
+        StreamEvent::Timing(timing)
+            if timing.kind == TimingEventKind::ToolFinished
+                && timing.call_id.as_deref() == Some("two")
+                && timing.suppressed
+    )));
+    assert_eq!(
+        kernel.packs.loaded_packs(),
+        vec![optimus_packs::PackId::Core, optimus_packs::PackId::Browser]
+    );
+}
+
+#[test]
+fn hard_tool_call_ceiling_rejects_before_dispatch() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let calls = (0..65)
+        .map(|index| ToolCall {
+            id: format!("call-{index}"),
+            name: "memory_recall".into(),
+            arguments: json!({"subject": format!("subject-{index}")}),
+        })
+        .collect();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: None,
+        tool_calls: calls,
+    }]);
+
+    let error = kernel.turn(&mut model, "too many calls").unwrap_err();
+    assert!(matches!(
+        error,
+        KernelError::Model(message) if message.contains("hard per-step limit is 64")
+    ));
+    assert!(!kernel
+        .messages
+        .iter()
+        .any(|message| message.role == optimus_kernel::Role::Tool));
+}
+
+#[test]
+fn repeated_read_only_evidence_call_is_suppressed_and_forces_timed_synthesis() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let session_id = kernel.session_id();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "first".into(),
+                name: "memory_recall".into(),
+                arguments: json!({"subject":"user","predicate":"editor"}),
+            }],
+        },
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "duplicate".into(),
+                name: "memory_recall".into(),
+                arguments: json!({"predicate":"editor","subject":"user"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("No matching preference was found.".into()),
+            tool_calls: vec![],
+        },
+    ]);
+    let mut events = Vec::new();
+
+    let result = kernel
+        .turn_with_sink(&mut model, "what editor do I prefer?", &mut |event| {
+            events.push(event)
+        })
+        .unwrap();
+
+    assert_eq!(result.steps, 3);
+    assert_eq!(result.invoked_tools, vec![ToolId::from("memory_recall")]);
+    assert!(model.seen[2].tools.is_empty());
+    assert!(model.seen[2]
+        .messages
+        .iter()
+        .any(|message| message.content.contains("synthesis-only")));
+    assert!(kernel.messages.iter().any(|message| {
+        message.tool_call_id.as_deref() == Some("duplicate")
+            && message.content.contains("duplicate_tool_call_suppressed")
+    }));
+    assert!(result.timings.total_ms >= result.timings.model_ms);
+    assert!(result.timings.first_response_ms.is_some());
+
+    let timing_events = events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Timing(timing) => Some(timing),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        timing_events.first().map(|event| event.kind),
+        Some(TimingEventKind::TurnStarted)
+    );
+    assert_eq!(
+        timing_events.last().map(|event| event.kind),
+        Some(TimingEventKind::TurnFinished)
+    );
+    assert_eq!(
+        timing_events.last().unwrap().status.as_deref(),
+        Some("succeeded")
+    );
+    assert!(timing_events.iter().any(|event| {
+        event.kind == TimingEventKind::ToolFinished
+            && event.call_id.as_deref() == Some("duplicate")
+            && event.suppressed
+    }));
+
+    let sessions = SessionStore::open(dir.path().join("sessions.db")).unwrap();
+    let turn = sessions.turns(session_id).unwrap().pop().unwrap();
+    let executions = ExecutionStore::open(dir.path().join("execution.db")).unwrap();
+    let manifest = executions.find_by_turn(turn.id).unwrap().unwrap();
+    let timing = executions.timing_summary(manifest).unwrap();
+    assert_eq!(timing.terminal_status.as_deref(), Some("succeeded"));
+    assert_eq!(timing.model_call_count, 3);
+    assert_eq!(timing.executed_tool_call_count, 1);
+    assert_eq!(timing.suppressed_tool_call_count, 1);
 }
 
 #[test]

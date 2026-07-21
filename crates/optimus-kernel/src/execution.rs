@@ -18,6 +18,56 @@ pub const EXECUTION_MANIFEST_VERSION: u16 = 1;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+pub enum TimingEventKind {
+    TurnStarted,
+    ModelStarted,
+    FirstResponse,
+    ModelFinished,
+    ToolStarted,
+    ToolFinished,
+    TurnFinished,
+}
+
+impl TimingEventKind {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::TurnStarted => "turn_started",
+            Self::ModelStarted => "model_started",
+            Self::FirstResponse => "first_response",
+            Self::ModelFinished => "model_finished",
+            Self::ToolStarted => "tool_started",
+            Self::ToolFinished => "tool_finished",
+            Self::TurnFinished => "turn_finished",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TimingEvent {
+    pub kind: TimingEventKind,
+    pub step: Option<u32>,
+    pub call_id: Option<String>,
+    pub name: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub elapsed_ms: u64,
+    pub status: Option<String>,
+    pub suppressed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct ExecutionTimingSummary {
+    pub total_ms: u64,
+    pub first_response_ms: Option<u64>,
+    pub model_ms: u64,
+    pub tool_ms: u64,
+    pub model_call_count: usize,
+    pub executed_tool_call_count: usize,
+    pub suppressed_tool_call_count: usize,
+    pub terminal_status: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecutionStatus {
     Running,
     Succeeded,
@@ -126,7 +176,8 @@ impl ExecutionStore {
                tool_catalog_sha256 TEXT NOT NULL CHECK(length(tool_catalog_sha256)=64),
                policy_sha256 TEXT NOT NULL CHECK(length(policy_sha256)=64),
                status TEXT NOT NULL CHECK(status IN ('running','succeeded','failed','cancelled')),
-               created_unix INTEGER NOT NULL,completed_unix INTEGER
+               created_unix INTEGER NOT NULL,completed_unix INTEGER,
+               duration_ms INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)
              );
              CREATE TABLE IF NOT EXISTS execution_model_calls(
                manifest_id TEXT NOT NULL REFERENCES execution_manifests(id) ON DELETE CASCADE,
@@ -134,6 +185,7 @@ impl ExecutionStore {
                request_sha256 TEXT NOT NULL CHECK(length(request_sha256)=64),
                response_sha256 TEXT NOT NULL CHECK(length(response_sha256)=64),
                replay_class TEXT NOT NULL,
+               duration_ms INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0),
                PRIMARY KEY(manifest_id,step)
              );
              CREATE TABLE IF NOT EXISTS execution_tool_calls(
@@ -142,13 +194,45 @@ impl ExecutionStore {
                arguments_sha256 TEXT NOT NULL CHECK(length(arguments_sha256)=64),
                outcome_sha256 TEXT NOT NULL CHECK(length(outcome_sha256)=64),
                replay_class TEXT NOT NULL,effect_attempt_id TEXT,effect_sha256 TEXT,
-               receipt_sha256 TEXT,
+               receipt_sha256 TEXT,duration_ms INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0),
+               suppressed INTEGER NOT NULL DEFAULT 0 CHECK(suppressed IN (0,1)),
                PRIMARY KEY(manifest_id,call_id)
              );
              CREATE TABLE IF NOT EXISTS execution_trace_links(
                manifest_id TEXT PRIMARY KEY REFERENCES execution_manifests(id) ON DELETE CASCADE,
                trace_id TEXT NOT NULL,span_id TEXT NOT NULL UNIQUE,parent_span_id TEXT
+             );
+             CREATE TABLE IF NOT EXISTS execution_timing_events(
+               sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+               manifest_id TEXT NOT NULL REFERENCES execution_manifests(id) ON DELETE CASCADE,
+               kind TEXT NOT NULL,step INTEGER,call_id TEXT,name TEXT,duration_ms INTEGER,
+               elapsed_ms INTEGER NOT NULL CHECK(elapsed_ms >= 0),status TEXT,
+               suppressed INTEGER NOT NULL CHECK(suppressed IN (0,1))
              );",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_manifests",
+            "duration_ms",
+            "INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_model_calls",
+            "duration_ms",
+            "INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_tool_calls",
+            "duration_ms",
+            "INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_tool_calls",
+            "suppressed",
+            "INTEGER NOT NULL DEFAULT 0 CHECK(suppressed IN (0,1))",
         )?;
         Ok(Self { conn })
     }
@@ -272,11 +356,12 @@ impl ExecutionStore {
         &self,
         manifest_id: Uuid,
         step: u32,
-        provider: &str,
-        model: &str,
+        identity: (&str, &str),
         request: &CompletionRequest,
         response: &CompletionResponse,
+        duration_ms: u64,
     ) -> Result<()> {
+        let (provider, model) = identity;
         let replay = if provider == "offline" {
             ReplayClass::FixtureReplayable
         } else {
@@ -284,8 +369,8 @@ impl ExecutionStore {
         };
         self.conn.execute(
             "INSERT INTO execution_model_calls(
-               manifest_id,step,provider,model,request_sha256,response_sha256,replay_class
-             ) VALUES(?1,?2,?3,?4,?5,?6,?7)",
+               manifest_id,step,provider,model,request_sha256,response_sha256,replay_class,duration_ms
+             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8)",
             params![
                 manifest_id.to_string(),
                 step as i64,
@@ -293,7 +378,8 @@ impl ExecutionStore {
                 model,
                 sha256(&serde_json::to_vec(request)?),
                 sha256(&serde_json::to_vec(response)?),
-                replay_name(replay)
+                replay_name(replay),
+                duration_ms as i64
             ],
         )?;
         Ok(())
@@ -304,13 +390,15 @@ impl ExecutionStore {
         manifest_id: Uuid,
         call: &ToolCall,
         outcome: &ToolOutcome,
+        duration_ms: u64,
+        suppressed: bool,
     ) -> Result<()> {
         let provenance = outcome.provenance.as_ref();
         self.conn.execute(
             "INSERT INTO execution_tool_calls(
                manifest_id,call_id,tool_id,arguments_sha256,outcome_sha256,replay_class,
-               effect_attempt_id,effect_sha256,receipt_sha256
-             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+               effect_attempt_id,effect_sha256,receipt_sha256,duration_ms,suppressed
+             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
             params![
                 manifest_id.to_string(),
                 call.id,
@@ -320,22 +408,58 @@ impl ExecutionStore {
                 replay_name(outcome.replay),
                 provenance.map(|value| value.effect_attempt_id.to_string()),
                 provenance.map(|value| value.effect_sha256.as_str()),
-                provenance.and_then(|value| value.receipt_sha256.as_deref())
+                provenance.and_then(|value| value.receipt_sha256.as_deref()),
+                duration_ms as i64,
+                i64::from(suppressed)
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn record_timing_event(&self, manifest_id: Uuid, event: &TimingEvent) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO execution_timing_events(
+               manifest_id,kind,step,call_id,name,duration_ms,elapsed_ms,status,suppressed
+             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+            params![
+                manifest_id.to_string(),
+                event.kind.as_str(),
+                event.step.map(i64::from),
+                event.call_id,
+                event.name,
+                event.duration_ms.map(|value| value as i64),
+                event.elapsed_ms as i64,
+                event.status,
+                i64::from(event.suppressed)
             ],
         )?;
         Ok(())
     }
 
     pub fn finish(&self, manifest_id: Uuid, status: ExecutionStatus) -> Result<()> {
+        self.finish_timed(manifest_id, status, 0)
+    }
+
+    pub fn finish_timed(
+        &self,
+        manifest_id: Uuid,
+        status: ExecutionStatus,
+        duration_ms: u64,
+    ) -> Result<()> {
         if status == ExecutionStatus::Running {
             return Err(KernelError::Model(
                 "execution settlement requires terminal status".into(),
             ));
         }
         let changed = self.conn.execute(
-            "UPDATE execution_manifests SET status=?1,completed_unix=?2
-             WHERE id=?3 AND status='running'",
-            params![status.as_str(), now_unix() as i64, manifest_id.to_string()],
+            "UPDATE execution_manifests SET status=?1,completed_unix=?2,duration_ms=?3
+             WHERE id=?4 AND status='running'",
+            params![
+                status.as_str(),
+                now_unix() as i64,
+                duration_ms as i64,
+                manifest_id.to_string()
+            ],
         )?;
         if changed != 1 {
             return Err(KernelError::Model(format!(
@@ -343,6 +467,37 @@ impl ExecutionStore {
             )));
         }
         Ok(())
+    }
+
+    pub fn timing_summary(&self, manifest_id: Uuid) -> Result<ExecutionTimingSummary> {
+        self.conn
+            .query_row(
+                "SELECT m.duration_ms,
+                        (SELECT elapsed_ms FROM execution_timing_events WHERE manifest_id=m.id AND kind='first_response' ORDER BY sequence LIMIT 1),
+                        COALESCE((SELECT sum(duration_ms) FROM execution_timing_events WHERE manifest_id=m.id AND kind='model_finished'),0),
+                        COALESCE((SELECT sum(duration_ms) FROM execution_timing_events WHERE manifest_id=m.id AND kind='tool_finished' AND suppressed=0),0),
+                        (SELECT count(*) FROM execution_timing_events WHERE manifest_id=m.id AND kind='model_finished'),
+                        (SELECT count(*) FROM execution_timing_events WHERE manifest_id=m.id AND kind='tool_finished' AND suppressed=0),
+                        (SELECT count(*) FROM execution_timing_events WHERE manifest_id=m.id AND kind='tool_finished' AND suppressed=1),
+                        CASE WHEN m.status='running' THEN NULL ELSE m.status END
+                 FROM execution_manifests m WHERE m.id=?1",
+                params![manifest_id.to_string()],
+                |row| {
+                    Ok(ExecutionTimingSummary {
+                        total_ms: row.get::<_, i64>(0)? as u64,
+                        first_response_ms: row
+                            .get::<_, Option<i64>>(1)?
+                            .map(|value| value as u64),
+                        model_ms: row.get::<_, i64>(2)? as u64,
+                        tool_ms: row.get::<_, i64>(3)? as u64,
+                        model_call_count: row.get::<_, i64>(4)? as usize,
+                        executed_tool_call_count: row.get::<_, i64>(5)? as usize,
+                        suppressed_tool_call_count: row.get::<_, i64>(6)? as usize,
+                        terminal_status: row.get(7)?,
+                    })
+                },
+            )
+            .map_err(KernelError::Sqlite)
     }
 
     pub fn manifest(&self, id: Uuid) -> Result<ExecutionManifest> {
@@ -434,6 +589,19 @@ impl ExecutionStore {
     }
 }
 
+fn ensure_column(connection: &Connection, table: &str, column: &str, sql_type: &str) -> Result<()> {
+    let mut statement = connection.prepare(&format!("PRAGMA table_info({table})"))?;
+    let columns = statement
+        .query_map([], |row| row.get::<_, String>(1))?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    if !columns.iter().any(|value| value == column) {
+        connection.execute_batch(&format!(
+            "ALTER TABLE {table} ADD COLUMN {column} {sql_type}"
+        ))?;
+    }
+    Ok(())
+}
+
 fn read_classes(connection: &Connection, sql: &str, manifest_id: Uuid) -> Result<Vec<String>> {
     let mut statement = connection.prepare(sql)?;
     let rows = statement.query_map(params![manifest_id.to_string()], |row| row.get(0))?;
@@ -490,13 +658,13 @@ mod tests {
             .record_model_call(
                 manifest,
                 1,
-                "codex",
-                "gpt-5.6-terra",
+                ("codex", "gpt-5.6-terra"),
                 &CompletionRequest::default(),
                 &CompletionResponse {
                     text: Some("answer".into()),
                     tool_calls: vec![],
                 },
+                17,
             )
             .unwrap();
         let report = store.replay_report(manifest).unwrap();
@@ -540,6 +708,8 @@ mod tests {
                     arguments: json!({"program":"x"}),
                 },
                 &outcome,
+                9,
+                false,
             )
             .unwrap();
         assert_eq!(

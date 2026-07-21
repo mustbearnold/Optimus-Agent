@@ -1238,6 +1238,7 @@
       },
       "validated_by": [
         "apps/optimus-cli/tests/eval_compare.rs",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/evaluation_contracts.rs",
         "crates/optimus-kernel/tests/integrity_integration.rs",

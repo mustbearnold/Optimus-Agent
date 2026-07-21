@@ -69,6 +69,49 @@ test('Rome design tokens are defined', async ({ page }) => {
   expect(tokens.radiusImportant).toBe('0px');
 });
 
+test('turn and session timers expose live and terminal timing evidence', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+  await page.evaluate(() => {
+    window.optimus.chatStream = (_text, _opts, onEvent) => {
+      let resolve;
+      const task = new Promise((done) => { resolve = done; });
+      task.cancel = () => true;
+      window.__finishTimedTurn = () => {
+        onEvent({ type: 'timing', kind: 'first_response', elapsed_ms: 34 });
+        onEvent({ type: 'timing', kind: 'tool_started', name: 'web_search', call_id: 'search-1', elapsed_ms: 34, suppressed: false });
+        onEvent({ type: 'tool', name: 'web_search', detail: 'running' });
+        onEvent({ type: 'timing', kind: 'tool_finished', name: 'web_search', call_id: 'search-1', duration_ms: 21, elapsed_ms: 55, suppressed: false });
+        onEvent({ type: 'delta', text: 'Latest AI news.' });
+        onEvent({ type: 'timing', kind: 'turn_finished', duration_ms: 89, elapsed_ms: 89, status: 'succeeded' });
+        resolve({
+          assistant_text: 'Latest AI news.', session_id: 'timed-session', title: 'timed',
+          provider: 'offline', steps: 1, schema_tokens_final: 1, tool_trace: [],
+          timings: { total_ms: 89, first_response_ms: 34, model_ms: 68, tool_ms: 21 },
+        });
+      };
+      return task;
+    };
+  });
+
+  await page.fill('#input', 'timed request');
+  await page.click('#send');
+  await expect(page.locator('#turnTimer')).toHaveAttribute('data-active', 'true');
+  await expect(page.locator('#turnTimer')).toContainText('turn');
+  await expect(page.locator('#sessionTimer')).toContainText('session');
+  await page.evaluate(() => window.__finishTimedTurn());
+  await expect(page.locator('#send')).toHaveAttribute('aria-label', 'Send');
+  await expect(page.locator('#turnTimer')).toHaveAttribute('data-active', 'false');
+  await expect(page.locator('.msg.assistant .status-strip').last()).toContainText('total 89 ms');
+  await expect(page.locator('.msg.assistant .status-strip').last()).toContainText('first 34 ms');
+  await expect(page.locator('.msg.assistant .status-strip').last()).toContainText('model 68 ms');
+  await expect(page.locator('.msg.assistant .status-strip').last()).toContainText('tools 21 ms');
+  await expect(page.locator('#taskBody .task-item')).toHaveCount(1);
+  await expect(page.locator('#taskBody .task-item')).toContainText('web_search');
+  await expect(page.locator('#taskBody .task-item')).toContainText('21 ms');
+  await expect(page.locator('#taskBody .task-item')).not.toContainText('×2');
+});
+
 test('shell multi-pane IA: leftRail main statusBar; right/term hidden by default', async ({ page }) => {
   await page.goto('/');
   await waitForReady(page);

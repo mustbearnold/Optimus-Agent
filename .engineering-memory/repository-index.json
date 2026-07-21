@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 199,
+  "file_count": 200,
   "files": [
     {
       "bytes": 152,
@@ -133,11 +133,11 @@
       "sha256": "1c9bc860b10ca1b97285815c830975cfe3720029bc4d894526400e49373406a2"
     },
     {
-      "bytes": 16440,
+      "bytes": 18995,
       "language": "JavaScript",
-      "lines": 378,
+      "lines": 421,
       "path": "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
-      "sha256": "13255467f963d4a904d0fe0d8b7f9691e3303d707cce62b41398cde96d425b56"
+      "sha256": "7e83fd976cbe5a7584ba05bb3f967d167534247b164b546875a344b688bd185a"
     },
     {
       "bytes": 9020,
@@ -196,11 +196,11 @@
       "sha256": "4454213dfe4a86e6347065b1e78192251021507d1f071c34b65c149f7ddf0bdf"
     },
     {
-      "bytes": 7083,
+      "bytes": 7400,
       "language": "Rust",
-      "lines": 208,
+      "lines": 216,
       "path": "apps/optimus-desktop/src/ipc/chat.rs",
-      "sha256": "9bc57b639a6584d5621380edbe9099189da335f1fac8acdab0ebda82a9aa73fa"
+      "sha256": "50cd1e8061b422426c9ae558e7971cc6989d28ccfc1c375833c21586c55155ee"
     },
     {
       "bytes": 502,
@@ -217,11 +217,11 @@
       "sha256": "a45f9f25f6b5af16c31499a2256f5b9d8794c50c63e721295def97ec44b6dd89"
     },
     {
-      "bytes": 2408,
+      "bytes": 3138,
       "language": "Rust",
-      "lines": 87,
+      "lines": 104,
       "path": "apps/optimus-desktop/src/ipc/mod.rs",
-      "sha256": "d42eeda713bd9c8f62f82fa4f2c4c96ede2fb8165f0a08838f2a42fe89d5152b"
+      "sha256": "de573c540916de6681e0a7d4c6f045c12c349e933f8747a7b02be36a9ec0b23d"
     },
     {
       "bytes": 3229,
@@ -294,25 +294,25 @@
       "sha256": "6c587ff100deffbf157325ae0a213d54c800988dd09324475f34ba09eb73ee03"
     },
     {
-      "bytes": 109467,
+      "bytes": 115573,
       "language": "JavaScript",
-      "lines": 2756,
+      "lines": 2880,
       "path": "apps/optimus-desktop/ui/app.js",
-      "sha256": "44767ac1af31257a9e62f2da0d3ece098db7194a21600e72463a73a8f06760bc"
+      "sha256": "7cbb455f827cf45207e1b2ee562339afee05baa35a321bdea3a312cca6c87c18"
     },
     {
-      "bytes": 18459,
+      "bytes": 18727,
       "language": "HTML",
-      "lines": 324,
+      "lines": 328,
       "path": "apps/optimus-desktop/ui/index.html",
-      "sha256": "240b6755331f0fd75c49194fc76bdb761ba1c92da0fe42f9dc4e368ce4dd6779"
+      "sha256": "26305109f911c828223bcc0930640097fbaeae9efb2d5d2f6638ddedec484cca"
     },
     {
-      "bytes": 43395,
+      "bytes": 43772,
       "language": "CSS",
-      "lines": 511,
+      "lines": 516,
       "path": "apps/optimus-desktop/ui/style.css",
-      "sha256": "6d6afd22a918fff904df6870d4c378365f94724896f23042b6aae47d835d5857"
+      "sha256": "5441c10faa528c7a7697eb9e8775031e990a27829f24e3caa21c5e6e65dff955"
     },
     {
       "bytes": 398,
@@ -392,11 +392,11 @@
       "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
     },
     {
-      "bytes": 18807,
+      "bytes": 25665,
       "language": "Rust",
-      "lines": 550,
+      "lines": 720,
       "path": "crates/optimus-kernel/src/execution.rs",
-      "sha256": "6a7433ac116e2f6b7681a60de791951013fb5627eb32e3b70f16c3f4e4e6ac89"
+      "sha256": "7925c4376652691031567cf3783c5a87c2bd3aec27e84df37b22d774781a7b4f"
     },
     {
       "bytes": 18952,
@@ -413,11 +413,11 @@
       "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
     },
     {
-      "bytes": 54790,
+      "bytes": 68356,
       "language": "Rust",
-      "lines": 1429,
+      "lines": 1770,
       "path": "crates/optimus-kernel/src/lib.rs",
-      "sha256": "93a4478e39193744a2da3ed7cf15d22c3b0b3d4f9d7678460ff08f0b7867dc2f"
+      "sha256": "7085492eefd607866761a952cba847559b14c26a686c687302e2973d4321b878"
     },
     {
       "bytes": 13305,
@@ -518,11 +518,11 @@
       "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
     },
     {
-      "bytes": 21647,
+      "bytes": 28424,
       "language": "Rust",
-      "lines": 619,
+      "lines": 812,
       "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-      "sha256": "37231536f1951b1ced48ccd593a3d12563bebbf28e8fa96c92b9ba7420cc2cf3"
+      "sha256": "a9e286ff076cba8e429424a2bd3e2ebf1af3e51e55e9eb214840bafc3a86b50b"
     },
     {
       "bytes": 5004,
@@ -931,11 +931,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 25724,
+      "bytes": 26809,
       "language": "Markdown",
-      "lines": 436,
+      "lines": 450,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "b9987c04edb53995936ebee73fe84a3a7d1fcaab212d533da65b049850e60ba0"
+      "sha256": "51282747153a5caa5f74f0099f317bdf7132c6d9e3f19eb153ddc66bb3f1f9f8"
     },
     {
       "bytes": 13027,
@@ -1162,11 +1162,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 13512,
+      "bytes": 14562,
       "language": "Markdown",
-      "lines": 222,
+      "lines": 235,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "74ca5c780d6fa466fb6f17a9f3f1dd9c52736241ba840459e07d1c254d6161d2"
+      "sha256": "3746529a66e68aad9eb83a77d160d24d7491a2a208ba6c46491c06f5bcca9c76"
     },
     {
       "bytes": 5802,
@@ -1302,6 +1302,13 @@
       "sha256": "bce85584e1d71d8a5a2bf15189f9a7df18460fadb9ea55ff3f88b7ccae159ca2"
     },
     {
+      "bytes": 4369,
+      "language": "Markdown",
+      "lines": 80,
+      "path": "docs/specifications/turn-timing-and-tool-loop-control.md",
+      "sha256": "46daf70c04f32a8a998637d7ecd40523a13a0715602aac4840973ef01a03c5d5"
+    },
+    {
       "bytes": 7663,
       "language": "Markdown",
       "lines": 164,
@@ -1316,11 +1323,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 80554,
+      "bytes": 81475,
       "language": "Python",
-      "lines": 1694,
+      "lines": 1719,
       "path": "scripts/engineering_memory.py",
-      "sha256": "e998662e188b2c6db403edce148ea2dca61ffcce820291190f90fbd8debc0cb5"
+      "sha256": "ef84ea2d53756fd07868fbdf9b5b445655fcb8dde1eebcecbe047c0a5f9e7237"
     },
     {
       "bytes": 9185,
@@ -1337,11 +1344,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 18106,
+      "bytes": 18764,
       "language": "Python",
-      "lines": 429,
+      "lines": 448,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "03ed88a0d252d5a7e9776855cceae89c01c268d7adb2dc32a4502f211540a55c"
+      "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
     },
     {
       "bytes": 5394,
@@ -1413,11 +1420,11 @@
   ],
   "languages": {
     "CSS": {
-      "bytes": 47552,
+      "bytes": 47929,
       "files": 2
     },
     "HTML": {
-      "bytes": 58016,
+      "bytes": 58284,
       "files": 3
     },
     "JSON": {
@@ -1425,12 +1432,12 @@
       "files": 3
     },
     "JavaScript": {
-      "bytes": 166658,
+      "bytes": 175319,
       "files": 9
     },
     "Markdown": {
-      "bytes": 543212,
-      "files": 90
+      "bytes": 549716,
+      "files": 91
     },
     "Other": {
       "bytes": 156778,
@@ -1441,11 +1448,11 @@
       "files": 1
     },
     "Python": {
-      "bytes": 103984,
+      "bytes": 105563,
       "files": 3
     },
     "Rust": {
-      "bytes": 1177822,
+      "bytes": 1206070,
       "files": 72
     },
     "Shell": {
@@ -1483,7 +1490,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "32ed0467945e1ea6fec08537fae4c49ed3693e7a96ac4535596c16ac017ffdbb",
+  "tree_sha256": "9384aecb55004682c6b51fb421bd3877ca747da9fec5d53c385ca35360a6f18a",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {

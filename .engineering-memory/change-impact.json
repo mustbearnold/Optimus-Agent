@@ -1110,6 +1110,25 @@
     },
     {
       "covers": [
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/src/execution.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-desktop/ui/index.html",
+        "apps/optimus-desktop/ui/app.js",
+        "apps/optimus-desktop/ui/style.css",
+        "apps/optimus-desktop/e2e/**"
+      ],
+      "depends_on": [],
+      "document": "docs/specifications/turn-timing-and-tool-loop-control.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 13,
+      "resolved_tests": [],
+      "status": "historical",
+      "validated_by": []
+    },
+    {
+      "covers": [
         "crates/optimus-kernel/src/eval.rs",
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/tests/evaluation_contracts.rs",
@@ -1187,23 +1206,29 @@
       "docs/maps/repository-and-ownership.md"
     ],
     "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js": [
-      "docs/maps/observability-and-evaluations.md"
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js": [
-      "docs/maps/observability-and-evaluations.md"
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js": [
-      "docs/maps/observability-and-evaluations.md"
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js": [
-      "docs/maps/observability-and-evaluations.md"
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js": [
-      "docs/maps/observability-and-evaluations.md"
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/support.js": [
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
-      "docs/maps/observability-and-evaluations.md"
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/src/bridge.rs": [
       "docs/architecture/system-overview.md",
@@ -1226,7 +1251,8 @@
       "docs/maps/security-and-approvals.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/stream-delivery-cancellation.md"
+      "docs/specifications/stream-delivery-cancellation.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/src/ipc/contract.rs": [
       "docs/architecture/system-overview.md",
@@ -1331,13 +1357,16 @@
     "apps/optimus-desktop/ui/app.js": [
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/observability-and-evaluations.md",
-      "docs/specifications/desktop-turn-cancellation.md"
+      "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/ui/index.html": [
-      "docs/specifications/desktop-turn-cancellation.md"
+      "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/ui/style.css": [
-      "docs/specifications/desktop-turn-cancellation.md"
+      "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "crates/optimus-graph/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -1449,7 +1478,8 @@
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "crates/optimus-kernel/src/fs_sandbox.rs": [
       "docs/architecture/system-overview.md",
@@ -1487,6 +1517,7 @@
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
       "docs/specifications/stream-delivery-cancellation.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "crates/optimus-kernel/src/openai_compat.rs": [
@@ -1603,7 +1634,8 @@
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
-      "docs/specifications/stream-delivery-cancellation.md"
+      "docs/specifications/stream-delivery-cancellation.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "crates/optimus-kernel/tests/openai_http.rs": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md",

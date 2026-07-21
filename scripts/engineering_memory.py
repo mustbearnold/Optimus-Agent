@@ -147,7 +147,7 @@ def repository_files() -> tuple[Path, ...]:
         base = Path(directory)
         for filename in sorted(filenames):
             path = base / filename
-            if is_sensitive(path):
+            if is_sensitive(path) or is_excluded(path):
                 continue
             out.append(path)
     return tuple(sorted(out, key=relative))
@@ -1487,6 +1487,31 @@ def current_architecture_semantic_errors(
         for claim in stale_claims:
             if claim in text:
                 errors.append(f"superseded ADR-0019 claim in {rel}: {claim}")
+
+    required_source_fragments = {
+        "crates/optimus-kernel/src/lib.rs": (
+            "HARD_MAX_TOOL_CALLS_PER_STEP",
+            "duplicate_tool_call_suppressed",
+            "tool_call_budget_suppressed",
+            "TimingEventKind::TurnFinished",
+        ),
+        "crates/optimus-kernel/src/execution.rs": (
+            "execution_timing_events",
+            "duration_ms INTEGER NOT NULL",
+            "timing_summary",
+        ),
+        "apps/optimus-desktop/ui/app.js": (
+            "sessionTimer",
+            "turnTimer",
+            "first_response_ms",
+            "suppressedCount",
+        ),
+    }
+    for rel, fragments in required_source_fragments.items():
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        for fragment in fragments:
+            if fragment not in text:
+                errors.append(f"timing/loop authority missing from {rel}: {fragment}")
     return errors
 
 

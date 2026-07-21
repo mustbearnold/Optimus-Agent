@@ -23,7 +23,7 @@ pub(crate) use system::{auth_status_json, doctor_json};
 mod tests {
     use std::path::PathBuf;
 
-    use optimus_kernel::StreamEvent;
+    use optimus_kernel::{StreamEvent, TimingEvent, TimingEventKind};
     use serde_json::json;
 
     use super::{handle_ipc, stream_event_to_json, IpcEnvelope, IpcReply};
@@ -74,6 +74,23 @@ mod tests {
         assert_eq!(
             stream_event_to_json(&StreamEvent::Status("working".into())),
             json!({"type":"status","text":"working"})
+        );
+        assert_eq!(
+            stream_event_to_json(&StreamEvent::Timing(TimingEvent {
+                kind: TimingEventKind::ToolFinished,
+                step: Some(2),
+                call_id: Some("call-1".into()),
+                name: Some("web_search".into()),
+                duration_ms: Some(17),
+                elapsed_ms: 29,
+                status: Some("succeeded".into()),
+                suppressed: false,
+            })),
+            json!({
+                "type":"timing","kind":"tool_finished","step":2,
+                "call_id":"call-1","name":"web_search","duration_ms":17,
+                "elapsed_ms":29,"status":"succeeded","suppressed":false
+            })
         );
     }
 

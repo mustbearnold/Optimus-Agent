@@ -193,6 +193,7 @@ pub(crate) fn chat_turn_cancellable(
         "schema_tokens_final": result.schema_tokens_final,
         "compressed": result.compressed,
         "tool_trace": result.tool_trace,
+        "timings": result.timings,
         "provider": used_provider,
     }))
 }
@@ -204,5 +205,12 @@ pub(crate) fn stream_event_to_json(ev: &StreamEvent) -> serde_json::Value {
             json!({"type": "tool", "name": name, "detail": detail})
         }
         StreamEvent::Status(s) => json!({"type": "status", "text": s}),
+        StreamEvent::Timing(timing) => {
+            let mut value = serde_json::to_value(timing).unwrap_or_default();
+            if let Some(object) = value.as_object_mut() {
+                object.insert("type".into(), json!("timing"));
+            }
+            value
+        }
     }
 }

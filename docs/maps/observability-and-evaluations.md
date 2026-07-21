@@ -35,9 +35,9 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 |---|---|---|
 | Work Graph event ledger | Confirmed current behaviour | Ordered integer sequence, optional job/node IDs, event kind, JSON payload, database timestamp. |
 | Job/node projections | Confirmed current behaviour | Status, budgets, effect JSON, durable attempts/receipts, cancellation requests, exact-action approval decisions, steps, and bounded command output. |
-| Kernel turn sink | Confirmed current behaviour | In-process text delta, tool started/finished, status, final, and error events. |
+| Kernel turn sink | Confirmed current behaviour | In-process text delta, tool status, status, and typed monotonic turn/model/first-response/tool timing events, including terminal status and suppression evidence. |
 | Sessions | Confirmed current behaviour | Serialized transcript, loaded packs, and normalized tool-call → job/node/effect-attempt/effect/receipt-hash links. |
-| Execution manifests | Confirmed current behaviour | Versioned manifest identity, turn, provider/model, prompt/tool/policy/input hashes, atomic root trace link, terminal status, exact tool outcomes, replay classification, and non-replayability reasons. |
+| Execution manifests | Confirmed current behaviour | Versioned manifest identity, turn, provider/model, prompt/tool/policy/input hashes, atomic root trace link, terminal status, total/model/tool durations, ordered timing events, exact tool outcomes including suppression, replay classification, and non-replayability reasons. |
 | Agent invocations | Confirmed current behaviour | Immutable descriptor version, accepted request, retry lineage, cancellation request, ordered events, one terminal result, and runtime-validated effect links. |
 | Workflow registry/adapters | Confirmed current behaviour | Versioned validated definitions, exact terminal declarations, owner capability matrices, and fail-closed status mappings; not universal run state. |
 | Campaign/cron/gateway | Confirmed current behaviour | Campaign and cron leases; gateway message claims, generation/token/deadline state, attempt history, terminal outbox JSON, and reconciled files. |
@@ -51,6 +51,19 @@ or total order.
 **Confirmed current behaviour:** accepted Work Graph projection transitions and
 their events commit atomically. Storage also reserves one terminal-event slot;
 legacy partial projections are quarantined rather than executed.
+
+**Confirmed current behaviour:** every accepted kernel turn uses one monotonic clock
+for total, first-response, model-step, and tool-call millisecond evidence. Started
+and finished events are streamed and persisted in `execution.db`; success, failure,
+and cancellation retain a terminal timing event. Wall-clock SQLite timestamps remain
+record metadata and are not used to compute elapsed durations. Timing values never
+participate in replay hashes or deterministic evaluation identities.
+
+**Confirmed current behaviour:** one model step executes at most eight tool effects
+by default; additional valid calls receive explicit suppressed outcomes and trigger
+a synthesis-only next step. Exact normalized repeated `web_search`, `memory_recall`,
+and `skill_resolve` calls are likewise suppressed after the first execution. More
+than 64 calls in one provider response fail before sibling effects.
 
 ## Current event/terminal coverage
 

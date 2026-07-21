@@ -390,6 +390,25 @@ class EngineeringMemoryTests(unittest.TestCase):
             )
         )
 
+    def test_repository_files_excludes_linked_worktree_git_pointer(self) -> None:
+        fake_root = Path("C:/repo")
+        with (
+            mock.patch.object(EM, "ROOT", fake_root),
+            mock.patch.object(
+                EM.os,
+                "walk",
+                return_value=[(str(fake_root), [], [".git", "Cargo.toml"])],
+            ),
+        ):
+            EM.repository_files.cache_clear()
+            try:
+                self.assertEqual(
+                    [path.name for path in EM.repository_files()],
+                    ["Cargo.toml"],
+                )
+            finally:
+                EM.repository_files.cache_clear()
+
     def test_file_records_canonicalize_text_eol_and_preserve_binary_bytes(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="engineering-memory-test-", dir=ROOT

@@ -758,8 +758,66 @@
     filesPath: '',
     filesLoading: false,
     filePreviewPath: '',
+    sessionStartedEpochMs: Date.now(),
+    turnStartedPerfMs: null,
+    turnTimerHandle: null,
+    latestTurnTimings: null,
     listMode: (function(){ try { return localStorage.getItem('optimus.ui.listMode') || 'projects'; } catch { return 'projects'; } })(),
   };
+  function formatDuration(ms) {
+    const value = Math.max(0, Number(ms) || 0);
+    if (value < 1000) return `${Math.round(value)} ms`;
+    if (value < 60000) return `${(value / 1000).toFixed(value < 10000 ? 1 : 0)} s`;
+    const minutes = Math.floor(value / 60000);
+    const seconds = Math.floor((value % 60000) / 1000);
+    return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  }
+  function parseSessionEpoch(value) {
+    if (typeof value !== 'string') return Date.now();
+    if (value.startsWith('ts:')) {
+      const seconds = Number(value.slice(3));
+      if (Number.isFinite(seconds)) return seconds * 1000;
+    }
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : Date.now();
+  }
+  function setSessionClock(createdAt) {
+    state.sessionStartedEpochMs = createdAt ? parseSessionEpoch(createdAt) : Date.now();
+    paintSessionClock();
+  }
+  function paintSessionClock() {
+    const node = $('sessionTimer');
+    if (node) node.textContent = `session ${formatDuration(Date.now() - state.sessionStartedEpochMs)}`;
+  }
+  function paintTurnClock() {
+    const node = $('turnTimer');
+    if (!node || state.turnStartedPerfMs == null) return;
+    node.textContent = `turn ${formatDuration(performance.now() - state.turnStartedPerfMs)}`;
+  }
+  function startTurnClock() {
+    state.turnStartedPerfMs = performance.now();
+    state.latestTurnTimings = null;
+    const node = $('turnTimer');
+    if (node) node.dataset.active = 'true';
+    paintTurnClock();
+    if (state.turnTimerHandle) clearInterval(state.turnTimerHandle);
+    state.turnTimerHandle = setInterval(paintTurnClock, 250);
+  }
+  function stopTurnClock(totalMs) {
+    if (state.turnTimerHandle) clearInterval(state.turnTimerHandle);
+    state.turnTimerHandle = null;
+    const node = $('turnTimer');
+    if (node) {
+      const measured = totalMs == null && state.turnStartedPerfMs != null
+        ? performance.now() - state.turnStartedPerfMs
+        : totalMs;
+      node.textContent = `turn ${formatDuration(measured || 0)}`;
+      node.dataset.active = 'false';
+    }
+    state.turnStartedPerfMs = null;
+  }
+  setInterval(paintSessionClock, 1000);
+  paintSessionClock();
   function loadLayout() {
     try {
       const raw = localStorage.getItem(LAYOUT_KEY);
@@ -961,6 +1019,7 @@
           status: t.status || 'ok',
           count: 0,
           runs: [],
+          durationMs: 0,
         };
         map.set(name, g);
         order.push(g);
@@ -970,6 +1029,7 @@
       else if (g.status !== 'run' && t.status === 'ok') g.status = 'ok';
       const d = String(t.detail || '').trim();
       if (d) g.runs.push(d);
+      g.durationMs += Number(t.durationMs) || 0;
     }
     return order;
   }
@@ -1026,7 +1086,7 @@
       const detail = formatToolDetail(g.name, g.runs);
       return `<details class="tool-card" ${g.status === 'run' ? 'open' : ''}>
         <summary><span class="tool-dot ${st}"></span><span>${esc(label)}</span>
-        <span style="margin-left:auto;color:var(--text-3);font-size:11px">${esc(g.status || '')}${g.count > 1 ? ` · ${g.count}` : ''}</span></summary>
+        <span style="margin-left:auto;color:var(--text-3);font-size:11px">${g.durationMs ? esc(formatDuration(g.durationMs)) + ' · ' : ''}${esc(g.status || '')}${g.count > 1 ? ` · ${g.count}` : ''}</span></summary>
         <pre>${esc(detail)}</pre>
       </details>`;
     }).join('');
@@ -1049,14 +1109,17 @@
     p.setAttribute('aria-hidden', open ? 'false' : 'true');
     if (chip) chip.classList.toggle('active', !!open);
   }
-  function upsertTask(name, detail, status) {
+  function upsertTask(name, detail, status, callId) {
     const key = name || 'tool';
     let t = state.tasks.find(x => x.name === key);
     if (!t) {
-      t = { id: Date.now() + Math.random(), name: key, detail: detail || '', status: status || 'run', count: 1, lastDetail: detail || '' };
+      t = { id: Date.now() + Math.random(), name: key, detail: detail || '', status: status || 'run', count: 1, lastDetail: detail || '', callIds: callId ? [callId] : [], suppressedCount: 0 };
       state.tasks.push(t);
     } else {
-      if (status === 'run' && detail && detail !== t.lastDetail) {
+      if (callId && !t.callIds.includes(callId)) {
+        t.callIds.push(callId);
+        t.count = (t.count || 1) + 1;
+      } else if (!callId && status === 'run' && detail && detail !== t.lastDetail) {
         t.count = (t.count || 1) + 1;
         t.lastDetail = detail;
       }
@@ -1078,10 +1141,10 @@
     }
     body.innerHTML = state.tasks.map(t => `
       <div class="task-item">
-        <span class="tool-dot ${t.status === 'ok' ? 'ok' : 'run'}"></span>
+        <span class="tool-dot ${t.status === 'ok' ? 'ok' : (t.status === 'run' ? 'run' : '')}"></span>
         <div>
-          <div class="t-name">${esc(t.name)}${t.count > 1 ? ` ×${t.count}` : ''}</div>
-          <div class="t-detail">${esc(t.detail || t.status || '')}</div>
+          <div class="t-name">${esc(t.name)}${t.count > 1 ? ` ×${t.count}` : ''}${t.suppressedCount ? ` · ${t.suppressedCount} suppressed` : ''}</div>
+          <div class="t-detail">${t.durationMs != null ? `${esc(formatDuration(t.durationMs))} · ` : ''}${esc(t.detail || t.status || '')}</div>
         </div>
       </div>`).join('');
   }
@@ -1472,6 +1535,8 @@
       const r = await api('sessions');
       const list = (r && r.sessions) || r || [];
       state.sessions = Array.isArray(list) ? list : [];
+      const active = state.sessions.find((session) => String(session.id) === String(state.sessionId));
+      if (active && active.created_at) setSessionClock(active.created_at);
     } catch (e) {
       console.warn('refreshSessions', e);
       state.sessions = state.sessions || [];
@@ -1482,6 +1547,8 @@
     if (!id) return;
     const detail = await api('getSession', id);
     state.sessionId = detail.id;
+    const meta = state.sessions.find((session) => String(session.id) === String(detail.id));
+    setSessionClock(meta && meta.created_at);
     const raw = Array.isArray(detail.messages) ? detail.messages : [];
     const out = [];
     let pendingTools = [];
@@ -1525,12 +1592,21 @@
   async function newSession() {
     const s = await api('newSession');
     state.sessionId = s.id;
+    setSessionClock();
     state.messages = [];
     setHeading(s.title || 'session');
     await refreshSessions();
     renderMessages();
     if ($('input')) $('input').focus();
     return s;
+  }
+  function timingPills(timings) {
+    if (!timings) return '';
+    const pill = (label, value) => value == null ? '' : `<span class="pill">${label} <em>${esc(formatDuration(value))}</em></span>`;
+    return pill('total', timings.total_ms)
+      + pill('first', timings.first_response_ms)
+      + pill('model', timings.model_ms)
+      + pill('tools', timings.tool_ms);
   }
   function setBusy(b) {
     state.busy = b;
@@ -1589,6 +1665,7 @@
     renderTasks();
     renderMessages({ enterFrom, forceScroll: true });
     setBusy(true);
+    startTurnClock();
     try {
       const provider = $('provider').value;
       const model = $('model').value;
@@ -1625,6 +1702,37 @@
           const typing = document.getElementById('typing');
           if (typing) typing.textContent = ev.text || 'Optimus is working…';
           else scheduleStreamPaint(asstIdx);
+        } else if (ev.type === 'timing') {
+          const timings = state.latestTurnTimings || (state.latestTurnTimings = {
+            total_ms: null,
+            first_response_ms: null,
+            model_ms: 0,
+            tool_ms: 0,
+          });
+          const duration = Number(ev.duration_ms) || 0;
+          if (ev.kind === 'tool_started') {
+            upsertTask(ev.name || 'tool', 'running', 'run', ev.call_id);
+          }
+          if (ev.kind === 'first_response') timings.first_response_ms = Number(ev.elapsed_ms) || 0;
+          if (ev.kind === 'model_finished') timings.model_ms += duration;
+          if (ev.kind === 'tool_finished' && !ev.suppressed) timings.tool_ms += duration;
+          if (ev.kind === 'tool_finished') {
+            const task = [...state.tasks].reverse().find((item) => item.name === ev.name);
+            if (task) {
+              task.durationMs = (Number(task.durationMs) || 0) + duration;
+              if (ev.suppressed) task.suppressedCount = (task.suppressedCount || 0) + 1;
+              task.status = ev.suppressed ? 'suppressed' : (ev.status === 'failed' ? 'failed' : 'ok');
+              renderTasks();
+            }
+            const tools = state.messages[asstIdx].tools || [];
+            const tool = [...tools].reverse().find((item) => item.name === ev.name);
+            if (tool) tool.durationMs = (Number(tool.durationMs) || 0) + duration;
+          }
+          if (ev.kind === 'turn_finished') {
+            timings.total_ms = Number(ev.duration_ms) || Number(ev.elapsed_ms) || 0;
+            stopTurnClock(timings.total_ms);
+          }
+          scheduleStreamPaint(asstIdx);
         } else if (ev.type === 'tool') {
           const name = ev.name || 'tool';
           const detail = ev.detail || '';
@@ -1643,7 +1751,13 @@
             t.detail = detail || t.detail;
             t.status = 'run';
           }
-          upsertTask(name, detail, 'run');
+          const timedTask = state.tasks.find((item) => item.name === name && item.callIds && item.callIds.length);
+          if (timedTask) {
+            if (detail) timedTask.detail = detail;
+            renderTasks();
+          } else {
+            upsertTask(name, detail, 'run');
+          }
           scheduleStreamPaint(asstIdx);
         }
       };
@@ -1664,12 +1778,18 @@
       } else {
         state.messages[asstIdx].content = stripToolCallNoise(state.messages[asstIdx].content);
       }
+      state.latestTurnTimings = res.timings || state.latestTurnTimings;
+      stopTurnClock(state.latestTurnTimings && state.latestTurnTimings.total_ms);
       // Surface tool_trace from result if present
       if (Array.isArray(res.tool_trace) && res.tool_trace.length) {
+        const durationAssigned = new Set();
         state.messages[asstIdx].tools = res.tool_trace.map(line => {
           const s = String(line);
           const name = s.split(/[\s:(]/)[0] || 'tool';
-          return { name, detail: s, status: 'ok' };
+          const task = state.tasks.find((item) => item.name === name);
+          const durationMs = task && !durationAssigned.has(name) ? task.durationMs : 0;
+          durationAssigned.add(name);
+          return { name, detail: s, status: 'ok', durationMs };
         });
       } else if (state.messages[asstIdx].tools) {
         state.messages[asstIdx].tools = state.messages[asstIdx].tools.map(t => ({ ...t, status: 'ok' }));
@@ -1682,7 +1802,8 @@
         <span class="pill">steps <em>${esc(res.steps)}</em></span>
         <span class="pill">schema <em>${esc(res.schema_tokens_final)}</em></span>
         ${thinkingOn ? `<span class="pill amber">think <em>${esc(thinkingLevel)}</em></span>` : ''}
-        ${fastOn ? `<span class="pill">fast <em>on</em></span>` : ''}`;
+        ${fastOn ? `<span class="pill">fast <em>on</em></span>` : ''}
+        ${timingPills(state.latestTurnTimings)}`;
       finishTasks();
       paintStreamBubble(asstIdx);
       await refreshSessions();
@@ -1692,17 +1813,20 @@
         const partial = state.messages[asstIdx] || { role: 'assistant', content: '' };
         partial.streaming = false;
         partial.content = stripToolCallNoise(partial.content || '') || 'Cancelled.';
-        partial.meta = `<span class="pill amber"><em>cancelled</em></span>`;
+        partial.meta = `<span class="pill amber"><em>cancelled</em></span>${timingPills(state.latestTurnTimings)}`;
         state.messages[asstIdx] = partial;
       } else {
         state.messages[asstIdx] = {
           role: 'assistant',
           content: `Error: ${e.message || e}`,
-          meta: `<span class="pill err"><em>failed</em></span>`,
+          meta: `<span class="pill err"><em>failed</em></span>${timingPills(state.latestTurnTimings)}`,
         };
       }
       finishTasks();
     } finally {
+      if (state.turnStartedPerfMs != null) {
+        stopTurnClock(state.latestTurnTimings && state.latestTurnTimings.total_ms);
+      }
       state.activeCancel = null;
       state.cancelRequested = false;
       setBusy(false);

@@ -157,6 +157,12 @@ adapter interface. `ScriptedModel` is a deterministic test/offline adapter.
 and canonical tools until a non-empty final assistant response, cancellation, or
 a bounded error.
 
+**Confirmed current behaviour:** the turn loop emits and durably records monotonic
+integer-millisecond timing events for the turn, each model step, first provider
+response, and each tool call. Terminal success, failure, and cancellation include
+one turn-finished timing event. Successful desktop responses expose total,
+first-response, aggregate model, and aggregate executed-tool durations.
+
 **Confirmed current behaviour:** canonical agent IDs/versions, descriptors,
 typed bounded requests/results, context/evidence references, budgets, tool sets,
 permission envelopes, immutable registration, durable invocation events,
@@ -177,6 +183,13 @@ idempotency, timeout ownership, cancellation, observability declarations,
 availability, pack ownership, and schema-token cost. Available tool calls are validated against the exact set
 advertised for that model step, including non-empty unique call IDs, before any
 sibling effect runs.
+
+**Confirmed current behaviour:** provider responses have a hard ceiling of 64 tool
+calls before effects and a default execution budget of eight calls per model step.
+Valid overflow calls receive typed suppressed outcomes and force the next request
+to advertise no tools. Exact normalized repeated `web_search`, `memory_recall`, and
+`skill_resolve` calls are suppressed after their first execution in a turn; mutable
+and context-sensitive tools are not semantic-deduplicated.
 
 **Confirmed current behaviour:** available tools are `read_file`, `write_file`,
 `terminal`, `web_search`, `memory_recall`, `skill_resolve`, `activate_pack`,
@@ -204,6 +217,7 @@ Optimus home:
 | `memory.db` | memory | Evidence ledger and bitemporal claims. |
 | `skills.db` | skills | Skill versions, permissions, outcomes, and events. |
 | `sessions.db` | kernel/session | Session title, loaded pack names, serialized messages, and hash-only durable effect causal links. |
+| `execution.db` | kernel/execution | Versioned execution manifests, exact model/tool hashes and outcomes, monotonic duration fields, ordered timing events, terminal status, trace links, and replay classification. |
 | `cron.db` | kernel/cron | Interval schedules, exact lease owner/generation/token/deadline state, and latest status. |
 | `gateway/gateway.db` plus files | kernel/gateway | Authoritative message claims/attempts/terminal outbox JSON plus reconciled inbox/outbox/processed/failed adapter files. |
 | caller-selected agent registry/invocation DBs | kernel/agent | Immutable descriptor versions plus accepted invocation projections, ordered events, retry lineage, cancellation, terminal results, and validated effect links. |
