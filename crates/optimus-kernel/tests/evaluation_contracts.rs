@@ -308,6 +308,78 @@ fn exact_offline_runner_produces_one_deterministic_candidate_report() {
 }
 
 #[test]
+fn exact_offline_runner_preflights_caller_contracts_before_mutation() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let measurements = dataset
+        .cases
+        .iter()
+        .map(|case| EvaluationResourceMeasurement {
+            case_id: case.id.clone(),
+            latency_millis: 1,
+            cost_microunits: 0,
+        })
+        .collect::<Vec<_>>();
+
+    let invalid_binding_home = directory.path().join("invalid-binding");
+    let mut invalid_binding = binding();
+    invalid_binding.provider.clear();
+    assert!(run_priority2_offline_evaluation(
+        &invalid_binding_home,
+        invalid_binding,
+        &measurements,
+        &[],
+    )
+    .is_err());
+    assert!(!invalid_binding_home.join("evaluation-runs").exists());
+
+    let invalid_measurement_home = directory.path().join("invalid-measurement");
+    let mut invalid_measurements = measurements.clone();
+    invalid_measurements[0].case_id = "unknown-case".into();
+    assert!(run_priority2_offline_evaluation(
+        &invalid_measurement_home,
+        binding(),
+        &invalid_measurements,
+        &[],
+    )
+    .is_err());
+    assert!(!invalid_measurement_home.join("evaluation-runs").exists());
+
+    let invalid_threshold_home = directory.path().join("invalid-threshold");
+    let invalid_threshold = MetricThreshold {
+        metric: EvaluationMetric::ExactText,
+        direction: MetricDirection::Minimum,
+        value: 10_001,
+        min_samples: 10,
+    };
+    assert!(run_priority2_offline_evaluation(
+        &invalid_threshold_home,
+        binding(),
+        &measurements,
+        &[invalid_threshold],
+    )
+    .is_err());
+    assert!(!invalid_threshold_home.join("evaluation-runs").exists());
+
+    let duplicate_threshold_home = directory.path().join("duplicate-threshold");
+    let threshold = MetricThreshold::new(
+        EvaluationMetric::ExactText,
+        MetricDirection::Minimum,
+        10_000,
+        10,
+    )
+    .unwrap();
+    assert!(run_priority2_offline_evaluation(
+        &duplicate_threshold_home,
+        binding(),
+        &measurements,
+        &[threshold.clone(), threshold],
+    )
+    .is_err());
+    assert!(!duplicate_threshold_home.join("evaluation-runs").exists());
+}
+
+#[test]
 fn reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic() {
     let dataset = priority2_dataset();
     let observations = passing_observations(&dataset);

@@ -22,6 +22,7 @@
       "knowledge_type": "architecture",
       "resolved_source_count": 71,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -461,6 +462,7 @@
       "knowledge_type": "model-routing-map",
       "resolved_source_count": 8,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -507,6 +509,7 @@
       "knowledge_type": "observability-evaluation-map",
       "resolved_source_count": 22,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -893,6 +896,7 @@
       "knowledge_type": "specification",
       "resolved_source_count": 45,
       "resolved_tests": [
+        "apps/optimus-cli/tests/eval_report.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -1007,6 +1011,26 @@
     },
     {
       "covers": [
+        "apps/optimus-cli/src/main.rs",
+        "apps/optimus-cli/tests/eval_report.rs",
+        "crates/optimus-kernel/src/evaluation.rs",
+        "crates/optimus-kernel/tests/evaluation_contracts.rs",
+        "docs/architecture/phase-14-gateway-eval.md",
+        "docs/architecture/system-overview.md",
+        "docs/maps/observability-and-evaluations.md",
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py"
+      ],
+      "depends_on": [],
+      "document": "docs/specifications/safe-cli-exact-evaluation-report.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 9,
+      "resolved_tests": [],
+      "status": "historical",
+      "validated_by": []
+    },
+    {
+      "covers": [
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "apps/optimus-desktop/src/ipc/chat.rs",
@@ -1101,7 +1125,11 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
+    ],
+    "apps/optimus-cli/tests/eval_report.rs": [
+      "docs/specifications/safe-cli-exact-evaluation-report.md"
     ],
     "apps/optimus-cli/tests/gateway_http.rs": [
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
@@ -1359,7 +1387,8 @@
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md"
     ],
     "crates/optimus-kernel/src/execution.rs": [
       "docs/architecture/system-overview.md",
@@ -1508,6 +1537,7 @@
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "crates/optimus-kernel/tests/integrity_integration.rs": [
@@ -1719,7 +1749,8 @@
     "docs/architecture/phase-14-gateway-eval.md": [
       "docs/lessons/ai-agent-mistakes.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
-      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md"
     ],
     "docs/architecture/phase-15-campaigns.md": [
       "docs/lessons/ai-agent-mistakes.md",
@@ -1812,6 +1843,7 @@
       "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "docs/contracts/high-risk-contracts.md": [
@@ -2107,6 +2139,7 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/stream-delivery-cancellation.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
@@ -2150,6 +2183,7 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "scripts/test_engineering_memory.py": [
@@ -2163,6 +2197,7 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
+      "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "skills/update-engineering-memory/SKILL.md": [

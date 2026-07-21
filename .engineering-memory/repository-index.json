@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 194,
+  "file_count": 196,
   "files": [
     {
       "bytes": 152,
@@ -91,11 +91,18 @@
       "sha256": "f6fc2db66f6edc6f5e14389e9073f931b609927fa42c1776e367de6ad4d07d73"
     },
     {
-      "bytes": 42244,
+      "bytes": 44187,
       "language": "Rust",
-      "lines": 1154,
+      "lines": 1203,
       "path": "apps/optimus-cli/src/main.rs",
-      "sha256": "4969626912d17b2675b78522dcdbd76e3b7275ebebb681fb735f8cfb996bfce3"
+      "sha256": "7b49b1e340aa774dcb602b77a80da6d5889789ac09072a3c50eea3df3297c75d"
+    },
+    {
+      "bytes": 7344,
+      "language": "Rust",
+      "lines": 227,
+      "path": "apps/optimus-cli/tests/eval_report.rs",
+      "sha256": "d2781d72febfc906c4a2b5375a28d46f62db715ca4b15be2ba9595c3279da532"
     },
     {
       "bytes": 3478,
@@ -371,11 +378,11 @@
       "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
     },
     {
-      "bytes": 26491,
+      "bytes": 27221,
       "language": "Rust",
-      "lines": 750,
+      "lines": 778,
       "path": "crates/optimus-kernel/src/evaluation.rs",
-      "sha256": "4372312bdb2b82f1244bb045b5fa1918b41a958eb9ce9902e6c86a17680256ca"
+      "sha256": "65847d017020fd3cc1259e344d80d3d611848fd906444be5aa327e921309b3cb"
     },
     {
       "bytes": 18807,
@@ -490,11 +497,11 @@
       "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
     },
     {
-      "bytes": 18363,
+      "bytes": 20618,
       "language": "Rust",
-      "lines": 509,
+      "lines": 581,
       "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
-      "sha256": "d08a414cb65d76a1712c416002c3aa4f2317c4bf96ea99738d88f80fa648d7d8"
+      "sha256": "e94bbd0aa35753b5cf54a0e8120c9a7e991be01b62494f7db964b7a3813a3571"
     },
     {
       "bytes": 14141,
@@ -798,11 +805,11 @@
       "sha256": "34c54c1070c9681cc38ef00b96ceeec728907382af32e187e1501fa7e81d8e48"
     },
     {
-      "bytes": 1270,
+      "bytes": 1686,
       "language": "Markdown",
-      "lines": 46,
+      "lines": 52,
       "path": "docs/architecture/phase-14-gateway-eval.md",
-      "sha256": "ec6b2266a48ea70211dc18e85d0a71a9b0f1e57904250c49d49a6238082cd673"
+      "sha256": "b42390da7962ad1952bd19242d5d5c5c2d69048a447988bd43b0f1f878b91d5e"
     },
     {
       "bytes": 1854,
@@ -917,11 +924,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 24660,
+      "bytes": 25037,
       "language": "Markdown",
-      "lines": 419,
+      "lines": 425,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "a766f536aadef4e0fc5926e758807be6097a17377aeff3a719be26be7bee6122"
+      "sha256": "539db8899d4952dfc350ed7b409edeac2745a654379679ec101b7a4e5c4f80d4"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1155,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 12602,
+      "bytes": 12889,
       "language": "Markdown",
-      "lines": 209,
+      "lines": 213,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "fd194e9964dd9a0226fc621fedb23ef64fe1a29204d56c516f9a8e735df3ac27"
+      "sha256": "8a686890a994be78e73b48e4d0f36ee6bf6bacf05cee725d1df3c7be17833500"
     },
     {
       "bytes": 5802,
@@ -1260,6 +1267,13 @@
       "sha256": "308a025be5e659f5869815eedad82dbf1228c065d45b7da9c1dcda363bfb361f"
     },
     {
+      "bytes": 9471,
+      "language": "Markdown",
+      "lines": 192,
+      "path": "docs/specifications/safe-cli-exact-evaluation-report.md",
+      "sha256": "0dc151962504a2d695e15325747a48d7b900d7c7c8786d2d7f50997748d5f204"
+    },
+    {
       "bytes": 8397,
       "language": "Markdown",
       "lines": 186,
@@ -1281,11 +1295,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 76208,
+      "bytes": 77490,
       "language": "Python",
-      "lines": 1608,
+      "lines": 1633,
       "path": "scripts/engineering_memory.py",
-      "sha256": "5bf289ec7d770d2854ba063229a3a9da1d5e161f8c8ca387d35c2267974bb65b"
+      "sha256": "d47667a2b2acee0a37ca9251ea679a6822143018b6b1b9e52d75f2e01c517867"
     },
     {
       "bytes": 9185,
@@ -1302,11 +1316,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 15673,
+      "bytes": 15898,
       "language": "Python",
-      "lines": 373,
+      "lines": 377,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "760dcdddd70c90462ed182257a8a69594f4411d1857c7d4ecd550c9e6426d3cd"
+      "sha256": "4faac811b4b2bd7f5deac4b118861d1c60266f371f9fcd5658ab5f266a4aeae6"
     },
     {
       "bytes": 5394,
@@ -1394,8 +1408,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 512659,
-      "files": 87
+      "bytes": 523210,
+      "files": 88
     },
     "Other": {
       "bytes": 156778,
@@ -1406,12 +1420,12 @@
       "files": 1
     },
     "Python": {
-      "bytes": 97205,
+      "bytes": 98712,
       "files": 3
     },
     "Rust": {
-      "bytes": 1155649,
-      "files": 70
+      "bytes": 1167921,
+      "files": 71
     },
     "Shell": {
       "bytes": 1226,
@@ -1448,7 +1462,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "77d3378b965cebe9aaeb67ec3a4b100fb0c57bf5afef78d5a7f7d20f601747f3",
+  "tree_sha256": "6e328238c974969f8b2f621404052b845efd1f1015e33efb8b06dcacd958a61b",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {
@@ -1466,6 +1480,16 @@
           ],
           "name": "optimus",
           "src_path": "apps/optimus-cli/src/main.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "test"
+          ],
+          "name": "eval_report",
+          "src_path": "apps/optimus-cli/tests/eval_report.rs"
         },
         {
           "crate_types": [

@@ -375,6 +375,12 @@ candidate-bound report. Per-case latency and cost are mandatory explicit inputs;
 they are not inferred from wall time or silently defaulted. Equal inputs yield
 equal report bytes while run and trace identities remain fresh.
 
+**Confirmed current behaviour:** `optimus eval report` reads candidate binding,
+per-case measurements, and optional thresholds from separate bounded JSON files.
+Typed policies are preflighted before evaluation run state. Success and threshold
+failure both print the complete report; threshold failure exits non-zero. The
+legacy four-case `eval run` command remains available.
+
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is

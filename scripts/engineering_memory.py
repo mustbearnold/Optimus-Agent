@@ -1038,6 +1038,27 @@ def build_evaluation_coverage() -> dict[str, Any]:
     missing = [symbol for symbol in required_typed_symbols if symbol not in typed]
     if missing:
         raise MemoryError(f"typed evaluation extraction is stale; missing symbols: {missing}")
+    preflight_symbols = [
+        "binding.validate()?",
+        "validated_measurements(&dataset, measurements)?",
+        "validate_threshold_policy(thresholds)?",
+    ]
+    run_start = typed.index("pub fn run_priority2_offline_evaluation")
+    run_body = typed[run_start:]
+    ownership = run_body.index('join("evaluation-runs")')
+    if any(symbol not in run_body[:ownership] for symbol in preflight_symbols):
+        raise MemoryError("Priority-2 report inputs are not preflighted before run ownership")
+    cli_path = ROOT / "apps/optimus-cli/src/main.rs"
+    cli = cli_path.read_text(encoding="utf-8")
+    cli_test_path = ROOT / "apps/optimus-cli/tests/eval_report.rs"
+    cli_test = cli_test_path.read_text(encoding="utf-8")
+    if (
+        "EvalCmd::Report" not in cli
+        or "fn read_bounded_json" not in cli
+        or "run_priority2_offline_evaluation" not in cli
+        or "eval_report_command_prints_the_exact_candidate_report" not in cli_test
+    ):
+        raise MemoryError("bounded Priority-2 CLI report operation is not implemented and exercised")
     return {
         **generated_header(),
         "framework_status": "produced_priority2_offline_reports_and_immutable_baselines",
@@ -1080,6 +1101,10 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "case_count": len(ids) + len(integrity_ids),
             "resource_measurements": "explicit_caller_supplied_per_case",
             "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
+            "preflight_before_mutation": True,
+            "cli": "optimus eval report",
+            "cli_validated_by": "apps/optimus-cli/tests/eval_report.rs",
+            "json_input_limit_bytes": 1048576,
         },
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",

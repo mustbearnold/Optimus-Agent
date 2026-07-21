@@ -16,9 +16,27 @@
       "tests": [
         {
           "cases": [
+            "eval_report_command_prints_the_exact_candidate_report",
+            "eval_report_command_prints_failing_report_before_nonzero_exit",
+            "eval_report_command_bounds_json_before_execution_without_echoing_content",
+            "legacy_eval_run_json_remains_available"
+          ],
+          "path": "apps/optimus-cli/tests/eval_report.rs"
+        },
+        {
+          "cases": [
             "webhook_inbound_drain_outbox"
           ],
           "path": "apps/optimus-cli/tests/gateway_http.rs"
+        },
+        {
+          "cases": [
+            "eval_report_command_prints_the_exact_candidate_report",
+            "eval_report_command_prints_failing_report_before_nonzero_exit",
+            "eval_report_command_bounds_json_before_execution_without_echoing_content",
+            "legacy_eval_run_json_remains_available"
+          ],
+          "path": "apps/optimus-cli/tests/eval_report.rs"
         },
         {
           "cases": [
@@ -202,6 +220,7 @@
             "offline_trajectory_runner_never_fabricates_evidence_for_unusable_home",
             "exact_suite_results_project_to_canonical_observations_with_explicit_resources",
             "exact_offline_runner_produces_one_deterministic_candidate_report",
+            "exact_offline_runner_preflights_caller_contracts_before_mutation",
             "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
             "immutable_baseline_comparison_reports_regression_without_rewriting_history",
             "comparison_rejects_tampered_report_hashes",
@@ -367,6 +386,7 @@
             "offline_trajectory_runner_never_fabricates_evidence_for_unusable_home",
             "exact_suite_results_project_to_canonical_observations_with_explicit_resources",
             "exact_offline_runner_produces_one_deterministic_candidate_report",
+            "exact_offline_runner_preflights_caller_contracts_before_mutation",
             "reports_bind_candidate_compute_checked_metrics_and_are_byte_deterministic",
             "immutable_baseline_comparison_reports_regression_without_rewriting_history",
             "comparison_rejects_tampered_report_hashes",

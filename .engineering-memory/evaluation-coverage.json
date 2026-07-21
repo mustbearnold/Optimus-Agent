@@ -100,6 +100,10 @@
   ],
   "priority2_report_executor": {
     "case_count": 10,
+    "cli": "optimus eval report",
+    "cli_validated_by": "apps/optimus-cli/tests/eval_report.rs",
+    "json_input_limit_bytes": 1048576,
+    "preflight_before_mutation": true,
     "resource_measurements": "explicit_caller_supplied_per_case",
     "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
     "source": "crates/optimus-kernel/src/evaluation.rs",

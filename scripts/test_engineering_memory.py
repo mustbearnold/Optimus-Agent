@@ -223,6 +223,10 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "case_count": 10,
                 "resource_measurements": "explicit_caller_supplied_per_case",
                 "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
+                "preflight_before_mutation": True,
+                "cli": "optimus eval report",
+                "cli_validated_by": "apps/optimus-cli/tests/eval_report.rs",
+                "json_input_limit_bytes": 1048576,
             },
         )
         self.assertEqual(coverage["typed_dataset"]["case_count"], 10)

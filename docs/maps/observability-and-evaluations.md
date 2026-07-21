@@ -155,6 +155,10 @@ tool, terminal, replay, and trace fields derive from executor evidence. Latency 
 cost must be supplied explicitly for every case; the runner neither fabricates
 zero values nor introduces wall-clock nondeterminism. Equal semantic evidence and
 resource inputs produce equal report bytes despite fresh run and trace identities.
+The CLI exposes this path as `optimus eval report` using separate one-megabyte-
+bounded JSON inputs for binding, measurements, and optional thresholds. Typed
+caller contracts are preflighted before run mutation; a threshold-failing report
+is printed before the command returns non-zero.
 
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider

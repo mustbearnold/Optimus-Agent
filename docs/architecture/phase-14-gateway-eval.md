@@ -25,6 +25,11 @@ Ticks due cron + optional full gateway drain each loop.
 `eval run` — offline built-in suite (echo, memory recall, pack activate).  
 Isolated case homes; no network; must be reproducible.
 
+`eval report --binding PATH --measurements PATH [--thresholds PATH]` — exact
+ten-case candidate report from bounded explicit JSON evidence. Inputs are
+preflighted before run state; failing thresholds still print the report and return
+a non-zero exit. `eval run` remains the compatibility trajectory command.
+
 ## Evidence
 
 ```text
@@ -42,5 +47,6 @@ install/relaunch pid on Programs\OptimusAgent
 optimus gateway send "hi" --channel local
 optimus gateway drain
 optimus eval run
+optimus eval report --binding binding.json --measurements measurements.json --thresholds thresholds.json
 optimus cron serve --interval 5 --with-gateway
 ```

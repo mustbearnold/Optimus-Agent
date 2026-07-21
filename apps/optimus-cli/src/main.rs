@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::io::Read;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 mod gateway_http;
@@ -6,10 +7,11 @@ mod gateway_http;
 use clap::{Parser, Subcommand};
 use optimus_kernel::{
     device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_sessions, open_cron,
-    resolve_route, run_offline_trajectory_suite, sanitize_codex_oauth_model, tick_cron,
-    BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
-    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface,
-    ScriptedModel, ToolCall,
+    resolve_route, run_offline_trajectory_suite, run_priority2_offline_evaluation,
+    sanitize_codex_oauth_model, tick_cron, BrowserSession, CandidateBinding, CodexAuthStore,
+    CodexOAuthConfig, CodexOAuthModel, CompletionResponse, EvaluationResourceMeasurement, Kernel,
+    KernelConfig, MetricThreshold, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest,
+    RouteSurface, ScriptedModel, ToolCall, MAX_EVALUATION_DATASET_BYTES,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{
@@ -299,6 +301,15 @@ enum EvalCmd {
         #[arg(long)]
         json: bool,
     },
+    /// Produce the exact ten-case candidate report from explicit JSON evidence
+    Report {
+        #[arg(long)]
+        binding: PathBuf,
+        #[arg(long)]
+        measurements: PathBuf,
+        #[arg(long)]
+        thresholds: Option<PathBuf>,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -357,6 +368,20 @@ fn parse_perms(s: &str) -> Result<Vec<Permission>, String> {
         });
     }
     Ok(out)
+}
+
+fn read_bounded_json<T: serde::de::DeserializeOwned>(
+    path: &Path,
+    label: &str,
+) -> Result<T, Box<dyn std::error::Error>> {
+    let file = std::fs::File::open(path)?;
+    let mut bytes = Vec::new();
+    file.take(MAX_EVALUATION_DATASET_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)?;
+    if bytes.is_empty() || bytes.len() > MAX_EVALUATION_DATASET_BYTES {
+        return Err(format!("{label} JSON size is outside policy").into());
+    }
+    serde_json::from_slice(&bytes).map_err(Into::into)
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
@@ -964,6 +989,30 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 if !report.all_ok() {
                     return Err("eval suite failed".into());
+                }
+                Ok(())
+            }
+            EvalCmd::Report {
+                binding,
+                measurements,
+                thresholds,
+            } => {
+                let binding: CandidateBinding = read_bounded_json(&binding, "binding")?;
+                let measurements: Vec<EvaluationResourceMeasurement> =
+                    read_bounded_json(&measurements, "measurements")?;
+                let thresholds: Vec<MetricThreshold> = match thresholds {
+                    Some(path) => read_bounded_json(&path, "thresholds")?,
+                    None => Vec::new(),
+                };
+                let report = run_priority2_offline_evaluation(
+                    &cli.home,
+                    binding,
+                    &measurements,
+                    &thresholds,
+                )?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.passed {
+                    return Err("evaluation thresholds failed".into());
                 }
                 Ok(())
             }

@@ -259,6 +259,49 @@ pub struct EvaluationResourceMeasurement {
     pub cost_microunits: u64,
 }
 
+fn validated_measurements<'a>(
+    dataset: &EvaluationDataset,
+    measurements: &'a [EvaluationResourceMeasurement],
+) -> Result<BTreeMap<&'a str, &'a EvaluationResourceMeasurement>> {
+    let mut by_id = BTreeMap::new();
+    for measurement in measurements {
+        validate_id(&measurement.case_id, "resource measurement case id")?;
+        if by_id
+            .insert(measurement.case_id.as_str(), measurement)
+            .is_some()
+        {
+            return Err(invalid("duplicate resource measurement case id"));
+        }
+    }
+    if by_id.len() != dataset.cases.len()
+        || dataset
+            .cases
+            .iter()
+            .any(|case| !by_id.contains_key(case.id.as_str()))
+    {
+        return Err(invalid(
+            "resource measurements must match the dataset case set",
+        ));
+    }
+    Ok(by_id)
+}
+
+fn validate_threshold_policy(thresholds: &[MetricThreshold]) -> Result<()> {
+    let mut dimensions = BTreeSet::new();
+    for threshold in thresholds {
+        MetricThreshold::new(
+            threshold.metric,
+            threshold.direction,
+            threshold.value,
+            threshold.min_samples,
+        )?;
+        if !dimensions.insert(threshold.metric) {
+            return Err(invalid("duplicate evaluation threshold metric"));
+        }
+    }
+    Ok(())
+}
+
 pub fn project_evaluation_observations(
     dataset: &EvaluationDataset,
     results: &[EvalCaseResult],
@@ -272,25 +315,15 @@ pub fn project_evaluation_observations(
             return Err(invalid("duplicate evaluation result case id"));
         }
     }
-    let mut measurements_by_id = BTreeMap::new();
-    for measurement in measurements {
-        validate_id(&measurement.case_id, "resource measurement case id")?;
-        if measurements_by_id
-            .insert(measurement.case_id.as_str(), measurement)
-            .is_some()
-        {
-            return Err(invalid("duplicate resource measurement case id"));
-        }
-    }
+    let measurements_by_id = validated_measurements(dataset, measurements)?;
     if results_by_id.len() != dataset.cases.len()
-        || measurements_by_id.len() != dataset.cases.len()
-        || dataset.cases.iter().any(|case| {
-            !results_by_id.contains_key(case.id.as_str())
-                || !measurements_by_id.contains_key(case.id.as_str())
-        })
+        || dataset
+            .cases
+            .iter()
+            .any(|case| !results_by_id.contains_key(case.id.as_str()))
     {
         return Err(invalid(
-            "evaluation results and measurements must match the dataset case set",
+            "evaluation results must match the dataset case set",
         ));
     }
 
@@ -335,6 +368,11 @@ pub fn run_priority2_offline_evaluation(
     measurements: &[EvaluationResourceMeasurement],
     thresholds: &[MetricThreshold],
 ) -> Result<EvaluationReportV1> {
+    let dataset = priority2_dataset();
+    dataset.validate()?;
+    binding.validate()?;
+    validated_measurements(&dataset, measurements)?;
+    validate_threshold_policy(thresholds)?;
     let run_home = home
         .as_ref()
         .join("evaluation-runs")
@@ -347,7 +385,6 @@ pub fn run_priority2_offline_evaluation(
         .into_iter()
         .chain(integrity.cases)
         .collect::<Vec<_>>();
-    let dataset = priority2_dataset();
     let observations = project_evaluation_observations(&dataset, &results, measurements)?;
     build_evaluation_report(&dataset, binding, &observations, thresholds)
 }
@@ -400,28 +437,19 @@ fn evaluate_thresholds(
     metrics: &BTreeMap<EvaluationMetric, MetricScore>,
     thresholds: &[MetricThreshold],
 ) -> Result<Vec<EvaluationMetric>> {
-    let mut dimensions = BTreeSet::new();
+    validate_threshold_policy(thresholds)?;
     let mut failures = Vec::new();
     for threshold in thresholds {
-        let checked = MetricThreshold::new(
-            threshold.metric,
-            threshold.direction,
-            threshold.value,
-            threshold.min_samples,
-        )?;
-        if !dimensions.insert(checked.metric) {
-            return Err(invalid("duplicate evaluation threshold metric"));
-        }
         let score = metrics
-            .get(&checked.metric)
+            .get(&threshold.metric)
             .ok_or_else(|| invalid("evaluation threshold metric is missing"))?;
-        let failed = score.samples < checked.min_samples
-            || match checked.direction {
-                MetricDirection::Minimum => score.value < checked.value,
-                MetricDirection::Maximum => score.value > checked.value,
+        let failed = score.samples < threshold.min_samples
+            || match threshold.direction {
+                MetricDirection::Minimum => score.value < threshold.value,
+                MetricDirection::Maximum => score.value > threshold.value,
             };
         if failed {
-            failures.push(checked.metric);
+            failures.push(threshold.metric);
         }
     }
     failures.sort();
