@@ -1,8 +1,9 @@
 use optimus_kernel::{
     build_evaluation_report, compare_evaluation_reports, priority2_dataset,
-    run_offline_trajectory_suite, BaselineStore, CandidateBinding, EvaluationDataset,
-    EvaluationMetric, EvaluationObservation, EvaluationReportV1, ExecutionStatus, MetricDirection,
-    MetricThreshold, ReplayClassification,
+    project_evaluation_observations, run_offline_integrity_suite, run_offline_trajectory_suite,
+    run_priority2_offline_evaluation, BaselineStore, CandidateBinding, EvaluationDataset,
+    EvaluationMetric, EvaluationObservation, EvaluationReportV1, EvaluationResourceMeasurement,
+    ExecutionStatus, MetricDirection, MetricThreshold, ReplayClassification,
 };
 use optimus_packs::ToolId;
 use sha2::{Digest, Sha256};
@@ -157,6 +158,153 @@ fn offline_trajectory_runner_never_fabricates_evidence_for_unusable_home() {
             && result.trace_context.is_none()
     }));
     assert_eq!(std::fs::read(&blocked_home).unwrap(), b"blocked");
+}
+
+#[test]
+fn exact_suite_results_project_to_canonical_observations_with_explicit_resources() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let trajectory = run_offline_trajectory_suite(directory.path().join("trajectory"));
+    let integrity = run_offline_integrity_suite(directory.path().join("integrity")).unwrap();
+    let mut results = trajectory
+        .cases
+        .into_iter()
+        .chain(integrity.cases)
+        .collect::<Vec<_>>();
+    results.reverse();
+    let mut measurements = dataset
+        .cases
+        .iter()
+        .enumerate()
+        .map(|(index, case)| EvaluationResourceMeasurement {
+            case_id: case.id.clone(),
+            latency_millis: index as u64 + 1,
+            cost_microunits: (index as u64 + 1) * 10,
+        })
+        .collect::<Vec<_>>();
+    measurements.reverse();
+
+    let observations = project_evaluation_observations(&dataset, &results, &measurements).unwrap();
+
+    assert_eq!(
+        observations
+            .iter()
+            .map(|observation| observation.case_id.as_str())
+            .collect::<Vec<_>>(),
+        dataset
+            .cases
+            .iter()
+            .map(|case| case.id.as_str())
+            .collect::<Vec<_>>()
+    );
+    assert!(observations.iter().all(|observation| {
+        observation.exact_text
+            && observation.terminal_correct
+            && observation.replay_correct
+            && observation.trace_present
+    }));
+    assert_eq!(observations[1].expected_tools, 1);
+    assert_eq!(observations[1].observed_tools, 1);
+    assert_eq!(observations[1].matched_tools, 1);
+    assert_eq!(observations[0].latency_millis, 1);
+    assert_eq!(observations[9].cost_microunits, 100);
+
+    results
+        .iter_mut()
+        .find(|result| result.id == "memory-then-answer")
+        .unwrap()
+        .invoked_tools
+        .push(ToolId::new("memory_recall"));
+    let duplicated = project_evaluation_observations(&dataset, &results, &measurements).unwrap();
+    assert_eq!(duplicated[1].observed_tools, 2);
+    assert_eq!(duplicated[1].matched_tools, 1);
+
+    let mut duplicate_results = results.clone();
+    duplicate_results.push(results[0].clone());
+    assert!(project_evaluation_observations(&dataset, &duplicate_results, &measurements).is_err());
+    let mut missing_measurement = measurements.clone();
+    missing_measurement.pop();
+    assert!(project_evaluation_observations(&dataset, &results, &missing_measurement).is_err());
+    let mut unknown_measurement = measurements.clone();
+    unknown_measurement[0].case_id = "unknown-case".into();
+    assert!(project_evaluation_observations(&dataset, &results, &unknown_measurement).is_err());
+}
+
+#[test]
+fn exact_offline_runner_produces_one_deterministic_candidate_report() {
+    let directory = tempdir().unwrap();
+    let dataset = priority2_dataset();
+    let measurements = dataset
+        .cases
+        .iter()
+        .enumerate()
+        .map(|(index, case)| EvaluationResourceMeasurement {
+            case_id: case.id.clone(),
+            latency_millis: index as u64 + 1,
+            cost_microunits: (index as u64 + 1) * 10,
+        })
+        .collect::<Vec<_>>();
+    let thresholds = vec![
+        MetricThreshold::new(
+            EvaluationMetric::ExactText,
+            MetricDirection::Minimum,
+            10_000,
+            10,
+        )
+        .unwrap(),
+        MetricThreshold::new(
+            EvaluationMetric::LatencyMillis,
+            MetricDirection::Maximum,
+            5,
+            10,
+        )
+        .unwrap(),
+    ];
+
+    let first =
+        run_priority2_offline_evaluation(directory.path(), binding(), &measurements, &thresholds)
+            .unwrap();
+    let second =
+        run_priority2_offline_evaluation(directory.path(), binding(), &measurements, &thresholds)
+            .unwrap();
+
+    assert_eq!(first, second);
+    assert_eq!(
+        serde_json::to_vec(&first).unwrap(),
+        serde_json::to_vec(&second).unwrap()
+    );
+    assert!(first.passed);
+    assert_eq!(first.binding, binding());
+    assert_eq!(first.metrics[&EvaluationMetric::ExactText].samples, 10);
+    assert_eq!(first.metrics[&EvaluationMetric::ExactText].value, 10_000);
+    assert_eq!(
+        first.metrics[&EvaluationMetric::ToolPrecision].value,
+        10_000
+    );
+    assert_eq!(first.metrics[&EvaluationMetric::ToolRecall].value, 10_000);
+    assert_eq!(
+        first.metrics[&EvaluationMetric::TerminalAccuracy].value,
+        10_000
+    );
+    assert_eq!(
+        first.metrics[&EvaluationMetric::ReplayAccuracy].value,
+        10_000
+    );
+    assert_eq!(first.metrics[&EvaluationMetric::LatencyMillis].value, 5);
+    assert_eq!(first.metrics[&EvaluationMetric::CostMicrounits].value, 55);
+    assert_eq!(
+        std::fs::read_dir(directory.path().join("evaluation-runs"))
+            .unwrap()
+            .count(),
+        2
+    );
+
+    let blocked = directory.path().join("blocked");
+    std::fs::write(&blocked, b"preserve").unwrap();
+    assert!(
+        run_priority2_offline_evaluation(&blocked, binding(), &measurements, &thresholds,).is_err()
+    );
+    assert_eq!(std::fs::read(&blocked).unwrap(), b"preserve");
 }
 
 #[test]

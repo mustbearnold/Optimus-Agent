@@ -7,8 +7,12 @@ use optimus_packs::ToolId;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use uuid::Uuid;
 
-use crate::{ExecutionStatus, KernelError, ReplayClassification, Result};
+use crate::{
+    run_offline_integrity_suite, run_offline_trajectory_suite, EvalCaseResult, ExecutionStatus,
+    KernelError, ReplayClassification, Result,
+};
 
 pub const EVALUATION_DATASET_VERSION: u16 = 1;
 pub const EVALUATION_REPORT_VERSION: u16 = 1;
@@ -246,6 +250,106 @@ pub struct EvaluationObservation {
     pub trace_present: bool,
     pub latency_millis: u64,
     pub cost_microunits: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EvaluationResourceMeasurement {
+    pub case_id: String,
+    pub latency_millis: u64,
+    pub cost_microunits: u64,
+}
+
+pub fn project_evaluation_observations(
+    dataset: &EvaluationDataset,
+    results: &[EvalCaseResult],
+    measurements: &[EvaluationResourceMeasurement],
+) -> Result<Vec<EvaluationObservation>> {
+    dataset.validate()?;
+    let mut results_by_id = BTreeMap::new();
+    for result in results {
+        validate_id(&result.id, "evaluation result case id")?;
+        if results_by_id.insert(result.id.as_str(), result).is_some() {
+            return Err(invalid("duplicate evaluation result case id"));
+        }
+    }
+    let mut measurements_by_id = BTreeMap::new();
+    for measurement in measurements {
+        validate_id(&measurement.case_id, "resource measurement case id")?;
+        if measurements_by_id
+            .insert(measurement.case_id.as_str(), measurement)
+            .is_some()
+        {
+            return Err(invalid("duplicate resource measurement case id"));
+        }
+    }
+    if results_by_id.len() != dataset.cases.len()
+        || measurements_by_id.len() != dataset.cases.len()
+        || dataset.cases.iter().any(|case| {
+            !results_by_id.contains_key(case.id.as_str())
+                || !measurements_by_id.contains_key(case.id.as_str())
+        })
+    {
+        return Err(invalid(
+            "evaluation results and measurements must match the dataset case set",
+        ));
+    }
+
+    dataset
+        .cases
+        .iter()
+        .map(|case| {
+            let result = results_by_id[case.id.as_str()];
+            let measurement = measurements_by_id[case.id.as_str()];
+            let expected_tools = case
+                .expected_tools
+                .iter()
+                .map(ToolId::as_str)
+                .collect::<BTreeSet<_>>();
+            let observed_tools = result
+                .invoked_tools
+                .iter()
+                .map(ToolId::as_str)
+                .collect::<BTreeSet<_>>();
+            Ok(EvaluationObservation {
+                case_id: case.id.clone(),
+                exact_text: match &case.exact_assistant_text {
+                    Some(expected) => result.assistant_text == *expected,
+                    None => result.assistant_text.is_empty(),
+                },
+                expected_tools: case.expected_tools.len(),
+                observed_tools: result.invoked_tools.len(),
+                matched_tools: expected_tools.intersection(&observed_tools).count(),
+                terminal_correct: result.terminal_status == Some(case.terminal_status),
+                replay_correct: result.replay == Some(case.replay),
+                trace_present: result.trace_context.is_some(),
+                latency_millis: measurement.latency_millis,
+                cost_microunits: measurement.cost_microunits,
+            })
+        })
+        .collect()
+}
+
+pub fn run_priority2_offline_evaluation(
+    home: impl AsRef<Path>,
+    binding: CandidateBinding,
+    measurements: &[EvaluationResourceMeasurement],
+    thresholds: &[MetricThreshold],
+) -> Result<EvaluationReportV1> {
+    let run_home = home
+        .as_ref()
+        .join("evaluation-runs")
+        .join(Uuid::new_v4().to_string());
+    std::fs::create_dir_all(&run_home)?;
+    let trajectory = run_offline_trajectory_suite(run_home.join("trajectory"));
+    let integrity = run_offline_integrity_suite(run_home.join("integrity"))?;
+    let results = trajectory
+        .cases
+        .into_iter()
+        .chain(integrity.cases)
+        .collect::<Vec<_>>();
+    let dataset = priority2_dataset();
+    let observations = project_evaluation_observations(&dataset, &results, measurements)?;
+    build_evaluation_report(&dataset, binding, &observations, thresholds)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

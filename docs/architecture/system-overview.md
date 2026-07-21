@@ -368,6 +368,13 @@ assistant text, canonical invoked tools, terminal status, replay classification,
 and root trace. Missing or mismatched persisted evidence fails the case; failed
 cases carry no typed success evidence.
 
+**Confirmed current behaviour:** the exact Priority-2 report runner owns a fresh
+run directory, executes the four trajectory and six integrity cases, projects
+their typed evidence in canonical dataset order, and returns one deterministic
+candidate-bound report. Per-case latency and cost are mandatory explicit inputs;
+they are not inferred from wall time or silently defaulted. Equal inputs yield
+equal report bytes while run and trace identities remain fresh.
+
 **Confirmed bounded behaviour:** desktop stream delivery loss requests the same
 cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is

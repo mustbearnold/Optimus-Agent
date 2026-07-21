@@ -215,6 +215,16 @@ class EngineeringMemoryTests(unittest.TestCase):
                 ],
             },
         )
+        self.assertEqual(
+            coverage["priority2_report_executor"],
+            {
+                "source": "crates/optimus-kernel/src/evaluation.rs",
+                "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+                "case_count": 10,
+                "resource_measurements": "explicit_caller_supplied_per_case",
+                "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
+            },
+        )
         self.assertEqual(coverage["typed_dataset"]["case_count"], 10)
         self.assertTrue(coverage["baseline_comparison"])
         self.assertTrue(coverage["version_binding"])

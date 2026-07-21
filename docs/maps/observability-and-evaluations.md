@@ -148,17 +148,24 @@ Observation input must explicitly declare trace presence; report construction
 rejects a missing trace whenever the identity-matched case requires one. Trace
 presence is evidence validity rather than a scored metric.
 
+**Confirmed current behaviour:** the exact Priority-2 offline runner creates a
+fresh evaluation-owned run, executes both exact suites, projects all ten results
+in dataset order, and returns one candidate-bound `EvaluationReportV1`. Text,
+tool, terminal, replay, and trace fields derive from executor evidence. Latency and
+cost must be supplied explicitly for every case; the runner neither fabricates
+zero values nor introduces wall-clock nondeterminism. Equal semantic evidence and
+resource inputs produce equal report bytes despite fresh run and trace identities.
+
 **Confirmed current behaviour:** Rust unit/integration suites cover state
 machines, policies, budgets, filesystem and browser boundaries, provider
 parsing, sessions, memory, skills, cron, gateway, and campaigns. Desktop
 Playwright tests cover bootstrap, shell/composer behavior, session/runtime
 interactions, capabilities/tools, drag, and browser UI contracts.
 
-**Partially implemented behaviour:** the six traced integrity cases and four typed
-trajectories are executable through separate exact runners, but their results are
-not yet converted into one produced `EvaluationReportV1`. The framework is not a
-universal workflow runner or automatic release gate and does not establish
-factual correctness beyond declared cases.
+**Partially implemented behaviour:** the exact ten-case report producer is not a
+universal workflow runner or automatic release gate and does not establish factual
+correctness beyond declared cases. Explicit resource measurements are
+identity-checked but their external source is not independently proven.
 
 ## Missing observability
 

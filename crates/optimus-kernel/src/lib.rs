@@ -66,11 +66,12 @@ pub use eval::{
     IntegrityObservation, REQUIRED_INTEGRITY_EVALS,
 };
 pub use evaluation::{
-    build_evaluation_report, compare_evaluation_reports, priority2_dataset, BaselineStore,
+    build_evaluation_report, compare_evaluation_reports, priority2_dataset,
+    project_evaluation_observations, run_priority2_offline_evaluation, BaselineStore,
     CandidateBinding, EvaluationCaseContract, EvaluationComparison, EvaluationDataset,
-    EvaluationMetric, EvaluationObservation, EvaluationReportV1, MetricDirection, MetricScore,
-    MetricThreshold, EVALUATION_DATASET_VERSION, EVALUATION_REPORT_VERSION, MAX_EVALUATION_CASES,
-    MAX_EVALUATION_DATASET_BYTES,
+    EvaluationMetric, EvaluationObservation, EvaluationReportV1, EvaluationResourceMeasurement,
+    MetricDirection, MetricScore, MetricThreshold, EVALUATION_DATASET_VERSION,
+    EVALUATION_REPORT_VERSION, MAX_EVALUATION_CASES, MAX_EVALUATION_DATASET_BYTES,
 };
 pub use execution::{
     ExecutionManifest, ExecutionStatus, ExecutionStore, ReplayClassification, ReplayReport,

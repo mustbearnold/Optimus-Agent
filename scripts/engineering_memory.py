@@ -1026,9 +1026,12 @@ def build_evaluation_coverage() -> dict[str, Any]:
         "pub struct EvaluationDataset",
         "pub struct CandidateBinding",
         "pub struct EvaluationReportV1",
+        "pub struct EvaluationResourceMeasurement",
         "pub struct BaselineStore",
         "pub fn build_evaluation_report",
         "pub fn compare_evaluation_reports",
+        "pub fn project_evaluation_observations",
+        "pub fn run_priority2_offline_evaluation",
         "pub trace_present: bool",
         "case.trace_required && !observation.trace_present",
     ]
@@ -1037,7 +1040,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
         raise MemoryError(f"typed evaluation extraction is stale; missing symbols: {missing}")
     return {
         **generated_header(),
-        "framework_status": "typed_offline_execution_evidence_and_immutable_baselines",
+        "framework_status": "produced_priority2_offline_reports_and_immutable_baselines",
         "builtin_cases": [
             {"id": case_id, "source": "crates/optimus-kernel/src/eval.rs"}
             for case_id in ids
@@ -1071,6 +1074,13 @@ def build_evaluation_coverage() -> dict[str, Any]:
                 "trace_context",
             ],
         },
+        "priority2_report_executor": {
+            "source": "crates/optimus-kernel/src/evaluation.rs",
+            "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+            "case_count": len(ids) + len(integrity_ids),
+            "resource_measurements": "explicit_caller_supplied_per_case",
+            "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
+        },
         "dimensions": {
             "canonical_tool_trace": "covered_by_builtin_cases_and_tests",
             "assistant_text": "exact_output_retained_by_typed_trajectory_executor; dataset_metric_is_exact",
@@ -1080,8 +1090,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "retrieval_relevance": "missing",
             "source_grounding": "missing",
             "citation_correctness": "missing",
-            "cost": "checked_integer_mean",
-            "latency": "checked_integer_mean",
+            "cost": "checked_integer_mean_from_explicit_per_case_measurements",
+            "latency": "checked_integer_mean_from_explicit_per_case_measurements",
             "replay": "persisted_fixture_replay_classification_plus_accuracy_metric",
             "trace": "required_case_trace_presence_enforced_before_metrics",
             "gpu_cpu_correctness": "not_applicable_no_gpu_component",

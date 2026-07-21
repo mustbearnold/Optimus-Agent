@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 193,
+  "file_count": 194,
   "files": [
     {
       "bytes": 152,
@@ -371,11 +371,11 @@
       "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
     },
     {
-      "bytes": 22561,
+      "bytes": 26491,
       "language": "Rust",
-      "lines": 646,
+      "lines": 750,
       "path": "crates/optimus-kernel/src/evaluation.rs",
-      "sha256": "503f982253941217ce6571edde4df753aedfcb195da848b0a056625d3cf77f36"
+      "sha256": "4372312bdb2b82f1244bb045b5fa1918b41a958eb9ce9902e6c86a17680256ca"
     },
     {
       "bytes": 18807,
@@ -399,11 +399,11 @@
       "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
     },
     {
-      "bytes": 54647,
+      "bytes": 54749,
       "language": "Rust",
-      "lines": 1427,
+      "lines": 1428,
       "path": "crates/optimus-kernel/src/lib.rs",
-      "sha256": "c9d0f50cdbc950fe8a63be371e531b2fc026b97467a0cc452fcc8fdb0b378469"
+      "sha256": "be4313de18d1581f3b6ce7d87de9380ec6911f0d4c0f834369ad6d4cad21b5c4"
     },
     {
       "bytes": 13305,
@@ -490,11 +490,11 @@
       "sha256": "dd998a10024bed560e1d24bf1080c85378c18afce539cc79c52916d699caa85b"
     },
     {
-      "bytes": 13062,
+      "bytes": 18363,
       "language": "Rust",
-      "lines": 361,
+      "lines": 509,
       "path": "crates/optimus-kernel/tests/evaluation_contracts.rs",
-      "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
+      "sha256": "d08a414cb65d76a1712c416002c3aa4f2317c4bf96ea99738d88f80fa648d7d8"
     },
     {
       "bytes": 14141,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 24197,
+      "bytes": 24660,
       "language": "Markdown",
-      "lines": 412,
+      "lines": 419,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
+      "sha256": "a766f536aadef4e0fc5926e758807be6097a17377aeff3a719be26be7bee6122"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1148,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 12093,
+      "bytes": 12602,
       "language": "Markdown",
-      "lines": 202,
+      "lines": 209,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
+      "sha256": "fd194e9964dd9a0226fc621fedb23ef64fe1a29204d56c516f9a8e735df3ac27"
     },
     {
       "bytes": 5802,
@@ -1195,6 +1195,13 @@
       "lines": 219,
       "path": "docs/specifications/desktop-turn-cancellation.md",
       "sha256": "516355a607ae3bc91997272d71df0b1ca07182ab13f1d9a89bbf7bf6b5908988"
+    },
+    {
+      "bytes": 10926,
+      "language": "Markdown",
+      "lines": 208,
+      "path": "docs/specifications/exact-priority2-offline-report-production.md",
+      "sha256": "89424bf8921e651a5cb926b9fdf3422ed61c70d13e8d850b9a448ef6d538424d"
     },
     {
       "bytes": 7081,
@@ -1274,11 +1281,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 75575,
+      "bytes": 76208,
       "language": "Python",
-      "lines": 1598,
+      "lines": 1608,
       "path": "scripts/engineering_memory.py",
-      "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
+      "sha256": "5bf289ec7d770d2854ba063229a3a9da1d5e161f8c8ca387d35c2267974bb65b"
     },
     {
       "bytes": 9185,
@@ -1295,11 +1302,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 15208,
+      "bytes": 15673,
       "language": "Python",
-      "lines": 363,
+      "lines": 373,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
+      "sha256": "760dcdddd70c90462ed182257a8a69594f4411d1857c7d4ecd550c9e6426d3cd"
     },
     {
       "bytes": 5394,
@@ -1387,8 +1394,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 500761,
-      "files": 86
+      "bytes": 512659,
+      "files": 87
     },
     "Other": {
       "bytes": 156778,
@@ -1399,11 +1406,11 @@
       "files": 1
     },
     "Python": {
-      "bytes": 96107,
+      "bytes": 97205,
       "files": 3
     },
     "Rust": {
-      "bytes": 1146316,
+      "bytes": 1155649,
       "files": 70
     },
     "Shell": {
@@ -1441,7 +1448,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "f3d3b5dcdf71e7eb6dd051ecbbe99f71da6d0cb7f52f3206c9b2ab3f463ec4f8",
+  "tree_sha256": "77d3378b965cebe9aaeb67ec3a4b100fb0c57bf5afef78d5a7f7d20f601747f3",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {
