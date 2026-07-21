@@ -2,12 +2,13 @@ use std::collections::BTreeSet;
 
 use optimus_graph::JobId;
 use optimus_kernel::{
-    run_offline_integrity_suite, AgentBudget, AgentDescriptor, AgentFailure, AgentId,
-    AgentInvocationStatus, AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest,
-    AgentResult, AgentResultKind, AgentVersion, CompletionResponse, ExecutionStatus,
-    ExecutionStore, Kernel, KernelConfig, Message, Role, ScriptedModel, SessionStore, ToolCall,
-    TurnStatus, WorkflowAdapterKind, WorkflowAgentRef, WorkflowNode, AGENT_REQUEST_SCHEMA_VERSION,
-    AGENT_RESULT_SCHEMA_VERSION,
+    evaluate_integrity_observations, run_offline_integrity_suite, AgentBudget, AgentDescriptor,
+    AgentFailure, AgentId, AgentInvocationStatus, AgentInvocationStore, AgentPermissions,
+    AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion, CompletionResponse,
+    ExecutionStatus, ExecutionStore, IntegrityObservation, Kernel, KernelConfig, Message,
+    ReplayClassification, Role, ScriptedModel, SessionStore, SpanStatus, ToolCall, TraceEventKind,
+    TraceStore, TurnStatus, WorkflowAdapterKind, WorkflowAgentRef, WorkflowNode,
+    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
 };
 use optimus_packs::{builtin_catalog, DurableEffectProvenance, ToolId};
 use optimus_runtime::Runtime;
@@ -279,18 +280,87 @@ fn offline_integrity_executor_executes_all_required_contract_cases() {
             .collect::<Vec<_>>(),
         optimus_kernel::REQUIRED_INTEGRITY_EVALS
     );
+    let run_home = std::fs::read_dir(dir.path().join("integrity-runs"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    let traces = TraceStore::open(run_home.join("integrity-traces.db")).unwrap();
+    for case in &report.cases {
+        assert_eq!(case.terminal_status, Some(ExecutionStatus::Succeeded));
+        assert_eq!(case.replay, Some(ReplayClassification::Deterministic));
+        let context = case.trace_context.expect("executed case retains trace");
+        assert!(context.parent_span_id.is_none());
+        let span = traces.span(context).unwrap();
+        assert_eq!(span.subsystem, "evaluation");
+        assert_eq!(span.subject, case.id);
+        assert_eq!(span.status, SpanStatus::Succeeded);
+        assert_eq!(
+            traces
+                .events(context)
+                .unwrap()
+                .into_iter()
+                .map(|event| event.kind)
+                .collect::<Vec<_>>(),
+            vec![TraceEventKind::Evidence, TraceEventKind::Terminal]
+        );
+    }
 }
 
 #[test]
-fn offline_integrity_executor_isolates_deterministic_retries() {
+fn integrity_observations_reject_typed_outcomes_without_trace_identity() {
+    let observations = optimus_kernel::REQUIRED_INTEGRITY_EVALS
+        .into_iter()
+        .map(|id| IntegrityObservation {
+            id: id.into(),
+            passed: true,
+            evidence: "observed".into(),
+            terminal_status: Some(ExecutionStatus::Succeeded),
+            replay: Some(ReplayClassification::Deterministic),
+            trace_context: None,
+        })
+        .collect();
+
+    let error = evaluate_integrity_observations(observations).unwrap_err();
+
+    assert!(error
+        .to_string()
+        .contains("integrity typed evidence is inconsistent"));
+
+    let untraced_successes = optimus_kernel::REQUIRED_INTEGRITY_EVALS
+        .into_iter()
+        .map(|id| IntegrityObservation {
+            id: id.into(),
+            passed: true,
+            evidence: "observed".into(),
+            terminal_status: None,
+            replay: None,
+            trace_context: None,
+        })
+        .collect();
+    assert!(evaluate_integrity_observations(untraced_successes).is_err());
+}
+
+#[test]
+fn offline_integrity_executor_isolates_fresh_traces_and_stable_semantics() {
     let dir = tempdir().unwrap();
     let first = run_offline_integrity_suite(dir.path()).unwrap();
     let second = run_offline_integrity_suite(dir.path()).unwrap();
 
-    assert_eq!(
-        serde_json::to_value(first).unwrap(),
-        serde_json::to_value(second).unwrap()
-    );
+    assert!(first
+        .cases
+        .iter()
+        .zip(&second.cases)
+        .all(|(left, right)| left.trace_context != right.trace_context));
+    let normalize = |report: optimus_kernel::EvalReport| {
+        let mut value = serde_json::to_value(report).unwrap();
+        for case in value["cases"].as_array_mut().unwrap() {
+            case["trace_context"] = serde_json::Value::Null;
+        }
+        value
+    };
+    assert_eq!(normalize(first), normalize(second));
     assert_eq!(
         std::fs::read_dir(dir.path().join("integrity-runs"))
             .unwrap()
@@ -310,10 +380,13 @@ fn offline_integrity_executor_reports_stable_failures_for_unusable_home() {
 
     assert_eq!(first.passed, 0);
     assert_eq!(first.failed, optimus_kernel::REQUIRED_INTEGRITY_EVALS.len());
-    assert!(first
-        .cases
-        .iter()
-        .all(|case| { !case.ok && case.detail.starts_with("integrity_case_failed:") }));
+    assert!(first.cases.iter().all(|case| {
+        !case.ok
+            && case.detail.starts_with("integrity_case_failed:")
+            && case.terminal_status.is_none()
+            && case.replay.is_none()
+            && case.trace_context.is_none()
+    }));
     assert_eq!(
         serde_json::to_value(first).unwrap(),
         serde_json::to_value(second).unwrap()

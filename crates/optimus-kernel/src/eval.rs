@@ -10,6 +10,7 @@ use optimus_packs::{builtin_catalog, ToolId};
 use optimus_runtime::{Runtime, RuntimeError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::{
@@ -17,8 +18,8 @@ use crate::{
     AgentId, AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
     AgentResultKind, AgentVersion, CancellationToken, CompletionResponse, ExecutionStatus, Kernel,
     KernelConfig, KernelError, PrivacyPolicy, ReplayClassification, RouteRequest, RouteSurface,
-    ScriptedModel, ToolCall, TraceContext, TurnResult, AGENT_REQUEST_SCHEMA_VERSION,
-    AGENT_RESULT_SCHEMA_VERSION,
+    ScriptedModel, SpanStatus, ToolCall, TraceContext, TraceEventKind, TraceStore, TurnResult,
+    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,6 +74,12 @@ pub struct IntegrityObservation {
     pub id: String,
     pub passed: bool,
     pub evidence: String,
+    #[serde(default)]
+    pub terminal_status: Option<ExecutionStatus>,
+    #[serde(default)]
+    pub replay: Option<ReplayClassification>,
+    #[serde(default)]
+    pub trace_context: Option<TraceContext>,
 }
 
 pub const REQUIRED_INTEGRITY_EVALS: [&str; 6] = [
@@ -89,11 +96,33 @@ pub fn evaluate_integrity_observations(
 ) -> Result<EvalReport, KernelError> {
     let mut by_id = std::collections::BTreeMap::new();
     for observation in observations {
+        let expected_status = if observation.passed {
+            ExecutionStatus::Succeeded
+        } else {
+            ExecutionStatus::Failed
+        };
+        let typed_evidence_is_coherent = match (
+            observation.trace_context,
+            observation.terminal_status,
+            observation.replay,
+        ) {
+            (None, None, None) => !observation.passed,
+            (Some(_), Some(status), Some(ReplayClassification::Deterministic)) => {
+                status == expected_status
+            }
+            _ => false,
+        };
         if observation.evidence.trim().is_empty()
+            || !typed_evidence_is_coherent
             || by_id.insert(observation.id.clone(), observation).is_some()
         {
             return Err(KernelError::Model(
-                "integrity evaluation requires unique observations with evidence".into(),
+                if !typed_evidence_is_coherent {
+                    "integrity typed evidence is inconsistent"
+                } else {
+                    "integrity evaluation requires unique observations with evidence"
+                }
+                .into(),
             ));
         }
     }
@@ -116,9 +145,9 @@ pub fn evaluate_integrity_observations(
                 tool_trace: vec![],
                 assistant_text: String::new(),
                 invoked_tools: vec![],
-                terminal_status: None,
-                replay: None,
-                trace_context: None,
+                terminal_status: observation.terminal_status,
+                replay: observation.replay,
+                trace_context: observation.trace_context,
             }
         })
         .collect::<Vec<_>>();
@@ -140,13 +169,71 @@ fn integrity_observation(
             id: id.into(),
             passed: true,
             evidence: success_evidence.into(),
+            terminal_status: None,
+            replay: None,
+            trace_context: None,
         },
         Err(code) => IntegrityObservation {
             id: id.into(),
             passed: false,
             evidence: format!("integrity_case_failed:{code}"),
+            terminal_status: None,
+            replay: None,
+            trace_context: None,
         },
     }
+}
+
+fn begin_integrity_trace(traces: &TraceStore, id: &str) -> Result<TraceContext, KernelError> {
+    traces.begin_root("evaluation", id)
+}
+
+fn finish_integrity_trace(
+    traces: &TraceStore,
+    context: TraceContext,
+    mut observation: IntegrityObservation,
+) -> Result<IntegrityObservation, KernelError> {
+    let status = if observation.passed {
+        SpanStatus::Succeeded
+    } else {
+        SpanStatus::Failed
+    };
+    let evidence_sha256 = format!("{:x}", Sha256::digest(observation.evidence.as_bytes()));
+    traces.append_event(
+        context,
+        TraceEventKind::Evidence,
+        "case_result",
+        evidence_sha256,
+    )?;
+    traces.settle(context, status)?;
+    let persisted = traces.span(context)?;
+    if persisted.status != status
+        || persisted.subsystem != "evaluation"
+        || persisted.subject != observation.id
+    {
+        return Err(KernelError::Model(
+            "integrity trace readback does not match case outcome".into(),
+        ));
+    }
+    observation.trace_context = Some(persisted.context);
+    observation.terminal_status = Some(if observation.passed {
+        ExecutionStatus::Succeeded
+    } else {
+        ExecutionStatus::Failed
+    });
+    observation.replay = Some(ReplayClassification::Deterministic);
+    Ok(observation)
+}
+
+fn traced_integrity_observation(
+    traces: &TraceStore,
+    id: &str,
+    success_evidence: &str,
+    observe: impl FnOnce() -> std::result::Result<(), &'static str>,
+) -> Result<IntegrityObservation, KernelError> {
+    let context = begin_integrity_trace(traces, id)?;
+    let observation = integrity_observation(id, success_evidence, observe());
+    finish_integrity_trace(traces, context, observation)
 }
 
 fn observe_sensitivity_denial(home: &Path) -> std::result::Result<(), &'static str> {
@@ -396,38 +483,53 @@ pub fn run_offline_integrity_suite(home: impl AsRef<Path>) -> Result<EvalReport,
                 .collect(),
         );
     }
+    let traces = TraceStore::open(run_home.join("integrity-traces.db"))?;
+    let cooperative_trace = begin_integrity_trace(&traces, "cooperative_cancellation")?;
+    let stale_trace = begin_integrity_trace(&traces, "stale_completion_fence")?;
     let cancellation = observe_agent_cancellation(&run_home);
     evaluate_integrity_observations(vec![
-        integrity_observation(
+        traced_integrity_observation(
+            &traces,
             "sensitivity_denial",
             "restricted write rejected under personal clearance",
-            observe_sensitivity_denial(&run_home),
-        ),
-        integrity_observation(
+            || observe_sensitivity_denial(&run_home),
+        )?,
+        traced_integrity_observation(
+            &traces,
             "smartdeny_approval",
             "RunCommand awaited approval and created no file",
-            observe_smartdeny_approval(&run_home),
-        ),
-        integrity_observation(
+            || observe_smartdeny_approval(&run_home),
+        )?,
+        traced_integrity_observation(
+            &traces,
             "route_policy_denial",
             "remote Codex route rejected under local-only privacy",
-            observe_route_policy_denial(&run_home),
-        ),
-        integrity_observation(
-            "cooperative_cancellation",
-            "durable cancellation synchronized to kernel token",
-            cancellation.0,
-        ),
-        integrity_observation(
-            "stale_completion_fence",
-            "late success rejected after cancellation request",
-            cancellation.1,
-        ),
-        integrity_observation(
+            || observe_route_policy_denial(&run_home),
+        )?,
+        finish_integrity_trace(
+            &traces,
+            cooperative_trace,
+            integrity_observation(
+                "cooperative_cancellation",
+                "durable cancellation synchronized to kernel token",
+                cancellation.0,
+            ),
+        )?,
+        finish_integrity_trace(
+            &traces,
+            stale_trace,
+            integrity_observation(
+                "stale_completion_fence",
+                "late success rejected after cancellation request",
+                cancellation.1,
+            ),
+        )?,
+        traced_integrity_observation(
+            &traces,
             "gateway_dead_letter",
             "third bounded failure produced dead-letter state",
-            observe_gateway_dead_letter(&run_home),
-        ),
+            || observe_gateway_dead_letter(&run_home),
+        )?,
     ])
 }
 
@@ -658,5 +760,36 @@ mod tests {
             serde_json::to_string_pretty(&report).unwrap_or_default()
         );
         assert_eq!(report.passed, 4);
+    }
+
+    #[test]
+    fn failed_integrity_case_persists_failed_terminal_trace() {
+        let directory = tempdir().unwrap();
+        let traces = TraceStore::open(directory.path().join("integrity-traces.db")).unwrap();
+        let context = begin_integrity_trace(&traces, "sensitivity_denial").unwrap();
+        let observation = finish_integrity_trace(
+            &traces,
+            context,
+            integrity_observation("sensitivity_denial", "", Err("forced_fixture_failure")),
+        )
+        .unwrap();
+
+        assert!(!observation.passed);
+        assert_eq!(observation.terminal_status, Some(ExecutionStatus::Failed));
+        assert_eq!(
+            observation.replay,
+            Some(ReplayClassification::Deterministic)
+        );
+        assert_eq!(observation.trace_context, Some(context));
+        assert_eq!(traces.span(context).unwrap().status, SpanStatus::Failed);
+        assert_eq!(
+            traces
+                .events(context)
+                .unwrap()
+                .into_iter()
+                .map(|event| event.kind)
+                .collect::<Vec<_>>(),
+            vec![TraceEventKind::Evidence, TraceEventKind::Terminal]
+        );
     }
 }

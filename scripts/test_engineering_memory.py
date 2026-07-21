@@ -195,6 +195,9 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs",
                 "case_count": 6,
                 "isolated_runs": True,
+                "trace_store": "per_run_integrity-traces.db",
+                "typed_evidence": ["terminal_status", "replay", "trace_context"],
+                "retry_identity": "fresh_trace_ids_stable_normalized_semantics",
             },
         )
         self.assertEqual(

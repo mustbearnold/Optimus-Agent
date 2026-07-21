@@ -79,7 +79,14 @@
   "integrity_executor": {
     "case_count": 6,
     "isolated_runs": true,
+    "retry_identity": "fresh_trace_ids_stable_normalized_semantics",
     "source": "crates/optimus-kernel/src/eval.rs",
+    "trace_store": "per_run_integrity-traces.db",
+    "typed_evidence": [
+      "terminal_status",
+      "replay",
+      "trace_context"
+    ],
     "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs"
   },
   "metrics": [

@@ -128,7 +128,10 @@ gateway dead letter. Missing, duplicate, or evidence-free observations fail the
 evaluation contract. The public offline executor runs those real local subsystem
 boundaries in an isolated per-run directory, matches policy-specific denial
 outcomes, and returns six deterministic failed observations when run ownership
-cannot be established.
+cannot be established. A usable run persists one parentless evaluation root per
+case with hashed evidence and terminal settlement, then returns the read-back
+context, terminal status, and deterministic replay class. Retry trace identities
+are fresh while normalized case semantics remain stable.
 
 **Confirmed current behaviour:** the versioned Priority-2 dataset represents
 those six cases and four trajectories with exact case/tool/terminal/replay/trace
@@ -151,9 +154,9 @@ parsing, sessions, memory, skills, cron, gateway, and campaigns. Desktop
 Playwright tests cover bootstrap, shell/composer behavior, session/runtime
 interactions, capabilities/tools, drag, and browser UI contracts.
 
-**Partially implemented behaviour:** the six integrity cases and four typed
+**Partially implemented behaviour:** the six traced integrity cases and four typed
 trajectories are executable through separate exact runners, but their results are
-not yet combined into one produced `EvaluationReportV1`. The framework is not a
+not yet converted into one produced `EvaluationReportV1`. The framework is not a
 universal workflow runner or automatic release gate and does not establish
 factual correctness beyond declared cases.
 

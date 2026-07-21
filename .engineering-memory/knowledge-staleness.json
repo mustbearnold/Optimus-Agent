@@ -179,11 +179,11 @@
           "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 22561,
@@ -501,14 +501,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "8db2f685c5be3b64d09d8fe60018e6b851a2e634648d1f51f684141ce20796b7",
+      "current_tree_sha256": "8a3824347fa4ce9f9b6f8a1f3cf9bebd82206dc4e51602d6b053546348671e6a",
       "document": "docs/architecture/system-overview.md",
       "knowledge_status": "current",
       "knowledge_type": "architecture",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "8db2f685c5be3b64d09d8fe60018e6b851a2e634648d1f51f684141ce20796b7"
+      "verified_tree_sha256": "8a3824347fa4ce9f9b6f8a1f3cf9bebd82206dc4e51602d6b053546348671e6a"
     },
     {
       "covered_files": [
@@ -674,11 +674,11 @@
           "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 22561,
@@ -982,14 +982,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "798c608d584b8daf8e9b0664e283a5f60c29a4c18645141f606d9596c32377dc",
+      "current_tree_sha256": "0419a05ee1d9fc6fa8636f68b1b43ce0d32993f97690581af094120dd577e863",
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_status": "current",
       "knowledge_type": "contract-risk-register",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "798c608d584b8daf8e9b0664e283a5f60c29a4c18645141f606d9596c32377dc"
+      "verified_tree_sha256": "0419a05ee1d9fc6fa8636f68b1b43ce0d32993f97690581af094120dd577e863"
     },
     {
       "covered_files": [
@@ -1008,18 +1008,18 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         },
         {
           "bytes": 5394,
@@ -1029,14 +1029,14 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "c8a896152e74cb00d74b13f44e944dc300b048dfc35ffdfe5b31343850a42da4",
+      "current_tree_sha256": "bd0e5f41744a69d967d761e395005a463acd1b3f9e664cbe647b5b10608ba4bf",
       "document": "docs/decisions/0017-engineering-memory-separation.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "c8a896152e74cb00d74b13f44e944dc300b048dfc35ffdfe5b31343850a42da4"
+      "verified_tree_sha256": "bd0e5f41744a69d967d761e395005a463acd1b3f9e664cbe647b5b10608ba4bf"
     },
     {
       "covered_files": [
@@ -1158,28 +1158,28 @@
           "sha256": "19412ab5b78f9f905f67b01658f4c32052ff3fd84908781cc7658dc267a8f6f2"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "ebeeb2b68f402971cdf7cb07715df77f563866262b68bbfc1f670acf32a6beca",
+      "current_tree_sha256": "3f16d6f823936040dbf0ed47c064ec9b6d926757a1c1786eddc28c753dfd29ee",
       "document": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "ebeeb2b68f402971cdf7cb07715df77f563866262b68bbfc1f670acf32a6beca"
+      "verified_tree_sha256": "3f16d6f823936040dbf0ed47c064ec9b6d926757a1c1786eddc28c753dfd29ee"
     },
     {
       "covered_files": [
@@ -1439,11 +1439,11 @@
           "sha256": "283ef174c05c474e648e01756314e619f651fea4d121786d92c27e818f501072"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 20646,
@@ -1460,11 +1460,11 @@
           "sha256": "172fdafaada0f25425a790ea0ef16f46fc8dca49fb371760223c62d22814e3f5"
         },
         {
-          "bytes": 11369,
+          "bytes": 14141,
           "language": "Rust",
-          "lines": 322,
+          "lines": 395,
           "path": "crates/optimus-kernel/tests/integrity_integration.rs",
-          "sha256": "1f1130c35aca10fc8cf05d0daa710c30919a0802915a9c5b3641d4994385e1a2"
+          "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
         },
         {
           "bytes": 8564,
@@ -1481,14 +1481,14 @@
           "sha256": "c5bb5e69951f31ceaa820bcbc1b13302e0566ca0d1b9a3da21ff7934599def75"
         }
       ],
-      "current_tree_sha256": "286dc82b1b319513cab8b2607397ee6cc15642d3b5d8d5679358186d13fd9267",
+      "current_tree_sha256": "b818f31ece77e02adc88a6121906a90346d11128f791edd7c7a4aaa953f17eac",
       "document": "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "286dc82b1b319513cab8b2607397ee6cc15642d3b5d8d5679358186d13fd9267"
+      "verified_tree_sha256": "b818f31ece77e02adc88a6121906a90346d11128f791edd7c7a4aaa953f17eac"
     },
     {
       "covered_files": [
@@ -1603,11 +1603,11 @@
     {
       "covered_files": [
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
           "bytes": 1191,
@@ -1792,14 +1792,14 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         }
       ],
-      "current_tree_sha256": "259e517b0e0a4fe8003d142fe01bd083df065cd05ca983814b234d35b4e12ed5",
+      "current_tree_sha256": "0df8342dc20c8a779711ca980c91761fb6618a917b421930e62790785335b214",
       "document": "docs/decisions/README.md",
       "knowledge_status": "current",
       "knowledge_type": "decision-index",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "259e517b0e0a4fe8003d142fe01bd083df065cd05ca983814b234d35b4e12ed5"
+      "verified_tree_sha256": "0df8342dc20c8a779711ca980c91761fb6618a917b421930e62790785335b214"
     },
     {
       "covered_files": [
@@ -1818,11 +1818,11 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
           "bytes": 5394,
@@ -1832,14 +1832,14 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "25e203a27cbfee68c00c0c429973eb82e83e2a80486560f05fb2d419fed875ce",
+      "current_tree_sha256": "6fd8c27aafac82aba08c31cc2e87b39d0871861a40c3ccdb6b5ed3908d3a7b93",
       "document": "docs/engineering-memory/README.md",
       "knowledge_status": "current",
       "knowledge_type": "engineering-memory-guide",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "25e203a27cbfee68c00c0c429973eb82e83e2a80486560f05fb2d419fed875ce"
+      "verified_tree_sha256": "6fd8c27aafac82aba08c31cc2e87b39d0871861a40c3ccdb6b5ed3908d3a7b93"
     },
     {
       "covered_files": [
@@ -2061,11 +2061,11 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
           "bytes": 13027,
@@ -2257,21 +2257,21 @@
           "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         }
       ],
-      "current_tree_sha256": "90791c6b0b734903dc13f42c12f4ad004abad0196095b2b01cf9aac5c0af8271",
+      "current_tree_sha256": "79bceafd3f7c60a6fb2abf5a4a3933654944aaa19711de64e9a2f0054c47b44e",
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_status": "current",
       "knowledge_type": "lesson-ledger",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "90791c6b0b734903dc13f42c12f4ad004abad0196095b2b01cf9aac5c0af8271"
+      "verified_tree_sha256": "79bceafd3f7c60a6fb2abf5a4a3933654944aaa19711de64e9a2f0054c47b44e"
     },
     {
       "covered_files": [
@@ -2510,11 +2510,11 @@
           "sha256": "283ef174c05c474e648e01756314e619f651fea4d121786d92c27e818f501072"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 18807,
@@ -2566,14 +2566,14 @@
           "sha256": "a8e14190e299f3cd84b44ee51b0ad8a7eb5b0aef9434eae02e6dc05cb0300dab"
         }
       ],
-      "current_tree_sha256": "b159caec4c9433672df53e4b9177f60fe2614945f54b791efe5a123575466c12",
+      "current_tree_sha256": "4d13ace8b72bd20ee138f240d39620718662343b8f986ae0e33a6c4ed0d3bdfa",
       "document": "docs/maps/observability-and-evaluations.md",
       "knowledge_status": "current",
       "knowledge_type": "observability-evaluation-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "b159caec4c9433672df53e4b9177f60fe2614945f54b791efe5a123575466c12"
+      "verified_tree_sha256": "4d13ace8b72bd20ee138f240d39620718662343b8f986ae0e33a6c4ed0d3bdfa"
     },
     {
       "covered_files": [
@@ -2788,11 +2788,11 @@
           "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 22561,
@@ -2963,14 +2963,14 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         }
       ],
-      "current_tree_sha256": "1a7fb7e8efe29cde4fcc52a240fe4e5e8b01a4365f774cee1c5bf2f0b0508d91",
+      "current_tree_sha256": "5ac94f6361fcb3a7b0d10389d7951301478ef34f589d8e607a134b81f5f7a3f2",
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_status": "current",
       "knowledge_type": "repository-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "1a7fb7e8efe29cde4fcc52a240fe4e5e8b01a4365f774cee1c5bf2f0b0508d91"
+      "verified_tree_sha256": "5ac94f6361fcb3a7b0d10389d7951301478ef34f589d8e607a134b81f5f7a3f2"
     },
     {
       "covered_files": [
@@ -3169,11 +3169,11 @@
           "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
           "bytes": 13027,
@@ -3379,11 +3379,11 @@
           "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
           "bytes": 5802,
@@ -3400,11 +3400,11 @@
           "sha256": "8ad7d302ed247a98a423e68922a740498587823c19b5416e272849f8c100180e"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
           "bytes": 5394,
@@ -3414,14 +3414,14 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "122de04aa33416cd6f466c66351e35b635d75642400e20afb2f0cfac417386da",
+      "current_tree_sha256": "2c31433305e4d28e1a8c3a7b25ce48a356ff1cadee5fdec927019dfd53a73633",
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "122de04aa33416cd6f466c66351e35b635d75642400e20afb2f0cfac417386da"
+      "verified_tree_sha256": "2c31433305e4d28e1a8c3a7b25ce48a356ff1cadee5fdec927019dfd53a73633"
     },
     {
       "covered_files": [
@@ -3454,42 +3454,42 @@
           "sha256": "8cb49e7aba666eeeee81ce3c5cd9f9797b51bbb8c6a012a09e9f88da5a443f07"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "8d0b2d8bc965cd620dac3f7731ee78943edf651894e5306ae9b6c0247813448f",
+      "current_tree_sha256": "b66955af8f3439d68a86c6ae2141cecff2c86ac0cf71b4f6fdc2b15ea470b7f5",
       "document": "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "8d0b2d8bc965cd620dac3f7731ee78943edf651894e5306ae9b6c0247813448f"
+      "verified_tree_sha256": "b66955af8f3439d68a86c6ae2141cecff2c86ac0cf71b4f6fdc2b15ea470b7f5"
     },
     {
       "covered_files": [
@@ -3522,21 +3522,21 @@
           "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         }
       ],
-      "current_tree_sha256": "be38e663add9297beff9c2a1784de9261251d0971f0ac067449ba13097241fa6",
+      "current_tree_sha256": "0f38384e0358123ad1829e4b8fa59fd7391845a5bd6073bfbef4103e3ba70026",
       "document": "docs/specifications/candidate-aware-evaluation-comparison.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "0c07762a40e4264a08c38eaf04532b41cb90e0d4",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "be38e663add9297beff9c2a1784de9261251d0971f0ac067449ba13097241fa6"
+      "verified_tree_sha256": "0f38384e0358123ad1829e4b8fa59fd7391845a5bd6073bfbef4103e3ba70026"
     },
     {
       "covered_files": [
@@ -3651,11 +3651,11 @@
           "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
           "bytes": 6859,
@@ -3665,14 +3665,14 @@
           "sha256": "c1dc6ce2a5c3282bfde3d3184daa5501f440f4e0198fd0192bcc9a06f85b5c51"
         }
       ],
-      "current_tree_sha256": "ba9d29102488e7e419d38aacaa0e343c9d64a47c3a9bc9b0473d5ae33665d961",
+      "current_tree_sha256": "be1d460b093d8a377f3f279e3c9a35528a24034d839bc7c572204db3ba296070",
       "document": "docs/specifications/fail-closed-evaluation-report-validation.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "df70591ab07a67c1589651c266b836879f8ced9b",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "ba9d29102488e7e419d38aacaa0e343c9d64a47c3a9bc9b0473d5ae33665d961"
+      "verified_tree_sha256": "be1d460b093d8a377f3f279e3c9a35528a24034d839bc7c572204db3ba296070"
     },
     {
       "covered_files": [
@@ -3691,51 +3691,51 @@
           "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "d1b51411733af9bb7b75874aafede39a4fedb0fe3980910b3029ec46a4b7fc97",
+      "current_tree_sha256": "6c4800ee22bdae632f8ab5c3876a7eb3c66cf590d79849e8a0cd2448b157b025",
       "document": "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "d1b51411733af9bb7b75874aafede39a4fedb0fe3980910b3029ec46a4b7fc97"
+      "verified_tree_sha256": "6c4800ee22bdae632f8ab5c3876a7eb3c66cf590d79849e8a0cd2448b157b025"
     },
     {
       "covered_files": [
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
           "bytes": 13027,
@@ -3766,18 +3766,18 @@
           "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         },
         {
           "bytes": 5394,
@@ -3787,14 +3787,68 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "fac6ee1d1472823c2081f097ddb282e71c23892e78fec3f821fa3352a0a44ae2",
+      "current_tree_sha256": "b7bdb9786028acfe3ce2a2b084ecdf76829de906571c53e1741bf1d800aaa03a",
       "document": "docs/specifications/git-stable-engineering-memory.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "7bb604883362d2e9ccbf0a950422e6c6d7c5b081",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "fac6ee1d1472823c2081f097ddb282e71c23892e78fec3f821fa3352a0a44ae2"
+      "verified_tree_sha256": "b7bdb9786028acfe3ce2a2b084ecdf76829de906571c53e1741bf1d800aaa03a"
+    },
+    {
+      "covered_files": [
+        {
+          "bytes": 28053,
+          "language": "Rust",
+          "lines": 795,
+          "path": "crates/optimus-kernel/src/eval.rs",
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
+        },
+        {
+          "bytes": 14141,
+          "language": "Rust",
+          "lines": 395,
+          "path": "crates/optimus-kernel/tests/integrity_integration.rs",
+          "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
+        },
+        {
+          "bytes": 24197,
+          "language": "Markdown",
+          "lines": 412,
+          "path": "docs/architecture/system-overview.md",
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
+        },
+        {
+          "bytes": 12093,
+          "language": "Markdown",
+          "lines": 202,
+          "path": "docs/maps/observability-and-evaluations.md",
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
+        },
+        {
+          "bytes": 75575,
+          "language": "Python",
+          "lines": 1598,
+          "path": "scripts/engineering_memory.py",
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
+        },
+        {
+          "bytes": 15208,
+          "language": "Python",
+          "lines": 363,
+          "path": "scripts/test_engineering_memory.py",
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
+        }
+      ],
+      "current_tree_sha256": "0f181333c2593b78064f43c5557f0efb6f70cfd7d4229e42b938df4e481ed0c3",
+      "document": "docs/specifications/persisted-integrity-evaluation-traces.md",
+      "knowledge_status": "historical",
+      "knowledge_type": "specification",
+      "last_verified_commit": null,
+      "stale": false,
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "0f181333c2593b78064f43c5557f0efb6f70cfd7d4229e42b938df4e481ed0c3"
     },
     {
       "covered_files": [
@@ -3841,11 +3895,11 @@
           "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 22561,
@@ -3974,11 +4028,11 @@
           "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
         },
         {
-          "bytes": 11369,
+          "bytes": 14141,
           "language": "Rust",
-          "lines": 322,
+          "lines": 395,
           "path": "crates/optimus-kernel/tests/integrity_integration.rs",
-          "sha256": "1f1130c35aca10fc8cf05d0daa710c30919a0802915a9c5b3641d4994385e1a2"
+          "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
         },
         {
           "bytes": 21647,
@@ -4282,11 +4336,11 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
           "bytes": 13027,
@@ -4492,11 +4546,11 @@
           "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
           "bytes": 5802,
@@ -4520,28 +4574,28 @@
           "sha256": "e7bfa1aa561c14116e0894ccf9163cdb56cd725753335f9905de9385a2907d02"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "b438de75c0c664ae2725c6ed2cfecde00eb267135186f901e7debd7f7beee1ec",
+      "current_tree_sha256": "7da4fdba6767360fc5aa4b5f4b88ed4a4f8b6ea8a3e03fa470b7956603002053",
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "b438de75c0c664ae2725c6ed2cfecde00eb267135186f901e7debd7f7beee1ec"
+      "verified_tree_sha256": "7da4fdba6767360fc5aa4b5f4b88ed4a4f8b6ea8a3e03fa470b7956603002053"
     },
     {
       "covered_files": [
@@ -4714,11 +4768,11 @@
           "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 22561,
@@ -4861,14 +4915,14 @@
           "sha256": "c5bb5e69951f31ceaa820bcbc1b13302e0566ca0d1b9a3da21ff7934599def75"
         }
       ],
-      "current_tree_sha256": "5d755061a77252e682f58d0f5eef2d46a89b9e65546117f2fa4fb5f37f6a6075",
+      "current_tree_sha256": "90dcfd2a423065133c66ed152fca4cdccce34ee4b915a807b901ec8ac9c9dd09",
       "document": "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "5d755061a77252e682f58d0f5eef2d46a89b9e65546117f2fa4fb5f37f6a6075"
+      "verified_tree_sha256": "90dcfd2a423065133c66ed152fca4cdccce34ee4b915a807b901ec8ac9c9dd09"
     },
     {
       "covered_files": [
@@ -4915,11 +4969,11 @@
           "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 22561,
@@ -5048,11 +5102,11 @@
           "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
         },
         {
-          "bytes": 11369,
+          "bytes": 14141,
           "language": "Rust",
-          "lines": 322,
+          "lines": 395,
           "path": "crates/optimus-kernel/tests/integrity_integration.rs",
-          "sha256": "1f1130c35aca10fc8cf05d0daa710c30919a0802915a9c5b3641d4994385e1a2"
+          "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
         },
         {
           "bytes": 21647,
@@ -5335,11 +5389,11 @@
           "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
           "bytes": 13027,
@@ -5545,11 +5599,11 @@
           "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
           "bytes": 5802,
@@ -5573,37 +5627,37 @@
           "sha256": "906359380d463a76f18eb1dfaa04d631d92184dbc609787f824db71b5da06998"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "0a0769e15374b108f332e3e69d4d808153271cc77c641ea73d4c029cf9d07697",
+      "current_tree_sha256": "6ab758aa9bff6f2da17aa1f3d5f7a42f0cb147f654771af74138899ae08f9222",
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "0a0769e15374b108f332e3e69d4d808153271cc77c641ea73d4c029cf9d07697"
+      "verified_tree_sha256": "6ab758aa9bff6f2da17aa1f3d5f7a42f0cb147f654771af74138899ae08f9222"
     },
     {
       "covered_files": [
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 54647,
@@ -5613,11 +5667,11 @@
           "sha256": "c9d0f50cdbc950fe8a63be371e531b2fc026b97467a0cc452fcc8fdb0b378469"
         },
         {
-          "bytes": 11369,
+          "bytes": 14141,
           "language": "Rust",
-          "lines": 322,
+          "lines": 395,
           "path": "crates/optimus-kernel/tests/integrity_integration.rs",
-          "sha256": "1f1130c35aca10fc8cf05d0daa710c30919a0802915a9c5b3641d4994385e1a2"
+          "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
         },
         {
           "bytes": 7610,
@@ -5627,11 +5681,11 @@
           "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
           "bytes": 7081,
@@ -5641,28 +5695,28 @@
           "sha256": "2e1f489fdce1d2c0e45e792a1d034a926c686f7c61ea47b7ed877b992ce1401f"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "ca44bc2694c557b544c1a7195845b62b95909de8c7fa074ab3f5ebadb3f4a6bf",
+      "current_tree_sha256": "4cffc2947904541be9ebda0614395291c47a4cce2d4f153f6a32e6301f9ec325",
       "document": "docs/specifications/reusable-offline-integrity-executor.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "c3aa28fb78a47a485dc1cb57d7066695f8d0d195",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "ca44bc2694c557b544c1a7195845b62b95909de8c7fa074ab3f5ebadb3f4a6bf"
+      "verified_tree_sha256": "4cffc2947904541be9ebda0614395291c47a4cce2d4f153f6a32e6301f9ec325"
     },
     {
       "covered_files": [
@@ -5716,21 +5770,21 @@
           "sha256": "c5bb5e69951f31ceaa820bcbc1b13302e0566ca0d1b9a3da21ff7934599def75"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         }
       ],
-      "current_tree_sha256": "6b391f57fa32f30e89da2868a9336c33756dc412dbcd6fbf82597835f2573a07",
+      "current_tree_sha256": "5e91990d8003c2b51db154132906e7ad372570fa949cbcb90d3453a5e30caad5",
       "document": "docs/specifications/stream-delivery-cancellation.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "28b0e96ac73ddedb8387478b63c8edaa0a385ac5",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "6b391f57fa32f30e89da2868a9336c33756dc412dbcd6fbf82597835f2573a07"
+      "verified_tree_sha256": "5e91990d8003c2b51db154132906e7ad372570fa949cbcb90d3453a5e30caad5"
     },
     {
       "covered_files": [
@@ -5742,11 +5796,11 @@
           "sha256": "4969626912d17b2675b78522dcdbd76e3b7275ebebb681fb735f8cfb996bfce3"
         },
         {
-          "bytes": 23268,
+          "bytes": 28053,
           "language": "Rust",
-          "lines": 662,
+          "lines": 795,
           "path": "crates/optimus-kernel/src/eval.rs",
-          "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+          "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
         },
         {
           "bytes": 54647,
@@ -5763,42 +5817,42 @@
           "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
         },
         {
-          "bytes": 23937,
+          "bytes": 24197,
           "language": "Markdown",
-          "lines": 409,
+          "lines": 412,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+          "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
         },
         {
-          "bytes": 11812,
+          "bytes": 12093,
           "language": "Markdown",
-          "lines": 199,
+          "lines": 202,
           "path": "docs/maps/observability-and-evaluations.md",
-          "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+          "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
         },
         {
-          "bytes": 74644,
+          "bytes": 75575,
           "language": "Python",
-          "lines": 1579,
+          "lines": 1598,
           "path": "scripts/engineering_memory.py",
-          "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+          "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
         },
         {
-          "bytes": 14983,
+          "bytes": 15208,
           "language": "Python",
-          "lines": 360,
+          "lines": 363,
           "path": "scripts/test_engineering_memory.py",
-          "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+          "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
         }
       ],
-      "current_tree_sha256": "38036fc1aef95aef39ebe8bad68b6eb9acc8f3b868d76ad4325a1f6a91cc4508",
+      "current_tree_sha256": "7d507bfa00d17218ac5134b2f49202015a3afaeb08687b04a5ac59ca25620851",
       "document": "docs/specifications/typed-offline-trajectory-evidence.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "38036fc1aef95aef39ebe8bad68b6eb9acc8f3b868d76ad4325a1f6a91cc4508"
+      "verified_tree_sha256": "7d507bfa00d17218ac5134b2f49202015a3afaeb08687b04a5ac59ca25620851"
     }
   ],
   "generated_by": "scripts/engineering_memory.py",

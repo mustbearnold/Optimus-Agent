@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 192,
+  "file_count": 193,
   "files": [
     {
       "bytes": 152,
@@ -364,11 +364,11 @@
       "sha256": "faa885cf84b9586b5b3212cbeb2e8832c313178b07cd8a33b86178dd3ab77616"
     },
     {
-      "bytes": 23268,
+      "bytes": 28053,
       "language": "Rust",
-      "lines": 662,
+      "lines": 795,
       "path": "crates/optimus-kernel/src/eval.rs",
-      "sha256": "147c61c55f24c1c08aa77b668d97966c14a720630131cbb3b0a962714f19f129"
+      "sha256": "fa046300e4e7b2fd21156a50df2979f15733b0cc77051d0adf40c4d91b70b66a"
     },
     {
       "bytes": 22561,
@@ -497,11 +497,11 @@
       "sha256": "2dfb7a6eacf199a4df1fd868e19f8801a8f40aa66b95bcd68881667f3ee5c7eb"
     },
     {
-      "bytes": 11369,
+      "bytes": 14141,
       "language": "Rust",
-      "lines": 322,
+      "lines": 395,
       "path": "crates/optimus-kernel/tests/integrity_integration.rs",
-      "sha256": "1f1130c35aca10fc8cf05d0daa710c30919a0802915a9c5b3641d4994385e1a2"
+      "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
     },
     {
       "bytes": 21647,
@@ -917,11 +917,11 @@
       "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
     },
     {
-      "bytes": 23937,
+      "bytes": 24197,
       "language": "Markdown",
-      "lines": 409,
+      "lines": 412,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "99cc3d51f0c2e925ab7ac783f49105976b1d12c3503717b4121e334819f1871d"
+      "sha256": "bb2ed321a24ea7ff1d995e57d1ca6596f573f636253496f1899bed14f69ca146"
     },
     {
       "bytes": 13027,
@@ -1148,11 +1148,11 @@
       "sha256": "200aa92e89acbeff7cf3a33a393cb82f70d6ade7d16098b7e06def4bd324f01c"
     },
     {
-      "bytes": 11812,
+      "bytes": 12093,
       "language": "Markdown",
-      "lines": 199,
+      "lines": 202,
       "path": "docs/maps/observability-and-evaluations.md",
-      "sha256": "82716ea9dff5efb972298ed0747048ecb1300a668d12a9479c8fe1e7e4d8d825"
+      "sha256": "33dd3ba500e9c4e4f219681f6d118a65865f9cd9505e3173fa050c03a6bbcbdb"
     },
     {
       "bytes": 5802,
@@ -1218,6 +1218,13 @@
       "sha256": "d0a70a9d05fbb41a7776d30ec2144d394c77f79272a39ca2c2a74f0928da57d0"
     },
     {
+      "bytes": 10773,
+      "language": "Markdown",
+      "lines": 209,
+      "path": "docs/specifications/persisted-integrity-evaluation-traces.md",
+      "sha256": "6e652fd221e066bd42ddd103de2fbd5ce911dd58214e8290e06c3e2f521ada37"
+    },
+    {
       "bytes": 25330,
       "language": "Markdown",
       "lines": 272,
@@ -1267,11 +1274,11 @@
       "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
     },
     {
-      "bytes": 74644,
+      "bytes": 75575,
       "language": "Python",
-      "lines": 1579,
+      "lines": 1598,
       "path": "scripts/engineering_memory.py",
-      "sha256": "4c734a8cf6bfe321d5836a6e32e880b6cf35d8683d2447302ef998fed5a91110"
+      "sha256": "bc78c0de890bf56de637446d7f0b26b2f173a99addb4b7abc02bc227272f0ad1"
     },
     {
       "bytes": 9185,
@@ -1288,11 +1295,11 @@
       "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
     },
     {
-      "bytes": 14983,
+      "bytes": 15208,
       "language": "Python",
-      "lines": 360,
+      "lines": 363,
       "path": "scripts/test_engineering_memory.py",
-      "sha256": "31dee59af081b543c7c00fba9827b84f46c9660239d184978fad387209466a4a"
+      "sha256": "13b9ff082b60fd93a7e40d44a66ac87c581a43a4f4f3541e4c4b31d362386ce5"
     },
     {
       "bytes": 5394,
@@ -1380,8 +1387,8 @@
       "files": 9
     },
     "Markdown": {
-      "bytes": 489447,
-      "files": 85
+      "bytes": 500761,
+      "files": 86
     },
     "Other": {
       "bytes": 156778,
@@ -1392,11 +1399,11 @@
       "files": 1
     },
     "Python": {
-      "bytes": 94951,
+      "bytes": 96107,
       "files": 3
     },
     "Rust": {
-      "bytes": 1138759,
+      "bytes": 1146316,
       "files": 70
     },
     "Shell": {
@@ -1434,7 +1441,7 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "f8c6950469c4f3d848bfa91fd38f923a315804a7e4630458a8c24717b40081b3",
+  "tree_sha256": "f3d3b5dcdf71e7eb6dd051ecbbe99f71da6d0cb7f52f3206c9b2ab3f463ec4f8",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
     {

@@ -357,7 +357,10 @@ the six required memory, SmartDeny, routing, cancellation/fencing, and gateway
 cases against isolated local run state. It requires run-directory ownership
 before execution, matches policy-specific denial outcomes, and returns a complete
 deterministic failed report when setup is unavailable. It does not execute an
-approved command or access the network.
+approved command or access the network. Usable runs persist one evaluation-owned
+root span per case with hashed evidence and terminal status, then return the exact
+read-back trace context and deterministic replay class. Independent retries use
+fresh trace identities and stable normalized semantics.
 
 **Confirmed current behaviour:** a separate exact four-case offline trajectory
 runner reloads each successful turn's execution evidence and returns exact

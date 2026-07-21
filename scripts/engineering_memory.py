@@ -1004,6 +1004,22 @@ def build_evaluation_coverage() -> dict[str, Any]:
         r"run_offline_integrity_suite\s*\(", integration
     ):
         raise MemoryError("reusable offline integrity executor is not implemented and exercised")
+    integrity_trace_symbols = [
+        'TraceStore::open(run_home.join("integrity-traces.db"))',
+        "fn traced_integrity_observation",
+        "fn finish_integrity_trace",
+        "pub terminal_status: Option<ExecutionStatus>",
+        "pub replay: Option<ReplayClassification>",
+        "pub trace_context: Option<TraceContext>",
+        "(None, None, None) => !observation.passed",
+    ]
+    missing_integrity_trace = [
+        symbol for symbol in integrity_trace_symbols if symbol not in text
+    ]
+    if missing_integrity_trace or "TraceStore::open(run_home.join" not in integration:
+        raise MemoryError(
+            f"integrity trace evidence is stale; missing: {missing_integrity_trace}"
+        )
     typed_path = ROOT / "crates/optimus-kernel/src/evaluation.rs"
     typed = typed_path.read_text(encoding="utf-8")
     required_typed_symbols = [
@@ -1039,6 +1055,9 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs",
             "case_count": len(integrity_ids),
             "isolated_runs": True,
+            "trace_store": "per_run_integrity-traces.db",
+            "typed_evidence": ["terminal_status", "replay", "trace_context"],
+            "retry_identity": "fresh_trace_ids_stable_normalized_semantics",
         },
         "trajectory_executor": {
             "source": "crates/optimus-kernel/src/eval.rs",

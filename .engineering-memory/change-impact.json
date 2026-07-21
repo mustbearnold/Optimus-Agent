@@ -793,6 +793,23 @@
     },
     {
       "covers": [
+        "crates/optimus-kernel/src/eval.rs",
+        "crates/optimus-kernel/tests/integrity_integration.rs",
+        "docs/architecture/system-overview.md",
+        "docs/maps/observability-and-evaluations.md",
+        "scripts/engineering_memory.py",
+        "scripts/test_engineering_memory.py"
+      ],
+      "depends_on": [],
+      "document": "docs/specifications/persisted-integrity-evaluation-traces.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 6,
+      "resolved_tests": [],
+      "status": "historical",
+      "validated_by": []
+    },
+    {
+      "covers": [
         "crates/optimus-memory/src/**",
         "crates/optimus-memory/tests/**",
         "crates/optimus-kernel/src/**",
@@ -1306,6 +1323,7 @@
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1473,6 +1491,7 @@
     ],
     "crates/optimus-kernel/tests/integrity_integration.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md"
@@ -1768,6 +1787,7 @@
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",
+      "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
@@ -2060,6 +2080,7 @@
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
+      "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
@@ -2101,6 +2122,7 @@
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",
+      "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
@@ -2112,6 +2134,7 @@
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",
+      "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md",
