@@ -129,15 +129,15 @@ export function Transcript({
 function EmptyWorkbench({ onStarter }: { onStarter: (text: string) => void }) {
   const starters = [
     ['Fix a failing test', 'Trace the failing test to its root cause, implement the smallest fix, and verify it.'],
-    ['Audit current changes', 'Review the current changed files for regressions, unsafe behavior, and unnecessary complexity.'],
-    ['Plan a feature', 'Inspect this workspace and create a decision-complete implementation plan for the feature I describe.'],
+    ['Review current changes', 'Review the current changed files for regressions, unsafe behavior, and unnecessary complexity.'],
+    ['Plan a scoped feature', 'Inspect this workspace and create a decision-complete implementation plan for the feature I describe.'],
   ] as const;
   return (
-    <section className="work-empty">
-      <span className="empty-kicker">Optimus workbench</span>
-      <h1>What should we build?</h1>
-      <p>Start with a concrete outcome. Optimus will keep controls and evidence close to the work.</p>
-      <div className="starter-list">
+    <section className="work-empty" aria-labelledby="empty-work-title">
+      <span className="empty-kicker">New local session</span>
+      <h1 id="empty-work-title">Start local work</h1>
+      <p>Describe the outcome and constraints. Commands, files, approvals, and artifacts stay attached to this session.</p>
+      <div className="starter-list" aria-label="Common local tasks">
         {starters.map(([label, prompt], index) => (
           <button type="button" onClick={() => onStarter(prompt)} key={label}>
             <span className="starter-index">0{index + 1}</span>

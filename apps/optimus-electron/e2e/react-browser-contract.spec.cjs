@@ -23,7 +23,12 @@ test('wide 1600x1000 renders the dense three-surface workbench', async ({ page }
   await expect(workspace).toBeVisible();
   expect((await rail.boundingBox()).width).toBe(232);
   expect((await workspace.boundingBox()).width).toBeGreaterThanOrEqual(700);
+  const searchBox = await page.locator('.rail-search').boundingBox();
+  const newSessionBox = await page.getByRole('button', { name: 'New session', exact: true }).boundingBox();
+  expect(Math.abs(searchBox.y - newSessionBox.y)).toBeLessThanOrEqual(1);
+  expect(newSessionBox.x).toBeGreaterThanOrEqual(searchBox.x + searchBox.width);
   await expect(page.getByLabel('Message Optimus')).toBeVisible();
+  await expect(page.locator('.message').first()).toBeVisible();
   await assertComposerInsideViewport(page);
   await page.screenshot({
     path: path.join(EVIDENCE_DIR, 'react-workbench-wide-1600x1000.png'),
@@ -56,6 +61,9 @@ test('compact 640x800 switches one primary surface at a time', async ({ page }) 
   await expect(page.getByRole('region', { name: 'Agent work surface' })).toBeHidden();
   await page.getByRole('tab', { name: 'work', exact: true }).click();
   await expect(page.getByLabel('Message Optimus')).toBeVisible();
+  await expect(page.getByLabel('Thinking level')).toBeVisible();
+  await expect(page.getByLabel('Access')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fast' })).toBeVisible();
   await assertComposerInsideViewport(page);
   await page.screenshot({
     path: path.join(EVIDENCE_DIR, 'react-workbench-compact-640x800.png'),
@@ -70,12 +78,28 @@ test('320 CSS px reflow and reduced motion preserve state and focus', async ({ p
   await page.goto(URL);
   await expect(page.getByRole('tablist', { name: 'Primary surface' })).toBeVisible();
   await expect(page.getByLabel('Message Optimus')).toBeVisible();
+  await expect(page.getByLabel('Provider')).toBeVisible();
+  await expect(page.getByLabel('Model')).toBeVisible();
+  await expect(page.getByLabel('Thinking level')).toBeVisible();
+  await expect(page.getByLabel('Access')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fast' })).toBeVisible();
   await assertComposerInsideViewport(page);
+  await assertComposerControlsInsideCard(page);
   await assertNoHorizontalOverflow(page);
+  await page.getByLabel('Message Optimus').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Provider')).toBeFocused();
+  const focusShadow = await page.getByLabel('Provider').evaluate((element) =>
+    getComputedStyle(element).boxShadow
+  );
+  expect(focusShadow).not.toBe('none');
   const duration = await page.locator('.workspace-shell').evaluate((element) =>
     getComputedStyle(element).animationDuration
   );
   expect(['0.001ms', '1e-06s']).toContain(duration);
+  await page.screenshot({
+    path: path.join(EVIDENCE_DIR, 'react-workbench-reflow-320x800.png'),
+  });
   expect(errors).toEqual([]);
 });
 
@@ -87,7 +111,11 @@ test('light theme and secondary routes settle without console errors', async ({ 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.getByRole('button', { name: 'Capabilities' }).click();
   await expect(page.getByRole('main', { name: 'Capabilities' })).toBeVisible();
-  await expect(page.getByText('Specialist agents — unavailable')).toBeVisible();
+  const specialistBoundary = page.locator('.capability-boundary li').filter({ hasText: 'Specialist agents' });
+  await expect(specialistBoundary.getByText('Unavailable', { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: path.join(EVIDENCE_DIR, 'react-capabilities-light-1280x820.png'),
+  });
   await page.getByRole('button', { name: 'Artifacts', exact: true }).first().click();
   await expect(page.getByRole('region', { name: 'Artifacts' })).toBeVisible();
   await page.getByRole('button', { name: 'Settings' }).click();
@@ -120,4 +148,22 @@ async function assertComposerInsideViewport(page) {
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
   expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+}
+
+async function assertComposerControlsInsideCard(page) {
+  const card = await page.locator('.composer-card').boundingBox();
+  expect(card).not.toBeNull();
+  const controls = [
+    page.getByLabel('Provider'),
+    page.getByLabel('Model'),
+    page.getByLabel('Thinking level'),
+    page.getByLabel('Access'),
+    page.getByRole('button', { name: 'Fast' }),
+  ];
+  for (const control of controls) {
+    const box = await control.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box.x).toBeGreaterThanOrEqual(card.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(card.x + card.width);
+  }
 }

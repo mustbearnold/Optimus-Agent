@@ -318,29 +318,29 @@ code {
 }
 
 .rail-primary {
-  display: grid;
-  gap: 7px;
-  padding: 8px 8px 6px;
+  padding: 8px 8px 7px;
 }
 
-.new-session-button {
-  height: 30px;
-  display: flex;
+.rail-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 29px;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 0 10px;
-  border: 1px solid color-mix(in srgb, var(--accent) 43%, var(--border));
+  gap: 5px;
+}
+
+.new-session-icon {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
   border-radius: var(--radius);
   color: var(--accent-strong);
-  background: var(--accent-soft);
-  font-weight: 600;
-  transition: color 70ms linear, background-color 70ms linear, border-color 70ms linear;
+  transition: color 70ms linear, background-color 70ms linear;
 }
 
-.new-session-button:hover {
-  background: color-mix(in srgb, var(--accent) 19%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+.new-session-icon:hover {
+  color: var(--text);
+  background: var(--hover);
 }
 
 .rail-search,
@@ -1363,9 +1363,7 @@ code {
   margin-bottom: 7px;
   color: var(--muted);
   font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .message-status {
@@ -1425,17 +1423,16 @@ code {
 }
 
 .work-empty {
-  width: min(100%, 620px);
-  margin: 10vh auto 0;
+  width: min(100%, 560px);
+  margin: 8vh auto 0;
 }
 
 .empty-kicker,
 .route-kicker {
   color: var(--accent-strong);
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.015em;
 }
 
 .work-empty h1,
@@ -1443,9 +1440,9 @@ code {
 .unavailable-route h1,
 .fatal-shell h1 {
   margin: 9px 0 7px;
-  font-size: clamp(25px, 3vw, 38px);
-  font-weight: 540;
-  letter-spacing: -0.035em;
+  font-size: clamp(24px, 2.3vw, 30px);
+  font-weight: 560;
+  letter-spacing: -0.025em;
 }
 
 .work-empty > p,
@@ -1460,28 +1457,29 @@ code {
 
 .starter-list {
   display: grid;
-  gap: 6px;
-  margin-top: 28px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .starter-list button {
-  min-height: 56px;
+  min-height: 49px;
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 9px;
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
   text-align: left;
-  transition: background-color 70ms linear, border-color 70ms linear, transform 90ms var(--ease-out);
+  transition: color 70ms linear, background-color 70ms linear;
+}
+
+.starter-list button:last-child {
+  border-bottom: 0;
 }
 
 .starter-list button:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-  transform: translateX(2px);
+  background: var(--hover);
 }
 
 .starter-index {
@@ -1518,8 +1516,6 @@ code {
   gap: 7px;
   color: var(--muted);
   font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
 }
 
 .activity-heading::marker {
@@ -1743,69 +1739,15 @@ code {
   padding: clamp(24px, 5vw, 58px);
 }
 
+.capabilities-page {
+  container: capabilities / inline-size;
+}
+
 .route-heading {
   max-width: 690px;
   margin-bottom: 28px;
 }
 
-.capability-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.metric-card {
-  min-height: 78px;
-  display: grid;
-  align-content: center;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  text-align: left;
-}
-
-button.metric-card:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-
-.metric-card strong {
-  font-size: 23px;
-  font-weight: 560;
-}
-
-.metric-card span {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.capability-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
-  gap: 10px;
-}
-
-.capability-card {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.capability-card > header {
-  min-height: 68px;
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  padding: 11px;
-  border-bottom: 1px solid var(--border);
-}
-
-.capability-icon,
 .settings-mark,
 .unavailable-icon {
   width: 34px;
@@ -1818,23 +1760,127 @@ button.metric-card:hover {
   background: var(--accent-soft);
 }
 
-.capability-card header > div {
+.capability-overview {
+  min-height: 48px;
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 16px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.capability-overview dl {
   min-width: 0;
-  display: grid;
-  gap: 4px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin: 0;
 }
 
-.capability-card header strong {
-  font-size: 13px;
+.capability-overview dl > div {
+  min-width: 120px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 0 14px;
+  border-right: 1px solid var(--border);
 }
 
-.capability-card header span {
+.capability-overview dt,
+.capability-overview dd {
+  margin: 0;
+}
+
+.capability-overview dt {
   color: var(--muted);
-  line-height: 1.4;
+  font-size: 10px;
+}
+
+.capability-overview dd {
+  order: -1;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.approval-summary {
+  min-width: 156px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  color: var(--muted);
+  text-align: left;
+  transition: color 70ms linear, background-color 70ms linear;
+}
+
+.approval-summary:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.approval-summary strong {
+  color: var(--warning);
+  font-variant-numeric: tabular-nums;
+}
+
+.capability-registry,
+.capability-boundary {
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.capability-section-heading {
+  min-height: 57px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.capability-section-heading h2,
+.capability-pack h3,
+.capability-boundary h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.capability-section-heading p,
+.capability-pack p,
+.capability-boundary p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.capability-pack + .capability-pack {
+  border-top: 1px solid var(--border);
+}
+
+.capability-pack > header {
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 12px;
+  background: var(--surface-2);
+}
+
+.capability-pack > header > span {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .tool-list {
-  padding: 5px;
+  padding: 3px 5px;
 }
 
 .tool-row {
@@ -1869,21 +1915,53 @@ button.metric-card:hover {
   border-radius: 4px;
 }
 
-.capability-card.is-unavailable {
-  border-style: dashed;
+.capability-boundary {
+  margin-top: 12px;
 }
 
-.capability-card.is-unavailable .capability-icon {
+.capability-boundary > header {
+  min-height: 57px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.capability-boundary > header > svg {
   color: var(--warning);
-  border-color: color-mix(in srgb, var(--warning) 34%, var(--border));
-  background: color-mix(in srgb, var(--warning) 9%, transparent);
 }
 
-.capability-card ul {
+.capability-boundary ul {
   margin: 0;
-  padding: 12px 28px 16px;
-  color: var(--muted);
-  line-height: 1.8;
+  padding: 0;
+  list-style: none;
+}
+
+.capability-boundary li {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.capability-boundary li:last-child {
+  border-bottom: 0;
+}
+
+.capability-boundary li strong {
+  color: var(--text-2);
+  font-weight: 540;
+}
+
+.capability-boundary li span {
+  color: var(--warning);
+  font-size: 10px;
+  text-align: right;
 }
 
 .execution-dock {
@@ -2175,7 +2253,6 @@ button.metric-card:hover {
 
 .task-pulse.is-active {
   background: var(--accent);
-  animation: pulse 1100ms ease-in-out infinite;
 }
 
 .task-summary {
@@ -2435,8 +2512,29 @@ button.metric-card:hover {
   50%, 100% { opacity: 0; }
 }
 
-@keyframes pulse {
-  50% { opacity: 0.45; }
+@container capabilities (max-width: 560px) {
+  .capability-overview {
+    display: block;
+  }
+
+  .capability-overview dl {
+    min-height: 48px;
+  }
+
+  .capability-overview dl > div {
+    min-width: 0;
+    flex: 1 1 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    padding-block: 7px;
+  }
+
+  .approval-summary {
+    width: 100%;
+    min-height: 38px;
+    border-top: 1px solid var(--border);
+  }
 }
 
 @media (max-width: 1279px) {
@@ -2620,22 +2718,28 @@ button.metric-card:hover {
     width: calc(100% - 16px);
   }
 
-  .composer-selects label:nth-child(3),
-  .composer-selects label:nth-child(4),
-  .fast-toggle {
-    display: none;
-  }
-
   .work-empty {
     margin-top: 6vh;
   }
 
-  .capability-summary {
-    grid-template-columns: 1fr 1fr;
+  .capability-overview {
+    display: block;
   }
 
-  .capability-grid {
-    grid-template-columns: 1fr;
+  .capability-overview dl {
+    min-height: 44px;
+    overflow-x: auto;
+  }
+
+  .capability-overview dl > div {
+    flex: 1 0 128px;
+    min-height: 44px;
+  }
+
+  .approval-summary {
+    width: 100%;
+    min-height: 38px;
+    border-top: 1px solid var(--border);
   }
 
   .artifact-layout,
@@ -2669,6 +2773,27 @@ button.metric-card:hover {
 
   .transcript-inner {
     padding-inline: 10px;
+  }
+
+  .composer-controls {
+    align-items: flex-end;
+  }
+
+  .composer-selects {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
+    overflow: visible;
+  }
+
+  .composer-selects label {
+    min-width: 0;
+  }
+
+  .composer-selects select,
+  .fast-toggle {
+    width: 100%;
+    max-width: none;
   }
 
   .message-user {

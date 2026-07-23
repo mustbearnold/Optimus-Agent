@@ -115,21 +115,28 @@ export function ProjectsRail(props: Props) {
       aria-label="Projects and sessions"
     >
       <div className="rail-primary">
-        <button type="button" className="new-session-button" onClick={() => props.onNewSession()}>
-          <Icon name="plus" />
-          <span>New session</span>
-        </button>
-        <label className="rail-search">
-          <Icon name="search" />
-          <span className="sr-only">Search sessions</span>
-          <input
-            type="search"
-            value={query}
-            placeholder="Search"
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <kbd>⌘K</kbd>
-        </label>
+        <div className="rail-action-row">
+          <label className="rail-search">
+            <Icon name="search" />
+            <span className="sr-only">Search sessions</span>
+            <input
+              type="search"
+              value={query}
+              placeholder="Search"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <kbd>⌘K</kbd>
+          </label>
+          <button
+            type="button"
+            className="new-session-icon"
+            aria-label="New session"
+            title="New session"
+            onClick={() => props.onNewSession()}
+          >
+            <Icon name="plus" />
+          </button>
+        </div>
       </div>
 
       <nav className="rail-nav" aria-label="Primary">

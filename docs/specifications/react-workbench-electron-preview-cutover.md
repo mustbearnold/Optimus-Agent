@@ -57,6 +57,11 @@ paid model, commit, push, publish, or deploy.
   display-frame lanes.
 - Responsive modes are wide three-surface, medium split, compact selected
   surface, and 320 px single-surface reflow.
+- Empty-session starters are compact task rows, not equal-weight cards.
+  Capabilities presents Rust packs and tools as an inspectable registry with a
+  separate unavailable boundary. At 320 CSS px the composer uses a two-column
+  control layout so provider, model, effort, access, and fast mode remain
+  visible without horizontal clipping.
 
 ### Planned behaviour
 

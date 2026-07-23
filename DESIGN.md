@@ -169,6 +169,11 @@ components:
 - **Confirmed current behaviour:** React owns Browser chrome and geometry while
   Electron owns a sandboxed native `WebContentsView`. The user preview and Rust
   agent Browser remain separate capability paths.
+- **Confirmed current behaviour:** the empty work surface uses compact,
+  outcome-oriented starter rows rather than a generic card grid. Capabilities
+  is a flat Rust-owned tool inventory with a separate unavailable boundary, and
+  the 320 px composer keeps provider, model, effort, access, and fast mode
+  visible without horizontal clipping.
 - **Planned behaviour:** installed-app cutover and physical high-refresh
   certification are not part of the repository implementation proof.
 
