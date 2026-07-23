@@ -7,6 +7,9 @@ covers:
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/native_workers.rs
   - apps/optimus-desktop/src/preview_embed.rs
+  - apps/optimus-electron/main.cjs
+  - apps/optimus-electron/preload.cjs
+  - apps/optimus-ui/src/ipc/**
 ---
 
 # Desktop IPC method inventory (frozen for shell migration)
@@ -53,13 +56,52 @@ HTTP stream: `POST /api/chat/stream` SSE with the same event shapes.
 | `browser_set_annotate` | Annotation mode |
 | `browser_annotation` | Pin push from preview |
 
-## Host HTTP surface (Electron / Playwright)
+## Host HTTP surface (Electron main / Playwright)
 
 | Route | Role |
 |---|---|
-| `GET /` | UI HTML (legacy assembled) or SPA static (later) |
+| `GET /` | Legacy assembled UI HTML and development/test harness |
 | `GET /api/health` | Liveness |
 | `POST /api/ipc` | JSON IPC (Bearer + CSRF) |
 | `POST /api/chat/stream` | SSE chat stream |
 
 Security: `OPTIMUS_HTTP_TOKEN` ≥ 32 chars, development/host flag, loopback only.
+
+## Electron React bridge
+
+**Confirmed current behaviour:** the production React renderer does not call
+the host routes directly and does not receive `OPTIMUS_HTTP_TOKEN`. Electron
+main authenticates the same frozen host calls and the preload exposes:
+
+```ts
+type OptimusElectronBridge = {
+  invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
+  chat: {
+    start(request: ChatRequest): Promise<{ streamId: number }>;
+    cancel(streamId: number): Promise<{ requested: boolean }>;
+    subscribe(listener: (event: ChatEnvelope) => void): () => void;
+  };
+  browser: {
+    setBounds(bounds: BrowserBounds): void;
+    setVisible(visible: boolean): void;
+    navigate(url: string): Promise<BrowserState>;
+    back(): Promise<BrowserState>;
+    forward(): Promise<BrowserState>;
+    reload(): Promise<BrowserState>;
+    state(): Promise<BrowserState>;
+    subscribe(listener: (state: BrowserState) => void): () => void;
+  };
+  windowAction(action: "minimize" | "maximize" | "close"): Promise<unknown>;
+  pickFolder(): Promise<PickFolderResult>;
+  openPath(path: string): Promise<unknown>;
+};
+```
+
+The bridge allowlists existing desktop method names, rejects serialized
+requests larger than 1 MiB, and permits one foreground chat stream per window.
+Chat envelopes carry both `streamId` and session ID. `hostInfo` is retained for
+legacy compatibility but omits the token in React mode.
+
+The Electron Browser methods control a user-facing `WebContentsView`; they are
+not aliases for Rust `browser_navigate`, `browser_click`, or
+`browser_reload`.

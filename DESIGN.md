@@ -157,6 +157,21 @@ components:
 
 **Optimus Vantage** is the July 2027 design forecast for coding-agent applications: an **artifact-centered agent workbench** with compact supervision lanes. The product is neither a chat app with developer tools attached nor a traditional IDE with an AI sidebar. Its primary object is the current unit of work—plan, diff, file, preview, run, approval, or result—while conversation steers that object and evidence remains one gesture away.
 
+### Implementation status — 2026-07-23
+
+- **Confirmed current behaviour:** the React renderer implements the Vantage
+  workbench and is the repository-level default Electron surface. Rust still
+  owns sessions, settings, jobs, approvals, tools, artifacts, files,
+  cancellation, and terminal outcomes.
+- **Confirmed current behaviour:** production React assets load through
+  `optimus-app://ui/`; the renderer uses a context-isolated preload and does not
+  receive the Rust bearer token.
+- **Confirmed current behaviour:** React owns Browser chrome and geometry while
+  Electron owns a sandboxed native `WebContentsView`. The user preview and Rust
+  agent Browser remain separate capability paths.
+- **Planned behaviour:** installed-app cutover and physical high-refresh
+  certification are not part of the repository implementation proof.
+
 This is a forecast, not a claim of settled consensus. It is based on product trajectories visible on **2026-07-23**:
 
 - Cursor describes an interface “centered around agents rather than files,” then a higher level of abstraction with drill-down, multi-repo layout, and local/cloud-agent handoff.
@@ -222,9 +237,9 @@ Streamed text is never scaled, blurred, translated, or individually animated. St
 ### Canonical desktop topology
 
 ```text
-┌────────────────────────── 40 px control strip ─────────────────────────────┐
+┌────────────────────────── 36 px control strip ─────────────────────────────┐
 │ scope  session / task                         agents  inspect  term  window │
-├─ 240 px scope rail ─┬──────────── flexible work canvas ───────┬─ inspector ┤
+├─ 232 px scope rail ─┬──────────── flexible work canvas ───────┬─ workspace ┤
 │ nav                 │ selected work object / transcript       │ files/diff │
 │ projects + sessions │ compact evidence timeline               │ browser    │
 │ agent occupancy     │ anchored command composer               │ provenance │
@@ -236,10 +251,10 @@ Streamed text is never scaled, blurred, translated, or individually animated. St
 
 ### Space ownership
 
-- **Control strip:** 40 px high. Window controls retain platform-safe width. Product actions use 30 px icon buttons or icon + short label where ambiguity matters.
-- **Scope rail:** 240 px default; 196–420 px resizable; collapses to a 48 px icon rail. Rows are 28 px with 4–6 px internal rhythm. Project/session hierarchy is denser than navigation.
-- **Work canvas:** owns all unallocated width. Conversation measure is 760–900 px depending on inspector state. It never becomes a decorative empty void.
-- **Inspector:** 380 px default; 280 px minimum; at most 46% of the window. It is a drill-down surface, not another dashboard.
+- **Control strip:** 36 px high. Window controls retain platform-safe width. Product actions use 30 px icon buttons or icon + short label where ambiguity matters.
+- **Scope rail:** 232 px default; 196–360 px resizable; collapses to a 52 px icon rail. Rows are 28 px with 4–6 px internal rhythm. Project/session hierarchy is denser than navigation.
+- **Work canvas:** owns all unallocated width and retains a 520 px minimum in the wide three-surface mode. It never becomes a decorative empty void.
+- **Workspace:** Browser, Files, and Artifacts are co-equal tabs. It defaults near 48% of usable width and has a 360 px minimum.
 - **Execution dock:** 184 px default; 120 px minimum; at most 42% of available app height. It can be collapsed to its 30 px header without losing running-state visibility.
 - **Truth strip:** 22 px. Show only facts useful across the whole app: connection, active agents, current model/access, branch/scope, and version warnings.
 
@@ -255,8 +270,8 @@ Streamed text is never scaled, blurred, translated, or individually animated. St
 ### Responsive behavior
 
 - **≥1280 px:** full scope rail, work canvas, inspector; execution dock optional.
-- **960–1279 px:** scope rail 216 px; inspector 320–400 px; hide low-priority control labels but retain tooltips.
-- **720–959 px:** scope rail becomes 48 px icon rail; inspector overlays or replaces the canvas only when explicitly selected.
+- **960–1279 px:** scope rail 208 px; workspace near 40% of usable width; hide low-priority control labels but retain tooltips.
+- **720–959 px:** scope rail becomes a 52 px command rail; workspace overlays or replaces the canvas only when explicitly selected.
 - **<720 px:** one primary surface at a time; titlebar exposes back/surface switcher. Do not squeeze three panes into unreadable columns.
 - User-resized widths win over responsive defaults while they remain valid. Clamp persisted values when the window shrinks.
 

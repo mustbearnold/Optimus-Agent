@@ -4,6 +4,8 @@
 **/test-results/
 **/playwright-report/
 spikes/**/dist/
+apps/optimus-ui/dist/
+**/*.tsbuildinfo
 **/__pycache__/
 *.pyc
 **/*.rs.bk

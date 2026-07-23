@@ -1,0 +1,102 @@
+import type {
+  ChatHandle,
+  ChatRequest,
+  DesktopMethod,
+  OptimusTransport,
+  StreamEvent,
+} from './contracts';
+
+type HttpConfig = { baseUrl: string; token: string };
+
+function configFromQuery(): HttpConfig | null {
+  const query = new URLSearchParams(location.search);
+  const baseUrl = query.get('host');
+  const token = query.get('token');
+  if (!baseUrl || !token) return null;
+  return { baseUrl: baseUrl.replace(/\/$/, ''), token };
+}
+
+export function hasHttpConfig() {
+  return configFromQuery() !== null;
+}
+
+export function createHttpTransport(): OptimusTransport {
+  const config = configFromQuery();
+  if (!config) throw new Error('HTTP host pairing unavailable');
+  let requestId = 1;
+  let streamId = 1;
+  const headers = () => ({
+    Authorization: `Bearer ${config.token}`,
+    'X-Optimus-CSRF': '1',
+    'Content-Type': 'application/json',
+  });
+
+  return {
+    kind: 'http',
+    async invoke<T>(method: DesktopMethod, params: Record<string, unknown> = {}) {
+      const response = await fetch(`${config.baseUrl}/api/ipc`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ id: requestId++, method, params }),
+      });
+      const body = (await response.json()) as {
+        ok?: boolean;
+        result?: T;
+        error?: string;
+      };
+      if (!response.ok || body.ok === false) {
+        throw new Error(body.error || `IPC ${method} failed (${response.status})`);
+      }
+      return body.result as T;
+    },
+    chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle {
+      const id = streamId++;
+      const controller = new AbortController();
+      const done = (async () => {
+        const response = await fetch(`${config.baseUrl}/api/chat/stream`, {
+          method: 'POST',
+          headers: { ...headers(), Accept: 'text/event-stream' },
+          body: JSON.stringify(request),
+          signal: controller.signal,
+        });
+        if (!response.ok || !response.body) {
+          throw new Error(`Chat stream failed (${response.status})`);
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done: ended, value } = await reader.read();
+          if (ended) break;
+          buffer += decoder.decode(value, { stream: true });
+          const blocks = buffer.split('\n\n');
+          buffer = blocks.pop() || '';
+          for (const block of blocks) {
+            const data = block
+              .split('\n')
+              .filter((line) => line.startsWith('data:'))
+              .map((line) => line.slice(5).trim())
+              .join('');
+            if (!data) continue;
+            try {
+              onEvent(JSON.parse(data) as StreamEvent);
+            } catch {
+              onEvent({ type: 'error', error: 'Malformed stream event' });
+            }
+          }
+        }
+      })();
+      return {
+        streamId: id,
+        done,
+        cancel: async () => {
+          if (!controller.signal.aborted) controller.abort();
+          return { requested: true };
+        },
+      };
+    },
+    windowAction: async () => ({ ok: true }),
+    pickFolder: async () => ({ ok: false, cancelled: true }),
+    openPath: async () => ({ ok: false }),
+  };
+}

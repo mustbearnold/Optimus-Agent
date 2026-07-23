@@ -40,7 +40,8 @@ it contains planned components and is not proof of implementation.
 **Confirmed current behaviour**
 
 ```text
-CLI or Desktop (native Wry IPC; loopback HTTP only for dev/tests)
+CLI, legacy Wry Desktop, or Electron React workbench
+        (bounded preload -> authenticated loopback Rust host)
                          |
                          v
           provider selection at each surface
@@ -71,6 +72,8 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 |---|---|---|
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
 | `apps/optimus-desktop` | Confirmed current behaviour | Native Wry/Tao desktop shell with WebKitGTK on Linux and WebView2 on Windows, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
+| `apps/optimus-electron` | Confirmed current behaviour | Default repository-level React shell; authenticates bounded Rust host requests in main, exposes a context-isolated preload, owns chat AbortControllers and one sandboxed `WebContentsView`, and retains `OPTIMUS_ELECTRON_UI=legacy` rollback. |
+| `apps/optimus-ui` | Confirmed current behaviour | React 19 Vantage workbench with typed transports, session-owned conversations, frame-coordinated streaming/Browser geometry, responsive Work/Browser/Files/Artifacts/Execution surfaces, and fixture-driven browser contracts. |
 | `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, cron, gateway, browser/search effectors, filesystem sandbox, and offline eval harnesses. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
@@ -323,6 +326,20 @@ derived from Work Graph jobs in the same SQLite database.
 
 **Confirmed current behaviour:** native desktop uses Wry IPC on a custom origin.
 HTTP mode and the webhook gateway bind to `127.0.0.1`.
+
+**Confirmed current behaviour:** the Electron production renderer loads built
+relative assets from `optimus-app://ui/`. Its context-isolated preload exposes a
+bounded method/chat/Browser/window contract; the Rust bearer token remains in
+Electron main. Main validates that calls originate from the owning Optimus
+renderer, caps serialized requests, allowlists method names, and permits one
+foreground SSE stream.
+
+**Confirmed current behaviour:** the user-facing Electron preview is a
+main-owned sandboxed `WebContentsView`. It accepts HTTPS and loopback HTTP,
+denies remote insecure HTTP, privileged/non-web schemes, permissions,
+downloads, and new windows, and is physically aligned to a React-measured
+content hole. This preview is not the Rust agent `browser_*` effector and no
+shared cookies, history, or automation target is claimed.
 
 **Confirmed current behaviour:** desktop HTTP mode is explicitly development-only
 and requires a 32-character bearer token. Effectful POSTs additionally require

@@ -217,6 +217,7 @@
         "crates/optimus-kernel/src/gateway.rs",
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/src/openai_compat.rs",
+        "crates/optimus-kernel/src/product_settings.rs",
         "crates/optimus-kernel/src/replay.rs",
         "crates/optimus-kernel/src/routing.rs",
         "crates/optimus-kernel/src/session.rs",
@@ -722,6 +723,7 @@
             "cancelling_pending_job_is_atomic_terminal_and_idempotent",
             "cancelling_running_command_terminates_and_reaps_child_without_late_effect",
             "cancelling_running_command_contains_a_setsid_escapee",
+            "cancelling_running_command_contains_a_nested_systemd_scope",
             "repeated_cancel_resume_run_and_recover_preserve_one_terminal_outcome"
           ],
           "path": "crates/optimus-runtime/tests/cancellation.rs"
@@ -789,6 +791,7 @@
             "cancelling_pending_job_is_atomic_terminal_and_idempotent",
             "cancelling_running_command_terminates_and_reaps_child_without_late_effect",
             "cancelling_running_command_contains_a_setsid_escapee",
+            "cancelling_running_command_contains_a_nested_systemd_scope",
             "repeated_cancel_resume_run_and_recover_preserve_one_terminal_outcome"
           ],
           "path": "crates/optimus-runtime/tests/cancellation.rs"

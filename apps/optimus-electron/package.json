@@ -8,9 +8,13 @@
     "start": "electron .",
     "dev": "node scripts/dev.cjs",
     "dev:legacy-html": "OPTIMUS_ELECTRON_UI=legacy node scripts/dev.cjs",
-    "dev:ui": "OPTIMUS_ELECTRON_UI=react node scripts/dev.cjs"
+    "dev:ui": "OPTIMUS_ELECTRON_UI=react node scripts/dev.cjs",
+    "test": "node --test test/*.test.cjs",
+    "test:e2e": "playwright test",
+    "check": "node --check main.cjs && node --check preload.cjs && npm test"
   },
   "devDependencies": {
-    "electron": "^37.2.0"
+    "@playwright/test": "^1.61.1",
+    "electron": "^43.2.0"
   }
 }

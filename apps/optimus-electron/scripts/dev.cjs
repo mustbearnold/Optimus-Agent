@@ -1,7 +1,6 @@
 /**
  * Dev launcher: ensure Rust host binary exists, then start Electron.
- * Optional React Vite: set OPTIMUS_ELECTRON_UI=react and run Vite separately
- * or set OPTIMUS_UI_AUTOSTART=1.
+ * React/Vite is the default. Set OPTIMUS_ELECTRON_UI=legacy for rollback.
  */
 const { spawn } = require('child_process');
 const path = require('path');
@@ -11,7 +10,7 @@ const net = require('net');
 const ROOT = path.resolve(__dirname, '../../..');
 const ELECTRON_DIR = path.resolve(__dirname, '..');
 const UI_DIR = path.resolve(ROOT, 'apps/optimus-ui');
-const UI_MODE = process.env.OPTIMUS_ELECTRON_UI || 'legacy';
+const UI_MODE = process.env.OPTIMUS_ELECTRON_UI || 'react';
 const UI_PORT = Number(process.env.OPTIMUS_UI_PORT || 5173);
 
 function cargoDesktop() {
@@ -76,6 +75,9 @@ async function main() {
       ...process.env,
       OPTIMUS_ELECTRON_UI: UI_MODE,
       OPTIMUS_UI_PORT: String(UI_PORT),
+      ...(UI_MODE === 'react'
+        ? { OPTIMUS_UI_DEV_URL: `http://127.0.0.1:${UI_PORT}/` }
+        : {}),
     },
   });
   children.push(electron);

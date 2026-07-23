@@ -1,23 +1,95 @@
 /**
  * Optimus Electron main process.
- * Spawns the Rust host (`optimus-desktop --host-only`) and loads the UI origin.
+ * Rust remains authoritative; the React renderer receives a bounded command
+ * bridge and never receives the production bearer token.
  */
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  WebContentsView,
+  dialog,
+  ipcMain,
+  protocol,
+  shell,
+} = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const net = require('net');
 const http = require('http');
+const { assertPreviewUrl } = require('./browser-policy.cjs');
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'optimus-app',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: false,
+    },
+  },
+]);
 
 const ROOT = path.resolve(__dirname, '../..');
+const UI_DIST = path.join(ROOT, 'apps', 'optimus-ui', 'dist');
+const EXPLICIT_USER_DATA = process.env.OPTIMUS_ELECTRON_USER_DATA || '';
+if (EXPLICIT_USER_DATA) app.setPath('userData', path.resolve(EXPLICIT_USER_DATA));
 const HOST_PORT = Number(process.env.OPTIMUS_HOST_PORT || 17865);
-const UI_MODE = process.env.OPTIMUS_ELECTRON_UI || 'legacy'; // legacy | react
-const REACT_DEV_PORT = Number(process.env.OPTIMUS_UI_PORT || 5173);
+const UI_MODE = process.env.OPTIMUS_ELECTRON_UI || 'react'; // react | legacy
+const REACT_DEV_URL = process.env.OPTIMUS_UI_DEV_URL || '';
+const MAX_IPC_BYTES = 1024 * 1024;
+const MAX_ACTIVE_STREAMS = 1;
+
+const DESKTOP_METHODS = new Set([
+  'ping',
+  'doctor',
+  'auth_status',
+  'auth_import_hermes',
+  'auth_import_cli',
+  'settings_get',
+  'settings_set',
+  'sessions',
+  'new_session',
+  'get_session',
+  'rename_session',
+  'delete_session',
+  'cron_list',
+  'cron_add',
+  'cron_tick',
+  'approvals_list',
+  'approvals_grant',
+  'jobs_list',
+  'campaign_list',
+  'campaign_create',
+  'campaign_run',
+  'campaign_status',
+  'term_run',
+  'browser_navigate',
+  'browser_click',
+  'browser_reload',
+  'fs_roots',
+  'fs_list',
+  'fs_read',
+  'artifacts_list',
+  'artifacts_put_text',
+  'artifacts_get',
+  'artifacts_delete',
+  'artifacts_delete_many',
+]);
 
 let hostProc = null;
 let mainWindow = null;
+let previewView = null;
+let previewVisible = false;
+let previewBounds = null;
+let previewError = '';
+let previewSession = null;
+let previewDownloadHandler = null;
 let httpToken = process.env.OPTIMUS_HTTP_TOKEN || '';
 let hostBase = `http://127.0.0.1:${HOST_PORT}`;
+let requestId = 1;
+let streamId = 1;
+const activeStreams = new Map();
 
 function cargoTargetDesktop() {
   const targetDir = process.env.CARGO_TARGET_DIR || path.join(ROOT, 'target');
@@ -36,7 +108,6 @@ function waitForHealth(base, token, timeoutMs = 45000) {
         reject(new Error(`host health timeout at ${base}`));
         return;
       }
-      // Health may require bearer depending on host version; try with token first.
       const req = http.get(
         `${base}/api/health`,
         {
@@ -49,12 +120,15 @@ function waitForHealth(base, token, timeoutMs = 45000) {
         },
         (res) => {
           let body = '';
-          res.on('data', (c) => (body += c));
+          res.on('data', (chunk) => (body += chunk));
           res.on('end', () => {
             try {
-              const j = JSON.parse(body || '{}');
-              if (res.statusCode === 200 && (j.ok === true || j.streaming === true)) resolve(j);
-              else setTimeout(tick, 200);
+              const payload = JSON.parse(body || '{}');
+              if (res.statusCode === 200 && (payload.ok === true || payload.streaming === true)) {
+                resolve(payload);
+              } else {
+                setTimeout(tick, 200);
+              }
             } catch {
               setTimeout(tick, 200);
             }
@@ -75,15 +149,13 @@ function startHost() {
   if (process.env.OPTIMUS_HOST_EXTERNAL === '1') {
     httpToken = process.env.OPTIMUS_HTTP_TOKEN || httpToken;
     hostBase = process.env.OPTIMUS_HOST_URL || hostBase;
-    return Promise.resolve();
+    return waitForHealth(hostBase, httpToken);
   }
 
   const bin = cargoTargetDesktop();
   if (!fs.existsSync(bin)) {
     return Promise.reject(
-      new Error(
-        `optimus-desktop binary missing at ${bin}. Run: cargo build -p optimus-desktop`
-      )
+      new Error(`optimus-desktop binary missing at ${bin}. Run: cargo build -p optimus-desktop`)
     );
   }
 
@@ -95,75 +167,417 @@ function startHost() {
   hostBase = `http://127.0.0.1:${HOST_PORT}`;
 
   const args = ['--host-only', '--host-port', String(HOST_PORT)];
-  if (process.env.OPTIMUS_HOME) {
-    args.push('--home', process.env.OPTIMUS_HOME);
-  }
-
+  if (process.env.OPTIMUS_HOME) args.push('--home', process.env.OPTIMUS_HOME);
   hostProc = spawn(bin, args, {
     env,
     cwd: ROOT,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
-  const onData = (buf) => {
-    const text = buf.toString();
+  const onData = (buffer) => {
+    const text = buffer.toString();
     process.stderr.write(text);
-    const m = text.match(/OPTIMUS_HTTP_TOKEN=(\S+)/);
-    if (m) httpToken = m[1];
+    const match = text.match(/OPTIMUS_HTTP_TOKEN=(\S+)/);
+    if (match) httpToken = match[1];
   };
   hostProc.stdout.on('data', onData);
   hostProc.stderr.on('data', onData);
   hostProc.on('exit', (code, signal) => {
     console.error(`[optimus-electron] host exited code=${code} signal=${signal}`);
   });
-
   return waitForHealth(hostBase, httpToken);
 }
 
-function uiUrl() {
-  if (UI_MODE === 'react') {
-    return `http://127.0.0.1:${REACT_DEV_PORT}/?host=${encodeURIComponent(hostBase)}&token=${encodeURIComponent(httpToken)}`;
+function registerUiProtocol() {
+  protocol.handle('optimus-app', async (request) => {
+    let relative = 'index.html';
+    try {
+      const url = new URL(request.url);
+      relative = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
+    } catch {
+      return new Response('bad request', { status: 400 });
+    }
+    let target = path.resolve(UI_DIST, relative);
+    const rootPrefix = `${path.resolve(UI_DIST)}${path.sep}`;
+    if (target !== path.resolve(UI_DIST) && !target.startsWith(rootPrefix)) {
+      return new Response('forbidden', { status: 403 });
+    }
+    if (!fs.existsSync(target) || fs.statSync(target).isDirectory()) {
+      if (path.extname(relative)) return new Response('not found', { status: 404 });
+      target = path.join(UI_DIST, 'index.html');
+    }
+    if (!fs.existsSync(target)) {
+      return new Response('React assets missing. Run npm --prefix apps/optimus-ui run build.', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
+    return new Response(fs.readFileSync(target), {
+      status: 200,
+      headers: {
+        'Content-Type': mimeType(target),
+        'Cache-Control': target.endsWith('index.html') ? 'no-store' : 'public, max-age=31536000, immutable',
+        ...(target.endsWith('index.html')
+          ? {
+              'Content-Security-Policy':
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+            }
+          : {}),
+      },
+    });
+  });
+}
+
+function mimeType(file) {
+  switch (path.extname(file).toLowerCase()) {
+    case '.html':
+      return 'text/html; charset=utf-8';
+    case '.js':
+      return 'text/javascript; charset=utf-8';
+    case '.css':
+      return 'text/css; charset=utf-8';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.png':
+      return 'image/png';
+    case '.woff2':
+      return 'font/woff2';
+    default:
+      return 'application/octet-stream';
   }
-  return hostBase + '/';
+}
+
+function uiUrl() {
+  if (UI_MODE === 'legacy') return `${hostBase}/`;
+  if (REACT_DEV_URL) return REACT_DEV_URL;
+  return 'optimus-app://ui/index.html';
 }
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 840,
-    minWidth: 420,
-    minHeight: 320,
+    width: 1440,
+    height: 900,
+    minWidth: 320,
+    minHeight: 480,
     title: 'Optimus Agent',
-    backgroundColor: '#080b10',
+    frame: false,
+    backgroundColor: '#07090d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      webSecurity: true,
     },
   });
+  mainWindow.setMenu(null);
+
+  if (UI_MODE === 'react') createPreviewView();
 
   mainWindow.webContents.on('did-finish-load', () => {
-    // Inject host pairing for legacy HTML (bridge already has HTTP mode from host).
-    // For React, query params carry host+token.
     if (UI_MODE === 'legacy' && httpToken) {
-      mainWindow.webContents.executeJavaScript(
-        `window.__OPTIMUS_HTTP_MODE__=true;window.__OPTIMUS_HTTP_TOKEN__=${JSON.stringify(httpToken)};`
-      ).catch(() => {});
+      mainWindow.webContents
+        .executeJavaScript(
+          `window.__OPTIMUS_HTTP_MODE__=true;window.__OPTIMUS_HTTP_TOKEN__=${JSON.stringify(httpToken)};`
+        )
+        .catch(() => undefined);
     }
   });
 
+  mainWindow.on('closed', () => {
+    destroyPreviewView();
+    mainWindow = null;
+  });
   mainWindow.loadURL(uiUrl());
 }
 
-function setupIpc() {
-  ipcMain.handle('optimus:host-info', () => ({
-    baseUrl: hostBase,
-    token: httpToken,
-    uiMode: UI_MODE,
-  }));
+function createPreviewView() {
+  if (!mainWindow || previewView) return;
+  previewView = new WebContentsView({
+    webPreferences: {
+      partition: 'persist:optimus-preview',
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+    },
+  });
+  mainWindow.contentView.addChildView(previewView);
+  previewView.setVisible(false);
+  const contents = previewView.webContents;
+  previewSession = contents.session;
+  previewDownloadHandler = (event, item) => {
+    event.preventDefault();
+    item.cancel();
+  };
+  previewSession.on('will-download', previewDownloadHandler);
+  previewSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+  previewSession.setPermissionCheckHandler(() => false);
+  contents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  contents.on('will-navigate', (event, url) => {
+    try {
+      assertPreviewUrl(url);
+    } catch {
+      event.preventDefault();
+      previewError = 'Navigation blocked by the Optimus preview policy.';
+      emitBrowserState();
+    }
+  });
+  contents.on('did-start-loading', () => {
+    previewError = '';
+    emitBrowserState();
+  });
+  contents.on('did-stop-loading', emitBrowserState);
+  contents.on('page-title-updated', emitBrowserState);
+  contents.on('did-navigate', emitBrowserState);
+  contents.on('did-navigate-in-page', emitBrowserState);
+  contents.on('did-fail-load', (_event, code, description, validatedUrl, isMainFrame) => {
+    if (!isMainFrame || code === -3) return;
+    previewError = `${description} (${validatedUrl})`;
+    emitBrowserState();
+  });
+  contents.loadURL('about:blank').catch(() => undefined);
+}
 
-  ipcMain.handle('optimus:window', async (_e, action) => {
+function destroyPreviewView() {
+  if (!previewView) return;
+  if (previewSession && previewDownloadHandler) {
+    previewSession.removeListener('will-download', previewDownloadHandler);
+  }
+  const contents = previewView.webContents;
+  if (!contents.isDestroyed()) contents.close();
+  previewView = null;
+  previewSession = null;
+  previewDownloadHandler = null;
+  previewBounds = null;
+  previewVisible = false;
+}
+
+function browserState() {
+  const contents = previewView?.webContents;
+  if (!contents || contents.isDestroyed()) {
+    return {
+      url: '',
+      title: 'Preview',
+      loading: false,
+      canGoBack: false,
+      canGoForward: false,
+      visible: false,
+      error: 'Native preview unavailable',
+      native: true,
+    };
+  }
+  const history = contents.navigationHistory;
+  return {
+    url: contents.getURL(),
+    title: contents.getTitle() || 'Preview',
+    loading: contents.isLoading(),
+    canGoBack: history.canGoBack(),
+    canGoForward: history.canGoForward(),
+    visible: previewVisible,
+    ...(previewError ? { error: previewError } : {}),
+    native: true,
+  };
+}
+
+function emitBrowserState() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send('optimus:browser-state', browserState());
+}
+
+function setPreviewBounds(value) {
+  if (!previewView || !value || typeof value !== 'object') return;
+  const next = {
+    x: boundedInteger(value.x, 0, 10000),
+    y: boundedInteger(value.y, 0, 10000),
+    width: boundedInteger(value.width, 0, 10000),
+    height: boundedInteger(value.height, 0, 10000),
+  };
+  if (
+    previewBounds &&
+    previewBounds.x === next.x &&
+    previewBounds.y === next.y &&
+    previewBounds.width === next.width &&
+    previewBounds.height === next.height
+  ) {
+    return;
+  }
+  previewBounds = next;
+  previewView.setBounds(next);
+}
+
+function boundedInteger(value, minimum, maximum) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return minimum;
+  return Math.max(minimum, Math.min(maximum, Math.round(number)));
+}
+
+function assertMainSender(event) {
+  if (
+    !mainWindow ||
+    event.sender !== mainWindow.webContents ||
+    event.senderFrame !== mainWindow.webContents.mainFrame
+  ) {
+    throw new Error('Rejected IPC from a non-primary renderer');
+  }
+}
+
+function assertBounded(value, label) {
+  let json;
+  try {
+    json = JSON.stringify(value ?? {});
+  } catch {
+    throw new Error(`${label} must be JSON serializable`);
+  }
+  if (Buffer.byteLength(json, 'utf8') > MAX_IPC_BYTES) {
+    throw new Error(`${label} exceeds ${MAX_IPC_BYTES} bytes`);
+  }
+}
+
+async function invokeHost(method, params = {}) {
+  if (!DESKTOP_METHODS.has(method)) throw new Error(`Unsupported desktop method: ${method}`);
+  assertBounded(params, 'IPC params');
+  const response = await fetch(`${hostBase}/api/ipc`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${httpToken}`,
+      Origin: hostBase,
+      'X-Optimus-CSRF': '1',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: requestId++, method, params }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.error || `IPC ${method} failed (${response.status})`);
+  }
+  return body.result;
+}
+
+function startChat(request) {
+  assertBounded(request, 'Chat request');
+  if (!request || typeof request.session !== 'string' || typeof request.message !== 'string') {
+    throw new Error('Chat requires session and message');
+  }
+  if (activeStreams.size >= MAX_ACTIVE_STREAMS) throw new Error('One foreground stream is already active');
+  const id = streamId++;
+  const controller = new AbortController();
+  activeStreams.set(id, {
+    controller,
+    sessionId: request.session,
+    terminal: false,
+  });
+  setImmediate(() => void pumpChat(id, request));
+  return { streamId: id };
+}
+
+async function pumpChat(id, request) {
+  const active = activeStreams.get(id);
+  if (!active) return;
+  try {
+    const response = await fetch(`${hostBase}/api/chat/stream`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${httpToken}`,
+        Origin: hostBase,
+        'X-Optimus-CSRF': '1',
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
+      body: JSON.stringify(request),
+      signal: active.controller.signal,
+    });
+    if (!response.ok || !response.body) throw new Error(`Chat stream failed (${response.status})`);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let splitAt;
+      while ((splitAt = buffer.indexOf('\n\n')) >= 0) {
+        const block = buffer.slice(0, splitAt);
+        buffer = buffer.slice(splitAt + 2);
+        for (const line of block.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload.startsWith(':')) continue;
+          let event;
+          try {
+            event = JSON.parse(payload);
+          } catch {
+            sendChatEvent(id, { type: 'error', error: 'Malformed stream event' });
+            return;
+          }
+          sendChatEvent(id, event);
+          if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') return;
+        }
+      }
+    }
+    const current = activeStreams.get(id);
+    if (current && !current.terminal) {
+      sendChatEvent(id, { type: 'error', error: 'Stream ended without a terminal event' });
+    }
+  } catch (error) {
+    const current = activeStreams.get(id);
+    if (!current || current.terminal) return;
+    if (error && error.name === 'AbortError') {
+      sendChatEvent(id, { type: 'cancelled', error: 'cancelled by user' });
+    } else {
+      sendChatEvent(id, {
+        type: 'error',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+function sendChatEvent(id, event) {
+  const active = activeStreams.get(id);
+  if (!active || active.terminal) return;
+  const terminal = event.type === 'done' || event.type === 'error' || event.type === 'cancelled';
+  if (terminal) active.terminal = true;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('optimus:chat-event', {
+      streamId: id,
+      sessionId: active.sessionId,
+      event,
+    });
+  }
+  if (terminal) activeStreams.delete(id);
+}
+
+function setupIpc() {
+  ipcMain.handle('optimus:host-info', (event) => {
+    assertMainSender(event);
+    return {
+      baseUrl: hostBase,
+      ...(UI_MODE === 'legacy' ? { token: httpToken } : {}),
+      uiMode: UI_MODE,
+    };
+  });
+
+  ipcMain.handle('optimus:invoke', async (event, method, params) => {
+    assertMainSender(event);
+    return invokeHost(method, params);
+  });
+
+  ipcMain.handle('optimus:chat-start', (event, request) => {
+    assertMainSender(event);
+    return startChat(request);
+  });
+
+  ipcMain.handle('optimus:chat-cancel', (event, id) => {
+    assertMainSender(event);
+    const active = activeStreams.get(Number(id));
+    if (!active || active.terminal) return { requested: false };
+    if (!active.controller.signal.aborted) active.controller.abort();
+    return { requested: true };
+  });
+
+  ipcMain.handle('optimus:window', async (event, action) => {
+    assertMainSender(event);
     if (!mainWindow) return { ok: false };
     switch (action) {
       case 'minimize':
@@ -182,33 +596,91 @@ function setupIpc() {
     return { ok: true };
   });
 
-  ipcMain.handle('optimus:pick-folder', async () => {
-    const r = await dialog.showOpenDialog(mainWindow, {
+  ipcMain.handle('optimus:pick-folder', async (event) => {
+    assertMainSender(event);
+    const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory', 'createDirectory'],
     });
-    if (r.canceled || !r.filePaths[0]) return { ok: false, cancelled: true };
-    return { ok: true, path: r.filePaths[0] };
+    if (result.canceled || !result.filePaths[0]) return { ok: false, cancelled: true };
+    return { ok: true, path: result.filePaths[0] };
   });
 
-  ipcMain.handle('optimus:open-path', async (_e, p) => {
-    if (!p || typeof p !== 'string') return { ok: false };
-    const err = await shell.openPath(p);
-    return err ? { ok: false, error: err } : { ok: true };
+  ipcMain.handle('optimus:open-path', async (event, targetPath) => {
+    assertMainSender(event);
+    if (!targetPath || typeof targetPath !== 'string') return { ok: false };
+    const error = await shell.openPath(targetPath);
+    return error ? { ok: false, error } : { ok: true };
   });
 
-  ipcMain.handle('optimus:open-url', async (_e, url) => {
-    if (!url || typeof url !== 'string') return { ok: false };
+  ipcMain.handle('optimus:open-url', async (event, input) => {
+    assertMainSender(event);
+    const url = assertPreviewUrl(input);
     await shell.openExternal(url);
     return { ok: true };
+  });
+
+  ipcMain.on('optimus:browser-bounds', (event, bounds) => {
+    try {
+      assertMainSender(event);
+      setPreviewBounds(bounds);
+    } catch {
+      // Fire-and-forget geometry is deliberately fail-closed.
+    }
+  });
+
+  ipcMain.on('optimus:browser-visible', (event, visible) => {
+    try {
+      assertMainSender(event);
+      previewVisible = Boolean(visible);
+      if (previewVisible && previewBounds) previewView?.setBounds(previewBounds);
+      previewView?.setVisible(previewVisible);
+      emitBrowserState();
+    } catch {
+      // Fire-and-forget visibility is deliberately fail-closed.
+    }
+  });
+
+  ipcMain.handle('optimus:browser-state', (event) => {
+    assertMainSender(event);
+    return browserState();
+  });
+
+  ipcMain.handle('optimus:browser-navigate', async (event, input) => {
+    assertMainSender(event);
+    const url = assertPreviewUrl(input);
+    previewError = '';
+    await previewView.webContents.loadURL(url);
+    return browserState();
+  });
+
+  ipcMain.handle('optimus:browser-back', (event) => {
+    assertMainSender(event);
+    const history = previewView?.webContents.navigationHistory;
+    if (history?.canGoBack()) history.goBack();
+    return browserState();
+  });
+
+  ipcMain.handle('optimus:browser-forward', (event) => {
+    assertMainSender(event);
+    const history = previewView?.webContents.navigationHistory;
+    if (history?.canGoForward()) history.goForward();
+    return browserState();
+  });
+
+  ipcMain.handle('optimus:browser-reload', (event) => {
+    assertMainSender(event);
+    previewView?.webContents.reload();
+    return browserState();
   });
 }
 
 app.whenReady().then(async () => {
   setupIpc();
+  registerUiProtocol();
   try {
     await startHost();
-  } catch (e) {
-    console.error('[optimus-electron] failed to start host:', e);
+  } catch (error) {
+    console.error('[optimus-electron] failed to start host:', error);
     app.quit();
     return;
   }
@@ -223,8 +695,15 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
+  for (const active of activeStreams.values()) active.controller.abort();
+  activeStreams.clear();
+  destroyPreviewView();
   if (hostProc && !hostProc.killed) {
     hostProc.kill('SIGTERM');
     hostProc = null;
   }
 });
+
+module.exports = {
+  boundedInteger,
+};

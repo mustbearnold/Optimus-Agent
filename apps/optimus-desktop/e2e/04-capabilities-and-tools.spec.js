@@ -162,7 +162,10 @@ test('Files pane: toggleRight loads fs_list tree + optional preview', async ({ p
         ? await window.optimus.fsList('')
         : null;
       const entries = (list && list.entries) || [];
-      const file = entries.find((e) => String(e.kind).toLowerCase() === 'file' && (e.size || 0) < 200000);
+      const file = entries.find((e) => {
+        const size = Number(e.size || 0);
+        return String(e.kind).toLowerCase() === 'file' && size > 0 && size < 200000;
+      });
       if (file && window.optimus && window.optimus.fsRead) {
         const r = await window.optimus.fsRead(file.path);
         const pre = document.getElementById('filePreview');

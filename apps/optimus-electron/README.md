@@ -1,43 +1,78 @@
 # optimus-electron
 
-T3 Code–style Electron shell for Optimus. Durable work still runs in the **Rust host**
-(`optimus-desktop --host-only`).
+Repository-level default Electron shell for the Optimus React workbench.
+Durable work, sessions, policy, approvals, files, artifacts, and terminal
+outcomes remain owned by `optimus-desktop --host-only`.
 
 ## Prerequisites
 
 ```bash
 cargo build -p optimus-desktop
-cd apps/optimus-electron && npm install
-cd ../optimus-ui && npm install   # for React UI
+npm --prefix apps/optimus-ui install
+npm --prefix apps/optimus-electron install
 ```
 
-## Run
+## Development
 
 ```bash
-# Legacy assembled HTML (from Rust host GET /)
-cd apps/optimus-electron
-npm run dev:legacy-html
+# Default: React Vite renderer plus the Rust host
+npm --prefix apps/optimus-electron run dev
 
-# React SPA (Vite) + host
-# terminal A is started by dev script when OPTIMUS_UI_AUTOSTART is on:
-npm run dev:ui
+# Explicit rollback surface
+npm --prefix apps/optimus-electron run dev:legacy-html
 ```
 
-Environment:
+Production-like repository proof first builds relative assets and then launches
+Electron without a Vite URL:
 
-| Var | Meaning |
+```bash
+npm --prefix apps/optimus-ui run build
+npm --prefix apps/optimus-electron start
+```
+
+This is not an installed-app or packaging command.
+
+## Environment
+
+| Variable | Meaning |
 |---|---|
-| `OPTIMUS_HOST_PORT` | Host port (default `17865`) |
-| `OPTIMUS_HTTP_TOKEN` | Optional; host mints one if unset |
+| `OPTIMUS_HOST_PORT` | Rust host port; default `17865` |
+| `OPTIMUS_HTTP_TOKEN` | Optional main-process host credential; the host mints one if unset |
 | `OPTIMUS_HOME` | Optimus data home |
-| `OPTIMUS_ELECTRON_UI` | `legacy` or `react` |
-| `OPTIMUS_HOST_EXTERNAL=1` | Do not spawn host; use existing |
+| `OPTIMUS_ELECTRON_USER_DATA` | Optional explicit Electron profile path; used for isolated compiled-shell evidence |
+| `OPTIMUS_ELECTRON_UI` | `react` by default; `legacy` is the rollback switch |
+| `OPTIMUS_UI_DEV_URL` | Explicit React development URL |
+| `OPTIMUS_HOST_EXTERNAL=1` | Use an already-running Rust host |
 
 ## Architecture
 
 ```text
-Electron main → spawn optimus-desktop --host-only
-             → BrowserWindow → legacy HTML or React (Vite)
-preload       → window.optimusElectron (chrome helpers)
-React/legacy  → POST /api/ipc + /api/chat/stream (Bearer token)
+React renderer
+  `-- context-isolated preload
+        |-- bounded invoke/chat --> Electron main --> bearer + CSRF --> Rust host
+        `-- Browser chrome/rect --> Electron main --> WebContentsView
 ```
+
+Production assets are served from `apps/optimus-ui/dist` through
+`optimus-app://ui/`. Electron main retains the bearer token; React receives no
+credential. Main allowlists method names, bounds request sizes and the active
+stream count, routes events by stream/session identity, and owns the stream
+`AbortController`.
+
+The native preview allows HTTPS and loopback HTTP only. It has no Node preload,
+uses context isolation and sandboxing, and denies permissions, downloads, and
+new windows. It is the user-facing preview, not the Rust agent Browser effector.
+
+## Verification
+
+```bash
+npm --prefix apps/optimus-ui run test
+npm --prefix apps/optimus-ui run build
+npm --prefix apps/optimus-electron run check
+xvfb-run -a npm --prefix apps/optimus-electron run test:e2e
+```
+
+The Playwright project includes deterministic React browser contracts and a
+compiled Electron-shell smoke using an isolated `local/tmp/**` Optimus home and
+offline provider. Evidence from that suite must be labelled “compiled Electron
+shell,” not “installed application.”
