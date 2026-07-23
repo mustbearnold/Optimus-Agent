@@ -73,9 +73,11 @@ variant; malformed OpenAI/Codex containers and completed SSE forms fail closed.
    permission set includes `Terminal`.
 6. **Confirmed:** approval decisions and status transitions are present in the
    job event/state stores.
-7. **Confirmed:** on Windows an approved command is created suspended, assigned
-   to a private kill-on-close Job Object, then resumed. Cancellation, timeout,
-   and root exit verify zero active Job processes before settlement.
+7. **Confirmed:** approved commands enter a private platform-owned process tree
+   before user code runs. Unix uses a new process group before `exec`; Windows
+   creates the process suspended, assigns it to a private kill-on-close Job
+   Object, then resumes it. Cancellation, timeout, root exit, and guard drop
+   terminate descendants and verify the owned tree is empty before settlement.
 
 **Confirmed current behaviour:** action decisions retain actor, creation time,
 expiry, denial/revocation reason, revoking actor, and ordered ledger events.
@@ -100,9 +102,11 @@ secret-basename predicate.
 built-in file-effect directory capability and can use their own filesystem
 syscalls.
 
-**Known boundary:** command containment uses the NT native `NtResumeProcess`
-entry point because `std::process::Child` does not expose the primary thread
-handle. Focused Windows tests cover pre-assignment failure and Job membership.
+**Known boundary:** Windows command containment uses the NT native
+`NtResumeProcess` entry point because `std::process::Child` does not expose the
+primary thread handle. Focused Windows tests cover pre-assignment failure and Job
+membership. Unix containment depends on process-group ownership and signals; it
+does not provide a separate filesystem, network, namespace, or cgroup sandbox.
 
 ## Browser/network boundary
 

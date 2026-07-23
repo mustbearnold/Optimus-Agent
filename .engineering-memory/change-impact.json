@@ -20,7 +20,7 @@
       ],
       "document": "docs/architecture/system-overview.md",
       "knowledge_type": "architecture",
-      "resolved_source_count": 71,
+      "resolved_source_count": 76,
       "resolved_tests": [
         "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
@@ -30,6 +30,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -78,13 +80,15 @@
       ],
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_type": "contract-risk-register",
-      "resolved_source_count": 67,
+      "resolved_source_count": 72,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -272,6 +276,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "apps/optimus-desktop/src/server.rs",
         "crates/optimus-kernel/src/cron.rs",
@@ -358,6 +364,88 @@
     },
     {
       "covers": [
+        "docs/architecture/optimus-version.json",
+        "docs/architecture/hermes-baselines/hermes-0.19.0.json",
+        "docs/architecture/hermes-feature-evidence.json",
+        "docs/architecture/hermes-performance-evidence.json",
+        "docs/architecture/hermes-manual-capabilities.json",
+        "scripts/optimus_version.py",
+        "scripts/check-parity-ledger.py",
+        "scripts/rebuild-install-relaunch.sh",
+        "scripts/rebuild-install-relaunch.ps1",
+        "apps/optimus-cli/src/main.rs"
+      ],
+      "depends_on": [
+        "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+        "docs/architecture/parity-capability-ledger.json"
+      ],
+      "document": "docs/decisions/0024-hermes-parity-version-gate.md",
+      "knowledge_type": "decision",
+      "resolved_source_count": 12,
+      "resolved_tests": [
+        "apps/optimus-cli/src/main.rs",
+        "scripts/check-parity-ledger.py",
+        "scripts/test_optimus_version.py"
+      ],
+      "status": "current",
+      "validated_by": [
+        "scripts/test_optimus_version.py",
+        "scripts/check-parity-ledger.py",
+        "apps/optimus-cli/src/main.rs"
+      ]
+    },
+    {
+      "covers": [
+        "DESIGN.md",
+        "apps/optimus-desktop/src/ui.rs",
+        "apps/optimus-desktop/ui/index.html",
+        "apps/optimus-desktop/ui/app.js",
+        "apps/optimus-desktop/ui/vantage.css",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
+        "docs/design/optimus-vantage-2027/*"
+      ],
+      "depends_on": [
+        "docs/decisions/0014-native-webview-ipc-mode.md",
+        "docs/specifications/phase-20-cdp-preview-browser.md"
+      ],
+      "document": "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
+      "knowledge_type": "decision",
+      "resolved_source_count": 15,
+      "resolved_tests": [
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
+        "apps/optimus-desktop/src/ui.rs"
+      ],
+      "status": "current",
+      "validated_by": [
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
+        "apps/optimus-desktop/src/ui.rs"
+      ]
+    },
+    {
+      "covers": [
+        "AGENTS.md",
+        "OPTIMUS_AGENTS.md",
+        "crates/optimus-kernel/src/lib.rs"
+      ],
+      "depends_on": [
+        "docs/decisions/0017-engineering-memory-separation.md"
+      ],
+      "document": "docs/decisions/0026-separate-development-and-runtime-agents.md",
+      "knowledge_type": "decision",
+      "resolved_source_count": 4,
+      "resolved_tests": [
+        "crates/optimus-kernel/src/lib.rs"
+      ],
+      "status": "current",
+      "validated_by": [
+        "crates/optimus-kernel/src/lib.rs"
+      ]
+    },
+    {
+      "covers": [
         "docs/decisions/*.md"
       ],
       "depends_on": [
@@ -365,7 +453,7 @@
       ],
       "document": "docs/decisions/README.md",
       "knowledge_type": "decision-index",
-      "resolved_source_count": 27,
+      "resolved_source_count": 30,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -377,6 +465,7 @@
     {
       "covers": [
         "AGENTS.md",
+        "OPTIMUS_AGENTS.md",
         "scripts/engineering_memory.py",
         "skills/update-engineering-memory/**"
       ],
@@ -385,7 +474,7 @@
       ],
       "document": "docs/engineering-memory/README.md",
       "knowledge_type": "engineering-memory-guide",
-      "resolved_source_count": 4,
+      "resolved_source_count": 5,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -406,7 +495,7 @@
       ],
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_type": "lesson-ledger",
-      "resolved_source_count": 60,
+      "resolved_source_count": 69,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -471,6 +560,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/codex_oauth.rs",
         "crates/optimus-kernel/tests/integrity_integration.rs",
@@ -509,7 +600,7 @@
       ],
       "document": "docs/maps/observability-and-evaluations.md",
       "knowledge_type": "observability-evaluation-map",
-      "resolved_source_count": 22,
+      "resolved_source_count": 24,
       "resolved_tests": [
         "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
@@ -519,6 +610,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -565,7 +658,7 @@
       ],
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_type": "repository-map",
-      "resolved_source_count": 55,
+      "resolved_source_count": 60,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -603,6 +696,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -650,7 +745,7 @@
       ],
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_type": "implementation-plan",
-      "resolved_source_count": 37,
+      "resolved_source_count": 40,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -743,6 +838,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "apps/optimus-desktop/src/native_workers.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs"
@@ -853,6 +950,136 @@
     },
     {
       "covers": [
+        "Cargo.toml",
+        "crates/optimus-browser/src/**",
+        "crates/optimus-packs/src/**",
+        "crates/optimus-kernel/src/**",
+        "apps/optimus-desktop/src/**",
+        "apps/optimus-desktop/ui/**"
+      ],
+      "depends_on": [
+        "docs/architecture/system-overview.md",
+        "docs/contracts/high-risk-contracts.md"
+      ],
+      "document": "docs/specifications/phase-20-cdp-preview-browser.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 47,
+      "resolved_tests": [
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
+        "apps/optimus-desktop/e2e/support.js",
+        "crates/optimus-browser/src/lib.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "status": "draft",
+      "validated_by": [
+        "crates/optimus-browser/src/lib.rs",
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "apps/optimus-desktop/e2e/**"
+      ]
+    },
+    {
+      "covers": [
+        "crates/optimus-kernel/src/browser.rs",
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-packs/src/lib.rs",
+        "crates/optimus-browser/src/lib.rs"
+      ],
+      "depends_on": [
+        "docs/specifications/phase-20-cdp-preview-browser.md",
+        "crates/optimus-browser/Cargo.toml"
+      ],
+      "document": "docs/specifications/phase-20b-kernel-cdp-integration.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 6,
+      "resolved_tests": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-packs/tests/packs_budget.rs"
+      ],
+      "status": "draft",
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "cargo test --workspace"
+      ]
+    },
+    {
+      "covers": [
+        "apps/optimus-desktop/ui/index.html",
+        "apps/optimus-desktop/src/bridge.rs",
+        "apps/optimus-desktop/src/ipc/router.rs",
+        "apps/optimus-desktop/src/ipc/runtime_ops.rs",
+        "crates/optimus-kernel/src/browser.rs",
+        "crates/optimus-kernel/src/lib.rs"
+      ],
+      "depends_on": [
+        "docs/specifications/phase-20b-kernel-cdp-integration.md"
+      ],
+      "document": "docs/specifications/phase-20c-desktop-browser-sidebar.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 7,
+      "resolved_tests": [],
+      "status": "draft",
+      "validated_by": [
+        "cargo check --workspace",
+        "cargo test --workspace"
+      ]
+    },
+    {
+      "covers": [
+        "apps/optimus-desktop/src/ipc/system.rs",
+        "crates/optimus-kernel/src/browser.rs",
+        "crates/optimus-browser/src/lib.rs",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js"
+      ],
+      "depends_on": [
+        "docs/specifications/phase-20-cdp-preview-browser.md",
+        "docs/specifications/phase-20c-desktop-browser-sidebar.md"
+      ],
+      "document": "docs/specifications/phase-20d-packaging-gates.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 6,
+      "resolved_tests": [
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js"
+      ],
+      "status": "active",
+      "validated_by": [
+        "cargo test -p optimus-kernel --lib browser",
+        "cargo test --workspace",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js"
+      ]
+    },
+    {
+      "covers": [
+        "crates/optimus-kernel/src/artifacts.rs",
+        "apps/optimus-desktop/src/ipc/files.rs",
+        "apps/optimus-desktop/ui/app.js",
+        "apps/optimus-desktop/ui/index.html"
+      ],
+      "depends_on": [
+        "docs/decisions/0002-memory-invariants.md",
+        "docs/architecture/parity-capability-ledger.json"
+      ],
+      "document": "docs/specifications/phase-21a-artifacts-store.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 6,
+      "resolved_tests": [],
+      "status": "active",
+      "validated_by": [
+        "cargo test -p optimus-kernel --lib artifacts",
+        "cargo test -p optimus-desktop --lib method_registry",
+        "cargo test --workspace"
+      ]
+    },
+    {
+      "covers": [
         "crates/optimus-memory/src/**",
         "crates/optimus-memory/tests/**",
         "crates/optimus-kernel/src/**",
@@ -873,7 +1100,7 @@
       ],
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 105,
+      "resolved_source_count": 115,
       "resolved_tests": [
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -916,7 +1143,7 @@
       ],
       "document": "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 45,
+      "resolved_source_count": 47,
       "resolved_tests": [
         "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
@@ -926,6 +1153,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -982,7 +1211,7 @@
       ],
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 102,
+      "resolved_source_count": 112,
       "resolved_tests": [
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -1095,6 +1324,8 @@
         "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
         "apps/optimus-desktop/e2e/support.js",
         "apps/optimus-desktop/src/native_workers.rs",
         "apps/optimus-desktop/src/server.rs",
@@ -1122,7 +1353,7 @@
       "depends_on": [],
       "document": "docs/specifications/turn-timing-and-tool-loop-control.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 13,
+      "resolved_source_count": 15,
       "resolved_tests": [],
       "status": "historical",
       "validated_by": []
@@ -1152,6 +1383,7 @@
   "source_to_knowledge": {
     "AGENTS.md": [
       "docs/decisions/0017-engineering-memory-separation.md",
+      "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "docs/engineering-memory/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md"
@@ -1165,7 +1397,15 @@
       "docs/engineering-memory/README.md",
       "docs/maps/repository-and-ownership.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
+    ],
+    "DESIGN.md": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
+    ],
+    "OPTIMUS_AGENTS.md": [
+      "docs/decisions/0026-separate-development-and-runtime-agents.md",
+      "docs/engineering-memory/README.md"
     ],
     "README.md": [
       "docs/maps/repository-and-ownership.md"
@@ -1185,6 +1425,7 @@
     "apps/optimus-cli/src/main.rs": [
       "docs/architecture/system-overview.md",
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
+      "docs/decisions/0024-hermes-parity-version-gate.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -1210,6 +1451,7 @@
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
@@ -1222,6 +1464,16 @@
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js": [
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
+    ],
+    "apps/optimus-desktop/e2e/06-preview-browser.spec.js": [
+      "docs/maps/observability-and-evaluations.md",
+      "docs/specifications/phase-20d-packaging-gates.md",
+      "docs/specifications/turn-timing-and-tool-loop-control.md"
+    ],
+    "apps/optimus-desktop/e2e/07-vantage-design.spec.js": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
@@ -1239,6 +1491,8 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/chat.rs": [
@@ -1250,6 +1504,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/stream-delivery-cancellation.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
@@ -1259,6 +1514,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/files.rs": [
@@ -1266,6 +1522,8 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/mod.rs": [
@@ -1273,6 +1531,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/os.rs": [
@@ -1280,6 +1539,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/router.rs": [
@@ -1287,6 +1547,8 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/runtime_ops.rs": [
@@ -1294,6 +1556,8 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/scheduling.rs": [
@@ -1301,6 +1565,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/sessions.rs": [
@@ -1308,6 +1573,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/ipc/system.rs": [
@@ -1315,6 +1581,8 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20d-packaging-gates.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/main.rs": [
@@ -1325,6 +1593,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/native_workers.rs": [
@@ -1334,8 +1603,16 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/stream-delivery-cancellation.md"
+    ],
+    "apps/optimus-desktop/src/preview_embed.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/src/server.rs": [
       "docs/architecture/system-overview.md",
@@ -1345,28 +1622,57 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/stream-delivery-cancellation.md"
     ],
     "apps/optimus-desktop/src/ui.rs": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-desktop/ui/app.js": [
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/ui/index.html": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md",
+      "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/ui/style.css": [
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
+    ],
+    "apps/optimus-desktop/ui/vantage.css": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md"
+    ],
+    "crates/optimus-browser/Cargo.toml": [
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20b-kernel-cdp-integration.md"
+    ],
+    "crates/optimus-browser/src/dom_snapshot.js": [
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md"
+    ],
+    "crates/optimus-browser/src/lib.rs": [
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20b-kernel-cdp-integration.md",
+      "docs/specifications/phase-20d-packaging-gates.md"
     ],
     "crates/optimus-graph/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -1390,6 +1696,17 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-1-integrity-next-30-microtasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "crates/optimus-kernel/src/artifacts.rs": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1399,6 +1716,10 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20b-kernel-cdp-integration.md",
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md",
+      "docs/specifications/phase-20d-packaging-gates.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1410,6 +1731,7 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1418,6 +1740,7 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1427,6 +1750,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1437,6 +1761,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1448,6 +1773,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/persisted-integrity-evaluation-traces.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1464,6 +1790,7 @@
       "docs/specifications/exact-priority2-offline-report-production.md",
       "docs/specifications/fail-closed-evaluation-report-validation.md",
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1476,6 +1803,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1487,6 +1815,7 @@
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1497,6 +1826,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1505,6 +1835,7 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
+      "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "docs/maps/model-routing.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
@@ -1512,6 +1843,9 @@
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20b-kernel-cdp-integration.md",
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1525,6 +1859,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1534,6 +1869,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1544,6 +1880,7 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1554,6 +1891,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1563,6 +1901,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1572,6 +1911,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1580,6 +1920,7 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1590,6 +1931,7 @@
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -1692,6 +2034,8 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
+      "docs/specifications/phase-20b-kernel-cdp-integration.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1790,13 +2134,50 @@
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
+    "docs/architecture/hermes-baselines/hermes-0.19.0.json": [
+      "docs/decisions/0024-hermes-parity-version-gate.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/architecture/hermes-feature-evidence.json": [
+      "docs/decisions/0024-hermes-parity-version-gate.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/architecture/hermes-manual-capabilities.json": [
+      "docs/decisions/0024-hermes-parity-version-gate.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/architecture/hermes-performance-evidence.json": [
+      "docs/decisions/0024-hermes-parity-version-gate.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
     "docs/architecture/optimus-exceeds-hermes.md": [
       "docs/lessons/ai-agent-mistakes.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
-    "docs/architecture/parity-capability-ledger.json": [
+    "docs/architecture/optimus-version.json": [
+      "docs/decisions/0024-hermes-parity-version-gate.md",
       "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/architecture/optimus-versioning.md": [
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/architecture/parity-capability-ledger.json": [
+      "docs/decisions/0024-hermes-parity-version-gate.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -1926,6 +2307,7 @@
       "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "docs/specifications/git-stable-engineering-memory.md",
       "docs/specifications/persisted-integrity-evaluation-traces.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md",
@@ -1941,6 +2323,7 @@
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/git-stable-engineering-memory.md",
+      "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -1972,6 +2355,7 @@
       "docs/lessons/ai-agent-mistakes.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -2080,6 +2464,7 @@
     "docs/decisions/0014-native-webview-ipc-mode.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
@@ -2118,6 +2503,7 @@
     "docs/decisions/0017-engineering-memory-separation.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
@@ -2182,6 +2568,7 @@
     "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0024-hermes-parity-version-gate.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
@@ -2191,6 +2578,33 @@
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md"
     ],
+    "docs/decisions/0024-hermes-parity-version-gate.md": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/README.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/README.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/decisions/0026-separate-development-and-runtime-agents.md": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/README.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
     "docs/decisions/README.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
@@ -2199,6 +2613,24 @@
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/design/optimus-vantage-2027/01-primary-workbench.png": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
+    ],
+    "docs/design/optimus-vantage-2027/02-browser-review.png": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
+    ],
+    "docs/design/optimus-vantage-2027/03-focus-and-empty.png": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
+    ],
+    "docs/design/optimus-vantage-2027/04-implemented-empty.png": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
+    ],
+    "docs/design/optimus-vantage-2027/05-implemented-workbench.png": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
+    ],
+    "docs/design/optimus-vantage-2027/06-implemented-focus-640.png": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
     ],
     "docs/engineering-memory/README.md": [
       "docs/specifications/git-stable-engineering-memory.md"
@@ -2250,6 +2682,17 @@
     "docs/specifications/fail-closed-evaluation-report-validation.md": [
       "docs/specifications/reusable-offline-integrity-executor.md"
     ],
+    "docs/specifications/phase-20-cdp-preview-browser.md": [
+      "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
+      "docs/specifications/phase-20b-kernel-cdp-integration.md",
+      "docs/specifications/phase-20d-packaging-gates.md"
+    ],
+    "docs/specifications/phase-20b-kernel-cdp-integration.md": [
+      "docs/specifications/phase-20c-desktop-browser-sidebar.md"
+    ],
+    "docs/specifications/phase-20c-desktop-browser-sidebar.md": [
+      "docs/specifications/phase-20d-packaging-gates.md"
+    ],
     "docs/specifications/priority-1-integrity-100-nanotasks.md": [
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -2258,6 +2701,9 @@
     ],
     "docs/specifications/stream-delivery-cancellation.md": [
       "docs/specifications/desktop-turn-cancellation.md"
+    ],
+    "scripts/check-parity-ledger.py": [
+      "docs/decisions/0024-hermes-parity-version-gate.md"
     ],
     "scripts/engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",
@@ -2277,6 +2723,15 @@
       "docs/specifications/reusable-offline-integrity-executor.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
+    ],
+    "scripts/optimus_version.py": [
+      "docs/decisions/0024-hermes-parity-version-gate.md"
+    ],
+    "scripts/rebuild-install-relaunch.ps1": [
+      "docs/decisions/0024-hermes-parity-version-gate.md"
+    ],
+    "scripts/rebuild-install-relaunch.sh": [
+      "docs/decisions/0024-hermes-parity-version-gate.md"
     ],
     "scripts/test_engineering_memory.py": [
       "docs/decisions/0017-engineering-memory-separation.md",

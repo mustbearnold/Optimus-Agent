@@ -9,6 +9,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from optimus_version import evaluate as evaluate_versioning
+
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "docs" / "architecture" / "parity-capability-ledger.json"
 SCORECARD = ROOT / "docs" / "architecture" / "sota-scorecard.md"
@@ -126,6 +128,10 @@ def main() -> int:
     if expected_total not in scorecard:
         fail(errors, f"stale scorecard total; expected row prefix {expected_total!r}")
 
+    versioning = evaluate_versioning(ROOT)
+    for error in versioning.errors:
+        fail(errors, f"versioning: {error}")
+
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
@@ -135,6 +141,7 @@ def main() -> int:
         "parity-ledger ok "
         f"capabilities={len(capabilities)} "
         + " ".join(f"{state}={counts[state]}" for state in sorted(VALID_STATES))
+        + f" hermes_target={versioning.target_version} feature_contracts={versioning.feature_total}"
     )
     return 0
 

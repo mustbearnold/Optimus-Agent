@@ -121,7 +121,7 @@ test('cron add list tick via IPC', async ({ serverInfo }) => {
   const path = require('path');
   const dbPath = path.join(serverInfo.home, 'cron.db');
   execFileSync(
-    process.env.PYTHON || 'python',
+    process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'),
     ['-c', `import sqlite3; c=sqlite3.connect(${JSON.stringify(dbPath)}); c.execute('update cron_jobs set next_run_unix=0'); c.commit()`],
     { stdio: 'pipe' }
   );

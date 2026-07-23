@@ -15,7 +15,10 @@ fn binding() -> CandidateBinding {
                 .parent()
                 .and_then(std::path::Path::parent)
                 .unwrap();
-            let output = Command::new("python")
+            let python = std::env::var_os("PYTHON").unwrap_or_else(|| {
+                std::ffi::OsString::from(if cfg!(windows) { "python" } else { "python3" })
+            });
+            let output = Command::new(python)
                 .current_dir(workspace)
                 .arg("scripts/engineering_memory.py")
                 .arg("binding")

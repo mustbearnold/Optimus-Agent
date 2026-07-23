@@ -1,8 +1,9 @@
-//! Optimus desktop shell — WebView2 host + HTTP mode for Playwright.
+//! Optimus desktop shell — native Wry webview + HTTP mode for Playwright.
 
 mod bridge;
 mod ipc;
 mod native_workers;
+mod preview_embed;
 mod server;
 mod ui;
 
@@ -18,19 +19,41 @@ use tao::{
     window::WindowBuilder,
 };
 use wry::{
+    dpi::{LogicalPosition, LogicalSize},
     http::{header::CONTENT_TYPE, Request, Response},
-    WebViewBuilder,
+    Rect, WebViewBuilder,
 };
 
 use crate::bridge::{inject_bridge, BRIDGE_JS};
 use crate::ipc::{pick_folder_dialog, IpcEnvelope, IpcReply};
 use crate::native_workers::NativeWorkers;
+use crate::preview_embed::{navigation_allowed as preview_nav_allowed, EmbedBounds, PreviewEmbed};
 use crate::server::{run_http_server, HttpSecurity};
+
+// Wry translates custom schemes to an HTTP `.localhost` origin only on
+// WebView2 and Android. WebKitGTK, WebKit, and WKWebView use the scheme itself.
+#[cfg(any(target_os = "windows", target_os = "android"))]
+const NATIVE_WEBVIEW_URL: &str = "http://optimus.localhost/";
+#[cfg(any(target_os = "windows", target_os = "android"))]
+const NATIVE_WEBVIEW_ORIGIN: &str = "http://optimus.localhost";
+#[cfg(not(any(target_os = "windows", target_os = "android")))]
+const NATIVE_WEBVIEW_URL: &str = "optimus://localhost/";
+#[cfg(not(any(target_os = "windows", target_os = "android")))]
+const NATIVE_WEBVIEW_ORIGIN: &str = "optimus://localhost";
+
+fn native_navigation_allowed(url: &str) -> bool {
+    if url == "about:blank" {
+        return true;
+    }
+    url.strip_prefix(NATIVE_WEBVIEW_ORIGIN).is_some_and(|rest| {
+        rest.is_empty() || rest.starts_with('/') || rest.starts_with('?') || rest.starts_with('#')
+    })
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "optimus-desktop", version, about = "Optimus Agent desktop")]
 struct Cli {
-    /// Optimus home directory (default: %LOCALAPPDATA%/optimus)
+    /// Optimus home directory (default: the platform-local data directory/optimus)
     #[arg(long, default_value = "")]
     home: String,
 
@@ -63,6 +86,14 @@ enum UserEvent {
         x: i32,
         y: i32,
     },
+    /// Live preview browser navigated (update omnibox / status).
+    BrowserNavigated {
+        url: String,
+    },
+    /// Annotation pin emitted from the live preview page.
+    BrowserAnnotation {
+        params: serde_json::Value,
+    },
 }
 
 fn requires_window_thread(method: &str) -> bool {
@@ -75,6 +106,12 @@ fn requires_window_thread(method: &str) -> bool {
             | "window_outer_position"
             | "window_set_outer_position"
             | "pick_folder"
+            | "browser_embed"
+            | "browser_navigate"
+            | "browser_reload"
+            | "browser_back"
+            | "browser_forward"
+            | "browser_set_annotate"
     )
 }
 
@@ -110,30 +147,36 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
     let proxy = event_loop.create_proxy();
     let workers = NativeWorkers::start(home.clone(), proxy.clone())?;
 
-    let mut window_builder = WindowBuilder::new()
+    let window_builder = WindowBuilder::new()
         .with_title("Optimus Agent")
         .with_inner_size(tao::dpi::LogicalSize::new(1280.0, 840.0))
-        // Allow Windows snap layouts (1/4 ≈ 480×540 on 1080p; 1/2 width/height).
+        // Remains usable in compact tiling/snap layouts.
         .with_min_inner_size(tao::dpi::LogicalSize::new(420.0, 320.0))
         .with_resizable(true)
-        // Seamless chrome: content owns the top bar (Windows app-bar integration).
+        // Seamless chrome: content owns the cross-platform top bar.
         .with_decorations(false);
 
     #[cfg(target_os = "windows")]
-    {
+    let window_builder = {
         use tao::platform::windows::WindowBuilderExtWindows;
-        window_builder = window_builder.with_undecorated_shadow(true);
-    }
+        window_builder.with_undecorated_shadow(true)
+    };
 
     let window = window_builder.build(&event_loop).expect("window");
 
     let html = inject_bridge(&ui::render_html());
     let html_bytes: Cow<'static, [u8]> = Cow::Owned(html.into_bytes());
 
+    let initial = window.inner_size().to_logical::<u32>(window.scale_factor());
+
     let proxy_for_ipc = proxy.clone();
-    let builder = WebViewBuilder::new()
-        // Opaque dark paint so a failed/late first paint never shows a blank black HWND.
+    let ui_builder = WebViewBuilder::new()
+        // Opaque dark paint prevents a bright/blank native surface before first paint.
         .with_background_color((0x0a, 0x0a, 0x0c, 255))
+        .with_bounds(Rect {
+            position: LogicalPosition::new(0, 0).into(),
+            size: LogicalSize::new(initial.width, initial.height).into(),
+        })
         .with_custom_protocol("optimus".into(), move |_id, req: Request<Vec<u8>>| {
             let path = req.uri().path().to_string();
             eprintln!("[optimus-desktop] asset {path}");
@@ -147,6 +190,12 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
             };
             Response::builder()
                 .header(CONTENT_TYPE, ctype)
+                .header(
+                    "Content-Security-Policy",
+                    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'",
+                )
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Referrer-Policy", "no-referrer")
                 .status(if ctype.starts_with("text/html") {
                     200
                 } else {
@@ -160,7 +209,9 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                         .unwrap()
                 })
         })
-        .with_url("http://optimus.localhost/")
+        .with_url(NATIVE_WEBVIEW_URL)
+        .with_navigation_handler(|url| native_navigation_allowed(&url))
+        .with_new_window_req_handler(|_| false)
         .with_initialization_script(BRIDGE_JS)
         .with_ipc_handler(move |req: Request<String>| {
             let body = req.body().clone();
@@ -170,9 +221,6 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
             }
             match serde_json::from_str::<IpcEnvelope>(&body) {
                 Ok(env) => {
-                    if env.method == "window_drag" {
-                        // Already queued DragWindow; still enqueue Ipc for reply/tests.
-                    }
                     if env.method == "window_set_outer_position" {
                         let x = env.params.get("x").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
                         let y = env.params.get("y").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
@@ -190,25 +238,102 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
             }
         })
         .with_accept_first_mouse(true);
+
+    let proxy_for_browser = proxy.clone();
+    let browser_builder = WebViewBuilder::new()
+        .with_background_color((0xff, 0xff, 0xff, 255))
+        .with_bounds(Rect {
+            position: LogicalPosition::new(0, 0).into(),
+            size: LogicalSize::new(1, 1).into(),
+        })
+        .with_visible(false)
+        // Warm Google as the default homepage so the first Browser tab open is
+        // already painted (no blank flash / cold navigation).
+        .with_url("https://www.google.com/")
+        .with_navigation_handler(move |url| {
+            // Annotation pins can arrive as a cancelled navigation when child
+            // webview IPC is unavailable.
+            if let Some(params) = preview_embed::annotation_from_nav_url(&url) {
+                eprintln!("[optimus-desktop] browser_annotation via nav callback");
+                let _ = proxy_for_browser.send_event(UserEvent::BrowserAnnotation { params });
+                return false;
+            }
+            let allowed = preview_nav_allowed(&url);
+            if allowed {
+                let _ = proxy_for_browser.send_event(UserEvent::BrowserNavigated { url });
+            }
+            allowed
+        })
+        .with_new_window_req_handler(|_| false)
+        .with_ipc_handler({
+            let proxy = proxy.clone();
+            move |req: Request<String>| {
+                let body = req.body().clone();
+                eprintln!(
+                    "[optimus-desktop] browser ipc raw len={} head={}",
+                    body.len(),
+                    body.chars().take(120).collect::<String>()
+                );
+                // Wry/WebKit may deliver a JSON object string, or a JSON-encoded string.
+                let envelope = match serde_json::from_str::<IpcEnvelope>(&body) {
+                    Ok(env) => Some(env),
+                    Err(_) => serde_json::from_str::<String>(&body)
+                        .ok()
+                        .and_then(|inner| serde_json::from_str::<IpcEnvelope>(&inner).ok()),
+                };
+                match envelope {
+                    Some(env) if env.method == "browser_annotation" => {
+                        eprintln!("[optimus-desktop] browser_annotation received");
+                        let _ =
+                            proxy.send_event(UserEvent::BrowserAnnotation { params: env.params });
+                    }
+                    Some(env) => {
+                        eprintln!(
+                            "[optimus-desktop] browser ipc ignored method={}",
+                            env.method
+                        );
+                    }
+                    None => {
+                        eprintln!("[optimus-desktop] browser ipc parse error body={body}");
+                    }
+                }
+            }
+        })
+        .with_accept_first_mouse(true);
+
+    // Shared Fixed container on Linux so both webviews can be absolutely positioned.
     #[cfg(any(
         target_os = "windows",
         target_os = "macos",
         target_os = "ios",
         target_os = "android"
     ))]
-    let webview = builder.build(&window)?;
+    let (webview, browser_wv) = {
+        let webview = ui_builder.build_as_child(&window)?;
+        let browser_wv = browser_builder.build_as_child(&window)?;
+        (webview, browser_wv)
+    };
     #[cfg(not(any(
         target_os = "windows",
         target_os = "macos",
         target_os = "ios",
         target_os = "android"
     )))]
-    let webview = {
+    let (webview, browser_wv) = {
+        use gtk::prelude::*;
         use tao::platform::unix::WindowExtUnix;
         use wry::WebViewBuilderExtUnix;
+
+        let fixed = gtk::Fixed::new();
         let vbox = window.default_vbox().unwrap();
-        builder.build_gtk(vbox)?
+        vbox.pack_start(&fixed, true, true, 0);
+        fixed.show_all();
+        let webview = ui_builder.build_gtk(&fixed)?;
+        let browser_wv = browser_builder.build_gtk(&fixed)?;
+        (webview, browser_wv)
     };
+
+    let mut preview = PreviewEmbed::new(browser_wv);
 
     let proxy_bg = proxy.clone();
     let mut ready_at: Option<Instant> = None;
@@ -252,9 +377,25 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
             Event::UserEvent(UserEvent::SetOuterPosition { x, y }) => {
                 window.set_outer_position(tao::dpi::PhysicalPosition::new(x, y));
             }
+            Event::UserEvent(UserEvent::BrowserNavigated { url }) => {
+                preview.note_url_if_empty(&url);
+                let payload = preview.on_navigated(url);
+                let body = serde_json::to_string(&payload).unwrap_or_else(|_| "{}".into());
+                let script = format!(
+                    "try {{ window.__optimusBrowserPush && window.__optimusBrowserPush({body}); }} catch (e) {{ console.error(e); }}"
+                );
+                let _ = webview.evaluate_script(&script);
+            }
+            Event::UserEvent(UserEvent::BrowserAnnotation { params }) => {
+                let body = serde_json::to_string(&params).unwrap_or_else(|_| "{}".into());
+                let script = format!(
+                    "try {{ window.__optimusBrowserAnnotation && window.__optimusBrowserAnnotation({body}); }} catch (e) {{ console.error(e); }}"
+                );
+                let _ = webview.evaluate_script(&script);
+            }
             Event::UserEvent(UserEvent::Ipc { id, method, params }) => {
                 eprintln!("[optimus-desktop] handle {method} id={id}");
-                // Window chrome controls (need live Window handle)
+                // Window chrome controls + live browser embed (need live WebView handles)
                 if requires_window_thread(&method) {
                     let reply = match method.as_str() {
                         "window_minimize" => {
@@ -285,8 +426,6 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                             }
                         }
                         "window_drag" => {
-                            // Prefer DragWindow fast-path; this reply path is for tests/HTTP.
-                            // Avoid double ReleaseCapture if DragWindow already ran — still OK to try.
                             let _ = window.drag_window();
                             IpcReply {
                                 id,
@@ -310,7 +449,6 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                             },
                         },
                         "window_set_outer_position" => {
-                            // Also handled via SetOuterPosition fast-path; ack here.
                             let x = params.get("x").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
                             let y = params.get("y").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
                             window.set_outer_position(tao::dpi::PhysicalPosition::new(x, y));
@@ -335,6 +473,104 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                                 error: Some(e),
                             },
                         },
+                        "browser_embed" => {
+                            match preview.apply_bounds(EmbedBounds::from_params(&params)) {
+                                Ok(v) => IpcReply {
+                                    id,
+                                    ok: true,
+                                    result: Some(v),
+                                    error: None,
+                                },
+                                Err(e) => IpcReply {
+                                    id,
+                                    ok: false,
+                                    result: None,
+                                    error: Some(e),
+                                },
+                            }
+                        }
+                        "browser_navigate" => {
+                            let url = params
+                                .get("url")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or_default();
+                            match preview.navigate(url) {
+                                Ok(v) => IpcReply {
+                                    id,
+                                    ok: true,
+                                    result: Some(v),
+                                    error: None,
+                                },
+                                Err(e) => IpcReply {
+                                    id,
+                                    ok: false,
+                                    result: None,
+                                    error: Some(e),
+                                },
+                            }
+                        }
+                        "browser_reload" => match preview.reload() {
+                            Ok(v) => IpcReply {
+                                id,
+                                ok: true,
+                                result: Some(v),
+                                error: None,
+                            },
+                            Err(e) => IpcReply {
+                                id,
+                                ok: false,
+                                result: None,
+                                error: Some(e),
+                            },
+                        },
+                        "browser_back" => match preview.back() {
+                            Ok(v) => IpcReply {
+                                id,
+                                ok: true,
+                                result: Some(v),
+                                error: None,
+                            },
+                            Err(e) => IpcReply {
+                                id,
+                                ok: false,
+                                result: None,
+                                error: Some(e),
+                            },
+                        },
+                        "browser_forward" => match preview.forward() {
+                            Ok(v) => IpcReply {
+                                id,
+                                ok: true,
+                                result: Some(v),
+                                error: None,
+                            },
+                            Err(e) => IpcReply {
+                                id,
+                                ok: false,
+                                result: None,
+                                error: Some(e),
+                            },
+                        },
+                        "browser_set_annotate" => {
+                            let enabled = params
+                                .get("enabled")
+                                .and_then(|v| v.as_bool())
+                                .unwrap_or(false);
+                            match preview.set_annotate(enabled) {
+                                Ok(v) => IpcReply {
+                                    id,
+                                    ok: true,
+                                    result: Some(v),
+                                    error: None,
+                                },
+                                Err(e) => IpcReply {
+                                    id,
+                                    ok: false,
+                                    result: None,
+                                    error: Some(e),
+                                },
+                            }
+                        }
                         _ => unreachable!(),
                     };
                     let _ = eval_reply(&webview, &reply);
@@ -390,6 +626,15 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                 let _ = eval_reply(&webview, &reply);
             }
             Event::WindowEvent {
+                event: WindowEvent::Resized(size),
+                ..
+            } => {
+                let logical = size.to_logical::<u32>(window.scale_factor());
+                PreviewEmbed::resize_main_fill(&webview, logical.width, logical.height);
+                // Main resize can disturb child z-order; raise without remapping.
+                preview.reassert_bounds();
+            }
+            Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
             } => *control_flow = ControlFlow::Exit,
@@ -423,7 +668,7 @@ fn eval_reply(webview: &wry::WebView, reply: &IpcReply) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{requires_window_thread, IpcReply, UserEvent};
+    use super::{native_navigation_allowed, requires_window_thread, IpcReply, UserEvent};
 
     fn assert_send_static<T: Send + 'static>() {}
 
@@ -434,7 +679,7 @@ mod tests {
     }
 
     #[test]
-    fn only_live_window_and_dialog_methods_require_the_event_loop() {
+    fn only_live_window_dialog_and_browser_embed_methods_require_the_event_loop() {
         for method in [
             "ping",
             "doctor",
@@ -445,32 +690,16 @@ mod tests {
             "window_outer_position",
             "window_set_outer_position",
             "pick_folder",
+            "browser_embed",
+            "browser_navigate",
+            "browser_reload",
+            "browser_back",
+            "browser_forward",
+            "browser_set_annotate",
             "auth_status",
-            "auth_import_hermes",
-            "auth_import_cli",
-            "sessions",
-            "delete_session",
-            "rename_session",
-            "open_path",
-            "new_session",
-            "get_session",
-            "cron_list",
-            "cron_add",
-            "cron_tick",
-            "approvals_list",
-            "approvals_grant",
-            "jobs_list",
-            "campaign_list",
-            "campaign_create",
-            "campaign_run",
-            "campaign_status",
-            "fs_roots",
-            "fs_list",
-            "fs_read",
-            "term_run",
             "chat",
-            "chat_offline",
             "chat_stream",
+            "term_run",
         ] {
             let expected = matches!(
                 method,
@@ -481,8 +710,22 @@ mod tests {
                     | "window_outer_position"
                     | "window_set_outer_position"
                     | "pick_folder"
+                    | "browser_embed"
+                    | "browser_navigate"
+                    | "browser_reload"
+                    | "browser_back"
+                    | "browser_forward"
+                    | "browser_set_annotate"
             );
             assert_eq!(requires_window_thread(method), expected, "{method}");
         }
+    }
+
+    #[test]
+    fn privileged_webview_navigation_is_confined_to_the_packaged_origin() {
+        assert!(native_navigation_allowed(super::NATIVE_WEBVIEW_URL));
+        assert!(native_navigation_allowed("about:blank"));
+        assert!(!native_navigation_allowed("https://evil.example/"));
+        assert!(!native_navigation_allowed("file:///etc/passwd"));
     }
 }

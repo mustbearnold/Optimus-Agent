@@ -30,7 +30,8 @@ it does not replace executable enforcement.
 - **State:** Confirmed current behaviour for Work Graph jobs, commands,
   campaigns, and cooperative model-provider calls.
 - **Evidence:** durable idempotent requests cancel pending work atomically;
-  runtime polling stops new nodes, terminates and reaps active commands, and
+  runtime polling stops new nodes, terminates and reaps active platform-owned
+  command trees (Unix process groups or Windows Job Objects), and
   propagates through campaign-created jobs/uncreated steps. Active providers
   receive a cooperative token and Codex SSE checks it on bounded read intervals.
   Desktop native/HTTP stream delivery failure requests the same token;

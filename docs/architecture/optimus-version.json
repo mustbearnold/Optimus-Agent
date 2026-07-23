@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "product": {
+    "name": "Optimus Agent",
+    "version_source": "Cargo.toml#workspace.package.version",
+    "version_policy": "independent-semver"
+  },
+  "hermes_target": {
+    "version": "0.19.0",
+    "release_date": "2026-07-20",
+    "upstream_revision": "8967e73e",
+    "source_url": "https://github.com/NousResearch/hermes-agent"
+  },
+  "baseline": {
+    "path": "docs/architecture/hermes-baselines/hermes-0.19.0.json",
+    "sha256": "cafbcf313b4fbd7885b4df9b888a2539885d8d62ec55e6df1cf88dc0e66cf725",
+    "feature_count": 2063,
+    "inventory_audit": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": "Machine capture must be reviewed against the official v0.19.0 docs before a parity claim. No inventory waivers are permitted."
+    }
+  },
+  "evidence": {
+    "feature_claims_path": "docs/architecture/hermes-feature-evidence.json",
+    "performance_path": "docs/architecture/hermes-performance-evidence.json",
+    "rollup_ledger_path": "docs/architecture/parity-capability-ledger.json"
+  },
+  "parity_claim": {
+    "status": "unverified",
+    "hermes_version": null,
+    "verified_at": null,
+    "optimus_revision": null,
+    "reviewer": null
+  },
+  "release_rules": {
+    "forbid_numeric_match_without_verified_parity": true,
+    "require_clean_revision_for_promotion": true,
+    "require_all_baseline_features_verified": true,
+    "require_all_rollup_rows_parity_or_win": true,
+    "allow_feature_waivers": false,
+    "evidence_max_age_days": 30,
+    "required_inventory_kinds": [
+      "cli-command",
+      "cli-option",
+      "slash-command",
+      "slash-alias",
+      "slash-subcommand",
+      "toolset",
+      "tool",
+      "provider",
+      "platform",
+      "manual"
+    ]
+  },
+  "performance_rules": {
+    "minimum_paired_samples_per_scenario": 30,
+    "minimum_distinct_seeds_per_scenario": 3,
+    "evidence_max_age_days": 30,
+    "require_same_machine": true,
+    "require_same_model": true,
+    "require_same_provider": true,
+    "require_same_tool_permissions": true,
+    "require_paired_order_randomization": true,
+    "maximum_latency_ratio": 1.0,
+    "maximum_ttft_ratio": 1.0,
+    "maximum_cost_per_success_ratio": 1.0,
+    "maximum_memory_ratio": 1.0,
+    "minimum_success_rate_delta": 0.0,
+    "minimum_quality_score_delta": 0.0,
+    "required_scenarios": [
+      {
+        "id": "cold-start",
+        "metrics": [
+          "wall_ms",
+          "rss_mb"
+        ]
+      },
+      {
+        "id": "single-turn",
+        "metrics": [
+          "wall_ms",
+          "ttft_ms",
+          "cost_usd"
+        ]
+      },
+      {
+        "id": "multi-tool-turn",
+        "metrics": [
+          "wall_ms",
+          "ttft_ms",
+          "cost_usd"
+        ]
+      },
+      {
+        "id": "long-session",
+        "metrics": [
+          "wall_ms",
+          "ttft_ms",
+          "cost_usd",
+          "rss_mb"
+        ]
+      },
+      {
+        "id": "session-resume",
+        "metrics": [
+          "wall_ms",
+          "ttft_ms"
+        ]
+      },
+      {
+        "id": "scheduled-job",
+        "metrics": [
+          "wall_ms",
+          "cost_usd"
+        ]
+      },
+      {
+        "id": "browser-task",
+        "metrics": [
+          "wall_ms",
+          "ttft_ms",
+          "cost_usd",
+          "rss_mb"
+        ]
+      },
+      {
+        "id": "delegated-task",
+        "metrics": [
+          "wall_ms",
+          "ttft_ms",
+          "cost_usd",
+          "rss_mb"
+        ]
+      }
+    ]
+  }
+}

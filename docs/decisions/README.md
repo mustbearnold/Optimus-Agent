@@ -41,10 +41,18 @@ implemented.
 | 0019 | Capability files and unified campaign authority | Accepted; limitations superseded by 0020 | Retained workspace capability, shared secret policy, unified campaign authority, deterministic handoff, and job-derived campaign status. |
 | 0020 | Work Graph integrity and loopback security | Accepted | Atomic transitions, terminal uniqueness, schema-v4 campaign leases, durable attempts/cancellation, exact-action approvals, and authenticated bounded loopback APIs. |
 | 0021 | Owned execution and causal delivery | Accepted | Suspended Job Object command ownership, cooperative model cancellation, leased cron/gateway attempts, reconciled transactional outbox, and session-to-effect provenance. |
+| 0022-A | Versioned agent and workflow contracts | Accepted | Typed immutable agent/workflow identities, permission closure, durable invocation outcomes, and explicit adapter capability limits. |
+| 0023 | Fixture replay, causal traces, routing telemetry, and versioned evaluation | Accepted | Immutable bounded replay/evaluation evidence with exact identities and deterministic comparison. |
+| 0024 | Fail-closed Hermes parity version gate | Accepted | Independent Optimus SemVer plus exact-release feature, quality, speed, cost, memory, and release-collision gates. |
+| 0025 | Artifact workbench and owned presentation state | Accepted | Compact Vantage workbench, one mounted-pane state owner, stable frame-committed streaming, bounded no-inertia motion, and a reversible visual seam. |
+| 0026 | Separate development and runtime agent instructions | Accepted | `AGENTS.md` governs repository development; `OPTIMUS_AGENTS.md` governs installed product sessions. |
+| 0027 | Settings-driven work isolation modes | Accepted; Phase 0 store/UI | Durable `settings.json` + Settings UI; project-bound/profile enforcement planned. |
 
 ## Known documentary debt
 
 - **Confirmed current behaviour:** two files use ADR number `0016`. They remain
+  unchanged to preserve history; use the A/B labels only in this index.
+- **Confirmed current behaviour:** two files use ADR number `0022`. They remain
   unchanged to preserve history; use the A/B labels only in this index.
 - **Confirmed current behaviour:** ADRs 0000–0016 predate the full template and
   omit one or more modern fields such as alternatives, risks, evaluation

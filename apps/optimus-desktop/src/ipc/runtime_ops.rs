@@ -1,10 +1,19 @@
 //! Approval, job, campaign, and bounded terminal IPC.
 
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
+use optimus_kernel::{ArtifactStore, BrowserEffector};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, StepKind};
 use serde_json::json;
+
+struct PreviewBrowserSession {
+    home: PathBuf,
+    effector: Box<dyn BrowserEffector>,
+}
+
+static PREVIEW_BROWSER: Mutex<Option<PreviewBrowserSession>> = Mutex::new(None);
 
 #[cfg(test)]
 pub(super) fn owns(method: &str) -> bool {
@@ -18,6 +27,9 @@ pub(super) fn owns(method: &str) -> bool {
             | "campaign_run"
             | "campaign_status"
             | "term_run"
+            | "browser_navigate"
+            | "browser_click"
+            | "browser_reload"
     )
 }
 
@@ -180,11 +192,30 @@ pub(super) fn handle(
             }))
         }
         "term_run" => term_run(home, params),
+        "browser_navigate" => browser_navigate(home, params),
+        "browser_click" => browser_click(home, params),
+        "browser_reload" => browser_reload(home, params),
         _ => Err(format!("unknown method: {method}")),
     }
 }
 
-/// Phase A terminal: one-shot `cmd /C` via Work Graph command capture (not interactive PTY).
+/// Phase A terminal: one-shot host shell via Work Graph capture (not interactive PTY).
+#[cfg(windows)]
+fn term_effect(line: &str) -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), line.into()],
+    }
+}
+
+#[cfg(unix)]
+fn term_effect(line: &str) -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), line.into()],
+    }
+}
+
 fn term_line_denied(line: &str) -> Option<&'static str> {
     let l = line.to_ascii_lowercase();
     const BAD: &[&str] = &[
@@ -195,6 +226,19 @@ fn term_line_denied(line: &str) -> Option<&'static str> {
         "rmdir /s",
         "rm -rf",
         "rm -r ",
+        "sudo ",
+        "mkfs",
+        "dd if=",
+        "chmod -r",
+        "chmod --recursive",
+        "chown -r",
+        "chown --recursive",
+        "pkill ",
+        "killall ",
+        "systemctl poweroff",
+        "systemctl reboot",
+        " poweroff",
+        " reboot",
         "shutdown",
         "reg delete",
         "powershell -enc",
@@ -238,10 +282,7 @@ fn term_run(home: &Path, params: serde_json::Value) -> Result<serde_json::Value,
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "term_run".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), line.into()],
-                },
+                effect: term_effect(line),
             }],
         })
         .map_err(|e| e.to_string())?;
@@ -295,4 +336,149 @@ pub(super) fn open_runtime(home: &std::path::Path) -> Result<optimus_runtime::Ru
     let ws = home.join("workspace");
     std::fs::create_dir_all(&ws).map_err(|e| e.to_string())?;
     optimus_runtime::Runtime::open(&db, &ws).map_err(|e| e.to_string())
+}
+
+/// IPC handler: navigate the browser to a URL and return page state.
+fn browser_navigate(
+    home: &PathBuf,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let url = params
+        .get("url")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "browser_navigate requires url".to_string())?;
+    with_preview_browser(home, |effector| {
+        effector.navigate(url).map_err(|e| e.to_string())
+    })
+}
+
+/// IPC handler: click an element by SOM index.
+fn browser_click(home: &PathBuf, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let index = params
+        .get("index")
+        .and_then(|v| v.as_u64())
+        .ok_or_else(|| "browser_click requires index".to_string())? as usize;
+    with_preview_browser(home, |effector| {
+        effector.click(index).map_err(|e| e.to_string())
+    })
+}
+
+/// IPC handler: refresh the current page snapshot.
+fn browser_reload(home: &PathBuf, _params: serde_json::Value) -> Result<serde_json::Value, String> {
+    with_preview_browser(home, |effector| {
+        effector.snapshot().map_err(|e| e.to_string())
+    })
+}
+
+fn with_preview_browser<F>(home: &Path, op: F) -> Result<serde_json::Value, String>
+where
+    F: FnOnce(&mut dyn BrowserEffector) -> Result<String, String>,
+{
+    let workspace = home.join("workspace");
+    std::fs::create_dir_all(&workspace).map_err(|e| e.to_string())?;
+
+    let mut guard = PREVIEW_BROWSER
+        .lock()
+        .map_err(|_| "preview browser lock poisoned".to_string())?;
+
+    let needs_new = match guard.as_ref() {
+        Some(session) => session.home != home,
+        None => true,
+    };
+    if needs_new {
+        if let Some(mut old) = guard.take() {
+            let _ = old.effector.close();
+        }
+        let effector = optimus_kernel::best_effector(&workspace).map_err(|e| e.to_string())?;
+        *guard = Some(PreviewBrowserSession {
+            home: home.to_path_buf(),
+            effector,
+        });
+    }
+
+    let session = guard
+        .as_mut()
+        .ok_or_else(|| "preview browser session missing".to_string())?;
+
+    match op(session.effector.as_mut()) {
+        Ok(result_json) => {
+            let mut value: serde_json::Value = serde_json::from_str(&result_json)
+                .unwrap_or(json!({ "ok": false, "error": result_json }));
+            maybe_publish_browser_screenshot(home, &mut value);
+            Ok(value)
+        }
+        Err(err) => {
+            if let Some(mut old) = guard.take() {
+                let _ = old.effector.close();
+            }
+            Err(err)
+        }
+    }
+}
+
+/// Best-effort: content-address browser screenshots into the artifact store.
+fn maybe_publish_browser_screenshot(home: &Path, value: &mut serde_json::Value) {
+    let Some(b64) = value.get("screenshot_b64").and_then(|v| v.as_str()) else {
+        return;
+    };
+    if b64.is_empty() {
+        return;
+    }
+    let title = value
+        .get("page_title")
+        .or_else(|| value.get("title"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("page");
+    let url = value
+        .get("final_url")
+        .or_else(|| value.get("url"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let label = if url.is_empty() {
+        format!("screenshot · {title}")
+    } else {
+        format!("screenshot · {title} · {url}")
+    };
+    let Ok(store) = ArtifactStore::open(home) else {
+        return;
+    };
+    if let Ok(record) = store.put_base64(b64, "image/png", "browser.screenshot", &label, None) {
+        if let Some(obj) = value.as_object_mut() {
+            obj.insert("artifact_sha256".into(), json!(record.sha256));
+            obj.insert("artifact_size_bytes".into(), json!(record.size_bytes));
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use optimus_graph::Effect;
+
+    use super::{term_effect, term_line_denied};
+
+    #[test]
+    fn terminal_effect_uses_the_host_shell() {
+        let Effect::RunCommand { program, args } = term_effect("printf optimus") else {
+            panic!("terminal must remain a RunCommand effect");
+        };
+
+        #[cfg(windows)]
+        assert_eq!((program.as_str(), args[0].as_str()), ("cmd", "/C"));
+        #[cfg(unix)]
+        assert_eq!((program.as_str(), args[0].as_str()), ("sh", "-c"));
+        assert_eq!(args[1], "printf optimus");
+    }
+
+    #[test]
+    fn terminal_policy_blocks_linux_elevation_and_disk_destruction() {
+        for line in [
+            "sudo apt purge optimus",
+            "mkfs.ext4 /dev/sda",
+            "dd if=/dev/zero of=/dev/sda",
+            "chmod -R 000 /",
+            "chown -R root:root /home",
+        ] {
+            assert!(term_line_denied(line).is_some(), "allowed: {line}");
+        }
+    }
 }

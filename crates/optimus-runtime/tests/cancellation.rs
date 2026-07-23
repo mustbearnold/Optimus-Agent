@@ -5,6 +5,28 @@ use optimus_runtime::{ApprovalGrant, Runtime, RuntimeError};
 use rusqlite::Connection;
 use tempfile::tempdir;
 
+#[cfg(windows)]
+fn delayed_marker_command() -> (String, Vec<String>) {
+    (
+        "cmd".into(),
+        vec![
+            "/C".into(),
+            "ping -n 5 127.0.0.1 >nul & echo survived>late.txt".into(),
+        ],
+    )
+}
+
+#[cfg(unix)]
+fn delayed_marker_command() -> (String, Vec<String>) {
+    (
+        "sh".into(),
+        vec![
+            "-c".into(),
+            "(sleep 1; printf survived > late.txt) & wait".into(),
+        ],
+    )
+}
+
 #[test]
 fn cancelling_pending_job_is_atomic_terminal_and_idempotent() {
     let root = tempdir().expect("tempdir");
@@ -66,37 +88,39 @@ fn cancelling_running_command_terminates_and_reaps_child_without_late_effect() {
     let workspace = root.path().join("workspace");
     std::fs::create_dir_all(&workspace).expect("workspace");
     let worker_runtime = Runtime::open(&db, &workspace).expect("worker runtime");
+    let (program, args) = delayed_marker_command();
     let job_id = worker_runtime
         .create_job(JobSpec {
             label: "cancel command".into(),
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "long command".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec![
-                        "/C".into(),
-                        "ping -n 5 127.0.0.1 >nul & echo survived>late.txt".into(),
-                    ],
-                },
+                effect: Effect::RunCommand { program, args },
             }],
         })
         .expect("create");
     worker_runtime
         .grant_approval(ApprovalGrant::for_job(job_id))
         .expect("approve");
-    let worker = std::thread::spawn(move || worker_runtime.run_all(job_id));
+    // Open both SQLite connections before execution begins. Initializing a
+    // Store while the worker owns its first write transaction creates an
+    // unrelated SQLITE_BUSY race that can mask the cancellation contract.
     let controller = Runtime::open(&db, &workspace).expect("controller runtime");
+    let worker = std::thread::spawn(move || worker_runtime.run_all(job_id));
     for _ in 0..100 {
         if controller.node_statuses(job_id).unwrap() == vec![NodeStatus::Running] {
             break;
         }
+        if worker.is_finished() {
+            break;
+        }
         std::thread::sleep(std::time::Duration::from_millis(20));
     }
-    assert_eq!(
-        controller.node_statuses(job_id).unwrap(),
-        vec![NodeStatus::Running]
-    );
+    let observed = controller.node_statuses(job_id).unwrap();
+    if observed != vec![NodeStatus::Running] {
+        let worker_result = worker.join().expect("worker thread");
+        panic!("command never reached running: status={observed:?} result={worker_result:?}");
+    }
 
     let requested = controller.cancel_job(job_id).expect("request cancellation");
     let worker_result = worker.join().expect("worker thread");
@@ -109,6 +133,126 @@ fn cancelling_running_command_terminates_and_reaps_child_without_late_effect() {
         vec![NodeStatus::Cancelled]
     );
     assert!(!workspace.join("late.txt").exists());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn cancelling_running_command_contains_a_setsid_escapee() {
+    let root = tempdir().expect("tempdir");
+    let db = root.path().join("optimus.db");
+    let workspace = root.path().join("workspace");
+    std::fs::create_dir_all(&workspace).expect("workspace");
+    let worker_runtime = Runtime::open(&db, &workspace).expect("worker runtime");
+    let job_id = worker_runtime
+        .create_job(JobSpec {
+            label: "cancel escaped command".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "setsid escape".into(),
+                effect: Effect::RunCommand {
+                    program: "sh".into(),
+                    args: vec![
+                        "-c".into(),
+                        "setsid sh -c 'sleep 1; printf escaped > escaped.txt' >/dev/null 2>&1 & sleep 30"
+                            .into(),
+                    ],
+                },
+            }],
+        })
+        .expect("create");
+    worker_runtime
+        .grant_approval(ApprovalGrant::for_job(job_id))
+        .expect("approve");
+    let controller = Runtime::open(&db, &workspace).expect("controller runtime");
+    let worker = std::thread::spawn(move || worker_runtime.run_all(job_id));
+    for _ in 0..100 {
+        if controller.node_statuses(job_id).unwrap() == vec![NodeStatus::Running] {
+            break;
+        }
+        if worker.is_finished() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    assert_eq!(
+        controller.node_statuses(job_id).unwrap(),
+        vec![NodeStatus::Running]
+    );
+    // Give the shell time to execute setsid before cancellation.
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
+    controller.cancel_job(job_id).expect("request cancellation");
+    let worker_result = worker.join().expect("worker thread");
+    assert!(matches!(worker_result, Err(RuntimeError::Cancelled { .. })));
+    std::thread::sleep(std::time::Duration::from_millis(1_200));
+    assert!(
+        !workspace.join("escaped.txt").exists(),
+        "a setsid descendant escaped runtime cancellation"
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn cancelling_running_command_contains_a_nested_systemd_scope() {
+    let root = tempdir().expect("tempdir");
+    let db = root.path().join("optimus.db");
+    let workspace = root.path().join("workspace");
+    std::fs::create_dir_all(&workspace).expect("workspace");
+    let worker_runtime = Runtime::open(&db, &workspace).expect("worker runtime");
+    let job_id = worker_runtime
+        .create_job(JobSpec {
+            label: "cancel nested systemd scope".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "nested scope escape".into(),
+                effect: Effect::RunCommand {
+                    program: "sh".into(),
+                    args: vec![
+                        "-c".into(),
+                        "printf attempted > nested-scope-attempted.txt; unit=optimus-nested-$PPID-$$-$(date +%s%N); /usr/bin/systemd-run --user --scope --quiet --collect --unit=$unit -- sh -c 'sleep 1; printf escaped > nested-scope-escaped.txt' >/dev/null 2>&1 & sleep 30"
+                            .into(),
+                    ],
+                },
+            }],
+        })
+        .expect("create");
+    worker_runtime
+        .grant_approval(ApprovalGrant::for_job(job_id))
+        .expect("approve");
+    let controller = Runtime::open(&db, &workspace).expect("controller runtime");
+    let worker = std::thread::spawn(move || worker_runtime.run_all(job_id));
+    for _ in 0..100 {
+        if controller.node_statuses(job_id).unwrap() == vec![NodeStatus::Running] {
+            break;
+        }
+        if worker.is_finished() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    assert_eq!(
+        controller.node_statuses(job_id).unwrap(),
+        vec![NodeStatus::Running]
+    );
+    for _ in 0..50 {
+        if workspace.join("nested-scope-attempted.txt").exists() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+
+    controller.cancel_job(job_id).expect("request cancellation");
+    let worker_result = worker.join().expect("worker thread");
+    assert!(matches!(worker_result, Err(RuntimeError::Cancelled { .. })));
+    assert!(
+        workspace.join("nested-scope-attempted.txt").exists(),
+        "the nested systemd escape probe never executed"
+    );
+    std::thread::sleep(std::time::Duration::from_millis(1_200));
+    assert!(
+        !workspace.join("nested-scope-escaped.txt").exists(),
+        "a nested systemd scope escaped runtime cancellation"
+    );
 }
 
 #[test]

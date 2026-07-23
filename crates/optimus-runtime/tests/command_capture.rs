@@ -5,6 +5,38 @@ use optimus_runtime::{ApprovalGrant, Runtime};
 use rusqlite::Connection;
 use tempfile::tempdir;
 
+#[cfg(windows)]
+fn successful_command() -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), "echo capture-me".into()],
+    }
+}
+
+#[cfg(unix)]
+fn successful_command() -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), "printf 'capture-me\\n'".into()],
+    }
+}
+
+#[cfg(windows)]
+fn failing_command() -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), "echo err-out & exit /B 7".into()],
+    }
+}
+
+#[cfg(unix)]
+fn failing_command() -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), "printf 'err-out\\n'; exit 7".into()],
+    }
+}
+
 #[test]
 fn captures_stdout_on_success() {
     let dir = tempdir().unwrap();
@@ -18,10 +50,7 @@ fn captures_stdout_on_success() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "run".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo".into(), "capture-me".into()],
-                },
+                effect: successful_command(),
             }],
         })
         .unwrap();
@@ -47,10 +76,7 @@ fn captures_on_nonzero_exit() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "run".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo err-out& exit /B 7".into()],
-                },
+                effect: failing_command(),
             }],
         })
         .unwrap();

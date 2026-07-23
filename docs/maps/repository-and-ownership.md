@@ -55,10 +55,14 @@ jobs, gateway, built-in eval, and campaigns.
 
 ### Desktop
 
-**Confirmed current behaviour:** the native shell serves one inline UI document
-through a custom protocol and communicates through Wry IPC. A separate loopback
-HTTP mode exists for Playwright and browser testing. IPC ownership is split into
-system, sessions, scheduling, runtime, files, chat, and OS modules.
+**Confirmed current behaviour:** the native Wry/Tao shell uses WebKitGTK on Linux
+and WebView2 on Windows. It serves one inline UI document through Wry IPC at the
+platform custom-protocol URL (`optimus://localhost/` on Linux and
+`http://optimus.localhost/` on Windows). A separate loopback HTTP mode exists for
+Playwright and browser testing. IPC ownership is split into system, sessions,
+scheduling, runtime, files, chat, and OS modules. Linux user installation and
+desktop registration are owned by `scripts/rebuild-install-relaunch.sh` and the
+XDG data/bin/application/icon locations it manages.
 
 ## Current ownership boundaries
 
@@ -93,6 +97,7 @@ restructure the whole repository to imitate a template.
 
 ```text
 AGENTS.md
+OPTIMUS_AGENTS.md
 scripts/engineering_memory.py
 scripts/test_engineering_memory.py
 skills/update-engineering-memory/SKILL.md
@@ -107,6 +112,7 @@ docs/
     observability-and-evaluations.md
   contracts/high-risk-contracts.md
   decisions/0017-engineering-memory-separation.md
+  decisions/0026-separate-development-and-runtime-agents.md
   lessons/ai-agent-mistakes.md
   plans/engineering-memory-phases.md
 .engineering-memory/
@@ -124,6 +130,8 @@ docs/
   knowledge-staleness.json
 ```
 
+`AGENTS.md` is development-only. `OPTIMUS_AGENTS.md` is the product runtime
+constitution injected into Optimus chat system prompts.
 **Confirmed current behaviour:** generated repository identity is the sorted
 source-record `tree_sha256`; UTF-8 text uses canonical LF and binary bytes remain
 exact. Generated maps deliberately exclude ambient Git

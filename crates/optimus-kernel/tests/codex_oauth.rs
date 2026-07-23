@@ -2,17 +2,69 @@
 
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
 use optimus_kernel::{
     from_codex_responses_response, to_codex_responses_request, verify_user_only, CodexAuthStore,
-    CodexOAuthConfig, CodexOAuthModel, CodexTokens, CompletionRequest, Message, ModelProvider,
-    Role,
+    CodexOAuthConfig, CodexOAuthModel, CodexTokens, CompletionRequest, CredentialProtector,
+    KernelError, Message, ModelProvider, Role,
 };
 use optimus_packs::CapabilitySession;
 use serde_json::json;
 use tempfile::tempdir;
+
+#[cfg(windows)]
+const TEST_PROTECTION_LABEL: &str = "dpapi-current-user";
+#[cfg(not(windows))]
+const TEST_PROTECTION_LABEL: &str = "test-xor-v1";
+
+#[cfg(not(windows))]
+#[derive(Debug)]
+struct TestCredentialProtector;
+
+#[cfg(not(windows))]
+impl CredentialProtector for TestCredentialProtector {
+    fn label(&self) -> &'static str {
+        TEST_PROTECTION_LABEL
+    }
+
+    fn protect(&self, plaintext: &[u8]) -> Result<Vec<u8>, KernelError> {
+        Ok(plaintext.iter().map(|byte| byte ^ 0xa5).collect())
+    }
+
+    fn unprotect(&self, ciphertext: &[u8]) -> Result<Vec<u8>, KernelError> {
+        self.protect(ciphertext)
+    }
+}
+
+#[cfg(windows)]
+fn open_test_store(home: &std::path::Path) -> CodexAuthStore {
+    CodexAuthStore::open(home).unwrap()
+}
+
+#[cfg(not(windows))]
+fn open_test_store(home: &std::path::Path) -> CodexAuthStore {
+    CodexAuthStore::open_with_protector(home, Arc::new(TestCredentialProtector)).unwrap()
+}
+
+#[cfg(windows)]
+fn open_test_model(config: CodexOAuthConfig) -> CodexOAuthModel {
+    CodexOAuthModel::new(config).unwrap()
+}
+
+#[cfg(not(windows))]
+fn open_test_model(config: CodexOAuthConfig) -> CodexOAuthModel {
+    let store =
+        CodexAuthStore::open_with_protector(&config.home, Arc::new(TestCredentialProtector))
+            .unwrap();
+    CodexOAuthModel {
+        config,
+        responses_url_override: None,
+        store,
+    }
+}
 
 fn read_http_request(stream: &mut TcpStream) -> std::io::Result<()> {
     let mut request = Vec::new();
@@ -74,7 +126,7 @@ fn spawn_mock(status: u16, body: &str) -> String {
 
 fn mock_streaming_model(body: &str) -> (tempfile::TempDir, CodexOAuthModel) {
     let dir = tempdir().unwrap();
-    let store = CodexAuthStore::open(dir.path()).unwrap();
+    let store = open_test_store(dir.path());
     store
         .save_tokens(
             CodexTokens {
@@ -87,12 +139,11 @@ fn mock_streaming_model(body: &str) -> (tempfile::TempDir, CodexOAuthModel) {
             "test",
         )
         .unwrap();
-    let mut model = CodexOAuthModel::new(CodexOAuthConfig {
+    let mut model = open_test_model(CodexOAuthConfig {
         home: dir.path().to_path_buf(),
         model: "gpt-5.4".into(),
         timeout_secs: 5,
-    })
-    .unwrap();
+    });
     model.responses_url_override = Some(spawn_mock(200, body));
     (dir, model)
 }
@@ -100,7 +151,7 @@ fn mock_streaming_model(body: &str) -> (tempfile::TempDir, CodexOAuthModel) {
 #[test]
 fn codex_store_roundtrip_and_status() {
     let dir = tempdir().unwrap();
-    let store = CodexAuthStore::open(dir.path()).unwrap();
+    let store = open_test_store(dir.path());
     let st = store.status().unwrap();
     assert!(!st.present);
     store
@@ -124,7 +175,7 @@ fn codex_store_roundtrip_and_status() {
     assert!(!stored_text.contains("private-access-sentinel"));
     assert!(!stored_text.contains("private-refresh-sentinel"));
     assert!(!stored_text.contains("refresh_token"));
-    assert!(stored_text.contains("dpapi-current-user"));
+    assert!(stored_text.contains(TEST_PROTECTION_LABEL));
     verify_user_only(store.path()).unwrap();
 }
 
@@ -137,7 +188,7 @@ fn legacy_plaintext_migrates_once_and_corruption_fails_without_rewrite() {
         r#"{"version":1,"providers":{"openai-codex":{"tokens":{"access_token":"legacy-access","refresh_token":"legacy-refresh","account_id":"legacy-account","id_token":null},"last_refresh":null,"auth_mode":"legacy","base_url":"https://chatgpt.com/backend-api/codex"}}}"#,
     )
     .unwrap();
-    let store = CodexAuthStore::open(dir.path()).unwrap();
+    let store = open_test_store(dir.path());
 
     let status = store.status().unwrap();
 
@@ -145,13 +196,15 @@ fn legacy_plaintext_migrates_once_and_corruption_fails_without_rewrite() {
     assert_eq!(status.account_id.as_deref(), Some("legacy-account"));
     let migrated = std::fs::read(&path).unwrap();
     let migrated_text = String::from_utf8_lossy(&migrated);
-    assert!(migrated_text.contains("dpapi-current-user"));
+    assert!(migrated_text.contains(TEST_PROTECTION_LABEL));
     assert!(!migrated_text.contains("legacy-access"));
     verify_user_only(&path).unwrap();
 
     std::fs::write(
         &path,
-        b"{\"version\":2,\"protection\":\"dpapi-current-user\",\"ciphertext_hex\":\"zz\"}",
+        format!(
+            "{{\"version\":2,\"protection\":\"{TEST_PROTECTION_LABEL}\",\"ciphertext_hex\":\"zz\"}}"
+        ),
     )
     .unwrap();
     let corrupt = std::fs::read(&path).unwrap();
@@ -162,7 +215,7 @@ fn legacy_plaintext_migrates_once_and_corruption_fails_without_rewrite() {
 #[test]
 fn codex_responses_http_roundtrip() {
     let dir = tempdir().unwrap();
-    let store = CodexAuthStore::open(dir.path()).unwrap();
+    let store = open_test_store(dir.path());
     store
         .save_tokens(
             CodexTokens {
@@ -179,12 +232,11 @@ fn codex_responses_http_roundtrip() {
         200,
         r#"{"output":[{"type":"message","content":[{"type":"output_text","text":"codex-hi"}]}]}"#,
     );
-    let mut model = CodexOAuthModel::new(CodexOAuthConfig {
+    let mut model = open_test_model(CodexOAuthConfig {
         home: dir.path().to_path_buf(),
         model: "gpt-5.4".into(),
         timeout_secs: 5,
-    })
-    .unwrap();
+    });
     model.responses_url_override = Some(url);
     let resp = model
         .complete(CompletionRequest {
@@ -207,7 +259,7 @@ fn codex_responses_http_roundtrip() {
 #[test]
 fn production_streaming_rejects_malformed_completed_tool_call() {
     let dir = tempdir().unwrap();
-    let store = CodexAuthStore::open(dir.path()).unwrap();
+    let store = open_test_store(dir.path());
     store
         .save_tokens(
             CodexTokens {
@@ -224,12 +276,11 @@ fn production_streaming_rejects_malformed_completed_tool_call() {
         200,
         "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"output\":[{\"type\":\"function_call\",\"call_id\":\"completed-bad\",\"name\":\"memory_recall\"}]}}\n\n",
     );
-    let mut model = CodexOAuthModel::new(CodexOAuthConfig {
+    let mut model = open_test_model(CodexOAuthConfig {
         home: dir.path().to_path_buf(),
         model: "gpt-5.4".into(),
         timeout_secs: 5,
-    })
-    .unwrap();
+    });
     model.responses_url_override = Some(url);
     let error = model
         .complete_streaming(
@@ -254,7 +305,7 @@ fn production_streaming_rejects_malformed_completed_tool_call() {
 #[test]
 fn production_streaming_validates_completed_output_after_item_call() {
     let dir = tempdir().unwrap();
-    let store = CodexAuthStore::open(dir.path()).unwrap();
+    let store = open_test_store(dir.path());
     store
         .save_tokens(
             CodexTokens {
@@ -271,12 +322,11 @@ fn production_streaming_validates_completed_output_after_item_call() {
         200,
         "data: {\"type\":\"response.output_item.done\",\"item\":{\"type\":\"function_call\",\"call_id\":\"valid-item\",\"name\":\"memory_recall\",\"arguments\":\"{}\"}}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"output\":[{\"type\":\"function_call\",\"call_id\":\"completed-bad\",\"name\":\"web_search\"}]}}\n\n",
     );
-    let mut model = CodexOAuthModel::new(CodexOAuthConfig {
+    let mut model = open_test_model(CodexOAuthConfig {
         home: dir.path().to_path_buf(),
         model: "gpt-5.4".into(),
         timeout_secs: 5,
-    })
-    .unwrap();
+    });
     model.responses_url_override = Some(url);
     let error = model
         .complete_streaming(

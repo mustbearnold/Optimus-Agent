@@ -7,6 +7,22 @@ use optimus_runtime::{Runtime, RuntimeError};
 use optimus_skills::{Permission, SkillDraft, SkillRegistry};
 use tempfile::tempdir;
 
+#[cfg(windows)]
+fn shell_command(script: &str) -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), script.into()],
+    }
+}
+
+#[cfg(unix)]
+fn shell_command(script: &str) -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), script.into()],
+    }
+}
+
 #[test]
 fn skill_with_terminal_unlocks_run_command() {
     let root = tempdir().unwrap();
@@ -37,10 +53,7 @@ fn skill_with_terminal_unlocks_run_command() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "echo".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo hi>out.txt".into()],
-                },
+                effect: shell_command("echo hi>out.txt"),
             }],
         })
         .unwrap();
@@ -85,10 +98,7 @@ fn skill_without_terminal_cannot_grant_run_command() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "echo".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo x>x.txt".into()],
-                },
+                effect: shell_command("echo x>x.txt"),
             }],
         })
         .unwrap();

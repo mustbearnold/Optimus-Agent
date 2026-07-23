@@ -7,9 +7,11 @@ const os = require('os');
 const net = require('net');
 
 const ROOT = path.resolve(__dirname, '../../..');
+const TARGET_DIR = process.env.CARGO_TARGET_DIR || path.join(ROOT, 'target');
 const EXE = path.join(
-  process.env.CARGO_TARGET_DIR || path.join(ROOT, 'local/tmp/cargo-target'),
-  'debug/optimus-desktop.exe'
+  TARGET_DIR,
+  'debug',
+  `optimus-desktop${process.platform === 'win32' ? '.exe' : ''}`
 );
 let activeBaseUrl = '';
 const HTTP_TOKEN = `optimus-e2e-token-${process.pid}-0123456789abcdef`;

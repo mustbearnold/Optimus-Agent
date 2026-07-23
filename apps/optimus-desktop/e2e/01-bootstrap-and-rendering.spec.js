@@ -161,3 +161,46 @@ test('formatRich hides tool JSON and keeps prose', async ({ page }) => {
   expect(cleaned.mixed).toContain('**Hello**');
   expect(cleaned.mixed).not.toContain('call_x');
 });
+
+test('formatRich cannot create event-handler attributes from markdown links', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+
+  const rendered = await page.evaluate(() => {
+    const host = document.createElement('div');
+    const hooks = (/** @type {any} */ (window)).__optimusTest;
+    host.innerHTML = hooks.formatRich(
+      '[safe](https://example.com/"onmouseover="globalThis.__optimusLinkPwned=1")'
+    );
+    const link = host.querySelector('a.md-link');
+    return {
+      linkCount: host.querySelectorAll('a.md-link').length,
+      eventAttributes: link
+        ? [...link.attributes].map((attr) => attr.name).filter((name) => /^on/i.test(name))
+        : [],
+    };
+  });
+
+  expect(rendered.linkCount).toBe(1);
+  expect(rendered.eventAttributes).toEqual([]);
+});
+
+test('active turns retain session ownership until streaming settles', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+
+  const blocked = await page.evaluate(async () => {
+    const hooks = (/** @type {any} */ (window)).__optimusTest;
+    hooks.setBusy(true);
+    try {
+      return {
+        created: await hooks.newSession(),
+        opened: await hooks.openSession('must-not-be-requested'),
+      };
+    } finally {
+      hooks.setBusy(false);
+    }
+  });
+
+  expect(blocked).toEqual({ created: false, opened: false });
+});

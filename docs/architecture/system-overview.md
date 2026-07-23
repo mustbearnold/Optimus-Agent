@@ -70,7 +70,7 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 | Component | State | Current responsibility |
 |---|---|---|
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
-| `apps/optimus-desktop` | Confirmed current behaviour | Windows-first Wry/Tao desktop shell, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
+| `apps/optimus-desktop` | Confirmed current behaviour | Native Wry/Tao desktop shell with WebKitGTK on Linux and WebView2 on Windows, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
 | `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, cron, gateway, browser/search effectors, filesystem sandbox, and offline eval harnesses. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
@@ -109,14 +109,17 @@ executors.
 step/failure/time budgets. A running node recovered after process death becomes
 `interrupted`, never silently `succeeded`. `run_all` stops on success, failure,
 approval wait, or a non-runnable/error condition. Commands are killed and reaped
-at a bounded timeout, and stdout/stderr capture is capped. On Windows commands
-launch suspended, enter a private kill-on-close Job Object before resume, and
-settlement verifies the Job has zero active processes.
+at a bounded timeout, and stdout/stderr capture is capped. On Unix each command
+enters a private process group before `exec`; cancellation, timeout, normal root
+exit, and guard drop terminate that owned group and verify it is empty. On
+Windows commands launch suspended, enter a private kill-on-close Job Object
+before resume, and settlement verifies the Job has zero active processes.
 
 **Confirmed current behaviour:** jobs, nodes, campaign steps, and campaigns have
 typed `cancelled` outcomes. Cancellation requests are durable and idempotent;
 pending work terminalizes atomically, running commands observe the request and
-terminate/reap their Windows process tree before cancellation is finalized, and
+terminate and reap their platform-owned process tree before cancellation is
+finalized, and
 campaign cancellation propagates to created jobs and uncreated steps. A storage
 unique terminal slot enforces exactly one terminal event across repeated cancel,
 resume, run, recovery, and recomputation.

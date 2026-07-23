@@ -327,6 +327,7 @@
         "status": "confirmed_current_behaviour"
       },
       "validated_by": [
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
         "crates/optimus-kernel/tests/browser_live.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "crates/optimus-packs/tests/packs_budget.rs"

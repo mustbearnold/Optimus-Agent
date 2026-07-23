@@ -11,8 +11,9 @@ pub const BRIDGE_JS: &str = r#"
 
   function isHttpMode() {
     // ONLY the Playwright/dev HTTP server (127.0.0.1:PORT) uses fetch IPC.
-    // Native WebView serves UI via custom protocol http://optimus.localhost/ —
-    // that MUST use window.ipc, not fetch (fetch hits the asset handler and dies).
+    // Native WebView serves UI through Wry's custom protocol. WebView2/Android
+    // expose http://optimus.localhost/; WebKitGTK/WebKit use optimus://localhost/.
+    // Both MUST use window.ipc, not fetch (fetch hits the asset handler and dies).
     try {
       if (window.__OPTIMUS_HTTP_MODE__ === true) return true;
       var host = location.hostname || '';
@@ -92,7 +93,7 @@ pub const BRIDGE_JS: &str = r#"
         if (!postNative(payload)) {
           pending.delete(id);
           clearTimeout(timer);
-          reject(new Error('Native bridge missing — run optimus-desktop.exe'));
+          reject(new Error('Native bridge missing — run optimus-desktop'));
         }
       } catch (e) {
         pending.delete(id);
@@ -228,6 +229,8 @@ pub const BRIDGE_JS: &str = r#"
 
   window.optimus = {
     doctor: function () { return post('doctor'); },
+    settingsGet: function () { return post('settings_get'); },
+    settingsSet: function (params) { return post('settings_set', params || {}); },
     sessions: function () { return post('sessions'); },
     getSession: function (id) { return post('get_session', { id: id }); },
     newSession: function () { return post('new_session'); },
@@ -274,6 +277,7 @@ pub const BRIDGE_JS: &str = r#"
     deleteSession: function (id) { return post('delete_session', { id: id }); },
     renameSession: function (id, title) { return post('rename_session', { id: id, title: title }); },
     openPath: function (path) { return post('open_path', { path: path }); },
+    openUrl: function (url) { return post('open_url', { url: url }); },
     invoke: function (method, params) { return post(method, params || {}); },
   };
 
@@ -306,5 +310,11 @@ mod tests {
         assert!(BRIDGE_JS.contains("signal: controller.signal"));
         assert!(BRIDGE_JS.contains("task.cancel = cancelOnce"));
         assert!(BRIDGE_JS.contains("post('chat_cancel', { stream_id: id })"));
+    }
+
+    #[test]
+    fn external_links_use_the_validated_os_ipc() {
+        assert!(BRIDGE_JS.contains("openUrl: function (url)"));
+        assert!(BRIDGE_JS.contains("post('open_url', { url: url })"));
     }
 }

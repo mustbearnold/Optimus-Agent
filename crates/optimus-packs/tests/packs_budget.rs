@@ -34,6 +34,17 @@ fn activate_browser_increases_schema_tokens() {
 }
 
 #[test]
+fn desktop_pack_exposes_computer_use_desktop_tool() {
+    let mut session = CapabilitySession::with_defaults();
+    session.activate(PackId::Desktop).unwrap();
+
+    let err = session
+        .resolve_loaded_tool("desktop_screenshot")
+        .unwrap_err();
+    assert_eq!(err, PackError::ToolUnavailable("desktop_screenshot".into()));
+}
+
+#[test]
 fn on_demand_pack_limit_is_two() {
     let mut s = CapabilitySession::with_defaults();
     s.activate(PackId::Browser).unwrap();

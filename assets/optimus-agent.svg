@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Optimus Agent</title>
+  <desc id="desc">A luminous segmented O surrounding an agent spark on a dark rounded square.</desc>
+  <defs>
+    <linearGradient id="surface" x1="24" y1="20" x2="230" y2="238" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171A24"/>
+      <stop offset="1" stop-color="#07080D"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="53" y1="42" x2="207" y2="211" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#57E6FF"/>
+      <stop offset="0.48" stop-color="#7287FF"/>
+      <stop offset="1" stop-color="#B067FF"/>
+    </linearGradient>
+    <radialGradient id="spark" cx="0" cy="0" r="1" gradientTransform="translate(128 128) rotate(90) scale(43)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.34" stop-color="#9BEAFF"/>
+      <stop offset="1" stop-color="#6879FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="25" y="25" width="206" height="206" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#surface)"/>
+  <rect x="9" y="9" width="238" height="238" rx="53" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+  <circle cx="128" cy="128" r="72" fill="none" stroke="url(#ring)" stroke-opacity="0.28" stroke-width="20" filter="url(#glow)"/>
+  <path d="M188.8 166.5A72 72 0 1 1 188.8 89.5" fill="none" stroke="url(#ring)" stroke-width="19" stroke-linecap="round"/>
+  <path d="M199 102L207 128L199 154" fill="none" stroke="#8DA1FF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="128" cy="128" r="43" fill="url(#spark)" opacity="0.82"/>
+  <path d="M128 91L136.2 119.8L165 128L136.2 136.2L128 165L119.8 136.2L91 128L119.8 119.8L128 91Z" fill="#F4FCFF"/>
+  <circle cx="128" cy="128" r="7" fill="#5FDFFF"/>
+</svg>

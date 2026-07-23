@@ -9,6 +9,149 @@
     localStorage.setItem(THEME_KEY, resolved);
   }
   applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+  /* High-refresh interactable motion: press class + velocity smear via rAF. */
+  (function installInteractableMotion() {
+    const INTERACT_SEL = [
+      'button', '[role="button"]', '[role="menuitem"]', '[role="tab"]', '[role="option"]',
+      '.chip', '.tb-btn', '.nav-item', '.settings-btn', '.btn-mini', '.thread', '.thread-pin',
+      '.proj-head', '.proj-add', '.proj-new', '.empty-action', '.cdd-btn', '.send', '.fs-row',
+      '.artifact-row', '.artifact-delete-btn', '.annot-toggle', '.annot-remove', '.annot-send-btn',
+      '.annot-clear-btn', '.crumb', '.chrome-icon-btn', '.chrome-go-btn', '.cap-row',
+      '.ctx-menu button', '#cddPortal button', '#cddPortal .cdd-item', '#listModeToggle button',
+      '#rightPaneTabs button', '#filesUp', '#filesRefresh', '.tool-card summary', '.workspace-toggle',
+    ].join(',');
+    const reduceMq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    let motionEnabled = !(reduceMq && reduceMq.matches);
+    let pressed = null;
+    let smearEl = null;
+    let lastX = 0;
+    let lastY = 0;
+    let lastT = 0;
+    let smearRaf = 0;
+    let longFrames = 0;
+    let lastFrameT = 0;
+
+    function setMotionAttr(on) {
+      motionEnabled = on;
+      html.setAttribute('data-v-motion', on ? 'on' : 'off');
+    }
+    setMotionAttr(motionEnabled);
+    if (reduceMq) {
+      const onReduce = () => setMotionAttr(!reduceMq.matches);
+      if (reduceMq.addEventListener) reduceMq.addEventListener('change', onReduce);
+      else if (reduceMq.addListener) reduceMq.addListener(onReduce);
+    }
+
+    function isInteractable(el) {
+      if (!(el instanceof Element)) return null;
+      const hit = el.closest(INTERACT_SEL);
+      if (!hit) return null;
+      if (hit.closest('.bubble-body, #browserSurface, #browserShot, #termOut, #filePreview')) return null;
+      if (hit.disabled || hit.getAttribute('aria-disabled') === 'true') return null;
+      return hit;
+    }
+
+    function clearPress() {
+      if (!pressed) return;
+      pressed.classList.remove('v-pressing');
+      pressed = null;
+    }
+
+    function clearSmear() {
+      if (smearEl) {
+        smearEl.classList.remove('v-smear');
+        smearEl.style.removeProperty('--motion-blur-dyn');
+        smearEl = null;
+      }
+      if (smearRaf) {
+        cancelAnimationFrame(smearRaf);
+        smearRaf = 0;
+      }
+    }
+
+    function applySmear(el, px) {
+      if (!motionEnabled || !el) return;
+      const blur = Math.min(1.15, Math.max(0, px));
+      if (blur < 0.08) {
+        if (smearEl === el) clearSmear();
+        return;
+      }
+      if (smearEl && smearEl !== el) clearSmear();
+      smearEl = el;
+      el.style.setProperty('--motion-blur-dyn', blur.toFixed(3) + 'px');
+      el.classList.add('v-smear');
+      if (smearRaf) cancelAnimationFrame(smearRaf);
+      const started = performance.now();
+      const from = blur;
+      const tick = (now) => {
+        const t = Math.min(1, (now - started) / 90);
+        const v = from * (1 - t);
+        if (v < 0.06 || !smearEl) {
+          clearSmear();
+          return;
+        }
+        smearEl.style.setProperty('--motion-blur-dyn', v.toFixed(3) + 'px');
+        smearRaf = requestAnimationFrame(tick);
+      };
+      smearRaf = requestAnimationFrame(tick);
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+      if (!motionEnabled || e.button !== 0) return;
+      const hit = isInteractable(e.target);
+      if (!hit) return;
+      clearPress();
+      pressed = hit;
+      hit.classList.add('v-pressing');
+      lastX = e.clientX;
+      lastY = e.clientY;
+      lastT = performance.now();
+    }, true);
+
+    document.addEventListener('pointerup', () => clearPress(), true);
+    document.addEventListener('pointercancel', () => { clearPress(); clearSmear(); }, true);
+    document.addEventListener('pointerleave', (e) => {
+      if (e.target === document.documentElement || e.target === document.body) {
+        clearPress();
+        clearSmear();
+      }
+    }, true);
+
+    document.addEventListener('pointermove', (e) => {
+      if (!motionEnabled) return;
+      const now = performance.now();
+      const dt = Math.max(1, now - (lastT || now));
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      lastT = now;
+      const speed = Math.hypot(dx, dy) / dt; // px/ms
+      if (speed < 0.35) return;
+      const hit = isInteractable(e.target);
+      if (!hit || hit === pressed) return;
+      applySmear(hit, speed * 1.1);
+    }, { capture: true, passive: true });
+
+    /* Long-frame guard: drop decorative blur if frames stay expensive. */
+    const watch = (now) => {
+      if (lastFrameT) {
+        const frame = now - lastFrameT;
+        if (frame > 28) longFrames += 1;
+        else longFrames = Math.max(0, longFrames - 1);
+        if (longFrames >= 12 && motionEnabled && !(reduceMq && reduceMq.matches)) {
+          setMotionAttr(false);
+          clearPress();
+          clearSmear();
+        }
+      }
+      lastFrameT = now;
+      requestAnimationFrame(watch);
+    };
+    requestAnimationFrame(watch);
+  })();
+
   function toggleTheme() {
     applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   }
@@ -23,7 +166,8 @@
     }
   });
   // Detect native vs HTTP chrome
-  // optimus.localhost (custom protocol WebView) is ALWAYS native — never treat as HTTP.
+  // Wry custom-protocol pages are always native: optimus.localhost on
+  // WebView2/Android and optimus://localhost on WebKitGTK/WebKit.
   function isNativeDesktop() {
     try {
       if (window.__OPTIMUS_HTTP_MODE__ === true) return false;
@@ -35,6 +179,28 @@
   }
   const isHttp = !isNativeDesktop();
   document.body.classList.add(isHttp ? 'http-mode' : 'native-chrome');
+  document.addEventListener('click', (e) => {
+    if (isHttp || !(e.target instanceof Element)) return;
+    const link = e.target.closest('a.md-link[href]');
+    if (!link) return;
+    e.preventDefault();
+    const href = link.getAttribute('href') || '';
+    if (window.optimus && typeof window.optimus.openUrl === 'function') {
+      window.optimus.openUrl(href).catch((error) => {
+        console.error('open external link failed', error);
+      });
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!(e.target instanceof Element)) return;
+    const starter = e.target.closest('[data-starter]');
+    if (!starter) return;
+    const input = $('input');
+    if (!input) return;
+    input.value = starter.getAttribute('data-starter') || '';
+    if (typeof autoGrow === 'function') autoGrow();
+    input.focus();
+  });
   function postDragNative() {
     // Lightest possible drag IPC (no await) — also triggers Rust DragWindow fast-path.
     try {
@@ -85,7 +251,7 @@
   if ($('winMax')) $('winMax').onclick = () => { winFire('window_maximize'); };
   if ($('winClose')) $('winClose').onclick = () => { winFire('window_close'); };
   // Titlebar drag — root cause of prior failure:
-  // 1) drag_window requires LMB still down when UI thread runs UserEvent; WebView2 IPC is async.
+  // 1) drag_window requires LMB still down when the UI thread handles the async Wry IPC event.
   // 2) preventDefault + dual pointerdown/mousedown disrupted capture.
   // Fix: fire OS drag_window ASAP AND track screen deltas with set_outer_position (always works).
   function isDragExempt(t) {
@@ -134,7 +300,7 @@
       // Attempt OS caption drag immediately (works when UserEvent is timely).
       postDragNative();
 
-      // Arm manual position drag (reliable under WebView2 async IPC).
+      // Arm manual position drag as the backend-neutral async IPC fallback.
       const sx = e.screenX;
       const sy = e.screenY;
       const startManual = (pos) => {
@@ -495,6 +661,8 @@
       e.stopPropagation();
       dragging = true;
       el.classList.add('dragging');
+      document.body.classList.add('is-resizing');
+      startBrowserResizePulse('left-divider');
       const onMove = (ev) => {
         if (!dragging) return;
         const shell = document.querySelector('.shell') || document.body;
@@ -502,18 +670,23 @@
         let w = ev.clientX - rect.left;
         w = Math.max(180, Math.min(Math.floor(rect.width * 0.5), w));
         document.documentElement.style.setProperty('--sidebar-w', w + 'px');
+        if (typeof syncBrowserEmbedBounds === 'function') syncBrowserEmbedBounds();
       };
       const onUp = () => {
         dragging = false;
         el.classList.remove('dragging');
+        document.body.classList.remove('is-resizing');
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        stopBrowserResizePulse('left-divider');
         try {
           localStorage.setItem(SIDEBAR_W_KEY, getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim());
         } catch {}
       };
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
     });
   })();
 
@@ -578,7 +751,77 @@
     });
   })();
 
-  // Settings popover
+  // Settings popover + durable work isolation (Phase 0)
+  let __productSettings = {
+    work_isolation: 'shared',
+    allow_concurrent_projects: false,
+    enforcement_active: true,
+  };
+
+  function isolationShortLabel(mode) {
+    if (mode === 'project_bound') return 'bound';
+    if (mode === 'isolated_profiles') return 'isolated';
+    return 'shared';
+  }
+
+  function applyIsolationToUi(settings) {
+    __productSettings = settings || __productSettings;
+    const mode = __productSettings.work_isolation || 'shared';
+    document.querySelectorAll('input[name="workIsolation"]').forEach(function(r) {
+      r.checked = r.value === mode;
+    });
+    const conc = $('allowConcurrentProjects');
+    if (conc) conc.checked = !!__productSettings.allow_concurrent_projects;
+    const note = $('isolationNote');
+    if (note) {
+      if (__productSettings.enforcement_active === false || (mode !== 'shared' && !__productSettings.enforcement_active)) {
+        note.hidden = false;
+        note.textContent = __productSettings.enforcement_note
+          || 'Mode saved as intent. Project-bound / profile enforcement ships later; runtime still uses shared paths today.';
+      } else {
+        note.hidden = true;
+        note.textContent = '';
+      }
+    }
+    if ($('stIsolation')) {
+      const em = $('stIsolation').querySelector('em');
+      if (em) em.textContent = isolationShortLabel(mode);
+      $('stIsolation').title = (__productSettings.work_isolation_label || mode)
+        + (__productSettings.allow_concurrent_projects ? ' · concurrent on' : ' · concurrent off');
+    }
+  }
+
+  async function loadProductSettings() {
+    try {
+      const data = await postRaw('settings_get', {});
+      const s = (data && data.settings) || data || {};
+      applyIsolationToUi(s);
+      return s;
+    } catch (e) {
+      console.warn('settings_get', e);
+      applyIsolationToUi(__productSettings);
+      return __productSettings;
+    }
+  }
+
+  async function saveProductSettingsFromUi() {
+    const selected = document.querySelector('input[name="workIsolation"]:checked');
+    const mode = (selected && selected.value) || 'shared';
+    const allow = !!( $('allowConcurrentProjects') && $('allowConcurrentProjects').checked );
+    try {
+      const data = await postRaw('settings_set', {
+        work_isolation: mode,
+        allow_concurrent_projects: allow,
+      });
+      const s = (data && data.settings) || {};
+      applyIsolationToUi(s);
+      try { await refreshStatusBar(); } catch {}
+    } catch (e) {
+      alert('Could not save settings: ' + (e.message || e));
+      await loadProductSettings();
+    }
+  }
+
   if ($('settingsBtn') && $('settingsPop')) {
     $('settingsBtn').onclick = (e) => {
       e.stopPropagation();
@@ -586,7 +829,10 @@
       const open = !pop.classList.contains('open');
       pop.classList.toggle('open', open);
       pop.setAttribute('aria-hidden', open ? 'false' : 'true');
-      if (open) refreshCron().catch(() => {});
+      if (open) {
+        loadProductSettings().catch(() => {});
+        refreshCron().catch(() => {});
+      }
     };
     document.addEventListener('click', (e) => {
       const pop = $('settingsPop');
@@ -596,6 +842,13 @@
       pop.setAttribute('aria-hidden', 'true');
     });
   }
+  document.querySelectorAll('input[name="workIsolation"]').forEach(function(r) {
+    r.onchange = function() { saveProductSettingsFromUi(); };
+  });
+  if ($('allowConcurrentProjects')) {
+    $('allowConcurrentProjects').onchange = function() { saveProductSettingsFromUi(); };
+  }
+  loadProductSettings().catch(() => {});
 
   // Context menu pin/unpin
   let _ctxSessionId = null;
@@ -746,6 +999,7 @@
     sessions: [],
     messages: [],
     busy: false,
+    sessionTransition: false,
     activeCancel: null,
     cancelRequested: false,
     filter: '',
@@ -754,7 +1008,7 @@
     streamRaf: 0,
     stickScroll: true,
     route: 'chat',
-    layout: { right: false, term: false, logs: false },
+    layout: { left: true, right: false, term: false, logs: false },
     filesPath: '',
     filesLoading: false,
     filePreviewPath: '',
@@ -816,6 +1070,20 @@
     }
     state.turnStartedPerfMs = null;
   }
+  function resetSessionTransients() {
+    if (state.turnTimerHandle) clearInterval(state.turnTimerHandle);
+    state.turnTimerHandle = null;
+    state.turnStartedPerfMs = null;
+    state.latestTurnTimings = null;
+    state.tasks = [];
+    renderTasks();
+    setTaskPanel(false);
+    const node = $('turnTimer');
+    if (node) {
+      node.textContent = 'turn —';
+      node.dataset.active = 'false';
+    }
+  }
   setInterval(paintSessionClock, 1000);
   paintSessionClock();
   function loadLayout() {
@@ -823,6 +1091,7 @@
       const raw = localStorage.getItem(LAYOUT_KEY);
       if (!raw) return;
       const j = JSON.parse(raw);
+      if (typeof j.left === 'boolean') state.layout.left = j.left;
       if (typeof j.right === 'boolean') state.layout.right = j.right;
       if (typeof j.term === 'boolean') state.layout.term = j.term;
       if (typeof j.logs === 'boolean') state.layout.logs = j.logs;
@@ -831,36 +1100,63 @@
   function saveLayout() {
     try {
       localStorage.setItem(LAYOUT_KEY, JSON.stringify({
+        left: !!state.layout.left,
         right: !!state.layout.right,
         term: !!state.layout.term,
         logs: !!state.layout.logs,
       }));
     } catch {}
   }
+  let layoutMotionTimer = 0;
+  let lastLayoutSignature = null;
+  function setMountedPane(node, open) {
+    if (!node) return;
+    node.removeAttribute('hidden');
+    node.classList.toggle('open', !!open);
+    node.classList.toggle('pane-hidden', !open);
+    node.setAttribute('aria-hidden', open ? 'false' : 'true');
+    try { node.inert = !open; } catch {}
+  }
+  function pulseWorkspaceLayout() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (typeof startBrowserResizePulse === 'function') startBrowserResizePulse('workspace-motion');
+    if (layoutMotionTimer) clearTimeout(layoutMotionTimer);
+    layoutMotionTimer = window.setTimeout(() => {
+      layoutMotionTimer = 0;
+      if (typeof stopBrowserResizePulse === 'function') stopBrowserResizePulse('workspace-motion');
+      if (typeof scheduleBrowserEmbedSync === 'function') scheduleBrowserEmbedSync();
+    }, 190);
+  }
   function applyLayout() {
     const right = $('rightPane');
     const term = $('termPane');
     const logs = $('logsDrawer');
     const row = $('appRow');
+    const leftToggle = $('toggleLeft');
     const tr = $('toggleRight');
     const tt = $('toggleTerm');
     const tl = $('toggleLogs');
-    if (right) {
-      if (state.layout.right) { right.classList.add('open'); right.removeAttribute('hidden'); }
-      else { right.classList.remove('open'); right.setAttribute('hidden', ''); }
+    const signature = `${state.layout.left ? 1 : 0}:${state.layout.right ? 1 : 0}:${state.layout.term ? 1 : 0}:${state.layout.logs ? 1 : 0}`;
+    const changed = lastLayoutSignature !== null && lastLayoutSignature !== signature;
+    lastLayoutSignature = signature;
+
+    setMountedPane(right, !!state.layout.right);
+    setMountedPane(term, !!state.layout.term);
+    setMountedPane(logs, !!state.layout.logs);
+    if (row) {
+      row.classList.toggle('right-open', !!state.layout.right);
+      row.classList.toggle('left-collapsed', !state.layout.left);
     }
-    if (term) {
-      if (state.layout.term) { term.classList.add('open'); term.removeAttribute('hidden'); }
-      else { term.classList.remove('open'); term.setAttribute('hidden', ''); }
+    html.setAttribute('data-left-collapsed', state.layout.left ? 'false' : 'true');
+    if (leftToggle) {
+      leftToggle.classList.toggle('active', !state.layout.left);
+      leftToggle.setAttribute('aria-pressed', state.layout.left ? 'false' : 'true');
     }
-    if (logs) {
-      if (state.layout.logs) { logs.classList.add('open'); logs.removeAttribute('hidden'); }
-      else { logs.classList.remove('open'); logs.setAttribute('hidden', ''); }
-    }
-    if (row) row.classList.toggle('right-open', !!state.layout.right);
     if (tr) { tr.classList.toggle('active', !!state.layout.right); tr.setAttribute('aria-pressed', state.layout.right ? 'true' : 'false'); }
     if (tt) { tt.classList.toggle('active', !!state.layout.term); tt.setAttribute('aria-pressed', state.layout.term ? 'true' : 'false'); }
     if (tl) { tl.classList.toggle('active', !!state.layout.logs); tl.setAttribute('aria-pressed', state.layout.logs ? 'true' : 'false'); }
+    if (changed) pulseWorkspaceLayout();
+    if (typeof scheduleBrowserEmbedSync === 'function') scheduleBrowserEmbedSync();
   }
   function setRoute(route) {
     const r = ['chat', 'capabilities', 'messaging', 'artifacts'].includes(route) ? route : 'chat';
@@ -929,15 +1225,23 @@
       return href.slice(0, 40) + (href.length > 40 ? '…' : '');
     }
   }
+  // formatInline receives text that has already passed through esc(). Quotes
+  // remain literal there because they are safe in text nodes, but they must be
+  // encoded before the same value crosses into an HTML attribute.
+  function escInlineAttr(s) {
+    return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
   function formatInline(escText) {
     // links: [label](url) then bare urls
     let s = escText;
     s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, lab, href) => {
       const label = lab === 'source' || lab === 'Source' ? prettyUrl(href) : lab;
-      return `<a class="md-link" href="${href}" title="${href}" target="_blank" rel="noreferrer">${label}</a>`;
+      const attrHref = escInlineAttr(href);
+      return `<a class="md-link" href="${attrHref}" title="${attrHref}" target="_blank" rel="noreferrer">${label}</a>`;
     });
     s = s.replace(/(^|[\s(])(https?:\/\/[^\s)<]+)/g, (_, pre, href) => {
-      return `${pre}<a class="md-link" href="${href}" title="${href}" target="_blank" rel="noreferrer">${prettyUrl(href)}</a>`;
+      const attrHref = escInlineAttr(href);
+      return `${pre}<a class="md-link" href="${attrHref}" title="${attrHref}" target="_blank" rel="noreferrer">${prettyUrl(href)}</a>`;
     });
     // bold / italic (order matters)
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -1033,7 +1337,14 @@
     }
     return order;
   }
-  window.__optimusTest = Object.freeze({ coalesceTools, stripToolCallNoise });
+  window.__optimusTest = Object.freeze({
+    coalesceTools,
+    stripToolCallNoise,
+    formatRich,
+    setBusy,
+    newSession,
+    openSession,
+  });
   function formatToolDetail(name, runs) {
     const titles = [];
     const queries = [];
@@ -1107,6 +1418,8 @@
     if (!p) return;
     p.classList.toggle('open', !!open);
     p.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open) p.removeAttribute('hidden');
+    else p.setAttribute('hidden', '');
     if (chip) chip.classList.toggle('active', !!open);
   }
   function upsertTask(name, detail, status, callId) {
@@ -1151,6 +1464,7 @@
   function finishTasks() {
     state.tasks = state.tasks.map(t => t.status === 'run' ? { ...t, status: 'ok' } : t);
     renderTasks();
+    setTaskPanel(false);
   }
   function msgHtml(m, idx, enter) {
     const enterCls = enter ? ' is-enter' : '';
@@ -1158,15 +1472,14 @@
       return `<div class="msg user${enterCls}" data-msg-idx="${idx}"><div class="bubble">${esc(m.content)}</div></div>`;
     }
     const tools = toolsHtml(m.tools);
-    let body;
-    if (!m.content && m.streaming) {
-      body = `<span class="typing" id="typing">Optimus is working…</span>`;
-    } else {
-      body = `<div class="bubble-body" data-stream-body="1">${formatRich(m.content || '')}</div>`;
-      if (m.streaming && m.content) body += `<span class="stream-cursor" aria-hidden="true"></span>`;
-    }
-    return `<div class="msg assistant${enterCls}" data-msg-idx="${idx}" data-streaming="${m.streaming ? '1' : '0'}">
-      <div class="bubble">${tools}${body}</div>
+    const live = !!m.streaming;
+    let bodyContent;
+    if (!m.content && live) bodyContent = '<span class="typing" id="typing">Optimus is working…</span>';
+    else bodyContent = live ? esc(m.content || '') : formatRich(m.content || '');
+    const liveAttr = live && m.content ? ' data-live-plain="1"' : '';
+    const cursor = live && m.content ? '<span class="stream-cursor" aria-hidden="true"></span>' : '';
+    return `<div class="msg assistant${enterCls}" data-msg-idx="${idx}" data-streaming="${live ? '1' : '0'}">
+      <div class="bubble"><div class="tool-stack" data-stream-tools="1">${tools}</div><div class="bubble-body" data-stream-body="1"${liveAttr}>${bodyContent}</div>${cursor}</div>
       ${m.meta ? `<div class="status-strip">${m.meta}</div>` : ''}
     </div>`;
   }
@@ -1175,8 +1488,13 @@
     const root = $('messages');
     if (!state.messages.length) {
       root.innerHTML = `<div class="empty" id="emptyState">
-        <h2>${state.sessionId ? 'Empty session' : 'Start a session'}</h2>
-        <p>Messages persist in sessions.db under your Optimus home.</p>
+        <h2>${state.sessionId ? 'What should Optimus change next?' : 'What should Optimus change?'}</h2>
+        <p>Choose a supported starting point or describe the outcome in the composer.</p>
+        <div class="empty-actions" aria-label="Starter tasks">
+          <button type="button" class="empty-action" data-starter="Diagnose the failing test and fix its root cause."><span class="ea-icon">◇</span><span>Fix a failing test</span><span class="ea-hint">trace → patch → verify</span></button>
+          <button type="button" class="empty-action" data-starter="Review the current changed files for bugs, regressions, and unnecessary complexity."><span class="ea-icon">≋</span><span>Audit current changes</span><span class="ea-hint">diff → risks → proof</span></button>
+          <button type="button" class="empty-action" data-starter="Inspect this workspace and create an implementation plan for the feature I describe."><span class="ea-icon">⌁</span><span>Plan a feature</span><span class="ea-hint">scope → plan → build</span></button>
+        </div>
       </div>`;
       return;
     }
@@ -1199,7 +1517,7 @@
   function paintStreamBubble(idx) {
     const m = state.messages[idx];
     if (!m) return;
-    let node = document.querySelector(`[data-msg-idx="${idx}"]`);
+    const node = document.querySelector(`[data-msg-idx="${idx}"]`);
     if (!node) {
       renderMessages({ forceScroll: true });
       return;
@@ -1209,24 +1527,60 @@
       renderMessages({ forceScroll: true });
       return;
     }
-    const tools = toolsHtml(m.tools);
-    let body;
-    if (!m.content && m.streaming) {
-      body = `<span class="typing" id="typing">Optimus is working…</span>`;
-    } else {
-      body = `<div class="bubble-body" data-stream-body="1">${formatRich(m.content || '')}</div>`;
-      if (m.streaming && m.content) body += `<span class="stream-cursor" aria-hidden="true"></span>`;
+    let toolStack = bubble.querySelector('[data-stream-tools="1"]');
+    if (!toolStack) {
+      toolStack = document.createElement('div');
+      toolStack.className = 'tool-stack';
+      toolStack.dataset.streamTools = '1';
+      bubble.prepend(toolStack);
     }
-    // Avoid full list rebuild — only this bubble
-    bubble.innerHTML = tools + body;
+    const tools = toolsHtml(m.tools);
+    if (toolStack.__optimusHtml !== tools) {
+      toolStack.innerHTML = tools;
+      toolStack.__optimusHtml = tools;
+    }
+
+    let body = bubble.querySelector('[data-stream-body="1"]');
+    if (!body) {
+      body = document.createElement('div');
+      body.className = 'bubble-body';
+      body.dataset.streamBody = '1';
+      bubble.appendChild(body);
+    }
+    let cursor = bubble.querySelector('.stream-cursor');
+    if (m.streaming && m.content) {
+      if (body.dataset.livePlain !== '1' || body.textContent !== String(m.content)) {
+        body.textContent = String(m.content);
+      }
+      body.dataset.livePlain = '1';
+      if (!cursor) {
+        cursor = document.createElement('span');
+        cursor.className = 'stream-cursor';
+        cursor.setAttribute('aria-hidden', 'true');
+        body.insertAdjacentElement('afterend', cursor);
+      }
+    } else if (m.streaming) {
+      delete body.dataset.livePlain;
+      if (!body.querySelector('.typing')) body.innerHTML = '<span class="typing" id="typing">Optimus is working…</span>';
+      if (cursor) cursor.remove();
+    } else {
+      delete body.dataset.livePlain;
+      const rich = formatRich(m.content || '');
+      if (body.innerHTML !== rich) body.innerHTML = rich;
+      if (cursor) cursor.remove();
+    }
+    node.dataset.streaming = m.streaming ? '1' : '0';
+
+    let strip = node.querySelector('.status-strip');
     if (m.meta) {
-      let strip = node.querySelector('.status-strip');
       if (!strip) {
         strip = document.createElement('div');
         strip.className = 'status-strip';
         node.appendChild(strip);
       }
-      strip.innerHTML = m.meta;
+      if (strip.innerHTML !== m.meta) strip.innerHTML = m.meta;
+    } else if (strip) {
+      strip.remove();
     }
     stickToBottom(false);
   }
@@ -1250,7 +1604,7 @@
     if (!auth) {
       el.hidden = false;
       el.className = 'auth-banner err';
-      el.textContent = 'Native bridge offline — launch optimus-desktop.exe';
+      el.textContent = 'Native bridge offline — launch optimus-desktop';
       return;
     }
     if (auth.present && !auth.access_expiring) {
@@ -1544,61 +1898,76 @@
     renderSessions();
   }
   async function openSession(id) {
-    if (!id) return;
-    const detail = await api('getSession', id);
-    state.sessionId = detail.id;
-    const meta = state.sessions.find((session) => String(session.id) === String(detail.id));
-    setSessionClock(meta && meta.created_at);
-    const raw = Array.isArray(detail.messages) ? detail.messages : [];
-    const out = [];
-    let pendingTools = [];
-    for (const m of raw) {
-      const role = m.role || 'assistant';
-      const content = m.content || '';
-      if (role === 'tool') continue;
-      if (role === 'assistant' && typeof isToolCallJson === 'function' && isToolCallJson(content)) {
-        try {
-          const calls = JSON.parse(String(content).trim());
-          if (Array.isArray(calls)) {
-            pendingTools = pendingTools.concat(calls.map((c) => ({
-              name: c.name || 'tool',
-              detail: typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments || {}),
-              status: 'ok',
-            })));
-          }
-        } catch {}
-        continue;
+    if (!id || state.busy || state.sessionTransition) return false;
+    state.sessionTransition = true;
+    try {
+      const detail = await api('getSession', id);
+      if (!detail) return false;
+      resetSessionTransients();
+      state.sessionId = detail.id;
+      const meta = state.sessions.find((session) => String(session.id) === String(detail.id));
+      setSessionClock(meta && meta.created_at);
+      const raw = Array.isArray(detail.messages) ? detail.messages : [];
+      const out = [];
+      let pendingTools = [];
+      for (const m of raw) {
+        const role = m.role || 'assistant';
+        const content = m.content || '';
+        if (role === 'tool') continue;
+        if (role === 'assistant' && typeof isToolCallJson === 'function' && isToolCallJson(content)) {
+          try {
+            const calls = JSON.parse(String(content).trim());
+            if (Array.isArray(calls)) {
+              pendingTools = pendingTools.concat(calls.map((c) => ({
+                name: c.name || 'tool',
+                detail: typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments || {}),
+                status: 'ok',
+              })));
+            }
+          } catch {}
+          continue;
+        }
+        if (role === 'assistant') {
+          const text = typeof stripToolCallNoise === 'function' ? stripToolCallNoise(content) : content;
+          out.push({
+            role: 'assistant',
+            content: text || content,
+            tools: pendingTools.length ? pendingTools : undefined,
+          });
+          pendingTools = [];
+        } else {
+          out.push({ role: 'user', content });
+        }
       }
-      if (role === 'assistant') {
-        const text = typeof stripToolCallNoise === 'function' ? stripToolCallNoise(content) : content;
-        out.push({
-          role: 'assistant',
-          content: text || content,
-          tools: pendingTools.length ? pendingTools : undefined,
-        });
-        pendingTools = [];
-      } else {
-        out.push({ role: 'user', content });
+      if (pendingTools.length) {
+        out.push({ role: 'assistant', content: '', tools: pendingTools });
       }
+      state.messages = out;
+      setHeading(detail.title || 'session');
+      renderSessions();
+      renderMessages({ forceScroll: true });
+      return true;
+    } finally {
+      state.sessionTransition = false;
     }
-    if (pendingTools.length) {
-      out.push({ role: 'assistant', content: '', tools: pendingTools });
-    }
-    state.messages = out;
-    setHeading(detail.title || 'session');
-    renderSessions();
-    renderMessages({ forceScroll: true });
   }
   async function newSession() {
-    const s = await api('newSession');
-    state.sessionId = s.id;
-    setSessionClock();
-    state.messages = [];
-    setHeading(s.title || 'session');
-    await refreshSessions();
-    renderMessages();
-    if ($('input')) $('input').focus();
-    return s;
+    if (state.busy || state.sessionTransition) return false;
+    state.sessionTransition = true;
+    try {
+      const s = await api('newSession');
+      resetSessionTransients();
+      state.sessionId = s.id;
+      setSessionClock();
+      state.messages = [];
+      setHeading(s.title || 'session');
+      await refreshSessions();
+      renderMessages();
+      if ($('input')) $('input').focus();
+      return s;
+    } finally {
+      state.sessionTransition = false;
+    }
   }
   function timingPills(timings) {
     if (!timings) return '';
@@ -1628,11 +1997,20 @@
       setBusy(true);
       return;
     }
+    if (state.sessionTransition) return;
     if (!text) return;
     state.cancelRequested = false;
     state.activeCancel = null;
     $('input').value = '';
     autoGrow();
+    // Agent-only browser/DOM context — not shown in the transcript bubble.
+    const agentBrowserCtx = (typeof takeBrowserAgentContext === 'function')
+      ? takeBrowserAgentContext()
+      : (window.__browserAgentContext || '');
+    if (window.__browserAgentContext) window.__browserAgentContext = '';
+    const outbound = agentBrowserCtx
+      ? (text + '\n\n' + agentBrowserCtx)
+      : text;
     if (!hasNative()) {
       const start = state.messages.length;
       state.messages.push({ role: 'user', content: text });
@@ -1763,12 +2141,12 @@
       };
       let res;
       if (window.optimus.chatStream) {
-        const stream = window.optimus.chatStream(text, opts, onEvent);
+        const stream = window.optimus.chatStream(outbound, opts, onEvent);
         state.activeCancel = typeof stream.cancel === 'function' ? stream.cancel.bind(stream) : null;
         if (state.cancelRequested && state.activeCancel) state.activeCancel();
         res = await stream;
       } else {
-        res = await api('chat', text, opts);
+        res = await api('chat', outbound, opts);
         state.messages[asstIdx].content = res.assistant_text || '';
       }
       state.sessionId = res.session_id || state.sessionId;
@@ -1806,19 +2184,32 @@
         ${timingPills(state.latestTurnTimings)}`;
       finishTasks();
       paintStreamBubble(asstIdx);
-      await refreshSessions();
+      void refreshSessions();
     } catch (e) {
-      const cancelled = state.cancelRequested || e?.name === 'AbortError' || /\bcancelled?\b/i.test(String(e?.message || e));
+      const errorMessage = String(e?.message || e);
+      const cancelled = state.cancelRequested || e?.name === 'AbortError' || /\bcancelled?\b/i.test(errorMessage);
+      const approvalRequired = /\bneeds approval\b|\bapproval required\b/i.test(errorMessage);
       if (cancelled) {
         const partial = state.messages[asstIdx] || { role: 'assistant', content: '' };
         partial.streaming = false;
         partial.content = stripToolCallNoise(partial.content || '') || 'Cancelled.';
         partial.meta = `<span class="pill amber"><em>cancelled</em></span>${timingPills(state.latestTurnTimings)}`;
         state.messages[asstIdx] = partial;
+      } else if (approvalRequired) {
+        const partial = state.messages[asstIdx] || { role: 'assistant', content: '' };
+        partial.streaming = false;
+        partial.content = 'Approval required. Review the pending request in Capabilities before retrying.';
+        partial.meta = `<span class="pill amber"><em>approval required</em></span>${timingPills(state.latestTurnTimings)}`;
+        partial.tools = (partial.tools || []).map((tool) => ({ ...tool, status: 'approval' }));
+        state.messages[asstIdx] = partial;
+        state.tasks = state.tasks.map((task) => task.status === 'run'
+          ? { ...task, status: 'approval', detail: 'approval required' }
+          : task);
+        renderTasks();
       } else {
         state.messages[asstIdx] = {
           role: 'assistant',
-          content: `Error: ${e.message || e}`,
+          content: `Error: ${errorMessage}`,
           meta: `<span class="pill err"><em>failed</em></span>${timingPills(state.latestTurnTimings)}`,
         };
       }
@@ -2123,10 +2514,280 @@
   };
   if ($('navCapabilities')) $('navCapabilities').onclick = () => setRoute('capabilities');
   if ($('navMessaging')) $('navMessaging').onclick = () => setRoute('messaging');
-  if ($('navArtifacts')) $('navArtifacts').onclick = () => setRoute('artifacts');
+  if ($('navArtifacts')) $('navArtifacts').onclick = () => {
+    setRoute('artifacts');
+    try { loadArtifactsList(); } catch (e) {}
+  };
   loadLayout();
   applyLayout();
   setRoute(state.route || 'chat');
+
+  // Artifacts list (content-addressed store) + gallery preview + bulk delete
+  let __artifactPreviewSha = '';
+  let __artifactCache = [];
+  const __artifactSelected = new Set();
+
+  function artifactFilterQuery() {
+    const a = ($('artifactFilter') && $('artifactFilter').value) || '';
+    const b = ($('artifactPageFilter') && $('artifactPageFilter').value) || '';
+    return (a || b || '').trim().toLowerCase();
+  }
+
+  function selectedArtifactShas() {
+    return Array.from(__artifactSelected);
+  }
+
+  function syncArtifactBulkButtons() {
+    const n = __artifactSelected.size;
+    const label = n ? ('Delete selected (' + n + ')') : 'Delete selected';
+    ['artifactsDeleteSelected', 'artifactPageDeleteSelected'].forEach(function(id) {
+      const el = $(id);
+      if (!el) return;
+      el.disabled = n === 0;
+      el.textContent = label;
+    });
+  }
+
+  function setArtifactSelected(sha, on) {
+    if (!sha) return;
+    if (on) __artifactSelected.add(sha);
+    else __artifactSelected.delete(sha);
+    document.querySelectorAll('.artifact-row[data-sha="' + sha + '"]').forEach(function(row) {
+      row.classList.toggle('selected', on);
+      const cb = row.querySelector('.artifact-check');
+      if (cb) cb.checked = on;
+    });
+    syncArtifactBulkButtons();
+  }
+
+  function applyArtifactFilter() {
+    const q = artifactFilterQuery();
+    document.querySelectorAll('.artifact-row[data-sha]').forEach(function(row) {
+      if (!q) {
+        row.hidden = false;
+        return;
+      }
+      const hay = (row.getAttribute('data-search') || '').toLowerCase();
+      row.hidden = hay.indexOf(q) === -1;
+    });
+  }
+
+  function renderArtifactRows(rows) {
+    if (!rows.length) {
+      return '<div class="artifact-row">No artifacts yet. Browser screenshots publish here after navigate.</div>';
+    }
+    return rows.map(function(a) {
+      const size = typeof a.size_bytes === 'number' ? a.size_bytes + ' B' : '';
+      const fullSha = a.sha256 || '';
+      const sha = fullSha.slice(0, 12);
+      const search = [a.label, a.source, a.sha256, a.media_type].filter(Boolean).join(' ');
+      const checked = __artifactSelected.has(fullSha) ? ' checked' : '';
+      const selectedCls = __artifactSelected.has(fullSha) ? ' selected' : '';
+      return '<div class="artifact-row' + selectedCls + '" data-sha="' + escapeHtml(fullSha) +
+        '" data-search="' + escapeHtml(search) + '" role="button" tabindex="0">' +
+        '<label class="artifact-check-wrap" title="Select for bulk delete">' +
+        '<input type="checkbox" class="artifact-check"' + checked + ' aria-label="Select artifact"/>' +
+        '</label>' +
+        '<span class="a-label">' + escapeHtml(a.label || 'artifact') + '</span>' +
+        '<span class="a-source">' + escapeHtml(a.source || '') + '</span>' +
+        '<span class="a-meta">' + escapeHtml(sha) + (size ? ' · ' + size : '') +
+        (a.media_type ? ' · ' + escapeHtml(a.media_type) : '') + '</span></div>';
+    }).join('');
+  }
+
+  async function loadArtifactsList() {
+    const sidebar = $('artifactList');
+    const page = $('artifactPageList');
+    try {
+      const data = await post('artifacts_list', {});
+      const rows = (data && data.artifacts) || [];
+      __artifactCache = rows;
+      const live = new Set(rows.map(function(r) { return r.sha256; }).filter(Boolean));
+      Array.from(__artifactSelected).forEach(function(sha) {
+        if (!live.has(sha)) __artifactSelected.delete(sha);
+      });
+      const html = renderArtifactRows(rows);
+      if (sidebar) sidebar.innerHTML = html;
+      if (page) page.innerHTML = html;
+      wireArtifactRows(sidebar);
+      wireArtifactRows(page);
+      applyArtifactFilter();
+      syncArtifactBulkButtons();
+    } catch (err) {
+      const msg = 'Failed to load artifacts: ' + (err.message || err);
+      if (sidebar) sidebar.textContent = msg;
+      if (page) page.textContent = msg;
+    }
+  }
+
+  function wireArtifactRows(root) {
+    if (!root) return;
+    root.querySelectorAll('.artifact-row[data-sha]').forEach(function(row) {
+      const sha = row.getAttribute('data-sha');
+      const cb = row.querySelector('.artifact-check');
+      if (cb) {
+        cb.onclick = function(ev) { ev.stopPropagation(); };
+        cb.onchange = function(ev) {
+          ev.stopPropagation();
+          setArtifactSelected(sha, !!cb.checked);
+        };
+      }
+      const checkWrap = row.querySelector('.artifact-check-wrap');
+      if (checkWrap) {
+        checkWrap.onclick = function(ev) { ev.stopPropagation(); };
+      }
+      row.onclick = function(ev) {
+        if (ev.target && ev.target.closest && ev.target.closest('.artifact-check-wrap')) return;
+        if (sha) openArtifactPreview(sha, row);
+      };
+      row.onkeydown = function(ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          if (ev.target && ev.target.classList && ev.target.classList.contains('artifact-check')) return;
+          ev.preventDefault();
+          row.click();
+        }
+      };
+    });
+  }
+
+  async function deleteSelectedArtifacts() {
+    const shas = selectedArtifactShas();
+    if (!shas.length) return;
+    if (!window.confirm('Delete ' + shas.length + ' selected artifact(s) permanently?')) return;
+    try {
+      const res = await post('artifacts_delete_many', { sha256s: shas });
+      const deleted = (res && res.deleted) || [];
+      deleted.forEach(function(sha) { __artifactSelected.delete(sha); });
+      if (__artifactPreviewSha && deleted.indexOf(__artifactPreviewSha) !== -1) {
+        clearArtifactPreview();
+      }
+      await loadArtifactsList();
+      const failed = (res && res.failed) || [];
+      if (failed.length) {
+        alert('Deleted ' + deleted.length + '; failed ' + failed.length +
+          (failed[0] && failed[0].error ? (': ' + failed[0].error) : ''));
+      }
+    } catch (err) {
+      alert('Bulk delete failed: ' + (err.message || err));
+    }
+  }
+
+  function clearArtifactPreview() {
+    __artifactPreviewSha = '';
+    ['artifactPreview', 'artifactPagePreview'].forEach(function(id) {
+      const el = $(id);
+      if (el) el.hidden = true;
+    });
+    ['artifactDelete', 'artifactPageDelete'].forEach(function(id) {
+      const el = $(id);
+      if (el) el.hidden = true;
+    });
+    ['artifactPreviewMeta', 'artifactPagePreviewMeta'].forEach(function(id) {
+      const el = $(id);
+      if (el) el.textContent = '';
+    });
+    ['artifactPreviewBody', 'artifactPagePreviewBody'].forEach(function(id) {
+      const el = $(id);
+      if (el) el.innerHTML = '';
+    });
+  }
+
+  async function openArtifactPreview(sha256, activeRow) {
+    document.querySelectorAll('.artifact-row.active').forEach(function(r) {
+      r.classList.remove('active');
+    });
+    if (activeRow) activeRow.classList.add('active');
+    __artifactPreviewSha = sha256;
+    const sidePrev = $('artifactPreview');
+    const sideMeta = $('artifactPreviewMeta');
+    const sideBody = $('artifactPreviewBody');
+    const pagePrev = $('artifactPagePreview');
+    const pageMeta = $('artifactPagePreviewMeta');
+    const pageBody = $('artifactPagePreviewBody');
+    const delA = $('artifactDelete');
+    const delB = $('artifactPageDelete');
+    if (sidePrev) sidePrev.hidden = false;
+    if (pagePrev) pagePrev.hidden = false;
+    if (delA) delA.hidden = false;
+    if (delB) delB.hidden = false;
+    if (sideMeta) sideMeta.textContent = 'Loading…';
+    if (pageMeta) pageMeta.textContent = 'Loading…';
+    if (sideBody) sideBody.innerHTML = '';
+    if (pageBody) pageBody.innerHTML = '';
+    try {
+      const data = await post('artifacts_get', { sha256: sha256 });
+      const a = (data && data.artifact) || {};
+      const metaText =
+        (a.label || 'artifact') + '\n' +
+        (a.source || '') + ' · ' + (a.media_type || '') + '\n' +
+        (a.sha256 || sha256) +
+        (typeof a.size_bytes === 'number' ? '\n' + a.size_bytes + ' bytes' : '') +
+        (a.created_at_unix ? '\nunix ' + a.created_at_unix : '');
+      if (sideMeta) sideMeta.textContent = metaText;
+      if (pageMeta) pageMeta.textContent = metaText;
+      let bodyHtml = '';
+      if (data.kind === 'image' && data.data_url) {
+        bodyHtml = '<img alt="artifact preview" src="' + data.data_url.replace(/"/g, '') + '"/>';
+      } else if (data.kind === 'text') {
+        bodyHtml = '<pre>' + escapeHtml(data.text || '') + '</pre>';
+      } else if (data.kind === 'binary') {
+        bodyHtml = '<pre>binary · ' + escapeHtml(String(data.size_bytes || '')) +
+          ' bytes\n' + escapeHtml(data.hex_preview || '') + '</pre>';
+      } else {
+        bodyHtml = '<pre>No preview</pre>';
+      }
+      if (sideBody) sideBody.innerHTML = bodyHtml;
+      if (pageBody) pageBody.innerHTML = bodyHtml;
+    } catch (err) {
+      const msg = 'Preview failed: ' + (err.message || err);
+      if (sideMeta) sideMeta.textContent = msg;
+      if (pageMeta) pageMeta.textContent = msg;
+    }
+  }
+
+  async function deleteActiveArtifact() {
+    if (!__artifactPreviewSha) return;
+    if (!window.confirm('Delete this artifact permanently?')) return;
+    try {
+      await post('artifacts_delete', { sha256: __artifactPreviewSha });
+      clearArtifactPreview();
+      await loadArtifactsList();
+    } catch (err) {
+      alert('Delete failed: ' + (err.message || err));
+    }
+  }
+
+  if ($('artifactsRefresh')) {
+    $('artifactsRefresh').onclick = function() { loadArtifactsList(); };
+  }
+  if ($('artifactDelete')) {
+    $('artifactDelete').onclick = function() { deleteActiveArtifact(); };
+  }
+  if ($('artifactPageDelete')) {
+    $('artifactPageDelete').onclick = function() { deleteActiveArtifact(); };
+  }
+  if ($('artifactsDeleteSelected')) {
+    $('artifactsDeleteSelected').onclick = function() { deleteSelectedArtifacts(); };
+  }
+  if ($('artifactPageDeleteSelected')) {
+    $('artifactPageDeleteSelected').onclick = function() { deleteSelectedArtifacts(); };
+  }
+  if ($('artifactFilter')) {
+    $('artifactFilter').oninput = function() {
+      if ($('artifactPageFilter') && this.value !== $('artifactPageFilter').value) {
+        $('artifactPageFilter').value = this.value;
+      }
+      applyArtifactFilter();
+    };
+  }
+  if ($('artifactPageFilter')) {
+    $('artifactPageFilter').oninput = function() {
+      if ($('artifactFilter') && this.value !== $('artifactFilter').value) {
+        $('artifactFilter').value = this.value;
+      }
+      applyArtifactFilter();
+    };
+  }
 
   // Right sidebar tabs
   state.rightTab = state.rightTab || 'files';
@@ -2142,6 +2803,21 @@
     if (t === 'files' && state.layout.right) {
       try { loadFilesTree(state.filesPath || ''); } catch (e) {}
     }
+    if (t === 'artifacts') {
+      try { loadArtifactsList(); } catch (e) {}
+    }
+    if (t === 'browser') {
+      // Warm + show without reloading if already preloaded.
+      if (typeof ensureBrowserPreloaded === 'function') {
+        ensureBrowserPreloaded().then(function() {
+          if (typeof revealBrowserEmbedSmooth === 'function') revealBrowserEmbedSmooth();
+        });
+      } else if (typeof scheduleBrowserEmbedSync === 'function') {
+        scheduleBrowserEmbedSync();
+      }
+    } else if (typeof scheduleBrowserEmbedSync === 'function') {
+      scheduleBrowserEmbedSync();
+    }
   }
   document.querySelectorAll('#rightPaneTabs button').forEach((b) => {
     b.onclick = () => setRightTab(b.dataset.tab);
@@ -2156,6 +2832,8 @@
       e.stopPropagation();
       dragging = true;
       handle.classList.add('dragging');
+      document.body.classList.add('is-resizing');
+      startBrowserResizePulse('right-divider');
       const onMove = (ev) => {
         if (!dragging) return;
         const shell = document.querySelector('.shell') || document.body;
@@ -2163,16 +2841,22 @@
         let w = rect.right - ev.clientX;
         w = Math.max(200, Math.min(Math.floor(rect.width * 0.55), w));
         document.documentElement.style.setProperty('--right-w', w + 'px');
+        if (typeof syncBrowserEmbedBounds === 'function') syncBrowserEmbedBounds();
       };
       const onUp = () => {
         dragging = false;
         handle.classList.remove('dragging');
+        document.body.classList.remove('is-resizing');
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        stopBrowserResizePulse('right-divider');
         try { localStorage.setItem('optimus.ui.rightW', getComputedStyle(document.documentElement).getPropertyValue('--right-w').trim()); } catch {}
+        if (typeof scheduleBrowserEmbedSync === 'function') scheduleBrowserEmbedSync();
       };
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
     });
     try {
       const rw = localStorage.getItem('optimus.ui.rightW');
@@ -2183,11 +2867,33 @@
     $('filesRefresh').onclick = () => loadFilesTree(state.filesPath || '');
   }
 
+  if ($('toggleLeft')) $('toggleLeft').onclick = () => {
+    state.layout.left = !state.layout.left;
+    applyLayout();
+    saveLayout();
+  };
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.code === 'Backslash') {
+      e.preventDefault();
+      if ($('toggleLeft')) $('toggleLeft').click();
+    }
+  });
   if ($('toggleRight')) $('toggleRight').onclick = () => {
     state.layout.right = !state.layout.right;
     applyLayout();
     saveLayout();
-    if (state.layout.right) loadFilesTree(state.filesPath || '');
+    if (state.layout.right) {
+      loadFilesTree(state.filesPath || '');
+      // Start warming Google as soon as the right pane is used.
+      try {
+        if (typeof ensureBrowserPreloaded === 'function') ensureBrowserPreloaded();
+      } catch (_) {}
+      if (state.rightTab === 'browser' && typeof revealBrowserEmbedSmooth === 'function') {
+        ensureBrowserPreloaded().then(function() { revealBrowserEmbedSmooth(); });
+      }
+    } else if (typeof scheduleBrowserEmbedSync === 'function') {
+      scheduleBrowserEmbedSync();
+    }
   };
   if ($('toggleTerm')) $('toggleTerm').onclick = () => {
     state.layout.term = !state.layout.term;
@@ -2590,7 +3296,12 @@
     }
   }
     async function postRaw(method, params) {
+    // Prefer the native bridge post path when available (longer timeout / shared pending map).
+    if (window.optimus && typeof window.optimus.post === 'function') {
+      return window.optimus.post(method, params || {});
+    }
     const id = Math.floor(Math.random() * 1e9);
+    const timeoutMs = /^browser_/.test(method) ? 120000 : 30000;
     // HTTP sandbox only
     if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port) {
       const r = await fetch('/api/ipc', {
@@ -2606,7 +3317,7 @@
     const payload = JSON.stringify({ id, method, params: params || {} });
     return new Promise((resolve, reject) => {
       const prev = window.__optimusIpcReply;
-      const timer = setTimeout(() => { window.__optimusIpcReply = prev; reject(new Error('timeout')); }, 30000);
+      const timer = setTimeout(() => { window.__optimusIpcReply = prev; reject(new Error('timeout')); }, timeoutMs);
       window.__optimusIpcReply = function (msg) {
         if (msg && msg.id === id) {
           clearTimeout(timer);
@@ -2686,6 +3397,18 @@
       if (em) em.textContent = v;
       else el.textContent = v;
     };
+    if (doc.work_isolation || (doc.settings && doc.settings.work_isolation)) {
+      applyIsolationToUi(Object.assign({}, __productSettings, doc.settings || {}, {
+        work_isolation: doc.work_isolation || (doc.settings && doc.settings.work_isolation),
+        work_isolation_label: doc.work_isolation_label || (doc.settings && doc.settings.work_isolation_label),
+        allow_concurrent_projects: doc.allow_concurrent_projects != null
+          ? doc.allow_concurrent_projects
+          : (doc.settings && doc.settings.allow_concurrent_projects),
+        enforcement_active: doc.isolation_enforcement_active != null
+          ? doc.isolation_enforcement_active
+          : (doc.settings && doc.settings.enforcement_active),
+      }));
+    }
     setEm('stGateway', doc.gateway === true ? 'ok' : (doc.gateway === false ? 'down' : (doc.gateway != null ? String(doc.gateway) : '—')));
     const agents = doc.campaigns_active ?? doc.agents ?? 0;
     const appr = Number(doc.approvals_pending || 0);
@@ -2816,6 +3539,10 @@
     try { await refreshStatusBar(); } catch {}
     startStatusPoll();
     document.documentElement.dataset.bootState = 'ready';
+    // Warm live browser (Google) in the background so Browser tab is instant.
+    try {
+      if (typeof ensureBrowserPreloaded === 'function') ensureBrowserPreloaded();
+    } catch (_) {}
   }
 
   if ($('model')) {
@@ -2865,7 +3592,7 @@
         $('authBanner').className = 'auth-banner err';
         $('authBanner').textContent = lastErr
           ? (`Bridge timeout: ${lastErr.message || lastErr}`)
-          : 'Native bridge missing — run optimus-desktop.exe';
+          : 'Native bridge missing — run optimus-desktop';
         renderMessages();
       }
     })();
@@ -2877,4 +3604,1013 @@
   } else {
     bootstrap();
   }
+
+  // ── Browser preview with annotation support ──────────────────────────
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Annotation state: { index, tag, text, comment }[]
+  if (!window.__browserAnnotations) window.__browserAnnotations = [];
+  var __annotSeen = {}; // index -> annotation object
+  var __selectedAnnotIndex = null;
+  var __browserCanvasCvs = null;
+  var __browserCanvasScaleX = 1;
+  var __browserCanvasScaleY = 1;
+  var __browserNaturalW = 1;
+  var __browserNaturalH = 1;
+  var __browserImgEl = null;
+
+  function findAnnotation(index) {
+    return window.__browserAnnotations.find(function(a) { return a.index === index; }) || null;
+  }
+
+  function syncAnnotCommentField() {
+    var input = $('annotComment');
+    if (!input) return;
+    var selected = __selectedAnnotIndex == null ? null : findAnnotation(__selectedAnnotIndex);
+    if (!selected) {
+      input.value = '';
+      input.disabled = true;
+      input.placeholder = 'Click a highlighted box to annotate it…';
+      return;
+    }
+    input.disabled = false;
+    input.placeholder = 'Comment on [' + selected.index + '] ' + (selected.text || selected.tag || 'element');
+    input.value = selected.comment || '';
+  }
+
+  function updateAnnotationsBar() {
+    var bar = $('annotationsBar');
+    var list = $('annotationsList');
+    if (!bar || !list) return;
+    if (window.__browserAnnotations.length === 0) {
+      bar.hidden = true;
+      __selectedAnnotIndex = null;
+      syncAnnotCommentField();
+      return;
+    }
+    bar.hidden = false;
+    var html = '';
+    for (var i = 0; i < window.__browserAnnotations.length; i++) {
+      var a = window.__browserAnnotations[i];
+      var selected = a.index === __selectedAnnotIndex;
+      html += '<span class="annot-chip' + (selected ? ' selected' : '') + '" data-index="' + a.index + '">' +
+        '<span class="elem-index" style="width:auto;margin-right:2px">' + a.index + '</span>' +
+        '<span class="annot-chip-label">' + escapeHtml(a.text || a.tag || 'element') + '</span>' +
+        (a.comment ? '<span class="annot-chip-note">· ' + escapeHtml(a.comment) + '</span>' : '') +
+        '<span class="annot-remove" data-index="' + a.index + '">×</span></span>';
+    }
+    list.innerHTML = html;
+    list.querySelectorAll('.annot-chip').forEach(function(chip) {
+      chip.onclick = function(e) {
+        if (e.target.classList.contains('annot-remove')) return;
+        selectAnnotation(parseInt(chip.getAttribute('data-index'), 10), true);
+      };
+    });
+    list.querySelectorAll('.annot-remove').forEach(function(btn) {
+      btn.onclick = function(e) {
+        removeAnnotation(parseInt(e.target.getAttribute('data-index'), 10));
+        e.stopPropagation();
+      };
+    });
+    syncAnnotCommentField();
+  }
+
+  function selectAnnotation(index, focusComment) {
+    if (!findAnnotation(index)) return;
+    __selectedAnnotIndex = index;
+    updateAnnotationsBar();
+    redrawCanvasAnnotations();
+    redrawElementListAnnotations();
+    if (focusComment) {
+      var input = $('annotComment');
+      if (input && !input.disabled) {
+        input.focus();
+        input.select();
+      }
+    }
+  }
+
+  function upsertAnnotation(index, tag, text) {
+    var existing = findAnnotation(index);
+    if (existing) {
+      existing.tag = tag || existing.tag || '';
+      existing.text = text || existing.text || '';
+      __annotSeen[index] = existing;
+      selectAnnotation(index, true);
+      return existing;
+    }
+    var created = { index: index, tag: tag || '', text: text || '', comment: '' };
+    window.__browserAnnotations.push(created);
+    __annotSeen[index] = created;
+    __selectedAnnotIndex = index;
+    updateAnnotationsBar();
+    redrawCanvasAnnotations();
+    redrawElementListAnnotations();
+    selectAnnotation(index, true);
+    return created;
+  }
+
+  function toggleAnnotation(index, tag, text) {
+    if (findAnnotation(index)) {
+      removeAnnotation(index);
+      return;
+    }
+    upsertAnnotation(index, tag, text);
+  }
+
+  function removeAnnotation(index) {
+    window.__browserAnnotations = window.__browserAnnotations.filter(function(a) { return a.index !== index; });
+    delete __annotSeen[index];
+    if (__selectedAnnotIndex === index) {
+      __selectedAnnotIndex = window.__browserAnnotations.length
+        ? window.__browserAnnotations[window.__browserAnnotations.length - 1].index
+        : null;
+    }
+    updateAnnotationsBar();
+    redrawCanvasAnnotations();
+    redrawElementListAnnotations();
+  }
+
+  function clearAnnotations() {
+    window.__browserAnnotations = [];
+    __annotSeen = {};
+    __selectedAnnotIndex = null;
+    updateAnnotationsBar();
+    redrawCanvasAnnotations();
+    redrawElementListAnnotations();
+  }
+
+  function isAnnotated(index) {
+    return !!findAnnotation(index);
+  }
+
+  function elementBox(e, scaleX, scaleY) {
+    return {
+      x: e.bounds.x * scaleX,
+      y: e.bounds.y * scaleY,
+      w: Math.max(1, e.bounds.width * scaleX),
+      h: Math.max(1, e.bounds.height * scaleY),
+    };
+  }
+
+  function hitTestElement(mx, my) {
+    var elems = window.__browserElements || [];
+    var scaleX = __browserCanvasScaleX;
+    var scaleY = __browserCanvasScaleY;
+    var hits = [];
+    for (var i = 0; i < elems.length; i++) {
+      var e = elems[i];
+      if (!e || !e.bounds) continue;
+      var box = elementBox(e, scaleX, scaleY);
+      if (mx >= box.x && mx <= box.x + box.w && my >= box.y && my <= box.y + box.h) {
+        hits.push({ el: e, area: box.w * box.h });
+      }
+    }
+    if (hits.length) {
+      hits.sort(function(a, b) { return a.area - b.area; });
+      return hits[0].el;
+    }
+    // Fallback: nearest center within 36px
+    var best = null;
+    var bestDist = 36;
+    for (var j = 0; j < elems.length; j++) {
+      var e2 = elems[j];
+      if (!e2 || !e2.bounds) continue;
+      var box2 = elementBox(e2, scaleX, scaleY);
+      var cx = box2.x + box2.w / 2;
+      var cy = box2.y + box2.h / 2;
+      var d = Math.sqrt((mx - cx) * (mx - cx) + (my - cy) * (my - cy));
+      if (d < bestDist) {
+        bestDist = d;
+        best = e2;
+      }
+    }
+    return best;
+  }
+
+  function redrawCanvasAnnotations() {
+    var cvs = __browserCanvasCvs;
+    if (!cvs) return;
+    var ctx = cvs.getContext('2d');
+    var elems = window.__browserElements || [];
+    var scaleX = __browserCanvasScaleX;
+    var scaleY = __browserCanvasScaleY;
+    var showBoxes = !$('browserShowAnnotations') || $('browserShowAnnotations').checked;
+
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (var i = 0; i < elems.length; i++) {
+      var e = elems[i];
+      if (!e || !e.bounds) continue;
+      var box = elementBox(e, scaleX, scaleY);
+      var annotated = isAnnotated(e.index);
+      var selected = e.index === __selectedAnnotIndex;
+
+      if (showBoxes) {
+        ctx.lineWidth = selected ? 2.5 : annotated ? 2 : 1;
+        ctx.strokeStyle = selected ? '#ffb000' : annotated ? '#e06030' : 'rgba(224,48,48,0.55)';
+        ctx.fillStyle = selected
+          ? 'rgba(255,176,0,0.16)'
+          : annotated
+            ? 'rgba(224,96,48,0.14)'
+            : 'rgba(224,48,48,0.05)';
+        ctx.fillRect(box.x, box.y, box.w, box.h);
+        ctx.strokeRect(box.x + 0.5, box.y + 0.5, Math.max(0, box.w - 1), Math.max(0, box.h - 1));
+      }
+
+      var cx = box.x + Math.min(12, box.w / 2);
+      var cy = box.y + Math.min(12, box.h / 2);
+      var r = 9;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.fillStyle = selected ? '#ffb000' : annotated ? '#e06030' : '#e03030';
+      ctx.fill();
+      if (selected || annotated) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 2.5, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#111111';
+      ctx.fillText(String(e.index), cx, cy);
+    }
+  }
+
+  function redrawElementListAnnotations() {
+    var elements = $('browserElements');
+    if (!elements || elements.hidden) return;
+    var items = elements.querySelectorAll('.browser-elem');
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var idx = parseInt(item.getAttribute('data-index'), 10);
+      item.classList.toggle('annotated', isAnnotated(idx));
+      item.classList.toggle('selected', idx === __selectedAnnotIndex);
+      var toggle = item.querySelector('.annot-toggle');
+      if (toggle) toggle.textContent = isAnnotated(idx) ? '✕' : '◎';
+    }
+  }
+
+  async function browserClickCall(index) {
+    return await postRaw('browser_click', { index: index });
+  }
+
+  async function browserNavigateCall(url) {
+    return await postRaw('browser_navigate', { url: url });
+  }
+
+  async function browserReloadCall() {
+    return await postRaw('browser_reload', {});
+  }
+
+  function layoutBrowserShot() {
+    if (!__browserCanvasCvs || !__browserImgEl || !__browserImgEl.isConnected) return;
+    var screenshot = $('browserScreenshot');
+    if (!screenshot) return;
+    var host = screenshot.getBoundingClientRect();
+    var hostW = Math.max(1, host.width);
+    var hostH = Math.max(1, host.height);
+    // Cover the full right-panel viewport (may crop edges), top-aligned.
+    var scale = Math.max(hostW / __browserNaturalW, hostH / __browserNaturalH);
+    var drawW = Math.max(1, Math.floor(__browserNaturalW * scale));
+    var drawH = Math.max(1, Math.floor(__browserNaturalH * scale));
+    var offsetX = Math.floor((hostW - drawW) / 2);
+    var offsetY = 0; // top-aligned browser chrome
+    __browserImgEl.style.position = 'absolute';
+    __browserImgEl.style.left = offsetX + 'px';
+    __browserImgEl.style.top = offsetY + 'px';
+    __browserImgEl.style.width = drawW + 'px';
+    __browserImgEl.style.height = drawH + 'px';
+    __browserImgEl.style.maxWidth = 'none';
+    __browserImgEl.style.maxHeight = 'none';
+    __browserImgEl.style.objectFit = 'fill';
+    __browserCanvasScaleX = drawW / __browserNaturalW;
+    __browserCanvasScaleY = drawH / __browserNaturalH;
+    __browserCanvasCvs.width = drawW;
+    __browserCanvasCvs.height = drawH;
+    __browserCanvasCvs.style.left = offsetX + 'px';
+    __browserCanvasCvs.style.top = offsetY + 'px';
+    __browserCanvasCvs.style.width = drawW + 'px';
+    __browserCanvasCvs.style.height = drawH + 'px';
+    redrawCanvasAnnotations();
+  }
+
+  function renderBrowserResult(result) {
+    const status = $('browserStatus');
+    const screenshot = $('browserScreenshot');
+    const elements = $('browserElements');
+    if (!status) return;
+    window.__browserElements = (result.elements || []).map(function(e) {
+      return { index: e.index, tag: e.tag, text: e.text, bounds: e.bounds, interactive: e.interactive };
+    });
+    window.__browserLinks = (result.links || []).map(function(l) {
+      return { index: l.index, text: l.text, href: l.href };
+    });
+    // Keep annotations only if indices still exist on this page.
+    var valid = {};
+    (window.__browserElements || []).forEach(function(e) { valid[e.index] = true; });
+    window.__browserAnnotations = (window.__browserAnnotations || []).filter(function(a) {
+      return !!valid[a.index];
+    });
+    __annotSeen = {};
+    window.__browserAnnotations.forEach(function(a) { __annotSeen[a.index] = a; });
+    if (__selectedAnnotIndex != null && !__annotSeen[__selectedAnnotIndex]) {
+      __selectedAnnotIndex = null;
+    }
+
+    if (result.screenshot_b64) {
+      setBrowserStatus((result.effector || 'cdp') + ' · ' + formatDisplayUrl(result.url || result.final_url || '') + ' · click a box to annotate', result.url || result.final_url || result.title || '');
+      __browserCanvasCvs = null;
+      __browserImgEl = null;
+
+      var showScreenshotCheck = $('browserShowScreenshot');
+      var showScreenshot = !showScreenshotCheck || showScreenshotCheck.checked;
+
+      if (showScreenshot) {
+        screenshot.hidden = false;
+        var img = new Image();
+        img.onload = function() {
+          var wrap = document.createElement('div');
+          wrap.className = 'browser-shot-wrap';
+          var imgEl = document.createElement('img');
+          imgEl.src = img.src;
+          imgEl.alt = result.title || 'Browser screenshot';
+          wrap.appendChild(imgEl);
+          var cvs = document.createElement('canvas');
+          wrap.appendChild(cvs);
+          __browserCanvasCvs = cvs;
+          __browserImgEl = imgEl;
+          __browserNaturalW = img.naturalWidth || 1;
+          __browserNaturalH = img.naturalHeight || 1;
+
+          cvs.onclick = function(ev) {
+            var rect2 = cvs.getBoundingClientRect();
+            var mx = (ev.clientX - rect2.left) * (cvs.width / Math.max(1, rect2.width));
+            var my = (ev.clientY - rect2.top) * (cvs.height / Math.max(1, rect2.height));
+            var hit = hitTestElement(mx, my);
+            if (!hit) {
+              setBrowserStatus((result.effector || 'cdp') + ' · no element under cursor');
+              return;
+            }
+            upsertAnnotation(hit.index, hit.tag, hit.text);
+            setBrowserStatus((result.effector || 'cdp') + ' · selected [' + hit.index + '] ' + String(hit.text || hit.tag || '').slice(0, 40));
+          };
+
+          if (window.__browserShotObserver) {
+            try { window.__browserShotObserver.disconnect(); } catch (_) {}
+          }
+          if (typeof ResizeObserver !== 'undefined') {
+            window.__browserShotObserver = new ResizeObserver(function() {
+              requestAnimationFrame(layoutBrowserShot);
+            });
+            window.__browserShotObserver.observe(screenshot);
+          }
+
+          screenshot.textContent = '';
+          screenshot.appendChild(wrap);
+          requestAnimationFrame(function() {
+            layoutBrowserShot();
+            renderElementsList();
+            updateAnnotationsBar();
+          });
+        };
+        img.src = 'data:image/png;base64,' + result.screenshot_b64;
+      } else {
+        screenshot.hidden = true;
+        renderElementsList();
+        updateAnnotationsBar();
+      }
+    } else if (result.title !== undefined || result.url || result.final_url || result.live) {
+      // Live embed path: never paint raw page/DOM text into the preview chrome.
+      var full = result.url || result.final_url || '';
+      if (full) setBrowserLocation(full);
+      setBrowserStatus(
+        (result.live ? 'live' : (result.effector || 'http')) + ' · ' + (formatDisplayUrl(full) || result.title || 'ready'),
+        full || result.title || ''
+      );
+      if (result.text) {
+        rememberBrowserAgentContext('[browser_page_text]\nurl: ' + (full || '') + '\n' + String(result.text).slice(0, 2500));
+      }
+      // Keep screenshot layer empty/hidden so it cannot cover the live webview.
+      if (screenshot) {
+        screenshot.textContent = '';
+        screenshot.hidden = true;
+      }
+      renderElementsList();
+      updateAnnotationsBar();
+    } else {
+      setBrowserStatus('Error: ' + (result.error || 'navigate failed'));
+      screenshot.hidden = true;
+      elements.hidden = true;
+    }
+  }
+
+  // Shared rendering for element/link list — respects checkbox state
+  function renderElementsList() {
+    var elements = $('browserElements');
+    if (!elements) return;
+    var showListCheck = $('browserShowElementList');
+    var showList = showListCheck && showListCheck.checked;
+    var showAnnotCheck = $('browserShowAnnotations');
+    var showAnnot = !showAnnotCheck || showAnnotCheck.checked;
+
+    if (!showList) {
+      elements.hidden = true;
+      return;
+    }
+
+    if (window.__browserElements && window.__browserElements.length > 0) {
+      if (!showAnnot) { elements.hidden = true; return; }
+      var html = '';
+      for (var i = 0; i < window.__browserElements.length; i++) {
+        var e = window.__browserElements[i];
+        var isAnnot = isAnnotated(e.index);
+        var selected = e.index === __selectedAnnotIndex;
+        var shortText = String(e.text || '').replace(/\s+/g, ' ').trim();
+        if (shortText.length > 72) shortText = shortText.slice(0, 70) + '…';
+        html += '<div class="browser-elem' + (isAnnot ? ' annotated' : '') + (selected ? ' selected' : '') + '" data-index="' + e.index + '">' +
+          '<span class="elem-index">' + (isAnnot ? '◆ ' : '') + e.index + '</span> ' +
+          '<span class="elem-tag">&lt;' + escapeHtml(e.tag) + '&gt;</span> ' +
+          '<span class="elem-text">' + escapeHtml(shortText) + '</span>' +
+          ' <span class="annot-toggle" data-index="' + e.index + '" data-tag="' + escapeHtml(e.tag) + '" data-text="' + escapeHtml(shortText) + '">' + (isAnnot ? '✕' : '◎') + '</span></div>';
+      }
+      elements.innerHTML = html;
+      elements.hidden = false;
+      wireAnnotToggles();
+      elements.querySelectorAll('.browser-elem').forEach(function(row) {
+        row.onclick = function(ev) {
+          if (ev.target.classList.contains('annot-toggle')) return;
+          var idx = parseInt(row.getAttribute('data-index'), 10);
+          var el = (window.__browserElements || []).find(function(x) { return x.index === idx; });
+          if (el) upsertAnnotation(el.index, el.tag, el.text);
+        };
+      });
+    } else if (window.__browserLinks && window.__browserLinks.length > 0) {
+      if (!showAnnot) { elements.hidden = true; return; }
+      var linkHtml = '';
+      for (var j = 0; j < window.__browserLinks.length; j++) {
+        var l = window.__browserLinks[j];
+        var isAnnotL = isAnnotated(l.index);
+        linkHtml += '<div class="browser-elem' + (isAnnotL ? ' annotated' : '') + '" data-index="' + l.index + '">' +
+          '<span class="elem-index">' + (isAnnotL ? '◆ ' : '') + l.index + '</span> ' +
+          '<span class="elem-text">' + escapeHtml(l.text) + '</span>' +
+          ' <span style="color:var(--text-3);font-size:10px">' + escapeHtml(l.href) + '</span>' +
+          ' <span class="annot-toggle" data-index="' + l.index + '" data-tag="a" data-text="' + escapeHtml(l.text) + '">' + (isAnnotL ? '✕' : '◎') + '</span></div>';
+      }
+      elements.innerHTML = linkHtml;
+      elements.hidden = false;
+      wireAnnotToggles();
+    } else {
+      elements.hidden = true;
+    }
+  }
+
+  function wireAnnotToggles() {
+    var elements = $('browserElements');
+    if (!elements) return;
+    elements.querySelectorAll('.annot-toggle').forEach(function(btn) {
+      btn.onclick = function(ev) {
+        var idx = parseInt(ev.target.getAttribute('data-index'), 10);
+        var tag = ev.target.getAttribute('data-tag') || '';
+        var text = ev.target.getAttribute('data-text') || '';
+        toggleAnnotation(idx, tag, text);
+        ev.stopPropagation();
+      };
+    });
+  }
+
+  // ── Send annotations to the chat composer ────────────────────────────
+  // User-visible composer text stays short. Full browser/DOM detail is kept
+  // in __browserAgentContext and merged into the outbound model payload only.
+  window.__browserAgentContext = window.__browserAgentContext || '';
+
+  function formatDisplayUrl(raw) {
+    var u = String(raw || '').trim();
+    if (!u) return '';
+    try {
+      var parsed = new URL(u.indexOf('://') >= 0 ? u : ('https://' + u));
+      var path = parsed.pathname || '/';
+      if (path.length > 36) path = path.slice(0, 34) + '…';
+      // Hide giant query strings from the chrome (ogs.google.com widgets etc.).
+      var hostPath = parsed.host + (path === '/' ? '' : path);
+      if (parsed.search && parsed.search.length > 0) {
+        // Show a light hint that params exist, not the params themselves.
+        if (hostPath.length < 48) hostPath += ' ·…';
+      }
+      return hostPath;
+    } catch (_) {
+      if (u.length > 64) return u.slice(0, 62) + '…';
+      return u;
+    }
+  }
+
+  function setBrowserLocation(fullUrl, opts) {
+    opts = opts || {};
+    var u = String(fullUrl || '').trim();
+    var urlEl = $('browserUrl');
+    if (urlEl) {
+      urlEl.dataset.fullUrl = u;
+      urlEl.title = u;
+      // Don't stomp while the user is editing the omnibox.
+      if (opts.force || document.activeElement !== urlEl) {
+        urlEl.value = formatDisplayUrl(u).replace(/^https?:\/\//i, '');
+      }
+    }
+    // Agent-only meta (not shown in status).
+    window.__browserLastFullUrl = u;
+  }
+
+  function setBrowserStatus(message, fullDetail) {
+    var status = $('browserStatus');
+    if (!status) return;
+    var msg = String(message || '').replace(/\s+/g, ' ').trim();
+    if (msg.length > 120) msg = msg.slice(0, 118) + '…';
+    status.textContent = msg;
+    if (fullDetail) {
+      status.title = String(fullDetail);
+      window.__browserLastStatusDetail = String(fullDetail);
+    } else {
+      status.removeAttribute('title');
+    }
+  }
+
+  function rememberBrowserAgentContext(block) {
+    var b = String(block || '').trim();
+    if (!b) return;
+    // Cap agent-side context so we never ship multi-MB DOM dumps.
+    if (b.length > 4000) b = b.slice(0, 4000) + '\n…(truncated)';
+    var prev = window.__browserAgentContext || '';
+    window.__browserAgentContext = prev ? (prev + '\n\n' + b) : b;
+    if (window.__browserAgentContext.length > 12000) {
+      window.__browserAgentContext = window.__browserAgentContext.slice(-12000);
+    }
+  }
+
+  function takeBrowserAgentContext() {
+    var ctx = window.__browserAgentContext || '';
+    window.__browserAgentContext = '';
+    return ctx;
+  }
+
+  function buildAnnotationPrompt() {
+    var annotations = window.__browserAnnotations || [];
+    if (annotations.length === 0) return '';
+    var urlEl = $('browserUrl');
+    var fullUrl = (urlEl && (urlEl.dataset.fullUrl || urlEl.value.trim())) || window.__browserLastFullUrl || '';
+    if (fullUrl && !/^https?:\/\//i.test(fullUrl)) fullUrl = 'https://' + fullUrl;
+    var display = formatDisplayUrl(fullUrl);
+
+    // Human-facing composer text — short, readable, no query-string walls.
+    var userLines = [];
+    userLines.push('Browser notes' + (display ? ' (' + display + ')' : '') + ':');
+    for (var i = 0; i < annotations.length; i++) {
+      var a = annotations[i];
+      var label = String(a.text || a.tag || 'element').replace(/\s+/g, ' ').trim();
+      if (label.length > 80) label = label.slice(0, 78) + '…';
+      var line = '• ' + label;
+      if (a.comment && a.comment.trim()) line += ' — ' + a.comment.trim();
+      userLines.push(line);
+    }
+    userLines.push('');
+
+    // Agent-only technical block (not shown in composer).
+    var agentLines = [];
+    agentLines.push('[browser_context hidden_from_ui]');
+    if (fullUrl) agentLines.push('url: ' + fullUrl);
+    for (var j = 0; j < annotations.length; j++) {
+      var b = annotations[j];
+      agentLines.push(
+        '- [' + b.index + '] <' + (b.tag || '?') + '> ' +
+        JSON.stringify(String(b.text || '').slice(0, 200)) +
+        (b.href ? ' href=' + JSON.stringify(String(b.href).slice(0, 300)) : '') +
+        (b.comment ? ' note=' + JSON.stringify(String(b.comment).slice(0, 300)) : '')
+      );
+    }
+    rememberBrowserAgentContext(agentLines.join('\n'));
+
+    return userLines.join('\n');
+  }
+
+  function setBrowserLoading(on) {
+    var el = $('browserLoading');
+    if (el) el.hidden = !on;
+    var reload = $('browserReload');
+    if (reload) reload.classList.toggle('spinning', !!on);
+  }
+
+  function normalizeBrowserUrl(raw) {
+    var url = String(raw || '').trim();
+    if (!url) return '';
+    // If the field shows a display form, prefer the stored full URL when
+    // the user hit Go without editing.
+    var urlEl = $('browserUrl');
+    if (urlEl && urlEl.dataset.fullUrl && formatDisplayUrl(urlEl.dataset.fullUrl).replace(/^https?:\/\//i, '') === url) {
+      return urlEl.dataset.fullUrl;
+    }
+    if (/^https?:\/\//i.test(url)) return url;
+    if (url.includes(' ') || !url.includes('.')) {
+      return 'https://www.google.com/search?q=' + encodeURIComponent(url);
+    }
+    return 'https://' + url;
+  }
+
+  function syncChromeToggle(btnId, checked) {
+    var btn = $(btnId);
+    if (!btn) return;
+    btn.classList.toggle('active', !!checked);
+    btn.setAttribute('aria-pressed', checked ? 'true' : 'false');
+  }
+
+  var __browserLive = true;
+  var __browserEmbedTimer = null;
+  var __browserEmbedLast = '';
+  var __browserEmbedInFlight = false;
+  var __browserEmbedPending = false;
+  var __browserEmbedPendingForce = false;
+  var BROWSER_RESIZE_IDLE_MS = 160;
+  var __browserResizePulseFrame = null;
+  var __browserResizeIdleTimer = null;
+  var __browserResizePulseReasons = Object.create(null);
+  var __liveAnnotSeq = 1000;
+  var DEFAULT_BROWSER_HOME = 'https://www.google.com/';
+  var __browserPreloaded = false;
+  var __browserPreloading = null;
+  var __browserCurrentUrl = DEFAULT_BROWSER_HOME;
+
+  function browserPanelIsActive() {
+    var right = $('rightPane');
+    var panel = $('rpBrowser');
+    return !!(right && right.classList.contains('open') && panel && panel.classList.contains('active'));
+  }
+
+  function scheduleBrowserEmbedSync() {
+    if (__browserEmbedTimer !== null) return;
+    __browserEmbedTimer = requestAnimationFrame(function() {
+      __browserEmbedTimer = null;
+      syncBrowserEmbedBounds();
+    });
+  }
+
+  function redrawBrowserEmbedFrame() {
+    __browserResizePulseFrame = null;
+    if (!Object.keys(__browserResizePulseReasons).length) return;
+    if (browserPanelIsActive()) syncBrowserEmbedBounds();
+    __browserResizePulseFrame = requestAnimationFrame(redrawBrowserEmbedFrame);
+  }
+
+  function startBrowserResizePulse(reason) {
+    __browserResizePulseReasons[reason || 'layout'] = true;
+    // Send changed geometry in the same input/resize turn, then keep sampling
+    // at the compositor's maximum presentation cadence.
+    if (browserPanelIsActive()) syncBrowserEmbedBounds();
+    if (__browserResizePulseFrame !== null) return;
+    __browserResizePulseFrame = requestAnimationFrame(redrawBrowserEmbedFrame);
+  }
+
+  function stopBrowserResizePulse(reason) {
+    delete __browserResizePulseReasons[reason || 'layout'];
+    if (Object.keys(__browserResizePulseReasons).length) return;
+    if (__browserResizePulseFrame !== null) cancelAnimationFrame(__browserResizePulseFrame);
+    __browserResizePulseFrame = null;
+    // Final convergence is change-detected; do not replay identical geometry.
+    syncBrowserEmbedBounds();
+  }
+
+  function noteBrowserWindowResize() {
+    startBrowserResizePulse('window');
+    if (__browserResizeIdleTimer) clearTimeout(__browserResizeIdleTimer);
+    __browserResizeIdleTimer = setTimeout(function() {
+      __browserResizeIdleTimer = null;
+      stopBrowserResizePulse('window');
+    }, BROWSER_RESIZE_IDLE_MS);
+  }
+
+  function browserPixel(n) {
+    return Math.round(Number(n) || 0);
+  }
+
+  function syncBrowserEmbedBounds() {
+    var hole = $('browserLiveHole') || $('browserViewport');
+    if (!hole) return;
+    var active = browserPanelIsActive() && __browserLive;
+    var r = hole.getBoundingClientRect();
+    // CSS pixels relative to the main UI webview origin (full window).
+    var payload = {
+      visible: !!(active && r.width >= 32 && r.height >= 32),
+      x: browserPixel(r.left),
+      y: browserPixel(r.top),
+      w: Math.max(0, browserPixel(r.width)),
+      h: Math.max(0, browserPixel(r.height)),
+      dpr: window.devicePixelRatio || 1
+    };
+    var key = payload.visible + ':' + payload.x + ',' + payload.y + ',' + payload.w + 'x' + payload.h;
+    var forced = !!window.__browserEmbedForce;
+    window.__browserEmbedForce = false;
+    if (key === __browserEmbedLast && !forced) return;
+    if (__browserEmbedInFlight) {
+      // Drop intermediate geometry while native GTK/WebView work is busy.
+      // The completion path recomputes and sends only the newest DOM bounds.
+      __browserEmbedPending = true;
+      __browserEmbedPendingForce = __browserEmbedPendingForce || forced;
+      return;
+    }
+    __browserEmbedLast = key;
+    __browserEmbedInFlight = true;
+    postRaw('browser_embed', payload).then(function(res) {
+      if (res && res.visible === false && active) {
+        // Retry once next frame if native rejected usable bounds.
+        window.__browserEmbedForce = true;
+        scheduleBrowserEmbedSync();
+      }
+    }).catch(function() {
+      // HTTP mode has no live embed; keep screenshot path.
+      __browserLive = false;
+    }).finally(function() {
+      __browserEmbedInFlight = false;
+      if (!__browserEmbedPending) return;
+      __browserEmbedPending = false;
+      if (__browserEmbedPendingForce) window.__browserEmbedForce = true;
+      __browserEmbedPendingForce = false;
+      syncBrowserEmbedBounds();
+    });
+  }
+
+  function forceBrowserEmbedSync() {
+    window.__browserEmbedForce = true;
+    __browserEmbedLast = '';
+    scheduleBrowserEmbedSync();
+  }
+
+  /** Settle layout then pin embed once — avoids open-tab jitter. */
+  function revealBrowserEmbedSmooth() {
+    if ($('browserScreenshot')) {
+      $('browserScreenshot').textContent = '';
+      $('browserScreenshot').hidden = true;
+    }
+    setBrowserLocation(__browserCurrentUrl || DEFAULT_BROWSER_HOME, { force: true });
+    setBrowserStatus('live · ' + formatDisplayUrl(__browserCurrentUrl || DEFAULT_BROWSER_HOME), __browserCurrentUrl || DEFAULT_BROWSER_HOME);
+    setBrowserLoading(false);
+    // Triple-RAF: layout → paint → final hole metrics, single native restack.
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        forceBrowserEmbedSync();
+        requestAnimationFrame(function() {
+          scheduleBrowserEmbedSync();
+        });
+      });
+    });
+  }
+
+  /**
+   * Warm the live webview to Google as early as possible (hidden until Browser tab).
+   * Safe to call repeatedly; only navigates once unless forced.
+   */
+  function ensureBrowserPreloaded(force) {
+    if (typeof hasNative === 'function' && !hasNative()) {
+      return Promise.resolve(null);
+    }
+    if (__browserPreloaded && !force) return Promise.resolve({ ok: true, cached: true });
+    if (__browserPreloading && !force) return __browserPreloading;
+
+    // Reflect default chrome immediately (no waiting on network for UI labels).
+    setBrowserLocation(DEFAULT_BROWSER_HOME, { force: true });
+    if (!browserPanelIsActive()) {
+      setBrowserStatus('live · ' + formatDisplayUrl(DEFAULT_BROWSER_HOME), DEFAULT_BROWSER_HOME);
+    }
+
+    __browserPreloading = browserNavigateCall(DEFAULT_BROWSER_HOME)
+      .then(function(result) {
+        __browserPreloaded = true;
+        __browserLive = true;
+        __browserCurrentUrl = (result && result.url) || DEFAULT_BROWSER_HOME;
+        setBrowserLocation(__browserCurrentUrl, { force: true });
+        if ($('browserScreenshot')) {
+          $('browserScreenshot').textContent = '';
+          $('browserScreenshot').hidden = true;
+        }
+        if (browserPanelIsActive()) {
+          setBrowserStatus('live · ' + formatDisplayUrl(__browserCurrentUrl), __browserCurrentUrl);
+          revealBrowserEmbedSmooth();
+        } else {
+          // Keep surface hidden but warm; only soft sync (visible:false).
+          scheduleBrowserEmbedSync();
+        }
+        return result;
+      })
+      .catch(function(err) {
+        __browserPreloading = null;
+        __browserPreloaded = false;
+        return null;
+      });
+    return __browserPreloading;
+  }
+
+  window.__optimusBrowserPush = function(msg) {
+    if (!msg) return;
+    if (msg.type === 'browser_nav' && msg.url) {
+      var u = String(msg.url);
+      // Ignore annotation callback noise if any slips through.
+      if (u.indexOf('optimus.invalid/__annot') >= 0) return;
+      __browserCurrentUrl = u;
+      if (u.indexOf('google.com') >= 0) __browserPreloaded = true;
+      setBrowserLocation(u);
+      setBrowserStatus('live · ' + formatDisplayUrl(u), u);
+      setBrowserLoading(false);
+      var back = $('browserBack');
+      var fwd = $('browserForward');
+      if (back) back.disabled = false;
+      if (fwd) fwd.disabled = false;
+      // Only restack when the Browser tab is actually showing — preload stays silent.
+      if (browserPanelIsActive()) forceBrowserEmbedSync();
+    }
+  };
+
+  window.__optimusBrowserAnnotation = function(params) {
+    if (!params) return;
+    __liveAnnotSeq += 1;
+    var idx = __liveAnnotSeq;
+    var created = upsertAnnotation(idx, params.tag || '', params.text || params.href || '');
+    if (created && params.url) {
+      created.href = params.url;
+    }
+    setBrowserStatus('Pinned [' + idx + '] ' + String(params.text || params.tag || '').slice(0, 48));
+    scheduleBrowserEmbedSync();
+  };
+
+  // Wire chrome-like toolbar
+  var browserGo = $('browserGo');
+  var browserUrl = $('browserUrl');
+  function runBrowserNavigate() {
+    if (!browserUrl) return;
+    var fullUrl = normalizeBrowserUrl(browserUrl.value);
+    if (!fullUrl) return;
+    setBrowserLocation(fullUrl, { force: true });
+    setBrowserStatus('Loading ' + formatDisplayUrl(fullUrl) + '…', fullUrl);
+    setBrowserLoading(true);
+    forceBrowserEmbedSync();
+    browserNavigateCall(fullUrl).then(function(result) {
+      setBrowserLoading(false);
+      if (result && result.live) {
+        __browserLive = true;
+        if ($('browserScreenshot')) {
+          $('browserScreenshot').textContent = '';
+          $('browserScreenshot').hidden = true;
+        }
+        setBrowserLocation(result.url || fullUrl, { force: true });
+        setBrowserStatus('live · ' + formatDisplayUrl(result.url || fullUrl), result.url || fullUrl);
+        forceBrowserEmbedSync();
+        return;
+      }
+      // Fallback CDP/HTTP screenshot path
+      __browserLive = false;
+      renderBrowserResult(result || {});
+      scheduleBrowserEmbedSync();
+    }).catch(function(e) {
+      setBrowserLoading(false);
+      setBrowserStatus('Error: ' + (e.message || e));
+    });
+  }
+  if (browserGo && browserUrl) {
+    browserGo.onclick = runBrowserNavigate;
+    browserUrl.onkeydown = function(e) {
+      if (e.key === 'Enter') runBrowserNavigate();
+    };
+    // Expand to full URL while editing; collapse to display form on blur.
+    browserUrl.onfocus = function() {
+      if (browserUrl.dataset.fullUrl) {
+        browserUrl.value = browserUrl.dataset.fullUrl.replace(/^https?:\/\//i, '');
+      }
+    };
+    browserUrl.onblur = function() {
+      var full = normalizeBrowserUrl(browserUrl.value);
+      if (full) setBrowserLocation(full, { force: true });
+    };
+  }
+  if ($('browserBack')) {
+    $('browserBack').onclick = function() {
+      postRaw('browser_back', {}).catch(function() {});
+    };
+  }
+  if ($('browserForward')) {
+    $('browserForward').onclick = function() {
+      postRaw('browser_forward', {}).catch(function() {});
+    };
+  }
+  if ($('browserReload')) {
+    $('browserReload').onclick = function() {
+      setBrowserLoading(true);
+      browserReloadCall().then(function(result) {
+        setBrowserLoading(false);
+        if (result && result.live) {
+          forceBrowserEmbedSync();
+          return;
+        }
+        renderBrowserResult(result);
+      }).catch(function() {
+        runBrowserNavigate();
+      });
+    };
+  }
+  function bindChromeToggle(btnId, checkboxId) {
+    var btn = $(btnId);
+    var box = $(checkboxId);
+    if (!btn || !box) return;
+    syncChromeToggle(btnId, box.checked);
+    btn.onclick = function() {
+      box.checked = !box.checked;
+      syncChromeToggle(btnId, box.checked);
+      box.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+  }
+  bindChromeToggle('browserToggleShot', 'browserShowScreenshot');
+  bindChromeToggle('browserToggleAnnot', 'browserShowAnnotations');
+  bindChromeToggle('browserToggleElements', 'browserShowElementList');
+
+  // Wire annotation actions
+  if ($('annotClear')) {
+    $('annotClear').onclick = function() { clearAnnotations(); scheduleBrowserEmbedSync(); };
+  }
+  if ($('annotComment')) {
+    $('annotComment').oninput = function() {
+      if (__selectedAnnotIndex == null) return;
+      var selected = findAnnotation(__selectedAnnotIndex);
+      if (!selected) return;
+      selected.comment = $('annotComment').value;
+      updateAnnotationsBar();
+    };
+    $('annotComment').onkeydown = function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if ($('annotSendToChat')) $('annotSendToChat').click();
+      }
+    };
+  }
+  if ($('annotSendToChat')) {
+    $('annotSendToChat').onclick = function() {
+      var prompt = buildAnnotationPrompt();
+      if (!prompt) {
+        setBrowserStatus('No annotations to send. Click a page element in annotation mode first.');
+        return;
+      }
+      var input = $('input');
+      if (input) {
+        var existing = input.value.trim();
+        // User-visible only: short notes. Agent context is attached at send().
+        input.value = existing ? (prompt + existing) : prompt;
+        input.focus();
+        var end = input.value.length;
+        try { input.setSelectionRange(end, end); } catch (_) {}
+        var ev = new Event('input', { bubbles: true });
+        input.dispatchEvent(ev);
+      }
+      setBrowserStatus('Annotation context added to composer ✓');
+    };
+  }
+
+  // Wire screenshot/annotations toggles
+  if ($('browserShowScreenshot')) {
+    $('browserShowScreenshot').onchange = function() {
+      // In live mode the native webview is the page; this toggle only affects CDP fallback.
+      var ss = $('browserScreenshot');
+      if (ss && !__browserLive) ss.hidden = !this.checked;
+      syncChromeToggle('browserToggleShot', this.checked);
+      if (this.checked && !__browserLive) requestAnimationFrame(layoutBrowserShot);
+    };
+  }
+  if ($('browserShowAnnotations')) {
+    $('browserShowAnnotations').onchange = function() {
+      syncChromeToggle('browserToggleAnnot', this.checked);
+      // Live annotate mode on the embedded page
+      postRaw('browser_set_annotate', { enabled: !!this.checked }).then(function() {
+        forceBrowserEmbedSync();
+      }).catch(function() {});
+      renderElementsList();
+      redrawCanvasAnnotations();
+      forceBrowserEmbedSync();
+    };
+  }
+  if ($('browserShowElementList')) {
+    $('browserShowElementList').onchange = function() {
+      syncChromeToggle('browserToggleElements', this.checked);
+      renderElementsList();
+    };
+  }
+
+  window.addEventListener('resize', noteBrowserWindowResize);
+  if (typeof ResizeObserver !== 'undefined') {
+    var vp = $('browserViewport');
+    if (vp) {
+      var ro = new ResizeObserver(noteBrowserWindowResize);
+      ro.observe(vp);
+    }
+  }
+  // Keep embed aligned after layout settles.
+  setTimeout(scheduleBrowserEmbedSync, 300);
+  setTimeout(scheduleBrowserEmbedSync, 1000);
 })();

@@ -11,7 +11,7 @@
     "node_modules",
     "target"
   ],
-  "file_count": 200,
+  "file_count": 241,
   "files": [
     {
       "bytes": 152,
@@ -19,6 +19,13 @@
       "lines": 12,
       "path": ".gitignore",
       "sha256": "4982a6c9f7501dfe2ce6781755d6473ad5d471c1ca5eab19a94991f34c394230"
+    },
+    {
+      "bytes": 905,
+      "language": "Markdown",
+      "lines": 23,
+      "path": ".hermes.md",
+      "sha256": "85ef829d0cf6bcecc2e81d78b61f41d0ac2b64e3cd7019d1f7df0009e6be8927"
     },
     {
       "bytes": 23220,
@@ -42,11 +49,11 @@
       "sha256": "8e8f54d6029ffcf1905cf591c244cdb553e5a0db73ae617996318d3ecdc63038"
     },
     {
-      "bytes": 3468,
+      "bytes": 6554,
       "language": "Markdown",
-      "lines": 67,
+      "lines": 133,
       "path": "AGENTS.md",
-      "sha256": "799c1f9f81e40d3056b1361056f01594f70fb3d5e72e5507339d268516c60fa8"
+      "sha256": "a12829cf83820819f4f205fefcc88850e8fa1ee204cc3ad70b74b82efe62bc87"
     },
     {
       "bytes": 781,
@@ -56,25 +63,39 @@
       "sha256": "a754a2872fb7d5ef22ea74915b6fa0e79f0fc3739b663ae9a7f65980f385f68f"
     },
     {
-      "bytes": 110052,
+      "bytes": 133720,
       "language": "Other",
-      "lines": 4464,
+      "lines": 5460,
       "path": "Cargo.lock",
-      "sha256": "da3399ab094823a2dddbcd255f4dfbd23864ce62967b3f67f3d252b3af4e5cb7"
+      "sha256": "491f3027dc6b9e719bf4a8cf1afec6bd5e9e360b4d5f22bae497510ff0fb9d0f"
     },
     {
-      "bytes": 1548,
+      "bytes": 1605,
       "language": "TOML",
-      "lines": 52,
+      "lines": 55,
       "path": "Cargo.toml",
-      "sha256": "281cb20399eb3e6596795e5721768bfa9017ac7445f2b0f1290f48ed7d4a135f"
+      "sha256": "d9e311801c4c56be76a4d2555da29421b1af80ebae39ecf27150b94d64698d75"
     },
     {
-      "bytes": 2273,
+      "bytes": 26491,
       "language": "Markdown",
-      "lines": 62,
+      "lines": 451,
+      "path": "DESIGN.md",
+      "sha256": "40cdb6dda1457ddc573a831bf24e2f69b5f7853a1047b2e59933be2dd1f7eb00"
+    },
+    {
+      "bytes": 1973,
+      "language": "Markdown",
+      "lines": 45,
+      "path": "OPTIMUS_AGENTS.md",
+      "sha256": "8d2fd603bbc1388605e093c1f99545dfe5364978f13dfac7116a765773241aa8"
+    },
+    {
+      "bytes": 4963,
+      "language": "Markdown",
+      "lines": 162,
       "path": "README.md",
-      "sha256": "cdeceb849c4d4ece450f88f4de641205e61bab1994cd2d1d1b50b4845608a1dc"
+      "sha256": "7f7c0f814fcd6c9cde218f2fd0a50291f23f2c1a85b398da8f24683483969133"
     },
     {
       "bytes": 660,
@@ -91,11 +112,11 @@
       "sha256": "f6fc2db66f6edc6f5e14389e9073f931b609927fa42c1776e367de6ad4d07d73"
     },
     {
-      "bytes": 45241,
+      "bytes": 48701,
       "language": "Rust",
-      "lines": 1234,
+      "lines": 1327,
       "path": "apps/optimus-cli/src/main.rs",
-      "sha256": "b3a0bf32190025ae1e4ae935626c66ccbdf8eab8777acd251f192ab23d1045b6"
+      "sha256": "81d6fa1c7dea42f4f31dfb99ca6d3d3aec1eae2124ca279984f04ec8683ced94"
     },
     {
       "bytes": 5668,
@@ -105,11 +126,11 @@
       "sha256": "7b067bfe766f3d1f6bbe54d46db70077c836c9698075a6ce32a5a3356719eb35"
     },
     {
-      "bytes": 7803,
+      "bytes": 7980,
       "language": "Rust",
-      "lines": 237,
+      "lines": 240,
       "path": "apps/optimus-cli/tests/eval_report.rs",
-      "sha256": "2bfc5bdcf82a69faa00b64a4e5eb7e701fd4f008a272a895fcce4d38b9d1123a"
+      "sha256": "39d9ab657cfbb13186da624c3fd7b6fa47960e253d226a060b2aeabfe1d9848f"
     },
     {
       "bytes": 3478,
@@ -119,39 +140,39 @@
       "sha256": "7b7f693b5864a656b15fa53f1f0f281d86d0eafbf87f3135a7321d20520cc6cd"
     },
     {
-      "bytes": 565,
+      "bytes": 782,
       "language": "TOML",
-      "lines": 26,
+      "lines": 33,
       "path": "apps/optimus-desktop/Cargo.toml",
-      "sha256": "04b2917b1c4c826e74974a7c470cefc8429759f186482d51e2adc55de6c03a8e"
+      "sha256": "765f6875a5681775b102e7d2c96d31b3f0bdcd736b336918239af0265912922e"
     },
     {
-      "bytes": 6131,
+      "bytes": 7485,
       "language": "JavaScript",
-      "lines": 163,
+      "lines": 206,
       "path": "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
-      "sha256": "1c9bc860b10ca1b97285815c830975cfe3720029bc4d894526400e49373406a2"
+      "sha256": "ba56f9772c59e25a38ad4eed2c6163392cac0e3601298da93bb00c0565e24b67"
     },
     {
-      "bytes": 18995,
+      "bytes": 20462,
       "language": "JavaScript",
-      "lines": 421,
+      "lines": 449,
       "path": "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
-      "sha256": "7e83fd976cbe5a7584ba05bb3f967d167534247b164b546875a344b688bd185a"
+      "sha256": "18bdc74b625604a360303bfa324bfc2c36ecbbda044259687b2fc3d810e49317"
     },
     {
-      "bytes": 9020,
+      "bytes": 9065,
       "language": "JavaScript",
       "lines": 243,
       "path": "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
-      "sha256": "f0897c9b679e70b01e47eb0c8c009b884afe02b1a5fcf1e348c2274cd738742d"
+      "sha256": "85f0e872aa91d325435a993d78c95641c9dbb17cd02ac01a1fe3d861590ae9b3"
     },
     {
-      "bytes": 12093,
+      "bytes": 12210,
       "language": "JavaScript",
-      "lines": 297,
+      "lines": 299,
       "path": "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js",
-      "sha256": "e39127a2f7791d4568ccbd4c653fce9472e500994464380635a42ed7d0d9323b"
+      "sha256": "9e7301097aeb9c664499d4099836d6ac94099a9f40dbe6d95c3ad489bdb39aff"
     },
     {
       "bytes": 6375,
@@ -161,11 +182,25 @@
       "sha256": "4fe2e89446fce1a655b26d122376d51136977837cbec7aa47b7395396d088092"
     },
     {
-      "bytes": 6003,
+      "bytes": 23354,
       "language": "JavaScript",
-      "lines": 190,
+      "lines": 615,
+      "path": "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+      "sha256": "12e5e72df9d9322eb1e648fcbbb13322b39054041f9475248c91216a757228b0"
+    },
+    {
+      "bytes": 12630,
+      "language": "JavaScript",
+      "lines": 270,
+      "path": "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
+      "sha256": "f56c0597d8d45a95e9928887f1b6e008adc656ea15e4be991cedf570bbb8c49c"
+    },
+    {
+      "bytes": 6064,
+      "language": "JavaScript",
+      "lines": 192,
       "path": "apps/optimus-desktop/e2e/support.js",
-      "sha256": "d3d2aeb6f75379335029101a318c15054ba5e8e5b2be948550dd244f8acc147b"
+      "sha256": "1badc97f91d785a70dda5800f5f7b4a289c9cae0ffc3a340d54d6ab1660e2eee"
     },
     {
       "bytes": 2247,
@@ -189,11 +224,11 @@
       "sha256": "fe65c0376df440f1d18b412200c2e5a56f2155e5b85a2f1184aff5dd0ed8735e"
     },
     {
-      "bytes": 10988,
+      "bytes": 11343,
       "language": "Rust",
-      "lines": 310,
+      "lines": 318,
       "path": "apps/optimus-desktop/src/bridge.rs",
-      "sha256": "4454213dfe4a86e6347065b1e78192251021507d1f071c34b65c149f7ddf0bdf"
+      "sha256": "d234eddb865be53fb09c31730ae98b0c80e20ce7885bdca2720f4aa9aca9a2da"
     },
     {
       "bytes": 7400,
@@ -210,11 +245,11 @@
       "sha256": "a929609e54d816fae0faddc506ec378a9603f0362f21f2e8b4adc8c843825e60"
     },
     {
-      "bytes": 2192,
+      "bytes": 8043,
       "language": "Rust",
-      "lines": 78,
+      "lines": 249,
       "path": "apps/optimus-desktop/src/ipc/files.rs",
-      "sha256": "a45f9f25f6b5af16c31499a2256f5b9d8794c50c63e721295def97ec44b6dd89"
+      "sha256": "beb05a77c011051f102721ff77687539d79a15a41dbea352f40054729a2b2a4f"
     },
     {
       "bytes": 3138,
@@ -224,25 +259,25 @@
       "sha256": "de573c540916de6681e0a7d4c6f045c12c349e933f8747a7b02be36a9ec0b23d"
     },
     {
-      "bytes": 3229,
+      "bytes": 6110,
       "language": "Rust",
-      "lines": 109,
+      "lines": 198,
       "path": "apps/optimus-desktop/src/ipc/os.rs",
-      "sha256": "9876ae790a59896f6dcd3dc711b520594e6e41720007663359717746132d8429"
+      "sha256": "c6d9cd08b3b6fc79eb2aaa83ed80530510b5d17d3d980bb6677cb91c83037cde"
     },
     {
-      "bytes": 5045,
+      "bytes": 5707,
       "language": "Rust",
-      "lines": 147,
+      "lines": 163,
       "path": "apps/optimus-desktop/src/ipc/router.rs",
-      "sha256": "130fd7bf4434488f394218f73861266e42819c1c2029de85b8041373957cea2e"
+      "sha256": "0c1358892697287387d4c49b70bc336cb6f7ffad1eaaab05502c4ec63e107b75"
     },
     {
-      "bytes": 10997,
+      "bytes": 16691,
       "language": "Rust",
-      "lines": 298,
+      "lines": 484,
       "path": "apps/optimus-desktop/src/ipc/runtime_ops.rs",
-      "sha256": "bd272f3537c84f8184f2c23541e1cc4651b9875543479efa9cf1ee558aae841a"
+      "sha256": "4c9ba7fb12885df371906368984f2ec372d7bb14ddb323943595dbdae7fed25e"
     },
     {
       "bytes": 2292,
@@ -259,18 +294,18 @@
       "sha256": "a607e3d8c3124785c3360c7cc9ff46762115bd832d1025b9e49347144e2e0068"
     },
     {
-      "bytes": 3842,
+      "bytes": 4950,
       "language": "Rust",
-      "lines": 112,
+      "lines": 148,
       "path": "apps/optimus-desktop/src/ipc/system.rs",
-      "sha256": "52dec0aff6130d5b14263edce8ced9151eb80d6c6eaf1cfd6aa400e285569b0c"
+      "sha256": "1ed1f55f4d8ce542d84e8ddebcead14f24b752fa0271e7152cca556af61bd71b"
     },
     {
-      "bytes": 18421,
+      "bytes": 29729,
       "language": "Rust",
-      "lines": 488,
+      "lines": 731,
       "path": "apps/optimus-desktop/src/main.rs",
-      "sha256": "0c73d6e0369f47282cc13443a6b373cbb0b45e3fb3754be008f3efc00db7faec"
+      "sha256": "551da5313ba650d4537a7fbef637f88681464bb0f46ee9f3a3cc404593b79c7f"
     },
     {
       "bytes": 12833,
@@ -280,6 +315,13 @@
       "sha256": "9d52c6643492e3689a9f9fc842ab6791f71b4e3036c69ec706a39f14069d4fbb"
     },
     {
+      "bytes": 22816,
+      "language": "Rust",
+      "lines": 679,
+      "path": "apps/optimus-desktop/src/preview_embed.rs",
+      "sha256": "3f1a54565d67caffefb399d033aa004f26bb7d464a79d824b88373752f839b0e"
+    },
+    {
       "bytes": 23355,
       "language": "Rust",
       "lines": 660,
@@ -287,32 +329,67 @@
       "sha256": "9f32244c9190e92a2b42d7f2dc3367f941d37dc865df19357f2c611e69ab3db5"
     },
     {
-      "bytes": 1380,
+      "bytes": 1558,
       "language": "Rust",
-      "lines": 42,
+      "lines": 45,
       "path": "apps/optimus-desktop/src/ui.rs",
-      "sha256": "6c587ff100deffbf157325ae0a213d54c800988dd09324475f34ba09eb73ee03"
+      "sha256": "b5cfce7a32aa59035243d1fd9a19096e77a78346b9c7755e8670a349bc85f019"
     },
     {
-      "bytes": 115573,
+      "bytes": 171666,
       "language": "JavaScript",
-      "lines": 2880,
+      "lines": 4300,
       "path": "apps/optimus-desktop/ui/app.js",
-      "sha256": "7cbb455f827cf45207e1b2ee562339afee05baa35a321bdea3a312cca6c87c18"
+      "sha256": "0ed67b26c4f8c0158eb300b6108072b6cde1948586df2c6445e14bac6e869bbd"
     },
     {
-      "bytes": 18727,
+      "bytes": 28465,
       "language": "HTML",
-      "lines": 328,
+      "lines": 396,
       "path": "apps/optimus-desktop/ui/index.html",
-      "sha256": "26305109f911c828223bcc0930640097fbaeae9efb2d5d2f6638ddedec484cca"
+      "sha256": "e7c0d41639893cbd50a4ca5238ef0e7b120e909586c1f8a05778d7b85a5f5e32"
     },
     {
-      "bytes": 43772,
+      "bytes": 78367,
       "language": "CSS",
-      "lines": 516,
+      "lines": 1054,
       "path": "apps/optimus-desktop/ui/style.css",
-      "sha256": "5441c10faa528c7a7697eb9e8775031e990a27829f24e3caa21c5e6e65dff955"
+      "sha256": "8ff7253f94bc98c66212ad6202291c05c5297709f193a038701a3863fc20c634"
+    },
+    {
+      "bytes": 30801,
+      "language": "CSS",
+      "lines": 530,
+      "path": "apps/optimus-desktop/ui/vantage.css",
+      "sha256": "ad5841846a648c07a0b65b1646f67ae7def43aae04a4f57967a1855fbffcbef5"
+    },
+    {
+      "bytes": 2040,
+      "language": "Other",
+      "lines": 32,
+      "path": "assets/optimus-agent.svg",
+      "sha256": "8ab2299b4cb94cdbf8ef6561f7a808dadb43912f569550e458b75ca612d11a0a"
+    },
+    {
+      "bytes": 490,
+      "language": "TOML",
+      "lines": 24,
+      "path": "crates/optimus-browser/Cargo.toml",
+      "sha256": "3dd634a7aca41c65782a3ed983372ec08f79798ca0078abb703b2f300a970fff"
+    },
+    {
+      "bytes": 1309,
+      "language": "JavaScript",
+      "lines": 32,
+      "path": "crates/optimus-browser/src/dom_snapshot.js",
+      "sha256": "09fe89bfb2256726a24274c8be8f660cdf40a6637137cf5e54d9c0746501914b"
+    },
+    {
+      "bytes": 19537,
+      "language": "Rust",
+      "lines": 592,
+      "path": "crates/optimus-browser/src/lib.rs",
+      "sha256": "121e2ebac7d98ce5f7dc10b7df6c4f873854d8da478d9dd24f78c7124543b925"
     },
     {
       "bytes": 398,
@@ -329,11 +406,11 @@
       "sha256": "bd901c51678ee23d45c92586ef680ea00690319161c8c04b05653abb334e6c6d"
     },
     {
-      "bytes": 886,
+      "bytes": 1299,
       "language": "TOML",
-      "lines": 28,
+      "lines": 43,
       "path": "crates/optimus-kernel/Cargo.toml",
-      "sha256": "19f72647c01c0c1e80d0118d43d72d1fc694be4c4910438cc182edd812e87147"
+      "sha256": "d1e72ac58ed33a73a588740df802382d77d46ad4bdc0a5d9493bf170f84bdcf5"
     },
     {
       "bytes": 31081,
@@ -343,18 +420,25 @@
       "sha256": "283ef174c05c474e648e01756314e619f651fea4d121786d92c27e818f501072"
     },
     {
-      "bytes": 12909,
+      "bytes": 22065,
       "language": "Rust",
-      "lines": 437,
-      "path": "crates/optimus-kernel/src/browser.rs",
-      "sha256": "cf08b60b1c497cfcd35a5dacd844245e7079aa71f81e312fff937f3384f4920c"
+      "lines": 628,
+      "path": "crates/optimus-kernel/src/artifacts.rs",
+      "sha256": "580731000b94416c970f007ef51d487fe015a4e7de80ee02a157f7dfbad58305"
     },
     {
-      "bytes": 55349,
+      "bytes": 25649,
       "language": "Rust",
-      "lines": 1531,
+      "lines": 802,
+      "path": "crates/optimus-kernel/src/browser.rs",
+      "sha256": "16c767931591318af35a5341064289061b22b233563d9435b023fd74ab4fdcd8"
+    },
+    {
+      "bytes": 59521,
+      "language": "Rust",
+      "lines": 1647,
       "path": "crates/optimus-kernel/src/codex_oauth.rs",
-      "sha256": "e23d3e68beb2fbd1ab6f533d4054ad2903ae2e9c458fe640b8bd20af883c5ff0"
+      "sha256": "95435a8988fa79737953c0e000adc01bb0600c3eaf3f66205bf0f8fcb6bf4146"
     },
     {
       "bytes": 4507,
@@ -364,11 +448,11 @@
       "sha256": "57a523a49d8b896f6ecb6e3b9b5f73b006e8dc25b1ec22794bdb8439526b35e6"
     },
     {
-      "bytes": 9274,
+      "bytes": 21721,
       "language": "Rust",
-      "lines": 298,
+      "lines": 641,
       "path": "crates/optimus-kernel/src/credential.rs",
-      "sha256": "5495a2a2a1b7789e021f7f82741db9d58d126b1cc6290aa9a4e79d3d16560e56"
+      "sha256": "2f5aa64f91207d1e202cfae5170859d88b20849877b4253f1a6a216a31d7d4c7"
     },
     {
       "bytes": 25083,
@@ -399,11 +483,11 @@
       "sha256": "7925c4376652691031567cf3783c5a87c2bd3aec27e84df37b22d774781a7b4f"
     },
     {
-      "bytes": 18952,
+      "bytes": 20463,
       "language": "Rust",
-      "lines": 565,
+      "lines": 606,
       "path": "crates/optimus-kernel/src/fs_sandbox.rs",
-      "sha256": "ddfd26f79b8451de843330e64a0cdd0362162726355d315d2e573ed12c9569fb"
+      "sha256": "ce80563357aed2676428af1e7a36efe41c017c4b428644a4aab59dc03af75f8b"
     },
     {
       "bytes": 34816,
@@ -413,11 +497,11 @@
       "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
     },
     {
-      "bytes": 68356,
+      "bytes": 69793,
       "language": "Rust",
-      "lines": 1770,
+      "lines": 1804,
       "path": "crates/optimus-kernel/src/lib.rs",
-      "sha256": "7085492eefd607866761a952cba847559b14c26a686c687302e2973d4321b878"
+      "sha256": "47c908dd6054954139664abe73d55a592cdc5ca80bd073439400acfc6c4938a1"
     },
     {
       "bytes": 13305,
@@ -490,11 +574,11 @@
       "sha256": "a4d01096aaa4954219ad22f5cdcae7cd7d917f630a0392fbd6651058af287420"
     },
     {
-      "bytes": 12532,
+      "bytes": 13842,
       "language": "Rust",
-      "lines": 363,
+      "lines": 413,
       "path": "crates/optimus-kernel/tests/codex_oauth.rs",
-      "sha256": "4b8c9c5e9a73bdec30d7b6b959b79479935200b492c6a54d32cb67424ef01d38"
+      "sha256": "1573c7c7c1f79c80cdfe5167dcaccb58ad17234d53f78fca9bc1bdf9b75446ab"
     },
     {
       "bytes": 1979,
@@ -518,11 +602,11 @@
       "sha256": "3cb3f133f70f3e2e1d384f4f33ba39487490ba9762eac91a8441063047a89493"
     },
     {
-      "bytes": 28424,
+      "bytes": 30361,
       "language": "Rust",
-      "lines": 812,
+      "lines": 867,
       "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-      "sha256": "a9e286ff076cba8e429424a2bd3e2ebf1af3e51e55e9eb214840bafc3a86b50b"
+      "sha256": "43504726a2c0b5282fca646b9e195dc36a37815b528e90d55132c5d1907abab8"
     },
     {
       "bytes": 5004,
@@ -609,11 +693,11 @@
       "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
     },
     {
-      "bytes": 17545,
+      "bytes": 17891,
       "language": "Rust",
-      "lines": 510,
+      "lines": 521,
       "path": "crates/optimus-packs/tests/packs_budget.rs",
-      "sha256": "ffad25e02079d92aa210be239c6f02f56d27d416410b1e1afe9c58a483bc707b"
+      "sha256": "5cc7db9bf118ea37298763be0a04071ffb152ec9d98675fd5f193ea33504ac68"
     },
     {
       "bytes": 597,
@@ -623,46 +707,46 @@
       "sha256": "00bf224df2125046ffec42ee051394548d37be84832db9ec7b3c09923d77cd10"
     },
     {
-      "bytes": 89727,
+      "bytes": 89967,
       "language": "Rust",
-      "lines": 2400,
+      "lines": 2413,
       "path": "crates/optimus-runtime/src/campaign.rs",
-      "sha256": "19a2042a8d36a181c387f3967312687a81a28efeaf71d1c8dc3a85d65c62be3e"
+      "sha256": "3067a8b12a8e8c73c1e52927553a3227653187d70effd9ab318507d74ab32814"
     },
     {
-      "bytes": 45350,
+      "bytes": 57037,
       "language": "Rust",
-      "lines": 1258,
+      "lines": 1571,
       "path": "crates/optimus-runtime/src/lib.rs",
-      "sha256": "faf16cf8ec254ccecbf6001b57947bba5df50013dcd6d3a085f2818908599980"
+      "sha256": "b1d550ca01791e086e185cfc94ef24e313309d8e42792a70bd6e0d1e1cf616e8"
     },
     {
-      "bytes": 9522,
+      "bytes": 9280,
       "language": "Rust",
       "lines": 301,
       "path": "crates/optimus-runtime/tests/approvals_surface.rs",
-      "sha256": "7bdd009e2758f6bba0bfda5931b49acd51fc3ca370c7c256fb7b85f9981fc381"
+      "sha256": "3f675ec08149d7fbe1461f34dbcd24fe082811d0b503026c236574cdea4bf214"
     },
     {
-      "bytes": 5749,
+      "bytes": 8668,
       "language": "Rust",
-      "lines": 159,
+      "lines": 239,
       "path": "crates/optimus-runtime/tests/cancellation.rs",
-      "sha256": "3a4ba93981fe848af28d9b9c0f75d272bd5bd3fbedbeee33e70399508835393f"
+      "sha256": "e00cbaf29d19c850b54628bdbdf349f1f6935abe761ac9fc05055078eb9329ae"
     },
     {
-      "bytes": 2583,
+      "bytes": 3016,
       "language": "Rust",
-      "lines": 74,
+      "lines": 100,
       "path": "crates/optimus-runtime/tests/command_capture.rs",
-      "sha256": "0fedde32f2942890caae62d13f249c76bd1c4652e00439927097ead8e10edb0d"
+      "sha256": "5d57564ee28c23c0be3681a8089dc656d3c4207d24c1b9c778e4c824801f15d1"
     },
     {
-      "bytes": 9290,
+      "bytes": 9525,
       "language": "Rust",
-      "lines": 264,
+      "lines": 277,
       "path": "crates/optimus-runtime/tests/crash_resume.rs",
-      "sha256": "fcb6c971b1cdc45e19481d6bc43710a5fb626be862c0a16f3b911ae5454c25d4"
+      "sha256": "ade82f7a8e45317965cce18ff423158e014d584eb2b1672ec35bd7003f232cbf"
     },
     {
       "bytes": 9454,
@@ -672,18 +756,18 @@
       "sha256": "9b111be69f9a06c296eb02a529a4bac93d3611bb9aaa127575839fa219b5dd03"
     },
     {
-      "bytes": 7712,
+      "bytes": 7890,
       "language": "Rust",
-      "lines": 231,
+      "lines": 251,
       "path": "crates/optimus-runtime/tests/phase1_policy_budget.rs",
-      "sha256": "8e723ff613a54a460e839f55bfa909aa72ebcda2761f6ee121f32a9060ba6cb0"
+      "sha256": "5a68ddbed1172b8a58f3af8ac8147cfa2c5abd7bf3a838ec5c4277d981c4b766"
     },
     {
-      "bytes": 3143,
+      "bytes": 3243,
       "language": "Rust",
-      "lines": 103,
+      "lines": 113,
       "path": "crates/optimus-runtime/tests/skill_bridge.rs",
-      "sha256": "1246cdccd05bddfbd10a3762cd7436136d1d8126120d46554f3497f91e5c1d99"
+      "sha256": "86b48ff7e32ff27d2379b11b557c59c48310c430ec064c9557e2b9df0572de12"
     },
     {
       "bytes": 399,
@@ -742,11 +826,11 @@
       "sha256": "a89cfb2f1c660a4c0a414e453fb95db9ac391eb9c67d39d31c0532e91e3fbe76"
     },
     {
-      "bytes": 1605,
+      "bytes": 5349,
       "language": "Markdown",
-      "lines": 59,
+      "lines": 180,
       "path": "docs/architecture/desktop-install-relaunch.md",
-      "sha256": "797349df172f0ff017f3a94c929cc92b4cb28bd732cb6aebea5904ed44508f8e"
+      "sha256": "85f80a897c758aef478c6bb371fad95f646ff4fe6c723e174eecfc37ac3f9c54"
     },
     {
       "bytes": 2173,
@@ -756,18 +840,60 @@
       "sha256": "fdba545aea5b15427402eb8decf0886cf6ec6632e0786063375e3ecab1006492"
     },
     {
-      "bytes": 27994,
+      "bytes": 345562,
+      "language": "JSON",
+      "lines": 12474,
+      "path": "docs/architecture/hermes-baselines/hermes-0.19.0.json",
+      "sha256": "cafbcf313b4fbd7885b4df9b888a2539885d8d62ec55e6df1cf88dc0e66cf725"
+    },
+    {
+      "bytes": 168,
+      "language": "JSON",
+      "lines": 6,
+      "path": "docs/architecture/hermes-feature-evidence.json",
+      "sha256": "ef38e156f89acd68a95d8953ebfc3de894edb493ff2cb661dfdd384860c6f679"
+    },
+    {
+      "bytes": 7362,
+      "language": "JSON",
+      "lines": 72,
+      "path": "docs/architecture/hermes-manual-capabilities.json",
+      "sha256": "0b40cf8a96cc34bf3134aef684525c1a917b204155b06a7ed2aad9cd8b878d6b"
+    },
+    {
+      "bytes": 677,
+      "language": "JSON",
+      "lines": 24,
+      "path": "docs/architecture/hermes-performance-evidence.json",
+      "sha256": "bb499f8f9ec47983a56c64ac5088616c4bfecbbd491cb00272571708f1adaa60"
+    },
+    {
+      "bytes": 28020,
       "language": "Markdown",
       "lines": 599,
       "path": "docs/architecture/optimus-exceeds-hermes.md",
-      "sha256": "4afdd78f5cf8767392fd10120d8340fe62d3350f0353ca0e9d103fa3492a99bf"
+      "sha256": "e0719ec7fc42a941c20838552687b19b64c326ea481cd97ad74e1f18e2f48fa8"
     },
     {
-      "bytes": 12894,
+      "bytes": 3494,
+      "language": "JSON",
+      "lines": 139,
+      "path": "docs/architecture/optimus-version.json",
+      "sha256": "d29ab0a067116c1ba61501ba7beab89007916ef670f0a4c5e7c550879a907e46"
+    },
+    {
+      "bytes": 9632,
+      "language": "Markdown",
+      "lines": 242,
+      "path": "docs/architecture/optimus-versioning.md",
+      "sha256": "74962bf5ff7335278eae77c16d16b071e72615bf8a167ad75bf5875bd7f5291c"
+    },
+    {
+      "bytes": 13430,
       "language": "JSON",
       "lines": 60,
       "path": "docs/architecture/parity-capability-ledger.json",
-      "sha256": "823a82c256f126df3efdc3c553ac50a7795831f3e57d5e0cbdf91596846b4d14"
+      "sha256": "0a762af1dbc564638b193b38201956b44364ca74eb818bdcb3364db786a40be2"
     },
     {
       "bytes": 1512,
@@ -924,25 +1050,25 @@
       "sha256": "656c16c7b45427f6a36a727b57c369c9012c017ffbd856198c9da93504f0e0a8"
     },
     {
-      "bytes": 3951,
+      "bytes": 4725,
       "language": "Markdown",
-      "lines": 88,
+      "lines": 91,
       "path": "docs/architecture/sota-scorecard.md",
-      "sha256": "e2c8b67e4efb994a83a29c70608e0723f1e095b4fbcc1be66401e38336e580db"
+      "sha256": "a98349b5c05a3bb6e88117c70fd354ab6ecad8dba9010631e989c61af3e89629"
     },
     {
-      "bytes": 26809,
+      "bytes": 27035,
       "language": "Markdown",
-      "lines": 450,
+      "lines": 453,
       "path": "docs/architecture/system-overview.md",
-      "sha256": "51282747153a5caa5f74f0099f317bdf7132c6d9e3f19eb153ddc66bb3f1f9f8"
+      "sha256": "c1190d5128c47cb2313f512e53e13b2822a5fbe89696c9e550507417d00af94e"
     },
     {
-      "bytes": 13027,
+      "bytes": 13094,
       "language": "Markdown",
-      "lines": 252,
+      "lines": 253,
       "path": "docs/contracts/high-risk-contracts.md",
-      "sha256": "f7c9840781442a0f7817074bc698bc7e19e74e6c99c73cf9a4a8cf03e034cd31"
+      "sha256": "593241372e61ee44d671cb253c6143abe6990445ce85ff839313dc21ea651be8"
     },
     {
       "bytes": 1191,
@@ -1043,11 +1169,11 @@
       "sha256": "23c13d8b6984c3274d4188c5c80e49383d0c78d278886adc257f607b2ae8054f"
     },
     {
-      "bytes": 1091,
+      "bytes": 1483,
       "language": "Markdown",
-      "lines": 31,
+      "lines": 36,
       "path": "docs/decisions/0014-native-webview-ipc-mode.md",
-      "sha256": "84a5abea7fef62b73fa38aef2e158c5347d6532789a23af9b8c6a4fe82119caa"
+      "sha256": "e0b65a163aaf1aa059f19d011fc42e12ad702ce2fd249f9cb8533201dd2e04b7"
     },
     {
       "bytes": 1134,
@@ -1099,11 +1225,11 @@
       "sha256": "d5db5a9b7a85090a84ba032f0474eb638c1aa970699d165c1ab35c56ff6cae1e"
     },
     {
-      "bytes": 7924,
+      "bytes": 8966,
       "language": "Markdown",
-      "lines": 163,
+      "lines": 178,
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
-      "sha256": "c5bb5e69951f31ceaa820bcbc1b13302e0566ca0d1b9a3da21ff7934599def75"
+      "sha256": "c7f67d7ae68d3a7401a3a6003a271746efa187d551af37acae8240ca2615841a"
     },
     {
       "bytes": 7477,
@@ -1120,11 +1246,32 @@
       "sha256": "d60ac5bf1fc2b1d62616406f983530a5c70e2afc0426c8502840d3f981511c51"
     },
     {
-      "bytes": 4125,
+      "bytes": 8719,
       "language": "Markdown",
-      "lines": 56,
+      "lines": 187,
+      "path": "docs/decisions/0024-hermes-parity-version-gate.md",
+      "sha256": "91681efce5d7f8b186339ee1bdfc3e0db9a300d10bde81a12c16559ccd5d1960"
+    },
+    {
+      "bytes": 9311,
+      "language": "Markdown",
+      "lines": 192,
+      "path": "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
+      "sha256": "15567c8f173f21512404b9d034847e1d9e4b7350f21813e8a1199257f296dc2f"
+    },
+    {
+      "bytes": 2743,
+      "language": "Markdown",
+      "lines": 86,
+      "path": "docs/decisions/0026-separate-development-and-runtime-agents.md",
+      "sha256": "f1b79dca70b01493bf62bd2a5d38bb0d11c7eb2abeca2e092a13dc83c0b6d349"
+    },
+    {
+      "bytes": 5243,
+      "language": "Markdown",
+      "lines": 63,
       "path": "docs/decisions/README.md",
-      "sha256": "365065e3717ebf22b5e3aa2dc2c8c0dec0e2537447fb83aeccbbeed4cc1cd6d7"
+      "sha256": "2d1818434da3a3e6cf9330e590942d55e87f2fb1ab7d22b86fda5cc3d30d46a6"
     },
     {
       "bytes": 39068,
@@ -1134,11 +1281,81 @@
       "sha256": "8129080fb13111fc9aa91fe974705cf9a167e7c7382dd02498348f5499a4193d"
     },
     {
-      "bytes": 3907,
+      "bytes": 1509814,
+      "language": "Other",
+      "lines": null,
+      "path": "docs/design/optimus-vantage-2027/01-primary-workbench.png",
+      "sha256": "6f6c083544b2c791523f4db02e5ab1515308d19ea4da33bd2164373c542df86e"
+    },
+    {
+      "bytes": 1479199,
+      "language": "Other",
+      "lines": null,
+      "path": "docs/design/optimus-vantage-2027/02-browser-review.png",
+      "sha256": "ff779117e7949e56b9811b7e6464ca4875815c1a0a97fa6b7caece0f0cbd909b"
+    },
+    {
+      "bytes": 1486648,
+      "language": "Other",
+      "lines": null,
+      "path": "docs/design/optimus-vantage-2027/03-focus-and-empty.png",
+      "sha256": "77a5f41f9ff2be5d6b0aff4967046a1ed12bf5a22a4fb487eccf7909f00ad8cd"
+    },
+    {
+      "bytes": 70841,
+      "language": "Other",
+      "lines": null,
+      "path": "docs/design/optimus-vantage-2027/04-implemented-empty.png",
+      "sha256": "520f26d5680eb0c927c36353be76bf14380b7de09919bdcfcfc1de75c8f63756"
+    },
+    {
+      "bytes": 101094,
+      "language": "Other",
+      "lines": null,
+      "path": "docs/design/optimus-vantage-2027/05-implemented-workbench.png",
+      "sha256": "8974b9bdf144872b31f6c645f99c5ed9b0a15898c5def9dc7c57662c0184538a"
+    },
+    {
+      "bytes": 55317,
+      "language": "Other",
+      "lines": null,
+      "path": "docs/design/optimus-vantage-2027/06-implemented-focus-640.png",
+      "sha256": "2e95d37c48bd02008ec7dcc854a049ddaa772132fbab61b40093ccedd542c85b"
+    },
+    {
+      "bytes": 4069,
       "language": "Markdown",
-      "lines": 97,
+      "lines": 101,
       "path": "docs/engineering-memory/README.md",
-      "sha256": "fbe927ea2c9d1d94b809e439dd6110ec72f12e9b3801232beac93c73bfd8278c"
+      "sha256": "037e2774f60e44975fc02a438947a30f1b34115f039421978fe0b3322911fa38"
+    },
+    {
+      "bytes": 2736,
+      "language": "Markdown",
+      "lines": 65,
+      "path": "docs/evidence/phase-20-cdp-browser-2026-07-23.md",
+      "sha256": "d4fa0234fd072140df145c5cbbbcd9a027a005d9e4564e74489a1fe95dd1dc17"
+    },
+    {
+      "bytes": 784,
+      "language": "Markdown",
+      "lines": 32,
+      "path": "docs/evidence/phase-21a-artifacts-2026-07-23.md",
+      "sha256": "9990c01a5db6a04dc828c0a1c0b85147c2cbd70e71ff2d1bedefc54c74aa9329"
+    },
+    {
+      "bytes": 484,
+      "language": "Markdown",
+      "lines": 18,
+      "path": "docs/evidence/phase-21b-artifacts-gallery-2026-07-23.md",
+      "sha256": "4db08c0cb911d009411dd04ef35e4689228483cdd57d14c6845edeb00e7c34ac"
+    },
+    {
+      "bytes": 911,
+      "language": "Markdown",
+      "lines": 27,
+      "path": "docs/evidence/phase-21c-artifacts-delete-2026-07-23.md",
+      "sha256": "30e42c80063f44de32c39e3cc8765e02804bd6860dd14e040145a6499e44b1ba"
     },
     {
       "bytes": 5062,
@@ -1169,18 +1386,18 @@
       "sha256": "3746529a66e68aad9eb83a77d160d24d7491a2a208ba6c46491c06f5bcca9c76"
     },
     {
-      "bytes": 5802,
+      "bytes": 6302,
       "language": "Markdown",
-      "lines": 134,
+      "lines": 142,
       "path": "docs/maps/repository-and-ownership.md",
-      "sha256": "ac1e8659201a1ce08355d842b3984053d8574b78613c0468d20d9c92ae1dc58e"
+      "sha256": "a705944c5028f6ed96acecc5b540b65bd677e8d393a609fa47136ec30556be49"
     },
     {
-      "bytes": 7557,
+      "bytes": 7875,
       "language": "Markdown",
-      "lines": 164,
+      "lines": 168,
       "path": "docs/maps/security-and-approvals.md",
-      "sha256": "8ad7d302ed247a98a423e68922a740498587823c19b5416e272849f8c100180e"
+      "sha256": "6c0901e2c4a0c9ef2c6e5c8a0cac68f4951dde4b1595ea3ac0639f954058c092"
     },
     {
       "bytes": 4007,
@@ -1253,6 +1470,41 @@
       "sha256": "6e652fd221e066bd42ddd103de2fbd5ce911dd58214e8290e06c3e2f521ada37"
     },
     {
+      "bytes": 10689,
+      "language": "Markdown",
+      "lines": 250,
+      "path": "docs/specifications/phase-20-cdp-preview-browser.md",
+      "sha256": "084eff6bc4e21bf949bfff13ec5147e8ab13d8e6e0f04403096d585d996b6a2b"
+    },
+    {
+      "bytes": 6387,
+      "language": "Markdown",
+      "lines": 190,
+      "path": "docs/specifications/phase-20b-kernel-cdp-integration.md",
+      "sha256": "9898d03f99911ac7958c6862903bc93887bb956a2a6bd5c85d5fe953d7eef843"
+    },
+    {
+      "bytes": 7982,
+      "language": "Markdown",
+      "lines": 221,
+      "path": "docs/specifications/phase-20c-desktop-browser-sidebar.md",
+      "sha256": "31396ee33f0c146af620e2edf1081173e1737aabb345de1c783b716879f92751"
+    },
+    {
+      "bytes": 1566,
+      "language": "Markdown",
+      "lines": 44,
+      "path": "docs/specifications/phase-20d-packaging-gates.md",
+      "sha256": "20d56054b0b908c356c18e4d1d678466d86c69e1ce688a330e426a4b62c70262"
+    },
+    {
+      "bytes": 1351,
+      "language": "Markdown",
+      "lines": 46,
+      "path": "docs/specifications/phase-21a-artifacts-store.md",
+      "sha256": "efe7ca44948333b6979e0b85fb152411fe0149bf9bc90395b7bcd568f6eb0fb0"
+    },
+    {
       "bytes": 25330,
       "language": "Markdown",
       "lines": 272,
@@ -1295,6 +1547,13 @@
       "sha256": "0dc151962504a2d695e15325747a48d7b900d7c7c8786d2d7f50997748d5f204"
     },
     {
+      "bytes": 3570,
+      "language": "Markdown",
+      "lines": 60,
+      "path": "docs/specifications/safe-user-directory-listing-and-live-codex.md",
+      "sha256": "42c618ccb71047dfd35e9a99b520b6b437d35ce423eabf4e5ae31283faae5770"
+    },
+    {
       "bytes": 8397,
       "language": "Markdown",
       "lines": 186,
@@ -1316,11 +1575,11 @@
       "sha256": "008849922f2f92646afbcd8121c918b3f0637744f5e2b67b92886e5dca151bfd"
     },
     {
-      "bytes": 5324,
+      "bytes": 5611,
       "language": "Python",
-      "lines": 143,
+      "lines": 150,
       "path": "scripts/check-parity-ledger.py",
-      "sha256": "bce6ee63e4ad1a9ce374a39a016687537dcbeaac4613e172f15100abcfcef259"
+      "sha256": "d294bcbedd2f3b9a5c875e992ce2e1a6dc6ed36bb0dea572742ff2c4c98518e0"
     },
     {
       "bytes": 81475,
@@ -1330,18 +1589,25 @@
       "sha256": "ef84ea2d53756fd07868fbdf9b5b445655fcb8dde1eebcecbe047c0a5f9e7237"
     },
     {
-      "bytes": 9185,
-      "language": "PowerShell",
-      "lines": 272,
-      "path": "scripts/rebuild-install-relaunch.ps1",
-      "sha256": "5b4282acd861ebfb39245ec5d4f6ed242852eb350be8f8c3aff6ce2395ea6565"
+      "bytes": 50873,
+      "language": "Python",
+      "lines": 1155,
+      "path": "scripts/optimus_version.py",
+      "sha256": "9f027ff4b2a88eaf87e187938f9e7282febceb798210ba4cf25d24435cfbf932"
     },
     {
-      "bytes": 1226,
+      "bytes": 22851,
+      "language": "PowerShell",
+      "lines": 543,
+      "path": "scripts/rebuild-install-relaunch.ps1",
+      "sha256": "b242d7171f6f4d3a8c73373a8f13d840b1fe3d5356363d003b5dd913252acb63"
+    },
+    {
+      "bytes": 26584,
       "language": "Shell",
-      "lines": 43,
+      "lines": 772,
       "path": "scripts/rebuild-install-relaunch.sh",
-      "sha256": "bc1f187180cd86d0bf80114535c2ceb490fb0a2dd3bc5f244e98e5a2cac6aef3"
+      "sha256": "0db680c4cc432bed58c30cda1594b6540e13231eb8cc5955a4a67f5ebc8aefa6"
     },
     {
       "bytes": 18764,
@@ -1349,6 +1615,27 @@
       "lines": 448,
       "path": "scripts/test_engineering_memory.py",
       "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
+    },
+    {
+      "bytes": 8198,
+      "language": "Python",
+      "lines": 200,
+      "path": "scripts/test_optimus_version.py",
+      "sha256": "8d3636f23f90f635f8c62a097a16e75f127f2c55d496c5453bd7f34f98a53b0f"
+    },
+    {
+      "bytes": 9814,
+      "language": "Python",
+      "lines": 232,
+      "path": "scripts/test_rebuild_install_safety.py",
+      "sha256": "43cbed072af207f24be3ec3641bf9109006e9e7e4fcd2f77a8219a15e39c5ecf"
+    },
+    {
+      "bytes": 12852,
+      "language": "Markdown",
+      "lines": 186,
+      "path": "skills/optimus-native-ui-testing/SKILL.md",
+      "sha256": "c453ee37a88edf8ff917ee5840d506bf08ca21ff6273963a33f0d4f5091bacf4"
     },
     {
       "bytes": 5394,
@@ -1420,59 +1707,63 @@
   ],
   "languages": {
     "CSS": {
-      "bytes": 47929,
-      "files": 2
+      "bytes": 113325,
+      "files": 3
     },
     "HTML": {
-      "bytes": 58284,
+      "bytes": 68022,
       "files": 3
     },
     "JSON": {
-      "bytes": 15385,
-      "files": 3
+      "bytes": 373184,
+      "files": 8
     },
     "JavaScript": {
-      "bytes": 175319,
-      "files": 9
+      "bytes": 271749,
+      "files": 12
     },
     "Markdown": {
-      "bytes": 549716,
-      "files": 91
+      "bytes": 672947,
+      "files": 109
     },
     "Other": {
-      "bytes": 156778,
-      "files": 3
+      "bytes": 4885399,
+      "files": 10
     },
     "PowerShell": {
-      "bytes": 9185,
+      "bytes": 22851,
       "files": 1
     },
     "Python": {
-      "bytes": 105563,
-      "files": 3
+      "bytes": 174735,
+      "files": 6
     },
     "Rust": {
-      "bytes": 1206070,
-      "files": 72
+      "bytes": 1353612,
+      "files": 75
     },
     "Shell": {
-      "bytes": 1226,
+      "bytes": 26584,
       "files": 1
     },
     "TOML": {
-      "bytes": 6833,
-      "files": 12
+      "bytes": 8010,
+      "files": 13
     }
   },
   "root_entries": [
     ".gitignore",
     ".hermes",
+    ".hermes.md",
     "AGENTS.md",
     "CONTEXT.md",
     "Cargo.lock",
     "Cargo.toml",
+    "DESIGN.md",
+    "OPTIMUS_AGENTS.md",
     "README.md",
     "apps",
+    "assets",
     "crates",
     "docs",
     "scripts",
@@ -1490,9 +1781,28 @@
     "tools": false,
     "workflows": false
   },
-  "tree_sha256": "9384aecb55004682c6b51fb421bd3877ca747da9fec5d53c385ca35360a6f18a",
+  "tree_sha256": "ecff89709a20dec1caf73a3628bf6336ee226dae7ad23884daf277dbe8ce0275",
   "verification_basis": "sha256_tree",
   "workspace_packages": [
+    {
+      "application": false,
+      "description": null,
+      "manifest_path": "crates/optimus-browser/Cargo.toml",
+      "name": "optimus-browser",
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "optimus_browser",
+          "src_path": "crates/optimus-browser/src/lib.rs"
+        }
+      ],
+      "version": "0.1.0"
+    },
     {
       "application": true,
       "description": "Optimus Agent CLI",

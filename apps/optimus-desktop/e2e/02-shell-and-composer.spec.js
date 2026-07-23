@@ -1,7 +1,7 @@
 // @ts-check
 const { test, expect, url, waitForReady } = require('./support');
 
-test('layout locks: sharp corners, compact tools, rail cannot blow sidebar', async ({ page }) => {
+test('layout locks: Vantage radii, compact tools, rail cannot blow sidebar', async ({ page }) => {
   await page.goto('/');
   await waitForReady(page);
 
@@ -31,7 +31,7 @@ test('layout locks: sharp corners, compact tools, rail cannot blow sidebar', asy
       radiusSend: sendR,
       sideFitsApp: sideH <= appH + 2,
       footVisible: foot.bottom <= shellBottom + 2 && foot.height > 0,
-      toolCompact: toolW <= 300,
+      toolCompact: toolW <= 720,
       toolGlass: (cs.backdropFilter || '').includes('blur') || (cs.webkitBackdropFilter || '').includes('blur'),
       romeInlay,
       hasRailSplit: !!rail,
@@ -40,8 +40,8 @@ test('layout locks: sharp corners, compact tools, rail cannot blow sidebar', asy
   });
   expect(layout.appOverflow).toMatch(/hidden/);
   expect(layout.sideOverflow).toMatch(/hidden/);
-  expect(layout.radiusComposer).toBe('0px');
-  expect(layout.radiusSend).toBe('0px');
+  expect(layout.radiusComposer).toBe('12px');
+  expect(parseFloat(layout.radiusSend)).toBeGreaterThanOrEqual(8);
   expect(layout.sideFitsApp).toBe(true);
   expect(layout.footVisible).toBe(true);
   expect(layout.toolCompact).toBe(true);
@@ -50,7 +50,7 @@ test('layout locks: sharp corners, compact tools, rail cannot blow sidebar', asy
   expect(layout.signalGone).toBe(true);
 });
 
-test('Rome design tokens are defined', async ({ page }) => {
+test('Vantage workspace design tokens are defined', async ({ page }) => {
   await page.goto('/');
   const tokens = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
@@ -62,11 +62,11 @@ test('Rome design tokens are defined', async ({ page }) => {
       radiusImportant: getComputedStyle(document.querySelector('.composer')).borderRadius,
     };
   });
-  expect(tokens.inlay).toMatch(/#c9a227/i);
+  expect(tokens.inlay).toMatch(/#7c8cff/i);
   expect(tokens.void).toBeTruthy();
   expect(tokens.stone).toBeTruthy();
   expect(tokens.ink).toBeTruthy();
-  expect(tokens.radiusImportant).toBe('0px');
+  expect(tokens.radiusImportant).toBe('12px');
 });
 
 test('turn and session timers expose live and terminal timing evidence', async ({ page }) => {
@@ -110,6 +110,33 @@ test('turn and session timers expose live and terminal timing evidence', async (
   await expect(page.locator('#taskBody .task-item')).toContainText('web_search');
   await expect(page.locator('#taskBody .task-item')).toContainText('21 ms');
   await expect(page.locator('#taskBody .task-item')).not.toContainText('×2');
+});
+
+test('approval-required turn is honest and session navigation clears transient state', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+  await page.evaluate(() => {
+    window.optimus.chatStream = (_text, _opts, onEvent) => {
+      onEvent({ type: 'timing', kind: 'tool_started', name: 'terminal', call_id: 'terminal-approval' });
+      onEvent({ type: 'tool', name: 'terminal', detail: 'running' });
+      onEvent({ type: 'timing', kind: 'turn_finished', duration_ms: 12, elapsed_ms: 12, status: 'failed' });
+      const task = Promise.reject(new Error('runtime: needs approval for job 11111111-1111-1111-1111-111111111111 node 0'));
+      task.cancel = () => true;
+      return task;
+    };
+  });
+
+  await page.fill('#input', 'approval test');
+  await page.click('#send');
+  await expect(page.locator('.msg.assistant').last()).toContainText('Approval required');
+  await expect(page.locator('.msg.assistant .status-strip').last()).toContainText('approval required');
+  await expect(page.locator('#taskBody .task-item')).toContainText('approval required');
+  await expect(page.locator('#taskBody .task-item')).not.toContainText('running');
+
+  await page.click('#newThread');
+  await expect(page.locator('#taskCount')).toHaveText('0');
+  await expect(page.locator('#taskPanel')).toBeHidden();
+  await expect(page.locator('#turnTimer')).toContainText('turn —');
 });
 
 test('shell multi-pane IA: leftRail main statusBar; right/term hidden by default', async ({ page }) => {
@@ -198,7 +225,7 @@ test('nav routes: Capabilities shows page-capabilities; New session stays on cha
   await expect(page.locator('#page-capabilities')).toBeHidden();
 });
 
-test('single window header — no logo strip, no second topbar', async ({ page }) => {
+test('single branded window header — no duplicate topbar', async ({ page }) => {
   await page.goto('/');
   await waitForReady(page);
 
@@ -208,14 +235,14 @@ test('single window header — no logo strip, no second topbar', async ({ page }
     const task = document.getElementById('taskChip');
     const copy = document.getElementById('copySession');
     const topbar = document.querySelector('.main > .topbar');
-    const mark = document.querySelector('.titlebar .tb-mark, .titlebar .tb-name');
+    const titlebarBrand = document.querySelector('.titlebar .tb-brand');
     const brand = document.querySelector('.sidebar .brand');
     return {
       headingInTitlebar: !!(heading && titlebar && titlebar.contains(heading)),
       tasksInTitlebar: !!(task && titlebar && titlebar.contains(task)),
       copyInTitlebar: !!(copy && titlebar && titlebar.contains(copy)),
       noSecondTopbar: !topbar || getComputedStyle(topbar).display === 'none',
-      noLogoInTitlebar: !mark,
+      brandInTitlebar: !!titlebarBrand,
       brandHidden: !brand || brand.hasAttribute('hidden') || getComputedStyle(brand).display === 'none',
       onlyOneHeader: document.querySelectorAll('.titlebar').length === 1,
     };
@@ -224,7 +251,7 @@ test('single window header — no logo strip, no second topbar', async ({ page }
   expect(chrome.tasksInTitlebar).toBe(true);
   expect(chrome.copyInTitlebar).toBe(true);
   expect(chrome.noSecondTopbar).toBe(true);
-  expect(chrome.noLogoInTitlebar).toBe(true);
+  expect(chrome.brandInTitlebar).toBe(true);
   expect(chrome.brandHidden).toBe(true);
   expect(chrome.onlyOneHeader).toBe(true);
 });
@@ -256,9 +283,9 @@ test('custom titlebar shell and send absolute position', async ({ page }) => {
         s.left >= c.left - 1 &&
         Math.abs(s.right - (c.right - 10)) < 10,
       sendBottomPinned: Math.abs(s.bottom - (c.bottom - 10)) < 8,
-      radius0: getComputedStyle(composer).borderRadius === '0px',
+      premiumRadius: parseFloat(getComputedStyle(composer).borderRadius) >= 12,
       footVisible: foot.getBoundingClientRect().bottom <= shellBottom + 2,
-      noLogo: !document.querySelector('.titlebar .tb-mark, .titlebar .tb-name, .titlebar .brand-mark'),
+      hasBrand: !!document.querySelector('.titlebar .tb-brand'),
       toggleFiles: !!document.getElementById('toggleRight'),
       toggleTerm: !!document.getElementById('toggleTerm'),
       hermesRail: !!document.getElementById('railSplit') && !!document.getElementById('modeProjects'),
@@ -270,9 +297,9 @@ test('custom titlebar shell and send absolute position', async ({ page }) => {
   expect(geom.bodyClass).toMatch(/http-mode|native-chrome/);
   expect(geom.sendInComposer).toBe(true);
   expect(geom.sendBottomPinned).toBe(true);
-  expect(geom.radius0).toBe(true);
+  expect(geom.premiumRadius).toBe(true);
   expect(geom.footVisible).toBe(true);
-  expect(geom.noLogo).toBe(true);
+  expect(geom.hasBrand).toBe(true);
   expect(geom.toggleFiles).toBe(true);
   expect(geom.toggleTerm).toBe(true);
   expect(geom.hermesRail).toBe(true);
@@ -296,8 +323,9 @@ test('send button stays on composer bar baseline', async ({ page }) => {
     };
   });
   expect(geom).toBeTruthy();
+  if (!geom) throw new Error('send geometry missing');
   expect(geom.pinnedBottomRight).toBe(true);
-  expect(Math.abs(geom.height - 28)).toBeLessThanOrEqual(2);
+  expect(Math.abs(geom.height - 32)).toBeLessThanOrEqual(2);
 });
 
 test('chat pane scrolls and composer controls exist', async ({ page }) => {

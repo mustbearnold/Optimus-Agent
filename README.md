@@ -1,61 +1,161 @@
 # Optimus Agent
 
-Rebuild of the personal-agent category to exceed Hermes Agent on reliability, measured learning, evidence-native memory, cost, security, durable multi-agent work, and Windows-first quality.
+Optimus Agent is a durable local AI-agent runtime with a native desktop shell, evidence-backed memory, policy-controlled tools, sessions, campaigns, cron, and multi-agent work.
+
+Ubuntu is the primary desktop target. Windows remains supported through platform-specific shell and installer paths.
 
 ## Status
 
-**Daily-use + operator path (phase 12):** browser HTTP effector, durable cron, streaming desktop, unsigned install/relaunch.
+The daily-use path includes:
 
-Scorecard: [sota-scorecard.md](docs/architecture/sota-scorecard.md) — architecture wins locked; surface breadth still catching Hermes.
+- Native Wry desktop shell using WebKitGTK on Ubuntu
+- Durable Rust runtime and SQLite state
+- Local command capture with approval controls
+- Owned process-tree cancellation and timeouts
+- Streaming chat, projects, sessions, campaigns, and cron
+- User-scoped Ubuntu install, application launcher, CLI links, and uninstaller
 
-## Docs
+See [sota-scorecard.md](docs/architecture/sota-scorecard.md) for the broader capability scorecard.
 
-- [Architecture](docs/architecture/optimus-exceeds-hermes.md)
-- ADRs 0000–0013 under `docs/decisions/`
-- Phase verifications 0–11 under `docs/architecture/`
-- [Desktop UI mock](docs/design/optimus-desktop-ui.html)
+Optimus uses independent product SemVer plus a fail-closed Hermes parity version. It is currently Optimus `0.1.0`, tracking Hermes `0.19.0`, with parity unverified. Run `optimus version` or see [optimus-versioning.md](docs/architecture/optimus-versioning.md). Installers reject a numerical Hermes version match unless every feature and comparative performance gate passes.
+
+## Ubuntu prerequisites
+
+The native desktop is tested on Ubuntu 26.04 x86_64.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  build-essential \
+  pkg-config \
+  libgtk-3-dev \
+  libwebkit2gtk-4.1-dev \
+  libxdo-dev \
+  desktop-file-utils
+```
+
+Install a current stable Rust toolchain if `cargo` is not already available:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Playwright UI tests also require Node.js, npm, and the pinned Chromium payload:
+
+```bash
+cd apps/optimus-desktop
+npm ci
+npx playwright install chromium
+cd ../..
+```
+
+## Build and run on Ubuntu
+
+```bash
+cargo build -p optimus-desktop -p optimus-cli
+cargo run -p optimus-desktop
+```
+
+Run the browser-compatible test server:
+
+```bash
+cargo run -p optimus-desktop -- --http 8787
+```
+
+Then open `http://127.0.0.1:8787` or run Playwright from `apps/optimus-desktop`.
+
+## Install for the current Ubuntu user
+
+No root access is used for application installation.
+
+```bash
+bash scripts/rebuild-install-relaunch.sh          # release build, install, relaunch
+bash scripts/rebuild-install-relaunch.sh --dev    # debug build, install, relaunch
+```
+
+The default install creates:
+
+```text
+~/.local/share/optimus-agent/
+  .optimus-agent-install
+  bin/optimus-desktop
+  bin/optimus
+  bin/optimus-cli
+  VERSION.txt
+  install-meta.json
+  uninstall.sh
+  README-INSTALL.txt
+
+~/.local/share/applications/optimus-agent.desktop
+~/.local/share/icons/hicolor/scalable/apps/optimus-agent.svg
+~/.local/bin/optimus
+~/.local/bin/optimus-cli
+```
+
+Launch **Optimus Agent** from the Ubuntu application menu or run:
+
+```bash
+~/.local/share/optimus-agent/bin/optimus-desktop
+```
+
+The installer refuses a foreign non-empty install root, existing non-Optimus
+CLI links, and symlinked desktop-entry/icon destinations. Uninstall requires
+the Optimus ownership marker and never removes application state.
+
+Uninstall:
+
+```bash
+~/.local/share/optimus-agent/uninstall.sh
+```
+
+See [desktop-install-relaunch.md](docs/architecture/desktop-install-relaunch.md) for profiles, environment overrides, verification, and Windows commands.
+
+## Test
+
+```bash
+cargo fmt --all -- --check
+python3 scripts/optimus_version.py validate
+python3 scripts/optimus_version.py release-check
+python3 scripts/test_optimus_version.py
+cargo test --workspace --all-targets -- --test-threads=1
+
+cd apps/optimus-desktop
+npx playwright test
+```
+
+The runtime cancellation suite includes a Linux descendant-process regression. It proves that cancellation removes the full owned Unix process group and prevents delayed child effects.
 
 ## Workspace
 
 ```text
-apps/optimus-cli          jobs · skills · packs · chat · sessions · auth
-apps/optimus-desktop      WebView2 shell + UI + Kernel IPC
-crates/optimus-kernel     turn · Codex SSE · sessions · compression · tools
-crates/optimus-store      job ledger + events
-crates/optimus-graph      job/node domain
-crates/optimus-runtime    effectors · capture · policy · skill bridge
+apps/optimus-cli          jobs, skills, packs, chat, sessions, auth
+apps/optimus-desktop      native Wry shell, WebKitGTK/WebView2, UI, Kernel IPC
+crates/optimus-kernel     turns, providers, sessions, compression, tools
+crates/optimus-store      job ledger and events
+crates/optimus-graph      job and node domain
+crates/optimus-runtime    effectors, process ownership, capture, policy, skills
 crates/optimus-memory     MetaMemory
 crates/optimus-skills     Skills 2.0
 crates/optimus-packs      progressive capability packs
 ```
 
-## Quick commands
+## Windows
 
-```bash
-cargo test --workspace -- --test-threads=1
-cargo run -p optimus-cli -- auth codex import-hermes
-cargo run -p optimus-cli -- chat --provider codex "hello"
-cargo run -p optimus-desktop
-cargo run -p optimus-desktop -- --http 8787   # Playwright / browser testing
-# then: cd apps/optimus-desktop && npx playwright test
+Windows keeps the PowerShell installer and the WebView2 desktop backend.
 
-# After every desktop rebuild — unsigned local install + relaunch:
-bash scripts/rebuild-install-relaunch.sh          # release
-bash scripts/rebuild-install-relaunch.sh --dev    # faster
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\rebuild-install-relaunch.ps1
 ```
 
-Install lands in `%LOCALAPPDATA%\Programs\OptimusAgent\` with Start Menu + Desktop shortcuts. See `docs/architecture/desktop-install-relaunch.md`.
+The Bash installer automatically delegates to that script when run under Git Bash, MSYS, or Cygwin.
 
-## Dev (Windows)
+## Documentation
 
-```bash
-export TEMP='C:/Users/mustb/AppData/Local/Temp'
-export TMP='C:/Users/mustb/AppData/Local/Temp'
-export CARGO_TARGET_DIR='E:/Projects/Optimus Agent/local/tmp/cargo-target'
-
-cargo test --workspace
-cargo run -p optimus-cli -- --help
-```
+- [System overview](docs/architecture/system-overview.md)
+- [Architecture direction](docs/architecture/optimus-exceeds-hermes.md)
+- [Desktop install and relaunch](docs/architecture/desktop-install-relaunch.md)
+- ADRs under `docs/decisions/`
+- Phase verification records under `docs/architecture/`
 
 ## North star
 

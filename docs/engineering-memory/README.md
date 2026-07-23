@@ -3,6 +3,7 @@ knowledge_type: engineering-memory-guide
 status: current
 covers:
   - AGENTS.md
+  - OPTIMUS_AGENTS.md
   - scripts/engineering_memory.py
   - skills/update-engineering-memory/**
 depends_on:
@@ -43,7 +44,10 @@ be reported and resolved rather than blended.
 
 ## Surfaces
 
-- `AGENTS.md` — concise laws relevant to nearly every task.
+- `AGENTS.md` — concise development laws for the Optimus source tree. Not loaded
+  into product chat.
+- `OPTIMUS_AGENTS.md` — product runtime constitution loaded into Optimus chat
+  system prompts.
 - `docs/architecture/system-overview.md` — current-vs-planned architecture.
 - `docs/maps/` — ownership, memory/retrieval, model, security, and
   observability/evaluation maps.

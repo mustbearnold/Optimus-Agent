@@ -1508,6 +1508,22 @@ mod tests {
         }
     }
 
+    #[cfg(windows)]
+    fn successful_command() -> StepKind {
+        StepKind::RunCommand {
+            program: "cmd".into(),
+            args: vec!["/C".into(), "echo done".into()],
+        }
+    }
+
+    #[cfg(unix)]
+    fn successful_command() -> StepKind {
+        StepKind::RunCommand {
+            program: "sh".into(),
+            args: vec!["-c".into(), "printf done".into()],
+        }
+    }
+
     #[test]
     fn sequential_write_campaign_succeeds() {
         let d = tempdir().unwrap();
@@ -1748,10 +1764,7 @@ mod tests {
                     },
                     CampaignStepSpec {
                         label: "cmd".into(),
-                        kind: StepKind::RunCommand {
-                            program: "cmd".into(),
-                            args: vec!["/C".into(), "echo".into(), "done".into()],
-                        },
+                        kind: successful_command(),
                     },
                     CampaignStepSpec {
                         label: "tail".into(),

@@ -8,6 +8,14 @@
   "mappings": [
     {
       "mapping_kind": "package_default_coarse",
+      "package": "optimus-browser",
+      "sources": [
+        "crates/optimus-browser/src/lib.rs"
+      ],
+      "tests": []
+    },
+    {
+      "mapping_kind": "package_default_coarse",
       "package": "optimus-cli",
       "sources": [
         "apps/optimus-cli/src/gateway_http.rs",
@@ -77,6 +85,7 @@
         "apps/optimus-desktop/src/ipc/system.rs",
         "apps/optimus-desktop/src/main.rs",
         "apps/optimus-desktop/src/native_workers.rs",
+        "apps/optimus-desktop/src/preview_embed.rs",
         "apps/optimus-desktop/src/server.rs",
         "apps/optimus-desktop/src/ui.rs"
       ],
@@ -90,18 +99,21 @@
             "two held SSE responses do not block the HTTP accept loop",
             "bridge HTTP stream cancellation is local and one-shot",
             "coalesceTools merges repeated web_search",
-            "formatRich hides tool JSON and keeps prose"
+            "formatRich hides tool JSON and keeps prose",
+            "formatRich cannot create event-handler attributes from markdown links",
+            "active turns retain session ownership until streaming settles"
           ],
           "path": "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"
         },
         {
           "cases": [
-            "layout locks: sharp corners, compact tools, rail cannot blow sidebar",
-            "Rome design tokens are defined",
+            "layout locks: Vantage radii, compact tools, rail cannot blow sidebar",
+            "Vantage workspace design tokens are defined",
             "turn and session timers expose live and terminal timing evidence",
+            "approval-required turn is honest and session navigation clears transient state",
             "shell multi-pane IA: leftRail main statusBar; right/term hidden by default",
             "nav routes: Capabilities shows page-capabilities; New session stays on chat",
-            "single window header — no logo strip, no second topbar",
+            "single branded window header — no duplicate topbar",
             "custom titlebar shell and send absolute position",
             "send button stays on composer bar baseline",
             "chat pane scrolls and composer controls exist",
@@ -146,6 +158,34 @@
           "path": "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js"
         },
         {
+          "cases": [
+            "chrome-like toolbar and live hole are present",
+            "omnibox Go invokes browser_navigate and updates status",
+            "annotation push creates bar and send-to-composer injects context",
+            "annotation toggle posts browser_set_annotate",
+            "browser live hole reports geometry via browser_embed payload",
+            "right sidebar keeps a draggable gutter outside the native browser surface",
+            "left and right sidebar resize bars share the same 7px horizontal width",
+            "held right-divider drag emits no duplicate native geometry",
+            "one-pixel divider movement reaches native geometry as one pixel",
+            "divider input dispatches changed native bounds in the same JavaScript turn",
+            "active right-divider drag dispatches every changed frame without duplicate geometry",
+            "fast right-divider drag coalesces slow native embeds to the latest bounds",
+            "app-window resize converges without replaying duplicate geometry"
+          ],
+          "path": "apps/optimus-desktop/e2e/06-preview-browser.spec.js"
+        },
+        {
+          "cases": [
+            "Vantage shell owns compact density and high-refresh motion tokens",
+            "left rail, inspector, and execution dock share one reversible presentation state",
+            "streaming keeps one live text node and commits at most once per display frame",
+            "focus breakpoint contains an active native Browser in its inspector overlay and hides it on close",
+            "resize paths are direct and reduced motion preserves state without transforms"
+          ],
+          "path": "apps/optimus-desktop/e2e/07-vantage-design.spec.js"
+        },
+        {
           "cases": [],
           "path": "apps/optimus-desktop/e2e/support.js"
         }
@@ -164,6 +204,7 @@
       "package": "optimus-kernel",
       "sources": [
         "crates/optimus-kernel/src/agent.rs",
+        "crates/optimus-kernel/src/artifacts.rs",
         "crates/optimus-kernel/src/browser.rs",
         "crates/optimus-kernel/src/codex_oauth.rs",
         "crates/optimus-kernel/src/compress.rs",
@@ -268,6 +309,8 @@
             "successful_turn_returns_exact_persisted_root_trace",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
+            "desktop_pack_lists_workspace_without_terminal",
+            "model_context_includes_host_provided_current_utc_date",
             "skill_resolve_returns_body",
             "write_file_tool_uses_durable_job",
             "valid_tool_execution_error_becomes_canonical_failed_outcome",
@@ -438,6 +481,8 @@
             "successful_turn_returns_exact_persisted_root_trace",
             "turn_recalls_memory_then_answers",
             "activate_pack_increases_tools_and_tokens",
+            "desktop_pack_lists_workspace_without_terminal",
+            "model_context_includes_host_provided_current_utc_date",
             "skill_resolve_returns_body",
             "write_file_tool_uses_durable_job",
             "valid_tool_execution_error_becomes_canonical_failed_outcome",
@@ -591,6 +636,7 @@
           "cases": [
             "starts_with_core_only_under_budget",
             "activate_browser_increases_schema_tokens",
+            "desktop_pack_exposes_computer_use_desktop_tool",
             "on_demand_pack_limit_is_two",
             "schema_budget_blocks_heavy_stack",
             "cannot_deactivate_core",
@@ -622,6 +668,7 @@
           "cases": [
             "starts_with_core_only_under_budget",
             "activate_browser_increases_schema_tokens",
+            "desktop_pack_exposes_computer_use_desktop_tool",
             "on_demand_pack_limit_is_two",
             "schema_budget_blocks_heavy_stack",
             "cannot_deactivate_core",
@@ -674,6 +721,7 @@
           "cases": [
             "cancelling_pending_job_is_atomic_terminal_and_idempotent",
             "cancelling_running_command_terminates_and_reaps_child_without_late_effect",
+            "cancelling_running_command_contains_a_setsid_escapee",
             "repeated_cancel_resume_run_and_recover_preserve_one_terminal_outcome"
           ],
           "path": "crates/optimus-runtime/tests/cancellation.rs"
@@ -740,6 +788,7 @@
           "cases": [
             "cancelling_pending_job_is_atomic_terminal_and_idempotent",
             "cancelling_running_command_terminates_and_reaps_child_without_late_effect",
+            "cancelling_running_command_contains_a_setsid_escapee",
             "repeated_cancel_resume_run_and_recover_preserve_one_terminal_outcome"
           ],
           "path": "crates/optimus-runtime/tests/cancellation.rs"

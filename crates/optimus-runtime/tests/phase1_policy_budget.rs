@@ -7,6 +7,39 @@ use optimus_graph::{Effect, JobSpec, JobStatus, NodeSpec, NodeStatus, PolicyMode
 use optimus_runtime::{ApprovalGrant, Runtime, RuntimeError};
 use tempfile::tempdir;
 
+#[cfg(windows)]
+fn shell_command(script: &str) -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), script.into()],
+    }
+}
+
+#[cfg(unix)]
+fn shell_command(script: &str) -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), script.into()],
+    }
+}
+
+#[cfg(windows)]
+fn long_sleep_command() -> Effect {
+    Effect::RunCommand {
+        program: "powershell".into(),
+        args: vec![
+            "-NoProfile".into(),
+            "-Command".into(),
+            "Start-Sleep -Seconds 30".into(),
+        ],
+    }
+}
+
+#[cfg(unix)]
+fn long_sleep_command() -> Effect {
+    shell_command("sleep 30")
+}
+
 fn open_rt(mode: PolicyMode) -> (tempfile::TempDir, Runtime) {
     let root = tempdir().expect("tempdir");
     let db = root.path().join("optimus.db");
@@ -26,10 +59,7 @@ fn run_command_denied_without_approval_in_smart_deny() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "echo".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo hi>out.txt".into()],
-                },
+                effect: shell_command("echo hi>out.txt"),
             }],
         })
         .unwrap();
@@ -52,10 +82,7 @@ fn run_command_succeeds_after_grant() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "echo".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo hi>out.txt".into()],
-                },
+                effect: shell_command("echo hi>out.txt"),
             }],
         })
         .unwrap();
@@ -123,14 +150,7 @@ fn command_timeout_kills_long_sleep() {
             },
             nodes: vec![NodeSpec {
                 label: "sleep".into(),
-                effect: Effect::RunCommand {
-                    program: "powershell".into(),
-                    args: vec![
-                        "-NoProfile".into(),
-                        "-Command".into(),
-                        "Start-Sleep -Seconds 30".into(),
-                    ],
-                },
+                effect: long_sleep_command(),
             }],
         })
         .unwrap();

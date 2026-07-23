@@ -49,10 +49,17 @@ caused an effect.
 
 ## Decision
 
-1. On Windows, runtime commands launch suspended, enter a private kill-on-close
-   Job Object, and resume only after assignment succeeds. Cancellation, timeout,
-   and normal root exit terminate the Job and verify its active process count is
-   zero before settlement.
+1. Runtime command ownership is platform-specific. On Windows, commands launch
+   suspended, enter a private kill-on-close Job Object, and resume only after
+   assignment succeeds. On Linux, commands launch as a transient `systemd --user`
+   service through Bubblewrap. The namespace masks the user-manager sockets and
+   exposes cgroup controls read-only, preventing descendants from migrating into
+   a sibling user unit. Cancellation, timeout, normal root exit, and guard drop
+   terminate the owned Job or service and verify it is empty before settlement.
+   `RunCommand` fails before process spawn on
+   macOS, BSD, and other platforms without an implemented durable process-tree
+   owner; process groups alone are not a containment boundary because a child can
+   call `setsid()` and escape.
 2. `ModelProvider` receives a cloneable cooperative cancellation token through a
    cancellable streaming seam. Existing turn APIs create a never-cancelled token;
    callers that own cancellation use `turn_with_sink_cancellable`. Codex SSE uses
@@ -100,7 +107,8 @@ typed capabilities instead of broad process/job grants.
 
 ## Consequences
 
-- `windows-sys` is a direct Windows-only runtime dependency.
+- `windows-sys` is a direct Windows-only runtime dependency. Linux ownership uses
+  the `systemd` user manager plus Bubblewrap; unsupported platforms fail closed.
 - Gateway state now includes `gateway/gateway.db`; file directories remain the
   external adapter and operator-visible materialization.
 - Cron and gateway stale owners cannot publish terminal state after takeover.
@@ -132,6 +140,11 @@ typed capabilities instead of broad process/job grants.
 
 - Windows tests prove injected pre-assignment failure cannot execute a marker,
   resumed children are Job members, and cancellation/timeout leave no late work.
+- Linux tests prove `setsid()` descendants remain in the owned service and that
+  a nested `systemd --user` scope cannot escape through the masked manager
+  sockets, so cancellation cannot leave either delayed file effect behind.
+- Platform-gate tests prove `RunCommand` is disabled before spawn when durable
+  process-tree ownership is unavailable.
 - Kernel tests prove an in-flight cooperative provider observes cancellation.
 - Cron tests cover concurrent claims, expiry takeover, stale completion, disable
   fencing, and legacy migration.
@@ -148,6 +161,11 @@ create/assign/resume guarantees. Reconsider the cooperative provider seam when
 all production adapters use an async transport with native request abort.
 Reconsider SQLite gateway authority only if an external broker provides stronger
 transactional claim/outbox semantics with local offline operation.
+
+The Unix process-group boundary covers normal descendants that inherit the
+group. A deliberately daemonizing approved command can create a new session;
+reconsider a Linux cgroup scope if hostile command containment becomes a product
+requirement rather than an approval boundary.
 
 ## Relevant code
 

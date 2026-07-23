@@ -1,6 +1,6 @@
 # Optimus Agent — Rebuild Blueprint (2026-07-18)
 
-**Mission:** Rebuild the personal agent category so Optimus exceeds Hermes Agent on *every* axis that matters in production: reliability, learning quality, memory integrity, cost, latency, security, multi-agent durability, desktop UX, Windows-first quality, evalability, and long-horizon autonomy — without sacrificing Hermes’ genuine strengths (provider freedom, gateway breadth, skills loop, cache discipline).
+**Mission:** Rebuild the personal agent category so Optimus exceeds Hermes Agent on *every* axis that matters in production: reliability, learning quality, memory integrity, cost, latency, security, multi-agent durability, desktop UX, Ubuntu-first quality, cross-platform discipline, evalability, and long-horizon autonomy — without sacrificing Hermes’ genuine strengths (provider freedom, gateway breadth, skills loop, cache discipline).
 
 This is not a Hermes fork with a coat of paint. It is a greenfield architecture that **imports Hermes product lessons and rejects Hermes structural debt**.
 

@@ -5,6 +5,22 @@ use optimus_runtime::{ApprovalGrant, Runtime};
 use rusqlite::Connection;
 use tempfile::tempdir;
 
+#[cfg(windows)]
+fn command_effect(script: &str) -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), script.into()],
+    }
+}
+
+#[cfg(unix)]
+fn command_effect(script: &str) -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), script.into()],
+    }
+}
+
 #[test]
 fn pending_approval_list_and_grant_resume() {
     let dir = tempdir().unwrap();
@@ -26,10 +42,7 @@ fn pending_approval_list_and_grant_resume() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "echo".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo".into(), "approved".into()],
-                },
+                effect: command_effect("echo approved"),
             }],
         })
         .unwrap();
@@ -66,10 +79,7 @@ fn grant_approval_marks_has_grant() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "c".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "exit".into(), "0".into()],
-                },
+                effect: command_effect("exit 0"),
             }],
         })
         .unwrap();
@@ -91,10 +101,7 @@ fn grant_is_bound_to_exact_node_effect_hash_actor_and_expiry() {
             budget: Default::default(),
             nodes: vec![NodeSpec {
                 label: "command".into(),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "exit 0".into()],
-                },
+                effect: command_effect("exit 0"),
             }],
         })
         .unwrap();
@@ -249,11 +256,7 @@ fn grants_do_not_transfer_to_changed_effects_or_other_nodes() {
     let _ = rt.run_next(changed);
     rt.grant_approval(ApprovalGrant::for_job_by(changed, "alice", 120))
         .unwrap();
-    let replacement = serde_json::to_string(&Effect::RunCommand {
-        program: "cmd".into(),
-        args: vec!["/C".into(), "echo changed".into()],
-    })
-    .unwrap();
+    let replacement = serde_json::to_string(&command_effect("echo changed")).unwrap();
     Connection::open(&db)
         .unwrap()
         .execute(
@@ -290,10 +293,7 @@ fn command_job(rt: &Runtime, label: &str, nodes: usize) -> optimus_graph::JobId 
         nodes: (0..nodes)
             .map(|index| NodeSpec {
                 label: format!("command {index}"),
-                effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "exit 0".into()],
-                },
+                effect: command_effect("exit 0"),
             })
             .collect(),
     })

@@ -8,6 +8,7 @@ members = [
     "crates/optimus-skills",
     "crates/optimus-packs",
     "crates/optimus-kernel",
+    "crates/optimus-browser",
     "apps/optimus-cli",
     "apps/optimus-desktop",
 ]
@@ -49,4 +50,6 @@ tempfile = "3"
 clap = { version = "4", features = ["derive"] }
 tiny_http = "0.12"
 cap-std = "4.0.2"
+fs2 = "0.4.3"
+libc = "0.2"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading"] }

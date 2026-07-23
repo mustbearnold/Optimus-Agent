@@ -1,8 +1,8 @@
-//! Diagnostics and Codex authentication IPC.
+//! Diagnostics, product settings, and Codex authentication IPC.
 
 use std::path::PathBuf;
 
-use optimus_kernel::{open_cron, CodexAuthStore};
+use optimus_kernel::{open_cron, CodexAuthStore, ProductSettings};
 use optimus_packs::CapabilitySession;
 use optimus_runtime::{CampaignStatus, CampaignStore};
 use serde_json::json;
@@ -13,19 +13,27 @@ use super::runtime_ops::open_runtime;
 pub(super) fn owns(method: &str) -> bool {
     matches!(
         method,
-        "ping" | "doctor" | "auth_status" | "auth_import_hermes" | "auth_import_cli"
+        "ping"
+            | "doctor"
+            | "auth_status"
+            | "auth_import_hermes"
+            | "auth_import_cli"
+            | "settings_get"
+            | "settings_set"
     )
 }
 
 pub(super) fn handle(
     home: &PathBuf,
     method: &str,
-    _params: serde_json::Value,
+    params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
     match method {
         "ping" => Ok(json!({ "pong": true, "home": home.display().to_string() })),
         "doctor" => Ok(doctor_json(home)),
         "auth_status" => Ok(auth_status_json(home)),
+        "settings_get" => settings_get(home),
+        "settings_set" => settings_set(home, params),
         "auth_import_hermes" => {
             let store = CodexAuthStore::open(home).map_err(|e| e.to_string())?;
             let msg = store.import_from_hermes().map_err(|e| e.to_string())?;
@@ -38,6 +46,18 @@ pub(super) fn handle(
         }
         _ => Err(format!("unknown method: {method}")),
     }
+}
+
+fn settings_get(home: &PathBuf) -> Result<serde_json::Value, String> {
+    let settings = ProductSettings::load(home).map_err(|e| e.to_string())?;
+    Ok(json!({ "settings": settings.to_public_json() }))
+}
+
+fn settings_set(home: &PathBuf, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let mut settings = ProductSettings::load(home).map_err(|e| e.to_string())?;
+    settings.apply_patch(&params).map_err(|e| e.to_string())?;
+    settings.save(home).map_err(|e| e.to_string())?;
+    Ok(json!({ "settings": settings.to_public_json() }))
 }
 
 pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
@@ -70,6 +90,23 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         .and_then(|rt| rt.list_pending_approvals().ok())
         .map(|rows| rows.len())
         .unwrap_or(0);
+    let browser_kind = if optimus_kernel::chrome_binary_path().is_some() {
+        "cdp"
+    } else {
+        "http-ssrf-safe"
+    };
+    let preview_browser = browser_kind == "cdp";
+    let product_settings = ProductSettings::load(home)
+        .map(|s| s.to_public_json())
+        .unwrap_or_else(|e| {
+            json!({
+                "work_isolation": "shared",
+                "work_isolation_label": "Shared workbench",
+                "allow_concurrent_projects": false,
+                "enforcement_active": true,
+                "error": e.to_string(),
+            })
+        });
     json!({
         "phase": "desktop-5-sidebars-preview",
         "home": home.display().to_string(),
@@ -80,17 +117,22 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         "version": env!("CARGO_PKG_VERSION"),
         "codex_present": auth.get("present").and_then(|v| v.as_bool()).unwrap_or(false),
         "streaming": true,
-        "browser": "http-ssrf-safe",
+        "browser": browser_kind,
         "cron": true,
         "approvals": true,
         "campaigns": true,
         "gateway": true,
         "files": true,
         "pty": false,
-        "preview_browser": false,
+        "preview_browser": preview_browser,
         "cron_jobs": cron_jobs,
         "campaigns_active": campaigns_active,
         "approvals_pending": approvals_pending,
+        "work_isolation": product_settings.get("work_isolation").cloned().unwrap_or(json!("shared")),
+        "work_isolation_label": product_settings.get("work_isolation_label").cloned().unwrap_or(json!("Shared workbench")),
+        "allow_concurrent_projects": product_settings.get("allow_concurrent_projects").cloned().unwrap_or(json!(false)),
+        "isolation_enforcement_active": product_settings.get("enforcement_active").cloned().unwrap_or(json!(true)),
+        "settings": product_settings,
     })
 }
 
@@ -108,5 +150,61 @@ pub fn auth_status_json(home: &PathBuf) -> serde_json::Value {
             Err(e) => json!({ "present": false, "error": e.to_string() }),
         },
         Err(e) => json!({ "present": false, "error": e.to_string() }),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{doctor_json, settings_get, settings_set};
+    use serde_json::json;
+
+    #[test]
+    fn doctor_preview_browser_matches_chrome_detection() {
+        let dir = tempfile::tempdir().expect("temp home");
+        let home = dir.path().to_path_buf();
+        let doc = doctor_json(&home);
+        let browser = doc
+            .get("browser")
+            .and_then(|v| v.as_str())
+            .expect("browser field");
+        let preview = doc
+            .get("preview_browser")
+            .and_then(|v| v.as_bool())
+            .expect("preview_browser field");
+        assert!(
+            browser == "cdp" || browser == "http-ssrf-safe",
+            "unexpected browser kind: {browser}"
+        );
+        assert_eq!(preview, browser == "cdp");
+        assert_eq!(
+            preview,
+            optimus_kernel::chrome_binary_path().is_some(),
+            "doctor.preview_browser must track chrome_binary_path()"
+        );
+    }
+
+    #[test]
+    fn settings_get_set_round_trip_and_doctor_fields() {
+        let dir = tempfile::tempdir().expect("temp home");
+        let home = dir.path().to_path_buf();
+        let got = settings_get(&home).unwrap();
+        assert_eq!(got["settings"]["work_isolation"], "shared");
+        let set = settings_set(
+            &home,
+            json!({
+                "work_isolation": "isolated_profiles",
+                "allow_concurrent_projects": true
+            }),
+        )
+        .unwrap();
+        assert_eq!(set["settings"]["work_isolation"], "isolated_profiles");
+        assert_eq!(set["settings"]["allow_concurrent_projects"], true);
+        assert_eq!(set["settings"]["enforcement_active"], false);
+        let again = settings_get(&home).unwrap();
+        assert_eq!(again["settings"]["work_isolation"], "isolated_profiles");
+        let doc = doctor_json(&home);
+        assert_eq!(doc["work_isolation"], "isolated_profiles");
+        assert_eq!(doc["allow_concurrent_projects"], true);
+        assert_eq!(doc["isolation_enforcement_active"], false);
     }
 }

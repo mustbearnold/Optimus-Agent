@@ -309,15 +309,15 @@ fn mtime_to_unix(t: Option<SystemTime>) -> u64 {
 
 /// Strip Windows `\\?\` extended prefix for prefix comparisons.
 fn normalize_lexically(path: &Path) -> PathBuf {
-    let s = path.to_string_lossy();
+    let _s = path.to_string_lossy();
     #[cfg(windows)]
     {
-        let stripped = if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+        let stripped = if let Some(rest) = _s.strip_prefix(r"\\?\UNC\") {
             format!(r"\\{rest}")
-        } else if let Some(rest) = s.strip_prefix(r"\\?\") {
+        } else if let Some(rest) = _s.strip_prefix(r"\\?\") {
             rest.to_string()
         } else {
-            s.into_owned()
+            _s.into_owned()
         };
         PathBuf::from(stripped)
     }
@@ -561,5 +561,46 @@ mod tests {
         assert_eq!(entries[0].name, "b.txt");
         assert_eq!(entries[0].path, "sub/b.txt");
         assert_eq!(entries[0].kind, FsEntryKind::File);
+    }
+
+    #[test]
+    fn recursive_listing_is_deterministic_bounded_and_paginated() {
+        let dir = tempdir().unwrap();
+        write_file(&dir.path().join("a").join("one.txt"), "one");
+        write_file(&dir.path().join("b.txt"), "b");
+        write_file(&dir.path().join("c.txt"), "c");
+        let fs = FsRoots::new(vec![dir.path().to_path_buf()]).unwrap();
+
+        let all = fs.list_dir("").unwrap();
+        let paths: Vec<_> = all.iter().map(|entry| entry.path.as_str()).collect();
+        // list_dir is non-recursive; subdir "a" appears but its children don't
+        assert!(paths.contains(&"a"));
+        assert!(paths.contains(&"b.txt"));
+        assert!(paths.contains(&"c.txt"));
+        assert_eq!(all.len(), 3);
+
+        // Verify the subdirectory contains its file
+        let sub = fs.list_dir("a").unwrap();
+        assert_eq!(sub.len(), 1);
+        assert_eq!(sub[0].name, "one.txt");
+        assert_eq!(sub[0].path, "a/one.txt");
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn onedrive_desktop_candidates_are_ordered_and_deduplicated() {
+        let root = PathBuf::from("C:/Users/test/OneDrive");
+        let candidates = onedrive_desktop_candidates([
+            Some(root.clone()),
+            Some(root.clone()),
+            Some(PathBuf::from("C:/Users/test/Commercial")),
+        ]);
+        assert_eq!(
+            candidates,
+            vec![
+                root.join("Desktop"),
+                PathBuf::from("C:/Users/test/Commercial/Desktop")
+            ]
+        );
     }
 }

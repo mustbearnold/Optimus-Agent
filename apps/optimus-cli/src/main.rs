@@ -21,6 +21,9 @@ use optimus_runtime::{
 use optimus_skills::{Permission, SkillDraft, SkillRegistry};
 use serde_json::json;
 
+const OPTIMUS_VERSION_MANIFEST: &str =
+    include_str!("../../../docs/architecture/optimus-version.json");
+
 #[derive(Parser, Debug)]
 #[command(name = "optimus", version, about = "Optimus Agent CLI")]
 struct Cli {
@@ -34,6 +37,11 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
+    /// Show product version, tracked Hermes target, and verified parity version
+    Version {
+        #[arg(long)]
+        json: bool,
+    },
     /// Print version and phase status
     Doctor,
     /// Run the Phase 0 golden multi-node job in a workspace
@@ -411,7 +419,78 @@ fn run_read_only_eval(cli: &Cli) -> Option<Result<(), Box<dyn std::error::Error>
     })())
 }
 
+fn embedded_version_status() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let manifest: serde_json::Value = serde_json::from_str(OPTIMUS_VERSION_MANIFEST)?;
+    let target = manifest
+        .pointer("/hermes_target/version")
+        .and_then(serde_json::Value::as_str)
+        .ok_or("embedded version manifest is missing hermes_target.version")?;
+    let claim_status = manifest
+        .pointer("/parity_claim/status")
+        .and_then(serde_json::Value::as_str)
+        .ok_or("embedded version manifest is missing parity_claim.status")?;
+    let parity_version = if claim_status == "verified" {
+        manifest
+            .pointer("/parity_claim/hermes_version")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null)
+    } else {
+        serde_json::Value::Null
+    };
+    let feature_contracts = manifest
+        .pointer("/baseline/feature_count")
+        .and_then(serde_json::Value::as_u64)
+        .ok_or("embedded version manifest is missing baseline.feature_count")?;
+    Ok(json!({
+        "product": "Optimus Agent",
+        "product_version": env!("CARGO_PKG_VERSION"),
+        "hermes_target_version": target,
+        "hermes_parity_version": parity_version,
+        "parity_claim_status": claim_status,
+        "frozen_hermes_feature_contracts": feature_contracts,
+    }))
+}
+
+fn run_read_only_version(cli: &Cli) -> Option<Result<(), Box<dyn std::error::Error>>> {
+    let Commands::Version { json: as_json } = &cli.command else {
+        return None;
+    };
+    Some((|| {
+        let status = embedded_version_status()?;
+        if *as_json {
+            println!("{}", serde_json::to_string_pretty(&status)?);
+        } else {
+            println!(
+                "Optimus Agent {}",
+                status["product_version"].as_str().unwrap_or("unknown")
+            );
+            println!(
+                "Hermes target: {}",
+                status["hermes_target_version"]
+                    .as_str()
+                    .unwrap_or("unknown")
+            );
+            println!(
+                "Hermes parity: {}",
+                status["hermes_parity_version"]
+                    .as_str()
+                    .unwrap_or("unverified")
+            );
+            println!(
+                "Frozen Hermes feature contracts: {}",
+                status["frozen_hermes_feature_contracts"]
+                    .as_u64()
+                    .unwrap_or(0)
+            );
+        }
+        Ok(())
+    })())
+}
+
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(result) = run_read_only_version(&cli) {
+        return result;
+    }
     if let Some(result) = run_read_only_eval(&cli) {
         return result;
     }
@@ -419,10 +498,24 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     let db = cli.home.join("optimus.db");
     let skills_db = cli.home.join("skills.db");
     match cli.command {
+        Commands::Version { .. } => unreachable!("version is handled before opening Optimus state"),
         Commands::Doctor => {
             println!(
                 "optimus {} — phase 16 gateway-http+campaign-ipc",
                 env!("CARGO_PKG_VERSION")
+            );
+            let version_status = embedded_version_status()?;
+            println!(
+                "hermes: target={} parity={} contracts={}",
+                version_status["hermes_target_version"]
+                    .as_str()
+                    .unwrap_or("unknown"),
+                version_status["hermes_parity_version"]
+                    .as_str()
+                    .unwrap_or("unverified"),
+                version_status["frozen_hermes_feature_contracts"]
+                    .as_u64()
+                    .unwrap_or(0),
             );
             println!("home: {}", cli.home.display());
             println!("db: {}", db.display());

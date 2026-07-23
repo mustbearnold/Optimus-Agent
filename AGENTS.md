@@ -1,8 +1,69 @@
 # Optimus Agent engineering rules
 
-This file contains repository-wide laws only. Detailed procedures live under
-`docs/` and `skills/`. For current architecture, start with
-`docs/architecture/system-overview.md`.
+This file contains repository-wide **development** laws only. It is for humans
+and coding agents working on the Optimus source tree.
+
+It is intentionally separate from the product runtime constitution:
+
+| File | Audience | Loaded into Optimus chat? |
+|---|---|---|
+| `AGENTS.md` | Developers / coding agents building Optimus | No |
+| `OPTIMUS_AGENTS.md` | Installed Optimus Agent product sessions | Yes |
+
+Detailed procedures live under `docs/` and `skills/`. For current architecture,
+start with `docs/architecture/system-overview.md`.
+
+## Hard project boundary (mandatory)
+
+When developing Optimus Agent, work is confined to the Optimus project tree.
+
+### Canonical root
+
+- Absolute root: `/home/mustbearnold/Projects/Optimus Agent`
+- Resolve with `readlink -f` / `pwd -P` before editing.
+- If the active workspace is not this root (or a path inside it), **stop**.
+  Switch to the Optimus project first. Do not “helpfully” edit elsewhere.
+
+### Allowed write scope
+
+Only create/modify/delete files under:
+
+1. `/home/mustbearnold/Projects/Optimus Agent/**` (source, docs, skills, scripts,
+   local build/evidence under this tree)
+2. Optimus install/runtime paths **only when the task explicitly requires
+   install, relaunch, uninstall, or live desktop verification**:
+   - `~/.local/share/optimus-agent/**`
+   - `~/.local/share/optimus/**`
+   - `~/.local/share/applications/optimus-agent.desktop`
+   - `~/.local/share/icons/**/optimus-agent.*`
+   - `~/.local/bin/optimus` and `~/.local/bin/optimus-cli` when they are
+     Optimus-managed symlinks
+
+### Forbidden without explicit user instruction naming that other target
+
+Do **not** edit, reorganize, install into, or “clean up”:
+
+- Sibling projects under `~/Projects/` (for example `Hermes Next`,
+  `Heracles Agent`, `i-have-adhd`, or any future non-Optimus folder)
+- Other application source trees under `~/`, `~/Projects/`, or elsewhere
+- Hermes product/config trees used for Hermes itself (for example
+  `~/.hermes/**`) except read-only inspection when needed for Optimus import
+  compatibility
+- Other agents’ repos, websites, business projects, or shared utilities outside
+  the Optimus root
+- Global system packages, user services, or shell config unless the user
+  explicitly asked for that host change as part of the Optimus task
+
+### Enforcement checklist (every Optimus development turn)
+
+1. Confirm workspace root is `/home/mustbearnold/Projects/Optimus Agent`.
+2. Before any write/patch/rm, assert the target path is inside that root or an
+   explicitly allowed Optimus install path above.
+3. Refuse cross-project drive-by fixes. If another project is implicated, report
+   the path and ask; do not touch it.
+4. Keep build artifacts, evidence, and temp outputs under this repo
+   (`local/tmp/**` preferred) rather than other project directories.
+5. Treat path containment as a hard gate equal to “do not commit unless asked”.
 
 ## Architectural laws
 
@@ -44,15 +105,18 @@ This file contains repository-wide laws only. Detailed procedures live under
 1. Identify the owning subsystem and read its Engineering Memory.
 2. Inspect current source, related tests, contracts, and ADRs.
 3. Establish a reproducible baseline.
-4. Make the smallest coherent change; preserve unrelated work.
-5. Test focused behaviour, then relevant integration/evaluation surfaces.
-6. Review security, approval, cancellation, terminal outcomes, observability,
+4. Before installed-Desktop or live-model testing, load and follow
+   `skills/optimus-native-ui-testing/SKILL.md`; native DOM/CUA evidence is
+   primary and deterministic tests are supplementary.
+5. Make the smallest coherent change; preserve unrelated work.
+6. Test focused behaviour, then relevant integration/evaluation surfaces.
+7. Review security, approval, cancellation, terminal outcomes, observability,
    replay implications, and CPU fallback where applicable.
-7. Run `python scripts/engineering_memory.py check` before refreshing memory.
-8. Update affected documentation and run
+8. Run `python scripts/engineering_memory.py check` before refreshing memory.
+9. Update affected documentation and run
    `python scripts/engineering_memory.py generate`.
-9. Run `python scripts/engineering_memory.py validate` and report known gaps.
-10. Do not commit, push, publish, install, or deploy unless explicitly asked.
+10. Run `python scripts/engineering_memory.py validate` and report known gaps.
+11. Do not commit, push, publish, install, or deploy unless explicitly asked.
 
 ## Repository conventions
 
@@ -63,5 +127,7 @@ This file contains repository-wide laws only. Detailed procedures live under
   retrieval indexes, and Engineering Memory are distinct systems.
 - `.engineering-memory/*.json` files are generated by
   `scripts/engineering_memory.py`; edit their source code/docs, not the JSON.
+- `AGENTS.md` is a developer control artifact. `OPTIMUS_AGENTS.md` is the product
+  runtime constitution. The installed Optimus runtime must never mutate either.
 - New reusable procedures belong in a focused repository skill. Keep this file
   concise.

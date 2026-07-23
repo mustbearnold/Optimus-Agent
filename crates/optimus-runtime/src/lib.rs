@@ -6,6 +6,8 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+#[cfg(target_os = "linux")]
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -157,16 +159,127 @@ pub struct JobSummary {
 
 struct KillOnDrop {
     child: Option<Child>,
+    #[cfg(target_os = "linux")]
+    linux_unit: Option<String>,
     #[cfg(windows)]
     job: Option<OwnedHandle>,
 }
 
+const CHILD_SETTLE_TIMEOUT: Duration = Duration::from_secs(2);
+
+fn ensure_owned_command_containment(os: &str) -> std::io::Result<()> {
+    if matches!(os, "linux" | "windows") {
+        return Ok(());
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        format!("run_command is disabled on {os}: durable process-tree ownership is unavailable"),
+    ))
+}
+
+fn wait_child_bounded(child: &mut Child) -> std::io::Result<()> {
+    let deadline = Instant::now() + CHILD_SETTLE_TIMEOUT;
+    loop {
+        if child.try_wait()?.is_some() {
+            return Ok(());
+        }
+        if Instant::now() >= deadline {
+            return Err(std::io::Error::other(format!(
+                "child process {} did not exit within {:?}",
+                child.id(),
+                CHILD_SETTLE_TIMEOUT
+            )));
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
+}
+
+fn kill_child_and_confirm_exit(child: &mut Child) -> std::io::Result<()> {
+    if child.try_wait()?.is_none() {
+        if let Err(kill_error) = child.kill() {
+            if child.try_wait()?.is_none() {
+                return Err(kill_error);
+            }
+        }
+    }
+    wait_child_bounded(child)
+}
+
+fn settle_child_after_signal(
+    child: &mut Child,
+    signal_result: std::io::Result<()>,
+) -> std::io::Result<()> {
+    match signal_result {
+        Ok(()) => match wait_child_bounded(child) {
+            Ok(()) => Ok(()),
+            Err(settle_error) => {
+                if let Err(kill_error) = kill_child_and_confirm_exit(child) {
+                    return Err(std::io::Error::other(format!(
+                        "{settle_error}; direct child cleanup also failed: {kill_error}"
+                    )));
+                }
+                Err(settle_error)
+            }
+        },
+        Err(signal_error) => match kill_child_and_confirm_exit(child) {
+            Ok(()) => Err(signal_error),
+            Err(kill_error) => Err(std::io::Error::other(format!(
+                "{signal_error}; direct child cleanup also failed: {kill_error}"
+            ))),
+        },
+    }
+}
+
 impl KillOnDrop {
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
+    fn spawn(command: &mut Command, linux_unit: String) -> std::io::Result<Self> {
+        let mut child = command.spawn()?;
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            match Self::linux_unit_is_active(&linux_unit) {
+                Ok(true) => {
+                    return Ok(Self {
+                        child: Some(child),
+                        linux_unit: Some(linux_unit),
+                    });
+                }
+                Ok(false) => {
+                    if child.try_wait()?.is_some() {
+                        // Short-lived commands can finish and have their unit
+                        // collected before the first status probe.
+                        return Ok(Self {
+                            child: Some(child),
+                            linux_unit: Some(linux_unit),
+                        });
+                    }
+                }
+                Err(error) => {
+                    let _ = kill_child_and_confirm_exit(&mut child);
+                    return Err(error);
+                }
+            }
+            if Instant::now() >= deadline {
+                let _ = kill_child_and_confirm_exit(&mut child);
+                return Err(std::io::Error::other(format!(
+                    "systemd user service {linux_unit} did not become active"
+                )));
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    #[cfg(all(unix, not(target_os = "linux")))]
     fn spawn(command: &mut Command, _fail_before_assignment: bool) -> std::io::Result<Self> {
-        Ok(Self {
-            child: Some(command.spawn()?),
-        })
+        let _ = command;
+        ensure_owned_command_containment(std::env::consts::OS)?;
+        unreachable!("non-Linux Unix must fail the containment gate")
+    }
+
+    #[cfg(not(any(windows, unix)))]
+    fn spawn(command: &mut Command, _fail_before_assignment: bool) -> std::io::Result<Self> {
+        let _ = command;
+        ensure_owned_command_containment(std::env::consts::OS)?;
+        unreachable!("platforms without durable process-tree ownership must fail closed")
     }
 
     #[cfg(windows)]
@@ -186,8 +299,7 @@ impl KillOnDrop {
         command.creation_flags(CREATE_SUSPENDED);
         let mut child = command.spawn()?;
         if fail_before_assignment {
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = kill_child_and_confirm_exit(&mut child);
             return Err(std::io::Error::other(
                 "injected failure before Job Object assignment",
             ));
@@ -196,8 +308,7 @@ impl KillOnDrop {
         let raw_job = unsafe { CreateJobObjectW(std::ptr::null(), std::ptr::null()) };
         if raw_job.is_null() {
             let error = std::io::Error::last_os_error();
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = kill_child_and_confirm_exit(&mut child);
             return Err(error);
         }
         let job = unsafe { OwnedHandle::from_raw_handle(raw_job) };
@@ -213,22 +324,24 @@ impl KillOnDrop {
         };
         if configured == 0 {
             let error = std::io::Error::last_os_error();
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = kill_child_and_confirm_exit(&mut child);
             return Err(error);
         }
         let assigned =
             unsafe { AssignProcessToJobObject(job.as_raw_handle(), child.as_raw_handle()) };
         if assigned == 0 {
             let error = std::io::Error::last_os_error();
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = kill_child_and_confirm_exit(&mut child);
             return Err(error);
         }
         let resume_status = unsafe { NtResumeProcess(child.as_raw_handle()) };
         if resume_status < 0 {
-            let _ = unsafe { TerminateJobObject(job.as_raw_handle(), 1) };
-            let _ = child.wait();
+            let terminated = if unsafe { TerminateJobObject(job.as_raw_handle(), 1) } == 0 {
+                Err(std::io::Error::last_os_error())
+            } else {
+                Ok(())
+            };
+            let _ = settle_child_after_signal(&mut child, terminated);
             return Err(std::io::Error::other(format!(
                 "NtResumeProcess failed with NTSTATUS 0x{:08x}",
                 resume_status as u32
@@ -290,27 +403,150 @@ impl KillOnDrop {
         }
     }
 
-    fn kill_and_reap(&mut self) -> std::io::Result<()> {
-        if let Some(mut child) = self.child.take() {
-            #[cfg(windows)]
-            {
-                let tree_result = self.terminate_job_and_confirm_empty();
-                let waited = child.wait();
-                if let Err(error) = tree_result {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    self.job.take();
-                    return Err(error);
-                }
-                waited?;
-                self.job.take();
+    #[cfg(target_os = "linux")]
+    fn linux_unit_is_active(linux_unit: &str) -> std::io::Result<bool> {
+        let output = Command::new("/usr/bin/systemctl")
+            .args([
+                "--user",
+                "show",
+                linux_unit,
+                "--property=LoadState",
+                "--property=ActiveState",
+            ])
+            .output()?;
+        if !output.status.success() {
+            return Err(std::io::Error::other(format!(
+                "systemctl show {linux_unit}: {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            )));
+        }
+        let state = String::from_utf8_lossy(&output.stdout);
+        let mut load_state = None;
+        let mut active_state = None;
+        for line in state.lines() {
+            if let Some(value) = line.strip_prefix("LoadState=") {
+                load_state = Some(value);
             }
-            #[cfg(not(windows))]
-            {
-                child.kill()?;
-                child.wait()?;
+            if let Some(value) = line.strip_prefix("ActiveState=") {
+                active_state = Some(value);
             }
         }
+        if load_state == Some("not-found") || matches!(active_state, Some("inactive" | "failed")) {
+            return Ok(false);
+        }
+        if matches!(
+            active_state,
+            Some("active" | "activating" | "deactivating" | "reloading")
+        ) {
+            return Ok(true);
+        }
+        Err(std::io::Error::other(format!(
+            "unexpected state for systemd user service {linux_unit}: {}",
+            state.trim()
+        )))
+    }
+
+    #[cfg(target_os = "linux")]
+    fn signal_linux_unit(&mut self) -> std::io::Result<()> {
+        let Some(linux_unit) = self.linux_unit.as_deref() else {
+            return Err(std::io::Error::other("missing systemd user service"));
+        };
+        if !Self::linux_unit_is_active(linux_unit)? {
+            self.linux_unit = None;
+            return Ok(());
+        }
+        let output = Command::new("/usr/bin/systemctl")
+            .args([
+                "--user",
+                "kill",
+                "--signal=SIGKILL",
+                "--kill-whom=all",
+                linux_unit,
+            ])
+            .output()?;
+        if output.status.success() {
+            return Ok(());
+        }
+        if !Self::linux_unit_is_active(linux_unit)? {
+            self.linux_unit = None;
+            return Ok(());
+        }
+        Err(std::io::Error::other(format!(
+            "systemctl kill {linux_unit}: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        )))
+    }
+
+    #[cfg(target_os = "linux")]
+    fn confirm_linux_unit_empty(&mut self) -> std::io::Result<()> {
+        let Some(linux_unit) = self.linux_unit.as_deref() else {
+            return Ok(());
+        };
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            if !Self::linux_unit_is_active(linux_unit)? {
+                self.linux_unit = None;
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err(std::io::Error::other(format!(
+                    "systemd user service {linux_unit} is still active"
+                )));
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    fn terminate_linux_unit_and_confirm_empty(&mut self) -> std::io::Result<()> {
+        self.signal_linux_unit()?;
+        self.confirm_linux_unit_empty()
+    }
+
+    fn kill_and_reap(&mut self) -> std::io::Result<()> {
+        #[cfg(windows)]
+        {
+            if let Some(mut child) = self.child.take() {
+                let tree_result = self.terminate_job_and_confirm_empty();
+                let child_result = settle_child_after_signal(&mut child, tree_result);
+                self.job.take();
+                child_result?;
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            let mut wait_error = None;
+            if let Some(mut child) = self.child.take() {
+                let signalled = self.signal_linux_unit();
+                if let Err(error) = settle_child_after_signal(&mut child, signalled) {
+                    wait_error = Some(error);
+                }
+            }
+
+            // A normal root exit may already have reaped `child` while owned
+            // descendants remain in the cgroup. Retry unit settlement
+            // independently so Drop never loses the containment handle.
+            if self.linux_unit.is_some() {
+                self.terminate_linux_unit_and_confirm_empty()?;
+            }
+            if let Some(error) = wait_error {
+                return Err(error);
+            }
+        }
+
+        #[cfg(all(unix, not(target_os = "linux")))]
+        if let Some(mut child) = self.child.take() {
+            // This is unreachable through `spawn`, which fails before creating
+            // a child on platforms without durable process-tree ownership.
+            kill_child_and_confirm_exit(&mut child)?;
+        }
+
+        #[cfg(not(any(windows, unix)))]
+        if let Some(mut child) = self.child.take() {
+            kill_child_and_confirm_exit(&mut child)?;
+        }
+
         Ok(())
     }
 }
@@ -319,6 +555,62 @@ impl Drop for KillOnDrop {
     fn drop(&mut self) {
         let _ = self.kill_and_reap();
     }
+}
+
+#[cfg(target_os = "linux")]
+static NEXT_LINUX_UNIT_ID: AtomicU64 = AtomicU64::new(1);
+
+#[cfg(target_os = "linux")]
+fn linux_contained_command(program: &str, args: &[String], workspace: &Path) -> (Command, String) {
+    let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, Ordering::Relaxed);
+    let unit_base = format!("optimus-command-{}-{sequence}", std::process::id());
+    let linux_unit = format!("{unit_base}.service");
+    let runtime_dir = format!("/run/user/{}", unsafe { libc::geteuid() });
+    let mut command = Command::new("/usr/bin/systemd-run");
+    command
+        .args([
+            "--user",
+            "--quiet",
+            "--collect",
+            "--wait",
+            "--pipe",
+            "--service-type=exec",
+            "--property=KillMode=control-group",
+            "--property=NoNewPrivileges=yes",
+            "--property=RestrictSUIDSGID=yes",
+        ])
+        .arg(format!("--unit={unit_base}"))
+        .arg("--")
+        .args([
+            "/usr/bin/bwrap",
+            "--die-with-parent",
+            "--unshare-pid",
+            "--bind",
+            "/",
+            "/",
+            "--dev-bind",
+            "/dev",
+            "/dev",
+            "--proc",
+            "/proc",
+            "--ro-bind",
+            "/sys/fs/cgroup",
+            "/sys/fs/cgroup",
+            "--ro-bind",
+            "/dev/null",
+        ])
+        .arg(format!("{runtime_dir}/bus"))
+        .arg("--tmpfs")
+        .arg(format!("{runtime_dir}/systemd"))
+        .arg("--chdir")
+        .arg(workspace)
+        .arg("--")
+        .arg(program)
+        .args(args)
+        .current_dir(workspace)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    (command, linux_unit)
 }
 
 pub struct Runtime {
@@ -1019,12 +1311,22 @@ impl Runtime {
         timeout: Duration,
         job_id: JobId,
     ) -> Result<CommandCapture> {
+        ensure_owned_command_containment(std::env::consts::OS)
+            .map_err(|error| RuntimeError::Effector(error.to_string()))?;
+        #[cfg(target_os = "linux")]
+        let (mut command, linux_unit) = linux_contained_command(program, args, &self.workspace);
+        #[cfg(not(target_os = "linux"))]
         let mut command = Command::new(program);
+        #[cfg(not(target_os = "linux"))]
         command
             .args(args)
             .current_dir(&self.workspace)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        #[cfg(target_os = "linux")]
+        let mut guard = KillOnDrop::spawn(&mut command, linux_unit)
+            .map_err(|e| RuntimeError::Effector(format!("spawn {program}: {e}")))?;
+        #[cfg(not(target_os = "linux"))]
         let mut guard = KillOnDrop::spawn(&mut command, false)
             .map_err(|e| RuntimeError::Effector(format!("spawn {program}: {e}")))?;
 
@@ -1045,7 +1347,11 @@ impl Runtime {
                     {
                         cleanup_error = guard.terminate_job_and_confirm_empty().err();
                     }
-                    #[cfg(not(windows))]
+                    #[cfg(target_os = "linux")]
+                    {
+                        cleanup_error = guard.terminate_linux_unit_and_confirm_empty().err();
+                    }
+                    #[cfg(not(any(windows, target_os = "linux")))]
                     {
                         cleanup_error = None;
                     }
@@ -1196,6 +1502,42 @@ fn read_limited(pipe: Option<impl Read>) -> (String, bool) {
     }
     let s = String::from_utf8_lossy(&buf).into_owned();
     (s, truncated)
+}
+
+#[cfg(all(test, unix))]
+mod bounded_child_cleanup_tests {
+    use super::{ensure_owned_command_containment, settle_child_after_signal};
+    use std::process::Command;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn failed_containment_signal_kills_child_without_unbounded_wait() {
+        let mut child = Command::new("sh")
+            .args(["-c", "sleep 30"])
+            .spawn()
+            .expect("spawn long-lived child");
+        let started = Instant::now();
+
+        let error = settle_child_after_signal(
+            &mut child,
+            Err(std::io::Error::other("injected containment failure")),
+        )
+        .expect_err("injected signal failure must be reported");
+
+        assert!(error.to_string().contains("injected containment failure"));
+        assert!(started.elapsed() < Duration::from_secs(3));
+        assert!(child.try_wait().expect("poll child").is_some());
+    }
+
+    #[test]
+    fn run_command_fails_closed_without_durable_process_tree_ownership() {
+        assert!(ensure_owned_command_containment("linux").is_ok());
+        assert!(ensure_owned_command_containment("windows").is_ok());
+        for unsupported in ["macos", "freebsd", "netbsd", "openbsd", "unknown"] {
+            let error = ensure_owned_command_containment(unsupported).unwrap_err();
+            assert_eq!(error.kind(), std::io::ErrorKind::Unsupported);
+        }
+    }
 }
 
 #[cfg(all(test, windows))]

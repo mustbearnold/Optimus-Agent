@@ -253,7 +253,9 @@ test('right sidebar tabs Files/Artifacts/Browser + resize handle', async ({ page
 
   await page.click('#rpTabBrowser');
   await expect(page.locator('#rpBrowser')).toBeVisible();
-  await expect(page.locator('#browserStub')).toContainText(/preview/i);
+  await expect(page.locator('#browserViewport')).toBeVisible();
+  await expect(page.locator('#browserUrl')).toBeEditable();
+  await expect(page.locator('#browserLiveHole')).toBeAttached();
 
   await page.click('#rpTabFiles');
   await expect

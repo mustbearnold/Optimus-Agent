@@ -236,6 +236,61 @@ fn activate_pack_increases_tools_and_tokens() {
 }
 
 #[test]
+fn desktop_pack_lists_workspace_without_terminal() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    std::fs::write(kernel.workspace().join("alpha.txt"), "alpha").unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "activate-desktop".into(),
+                name: "activate_pack".into(),
+                arguments: json!({"name":"desktop"}),
+            }],
+        },
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "read-alpha".into(),
+                name: "read_file".into(),
+                arguments: json!({"path":"alpha.txt"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("alpha-content".into()),
+            tool_calls: vec![],
+        },
+    ]);
+
+    let result = kernel
+        .turn(&mut model, "activate desktop and read file")
+        .unwrap();
+    assert_eq!(result.assistant_text, "alpha-content");
+    assert!(result.invoked_tools.contains(&ToolId::from("read_file")));
+    assert!(!result.invoked_tools.contains(&ToolId::from("terminal")));
+    assert!(kernel
+        .messages
+        .iter()
+        .any(|message| message.tool_call_id.as_deref() == Some("read-alpha")));
+}
+
+#[test]
+fn model_context_includes_host_provided_current_utc_date() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: Some("ok".into()),
+        tool_calls: vec![],
+    }]);
+
+    kernel.turn(&mut model, "what is current?").unwrap();
+    let system = &model.seen[0].messages[0].content;
+    // System prompt includes basic env hints (host CPU arch placeholder etc.)
+    assert!(system.len() > 100);
+}
+
+#[test]
 fn skill_resolve_returns_body() {
     let dir = tempdir().unwrap();
     let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();

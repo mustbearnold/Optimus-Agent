@@ -11,6 +11,22 @@ use optimus_runtime::Runtime;
 use rusqlite::Connection;
 use tempfile::tempdir;
 
+#[cfg(windows)]
+fn replay_marker_command() -> Effect {
+    Effect::RunCommand {
+        program: "cmd".into(),
+        args: vec!["/C".into(), "echo replayed>command-replayed.txt".into()],
+    }
+}
+
+#[cfg(unix)]
+fn replay_marker_command() -> Effect {
+    Effect::RunCommand {
+        program: "sh".into(),
+        args: vec!["-c".into(), "printf replayed >command-replayed.txt".into()],
+    }
+}
+
 fn workspace_hello(ws: &std::path::Path) -> PathBuf {
     ws.join("hello.txt")
 }
@@ -228,10 +244,7 @@ fn prepared_command_becomes_ambiguous_and_is_not_blindly_replayed() {
                 budget: Default::default(),
                 nodes: vec![NodeSpec {
                     label: "command".into(),
-                    effect: Effect::RunCommand {
-                        program: "cmd".into(),
-                        args: vec!["/C".into(), "echo replayed>command-replayed.txt".into()],
-                    },
+                    effect: replay_marker_command(),
                 }],
             })
             .expect("create");

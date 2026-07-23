@@ -1,12 +1,13 @@
 //! OpenAI Codex OAuth: token store, refresh, device login, Responses API provider.
 
-use std::fs;
+use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -77,6 +78,7 @@ pub struct CodexAuthStatus {
 
 pub struct CodexAuthStore {
     path: PathBuf,
+    lock_path: PathBuf,
     protector: Arc<dyn CredentialProtector>,
 }
 
@@ -86,6 +88,7 @@ impl CodexAuthStore {
         fs::create_dir_all(home)?;
         Ok(Self {
             path: home.join("auth.json"),
+            lock_path: home.join("auth.lock"),
             protector: Arc::new(SystemCredentialProtector),
         })
     }
@@ -98,6 +101,7 @@ impl CodexAuthStore {
         fs::create_dir_all(home)?;
         Ok(Self {
             path: home.join("auth.json"),
+            lock_path: home.join("auth.lock"),
             protector,
         })
     }
@@ -106,15 +110,42 @@ impl CodexAuthStore {
         &self.path
     }
 
-    fn load(&self) -> Result<AuthFile> {
+    fn lock_exclusive(&self) -> Result<File> {
+        if fs::symlink_metadata(&self.lock_path)
+            .is_ok_and(|metadata| metadata.file_type().is_symlink())
+        {
+            return Err(KernelError::Model(
+                "credential lock file must not be a symlink".into(),
+            ));
+        }
+        let mut options = OpenOptions::new();
+        options.read(true).write(true).create(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let file = options.open(&self.lock_path)?;
+        FileExt::lock_exclusive(&file)?;
+        Ok(file)
+    }
+
+    fn load_unlocked(&self) -> Result<AuthFile> {
         if !self.path.exists() {
             return Ok(AuthFile {
                 version: 1,
                 ..Default::default()
             });
         }
+        let metadata = fs::symlink_metadata(&self.path)?;
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(KernelError::Model(
+                "credential file must be a non-symlink regular file".into(),
+            ));
+        }
         let bytes = fs::read(&self.path)?;
         if let Ok(envelope) = serde_json::from_slice::<ProtectedAuthEnvelope>(&bytes) {
+            crate::verify_user_only(&self.path)?;
             if envelope.version != 2 || envelope.protection != self.protector.label() {
                 return Err(KernelError::Model(
                     "unsupported credential envelope or protection backend".into(),
@@ -126,11 +157,11 @@ impl CodexAuthStore {
         }
         let mut legacy: AuthFile = serde_json::from_slice(&bytes)?;
         legacy.version = 2;
-        self.save(&legacy)?;
+        self.save_unlocked(&legacy)?;
         Ok(legacy)
     }
 
-    fn save(&self, file: &AuthFile) -> Result<()> {
+    fn save_unlocked(&self, file: &AuthFile) -> Result<()> {
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent)?;
         }
@@ -145,7 +176,8 @@ impl CodexAuthStore {
     }
 
     pub fn status(&self) -> Result<CodexAuthStatus> {
-        let file = self.load()?;
+        let _lock = self.lock_exclusive()?;
+        let file = self.load_unlocked()?;
         match file.providers.openai_codex {
             None => Ok(CodexAuthStatus {
                 present: false,
@@ -167,7 +199,18 @@ impl CodexAuthStore {
     }
 
     pub fn save_tokens(&self, tokens: CodexTokens, base_url: &str, auth_mode: &str) -> Result<()> {
-        let mut file = self.load()?;
+        let _lock = self.lock_exclusive()?;
+        let mut file = self.load_unlocked()?;
+        self.save_tokens_unlocked(&mut file, tokens, base_url, auth_mode)
+    }
+
+    fn save_tokens_unlocked(
+        &self,
+        file: &mut AuthFile,
+        tokens: CodexTokens,
+        base_url: &str,
+        auth_mode: &str,
+    ) -> Result<()> {
         file.version = 2;
         file.providers.openai_codex = Some(CodexProviderState {
             tokens,
@@ -175,13 +218,14 @@ impl CodexAuthStore {
             auth_mode: Some(auth_mode.into()),
             base_url: Some(base_url.trim_end_matches('/').into()),
         });
-        self.save(&file)
+        self.save_unlocked(file)
     }
 
     pub fn clear(&self) -> Result<()> {
-        let mut file = self.load()?;
+        let _lock = self.lock_exclusive()?;
+        let mut file = self.load_unlocked()?;
         file.providers.openai_codex = None;
-        self.save(&file)
+        self.save_unlocked(&file)
     }
 
     pub fn import_from_hermes(&self) -> Result<String> {
@@ -220,8 +264,9 @@ impl CodexAuthStore {
 
     /// Resolve a fresh access token, refreshing if near expiry.
     pub fn resolve_access_token(&self) -> Result<(String, CodexTokens, String)> {
-        let file = self.load()?;
-        let mut st = file.providers.openai_codex.ok_or_else(|| {
+        let _lock = self.lock_exclusive()?;
+        let mut file = self.load_unlocked()?;
+        let mut st = file.providers.openai_codex.take().ok_or_else(|| {
             KernelError::Model(
                 "No Codex credentials. Run `optimus auth codex import` or `optimus auth codex login`."
                     .into(),
@@ -248,7 +293,7 @@ impl CodexAuthStore {
                 .base_url
                 .clone()
                 .unwrap_or_else(|| DEFAULT_CODEX_BASE_URL.into());
-            self.save_tokens(st.tokens.clone(), &base, "refresh")?;
+            self.save_tokens_unlocked(&mut file, st.tokens.clone(), &base, "refresh")?;
         }
         let base = st.base_url.unwrap_or_else(|| DEFAULT_CODEX_BASE_URL.into());
         Ok((st.tokens.access_token.clone(), st.tokens, base))
@@ -585,7 +630,7 @@ pub struct CodexOAuthModel {
     pub config: CodexOAuthConfig,
     /// Test override for responses URL.
     pub responses_url_override: Option<String>,
-    store: CodexAuthStore,
+    pub store: CodexAuthStore,
 }
 
 impl CodexOAuthModel {
@@ -1334,6 +1379,77 @@ mod tests {
     use super::*;
     use crate::Message;
     use optimus_packs::CapabilitySession;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tempfile::tempdir;
+
+    struct SlowIdentityProtector {
+        active: AtomicUsize,
+        max_active: AtomicUsize,
+    }
+
+    impl SlowIdentityProtector {
+        fn new() -> Self {
+            Self {
+                active: AtomicUsize::new(0),
+                max_active: AtomicUsize::new(0),
+            }
+        }
+    }
+
+    impl CredentialProtector for SlowIdentityProtector {
+        fn label(&self) -> &'static str {
+            "test-identity"
+        }
+
+        fn protect(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
+            let active = self.active.fetch_add(1, Ordering::SeqCst) + 1;
+            self.max_active.fetch_max(active, Ordering::SeqCst);
+            std::thread::sleep(Duration::from_millis(20));
+            self.active.fetch_sub(1, Ordering::SeqCst);
+            Ok(plaintext.to_vec())
+        }
+
+        fn unprotect(&self, ciphertext: &[u8]) -> Result<Vec<u8>> {
+            Ok(ciphertext.to_vec())
+        }
+    }
+
+    #[test]
+    fn auth_store_serializes_cross_instance_mutations() {
+        let home = tempdir().unwrap();
+        let protector = Arc::new(SlowIdentityProtector::new());
+        let mut workers = Vec::new();
+        for worker in 0..8 {
+            let home = home.path().to_path_buf();
+            let protector_for_store: Arc<dyn CredentialProtector> = protector.clone();
+            workers.push(std::thread::spawn(move || {
+                let store = CodexAuthStore::open_with_protector(home, protector_for_store).unwrap();
+                store
+                    .save_tokens(
+                        CodexTokens {
+                            access_token: format!("access-{worker}"),
+                            refresh_token: format!("refresh-{worker}"),
+                            account_id: None,
+                            id_token: None,
+                        },
+                        DEFAULT_CODEX_BASE_URL,
+                        "concurrency-test",
+                    )
+                    .unwrap();
+            }));
+        }
+        for worker in workers {
+            worker.join().unwrap();
+        }
+
+        assert_eq!(protector.max_active.load(Ordering::SeqCst), 1);
+        let protector_for_store: Arc<dyn CredentialProtector> = protector;
+        let status = CodexAuthStore::open_with_protector(home.path(), protector_for_store)
+            .unwrap()
+            .status()
+            .unwrap();
+        assert!(status.present);
+    }
 
     #[test]
     fn extracts_hermes_provider_tokens() {

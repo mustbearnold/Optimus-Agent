@@ -6,7 +6,9 @@ Accepted — 2026-07-19
 
 ## Context
 
-Optimus desktop serves the UI via wry custom protocol at `http://optimus.localhost/`.
+Optimus desktop serves the UI through a Wry custom protocol. Wry exposes that
+protocol as `http://optimus.localhost/` on Windows WebView2 and Android, but as
+`optimus://localhost/` on Linux WebKitGTK, macOS WebKit, and iOS WKWebView.
 The JS bridge treated *any* `http:`/`https:` page as "HTTP mode" and called `fetch('/api/ipc')`.
 
 That path hits the **asset** custom-protocol handler (`asset /api/ipc`), not the Kernel IPC
@@ -22,10 +24,13 @@ Playwright `--http 127.0.0.1:PORT` still legitimately needs fetch IPC.
 - `window.__OPTIMUS_HTTP_MODE__ === true` (set by HTTP server inject), or
 - hostname is `127.0.0.1`/`localhost` **and** a non-empty port is present
 
-Native `optimus.localhost` uses `window.ipc` / `chrome.webview.postMessage`.
+Native custom-protocol pages use `window.ipc` / `chrome.webview.postMessage`.
+The Rust shell selects the platform URL at compile time; never navigate
+WebKitGTK to the WebView2-only `.localhost` HTTP form.
 
 ## Consequences
 
 - Native UI works with CUA-verified live Codex chat
 - Playwright HTTP suite unchanged
 - Never use bare `location.protocol === 'http:'` for mode detection on custom protocols
+- Keep a platform URL unit test because browser HTTP tests cannot detect a broken native custom-protocol navigation
