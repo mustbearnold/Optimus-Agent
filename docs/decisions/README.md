@@ -47,6 +47,7 @@ implemented.
 | 0025 | Artifact workbench and owned presentation state | Accepted | Compact Vantage workbench, one mounted-pane state owner, stable frame-committed streaming, bounded no-inertia motion, and a reversible visual seam. |
 | 0026 | Separate development and runtime agent instructions | Accepted | `AGENTS.md` governs repository development; `OPTIMUS_AGENTS.md` governs installed product sessions. |
 | 0027 | Settings-driven work isolation modes | Accepted; Phase 0 store/UI | Durable `settings.json` + Settings UI; project-bound/profile enforcement planned. |
+| 0028 | Electron + React shell over Rust host | Accepted; migration in progress | Electron/React frontend; durable authority stays Rust; strangler via host HTTP. |
 
 ## Known documentary debt
 

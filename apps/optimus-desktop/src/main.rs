@@ -1,4 +1,4 @@
-//! Optimus desktop shell — native Wry webview + HTTP mode for Playwright.
+//! Optimus desktop shell — native Wry webview, HTTP host (Playwright / Electron).
 
 mod bridge;
 mod ipc;
@@ -29,6 +29,9 @@ use crate::ipc::{pick_folder_dialog, IpcEnvelope, IpcReply};
 use crate::native_workers::NativeWorkers;
 use crate::preview_embed::{navigation_allowed as preview_nav_allowed, EmbedBounds, PreviewEmbed};
 use crate::server::{run_http_server, HttpSecurity};
+
+/// Default loopback port for `--host-only` (Electron / external shells).
+const DEFAULT_HOST_PORT: u16 = 17865;
 
 // Wry translates custom schemes to an HTTP `.localhost` origin only on
 // WebView2 and Android. WebKitGTK, WebKit, and WKWebView use the scheme itself.
@@ -61,8 +64,18 @@ struct Cli {
     #[arg(long)]
     http: Option<u16>,
 
-    /// Explicitly enable the test-only HTTP UI/API surface.
-    #[arg(long, requires = "http")]
+    /// Headless Rust host for Electron (and other shells). No Wry window.
+    /// Uses OPTIMUS_HTTP_TOKEN (or generates one) and binds loopback HTTP+IPC.
+    #[arg(long, conflicts_with = "http")]
+    host_only: bool,
+
+    /// Port for `--host-only` (default 17865). Ignored unless `--host-only`.
+    #[arg(long, default_value_t = DEFAULT_HOST_PORT)]
+    host_port: u16,
+
+    /// Explicitly enable the HTTP UI/API surface (required for `--http` tests;
+    /// implied by `--host-only` for the Electron product path).
+    #[arg(long)]
     development_http: bool,
 }
 
@@ -121,17 +134,38 @@ fn main() -> wry::Result<()> {
     std::fs::create_dir_all(&home).ok();
     eprintln!("[optimus-desktop] home={}", home.display());
 
-    if let Some(port) = cli.http {
-        let token = std::env::var("OPTIMUS_HTTP_TOKEN").unwrap_or_default();
-        let security = match HttpSecurity::new(port, cli.development_http, token) {
+    if cli.host_only || cli.http.is_some() {
+        let port = if cli.host_only {
+            cli.host_port
+        } else {
+            cli.http.expect("http port")
+        };
+        let development = cli.development_http || cli.host_only;
+        let token = std::env::var("OPTIMUS_HTTP_TOKEN").unwrap_or_else(|_| {
+            if cli.host_only {
+                // Product host path: mint a process-local token if unset.
+                format!(
+                    "optimus-host-{}-{}",
+                    std::process::id(),
+                    uuid::Uuid::new_v4().simple()
+                )
+            } else {
+                String::new()
+            }
+        });
+        if cli.host_only {
+            eprintln!("[optimus-desktop] host-only mode on 127.0.0.1:{port}");
+            // Electron parent reads this line to pair Authorization.
+            eprintln!("[optimus-desktop] OPTIMUS_HTTP_TOKEN={token}");
+        }
+        let security = match HttpSecurity::new(port, development, token) {
             Ok(security) => security,
             Err(error) => {
-                eprintln!("[optimus-desktop] refusing HTTP mode: {error}");
+                eprintln!("[optimus-desktop] refusing HTTP/host mode: {error}");
                 std::process::exit(2);
             }
         };
         let html = inject_bridge(&ui::render_html());
-        // HTTP mode never returns Ok from wry — exit after server ends.
         if let Err(e) = run_http_server(home, port, html, security) {
             eprintln!("[optimus-desktop] http server error: {e}");
             std::process::exit(1);
@@ -653,6 +687,11 @@ fn resolve_home(home: &str) -> PathBuf {
             .unwrap_or_else(|_| PathBuf::from("."))
             .join(p);
     }
+    if let Ok(env_home) = std::env::var("OPTIMUS_HOME") {
+        if !env_home.is_empty() {
+            return PathBuf::from(env_home);
+        }
+    }
     if let Some(data) = dirs::data_local_dir() {
         return data.join("optimus");
     }
@@ -668,9 +707,16 @@ fn eval_reply(webview: &wry::WebView, reply: &IpcReply) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{native_navigation_allowed, requires_window_thread, IpcReply, UserEvent};
+    use super::{
+        native_navigation_allowed, requires_window_thread, IpcReply, UserEvent, DEFAULT_HOST_PORT,
+    };
 
     fn assert_send_static<T: Send + 'static>() {}
+
+    #[test]
+    fn host_only_default_port_is_stable() {
+        assert_eq!(DEFAULT_HOST_PORT, 17865);
+    }
 
     #[test]
     fn worker_payloads_remain_send_and_static() {

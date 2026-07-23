@@ -129,7 +129,9 @@ The runtime cancellation suite includes a Linux descendant-process regression. I
 
 ```text
 apps/optimus-cli          jobs, skills, packs, chat, sessions, auth
-apps/optimus-desktop      native Wry shell, WebKitGTK/WebView2, UI, Kernel IPC
+apps/optimus-desktop      Wry shell (legacy) + Rust HTTP host (--host-only)
+apps/optimus-electron     Electron shell (T3-style; loads host UI)
+apps/optimus-ui           React + Vite SPA (migration in progress)
 crates/optimus-kernel     turns, providers, sessions, compression, tools
 crates/optimus-store      job ledger and events
 crates/optimus-graph      job and node domain
@@ -138,6 +140,19 @@ crates/optimus-memory     MetaMemory
 crates/optimus-skills     Skills 2.0
 crates/optimus-packs      progressive capability packs
 ```
+
+### Electron shell (migration)
+
+```bash
+cargo build -p optimus-desktop
+cd apps/optimus-electron && npm install
+cd ../optimus-ui && npm install
+cd ../optimus-electron
+npm run dev:legacy-html   # existing HTML via Rust host
+npm run dev:ui            # React SPA + host
+```
+
+See `apps/optimus-electron/README.md` and ADR-0028.
 
 ## Windows
 

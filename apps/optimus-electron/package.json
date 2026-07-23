@@ -1,0 +1,16 @@
+{
+  "name": "optimus-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optimus Agent Electron shell (T3-style host + renderer)",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "node scripts/dev.cjs",
+    "dev:legacy-html": "OPTIMUS_ELECTRON_UI=legacy node scripts/dev.cjs",
+    "dev:ui": "OPTIMUS_ELECTRON_UI=react node scripts/dev.cjs"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0"
+  }
+}
