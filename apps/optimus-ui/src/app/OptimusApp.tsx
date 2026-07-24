@@ -20,6 +20,7 @@ import type {
   ProjectRuntimeScope,
   SessionDetail,
   SessionMeta,
+  ToolApprovalBinding,
 } from '../ipc/contracts';
 import { getTransport } from '../ipc';
 import { appReducer } from '../state/appReducer';
@@ -321,6 +322,29 @@ export function OptimusApp() {
     }
   };
 
+  const resolveTranscriptApproval = async (
+    binding: ToolApprovalBinding,
+    decision: 'approve' | 'deny'
+  ) => {
+    const sessionId = state.selectedSessionId;
+    if (!sessionId) throw new Error('Select the session that owns this approval.');
+    const projectId = assignments[sessionId];
+    await transport.invoke('chat_approval_resolve', {
+      session_id: sessionId,
+      run_id: binding.run_id,
+      call_id: binding.call_id,
+      job_id: binding.job_id,
+      node_id: binding.node_id,
+      node_index: binding.node_index,
+      effect_sha256: binding.effect_sha256,
+      decision,
+      ...(projectId ? { project_id: projectId } : {}),
+    });
+    const detail = await transport.invoke<SessionDetail>('get_session', { id: sessionId });
+    conversationStore.load(detail);
+    await refreshRuntime();
+  };
+
   const setWorkspaceTab = (tab: WorkspaceTab) => {
     dispatch({ type: 'patch-layout', patch: { workspaceTab: tab, workspaceOpen: true, compactSurface: tab } });
   };
@@ -462,6 +486,7 @@ export function OptimusApp() {
                       status={conversation.status}
                       statusText={conversation.statusText}
                       onStarter={(text) => setInput(text)}
+                      onApprovalDecision={resolveTranscriptApproval}
                     />
                     <Composer
                       value={annotation ? `${input}${input ? '\n\n' : ''}${annotation}` : input}

@@ -308,6 +308,7 @@
           "cases": [
             "tool_stream_events_keep_runtime_identity_and_validated_outcome",
             "project_write_emits_exact_approval_lifecycle_before_any_effect",
+            "project_write_denial_never_executes_and_settles_cancelled_once",
             "active_model_completion_observes_turn_cancellation",
             "stream_delivery_rejection_cancels_turn_and_execution_once",
             "successful_turn_returns_exact_persisted_root_trace",
@@ -482,6 +483,7 @@
           "cases": [
             "tool_stream_events_keep_runtime_identity_and_validated_outcome",
             "project_write_emits_exact_approval_lifecycle_before_any_effect",
+            "project_write_denial_never_executes_and_settles_cancelled_once",
             "active_model_completion_observes_turn_cancellation",
             "stream_delivery_rejection_cancels_turn_and_execution_once",
             "successful_turn_returns_exact_persisted_root_trace",

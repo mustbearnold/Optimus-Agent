@@ -380,6 +380,7 @@ function toolActivityFromEvent(
     status: toolActivityStatus(event.phase),
     ...(typeof event.duration_ms === 'number' ? { durationMs: event.duration_ms } : {}),
     ...(event.outcome ? { outcome: event.outcome } : {}),
+    ...(event.approval ? { approval: event.approval } : {}),
   };
 }
 

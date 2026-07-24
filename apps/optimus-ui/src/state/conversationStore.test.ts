@@ -208,6 +208,50 @@ describe('ConversationStore', () => {
     );
   });
 
+  it('retains the exact approval binding through durable replay and later lifecycle updates', () => {
+    const id = `approval-binding-reload-${Date.now()}`;
+    const approval = {
+      run_id: 'run-1',
+      call_id: 'call-1',
+      tool_id: 'write_file',
+      job_id: 'job-approval-1',
+      node_id: 'node-7',
+      node_index: 7,
+      effect_sha256: 'c'.repeat(64),
+      summary: 'Write src/app.ts',
+    };
+    conversationStore.load({
+      id,
+      run_status: 'failed',
+      messages: [
+        { role: 'user', content: 'update the file' },
+        {
+          role: 'assistant',
+          content: '',
+          tool_events: [
+            toolEvent('call-1', 'started', 'Preparing write', 'write_file'),
+            { ...toolEvent('call-1', 'approval_required', 'Write src/app.ts', 'write_file'), approval },
+          ],
+        },
+      ],
+    });
+
+    expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]).toEqual(
+      expect.objectContaining({
+        status: 'awaiting_approval',
+        approval,
+      })
+    );
+
+    conversationStore.apply(id, toolEvent('call-1', 'succeeded', 'Write completed', 'write_file'));
+    expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]).toEqual(
+      expect.objectContaining({
+        status: 'completed',
+        approval,
+      })
+    );
+  });
+
   it('restores a failed run even when its last tool completed successfully', () => {
     const id = `failed-after-tool-${Date.now()}`;
     conversationStore.load({

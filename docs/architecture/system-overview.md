@@ -89,6 +89,13 @@ provider, create or resume a `Kernel`, and call `Kernel::turn` or
 `turn_with_sink` or the cancellable variant. Desktop IPC methods are frozen in a single method/domain
 registry and dispatched to small domain modules.
 
+**Confirmed current behaviour:** an `approval_required` chat lifecycle event
+carries an exact runtime binding. The React transcript may submit approve or
+deny through `chat_approval_resolve`; desktop validates every identity field and
+Rust settles the effect, lifecycle receipt, turn, and execution manifest before
+the UI reloads the canonical session projection. This settlement does not issue
+a second model-provider request.
+
 **Confirmed current behaviour:** `CampaignStore` runs an ordered list of
 `WriteFile` or `RunCommand` steps. Each campaign step becomes a Work Graph job,
 so crash recovery and SmartDeny apply. Exact live owner/token/generation leases

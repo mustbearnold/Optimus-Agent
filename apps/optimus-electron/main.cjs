@@ -75,6 +75,7 @@ const DESKTOP_METHODS = new Set([
   'browser_navigate',
   'browser_click',
   'browser_reload',
+  'chat_approval_resolve',
   'fs_roots',
   'fs_list',
   'fs_read',

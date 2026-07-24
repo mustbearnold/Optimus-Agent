@@ -101,7 +101,7 @@
       ],
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_type": "contract-risk-register",
-      "resolved_source_count": 99,
+      "resolved_source_count": 100,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -503,7 +503,7 @@
       ],
       "document": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "knowledge_type": "decision",
-      "resolved_source_count": 83,
+      "resolved_source_count": 84,
       "resolved_tests": [
         "apps/optimus-desktop/src/main.rs",
         "apps/optimus-electron/package.json"
@@ -528,12 +528,13 @@
       ],
       "document": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "knowledge_type": "decision",
-      "resolved_source_count": 83,
+      "resolved_source_count": 84,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/e2e/installed-shell.spec.cjs",
         "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
         "apps/optimus-electron/test/browser-policy.test.cjs",
+        "apps/optimus-electron/test/ipc-allowlist.test.cjs",
         "apps/optimus-electron/test/runtime-paths.test.cjs",
         "apps/optimus-ui/src/app/OptimusApp.test.tsx",
         "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
@@ -568,7 +569,7 @@
       ],
       "document": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "knowledge_type": "decision",
-      "resolved_source_count": 74,
+      "resolved_source_count": 75,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
@@ -612,8 +613,10 @@
       "knowledge_type": "decision",
       "resolved_source_count": 68,
       "resolved_tests": [
+        "apps/optimus-desktop/src/ipc/chat.rs",
         "apps/optimus-desktop/src/ipc/runtime_ops.rs",
         "apps/optimus-desktop/src/ipc/sessions.rs",
+        "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
         "apps/optimus-ui/src/state/conversationStore.test.ts",
         "crates/optimus-kernel/src/execution.rs",
         "crates/optimus-kernel/tests/kernel_turn.rs",
@@ -626,6 +629,8 @@
         "crates/optimus-kernel/src/execution.rs",
         "apps/optimus-desktop/src/ipc/runtime_ops.rs",
         "apps/optimus-desktop/src/ipc/sessions.rs",
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
         "apps/optimus-ui/src/state/conversationStore.test.ts"
       ]
     },
@@ -658,7 +663,7 @@
       ],
       "document": "docs/design/codex-convergence-experience-contract.md",
       "knowledge_type": "design-contract",
-      "resolved_source_count": 71,
+      "resolved_source_count": 72,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/e2e/installed-shell.spec.cjs",
@@ -692,7 +697,7 @@
       ],
       "document": "docs/design/codex-convergence-state-matrix.md",
       "knowledge_type": "design-state-matrix",
-      "resolved_source_count": 70,
+      "resolved_source_count": 71,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/e2e/installed-shell.spec.cjs",
@@ -1026,7 +1031,7 @@
       ],
       "document": "docs/plans/full-app-microtasks.md",
       "knowledge_type": "implementation-plan",
-      "resolved_source_count": 171,
+      "resolved_source_count": 172,
       "resolved_tests": [
         "scripts/check-parity-ledger.py",
         "scripts/engineering_memory.py"
@@ -1147,7 +1152,7 @@
       ],
       "document": "docs/specifications/electron-react-migration-slice-1.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 72,
+      "resolved_source_count": 73,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/package.json"
@@ -1237,6 +1242,43 @@
       "status": "historical",
       "validated_by": [
         "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "crates/optimus-kernel/src/lib.rs",
+        "crates/optimus-kernel/src/execution.rs",
+        "apps/optimus-desktop/src/ipc/**",
+        "apps/optimus-electron/**",
+        "apps/optimus-ui/src/**"
+      ],
+      "depends_on": [
+        "docs/decisions/0031-safe-project-work-loop.md"
+      ],
+      "document": "docs/specifications/in-transcript-approval-resolution.md",
+      "knowledge_type": "specification",
+      "resolved_source_count": 77,
+      "resolved_tests": [
+        "apps/optimus-desktop/src/ipc/chat.rs",
+        "apps/optimus-desktop/src/ipc/contract.rs",
+        "apps/optimus-desktop/src/ipc/files.rs",
+        "apps/optimus-desktop/src/ipc/mod.rs",
+        "apps/optimus-desktop/src/ipc/os.rs",
+        "apps/optimus-desktop/src/ipc/router.rs",
+        "apps/optimus-desktop/src/ipc/runtime_ops.rs",
+        "apps/optimus-desktop/src/ipc/scheduling.rs",
+        "apps/optimus-desktop/src/ipc/sessions.rs",
+        "apps/optimus-desktop/src/ipc/system.rs",
+        "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+        "apps/optimus-ui/src/state/conversationStore.test.ts",
+        "crates/optimus-kernel/tests/kernel_turn.rs"
+      ],
+      "status": "current",
+      "validated_by": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "apps/optimus-desktop/src/ipc/**",
+        "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+        "apps/optimus-ui/src/state/conversationStore.test.ts"
       ]
     },
     {
@@ -1600,7 +1642,7 @@
       ],
       "document": "docs/specifications/react-workbench-electron-preview-cutover.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 83,
+      "resolved_source_count": 84,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -1614,6 +1656,7 @@
         "apps/optimus-electron/e2e/installed-shell.spec.cjs",
         "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
         "apps/optimus-electron/test/browser-policy.test.cjs",
+        "apps/optimus-electron/test/ipc-allowlist.test.cjs",
         "apps/optimus-electron/test/runtime-paths.test.cjs",
         "apps/optimus-ui/src/app/OptimusApp.test.tsx",
         "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
@@ -1933,6 +1976,7 @@
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md",
@@ -1948,6 +1992,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1961,6 +2006,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/phase-21d-artifacts-bulk-delete.md",
@@ -1976,6 +2022,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1989,6 +2036,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -2003,6 +2051,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/phase-21d-artifacts-bulk-delete.md",
@@ -2018,6 +2067,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2032,6 +2082,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -2045,6 +2096,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -2059,6 +2111,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
       "docs/plans/full-app-microtasks.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-0-work-isolation-settings.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20d-packaging-gates.md",
@@ -2172,6 +2225,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/browser-policy.cjs": [
@@ -2183,6 +2237,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/e2e/compiled-shell.spec.cjs": [
@@ -2194,6 +2249,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/e2e/installed-shell.spec.cjs": [
@@ -2205,6 +2261,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/e2e/react-browser-contract.spec.cjs": [
@@ -2216,6 +2273,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/main.cjs": [
@@ -2229,6 +2287,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/package-lock.json": [
@@ -2240,6 +2299,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/package.json": [
@@ -2251,6 +2311,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/playwright.config.cjs": [
@@ -2262,6 +2323,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/preload.cjs": [
@@ -2274,6 +2336,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/runtime-paths.cjs": [
@@ -2285,6 +2348,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/scripts/dev.cjs": [
@@ -2296,6 +2360,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/test/browser-policy.test.cjs": [
@@ -2307,6 +2372,19 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
+      "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "apps/optimus-electron/test/ipc-allowlist.test.cjs": [
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0028-electron-react-shell-rust-host.md",
+      "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
+      "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/test/runtime-paths.test.cjs": [
@@ -2318,6 +2396,7 @@
       "docs/design/codex-convergence-state-matrix.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/index.html": [
@@ -2360,6 +2439,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/app/OptimusApp.test.tsx": [
@@ -2372,6 +2452,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/app/OptimusApp.tsx": [
@@ -2384,6 +2465,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf": [
@@ -2396,6 +2478,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/codex-shell.css": [
@@ -2408,6 +2491,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx": [
@@ -2420,6 +2504,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/chrome/Icon.tsx": [
@@ -2432,6 +2517,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/chrome/TopBar.tsx": [
@@ -2444,6 +2530,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/chrome/TruthStrip.tsx": [
@@ -2456,6 +2543,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/execution/ExecutionDock.tsx": [
@@ -2468,6 +2556,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/execution/TaskPanel.tsx": [
@@ -2480,6 +2569,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/mail/MailPage.test.tsx": [
@@ -2492,6 +2582,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/mail/MailPage.tsx": [
@@ -2504,6 +2595,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/projects/ProjectSourcesDialog.tsx": [
@@ -2516,6 +2608,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/projects/ProjectsRail.tsx": [
@@ -2528,6 +2621,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/settings/SettingsDialog.tsx": [
@@ -2540,6 +2634,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx": [
@@ -2552,6 +2647,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Composer.test.tsx": [
@@ -2564,6 +2660,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Composer.tsx": [
@@ -2576,6 +2673,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/SessionBar.tsx": [
@@ -2588,6 +2686,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Transcript.test.tsx": [
@@ -2600,6 +2699,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Transcript.tsx": [
@@ -2612,6 +2712,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx": [
@@ -2624,6 +2725,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx": [
@@ -2636,6 +2738,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx": [
@@ -2648,6 +2751,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx": [
@@ -2660,6 +2764,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/FilesSurface.tsx": [
@@ -2672,6 +2777,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx": [
@@ -2684,6 +2790,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc.ts": [
@@ -2696,6 +2803,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/contracts.ts": [
@@ -2710,6 +2818,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/electronTransport.test.ts": [
@@ -2724,6 +2833,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/electronTransport.ts": [
@@ -2738,6 +2848,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/fixtureTransport.ts": [
@@ -2752,6 +2863,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/httpTransport.ts": [
@@ -2766,6 +2878,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/index.ts": [
@@ -2780,6 +2893,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/main.tsx": [
@@ -2792,6 +2906,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/performance/frameCoordinator.test.ts": [
@@ -2804,6 +2919,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/performance/frameCoordinator.ts": [
@@ -2816,6 +2932,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/appReducer.ts": [
@@ -2828,6 +2945,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/conversationStore.test.ts": [
@@ -2840,6 +2958,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/conversationStore.ts": [
@@ -2852,6 +2971,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/layoutStore.test.ts": [
@@ -2864,6 +2984,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/layoutStore.ts": [
@@ -2876,6 +2997,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/projectStore.test.ts": [
@@ -2888,6 +3010,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/projectStore.ts": [
@@ -2900,6 +3023,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/styles.css": [
@@ -2912,6 +3036,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/styles.test.ts": [
@@ -2924,6 +3049,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/test/setup.ts": [
@@ -2936,6 +3062,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/vite-env.d.ts": [
@@ -2948,6 +3075,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/tsconfig.json": [
@@ -3137,6 +3265,7 @@
       "docs/maps/repository-and-ownership.md",
       "docs/plans/full-app-microtasks.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -3181,6 +3310,7 @@
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20b-kernel-cdp-integration.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
@@ -4088,6 +4218,7 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/in-transcript-approval-resolution.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],

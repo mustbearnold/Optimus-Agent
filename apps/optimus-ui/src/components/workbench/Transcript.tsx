@@ -2,9 +2,15 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'rea
 import type { Message, RunStatus } from '../../ipc/contracts';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
-import { ActivityTimeline } from './ActivityTimeline';
+import { ActivityTimeline, type ApprovalDecisionHandler } from './ActivityTimeline';
 
-const MessageRow = memo(function MessageRow({ message }: { message: Message }) {
+const MessageRow = memo(function MessageRow({
+  message,
+  onApprovalDecision,
+}: {
+  message: Message;
+  onApprovalDecision?: ApprovalDecisionHandler;
+}) {
   const visibleContent = useTypewriterContent(message);
   const revealing = visibleContent !== message.content;
   const activeAssistantStatus =
@@ -30,7 +36,7 @@ const MessageRow = memo(function MessageRow({ message }: { message: Message }) {
         {visibleContent || (message.status === 'working' ? <span className="stream-caret">Working</span> : null)}
       </div>
       {message.role === 'assistant' && message.tools?.length ? (
-        <ActivityTimeline tools={message.tools} />
+        <ActivityTimeline tools={message.tools} onApprovalDecision={onApprovalDecision} />
       ) : null}
     </article>
   );
@@ -116,11 +122,13 @@ export function Transcript({
   status,
   statusText,
   onStarter,
+  onApprovalDecision,
 }: {
   messages: Message[];
   status: RunStatus;
   statusText: string;
   onStarter: (text: string) => void;
+  onApprovalDecision?: ApprovalDecisionHandler;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(200);
@@ -185,7 +193,11 @@ export function Transcript({
         ) : null}
         {!messages.length ? <EmptyWorkbench onStarter={onStarter} /> : null}
         {visible.map((message) => (
-          <MessageRow message={message} key={message.id} />
+          <MessageRow
+            message={message}
+            key={message.id}
+            onApprovalDecision={onApprovalDecision}
+          />
         ))}
         {status === 'disconnected' || status === 'failed' ? (
           <div className="inline-notice is-error" role="status">

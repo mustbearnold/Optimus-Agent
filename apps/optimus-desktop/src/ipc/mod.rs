@@ -84,6 +84,7 @@ mod tests {
             summary: "Found 3 sources".into(),
             duration_ms: Some(17),
             outcome: Some(outcome),
+            approval: None,
         }));
         assert_eq!(tool["type"], "tool");
         assert_eq!(tool["schema_version"], 1);

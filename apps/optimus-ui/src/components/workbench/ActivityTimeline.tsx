@@ -1,9 +1,23 @@
-import type { ToolActivity } from '../../ipc/contracts';
+import { useState } from 'react';
+import type { ToolActivity, ToolApprovalBinding } from '../../ipc/contracts';
 import { Icon, type IconName } from '../chrome/Icon';
 
 type ToolCategory = 'read' | 'command' | 'search' | 'edit' | 'browser' | 'other';
+export type ApprovalDecision = 'approve' | 'deny';
+export type ToolApprovalRequest = ToolApprovalBinding;
+export type ApprovalDecisionHandler = (
+  approval: ToolApprovalRequest,
+  decision: ApprovalDecision
+) => void | Promise<void>;
 
-export function ActivityTimeline({ tools }: { tools: ToolActivity[] }) {
+export function ActivityTimeline({
+  tools,
+  onApprovalDecision,
+}: {
+  tools: ToolActivity[];
+  onApprovalDecision?: ApprovalDecisionHandler;
+}) {
+  const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
   if (!tools.length) return null;
   const summary = summarizeTools(tools);
   const failed = tools.some((tool) => isFailed(tool.status));
@@ -22,20 +36,109 @@ export function ActivityTimeline({ tools }: { tools: ToolActivity[] }) {
       <div className="activity-rows">
         {tools.map((tool) => {
           const category = categorizeTool(tool.name);
+          const approvalState = approvalStates[tool.id];
           return (
-            <div className={`activity-row is-${tool.status}`} key={tool.id}>
-              <Icon name={toolIcon(category, tool.status)} />
-              <strong>{toolLabel(category, tool.name, tool.status)}</strong>
-              <span>
-                {tool.detail}
-                {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
-              </span>
+            <div className="activity-item" key={tool.id}>
+              <div className={`activity-row is-${tool.status}`}>
+                <Icon name={toolIcon(category, tool.status)} />
+                <strong>{toolLabel(category, tool.name, tool.status)}</strong>
+                <span>
+                  {tool.detail}
+                  {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
+                </span>
+              </div>
+              {tool.status === 'awaiting_approval' && tool.approval ? (
+                <ToolApprovalCard
+                  tool={tool}
+                  state={approvalState}
+                  onDecision={onApprovalDecision}
+                  onStateChange={(next) =>
+                    setApprovalStates((current) => ({ ...current, [tool.id]: next }))
+                  }
+                />
+              ) : null}
             </div>
           );
         })}
       </div>
     </details>
   );
+}
+
+type ApprovalState = {
+  pending?: ApprovalDecision;
+  submitted?: ApprovalDecision;
+  error?: string;
+};
+
+function ToolApprovalCard({
+  tool,
+  state,
+  onDecision,
+  onStateChange,
+}: {
+  tool: ToolActivity;
+  state?: ApprovalState;
+  onDecision?: ApprovalDecisionHandler;
+  onStateChange: (state: ApprovalState) => void;
+}) {
+  const approval = tool.approval;
+  if (!approval) return null;
+  const pending = state?.pending;
+  const disabled = Boolean(pending || !onDecision);
+
+  const choose = async (decision: ApprovalDecision) => {
+    if (!onDecision || disabled) return;
+    onStateChange({ pending: decision });
+    try {
+      await onDecision(
+        approval,
+        decision
+      );
+      onStateChange({ submitted: decision });
+    } catch (error) {
+      onStateChange({ error: errorMessage(error) });
+    }
+  };
+
+  return (
+    <section className="activity-approval" aria-label={`Approval required for ${tool.name}`}>
+      <strong>Approval required</strong>
+      <p>{approval.summary}</p>
+      <small>Optimus will only continue with this exact action after your choice.</small>
+      <div className="activity-approval-actions" role="group" aria-label="Approval decision">
+        <button
+          type="button"
+          onClick={() => void choose('approve')}
+          disabled={disabled}
+        >
+          {pending === 'approve' ? 'Approving…' : 'Approve and continue'}
+        </button>
+        <button
+          type="button"
+          className="is-deny"
+          onClick={() => void choose('deny')}
+          disabled={disabled}
+        >
+          {pending === 'deny' ? 'Denying…' : 'Deny'}
+        </button>
+      </div>
+      {state?.submitted ? (
+        <p className="activity-approval-status" role="status">
+          {state.submitted === 'approve' ? 'Approval submitted.' : 'Denial submitted.'}
+        </p>
+      ) : null}
+      {state?.error ? (
+        <p className="activity-approval-error" role="alert">
+          {state.error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unable to submit this approval decision.';
 }
 
 function summarizeTools(tools: ToolActivity[]) {

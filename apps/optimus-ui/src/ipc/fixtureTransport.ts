@@ -55,6 +55,32 @@ const details = new Map<string, SessionDetail>([
           content:
             'Understood. I’ll keep outcome and controls above raw activity, coalesce stream projection to the display clock, and avoid decorative work that competes with input.',
         },
+        {
+          role: 'assistant',
+          content: 'The focused verification command is ready, but it needs your approval before Optimus can run it.',
+          tool_events: [
+            {
+              type: 'tool',
+              schema_version: 1,
+              event_id: 'fixture-approval:required',
+              run_id: '11111111-1111-4111-8111-111111111111',
+              call_id: 'call_fixture_approval',
+              tool_id: 'terminal',
+              phase: 'approval_required',
+              summary: 'Run the focused React verification command',
+              approval: {
+                run_id: '11111111-1111-4111-8111-111111111111',
+                call_id: 'call_fixture_approval',
+                tool_id: 'terminal',
+                job_id: '22222222-2222-4222-8222-222222222222',
+                node_id: '33333333-3333-4333-8333-333333333333',
+                node_index: 0,
+                effect_sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                summary: 'Run the focused React verification command',
+              },
+            },
+          ],
+        },
       ],
     },
   ],
@@ -360,6 +386,53 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       const index = sessions.findIndex((item) => item.id === params.id);
       if (index >= 0) sessions.splice(index, 1);
       return { deleted: index >= 0, id: params.id };
+    }
+    case 'chat_approval_resolve': {
+      const sessionId = String(params.session_id || '');
+      const detail = details.get(sessionId);
+      if (!detail) throw new Error('Approval session was not found.');
+      const decision = params.decision === 'deny' ? 'denied' : 'approved';
+      detail.run_status = 'succeeded';
+      detail.messages = detail.messages.map((message) => ({
+        ...message,
+        ...(message.tool_events
+          ? {
+              tool_events: message.tool_events.map((event) =>
+                event.call_id === params.call_id
+                  ? {
+                      ...event,
+                      event_id: `${event.run_id}:${event.call_id}:${decision}`,
+                      phase: decision === 'approved' ? 'succeeded' : 'cancelled',
+                      summary:
+                        decision === 'approved'
+                          ? 'Approved exact action completed'
+                          : 'Exact action denied',
+                      approval: undefined,
+                    }
+                  : event
+              ),
+            }
+          : {}),
+      }));
+      detail.messages.push({
+        role: 'assistant',
+        content:
+          decision === 'approved'
+            ? 'Approved and completed the exact requested action.'
+            : 'Denied the exact requested action. Nothing was executed.',
+      });
+      return {
+        session_id: sessionId,
+        run_id: params.run_id,
+        call_id: params.call_id,
+        job_id: params.job_id,
+        node_id: params.node_id,
+        node_index: params.node_index,
+        effect_sha256: params.effect_sha256,
+        tool_id: 'terminal',
+        summary: 'Run the focused React verification command',
+        status: decision,
+      };
     }
     case 'approvals_list':
       return { pending: approvals };

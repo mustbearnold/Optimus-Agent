@@ -62,6 +62,7 @@ const METHOD_DOMAINS: &[(&str, Domain)] = &[
     ("browser_reload", Domain::Runtime),
     ("chat", Domain::Chat),
     ("chat_offline", Domain::Chat),
+    ("chat_approval_resolve", Domain::Chat),
 ];
 
 fn classify(method: &str) -> Option<Domain> {
@@ -155,6 +156,7 @@ mod tests {
         ("browser_reload", Domain::Runtime),
         ("chat", Domain::Chat),
         ("chat_offline", Domain::Chat),
+        ("chat_approval_resolve", Domain::Chat),
     ];
 
     #[test]

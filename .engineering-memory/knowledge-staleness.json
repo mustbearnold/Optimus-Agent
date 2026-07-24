@@ -32,11 +32,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -53,11 +53,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -67,11 +67,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -88,11 +88,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -207,11 +207,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -228,11 +228,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -571,11 +571,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -585,14 +585,14 @@
           "sha256": "840a2264f438d4ba2182cf608700da047cebcbd65d33f4ba9f6903ca48f9d0b5"
         }
       ],
-      "current_tree_sha256": "9e0feabb9f0cd53137e1ce2e4b3e31b7a4ee1b37a3d41d100396a07821c07b5d",
+      "current_tree_sha256": "92389054f956d34a20b12fda9eb740b50ca5612875ff99f75766b4be4ba79873",
       "document": "docs/architecture/system-overview.md",
       "knowledge_status": "current",
       "knowledge_type": "architecture",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "9e0feabb9f0cd53137e1ce2e4b3e31b7a4ee1b37a3d41d100396a07821c07b5d"
+      "verified_tree_sha256": "92389054f956d34a20b12fda9eb740b50ca5612875ff99f75766b4be4ba79873"
     },
     {
       "covered_files": [
@@ -604,11 +604,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 31331,
@@ -632,11 +632,11 @@
           "sha256": "3f1a54565d67caffefb399d033aa004f26bb7d464a79d824b88373752f839b0e"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 2578,
@@ -646,11 +646,11 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -667,11 +667,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -688,14 +688,14 @@
           "sha256": "38a86df5083f117ab1f4714147c53d5473e04966b4f0652c85c6d121991fab76"
         }
       ],
-      "current_tree_sha256": "4cba66d9cf6d0751c9ecdb96c6473a0024df4ae897676f0d26ea8ef002ee3ebc",
+      "current_tree_sha256": "492fe850101e64c606787e973d668032591ca5c3b52613b64282035be0169261",
       "document": "docs/contracts/desktop-ipc-methods.md",
       "knowledge_status": "current",
       "knowledge_type": "contract",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "4cba66d9cf6d0751c9ecdb96c6473a0024df4ae897676f0d26ea8ef002ee3ebc"
+      "verified_tree_sha256": "492fe850101e64c606787e973d668032591ca5c3b52613b64282035be0169261"
     },
     {
       "covered_files": [
@@ -714,11 +714,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -735,11 +735,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -749,11 +749,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -770,11 +770,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -854,11 +854,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -910,6 +910,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -917,11 +924,11 @@
           "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -938,11 +945,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -1029,11 +1036,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -1050,11 +1057,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -1379,11 +1386,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -1393,14 +1400,14 @@
           "sha256": "840a2264f438d4ba2182cf608700da047cebcbd65d33f4ba9f6903ca48f9d0b5"
         }
       ],
-      "current_tree_sha256": "5d3d0d57021fa3bb9781deef98b23a65f57e986f0413de9626b6669680776936",
+      "current_tree_sha256": "e2bb1fc133441f367d1055fcd4b6ac0dce83dc5442943dc0e5e6213b839f3a06",
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_status": "current",
       "knowledge_type": "contract-risk-register",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "5d3d0d57021fa3bb9781deef98b23a65f57e986f0413de9626b6669680776936"
+      "verified_tree_sha256": "e2bb1fc133441f367d1055fcd4b6ac0dce83dc5442943dc0e5e6213b839f3a06"
     },
     {
       "covered_files": [
@@ -1473,11 +1480,11 @@
           "sha256": "9b111be69f9a06c296eb02a529a4bac93d3611bb9aaa127575839fa219b5dd03"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 914,
@@ -1487,14 +1494,14 @@
           "sha256": "ec10c5509f7a67ce28d7eb42d38d9c8877cf38fc6c0d09bea096ee039a12b9de"
         }
       ],
-      "current_tree_sha256": "e95b517a53aadd131bd4f8576a21eb7f75238dc134320673f494586e98cdab35",
+      "current_tree_sha256": "c7ece9781d5d66c8f4234bf6555695a522dc78913227a0280f32c7bf7931f5dd",
       "document": "docs/decisions/0018-fail-closed-runtime-safety.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "e95b517a53aadd131bd4f8576a21eb7f75238dc134320673f494586e98cdab35"
+      "verified_tree_sha256": "c7ece9781d5d66c8f4234bf6555695a522dc78913227a0280f32c7bf7931f5dd"
     },
     {
       "covered_files": [
@@ -1555,11 +1562,11 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 6721,
@@ -1583,14 +1590,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "7d5468ec26daf81946452d2e09bc5860d35c2ba8ca4394f2cabc5f20abcbdf8c",
+      "current_tree_sha256": "dba31f26a0117731af6b56c5a4766a5a4be4da0ff14c17d52d8d64c82e5fd1f8",
       "document": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "7d5468ec26daf81946452d2e09bc5860d35c2ba8ca4394f2cabc5f20abcbdf8c"
+      "verified_tree_sha256": "dba31f26a0117731af6b56c5a4766a5a4be4da0ff14c17d52d8d64c82e5fd1f8"
     },
     {
       "covered_files": [
@@ -1700,11 +1707,11 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 7862,
@@ -1714,14 +1721,14 @@
           "sha256": "11b8ce44f707c483adc28d9a64e4c7c507f1461b6d8b6809775eee43c7d3f8e6"
         }
       ],
-      "current_tree_sha256": "102f390cf88e37628e60f1be550e1fc4337b5e73aed113ba5502273aeee65533",
+      "current_tree_sha256": "9bf9d99e8e6d8032ff99b01d483ddef9073b15f3775733eb6278db8ac11999af",
       "document": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "102f390cf88e37628e60f1be550e1fc4337b5e73aed113ba5502273aeee65533"
+      "verified_tree_sha256": "9bf9d99e8e6d8032ff99b01d483ddef9073b15f3775733eb6278db8ac11999af"
     },
     {
       "covered_files": [
@@ -1740,11 +1747,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 31331,
@@ -1796,11 +1803,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 18867,
@@ -1831,14 +1838,14 @@
           "sha256": "d5db5a9b7a85090a84ba032f0474eb638c1aa970699d165c1ab35c56ff6cae1e"
         }
       ],
-      "current_tree_sha256": "3fb7e0d8f638ba0c20b90d5df83262e127187993ab881c35b5c3991ed6b18ff4",
+      "current_tree_sha256": "34c5118bd154dee46957f2bf668c6cd8ee1045d72f480cf3c905bfe9dfe800a7",
       "document": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "3fb7e0d8f638ba0c20b90d5df83262e127187993ab881c35b5c3991ed6b18ff4"
+      "verified_tree_sha256": "34c5118bd154dee46957f2bf668c6cd8ee1045d72f480cf3c905bfe9dfe800a7"
     },
     {
       "covered_files": [
@@ -1911,11 +1918,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 17227,
@@ -1981,11 +1988,11 @@
           "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 9185,
@@ -2002,14 +2009,14 @@
           "sha256": "a2973a6a627104f32b0225dc6d5ec293697f5142c4737d010c58cef74951d143"
         }
       ],
-      "current_tree_sha256": "8a947d52ef72927ca12c01351e8bd4a28758fd499bb720abe529a887f064daaa",
+      "current_tree_sha256": "4da61e85ccdbda709bd2cdc8a02ea1729cdf2f7557938fec870746c4857334ee",
       "document": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "8a947d52ef72927ca12c01351e8bd4a28758fd499bb720abe529a887f064daaa"
+      "verified_tree_sha256": "4da61e85ccdbda709bd2cdc8a02ea1729cdf2f7557938fec870746c4857334ee"
     },
     {
       "covered_files": [
@@ -2241,11 +2248,11 @@
           "sha256": "8d2fd603bbc1388605e093c1f99545dfe5364978f13dfac7116a765773241aa8"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 4791,
@@ -2255,14 +2262,14 @@
           "sha256": "52a9f60415530b90b082a48d59fc26a324929c8802158f1f217657aa251438c0"
         }
       ],
-      "current_tree_sha256": "d98f4148fb65ebf84812c53ac13b3e782f9a4d7cacb4c38209b691941e82835f",
+      "current_tree_sha256": "5af845baba6dd4c48ce9648b259cc4d5e162ac07f00f7e24323e3d21465335ee",
       "document": "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "d98f4148fb65ebf84812c53ac13b3e782f9a4d7cacb4c38209b691941e82835f"
+      "verified_tree_sha256": "5af845baba6dd4c48ce9648b259cc4d5e162ac07f00f7e24323e3d21465335ee"
     },
     {
       "covered_files": [
@@ -2295,11 +2302,11 @@
           "sha256": "7da413b9b8f38753262035bcd6cd2c9e0bc792f4393feb344f25c165f64a5dc9"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 6721,
@@ -2309,23 +2316,23 @@
           "sha256": "19412ab5b78f9f905f67b01658f4c32052ff3fd84908781cc7658dc267a8f6f2"
         }
       ],
-      "current_tree_sha256": "0c0a361bde599cbc7fb5a192aa1ee8157a1b3e635506f7d4181ab728e5e05d47",
+      "current_tree_sha256": "8d98eef144029a5ae683493f6b49fde2b7f472e2fbddcc4d0c43bd7c7d833052",
       "document": "docs/decisions/0027-settings-driven-work-isolation.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "0c0a361bde599cbc7fb5a192aa1ee8157a1b3e635506f7d4181ab728e5e05d47"
+      "verified_tree_sha256": "8d98eef144029a5ae683493f6b49fde2b7f472e2fbddcc4d0c43bd7c7d833052"
     },
     {
       "covered_files": [
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -2342,11 +2349,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -2356,11 +2363,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -2377,11 +2384,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -2440,11 +2447,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -2496,6 +2503,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -2538,11 +2552,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -2636,11 +2650,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -2664,18 +2678,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -2727,11 +2741,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -2748,11 +2762,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -2797,18 +2811,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -2839,11 +2853,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -2902,23 +2916,23 @@
           "sha256": "ff6b539f6518ff1ddbb89bdee1573b9956b84b73dcc080ae813720a889b56f7d"
         }
       ],
-      "current_tree_sha256": "797856cc6f08b5563a2c0f6948b195eef696e90755acbd934f737e925dd896ab",
+      "current_tree_sha256": "26722c05067c699ac1adab0ed245fb8c7396f33cff0b5d77c7bad6c7dc27a78d",
       "document": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "797856cc6f08b5563a2c0f6948b195eef696e90755acbd934f737e925dd896ab"
+      "verified_tree_sha256": "26722c05067c699ac1adab0ed245fb8c7396f33cff0b5d77c7bad6c7dc27a78d"
     },
     {
       "covered_files": [
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -2935,11 +2949,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -2949,11 +2963,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -2970,11 +2984,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -3026,11 +3040,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -3082,6 +3096,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -3124,11 +3145,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -3222,11 +3243,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -3250,18 +3271,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -3313,11 +3334,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -3334,11 +3355,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -3383,18 +3404,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -3425,11 +3446,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -3474,11 +3495,11 @@
           "sha256": "615a7bfa93ccd302f34be03a113ceb16e366815256c064b9333b55a7761f64be"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
           "bytes": 9311,
@@ -3495,14 +3516,14 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         }
       ],
-      "current_tree_sha256": "28b69f9ade27ec73fb1ee69870da69926332007864bc235567d5390809cf4b6e",
+      "current_tree_sha256": "a6d677f18e945d3da7f45e7d4ea4b398a36c841115a776886583649c0a46cd9d",
       "document": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "28b69f9ade27ec73fb1ee69870da69926332007864bc235567d5390809cf4b6e"
+      "verified_tree_sha256": "a6d677f18e945d3da7f45e7d4ea4b398a36c841115a776886583649c0a46cd9d"
     },
     {
       "covered_files": [
@@ -3542,11 +3563,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -3598,6 +3619,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -3640,11 +3668,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -3738,11 +3766,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -3766,18 +3794,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -3829,11 +3857,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -3850,11 +3878,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -3899,18 +3927,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -3941,11 +3969,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -4025,23 +4053,23 @@
           "sha256": "275e0e8fab0158debcece4251761dd307d380e804529f1b18a70d2b68acc9e57"
         }
       ],
-      "current_tree_sha256": "f1ceb0ed99b4c67fc3b95ba58d2cb442f9bdae0e164bccb4a7720b07d04a5dc2",
+      "current_tree_sha256": "c4bafc0390b1427b4cdb98312f2730da44fa8fcf3c30451ddb585d6e42cef57b",
       "document": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "f1ceb0ed99b4c67fc3b95ba58d2cb442f9bdae0e164bccb4a7720b07d04a5dc2"
+      "verified_tree_sha256": "c4bafc0390b1427b4cdb98312f2730da44fa8fcf3c30451ddb585d6e42cef57b"
     },
     {
       "covered_files": [
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -4058,11 +4086,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -4072,11 +4100,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -4093,11 +4121,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -4107,11 +4135,11 @@
           "sha256": "1decf7d190bba449a3867c7d0ff6f2e2e545d5e5e7e9620381ca2daff378ac07"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 54,
@@ -4128,11 +4156,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -4226,11 +4254,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -4254,18 +4282,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -4317,11 +4345,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -4338,11 +4366,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -4387,18 +4415,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -4429,11 +4457,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -4464,18 +4492,18 @@
           "sha256": "38637a6b2f275b94500ae41eb31f8fc7f8bc6ba092db511f409edbc5e532e16a"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 17068,
@@ -4513,23 +4541,23 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         }
       ],
-      "current_tree_sha256": "e1c72f2537f40fbebdc712b151c789c10001739e8e7cfd995b7ba3ce462800c5",
+      "current_tree_sha256": "8cecba61ec17f19d90ac699a6563b1ce13285a791bfcf7b7c9a9010ed9a3c4f0",
       "document": "docs/decisions/0031-safe-project-work-loop.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "e1c72f2537f40fbebdc712b151c789c10001739e8e7cfd995b7ba3ce462800c5"
+      "verified_tree_sha256": "8cecba61ec17f19d90ac699a6563b1ce13285a791bfcf7b7c9a9010ed9a3c4f0"
     },
     {
       "covered_files": [
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 1191,
@@ -4756,11 +4784,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -4770,14 +4798,14 @@
           "sha256": "840a2264f438d4ba2182cf608700da047cebcbd65d33f4ba9f6903ca48f9d0b5"
         }
       ],
-      "current_tree_sha256": "e3a9b7535b11fac3f0c9e14a4e7ea9b872d0d3aaa2d4032e5c11e77cb457f355",
+      "current_tree_sha256": "d284cb528fc5489bfd94ab66470ee72ccab335cd5f97bcc0e0305319cbe929d6",
       "document": "docs/decisions/README.md",
       "knowledge_status": "current",
       "knowledge_type": "decision-index",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "e3a9b7535b11fac3f0c9e14a4e7ea9b872d0d3aaa2d4032e5c11e77cb457f355"
+      "verified_tree_sha256": "d284cb528fc5489bfd94ab66470ee72ccab335cd5f97bcc0e0305319cbe929d6"
     },
     {
       "covered_files": [
@@ -4817,11 +4845,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -4873,6 +4901,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -4915,11 +4950,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -5013,11 +5048,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -5041,18 +5076,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -5104,11 +5139,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -5125,11 +5160,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -5174,18 +5209,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -5216,11 +5251,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -5279,14 +5314,14 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         }
       ],
-      "current_tree_sha256": "a86d71724d30b7c033c2fabcd803a10af430f521e7a9aed3c948b8f8b0cbb92c",
+      "current_tree_sha256": "b7024509c5284b0dc9a70a73ff7e97a503fcb6a009ff24fc546f1e2fea03110c",
       "document": "docs/design/codex-convergence-experience-contract.md",
       "knowledge_status": "current",
       "knowledge_type": "design-contract",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "a86d71724d30b7c033c2fabcd803a10af430f521e7a9aed3c948b8f8b0cbb92c"
+      "verified_tree_sha256": "b7024509c5284b0dc9a70a73ff7e97a503fcb6a009ff24fc546f1e2fea03110c"
     },
     {
       "covered_files": [
@@ -5326,11 +5361,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -5382,6 +5417,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -5424,11 +5466,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -5522,11 +5564,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -5550,18 +5592,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -5613,11 +5655,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -5634,11 +5676,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -5683,18 +5725,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -5725,11 +5767,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -5781,14 +5823,14 @@
           "sha256": "89130c4d5e087787fe18ac67925eb409633b8d22169af266ae506a1c208d2168"
         }
       ],
-      "current_tree_sha256": "18a935bd9c4082e5b7e043bfd16733bcf8398c425c0be82cc3366cff07c36d0b",
+      "current_tree_sha256": "5bb60963caa092cd46227d5518c076be1e80c88eb95bddc01cc36c0579b820c0",
       "document": "docs/design/codex-convergence-state-matrix.md",
       "knowledge_status": "current",
       "knowledge_type": "design-state-matrix",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "18a935bd9c4082e5b7e043bfd16733bcf8398c425c0be82cc3366cff07c36d0b"
+      "verified_tree_sha256": "5bb60963caa092cd46227d5518c076be1e80c88eb95bddc01cc36c0579b820c0"
     },
     {
       "covered_files": [
@@ -6099,25 +6141,25 @@
           "sha256": "d45c3b58e1317a21d05c0701f6e5027d335dd4fc61d99fa4462811f56b6f5ec2"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 1191,
@@ -6344,11 +6386,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -6365,14 +6407,14 @@
           "sha256": "ef84ea2d53756fd07868fbdf9b5b445655fcb8dde1eebcecbe047c0a5f9e7237"
         }
       ],
-      "current_tree_sha256": "9e8ce5cea57bf66fd17f904a59e231ba34552ed37aee22ef074c15823bb1c4e2",
+      "current_tree_sha256": "a9202aa240d2d5de4424da23ce6a79042647c0472e1ede74456966ceb525c7ae",
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_status": "current",
       "knowledge_type": "lesson-ledger",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "9e8ce5cea57bf66fd17f904a59e231ba34552ed37aee22ef074c15823bb1c4e2"
+      "verified_tree_sha256": "a9202aa240d2d5de4424da23ce6a79042647c0472e1ede74456966ceb525c7ae"
     },
     {
       "covered_files": [
@@ -6459,11 +6501,11 @@
           "sha256": "81d6fa1c7dea42f4f31dfb99ca6d3d3aec1eae2124ca279984f04ec8683ced94"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 59521,
@@ -6473,11 +6515,11 @@
           "sha256": "95435a8988fa79737953c0e000adc01bb0600c3eaf3f66205bf0f8fcb6bf4146"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -6501,14 +6543,14 @@
           "sha256": "6969955e2238e5a1fd02eac4b5334f9869473c01db1bc830d0c49945aea27a92"
         }
       ],
-      "current_tree_sha256": "2f10ca806999446384ee8565dde8a3f76fbdddef69c7d483f740cedba7b34d6f",
+      "current_tree_sha256": "3516c45fb6406a52ad17b46013479de520eed1bb6b7bacd2b595ddd876f1fe2b",
       "document": "docs/maps/model-routing.md",
       "knowledge_status": "current",
       "knowledge_type": "model-routing-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "2f10ca806999446384ee8565dde8a3f76fbdddef69c7d483f740cedba7b34d6f"
+      "verified_tree_sha256": "3516c45fb6406a52ad17b46013479de520eed1bb6b7bacd2b595ddd876f1fe2b"
     },
     {
       "covered_files": [
@@ -6576,11 +6618,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 31331,
@@ -6632,18 +6674,18 @@
           "sha256": "44f9142404882a3d12ad2768c7432cd9238de4a89a184de43fb4738c346c09c4"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 20646,
@@ -6681,14 +6723,14 @@
           "sha256": "a8e14190e299f3cd84b44ee51b0ad8a7eb5b0aef9434eae02e6dc05cb0300dab"
         }
       ],
-      "current_tree_sha256": "2d505a429acae17ec3d6b0d8bc721e5325af824c6dc2d1f7b7c7343820e9ba56",
+      "current_tree_sha256": "1cbd6b4ac8f0619de2f43834ca58831fbf059da76d64e8e9741807796c527d31",
       "document": "docs/maps/observability-and-evaluations.md",
       "knowledge_status": "current",
       "knowledge_type": "observability-evaluation-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "2d505a429acae17ec3d6b0d8bc721e5325af824c6dc2d1f7b7c7343820e9ba56"
+      "verified_tree_sha256": "1cbd6b4ac8f0619de2f43834ca58831fbf059da76d64e8e9741807796c527d31"
     },
     {
       "covered_files": [
@@ -6742,11 +6784,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -6763,11 +6805,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -6777,11 +6819,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -6798,11 +6840,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -6861,11 +6903,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -6959,11 +7001,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -6987,18 +7029,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -7050,11 +7092,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -7071,11 +7113,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -7120,18 +7162,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -7162,11 +7204,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -7295,11 +7337,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -7316,11 +7358,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -7470,14 +7512,14 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         }
       ],
-      "current_tree_sha256": "ef97aa794cf0cdc1b0152841491414f8dc03b15098119811885c0201e83fa507",
+      "current_tree_sha256": "f428a1d7735c60bf3e887fe7e27275285af51289f0627c9ad72b4ab890e60847",
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_status": "current",
       "knowledge_type": "repository-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "ef97aa794cf0cdc1b0152841491414f8dc03b15098119811885c0201e83fa507"
+      "verified_tree_sha256": "f428a1d7735c60bf3e887fe7e27275285af51289f0627c9ad72b4ab890e60847"
     },
     {
       "covered_files": [
@@ -7496,11 +7538,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -7517,11 +7559,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -7531,11 +7573,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -7552,11 +7594,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -7650,14 +7692,14 @@
           "sha256": "c3856b46afd24fbda91d53dfdbeebd755d28e6c645b2253dc8f5e815bb208d1e"
         }
       ],
-      "current_tree_sha256": "a6e4d0a93acad8812231abf7ba84a58a279394f061e0bb44e943c994d86fb1d7",
+      "current_tree_sha256": "8b49e4baa271cd7649ea5d98d0c70ec53ea2eb5f04066305464f2d3fe0e8f520",
       "document": "docs/maps/security-and-approvals.md",
       "knowledge_status": "current",
       "knowledge_type": "security-map",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "a6e4d0a93acad8812231abf7ba84a58a279394f061e0bb44e943c994d86fb1d7"
+      "verified_tree_sha256": "8b49e4baa271cd7649ea5d98d0c70ec53ea2eb5f04066305464f2d3fe0e8f520"
     },
     {
       "covered_files": [
@@ -7676,25 +7718,25 @@
           "sha256": "d9e311801c4c56be76a4d2555da29421b1af80ebae39ecf27150b94d64698d75"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 1191,
@@ -7921,11 +7963,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -7984,14 +8026,14 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "0201bd3461d4e5eb3d70aea556d2e3c6e53fa16532f148983b5caad13a8455a0",
+      "current_tree_sha256": "2d971fd112040f7f3e70774074e81e4d31c3de4e5cfd1b0b1ad8a879e6df8739",
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "0201bd3461d4e5eb3d70aea556d2e3c6e53fa16532f148983b5caad13a8455a0"
+      "verified_tree_sha256": "2d971fd112040f7f3e70774074e81e4d31c3de4e5cfd1b0b1ad8a879e6df8739"
     },
     {
       "covered_files": [
@@ -8129,11 +8171,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -8150,11 +8192,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -8164,11 +8206,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -8185,11 +8227,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -8297,11 +8339,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -8353,6 +8395,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -8395,11 +8444,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -8493,11 +8542,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -8521,18 +8570,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -8584,11 +8633,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -8605,11 +8654,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -8654,18 +8703,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -8696,11 +8745,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -8815,11 +8864,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -8836,11 +8885,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -8955,11 +9004,11 @@
           "sha256": "2a5f0cc6d75c39638829e6e47f0a87aa3d9f2f35d51414b0992dc6971c412aa6"
         },
         {
-          "bytes": 34378,
+          "bytes": 42560,
           "language": "Rust",
-          "lines": 984,
+          "lines": 1227,
           "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-          "sha256": "57cfcce24f940f62e726a39abf320a3e05942c2a3f5ce26020a744b16a7c2c14"
+          "sha256": "da27bb564cae4026fb390db73528d151121f3558e9675c5c62c6a918044c04e1"
         },
         {
           "bytes": 5004,
@@ -9158,11 +9207,11 @@
           "sha256": "d45c3b58e1317a21d05c0701f6e5027d335dd4fc61d99fa4462811f56b6f5ec2"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 4186,
@@ -9193,37 +9242,37 @@
           "sha256": "275e0e8fab0158debcece4251761dd307d380e804529f1b18a70d2b68acc9e57"
         }
       ],
-      "current_tree_sha256": "510d157e8245026b46ae719a65c4fe4a37f784870a3c9b8111e0ed1f4c129ae5",
+      "current_tree_sha256": "5c03dc41fdde643d9929a9bd77ff3308d37468f0360e999d3c09828b72f464ad",
       "document": "docs/plans/full-app-microtasks.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "510d157e8245026b46ae719a65c4fe4a37f784870a3c9b8111e0ed1f4c129ae5"
+      "verified_tree_sha256": "5c03dc41fdde643d9929a9bd77ff3308d37468f0360e999d3c09828b72f464ad"
     },
     {
       "covered_files": [
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
-          "bytes": 34378,
+          "bytes": 42560,
           "language": "Rust",
-          "lines": 984,
+          "lines": 1227,
           "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-          "sha256": "57cfcce24f940f62e726a39abf320a3e05942c2a3f5ce26020a744b16a7c2c14"
+          "sha256": "da27bb564cae4026fb390db73528d151121f3558e9675c5c62c6a918044c04e1"
         },
         {
           "bytes": 15567,
@@ -9233,11 +9282,11 @@
           "sha256": "a2899822f0b2d5812bf4f22e7b4a96d625e5aacf0707a383de80646d54e093ed"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -9261,14 +9310,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "6db5dc169e3543aa800321e07133849fa9eb44fca52219478348ddb51b1dd8a3",
+      "current_tree_sha256": "e9b2c73c688608000aa58aa4a542266f212717122e441a8c63e651aefeea4aec",
       "document": "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "6db5dc169e3543aa800321e07133849fa9eb44fca52219478348ddb51b1dd8a3"
+      "verified_tree_sha256": "e9b2c73c688608000aa58aa4a542266f212717122e441a8c63e651aefeea4aec"
     },
     {
       "covered_files": [
@@ -9287,11 +9336,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 22270,
@@ -9301,11 +9350,11 @@
           "sha256": "b6b7e3e18eea4a416f5cca2e50e00a27d900c5820136f84f396a9a74c4d58b16"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -9329,14 +9378,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "b45ddc72ddc75995c30a1a84d341c01517b58ae175c397a81e2d8f4f8db3741a",
+      "current_tree_sha256": "5c6e6759435e6a634ebeb7f0f268e5ed949e09272f1d2a4b2be8bf228cd8ede7",
       "document": "docs/specifications/authoritative-offline-candidate-binding.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "b45ddc72ddc75995c30a1a84d341c01517b58ae175c397a81e2d8f4f8db3741a"
+      "verified_tree_sha256": "5c6e6759435e6a634ebeb7f0f268e5ed949e09272f1d2a4b2be8bf228cd8ede7"
     },
     {
       "covered_files": [
@@ -9355,11 +9404,11 @@
           "sha256": "b6b7e3e18eea4a416f5cca2e50e00a27d900c5820136f84f396a9a74c4d58b16"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 7610,
@@ -9376,14 +9425,14 @@
           "sha256": "3746529a66e68aad9eb83a77d160d24d7491a2a208ba6c46491c06f5bcca9c76"
         }
       ],
-      "current_tree_sha256": "36d2fc877e6e9ba7cba8a7ed5288400455f73dcdd55b010dc78493f9cf892fe4",
+      "current_tree_sha256": "00fcfa46516a6051553c2d2ebfd59993093e06cba65358809a147080b1907e35",
       "document": "docs/specifications/candidate-aware-evaluation-comparison.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "0c07762a40e4264a08c38eaf04532b41cb90e0d4",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "36d2fc877e6e9ba7cba8a7ed5288400455f73dcdd55b010dc78493f9cf892fe4"
+      "verified_tree_sha256": "00fcfa46516a6051553c2d2ebfd59993093e06cba65358809a147080b1907e35"
     },
     {
       "covered_files": [
@@ -9395,11 +9444,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 31331,
@@ -9437,18 +9486,18 @@
           "sha256": "00cbb595c322970acf0323d491aa6ff245fc7ef1515fbd909c0aca2f493cf983"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 9185,
@@ -9465,14 +9514,14 @@
           "sha256": "bce85584e1d71d8a5a2bf15189f9a7df18460fadb9ea55ff3f88b7ccae159ca2"
         }
       ],
-      "current_tree_sha256": "80659b54b1cabf2241d8cfc18b26449dbd5e51ae39cb8084f4e3e57dd378933a",
+      "current_tree_sha256": "071705e95069391b795d553229da085fd702a166dbf6399479259f4ef6cb79f3",
       "document": "docs/specifications/desktop-turn-cancellation.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "28b0e96ac73ddedb8387478b63c8edaa0a385ac5",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "80659b54b1cabf2241d8cfc18b26449dbd5e51ae39cb8084f4e3e57dd378933a"
+      "verified_tree_sha256": "071705e95069391b795d553229da085fd702a166dbf6399479259f4ef6cb79f3"
     },
     {
       "covered_files": [
@@ -9519,11 +9568,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -9575,6 +9624,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -9617,11 +9673,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -9715,11 +9771,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -9743,18 +9799,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -9806,11 +9862,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -9827,11 +9883,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -9876,18 +9932,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -9918,11 +9974,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -9967,11 +10023,11 @@
           "sha256": "615a7bfa93ccd302f34be03a113ceb16e366815256c064b9333b55a7761f64be"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
           "bytes": 4522,
@@ -9981,14 +10037,14 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         }
       ],
-      "current_tree_sha256": "9c2a21bbd5aa03058aecde76910aea4378d46d3799c07b51826fb3b85e2d5a7e",
+      "current_tree_sha256": "59f389ab6f3b3d3cee489154f0e65497e281548090b31fa3962089c21772c2d7",
       "document": "docs/specifications/electron-react-migration-slice-1.md",
       "knowledge_status": "active",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "9c2a21bbd5aa03058aecde76910aea4378d46d3799c07b51826fb3b85e2d5a7e"
+      "verified_tree_sha256": "59f389ab6f3b3d3cee489154f0e65497e281548090b31fa3962089c21772c2d7"
     },
     {
       "covered_files": [
@@ -10000,11 +10056,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 22270,
@@ -10014,11 +10070,11 @@
           "sha256": "b6b7e3e18eea4a416f5cca2e50e00a27d900c5820136f84f396a9a74c4d58b16"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -10042,14 +10098,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "7a8a3d83dc585f53d969c7a81ef7f6ac4af840f77d9b7bbbc29fe83f07709291",
+      "current_tree_sha256": "51f32181bb5518e6748f69c6695b578073ee49535f4512c465e809e65b6310d3",
       "document": "docs/specifications/exact-priority2-offline-report-production.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "7a8a3d83dc585f53d969c7a81ef7f6ac4af840f77d9b7bbbc29fe83f07709291"
+      "verified_tree_sha256": "51f32181bb5518e6748f69c6695b578073ee49535f4512c465e809e65b6310d3"
     },
     {
       "covered_files": [
@@ -10115,11 +10171,11 @@
           "sha256": "b6b7e3e18eea4a416f5cca2e50e00a27d900c5820136f84f396a9a74c4d58b16"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -10143,30 +10199,30 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "4faff27a288ffad5b4621a3461ede52c3ef6554aea159bbbad2237d93323b431",
+      "current_tree_sha256": "2eca12d66bae0812cc33adae212191a94de53eedda05332aec2a58754143f49e",
       "document": "docs/specifications/fail-closed-evaluation-trace-requirement.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "4faff27a288ffad5b4621a3461ede52c3ef6554aea159bbbad2237d93323b431"
+      "verified_tree_sha256": "2eca12d66bae0812cc33adae212191a94de53eedda05332aec2a58754143f49e"
     },
     {
       "covered_files": [
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 4791,
@@ -10211,14 +10267,565 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "20e96083e7396d58a0fc0c9307d95706f1372adbf54420615bb01f9d993bd50c",
+      "current_tree_sha256": "a208cf18346c3ee114f7342ca1be7c316edebc746d883f230b71cda91698f5c4",
       "document": "docs/specifications/git-stable-engineering-memory.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "7bb604883362d2e9ccbf0a950422e6c6d7c5b081",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "20e96083e7396d58a0fc0c9307d95706f1372adbf54420615bb01f9d993bd50c"
+      "verified_tree_sha256": "a208cf18346c3ee114f7342ca1be7c316edebc746d883f230b71cda91698f5c4"
+    },
+    {
+      "covered_files": [
+        {
+          "bytes": 15880,
+          "language": "Rust",
+          "lines": 433,
+          "path": "apps/optimus-desktop/src/ipc/chat.rs",
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
+        },
+        {
+          "bytes": 502,
+          "language": "Rust",
+          "lines": 21,
+          "path": "apps/optimus-desktop/src/ipc/contract.rs",
+          "sha256": "a929609e54d816fae0faddc506ec378a9603f0362f21f2e8b4adc8c843825e60"
+        },
+        {
+          "bytes": 12165,
+          "language": "Rust",
+          "lines": 354,
+          "path": "apps/optimus-desktop/src/ipc/files.rs",
+          "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
+        },
+        {
+          "bytes": 4299,
+          "language": "Rust",
+          "lines": 130,
+          "path": "apps/optimus-desktop/src/ipc/mod.rs",
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
+        },
+        {
+          "bytes": 8629,
+          "language": "Rust",
+          "lines": 261,
+          "path": "apps/optimus-desktop/src/ipc/os.rs",
+          "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
+        },
+        {
+          "bytes": 6349,
+          "language": "Rust",
+          "lines": 177,
+          "path": "apps/optimus-desktop/src/ipc/router.rs",
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
+        },
+        {
+          "bytes": 20075,
+          "language": "Rust",
+          "lines": 572,
+          "path": "apps/optimus-desktop/src/ipc/runtime_ops.rs",
+          "sha256": "5ab700bc7dda6492df7220897330ba923d203b6213e66bc55d9dc824e6c529fb"
+        },
+        {
+          "bytes": 2292,
+          "language": "Rust",
+          "lines": 70,
+          "path": "apps/optimus-desktop/src/ipc/scheduling.rs",
+          "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
+        },
+        {
+          "bytes": 11440,
+          "language": "Rust",
+          "lines": 324,
+          "path": "apps/optimus-desktop/src/ipc/sessions.rs",
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
+        },
+        {
+          "bytes": 7800,
+          "language": "Rust",
+          "lines": 210,
+          "path": "apps/optimus-desktop/src/ipc/system.rs",
+          "sha256": "1decf7d190bba449a3867c7d0ff6f2e2e545d5e5e7e9620381ca2daff378ac07"
+        },
+        {
+          "bytes": 2667,
+          "language": "Markdown",
+          "lines": 78,
+          "path": "apps/optimus-electron/README.md",
+          "sha256": "e1a17cbfb7aa50cb32698769f104ac3cb22fad86f6491da81838555ef5e85735"
+        },
+        {
+          "bytes": 528,
+          "language": "Other",
+          "lines": 20,
+          "path": "apps/optimus-electron/browser-policy.cjs",
+          "sha256": "3f8f99d63d983e22ac52100c282e8514d42bd2938bfaad1c1af5b549d756b67f"
+        },
+        {
+          "bytes": 11481,
+          "language": "Other",
+          "lines": 256,
+          "path": "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
+          "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
+        },
+        {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
+          "bytes": 14277,
+          "language": "Other",
+          "lines": 306,
+          "path": "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
+          "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
+        },
+        {
+          "bytes": 27637,
+          "language": "Other",
+          "lines": 887,
+          "path": "apps/optimus-electron/main.cjs",
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
+        },
+        {
+          "bytes": 7772,
+          "language": "JSON",
+          "lines": 238,
+          "path": "apps/optimus-electron/package-lock.json",
+          "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
+        },
+        {
+          "bytes": 670,
+          "language": "JSON",
+          "lines": 21,
+          "path": "apps/optimus-electron/package.json",
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
+        },
+        {
+          "bytes": 489,
+          "language": "Other",
+          "lines": 18,
+          "path": "apps/optimus-electron/playwright.config.cjs",
+          "sha256": "099ad0801e7fa9b4d5449cbccd6a7e7f8b78b272623823a97648f337b2b8f596"
+        },
+        {
+          "bytes": 2578,
+          "language": "Other",
+          "lines": 50,
+          "path": "apps/optimus-electron/preload.cjs",
+          "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
+        },
+        {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
+          "bytes": 3102,
+          "language": "Other",
+          "lines": 99,
+          "path": "apps/optimus-electron/scripts/dev.cjs",
+          "sha256": "2ebcd28c16cf76495a52ff0252964dc1504ac155d70f3973f40a0502badf1996"
+        },
+        {
+          "bytes": 809,
+          "language": "Other",
+          "lines": 22,
+          "path": "apps/optimus-electron/test/browser-policy.test.cjs",
+          "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
+        },
+        {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
+          "bytes": 54,
+          "language": "TypeScript",
+          "lines": 1,
+          "path": "apps/optimus-ui/src/App.tsx",
+          "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
+        },
+        {
+          "bytes": 4551,
+          "language": "TypeScript",
+          "lines": 95,
+          "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
+          "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
+        },
+        {
+          "bytes": 26908,
+          "language": "TypeScript",
+          "lines": 628,
+          "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
+        },
+        {
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
+          "language": "CSS",
+          "lines": 1623,
+          "path": "apps/optimus-ui/src/codex-shell.css",
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
+        },
+        {
+          "bytes": 3682,
+          "language": "TypeScript",
+          "lines": 83,
+          "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
+        },
+        {
+          "bytes": 2466,
+          "language": "TypeScript",
+          "lines": 145,
+          "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
+        },
+        {
+          "bytes": 4839,
+          "language": "TypeScript",
+          "lines": 164,
+          "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
+        },
+        {
+          "bytes": 864,
+          "language": "TypeScript",
+          "lines": 34,
+          "path": "apps/optimus-ui/src/components/chrome/TruthStrip.tsx",
+          "sha256": "f23d32fe410d9b53b49580796f9b4ad4de96aed875287fa70b3e832a04459ce5"
+        },
+        {
+          "bytes": 7730,
+          "language": "TypeScript",
+          "lines": 192,
+          "path": "apps/optimus-ui/src/components/execution/ExecutionDock.tsx",
+          "sha256": "876ebd4b4b1db01845f2bcbcd346290115fbc6eea72ee03403e29e2a47aa9db4"
+        },
+        {
+          "bytes": 2040,
+          "language": "TypeScript",
+          "lines": 61,
+          "path": "apps/optimus-ui/src/components/execution/TaskPanel.tsx",
+          "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
+        },
+        {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
+          "bytes": 7530,
+          "language": "TypeScript",
+          "lines": 215,
+          "path": "apps/optimus-ui/src/components/projects/ProjectSourcesDialog.tsx",
+          "sha256": "2028eed67c8ab816f224b37c7d31a90dde283a9b001cacd9603398c32faf13b7"
+        },
+        {
+          "bytes": 10018,
+          "language": "TypeScript",
+          "lines": 283,
+          "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
+        },
+        {
+          "bytes": 19043,
+          "language": "TypeScript",
+          "lines": 471,
+          "path": "apps/optimus-ui/src/components/settings/SettingsDialog.tsx",
+          "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
+        },
+        {
+          "bytes": 8679,
+          "language": "TypeScript",
+          "lines": 244,
+          "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
+        },
+        {
+          "bytes": 4770,
+          "language": "TypeScript",
+          "lines": 128,
+          "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
+        },
+        {
+          "bytes": 12670,
+          "language": "TypeScript",
+          "lines": 313,
+          "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
+        },
+        {
+          "bytes": 2526,
+          "language": "TypeScript",
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 9143,
+          "language": "TypeScript",
+          "lines": 272,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
+        },
+        {
+          "bytes": 9488,
+          "language": "TypeScript",
+          "lines": 274,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
+        },
+        {
+          "bytes": 2450,
+          "language": "TypeScript",
+          "lines": 70,
+          "path": "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx",
+          "sha256": "7bd4da4ceeb9c991df839382e6ffa624d12d3ff3be5614dcc5a103ec665b17f7"
+        },
+        {
+          "bytes": 9112,
+          "language": "TypeScript",
+          "lines": 249,
+          "path": "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
+          "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
+        },
+        {
+          "bytes": 2694,
+          "language": "TypeScript",
+          "lines": 88,
+          "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
+        },
+        {
+          "bytes": 9384,
+          "language": "TypeScript",
+          "lines": 289,
+          "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
+        },
+        {
+          "bytes": 4497,
+          "language": "TypeScript",
+          "lines": 127,
+          "path": "apps/optimus-ui/src/components/workspace/FilesSurface.tsx",
+          "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
+        },
+        {
+          "bytes": 1517,
+          "language": "TypeScript",
+          "lines": 33,
+          "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
+        },
+        {
+          "bytes": 29,
+          "language": "TypeScript",
+          "lines": 1,
+          "path": "apps/optimus-ui/src/ipc.ts",
+          "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
+        },
+        {
+          "bytes": 9254,
+          "language": "TypeScript",
+          "lines": 412,
+          "path": "apps/optimus-ui/src/ipc/contracts.ts",
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
+        },
+        {
+          "bytes": 4006,
+          "language": "TypeScript",
+          "lines": 119,
+          "path": "apps/optimus-ui/src/ipc/electronTransport.test.ts",
+          "sha256": "dcb81676c01f85d064bfc13e77efbd444c9c3c0b47c67287bd60da2f27ca341d"
+        },
+        {
+          "bytes": 2993,
+          "language": "TypeScript",
+          "lines": 89,
+          "path": "apps/optimus-ui/src/ipc/electronTransport.ts",
+          "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
+        },
+        {
+          "bytes": 18043,
+          "language": "TypeScript",
+          "lines": 558,
+          "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
+        },
+        {
+          "bytes": 3281,
+          "language": "TypeScript",
+          "lines": 102,
+          "path": "apps/optimus-ui/src/ipc/httpTransport.ts",
+          "sha256": "385fcaf5ecea5aaf970454463d1e50d714abdd54e4399569a69ec290adf32453"
+        },
+        {
+          "bytes": 654,
+          "language": "TypeScript",
+          "lines": 20,
+          "path": "apps/optimus-ui/src/ipc/index.ts",
+          "sha256": "38a86df5083f117ab1f4714147c53d5473e04966b4f0652c85c6d121991fab76"
+        },
+        {
+          "bytes": 319,
+          "language": "TypeScript",
+          "lines": 13,
+          "path": "apps/optimus-ui/src/main.tsx",
+          "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
+        },
+        {
+          "bytes": 1830,
+          "language": "TypeScript",
+          "lines": 52,
+          "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
+        },
+        {
+          "bytes": 2127,
+          "language": "TypeScript",
+          "lines": 86,
+          "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
+        },
+        {
+          "bytes": 1303,
+          "language": "TypeScript",
+          "lines": 40,
+          "path": "apps/optimus-ui/src/state/appReducer.ts",
+          "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
+        },
+        {
+          "bytes": 12687,
+          "language": "TypeScript",
+          "lines": 338,
+          "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
+        },
+        {
+          "bytes": 13798,
+          "language": "TypeScript",
+          "lines": 418,
+          "path": "apps/optimus-ui/src/state/conversationStore.ts",
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
+        },
+        {
+          "bytes": 1112,
+          "language": "TypeScript",
+          "lines": 37,
+          "path": "apps/optimus-ui/src/state/layoutStore.test.ts",
+          "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
+        },
+        {
+          "bytes": 2513,
+          "language": "TypeScript",
+          "lines": 74,
+          "path": "apps/optimus-ui/src/state/layoutStore.ts",
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
+        },
+        {
+          "bytes": 2240,
+          "language": "TypeScript",
+          "lines": 78,
+          "path": "apps/optimus-ui/src/state/projectStore.test.ts",
+          "sha256": "731e67944e063ee241ea0ce2bd41750b2f3920cd079e6d5000f868f31882430c"
+        },
+        {
+          "bytes": 4477,
+          "language": "TypeScript",
+          "lines": 153,
+          "path": "apps/optimus-ui/src/state/projectStore.ts",
+          "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
+        },
+        {
+          "bytes": 64936,
+          "language": "CSS",
+          "lines": 3674,
+          "path": "apps/optimus-ui/src/styles.css",
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
+        },
+        {
+          "bytes": 631,
+          "language": "TypeScript",
+          "lines": 16,
+          "path": "apps/optimus-ui/src/styles.test.ts",
+          "sha256": "b0b888e34f66956535975af52cd4453bc4dd5fecf0da8ec449bd57caed86d0d1"
+        },
+        {
+          "bytes": 591,
+          "language": "TypeScript",
+          "lines": 22,
+          "path": "apps/optimus-ui/src/test/setup.ts",
+          "sha256": "296160d939a4dd7d2fe19abd8ecb193f78c017ad34fe6fca09426118fddd68eb"
+        },
+        {
+          "bytes": 130,
+          "language": "TypeScript",
+          "lines": 6,
+          "path": "apps/optimus-ui/src/vite-env.d.ts",
+          "sha256": "9e4ac328a71daca279b7f795cec3bcc9ce5796b3bdc43e651ce35ecf1f4d394f"
+        },
+        {
+          "bytes": 36656,
+          "language": "Rust",
+          "lines": 1010,
+          "path": "crates/optimus-kernel/src/execution.rs",
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
+        },
+        {
+          "bytes": 96718,
+          "language": "Rust",
+          "lines": 2463,
+          "path": "crates/optimus-kernel/src/lib.rs",
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
+        },
+        {
+          "bytes": 9962,
+          "language": "Markdown",
+          "lines": 197,
+          "path": "docs/decisions/0031-safe-project-work-loop.md",
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
+        }
+      ],
+      "current_tree_sha256": "5219d3298808b6113914a65360d823b956b334614e8f66c044dc1c56323d1c7a",
+      "document": "docs/specifications/in-transcript-approval-resolution.md",
+      "knowledge_status": "current",
+      "knowledge_type": "specification",
+      "last_verified_commit": null,
+      "stale": false,
+      "verification_basis": "sha256_tree",
+      "verified_tree_sha256": "5219d3298808b6113914a65360d823b956b334614e8f66c044dc1c56323d1c7a"
     },
     {
       "covered_files": [
@@ -10237,11 +10844,11 @@
           "sha256": "2a5f0cc6d75c39638829e6e47f0a87aa3d9f2f35d51414b0992dc6971c412aa6"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -10265,14 +10872,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "910b27216d160721a65484dc408f9aa8fe597608dca1dcfbd0d5e80b0c31a129",
+      "current_tree_sha256": "f4a158406394a97a0eefc8f699889f0e1778919ba914b8dd75deb766c00e182a",
       "document": "docs/specifications/persisted-integrity-evaluation-traces.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "910b27216d160721a65484dc408f9aa8fe597608dca1dcfbd0d5e80b0c31a129"
+      "verified_tree_sha256": "f4a158406394a97a0eefc8f699889f0e1778919ba914b8dd75deb766c00e182a"
     },
     {
       "covered_files": [
@@ -10338,11 +10945,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -10359,11 +10966,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -10373,11 +10980,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -10394,11 +11001,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -10548,11 +11155,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -10569,11 +11176,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -10653,28 +11260,28 @@
           "sha256": "51de42f0eb8421f6f6b18720ad79d6a116e0fbbfcc82a929f9f9f73d2e7c3a55"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         }
       ],
-      "current_tree_sha256": "115372ee1c23740b8b2c18526add798a9d310ff94dcad4107852320738e9d854",
+      "current_tree_sha256": "f65ca5ebaede25dee9b0824048320e169bfec8f23d2bd9d46156ab6d11274939",
       "document": "docs/specifications/phase-20-cdp-preview-browser.md",
       "knowledge_status": "draft",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "115372ee1c23740b8b2c18526add798a9d310ff94dcad4107852320738e9d854"
+      "verified_tree_sha256": "f65ca5ebaede25dee9b0824048320e169bfec8f23d2bd9d46156ab6d11274939"
     },
     {
       "covered_files": [
@@ -10700,11 +11307,11 @@
           "sha256": "8972cebd2aab0164ebc29b29d4a782424672f7a15a914cd1462f7e656338a5ea"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 43505,
@@ -10721,14 +11328,14 @@
           "sha256": "084eff6bc4e21bf949bfff13ec5147e8ab13d8e6e0f04403096d585d996b6a2b"
         }
       ],
-      "current_tree_sha256": "d00c82f93c1a6c816fb3da0920eb06137b9c9a073953cae78b0eb2fa22ad1476",
+      "current_tree_sha256": "0e2b6b4f79143665481c0933b6832029464447e52c1319928704cb921cb37fa4",
       "document": "docs/specifications/phase-20b-kernel-cdp-integration.md",
       "knowledge_status": "draft",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "d00c82f93c1a6c816fb3da0920eb06137b9c9a073953cae78b0eb2fa22ad1476"
+      "verified_tree_sha256": "0e2b6b4f79143665481c0933b6832029464447e52c1319928704cb921cb37fa4"
     },
     {
       "covered_files": [
@@ -10740,11 +11347,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -10768,11 +11375,11 @@
           "sha256": "8972cebd2aab0164ebc29b29d4a782424672f7a15a914cd1462f7e656338a5ea"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 6387,
@@ -10782,14 +11389,14 @@
           "sha256": "9898d03f99911ac7958c6862903bc93887bb956a2a6bd5c85d5fe953d7eef843"
         }
       ],
-      "current_tree_sha256": "1d1a9ee8ebb316a55c86f80cd90431a796ad2d8c2e15bde5d4f682e521d9fae9",
+      "current_tree_sha256": "8a87f666a30f2761625080c7b2dfcf68c20f58c6f943c6e0fd86b9b1178635c0",
       "document": "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "knowledge_status": "draft",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "1d1a9ee8ebb316a55c86f80cd90431a796ad2d8c2e15bde5d4f682e521d9fae9"
+      "verified_tree_sha256": "8a87f666a30f2761625080c7b2dfcf68c20f58c6f943c6e0fd86b9b1178635c0"
     },
     {
       "covered_files": [
@@ -10909,11 +11516,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 183860,
@@ -10944,14 +11551,14 @@
           "sha256": "efe7ca44948333b6979e0b85fb152411fe0149bf9bc90395b7bcd568f6eb0fb0"
         }
       ],
-      "current_tree_sha256": "21e4c2710ad3e33bd26d6e049c2946d4ac1dd584f318f8ea42f3d9fe5b1df36e",
+      "current_tree_sha256": "56059d0bb2c41f9011cf40fbb91b75a2403aff71f5a5c5b1abd9cc4b1fef4bfe",
       "document": "docs/specifications/phase-21d-artifacts-bulk-delete.md",
       "knowledge_status": "active",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "21e4c2710ad3e33bd26d6e049c2946d4ac1dd584f318f8ea42f3d9fe5b1df36e"
+      "verified_tree_sha256": "56059d0bb2c41f9011cf40fbb91b75a2403aff71f5a5c5b1abd9cc4b1fef4bfe"
     },
     {
       "covered_files": [
@@ -11019,11 +11626,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -11040,11 +11647,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -11159,11 +11766,11 @@
           "sha256": "2a5f0cc6d75c39638829e6e47f0a87aa3d9f2f35d51414b0992dc6971c412aa6"
         },
         {
-          "bytes": 34378,
+          "bytes": 42560,
           "language": "Rust",
-          "lines": 984,
+          "lines": 1227,
           "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-          "sha256": "57cfcce24f940f62e726a39abf320a3e05942c2a3f5ce26020a744b16a7c2c14"
+          "sha256": "da27bb564cae4026fb390db73528d151121f3558e9675c5c62c6a918044c04e1"
         },
         {
           "bytes": 5004,
@@ -11502,25 +12109,25 @@
           "sha256": "d45c3b58e1317a21d05c0701f6e5027d335dd4fc61d99fa4462811f56b6f5ec2"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 1191,
@@ -11747,11 +12354,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -11817,14 +12424,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "855062930a911c38d51de1b06c6da8d9d67d05eb12983cd3c4d85db16bb86515",
+      "current_tree_sha256": "c211c484679ba914b33515ed2b554ec2209ef24e94c86424ca0bf848f86a4031",
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "855062930a911c38d51de1b06c6da8d9d67d05eb12983cd3c4d85db16bb86515"
+      "verified_tree_sha256": "c211c484679ba914b33515ed2b554ec2209ef24e94c86424ca0bf848f86a4031"
     },
     {
       "covered_files": [
@@ -11857,11 +12464,11 @@
           "sha256": "4dbff827a13b2b2a4a7bb015aeafa0eda05812ea34eafb164eb1ea90a118308f"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -11878,11 +12485,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -11892,11 +12499,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -11913,11 +12520,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -12025,11 +12632,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -12046,11 +12653,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -12158,11 +12765,11 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 9185,
@@ -12172,14 +12779,14 @@
           "sha256": "2dc7f51e1d0676665c49f534876f76136005d93f6a8229a69be93d083328b68a"
         }
       ],
-      "current_tree_sha256": "c7d37b1740f457d1f420a9a416c358b40f8c78b00f7d0764acb6076bfa9daf05",
+      "current_tree_sha256": "4800659b2e19f62035a8a795b7e8163d0f06c6c80822575b5b22ee39b12f63aa",
       "document": "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "c7d37b1740f457d1f420a9a416c358b40f8c78b00f7d0764acb6076bfa9daf05"
+      "verified_tree_sha256": "4800659b2e19f62035a8a795b7e8163d0f06c6c80822575b5b22ee39b12f63aa"
     },
     {
       "covered_files": [
@@ -12247,11 +12854,11 @@
           "sha256": "743562f65b0625de7cde5323446d07a948147dd0a5daeb8e8f7fac61cea9f932"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
           "bytes": 20463,
@@ -12268,11 +12875,11 @@
           "sha256": "7e2e63b82c22474eb9fc6eb3fab5a4dda9f170e54be69151ba44c8281adc549c"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 13305,
@@ -12387,11 +12994,11 @@
           "sha256": "2a5f0cc6d75c39638829e6e47f0a87aa3d9f2f35d51414b0992dc6971c412aa6"
         },
         {
-          "bytes": 34378,
+          "bytes": 42560,
           "language": "Rust",
-          "lines": 984,
+          "lines": 1227,
           "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-          "sha256": "57cfcce24f940f62e726a39abf320a3e05942c2a3f5ce26020a744b16a7c2c14"
+          "sha256": "da27bb564cae4026fb390db73528d151121f3558e9675c5c62c6a918044c04e1"
         },
         {
           "bytes": 5004,
@@ -12709,25 +13316,25 @@
           "sha256": "d45c3b58e1317a21d05c0701f6e5027d335dd4fc61d99fa4462811f56b6f5ec2"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 1191,
@@ -12954,11 +13561,11 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         },
         {
-          "bytes": 8684,
+          "bytes": 9962,
           "language": "Markdown",
-          "lines": 179,
+          "lines": 197,
           "path": "docs/decisions/0031-safe-project-work-loop.md",
-          "sha256": "91b883bdabdb1413755faf829caaaf52744028a4312f7a93256b6cf8b7b3412b"
+          "sha256": "61a8a5e6445df366a24b97bf942ad3262cf9db33bcbd18e30b3955c1c6c55976"
         },
         {
           "bytes": 6341,
@@ -13024,23 +13631,23 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "f8fb2c301ab3062c9296301baf38612552fbf778144876a13531d9a4b29af4bc",
+      "current_tree_sha256": "8bc6990c6e88394219146a23fb471494447d8a5a31b848b1adde581ba19194b3",
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "f8fb2c301ab3062c9296301baf38612552fbf778144876a13531d9a4b29af4bc"
+      "verified_tree_sha256": "8bc6990c6e88394219146a23fb471494447d8a5a31b848b1adde581ba19194b3"
     },
     {
       "covered_files": [
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 502,
@@ -13057,11 +13664,11 @@
           "sha256": "d85af7d3d61eed512dba2ffebf683d43f5a833682454f6433c8b40784d48321c"
         },
         {
-          "bytes": 4271,
+          "bytes": 4299,
           "language": "Rust",
-          "lines": 129,
+          "lines": 130,
           "path": "apps/optimus-desktop/src/ipc/mod.rs",
-          "sha256": "febf6298f0782147b1eb8e1043c210b6e208e1d5af1a47be9ca17ce1ac68f4a0"
+          "sha256": "fe515fce34c5ea393b9519ee96faaa43bf734957500ebccc97e55e7047bb02ce"
         },
         {
           "bytes": 8629,
@@ -13071,11 +13678,11 @@
           "sha256": "297fdf0d7f7293f3d025b2ad6bf60fff5ab63c26d9b0db91f2054cf32871a3f5"
         },
         {
-          "bytes": 6255,
+          "bytes": 6349,
           "language": "Rust",
-          "lines": 175,
+          "lines": 177,
           "path": "apps/optimus-desktop/src/ipc/router.rs",
-          "sha256": "e95f9a18e0165e383b09424fede57cb4bab3d10c49a930d63598626ccbc9dba6"
+          "sha256": "251fb966fbd41afad924ebb360d44bc8fcf74dbad4221318410ecaa4c29dd29b"
         },
         {
           "bytes": 20075,
@@ -13092,11 +13699,11 @@
           "sha256": "bc51abbaa2aaa56265494905834092390639eb21956f9854d7b14ed48d0c9b69"
         },
         {
-          "bytes": 11376,
+          "bytes": 11440,
           "language": "Rust",
-          "lines": 322,
+          "lines": 324,
           "path": "apps/optimus-desktop/src/ipc/sessions.rs",
-          "sha256": "1a495ca61317dae2b6e62da2eb8b7e6d31677f4dd44dba5cd480c52a96422bec"
+          "sha256": "ee3ff747c3aec547483f766efee95cd6adc62f960e151f5ac7d38d682ffba464"
         },
         {
           "bytes": 7800,
@@ -13148,11 +13755,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 27610,
+          "bytes": 27637,
           "language": "Other",
-          "lines": 886,
+          "lines": 887,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "42b8b8a55f7e44db2c98c9785e885e476f8f6181445a68b423146b4f4035cfda"
+          "sha256": "b46ec2b32ed5a50863eba18a194baff09d1e11cb3fa790e8dba9b65093c5f229"
         },
         {
           "bytes": 7772,
@@ -13204,6 +13811,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 382,
+          "language": "Other",
+          "lines": 10,
+          "path": "apps/optimus-electron/test/ipc-allowlist.test.cjs",
+          "sha256": "01eb99766cf6a1743dbcc51a9e92f41e1a503579605ef7c6092525c6838f3422"
+        },
+        {
           "bytes": 1709,
           "language": "Other",
           "lines": 49,
@@ -13246,11 +13860,11 @@
           "sha256": "dbc18449d48d9f601b2ddf4e85e459640743407cd0ee63dc327b18472dfc1b86"
         },
         {
-          "bytes": 25989,
+          "bytes": 26908,
           "language": "TypeScript",
-          "lines": 603,
+          "lines": 628,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "faf907875d5b923d9ae6207ca6cca8d1fef11c038c15847295f1fd639db5b018"
+          "sha256": "4acefb78db16b64eade72b94d06422b5a80414c27960a116ed55b4d49bd4268b"
         },
         {
           "bytes": 33400,
@@ -13344,11 +13958,11 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 5504,
+          "bytes": 8679,
           "language": "TypeScript",
-          "lines": 141,
+          "lines": 244,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "d4196abca522500d9df33f311d45d399a6b52ec2af7a1cf5fe9df4ddc4ab08a7"
+          "sha256": "284c8390e7d093e9773e30ded50b76dfc19e8631386f201744c1688539b4e489"
         },
         {
           "bytes": 4770,
@@ -13372,18 +13986,18 @@
           "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
         },
         {
-          "bytes": 5105,
+          "bytes": 9143,
           "language": "TypeScript",
-          "lines": 154,
+          "lines": 272,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
-          "sha256": "309d44571807e00539230252111e3e795f45d1e29a054696b07537c39aae5690"
+          "sha256": "fb3707a17157547a84e6dc6b0c979ce5c5204dc6bd91d619eaeda2de57c98ba0"
         },
         {
-          "bytes": 9186,
+          "bytes": 9488,
           "language": "TypeScript",
-          "lines": 262,
+          "lines": 274,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
+          "sha256": "ed601121a48df6e31975329c7ab4be2bf727e49058a1ff595328e0ed101d4e39"
         },
         {
           "bytes": 2450,
@@ -13435,11 +14049,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 8661,
+          "bytes": 9254,
           "language": "TypeScript",
-          "lines": 392,
+          "lines": 412,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "c638c95743fd85c8c4907fb844abf89d18ebd21134a7ea99dbebdfbd3a7550c6"
+          "sha256": "3eeaea31fa1df5b2c9864dbc3f252e8d951c72f6e477a28df44a3f07e3871fd6"
         },
         {
           "bytes": 4006,
@@ -13456,11 +14070,11 @@
           "sha256": "5d2b578242ee5f75eef4bcd097ea4be817edfcf54f9d76a6a8f632897f249b1c"
         },
         {
-          "bytes": 15146,
+          "bytes": 18043,
           "language": "TypeScript",
-          "lines": 485,
+          "lines": 558,
           "path": "apps/optimus-ui/src/ipc/fixtureTransport.ts",
-          "sha256": "fe9a062cd6ec66e11d948ee3ba7a632c6a4630563909c6478172c8597204df6e"
+          "sha256": "dcff00f3365cb266c3e5e47882df749ec88a935142bfc4783785a09dcfe3d513"
         },
         {
           "bytes": 3281,
@@ -13505,18 +14119,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 11366,
+          "bytes": 12687,
           "language": "TypeScript",
-          "lines": 294,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "02b1c53718b2ba926c1a397c6779c3d802cc7b128d00901456af0752a4ac5caf"
+          "sha256": "5a11cd932cf3016290cfa23c295fcb1d50303c4bb8e6703581033b49cd675927"
         },
         {
-          "bytes": 13737,
+          "bytes": 13798,
           "language": "TypeScript",
-          "lines": 417,
+          "lines": 418,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "a4aa00d313ab88a8d537184dc1798140cb488ab7b5a078eacb6de9fb0f0f8d4e"
+          "sha256": "6b6746c4901afa5fa2e097f7fecc42c8b2265bd97d802d7045268a1efea26814"
         },
         {
           "bytes": 1112,
@@ -13547,11 +14161,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 63644,
+          "bytes": 64936,
           "language": "CSS",
-          "lines": 3603,
+          "lines": 3674,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "f34363df1f5b0ebc79e92ee07a3d2a5d8fe7a2a6f6a3f38ebbfc77f46312e104"
+          "sha256": "e9bf02a5262c77623d40ddc0158f8b6ccd9779c83342b0adad8aefa05da9fe3c"
         },
         {
           "bytes": 631,
@@ -13596,11 +14210,11 @@
           "sha256": "615a7bfa93ccd302f34be03a113ceb16e366815256c064b9333b55a7761f64be"
         },
         {
-          "bytes": 5758,
+          "bytes": 6464,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 149,
           "path": "docs/contracts/desktop-ipc-methods.md",
-          "sha256": "36b933fca0986d83c112d88dc45387a7be4b0f8455b099e8587a1f5376f69f11"
+          "sha256": "e936efb99ed8bebac191e0804f50ece56bada1df01d9bfa94c8404bb011c086e"
         },
         {
           "bytes": 4522,
@@ -13617,14 +14231,14 @@
           "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         }
       ],
-      "current_tree_sha256": "f0818ca1301783c49294acadba43a8711b70a9fb9fa611d2572f41ca791afdce",
+      "current_tree_sha256": "8b9393bef52470bdab6eb56c99a2d7e90c8e4c3e9ddfce9d4664da4960910407",
       "document": "docs/specifications/react-workbench-electron-preview-cutover.md",
       "knowledge_status": "active",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "f0818ca1301783c49294acadba43a8711b70a9fb9fa611d2572f41ca791afdce"
+      "verified_tree_sha256": "8b9393bef52470bdab6eb56c99a2d7e90c8e4c3e9ddfce9d4664da4960910407"
     },
     {
       "covered_files": [
@@ -13683,11 +14297,11 @@
           "sha256": "44f9142404882a3d12ad2768c7432cd9238de4a89a184de43fb4738c346c09c4"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 14301,
@@ -13732,14 +14346,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "4699b75235e513988638d640d6850b62d27878cd4bc5f304ef35e329445d73d2",
+      "current_tree_sha256": "9539463e2581139918fadd2eb1126871d40f4a5c1c64666cf7ac88a2dbdaba0e",
       "document": "docs/specifications/reusable-offline-integrity-executor.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "c3aa28fb78a47a485dc1cb57d7066695f8d0d195",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "4699b75235e513988638d640d6850b62d27878cd4bc5f304ef35e329445d73d2"
+      "verified_tree_sha256": "9539463e2581139918fadd2eb1126871d40f4a5c1c64666cf7ac88a2dbdaba0e"
     },
     {
       "covered_files": [
@@ -13779,11 +14393,11 @@
           "sha256": "cb5d235bd0f65deac286b520bb0bb27d3bd649218abb02b6d80a8c9787d77c49"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -13807,23 +14421,23 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "e4d6fa872ef71c5eaa14d0095f997784f6f7b296394b36e6fb68eb5f918b0ed7",
+      "current_tree_sha256": "a252c88cd3d5d603e0a8acbc51e871956ff9afa4137c5cbe64a507b58ceddae0",
       "document": "docs/specifications/safe-cli-exact-evaluation-report.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "e4d6fa872ef71c5eaa14d0095f997784f6f7b296394b36e6fb68eb5f918b0ed7"
+      "verified_tree_sha256": "a252c88cd3d5d603e0a8acbc51e871956ff9afa4137c5cbe64a507b58ceddae0"
     },
     {
       "covered_files": [
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 12833,
@@ -13840,25 +14454,25 @@
           "sha256": "9f32244c9190e92a2b42d7f2dc3367f941d37dc865df19357f2c611e69ab3db5"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
-          "bytes": 34378,
+          "bytes": 42560,
           "language": "Rust",
-          "lines": 984,
+          "lines": 1227,
           "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-          "sha256": "57cfcce24f940f62e726a39abf320a3e05942c2a3f5ce26020a744b16a7c2c14"
+          "sha256": "da27bb564cae4026fb390db73528d151121f3558e9675c5c62c6a918044c04e1"
         },
         {
-          "bytes": 14857,
+          "bytes": 15171,
           "language": "Markdown",
-          "lines": 281,
+          "lines": 285,
           "path": "docs/contracts/high-risk-contracts.md",
-          "sha256": "b8c51bb861777b106bc17db41cb9d4272e1da0a6560c568005d8d762fd403910"
+          "sha256": "f306466e0a6de7b86e68f3df6dfff7dc57ee4cb47f9b1b5158595a62c43e6cbb"
         },
         {
           "bytes": 9185,
@@ -13875,14 +14489,14 @@
           "sha256": "3746529a66e68aad9eb83a77d160d24d7491a2a208ba6c46491c06f5bcca9c76"
         }
       ],
-      "current_tree_sha256": "fd1d60cbaf4b0447b5a3821ab5d3e27e6c70422b96d10209ff595c59628fe705",
+      "current_tree_sha256": "c401ec9f0bde373f6861288a1b92ddf9d7e8292fc96c5246eb24dfab383871ac",
       "document": "docs/specifications/stream-delivery-cancellation.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "28b0e96ac73ddedb8387478b63c8edaa0a385ac5",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "fd1d60cbaf4b0447b5a3821ab5d3e27e6c70422b96d10209ff595c59628fe705"
+      "verified_tree_sha256": "c401ec9f0bde373f6861288a1b92ddf9d7e8292fc96c5246eb24dfab383871ac"
     },
     {
       "covered_files": [
@@ -13943,11 +14557,11 @@
           "sha256": "1badc97f91d785a70dda5800f5f7b4a289c9cae0ffc3a340d54d6ab1660e2eee"
         },
         {
-          "bytes": 7873,
+          "bytes": 15880,
           "language": "Rust",
-          "lines": 225,
+          "lines": 433,
           "path": "apps/optimus-desktop/src/ipc/chat.rs",
-          "sha256": "46db9d50e430e3ed3a65e86d0f7592d93b556d6a5eea8e42752bd3060b247d24"
+          "sha256": "7e93574c534498e9a21756c392a8f02be6f808c81dc632b68570012ee618cd2a"
         },
         {
           "bytes": 183860,
@@ -13971,35 +14585,35 @@
           "sha256": "00cbb595c322970acf0323d491aa6ff245fc7ef1515fbd909c0aca2f493cf983"
         },
         {
-          "bytes": 31214,
+          "bytes": 36656,
           "language": "Rust",
-          "lines": 871,
+          "lines": 1010,
           "path": "crates/optimus-kernel/src/execution.rs",
-          "sha256": "13547628d042d055eeec58348da07b9c395cd60e4d507b7ecccad39f5d213551"
+          "sha256": "dca764ae80f9da8528efffe241da76e17204f6e4b2c52241918f0fdfab75e1ff"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
-          "bytes": 34378,
+          "bytes": 42560,
           "language": "Rust",
-          "lines": 984,
+          "lines": 1227,
           "path": "crates/optimus-kernel/tests/kernel_turn.rs",
-          "sha256": "57cfcce24f940f62e726a39abf320a3e05942c2a3f5ce26020a744b16a7c2c14"
+          "sha256": "da27bb564cae4026fb390db73528d151121f3558e9675c5c62c6a918044c04e1"
         }
       ],
-      "current_tree_sha256": "dcef0b4dce47ca6bdb956c3f9ddde9b7cefc0d62e2742751acd4959cf97d41ab",
+      "current_tree_sha256": "5c34cc727b15b175e3ece16a108ee483d91f040170204300af7a0bab0a8241bc",
       "document": "docs/specifications/turn-timing-and-tool-loop-control.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "dcef0b4dce47ca6bdb956c3f9ddde9b7cefc0d62e2742751acd4959cf97d41ab"
+      "verified_tree_sha256": "5c34cc727b15b175e3ece16a108ee483d91f040170204300af7a0bab0a8241bc"
     },
     {
       "covered_files": [
@@ -14018,11 +14632,11 @@
           "sha256": "44f9142404882a3d12ad2768c7432cd9238de4a89a184de43fb4738c346c09c4"
         },
         {
-          "bytes": 79607,
+          "bytes": 96718,
           "language": "Rust",
-          "lines": 2042,
+          "lines": 2463,
           "path": "crates/optimus-kernel/src/lib.rs",
-          "sha256": "1b0888eebd9a276947566bc3db44fff1a1570e42186795eeea626b54b68a525d"
+          "sha256": "447b2c83f68361e5aaac6f7ece48aaca4acdedd92b1bbafa21cc41d0aa8d55fc"
         },
         {
           "bytes": 22270,
@@ -14032,11 +14646,11 @@
           "sha256": "b6b7e3e18eea4a416f5cca2e50e00a27d900c5820136f84f396a9a74c4d58b16"
         },
         {
-          "bytes": 30640,
+          "bytes": 31069,
           "language": "Markdown",
-          "lines": 496,
+          "lines": 503,
           "path": "docs/architecture/system-overview.md",
-          "sha256": "4ee025c9ad3b5b8cea016ed037d672c82b1866706a88f6c213984ed9e5c78ee2"
+          "sha256": "7e41d72a12811a9f786b80385bb6d09b8bf699e34b05b2f3ab0021d297556106"
         },
         {
           "bytes": 14562,
@@ -14060,14 +14674,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "8bc1e2470979a599b3d5653f59ea2ff4f31f49515012f0eb7e0146a29fb5c36f",
+      "current_tree_sha256": "76c9be34eed8a55bad6888a012039c7f00b5dc9d51fecdb35a6c7155e1fa8859",
       "document": "docs/specifications/typed-offline-trajectory-evidence.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "8bc1e2470979a599b3d5653f59ea2ff4f31f49515012f0eb7e0146a29fb5c36f"
+      "verified_tree_sha256": "76c9be34eed8a55bad6888a012039c7f00b5dc9d51fecdb35a6c7155e1fa8859"
     }
   ],
   "generated_by": "scripts/engineering_memory.py",

@@ -47,7 +47,14 @@ the latest durable turn state.
 `artifacts_get`, `artifacts_delete`, `artifacts_delete_many`
 
 ### Chat
-`chat`, `chat_offline`
+`chat`, `chat_offline`, `chat_approval_resolve`
+
+`chat_approval_resolve` accepts a session-owned approval decision only when the
+request repeats the pending event's `run_id`, `call_id`, `job_id`, `node_id`,
+`node_index`, and `effect_sha256`. Approve executes that exact persisted effect;
+deny executes nothing. Both paths durably terminalize the tool event, assistant
+receipt, turn, and execution manifest before returning a presentation-safe
+summary. The caller must reload `get_session` for the canonical projection.
 
 ### OS / window
 `window_minimize`, `window_maximize`, `window_close`, `window_drag`, `window_outer_position`, `window_set_outer_position`, `pick_folder`, `open_path`, `open_url`
@@ -66,6 +73,9 @@ summary, optional duration, and optional validated terminal `outcome`. The
 phase set is `started`, `approval_required`, `succeeded`, `failed`, `cancelled`,
 `suppressed`, and `ambiguous`. These events are persisted before delivery and
 may be replayed by `get_session`; consumers deduplicate by `event_id`.
+`approval_required` also carries the exact approval binding needed by
+`chat_approval_resolve`. Terminal events may retain that binding as audit
+evidence, but the UI exposes controls only for the pending phase.
 
 ## Non-registry stream / embed methods
 

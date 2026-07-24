@@ -1,10 +1,10 @@
 //! Kernel turn loop offline tests.
 
 use optimus_kernel::{
-    CancellationToken, CompletionRequest, CompletionResponse, ExecutionStatus, ExecutionStore,
-    Kernel, KernelConfig, KernelError, ModelProvider, PolicyMode, ProjectAuthorityStore,
-    ScriptedModel, SessionStore, StreamControl, StreamEvent, TimingEventKind, ToolCall,
-    ToolLifecyclePhase, TurnStatus,
+    CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CompletionRequest,
+    CompletionResponse, ExecutionStatus, ExecutionStore, Kernel, KernelConfig, KernelError,
+    ModelProvider, PolicyMode, ProjectAuthorityStore, ScriptedModel, SessionStore, StreamControl,
+    StreamEvent, TimingEventKind, ToolCall, ToolLifecyclePhase, TurnStatus,
 };
 use optimus_packs::{PackError, ToolId, ToolOutcome, ToolOutcomeKind};
 use optimus_runtime::RuntimeError;
@@ -161,6 +161,12 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
     assert_eq!(tools[0].call_id, tools[1].call_id);
     assert_eq!(tools[1].summary, "Write src/proof.txt (4 bytes)");
     assert!(tools[1].outcome.is_none());
+    let binding = tools[1]
+        .approval
+        .clone()
+        .expect("approval event must carry exact runtime binding");
+    assert_eq!(binding.call_id, "write-1");
+    assert_eq!(binding.effect_sha256.len(), 64);
     assert!(!project.path().join("src/proof.txt").exists());
 
     let pending = kernel.runtime.list_pending_approvals().unwrap();
@@ -171,6 +177,243 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
         optimus_graph::Effect::ProjectWriteFile { relative_path, .. }
             if relative_path == "src/proof.txt"
     ));
+
+    let sessions = SessionStore::open(home.path().join("sessions.db")).unwrap();
+    let active = sessions
+        .active_turn(kernel.session_id())
+        .unwrap()
+        .expect("approval pause must keep turn active");
+    assert_eq!(active.status, TurnStatus::Running);
+    let executions = ExecutionStore::open(home.path().join("execution.db")).unwrap();
+    let manifest_id = executions.find_by_turn(active.id).unwrap().unwrap();
+    assert_eq!(manifest_id, binding.run_id);
+    assert_eq!(
+        executions.manifest(manifest_id).unwrap().status,
+        ExecutionStatus::Running
+    );
+    let mut resume_model = ScriptedModel::new(Vec::new());
+    assert!(kernel.resume_pending_turn(&mut resume_model).is_err());
+    assert!(
+        !project.path().join("src/proof.txt").exists(),
+        "generic resume must not bypass approval resolution"
+    );
+
+    let foreign_call = kernel.resolve_chat_approval_exact(
+        binding.run_id,
+        "foreign-call",
+        binding.job_id,
+        binding.node_id,
+        binding.node_index,
+        &binding.effect_sha256,
+        ChatApprovalDecision::Approve,
+    );
+    assert!(
+        foreign_call.is_err(),
+        "foreign call identity must fail closed"
+    );
+    let foreign = kernel.resolve_chat_approval_exact(
+        binding.run_id,
+        &binding.call_id,
+        optimus_runtime::job_id(uuid::Uuid::new_v4()),
+        binding.node_id,
+        binding.node_index,
+        &binding.effect_sha256,
+        ChatApprovalDecision::Approve,
+    );
+    assert!(foreign.is_err(), "foreign job identity must fail closed");
+    let changed = kernel.resolve_chat_approval_exact(
+        binding.run_id,
+        &binding.call_id,
+        binding.job_id,
+        binding.node_id,
+        binding.node_index,
+        &"0".repeat(64),
+        ChatApprovalDecision::Approve,
+    );
+    assert!(changed.is_err(), "changed effect identity must fail closed");
+    assert!(!project.path().join("src/proof.txt").exists());
+
+    let session_id = kernel.session_id();
+    drop(kernel);
+    let mut kernel = Kernel::open_project_session(
+        home.path(),
+        KernelConfig::default(),
+        Some(session_id),
+        "project-a",
+    )
+    .unwrap();
+    let resolution = kernel
+        .resolve_chat_approval_exact(
+            binding.run_id,
+            &binding.call_id,
+            binding.job_id,
+            binding.node_id,
+            binding.node_index,
+            &binding.effect_sha256,
+            ChatApprovalDecision::Approve,
+        )
+        .unwrap();
+    assert_eq!(resolution.status, ChatApprovalStatus::Approved);
+    assert_eq!(resolution.event.phase, ToolLifecyclePhase::Succeeded);
+    assert!(resolution
+        .event
+        .outcome
+        .as_ref()
+        .unwrap()
+        .provenance
+        .is_some());
+    assert_eq!(
+        std::fs::read_to_string(project.path().join("src/proof.txt")).unwrap(),
+        "safe"
+    );
+    assert!(sessions.active_turn(kernel.session_id()).unwrap().is_none());
+    assert_eq!(
+        executions.manifest(manifest_id).unwrap().status,
+        ExecutionStatus::Succeeded
+    );
+    let lifecycle = executions
+        .tool_lifecycle_for_session(kernel.session_id())
+        .unwrap();
+    assert_eq!(
+        lifecycle
+            .iter()
+            .map(|persisted| persisted.event.phase)
+            .collect::<Vec<_>>(),
+        vec![
+            ToolLifecyclePhase::Started,
+            ToolLifecyclePhase::ApprovalRequired,
+            ToolLifecyclePhase::Succeeded,
+        ]
+    );
+    assert_eq!(
+        lifecycle.last().unwrap().event.approval.as_ref(),
+        Some(&binding)
+    );
+    let links = sessions.effect_links(kernel.session_id()).unwrap();
+    assert_eq!(links.len(), 1);
+    assert_eq!(links[0].effect_hash, binding.effect_sha256);
+    assert_eq!(
+        kernel
+            .messages
+            .last()
+            .map(|message| message.content.as_str()),
+        Some(resolution.assistant_receipt.as_str())
+    );
+    assert!(kernel
+        .resolve_chat_approval_exact(
+            binding.run_id,
+            &binding.call_id,
+            binding.job_id,
+            binding.node_id,
+            binding.node_index,
+            &binding.effect_sha256,
+            ChatApprovalDecision::Approve,
+        )
+        .is_err());
+}
+
+#[test]
+fn project_write_denial_never_executes_and_settles_cancelled_once() {
+    let home = tempdir().unwrap();
+    let project = tempdir().unwrap();
+    let authority = ProjectAuthorityStore::open(home.path()).unwrap();
+    let selection = authority.stage_native_selection(project.path()).unwrap();
+    authority
+        .authorize_project(
+            "project-deny",
+            std::slice::from_ref(&selection.path),
+            Some(&selection.path),
+            std::slice::from_ref(&selection.grant_token),
+        )
+        .unwrap();
+    let mut kernel =
+        Kernel::open_project_session(home.path(), KernelConfig::default(), None, "project-deny")
+            .unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: None,
+        tool_calls: vec![ToolCall {
+            id: "deny-write".into(),
+            name: "write_file".into(),
+            arguments: json!({"path":"denied.txt","contents":"must-not-exist"}),
+        }],
+    }]);
+    let mut events = Vec::new();
+    assert!(matches!(
+        kernel.turn_with_sink(&mut model, "do not write", &mut |event| events.push(event)),
+        Err(KernelError::Runtime(RuntimeError::NeedsApproval { .. }))
+    ));
+    let binding = events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Tool(tool) if tool.phase == ToolLifecyclePhase::ApprovalRequired => {
+                tool.approval.clone()
+            }
+            _ => None,
+        })
+        .next()
+        .unwrap();
+
+    let resolution = kernel
+        .resolve_chat_approval_exact(
+            binding.run_id,
+            &binding.call_id,
+            binding.job_id,
+            binding.node_id,
+            binding.node_index,
+            &binding.effect_sha256,
+            ChatApprovalDecision::Deny {
+                reason: "user_denied_in_transcript".into(),
+            },
+        )
+        .unwrap();
+    assert_eq!(resolution.status, ChatApprovalStatus::Denied);
+    assert_eq!(resolution.event.phase, ToolLifecyclePhase::Cancelled);
+    assert_eq!(
+        resolution.event.outcome.as_ref().unwrap().kind,
+        ToolOutcomeKind::Cancelled
+    );
+    assert!(!project.path().join("denied.txt").exists());
+    let sessions = SessionStore::open(home.path().join("sessions.db")).unwrap();
+    let turn = sessions.turns(kernel.session_id()).unwrap().pop().unwrap();
+    assert_eq!(turn.status, TurnStatus::Cancelled);
+    assert_eq!(turn.error_code.as_deref(), Some("approval_denied"));
+    let executions = ExecutionStore::open(home.path().join("execution.db")).unwrap();
+    let lifecycle = executions
+        .tool_lifecycle_for_session(kernel.session_id())
+        .unwrap();
+    assert_eq!(
+        lifecycle.last().unwrap().event.phase,
+        ToolLifecyclePhase::Cancelled
+    );
+    assert_eq!(
+        lifecycle.last().unwrap().event.approval.as_ref(),
+        Some(&binding)
+    );
+    assert!(sessions
+        .effect_links(kernel.session_id())
+        .unwrap()
+        .is_empty());
+    assert_eq!(
+        kernel
+            .messages
+            .last()
+            .map(|message| message.content.as_str()),
+        Some(resolution.assistant_receipt.as_str())
+    );
+    assert!(kernel
+        .resolve_chat_approval_exact(
+            binding.run_id,
+            &binding.call_id,
+            binding.job_id,
+            binding.node_id,
+            binding.node_index,
+            &binding.effect_sha256,
+            ChatApprovalDecision::Deny {
+                reason: "user_denied_in_transcript".into(),
+            },
+        )
+        .is_err());
+    assert!(!project.path().join("denied.txt").exists());
 }
 
 #[test]

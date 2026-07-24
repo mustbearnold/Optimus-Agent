@@ -20,6 +20,8 @@ validated_by:
   - crates/optimus-kernel/src/execution.rs
   - apps/optimus-desktop/src/ipc/runtime_ops.rs
   - apps/optimus-desktop/src/ipc/sessions.rs
+  - apps/optimus-desktop/src/ipc/chat.rs
+  - apps/optimus-ui/src/components/workbench/Transcript.test.tsx
   - apps/optimus-ui/src/state/conversationStore.test.ts
 last_verified_commit: null
 ---
@@ -81,6 +83,13 @@ after that grant, and preserve truthful tool state across reload and reconnect.
 8. **Unrestricted access remains explicit.** Only the explicit `full` access
    selection uses the unrestricted effect policy. Other chat access modes use
    SmartDeny, and an absent project scope does not fall back to a shared folder.
+9. **Transcript decisions settle the exact paused turn.** A bound approval card
+   repeats the durable run, call, job, node, node index, and effect digest when
+   the user approves or denies. Rust validates that full identity, reopens only
+   the authorized project scope, executes at most the approved effect, and
+   appends a terminal tool event plus assistant receipt before settling the
+   turn and manifest. Denial executes nothing. The renderer then rebuilds from
+   `get_session` rather than inventing an optimistic terminal state.
 
 ## Alternatives considered
 
@@ -121,6 +130,8 @@ rebuilt without changing execution truth.
   against the exact authorized root after approval.
 - Tool cards and approval state survive a renderer reload or duplicate
   reconnect delivery.
+- A pending card can now approve or deny its exact action in the transcript;
+  the decision and terminal receipt remain visible after reload.
 - `execution.db` stores full lifecycle payloads in addition to the pre-existing
   provenance hashes and timing evidence.
 - Older sessions without lifecycle rows remain readable but cannot gain tool
@@ -132,10 +143,10 @@ rebuilt without changing execution truth.
   built-in file-effect capability and may perform their own filesystem access.
 - **Known boundary:** project authority is local-machine state and has no
   cross-device synchronization or enterprise policy layer.
-- **Known boundary:** approval resolution is durable, but the current chat turn
-  settles at the approval pause; a later milestone should provide first-class
-  in-transcript approve/deny-and-resume controls rather than only the execution
-  dock/runtime method.
+- **Known boundary:** approval resolution deterministically settles the paused
+  turn with a concise receipt. It does not make another provider call because
+  the original provider, model, and access configuration are not yet durably
+  recoverable as a resumable generation lease.
 - **Unknown or unresolved behaviour:** native picker provenance proves a local
   selection event, not operating-system identity or remote filesystem trust.
 
@@ -147,11 +158,14 @@ rebuilt without changing execution truth.
 - Runtime tests cover exact project writes and cross-workspace replay rejection
   without creating a file.
 - Kernel tests cover explicit approval lifecycle before any write effect and
-  durable ordered/idempotent lifecycle receipts after reopen.
+  durable ordered/idempotent lifecycle receipts after reopen, plus exact-bound
+  approval, denial, mismatch rejection, and turn/manifest settlement.
 - Desktop tests prove an approval reopens the exact authorized project root and
-  `get_session` rebuilds tool cards without returning protocol JSON.
+  `get_session` rebuilds tool cards without returning protocol JSON. IPC tests
+  prove malformed or mismatched approval identities cannot reach execution.
 - React tests prove stable event/call identity, overlapping calls, approval
-  retention, reload reconstruction, and reconnect deduplication.
+  retention, reload reconstruction, reconnect deduplication, and accessible
+  in-transcript approval/denial controls with pending and error feedback.
 
 ## Relevant code
 
@@ -160,6 +174,8 @@ rebuilt without changing execution truth.
 - `crates/optimus-kernel/src/lib.rs`
 - `crates/optimus-runtime/src/lib.rs`
 - `apps/optimus-desktop/src/ipc/sessions.rs`
+- `apps/optimus-desktop/src/ipc/chat.rs`
+- `apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx`
 - `apps/optimus-ui/src/state/conversationStore.ts`
 
 ## Relevant tests
@@ -169,6 +185,8 @@ rebuilt without changing execution truth.
 - `crates/optimus-kernel/src/execution.rs`
 - `apps/optimus-desktop/src/ipc/runtime_ops.rs`
 - `apps/optimus-desktop/src/ipc/sessions.rs`
+- `apps/optimus-desktop/src/ipc/chat.rs`
+- `apps/optimus-ui/src/components/workbench/Transcript.test.tsx`
 - `apps/optimus-ui/src/state/conversationStore.test.ts`
 
 ## Conditions for reconsideration

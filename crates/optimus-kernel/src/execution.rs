@@ -10,8 +10,8 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::{
-    CompletionRequest, CompletionResponse, KernelError, Result, SpanId, ToolCall,
-    ToolLifecycleEvent, TraceContext, TraceId,
+    ChatApprovalStatus, CompletionRequest, CompletionResponse, KernelError, Result, SpanId,
+    ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase, TraceContext, TraceId,
 };
 
 pub const EXECUTION_MANIFEST_VERSION: u16 = 1;
@@ -222,6 +222,14 @@ impl ExecutionStore {
                manifest_id TEXT NOT NULL REFERENCES execution_manifests(id) ON DELETE CASCADE,
                call_id TEXT NOT NULL,phase TEXT NOT NULL,
                event_json TEXT NOT NULL
+             );
+             CREATE TABLE IF NOT EXISTS execution_chat_approvals(
+               manifest_id TEXT NOT NULL REFERENCES execution_manifests(id) ON DELETE CASCADE,
+               call_id TEXT NOT NULL,
+               binding_json TEXT NOT NULL,
+               call_json TEXT NOT NULL,
+               status TEXT NOT NULL CHECK(status IN ('pending','approved','denied')),
+               PRIMARY KEY(manifest_id,call_id)
              );",
         )?;
         ensure_column(
@@ -467,6 +475,136 @@ impl ExecutionStore {
                     event.event_id
                 )));
             }
+        }
+        Ok(())
+    }
+
+    /// Persist the approval-required event and its exact runtime identity in one transaction.
+    pub fn record_chat_approval_required(
+        &self,
+        manifest_id: Uuid,
+        call: &ToolCall,
+        event: &ToolLifecycleEvent,
+        binding: &ToolApprovalBinding,
+    ) -> Result<()> {
+        if event.phase != ToolLifecyclePhase::ApprovalRequired
+            || event.approval.as_ref() != Some(binding)
+            || event.run_id != manifest_id.to_string()
+            || event.call_id != call.id
+            || binding.run_id != manifest_id
+            || binding.call_id != call.id
+        {
+            return Err(KernelError::Model(
+                "approval lifecycle event and exact runtime binding disagree".into(),
+            ));
+        }
+        let event_json = serde_json::to_string(event)?;
+        let binding_json = serde_json::to_string(binding)?;
+        let call_json = serde_json::to_string(call)?;
+        let transaction = self.conn.unchecked_transaction()?;
+        let inserted = transaction.execute(
+            "INSERT OR IGNORE INTO execution_tool_events(
+               event_id,manifest_id,call_id,phase,event_json
+             ) VALUES(?1,?2,?3,?4,?5)",
+            params![
+                event.event_id,
+                manifest_id.to_string(),
+                event.call_id,
+                event.phase.as_str(),
+                event_json
+            ],
+        )?;
+        if inserted == 0 {
+            let existing: String = transaction.query_row(
+                "SELECT event_json FROM execution_tool_events WHERE event_id=?1",
+                params![event.event_id],
+                |row| row.get(0),
+            )?;
+            if existing != event_json {
+                return Err(KernelError::Model(format!(
+                    "conflicting durable tool lifecycle event: {}",
+                    event.event_id
+                )));
+            }
+        }
+        let inserted = transaction.execute(
+            "INSERT OR IGNORE INTO execution_chat_approvals(
+               manifest_id,call_id,binding_json,call_json,status
+             ) VALUES(?1,?2,?3,?4,'pending')",
+            params![manifest_id.to_string(), call.id, binding_json, call_json],
+        )?;
+        if inserted == 0 {
+            let existing: (String, String, String) = transaction.query_row(
+                "SELECT binding_json,call_json,status FROM execution_chat_approvals
+                 WHERE manifest_id=?1 AND call_id=?2",
+                params![manifest_id.to_string(), call.id],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )?;
+            if existing != (binding_json, call_json, "pending".to_string()) {
+                return Err(KernelError::Model(format!(
+                    "conflicting or already resolved chat approval for call {}",
+                    call.id
+                )));
+            }
+        }
+        transaction.commit()?;
+        Ok(())
+    }
+
+    pub fn pending_chat_approval(
+        &self,
+        manifest_id: Uuid,
+        call_id: &str,
+    ) -> Result<Option<(ToolApprovalBinding, ToolCall)>> {
+        self.conn
+            .query_row(
+                "SELECT binding_json,call_json FROM execution_chat_approvals
+                 WHERE manifest_id=?1 AND call_id=?2 AND status='pending'",
+                params![manifest_id.to_string(), call_id],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+            )
+            .optional()?
+            .map(|(binding, call)| {
+                Ok((
+                    serde_json::from_str(&binding)?,
+                    serde_json::from_str(&call)?,
+                ))
+            })
+            .transpose()
+    }
+
+    pub fn has_pending_chat_approval(&self, manifest_id: Uuid) -> Result<bool> {
+        self.conn
+            .query_row(
+                "SELECT EXISTS(
+                   SELECT 1 FROM execution_chat_approvals
+                   WHERE manifest_id=?1 AND status='pending'
+                 )",
+                params![manifest_id.to_string()],
+                |row| row.get(0),
+            )
+            .map_err(KernelError::Sqlite)
+    }
+
+    pub fn finish_chat_approval(
+        &self,
+        manifest_id: Uuid,
+        call_id: &str,
+        status: ChatApprovalStatus,
+    ) -> Result<()> {
+        let status = match status {
+            ChatApprovalStatus::Approved => "approved",
+            ChatApprovalStatus::Denied => "denied",
+        };
+        let changed = self.conn.execute(
+            "UPDATE execution_chat_approvals SET status=?1
+             WHERE manifest_id=?2 AND call_id=?3 AND status='pending'",
+            params![status, manifest_id.to_string(), call_id],
+        )?;
+        if changed != 1 {
+            return Err(KernelError::Model(format!(
+                "chat approval is missing, foreign, or already resolved: {call_id}"
+            )));
         }
         Ok(())
     }
@@ -830,6 +968,7 @@ mod tests {
             summary: "Reading".into(),
             duration_ms: None,
             outcome: None,
+            approval: None,
         };
         let completed = ToolLifecycleEvent {
             event_id: format!("{manifest}:call-1:succeeded"),

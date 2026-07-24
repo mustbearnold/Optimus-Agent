@@ -287,6 +287,7 @@ mod tests {
                 summary: "Reading".into(),
                 duration_ms: None,
                 outcome: None,
+                approval: None,
             },
             ToolLifecycleEvent {
                 schema_version: 1,
@@ -298,6 +299,7 @@ mod tests {
                 summary: "Read README.md".into(),
                 duration_ms: Some(8),
                 outcome: Some(outcome),
+                approval: None,
             },
         ] {
             executions

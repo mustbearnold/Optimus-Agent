@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Transcript } from './Transcript';
@@ -150,5 +150,123 @@ describe('Transcript', () => {
     expect(screen.getByText('Approval required')).toBeInTheDocument();
     expect(container.querySelector('.activity-timeline')).toHaveClass('is-attention');
     expect(screen.queryByText('Editing files')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Approve and continue' })).not.toBeInTheDocument();
+  });
+
+  it('renders exact-action approval controls and sends only their durable binding', async () => {
+    const onApprovalDecision = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-bound-approval',
+            role: 'assistant',
+            content: '',
+            status: 'awaiting_approval',
+            tools: [
+              {
+                id: 'write-1',
+                runId: 'run-1',
+                callId: 'write-1',
+                name: 'write_file',
+                detail: 'Write src/app.ts (12 bytes)',
+                status: 'awaiting_approval',
+                approval: {
+                  run_id: 'run-1',
+                  call_id: 'write-1',
+                  tool_id: 'write_file',
+                  job_id: 'job-1',
+                  node_id: 'node-3',
+                  node_index: 3,
+                  effect_sha256: 'a'.repeat(64),
+                  summary: 'Write src/app.ts (12 bytes)',
+                },
+              },
+            ],
+          },
+        ]}
+        status="awaiting_approval"
+        statusText="Permission required"
+        onStarter={vi.fn()}
+        onApprovalDecision={onApprovalDecision}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.activity-heading')!);
+    expect(container.querySelector('details.activity-timeline')).toHaveAttribute('open');
+    expect(screen.getAllByText('Write src/app.ts (12 bytes)')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Approve and continue' }));
+
+    await waitFor(() =>
+      expect(onApprovalDecision).toHaveBeenCalledWith(
+        {
+          run_id: 'run-1',
+          call_id: 'write-1',
+          tool_id: 'write_file',
+          job_id: 'job-1',
+          node_id: 'node-3',
+          node_index: 3,
+          effect_sha256: 'a'.repeat(64),
+          summary: 'Write src/app.ts (12 bytes)',
+        },
+        'approve'
+      )
+    );
+    expect(screen.getByText('Approval submitted.')).toBeInTheDocument();
+  });
+
+  it('disables both approval decisions while a choice is pending and exposes callback errors', async () => {
+    let rejectDecision!: (error: Error) => void;
+    const onApprovalDecision = vi.fn(
+      () => new Promise<void>((_resolve, reject) => {
+        rejectDecision = reject;
+      })
+    );
+    const { container } = render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-pending-approval',
+            role: 'assistant',
+            content: '',
+            status: 'awaiting_approval',
+            tools: [
+              {
+                id: 'command-1',
+                runId: 'run-1',
+                callId: 'command-1',
+                name: 'run_command',
+                detail: 'Run npm test',
+                status: 'awaiting_approval',
+                approval: {
+                  run_id: 'run-1',
+                  call_id: 'command-1',
+                  tool_id: 'run_command',
+                  job_id: 'job-2',
+                  node_id: 'node-4',
+                  node_index: 4,
+                  effect_sha256: 'b'.repeat(64),
+                  summary: 'Run npm test',
+                },
+              },
+            ],
+          },
+        ]}
+        status="awaiting_approval"
+        statusText="Permission required"
+        onStarter={vi.fn()}
+        onApprovalDecision={onApprovalDecision}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.activity-heading')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
+
+    expect(screen.getByRole('button', { name: 'Denying…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Approve and continue' })).toBeDisabled();
+
+    await act(async () => rejectDecision(new Error('The approval is no longer pending')));
+    expect(screen.getByRole('alert')).toHaveTextContent('The approval is no longer pending');
   });
 });

@@ -69,6 +69,10 @@ it does not replace executable enforcement.
 - **Evidence:** project writes and commands additionally persist the canonical
   workspace hash. Approval execution reopens the matching Rust-authorized root
   and rejects a foreign or changed workspace before any effect.
+- **Evidence:** in-transcript decisions repeat run, call, job, node, node index,
+  and effect digest. Kernel mismatch tests reject stale or substituted actions;
+  denial terminalizes the paused turn without executing the effect, while an
+  exact approval produces one terminal lifecycle event and durable receipt.
 - **Required contract:** request includes exact side effects and effect hash;
   grant is actor/time/scope bound, non-transferable, expirable/revocable, and
   retained in trace; denial has a defined outcome.

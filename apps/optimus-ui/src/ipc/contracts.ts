@@ -11,6 +11,7 @@ export type DesktopMethod =
   | 'get_session'
   | 'rename_session'
   | 'delete_session'
+  | 'chat_approval_resolve'
   | 'cron_list'
   | 'cron_add'
   | 'cron_tick'
@@ -202,6 +203,23 @@ export type ToolActivity = {
     | 'ambiguous';
   durationMs?: number;
   outcome?: ToolOutcome;
+  /**
+   * The durable runtime identity for a pending high-risk effect. This is
+   * intentionally absent for ordinary tool activity: the UI must never turn
+   * natural-language text into an approval request.
+   */
+  approval?: ToolApprovalBinding;
+};
+
+export type ToolApprovalBinding = {
+  run_id: string;
+  call_id: string;
+  tool_id: string;
+  job_id: string;
+  node_id: string;
+  node_index: number;
+  effect_sha256: string;
+  summary: string;
 };
 
 export type ToolLifecyclePhase =
@@ -237,6 +255,8 @@ export type ToolLifecycleEvent = {
   summary: string;
   duration_ms?: number;
   outcome?: ToolOutcome;
+  /** Present only when the runtime is awaiting approval of this exact effect. */
+  approval?: ToolApprovalBinding;
 };
 
 export type TimingEvent = {

@@ -1791,6 +1791,10 @@ code {
   padding: 4px 0 2px 25px;
 }
 
+.activity-item {
+  min-width: 0;
+}
+
 .activity-row {
   min-height: 25px;
   display: grid;
@@ -1830,6 +1834,73 @@ code {
 
 .activity-row.is-failed > svg {
   color: var(--danger);
+}
+
+.activity-approval {
+  display: grid;
+  gap: 6px;
+  margin: 5px 0 6px 24px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--warning) 36%, var(--border));
+  border-radius: 7px;
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--warning) 7%, var(--surface-2));
+  font-size: 12px;
+}
+
+.activity-approval > strong {
+  color: var(--warning);
+  font-weight: 620;
+}
+
+.activity-approval p,
+.activity-approval small {
+  margin: 0;
+}
+
+.activity-approval p {
+  color: var(--text-2);
+}
+
+.activity-approval small {
+  color: var(--muted);
+}
+
+.activity-approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.activity-approval-actions button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--border));
+  border-radius: 6px;
+  color: #101216;
+  background: var(--warning);
+  font: inherit;
+  font-weight: 620;
+}
+
+.activity-approval-actions button.is-deny {
+  color: var(--text-2);
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.activity-approval-actions button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.activity-approval-status {
+  color: var(--success) !important;
+}
+
+.activity-approval-error {
+  color: var(--danger) !important;
 }
 
 .show-earlier,
