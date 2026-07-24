@@ -17,6 +17,11 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { assertPreviewUrl } = require('./browser-policy.cjs');
+const {
+  resolveApplicationRoot,
+  resolveHostBinary,
+  resolveUiDist,
+} = require('./runtime-paths.cjs');
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -30,8 +35,10 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-const ROOT = path.resolve(__dirname, '../..');
-const UI_DIST = path.join(ROOT, 'apps', 'optimus-ui', 'dist');
+app.setName('Optimus Agent');
+
+const ROOT = resolveApplicationRoot(process.env, __dirname);
+const UI_DIST = resolveUiDist(process.env, ROOT, __dirname);
 const EXPLICIT_USER_DATA = process.env.OPTIMUS_ELECTRON_USER_DATA || '';
 if (EXPLICIT_USER_DATA) app.setPath('userData', path.resolve(EXPLICIT_USER_DATA));
 const HOST_PORT = Number(process.env.OPTIMUS_HOST_PORT || 17865);
@@ -91,15 +98,8 @@ let hostBase = `http://127.0.0.1:${HOST_PORT}`;
 let requestId = 1;
 let streamId = 1;
 const activeStreams = new Map();
-
-function cargoTargetDesktop() {
-  const targetDir = process.env.CARGO_TARGET_DIR || path.join(ROOT, 'target');
-  const release = path.join(targetDir, 'release', 'optimus-desktop');
-  const debug = path.join(targetDir, 'debug', 'optimus-desktop');
-  if (fs.existsSync(release)) return release;
-  if (fs.existsSync(debug)) return debug;
-  return debug;
-}
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) app.quit();
 
 function waitForHealth(base, token, timeoutMs = 45000) {
   const start = Date.now();
@@ -153,7 +153,7 @@ function startHost() {
     return waitForHealth(hostBase, httpToken);
   }
 
-  const bin = cargoTargetDesktop();
+  const bin = resolveHostBinary(process.env, ROOT);
   if (!fs.existsSync(bin)) {
     return Promise.reject(
       new Error(`optimus-desktop binary missing at ${bin}. Run: cargo build -p optimus-desktop`)
@@ -283,6 +283,9 @@ function createWindow() {
         )
         .catch(() => undefined);
     }
+    console.error(
+      `[optimus-electron] ready ui=${UI_MODE} url=${mainWindow.webContents.getURL()}`
+    );
   });
 
   mainWindow.on('closed', () => {
@@ -815,21 +818,31 @@ function setupIpc() {
   });
 }
 
-app.whenReady().then(async () => {
-  setupIpc();
-  registerUiProtocol();
-  try {
-    await startHost();
-  } catch (error) {
-    console.error('[optimus-electron] failed to start host:', error);
-    app.quit();
-    return;
-  }
-  createWindow();
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+if (hasSingleInstanceLock) {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
   });
-});
+
+  app.whenReady().then(async () => {
+    app.setAppUserModelId('optimus-agent');
+    setupIpc();
+    registerUiProtocol();
+    try {
+      await startHost();
+    } catch (error) {
+      console.error('[optimus-electron] failed to start host:', error);
+      app.quit();
+      return;
+    }
+    createWindow();
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  });
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

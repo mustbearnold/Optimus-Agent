@@ -64,4 +64,75 @@ describe('ConversationStore', () => {
     );
     expect(conversationStore.get(id).messages.at(-1)?.content).toBe('partial');
   });
+
+  it('projects truthful per-session rail indicators across run states', () => {
+    const id = `indicator-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    expect(conversationStore.indicator(id)).toBeNull();
+
+    conversationStore.begin(id, 'work');
+    expect(conversationStore.indicator(id)).toBe('working');
+
+    conversationStore.apply(id, { type: 'status', text: 'Permission required to continue' });
+    expect(conversationStore.indicator(id)).toBe('attention');
+
+    conversationStore.apply(id, { type: 'error', error: 'tool failed' });
+    expect(conversationStore.indicator(id)).toBe('error');
+
+    conversationStore.begin(id, 'retry');
+    expect(conversationStore.indicator(id)).toBe('working');
+    conversationStore.apply(id, { type: 'done' });
+    expect(conversationStore.indicator(id)).toBeNull();
+  });
+
+  it('treats questions requiring an answer as attention, not active work', () => {
+    const id = `question-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'work');
+    conversationStore.apply(id, { type: 'status', text: 'Awaiting input from the user' });
+
+    expect(conversationStore.get(id).status).toBe('awaiting_approval');
+    expect(conversationStore.indicator(id)).toBe('attention');
+  });
+
+  it('keeps tool activity on the assistant turn that produced it', () => {
+    const id = `tools-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'inspect');
+    conversationStore.apply(id, { type: 'tool', name: 'read_file', detail: 'running' });
+    conversationStore.apply(id, { type: 'tool', name: 'read_file', detail: 'Read AGENTS.md' });
+    conversationStore.apply(id, { type: 'done' });
+
+    const firstAssistant = conversationStore
+      .get(id)
+      .messages.find((message) => message.role === 'assistant');
+    expect(firstAssistant?.tools).toEqual([
+      expect.objectContaining({
+        name: 'read_file',
+        detail: 'Read AGENTS.md',
+        status: 'completed',
+      }),
+    ]);
+
+    conversationStore.begin(id, 'continue');
+    const assistantTurns = conversationStore
+      .get(id)
+      .messages.filter((message) => message.role === 'assistant');
+    expect(assistantTurns[0]?.tools).toHaveLength(1);
+    expect(assistantTurns[1]?.tools).toEqual([]);
+  });
+
+  it('marks an unfinished tool as failed when its run fails', () => {
+    const id = `tool-failure-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'inspect');
+    conversationStore.apply(id, {
+      type: 'tool',
+      name: 'run_command',
+      detail: 'npm test',
+    });
+    conversationStore.apply(id, { type: 'error', error: 'command failed' });
+
+    expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]?.status).toBe('failed');
+  });
 });

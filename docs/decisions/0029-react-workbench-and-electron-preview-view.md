@@ -210,3 +210,29 @@ store `rootPaths[]`; native annotations return bounded element context; and
 renderer overlays suspend the `WebContentsView`. The React contract now covers
 1919, 1600, 960, 640, 480, and 320 CSS-pixel states. Runtime project
 enforcement and installed-product proof remain planned.
+
+## 2026-07-24 bounded typewriter projection addendum
+
+At the user's direction, the active assistant message may reveal streamed text
+one Unicode character per available display frame. This is a presentation-only
+projection over the complete authoritative stream buffer, not a queue of model
+events: the frame coordinator retains one latest job per message, fast-forwards
+when the unrevealed tail exceeds 180 characters, and never replays completed
+messages when they mount. Reduced-motion and hidden-document states converge
+immediately to the latest complete text. Loaded history, cancellation,
+authorization, terminal outcomes, and the Rust stream contract are unchanged.
+
+## 2026-07-24 per-turn tool activity addendum
+
+Tool activity is projected onto the stable assistant message that owns the
+current run instead of a transcript-global footer. The collapsed summary is
+the default reading surface; a native `details` disclosure expands the bounded
+individual calls and their running, completed, or failed presentation. Starting
+a later run does not erase tool activity from earlier in-memory turns.
+
+The current Rust stream emits ordered tool name/detail events without a stable
+tool-call ID, and persisted session detail does not replay tool events after a
+renderer reload. The renderer therefore coalesces only the latest open,
+same-name call in the single sequential run and does not claim durable tool
+history. Stable call IDs and persisted replay remain required before concurrent
+or refresh-resilient tool timelines can be claimed.

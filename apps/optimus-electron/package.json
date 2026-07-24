@@ -1,5 +1,6 @@
 {
   "name": "optimus-electron",
+  "productName": "Optimus Agent",
   "version": "0.1.0",
   "private": true,
   "description": "Optimus Agent Electron shell (T3-style host + renderer)",

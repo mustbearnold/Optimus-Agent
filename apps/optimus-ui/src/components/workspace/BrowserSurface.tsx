@@ -152,16 +152,6 @@ export function BrowserSurface({
 
   return (
     <section className="browser-surface" aria-label="Preview browser">
-      <div className="browser-tabs" aria-label="Preview tabs">
-        <button type="button" className="browser-tab is-active">
-          <span className="site-mark">G</span>
-          <span>{state.title || 'Preview'}</span>
-          <Icon name="close" />
-        </button>
-        <button type="button" className="browser-new-tab" aria-label="New preview tab" disabled>
-          <Icon name="plus" />
-        </button>
-      </div>
       <div className="browser-chrome" role="toolbar" aria-label="Browser navigation">
         <button
           type="button"
@@ -217,18 +207,6 @@ export function BrowserSurface({
         >
           <Icon name="annotation" />
         </button>
-      </div>
-      <div className="browser-status" role="status">
-        <span className={state.loading ? 'status-spinner' : annotationMode ? 'annotation-pulse' : 'status-dot'} />
-        <span>
-          {annotationMode
-            ? `Select a page element · Esc cancels`
-            : state.error
-              ? `Preview error · ${state.error}`
-              : state.loading
-                ? 'Loading preview…'
-                : `${state.native ? 'Live' : 'Contract preview'} · ${safeHost(state.url)}`}
-        </span>
       </div>
       <div
         ref={hole}

@@ -1,5 +1,5 @@
 export type WorkspaceTab = 'browser' | 'files' | 'artifacts';
-export type AppRoute = 'work' | 'capabilities' | 'messaging' | 'artifacts';
+export type AppRoute = 'work' | 'mail' | 'capabilities' | 'artifacts';
 export type CompactSurface = 'work' | WorkspaceTab | 'execution';
 
 export type LayoutState = {
@@ -38,6 +38,8 @@ const clamp = (value: unknown, min: number, max: number, fallback: number) => {
 export function loadLayout(): LayoutState {
   try {
     const value = JSON.parse(localStorage.getItem(KEY) || '{}') as Partial<LayoutState>;
+    const rawRoute = String(value.route || '');
+    const storedRoute = rawRoute === 'messaging' ? 'mail' : rawRoute;
     return {
       version: 1,
       leftWidth: clamp(value.leftWidth, 200, 400, defaultLayout.leftWidth),
@@ -49,8 +51,8 @@ export function loadLayout(): LayoutState {
         : defaultLayout.workspaceTab,
       executionOpen: Boolean(value.executionOpen),
       executionHeight: clamp(value.executionHeight, 120, 520, defaultLayout.executionHeight),
-      route: ['work', 'capabilities', 'messaging', 'artifacts'].includes(String(value.route))
-        ? (value.route as AppRoute)
+      route: ['work', 'mail', 'capabilities', 'artifacts'].includes(String(storedRoute))
+        ? (storedRoute as AppRoute)
         : defaultLayout.route,
       compactSurface: ['work', 'browser', 'files', 'artifacts', 'execution'].includes(
         String(value.compactSurface)

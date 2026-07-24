@@ -4,16 +4,16 @@ import { frameCoordinator } from '../performance/frameCoordinator';
 
 type SessionProjection = {
   messages: Message[];
-  tools: ToolActivity[];
   status: RunStatus;
   statusText: string;
   durationMs?: number;
   loaded: boolean;
 };
 
+export type SessionIndicatorState = 'working' | 'attention' | 'error';
+
 const emptyProjection = (): SessionProjection => ({
   messages: [],
-  tools: [],
   status: 'idle',
   statusText: '',
   loaded: false,
@@ -22,8 +22,10 @@ const emptyProjection = (): SessionProjection => ({
 class ConversationStore {
   private readonly sessions = new Map<string, SessionProjection>();
   private readonly listeners = new Map<string, Set<() => void>>();
+  private readonly allListeners = new Set<() => void>();
   private readonly streamText = new Map<string, string>();
   private readonly sessionVersions = new Map<string, number>();
+  private allVersion = 0;
 
   get(sessionId: string | null): SessionProjection {
     if (!sessionId) return emptyProjection();
@@ -46,6 +48,25 @@ class ConversationStore {
     };
   }
 
+  subscribeAll(listener: () => void) {
+    this.allListeners.add(listener);
+    return () => {
+      this.allListeners.delete(listener);
+    };
+  }
+
+  versionAll() {
+    return this.allVersion;
+  }
+
+  indicator(sessionId: string): SessionIndicatorState | null {
+    const status = this.sessions.get(sessionId)?.status;
+    if (status === 'submitting' || status === 'working') return 'working';
+    if (status === 'awaiting_approval') return 'attention';
+    if (status === 'failed' || status === 'disconnected') return 'error';
+    return null;
+  }
+
   load(detail: SessionDetail) {
     const messages: Message[] = detail.messages.map((message, index) => ({
       id: `${detail.id}:persisted:${index}`,
@@ -55,7 +76,6 @@ class ConversationStore {
     }));
     this.sessions.set(detail.id, {
       messages,
-      tools: [],
       status: 'idle',
       statusText: '',
       loaded: true,
@@ -71,7 +91,6 @@ class ConversationStore {
       loaded: true,
       status: 'submitting',
       statusText: 'Submitting…',
-      tools: [],
       messages: [
         ...current.messages,
         {
@@ -85,6 +104,7 @@ class ConversationStore {
           role: 'assistant',
           content: '',
           status: 'working',
+          tools: [],
         },
       ],
     });
@@ -97,24 +117,57 @@ class ConversationStore {
     if (!current) return;
     if (event.type === 'delta') {
       this.streamText.set(sessionId, (this.streamText.get(sessionId) || '') + event.text);
-      frameCoordinator.schedule('content', () => this.flushText(sessionId));
+      frameCoordinator.scheduleKeyed('content', `stream:${sessionId}`, () =>
+        this.flushText(sessionId)
+      );
       return;
     }
     if (event.type === 'tool') {
-      const id = `${event.name}:${current.tools.length}`;
+      const messages = current.messages.slice();
+      const messageIndex = findLastAssistantIndex(messages);
+      if (messageIndex < 0) return;
+      const message = messages[messageIndex]!;
+      const tools = [...(message.tools || [])];
+      const openToolIndex = findLastOpenToolIndex(tools, event.name);
+      if (openToolIndex >= 0 && event.detail !== 'running') {
+        const tool = tools[openToolIndex]!;
+        tools[openToolIndex] = {
+          ...tool,
+          detail: event.detail,
+          status: toolResultStatus(event.detail),
+        };
+      } else if (openToolIndex >= 0) {
+        tools[openToolIndex] = { ...tools[openToolIndex]!, detail: event.detail };
+      } else {
+        const priorToolCount = current.messages.reduce(
+          (count, candidate) => count + (candidate.tools?.length || 0),
+          0
+        );
+        tools.push({
+          id: `${message.id}:tool:${priorToolCount}`,
+          name: event.name,
+          detail: event.detail,
+          status: 'running',
+        });
+      }
+      messages[messageIndex] = {
+        ...message,
+        tools: tools.slice(-200),
+      };
       this.sessions.set(sessionId, {
         ...current,
         status: 'working',
         statusText: event.detail || `${event.name}…`,
-        tools: [
-          ...current.tools.slice(-199),
-          { id, name: event.name, detail: event.detail, status: 'running' },
-        ],
+        messages,
       });
     } else if (event.type === 'status') {
+      const needsAttention =
+        /\b(?:approval|permission|question|confirmation)\b|\b(?:input|answer|choice)\s+(?:required|needed|requested)\b|\bawaiting\s+(?:input|answer|choice)\b/i.test(
+          event.text
+        );
       this.sessions.set(sessionId, {
         ...current,
-        status: /approval/i.test(event.text) ? 'awaiting_approval' : 'working',
+        status: needsAttention ? 'awaiting_approval' : 'working',
         statusText: event.text,
       });
     } else if (event.type === 'timing') {
@@ -200,17 +253,28 @@ class ConversationStore {
     ) {
       return;
     }
-    const messages = current.messages.map((message, index, all) =>
-      index === all.length - 1 && message.role === 'assistant'
-        ? { ...message, status }
-        : message
-    );
+    const messages = current.messages.map((message, index, all) => {
+      if (index !== all.length - 1 || message.role !== 'assistant') return message;
+      return {
+        ...message,
+        status,
+        tools: message.tools?.map((tool) =>
+          tool.status === 'running'
+            ? {
+                ...tool,
+                status:
+                  status === 'failed' || status === 'disconnected'
+                    ? ('failed' as const)
+                    : ('completed' as const),
+              }
+            : tool
+        ),
+        ...(typeof current.durationMs === 'number' ? { durationMs: current.durationMs } : {}),
+      };
+    });
     this.sessions.set(sessionId, {
       ...current,
       messages,
-      tools: current.tools.map((tool) =>
-        tool.status === 'running' ? { ...tool, status: 'completed' } : tool
-      ),
       status,
       statusText,
     });
@@ -220,8 +284,31 @@ class ConversationStore {
 
   private emit(sessionId: string) {
     this.sessionVersions.set(sessionId, this.version(sessionId) + 1);
+    this.allVersion += 1;
     this.listeners.get(sessionId)?.forEach((listener) => listener());
+    this.allListeners.forEach((listener) => listener());
   }
+}
+
+function findLastAssistantIndex(messages: Message[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === 'assistant') return index;
+  }
+  return -1;
+}
+
+function findLastOpenToolIndex(tools: ToolActivity[], name: string) {
+  for (let index = tools.length - 1; index >= 0; index -= 1) {
+    const tool = tools[index];
+    if (tool?.name === name && tool.status === 'running') return index;
+  }
+  return -1;
+}
+
+function toolResultStatus(detail: string): ToolActivity['status'] {
+  return /\b(?:fail(?:ed|ure)?|error|denied|suppressed)\b/i.test(detail)
+    ? 'failed'
+    : 'completed';
 }
 
 export const conversationStore = new ConversationStore();
@@ -233,4 +320,19 @@ export function useConversation(sessionId: string | null) {
     () => conversationStore.version(sessionId)
   );
   return conversationStore.get(sessionId);
+}
+
+export function useConversationIndicators(sessionIds: string[]) {
+  useSyncExternalStore(
+    (listener) => conversationStore.subscribeAll(listener),
+    () => conversationStore.versionAll(),
+    () => conversationStore.versionAll()
+  );
+
+  return Object.fromEntries(
+    sessionIds.flatMap((sessionId) => {
+      const indicator = conversationStore.indicator(sessionId);
+      return indicator ? [[sessionId, indicator] as const] : [];
+    })
+  ) as Record<string, SessionIndicatorState>;
 }

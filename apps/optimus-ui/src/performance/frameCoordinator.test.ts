@@ -36,4 +36,17 @@ describe('FrameCoordinator', () => {
     expect(order).toEqual(['read', 'write', 'geometry']);
     coordinator.destroy();
   });
+
+  it('keeps the latest job for each key without dropping sibling projections', () => {
+    const coordinator = new FrameCoordinator();
+    const values: number[] = [];
+    coordinator.scheduleKeyed('content', 'first', () => values.push(1));
+    coordinator.scheduleKeyed('content', 'second', () => values.push(2));
+    coordinator.scheduleKeyed('content', 'first', () => values.push(3));
+
+    coordinator.flushNow();
+
+    expect(values).toEqual([3, 2]);
+    coordinator.destroy();
+  });
 });

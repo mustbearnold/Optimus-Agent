@@ -50,7 +50,9 @@ export type Message = {
   role: 'user' | 'assistant';
   content: string;
   status?: RunStatus;
+  durationMs?: number;
   createdAt?: string;
+  tools?: ToolActivity[];
 };
 
 export type SessionMeta = {

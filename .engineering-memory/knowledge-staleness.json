@@ -550,11 +550,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -571,14 +571,14 @@
           "sha256": "2b7c5e87a32dd08f7557afa5c026ce5b371e00475f75943325b0993e5fa065c6"
         }
       ],
-      "current_tree_sha256": "d20a6df374f752e23c534a5288e7bd0b79721c3392685171a7ee1942a454f884",
+      "current_tree_sha256": "db4000dd70969ebc37be961820008c46801fd61ab6101866ab7f94685e67aac5",
       "document": "docs/architecture/system-overview.md",
       "knowledge_status": "current",
       "knowledge_type": "architecture",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "d20a6df374f752e23c534a5288e7bd0b79721c3392685171a7ee1942a454f884"
+      "verified_tree_sha256": "db4000dd70969ebc37be961820008c46801fd61ab6101866ab7f94685e67aac5"
     },
     {
       "covered_files": [
@@ -618,11 +618,11 @@
           "sha256": "3f1a54565d67caffefb399d033aa004f26bb7d464a79d824b88373752f839b0e"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 2578,
@@ -632,11 +632,11 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -674,14 +674,14 @@
           "sha256": "38a86df5083f117ab1f4714147c53d5473e04966b4f0652c85c6d121991fab76"
         }
       ],
-      "current_tree_sha256": "cf7b8926e165405f056707e07d66924e2f16940a170dad32cd8e70e439aebc84",
+      "current_tree_sha256": "ca2c85048627cf93af1cf2d364a9df7cd0c082ba0a853615e59f575de4fd63f5",
       "document": "docs/contracts/desktop-ipc-methods.md",
       "knowledge_status": "current",
       "knowledge_type": "contract",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "cf7b8926e165405f056707e07d66924e2f16940a170dad32cd8e70e439aebc84"
+      "verified_tree_sha256": "ca2c85048627cf93af1cf2d364a9df7cd0c082ba0a853615e59f575de4fd63f5"
     },
     {
       "covered_files": [
@@ -826,6 +826,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -833,11 +840,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -847,11 +854,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -868,6 +875,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -882,11 +896,18 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
-          "bytes": 7284,
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -1323,11 +1344,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -1344,14 +1365,14 @@
           "sha256": "2b7c5e87a32dd08f7557afa5c026ce5b371e00475f75943325b0993e5fa065c6"
         }
       ],
-      "current_tree_sha256": "9be86b4aefc33768b8e5179450a64f8832f5bc3432673b013e9afb2a7f63c465",
+      "current_tree_sha256": "a29adfa1d918a5f457b8fbc7416247e745bd0d908b602190ff03ad0bb59cf052",
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_status": "current",
       "knowledge_type": "contract-risk-register",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "9be86b4aefc33768b8e5179450a64f8832f5bc3432673b013e9afb2a7f63c465"
+      "verified_tree_sha256": "a29adfa1d918a5f457b8fbc7416247e745bd0d908b602190ff03ad0bb59cf052"
     },
     {
       "covered_files": [
@@ -2042,21 +2063,21 @@
           "sha256": "b242d7171f6f4d3a8c73373a8f13d840b1fe3d5356363d003b5dd913252acb63"
         },
         {
-          "bytes": 26743,
+          "bytes": 37473,
           "language": "Shell",
-          "lines": 775,
+          "lines": 1063,
           "path": "scripts/rebuild-install-relaunch.sh",
-          "sha256": "218f1b50ddec56a0902e9f08053e8a3fec6a076b941bc827f7a6c1d6f5728dd7"
+          "sha256": "68df7af7bb7da64101bfee193c9fb494bb09ab80fcad8660b7336634d519a9b5"
         }
       ],
-      "current_tree_sha256": "9275633fc2ca8360ab8a005614897eb6ead8376a9f92b501f9d27e527f3ccf31",
+      "current_tree_sha256": "924ecb5827555180879b27e90ba7150df038e137f39b78708ae098f9c1e70fc6",
       "document": "docs/decisions/0024-hermes-parity-version-gate.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "9275633fc2ca8360ab8a005614897eb6ead8376a9f92b501f9d27e527f3ccf31"
+      "verified_tree_sha256": "924ecb5827555180879b27e90ba7150df038e137f39b78708ae098f9c1e70fc6"
     },
     {
       "covered_files": [
@@ -2377,6 +2398,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -2384,11 +2412,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -2398,11 +2426,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -2419,6 +2447,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -2433,6 +2468,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -2440,18 +2482,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -2461,46 +2503,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -2524,6 +2573,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -2531,11 +2594,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -2545,32 +2608,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -2587,18 +2664,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -2608,11 +2685,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -2622,11 +2699,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -2671,18 +2748,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -2692,18 +2769,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -2713,11 +2790,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -2734,11 +2811,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -2769,11 +2846,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -2797,14 +2874,14 @@
           "sha256": "ff6b539f6518ff1ddbb89bdee1573b9956b84b73dcc080ae813720a889b56f7d"
         }
       ],
-      "current_tree_sha256": "c1bd383ca6439161d454db7cbdb4f7b4562fd5fba20187785465bea22ff1bdba",
+      "current_tree_sha256": "298bb2d0e068acbabd9e544e6eaa60a8ea454b1fcfb03a337a0381715298149e",
       "document": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "c1bd383ca6439161d454db7cbdb4f7b4562fd5fba20187785465bea22ff1bdba"
+      "verified_tree_sha256": "298bb2d0e068acbabd9e544e6eaa60a8ea454b1fcfb03a337a0381715298149e"
     },
     {
       "covered_files": [
@@ -2907,6 +2984,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -2914,11 +2998,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -2928,11 +3012,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -2949,6 +3033,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -2963,6 +3054,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -2970,18 +3068,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -2991,46 +3089,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -3054,6 +3159,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -3061,11 +3180,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -3075,32 +3194,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -3117,18 +3250,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -3138,11 +3271,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -3152,11 +3285,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -3201,18 +3334,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -3222,18 +3355,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -3243,11 +3376,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -3264,11 +3397,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -3299,11 +3432,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -3334,14 +3467,14 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         }
       ],
-      "current_tree_sha256": "c03d9aa51a0b0a1510d520711725e5d9ea2bdf8e0634990d4ef438abccb7256c",
+      "current_tree_sha256": "4455375cd777d69693fa9dde1e4404dd259b8cbfc45f1135e0faad5deb8943a7",
       "document": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "c03d9aa51a0b0a1510d520711725e5d9ea2bdf8e0634990d4ef438abccb7256c"
+      "verified_tree_sha256": "4455375cd777d69693fa9dde1e4404dd259b8cbfc45f1135e0faad5deb8943a7"
     },
     {
       "covered_files": [
@@ -3367,6 +3500,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -3374,11 +3514,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -3388,11 +3528,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -3409,6 +3549,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -3423,6 +3570,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -3430,18 +3584,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -3451,46 +3605,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -3514,6 +3675,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -3521,11 +3696,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -3535,32 +3710,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -3577,18 +3766,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -3598,11 +3787,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -3612,11 +3801,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -3661,18 +3850,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -3682,18 +3871,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -3703,11 +3892,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -3724,11 +3913,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -3759,11 +3948,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -3780,42 +3969,42 @@
           "sha256": "340a352524fb31e9fc94d7715cfb543d5a7f0838ce108b5d27850383cc74f231"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
-          "bytes": 10071,
+          "bytes": 10070,
           "language": "Markdown",
-          "lines": 198,
+          "lines": 197,
           "path": "docs/design/codex-convergence-experience-contract.md",
-          "sha256": "633126c72ded19253fd4508f62ce37db768f42eaf12307d94bc867c28ce29e6f"
+          "sha256": "89130c4d5e087787fe18ac67925eb409633b8d22169af266ae506a1c208d2168"
         },
         {
-          "bytes": 7865,
+          "bytes": 7864,
           "language": "Markdown",
-          "lines": 139,
+          "lines": 138,
           "path": "docs/design/codex-convergence-state-matrix.md",
-          "sha256": "5c018d2b0822adbd294b0ae8fa274579bfbac319a03131e8723a3ac3a5a986bb"
+          "sha256": "d7920946b80a467aaa122ae364c5e5ff71af94141b7d7ab59d3c5526671ee2bb"
         },
         {
-          "bytes": 12037,
+          "bytes": 15719,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 295,
           "path": "docs/specifications/react-workbench-electron-preview-cutover.md",
-          "sha256": "e4ca4961519e6d1c3e3a39ea5caa19a21a1cbaddda47b38f4ded9c18954a9182"
+          "sha256": "275e0e8fab0158debcece4251761dd307d380e804529f1b18a70d2b68acc9e57"
         }
       ],
-      "current_tree_sha256": "53ce3765709083f176a49b973f1718556c9b52648986a7d498bd39b02750eae3",
+      "current_tree_sha256": "3729568e43d14380d9ed4022647a3d4c1c377ba10c218ee4da2bffe76d023b25",
       "document": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "knowledge_status": "current",
       "knowledge_type": "decision",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "53ce3765709083f176a49b973f1718556c9b52648986a7d498bd39b02750eae3"
+      "verified_tree_sha256": "3729568e43d14380d9ed4022647a3d4c1c377ba10c218ee4da2bffe76d023b25"
     },
     {
       "covered_files": [
@@ -4037,11 +4226,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -4058,14 +4247,14 @@
           "sha256": "2b7c5e87a32dd08f7557afa5c026ce5b371e00475f75943325b0993e5fa065c6"
         }
       ],
-      "current_tree_sha256": "d600c4805c9b2972ea459bba12485070dd872e91423be45a4f2de7eb86618adf",
+      "current_tree_sha256": "6db9924b74962c3af5c6e839588aa0b8a852b1e9ce15ca096850724996d2ac1d",
       "document": "docs/decisions/README.md",
       "knowledge_status": "current",
       "knowledge_type": "decision-index",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "d600c4805c9b2972ea459bba12485070dd872e91423be45a4f2de7eb86618adf"
+      "verified_tree_sha256": "6db9924b74962c3af5c6e839588aa0b8a852b1e9ce15ca096850724996d2ac1d"
     },
     {
       "covered_files": [
@@ -4091,6 +4280,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -4098,11 +4294,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -4112,11 +4308,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -4133,6 +4329,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -4147,6 +4350,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -4154,18 +4364,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -4175,46 +4385,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -4238,6 +4455,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -4245,11 +4476,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -4259,32 +4490,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -4301,18 +4546,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -4322,11 +4567,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -4336,11 +4581,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -4385,18 +4630,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -4406,18 +4651,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -4427,11 +4672,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -4448,11 +4693,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -4483,11 +4728,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -4497,11 +4742,11 @@
           "sha256": "615a7bfa93ccd302f34be03a113ceb16e366815256c064b9333b55a7761f64be"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -4511,14 +4756,14 @@
           "sha256": "f0f7157a9b973fdc737040dc912c776eb276c6eb3de071b6a33925c591a9f3ce"
         }
       ],
-      "current_tree_sha256": "925923d208460d0140e1619cf6346e8de99e4774f7471ddc3066326974954a27",
+      "current_tree_sha256": "6a1ac5e1508cf258118a2cb0ac2da3797ea36f57705d97838a15f770f082d6a9",
       "document": "docs/design/codex-convergence-experience-contract.md",
       "knowledge_status": "current",
       "knowledge_type": "design-contract",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "925923d208460d0140e1619cf6346e8de99e4774f7471ddc3066326974954a27"
+      "verified_tree_sha256": "6a1ac5e1508cf258118a2cb0ac2da3797ea36f57705d97838a15f770f082d6a9"
     },
     {
       "covered_files": [
@@ -4544,6 +4789,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -4551,11 +4803,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -4565,11 +4817,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -4586,6 +4838,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -4600,6 +4859,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -4607,18 +4873,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -4628,46 +4894,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -4691,6 +4964,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -4698,11 +4985,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -4712,32 +4999,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -4754,18 +5055,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -4775,11 +5076,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -4789,11 +5090,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -4838,18 +5139,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -4859,18 +5160,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -4880,11 +5181,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -4901,11 +5202,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -4936,11 +5237,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -4950,21 +5251,21 @@
           "sha256": "615a7bfa93ccd302f34be03a113ceb16e366815256c064b9333b55a7761f64be"
         },
         {
-          "bytes": 10071,
+          "bytes": 10070,
           "language": "Markdown",
-          "lines": 198,
+          "lines": 197,
           "path": "docs/design/codex-convergence-experience-contract.md",
-          "sha256": "633126c72ded19253fd4508f62ce37db768f42eaf12307d94bc867c28ce29e6f"
+          "sha256": "89130c4d5e087787fe18ac67925eb409633b8d22169af266ae506a1c208d2168"
         }
       ],
-      "current_tree_sha256": "9cd5ba13b4080c2031f78428c961d0bb395c28c2add3ff8b879b2c319141d79b",
+      "current_tree_sha256": "1699d7b06e83af2b0ef7c32c8175dc96ea33110614c756be5064c8564e6ec92f",
       "document": "docs/design/codex-convergence-state-matrix.md",
       "knowledge_status": "current",
       "knowledge_type": "design-state-matrix",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "9cd5ba13b4080c2031f78428c961d0bb395c28c2add3ff8b879b2c319141d79b"
+      "verified_tree_sha256": "1699d7b06e83af2b0ef7c32c8175dc96ea33110614c756be5064c8564e6ec92f"
     },
     {
       "covered_files": [
@@ -5506,11 +5807,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -5534,14 +5835,14 @@
           "sha256": "ef84ea2d53756fd07868fbdf9b5b445655fcb8dde1eebcecbe047c0a5f9e7237"
         }
       ],
-      "current_tree_sha256": "3d1675184bee542cf68e2a23935b87099720cf5b77d948b895b3907b24efbb93",
+      "current_tree_sha256": "3f7e0baceb8c46bb30282b45522b8ebc9eb46afd70d48e539cd35b2aca693c65",
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_status": "current",
       "knowledge_type": "lesson-ledger",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "3d1675184bee542cf68e2a23935b87099720cf5b77d948b895b3907b24efbb93"
+      "verified_tree_sha256": "3f7e0baceb8c46bb30282b45522b8ebc9eb46afd70d48e539cd35b2aca693c65"
     },
     {
       "covered_files": [
@@ -6023,46 +6324,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -6086,6 +6394,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -6093,11 +6415,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -6107,32 +6429,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -6149,18 +6485,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -6170,11 +6506,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -6184,11 +6520,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -6233,18 +6569,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -6254,18 +6590,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -6275,11 +6611,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -6296,11 +6632,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -6597,14 +6933,14 @@
           "sha256": "66bbdbfbbcbc6c013d5e6eec71e3ead8ca650bf63de31fc144ed45d0bc0940b7"
         }
       ],
-      "current_tree_sha256": "2b782fbe4c5b4ea4ff4393d20390574b2e9ecc778f7ec368cc6b3603a0f79f9e",
+      "current_tree_sha256": "d6aed31254ce4d28cbcdb08872f61956e36062736a39992902919c079a8eb7a6",
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_status": "current",
       "knowledge_type": "repository-map",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "2b782fbe4c5b4ea4ff4393d20390574b2e9ecc778f7ec368cc6b3603a0f79f9e"
+      "verified_tree_sha256": "d6aed31254ce4d28cbcdb08872f61956e36062736a39992902919c079a8eb7a6"
     },
     {
       "covered_files": [
@@ -7034,11 +7370,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -7104,14 +7440,14 @@
           "sha256": "e1444f342625fc31e58a231f2197907d2c55990119578dcc2cfd41f06123830f"
         }
       ],
-      "current_tree_sha256": "bacf31348500053d340b26f9025e147d0de0a8df7fc8f23a4d6abeb9722be2cb",
+      "current_tree_sha256": "0148585c6f591a3dacff2036ecda33105db6313fcca4f033a9b38a2e47998726",
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "bacf31348500053d340b26f9025e147d0de0a8df7fc8f23a4d6abeb9722be2cb"
+      "verified_tree_sha256": "0148585c6f591a3dacff2036ecda33105db6313fcca4f033a9b38a2e47998726"
     },
     {
       "covered_files": [
@@ -7403,6 +7739,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -7410,11 +7753,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -7424,11 +7767,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -7445,6 +7788,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -7459,6 +7809,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -7466,18 +7823,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -7487,46 +7844,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -7550,6 +7914,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -7557,11 +7935,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -7571,32 +7949,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -7613,18 +8005,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -7634,11 +8026,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -7648,11 +8040,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -7697,18 +8089,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -7718,18 +8110,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -7739,11 +8131,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -7760,11 +8152,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -7795,11 +8187,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -8236,28 +8628,28 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
-          "bytes": 12037,
+          "bytes": 15719,
           "language": "Markdown",
-          "lines": 242,
+          "lines": 295,
           "path": "docs/specifications/react-workbench-electron-preview-cutover.md",
-          "sha256": "e4ca4961519e6d1c3e3a39ea5caa19a21a1cbaddda47b38f4ded9c18954a9182"
+          "sha256": "275e0e8fab0158debcece4251761dd307d380e804529f1b18a70d2b68acc9e57"
         }
       ],
-      "current_tree_sha256": "2122485dd18554fce073e222887702c55a75b9a01fdddb88c94f3af00224ce44",
+      "current_tree_sha256": "87167c0cbf56119153fe9900f6c3cd947416b0b281772c89a782dcd3ac84dec2",
       "document": "docs/plans/full-app-microtasks.md",
       "knowledge_status": "current",
       "knowledge_type": "implementation-plan",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "2122485dd18554fce073e222887702c55a75b9a01fdddb88c94f3af00224ce44"
+      "verified_tree_sha256": "87167c0cbf56119153fe9900f6c3cd947416b0b281772c89a782dcd3ac84dec2"
     },
     {
       "covered_files": [
@@ -8562,6 +8954,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -8569,11 +8968,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -8583,11 +8982,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -8604,6 +9003,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -8618,6 +9024,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -8625,18 +9038,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -8646,46 +9059,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -8709,6 +9129,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -8716,11 +9150,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -8730,32 +9164,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -8772,18 +9220,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -8793,11 +9241,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -8807,11 +9255,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -8856,18 +9304,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -8877,18 +9325,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -8898,11 +9346,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -8919,11 +9367,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -8954,11 +9402,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -8982,14 +9430,14 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         }
       ],
-      "current_tree_sha256": "3a86bc3823a8f3108fc7f3ade460abc841ed42ff55efc7fbfebcfd54fcf0f987",
+      "current_tree_sha256": "623776b31cf4eb3e9c75e3a8c52d9d68996f86996500b39f597019a95abe3134",
       "document": "docs/specifications/electron-react-migration-slice-1.md",
       "knowledge_status": "active",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "3a86bc3823a8f3108fc7f3ade460abc841ed42ff55efc7fbfebcfd54fcf0f987"
+      "verified_tree_sha256": "623776b31cf4eb3e9c75e3a8c52d9d68996f86996500b39f597019a95abe3134"
     },
     {
       "covered_files": [
@@ -10720,11 +11168,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -10797,14 +11245,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "11828a81df534f168282a51ebf0480481e5073c45baf66e379dfaab57ba498d7",
+      "current_tree_sha256": "a440362514db6a5c6e1a2b4b4ff859747ed28bad10993acf3e8c3e16500558ca",
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "b59b90766fd3b001725dd1542a05326a1d4b4894",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "11828a81df534f168282a51ebf0480481e5073c45baf66e379dfaab57ba498d7"
+      "verified_tree_sha256": "a440362514db6a5c6e1a2b4b4ff859747ed28bad10993acf3e8c3e16500558ca"
     },
     {
       "covered_files": [
@@ -11906,11 +12354,11 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         },
         {
           "bytes": 9575,
@@ -11983,14 +12431,14 @@
           "sha256": "33aba770c30492e2cf7ef0b8e6e8b5e20929f65fd259a5042a0eea177b0b11b9"
         }
       ],
-      "current_tree_sha256": "03b175b47974637d95a3ea7c0757710eca8139e6534e15737a2b217581756b4a",
+      "current_tree_sha256": "c3d09a87ee2a0aa246ce12879e353898c8cb1e7d90297571458bb711528e42cb",
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "knowledge_status": "historical",
       "knowledge_type": "specification",
       "last_verified_commit": "09fddbc1b60a6b37f9f80680988ea5036a9b8eec",
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "03b175b47974637d95a3ea7c0757710eca8139e6534e15737a2b217581756b4a"
+      "verified_tree_sha256": "c3d09a87ee2a0aa246ce12879e353898c8cb1e7d90297571458bb711528e42cb"
     },
     {
       "covered_files": [
@@ -12093,6 +12541,13 @@
           "sha256": "b826ea0ab8a239d0c9cdd52479e07a036feb78d0f776cc9c97a352e9ba5befa4"
         },
         {
+          "bytes": 6093,
+          "language": "Other",
+          "lines": 146,
+          "path": "apps/optimus-electron/e2e/installed-shell.spec.cjs",
+          "sha256": "55a27ea023ffc06ee1be3c368e35d82c0086945615223893eb8ce82040c03fe0"
+        },
+        {
           "bytes": 14277,
           "language": "Other",
           "lines": 306,
@@ -12100,11 +12555,11 @@
           "sha256": "18d42b34c83bfe09fcc3755bcbb9e5b7da23569cb3e3c96e16653e475f427777"
         },
         {
-          "bytes": 26429,
+          "bytes": 26737,
           "language": "Other",
-          "lines": 850,
+          "lines": 863,
           "path": "apps/optimus-electron/main.cjs",
-          "sha256": "54853ed6e8c2231c809927988df8bc798b18037f00a082136d60289ec76d4cfd"
+          "sha256": "f7b5af1c280d5770adcb0484620d652618d55b3ce13eba9225d6a20802145df6"
         },
         {
           "bytes": 7772,
@@ -12114,11 +12569,11 @@
           "sha256": "ac091ee97d7e0f1efe65ddb4f4c5c9de180c98b7817f4e42f60f40fc40b07823"
         },
         {
-          "bytes": 636,
+          "bytes": 670,
           "language": "JSON",
-          "lines": 20,
+          "lines": 21,
           "path": "apps/optimus-electron/package.json",
-          "sha256": "8b45e743df760b29563848be5e3287efe116ee2159a14cb3c9667101ea72cdc3"
+          "sha256": "bb47b817502e0d4edacbd17e4d42d233bcc7c0d0ca65f9d7d93e76fc4a39396f"
         },
         {
           "bytes": 489,
@@ -12135,6 +12590,13 @@
           "sha256": "eb71cddebc91a642e385af887bf54930f743925c19cbd3ece45e0a41c70ddffe"
         },
         {
+          "bytes": 1445,
+          "language": "Other",
+          "lines": 48,
+          "path": "apps/optimus-electron/runtime-paths.cjs",
+          "sha256": "c4022909cf60c96c0831a4b6c10caf906dbb3651890b497843bceb4102a41fda"
+        },
+        {
           "bytes": 3102,
           "language": "Other",
           "lines": 99,
@@ -12149,6 +12611,13 @@
           "sha256": "0dd95e58c5ccd91fbcf8df4e6783066a34d561954eaa72ead176ba9bb4fed7a4"
         },
         {
+          "bytes": 1709,
+          "language": "Other",
+          "lines": 49,
+          "path": "apps/optimus-electron/test/runtime-paths.test.cjs",
+          "sha256": "bf2e041917a8cdac671ad2e504bd4c41e52836a272568fed45e449f4bb3896b4"
+        },
+        {
           "bytes": 652,
           "language": "HTML",
           "lines": 17,
@@ -12156,18 +12625,18 @@
           "sha256": "64fc06835d32bc08e3933763a4c339cb016b5aaa776ae666a03f598919aaa309"
         },
         {
-          "bytes": 104106,
+          "bytes": 104506,
           "language": "JSON",
-          "lines": 3057,
+          "lines": 3067,
           "path": "apps/optimus-ui/package-lock.json",
-          "sha256": "7cae20aa7100d5fce18edda4f1bf6926d05e309c6e3a0a4bf2876c4cbb2802f4"
+          "sha256": "5ed77ff58c664e79861811bef6bfed311314e154b5357a26d26596a49129479f"
         },
         {
-          "bytes": 714,
+          "bytes": 746,
           "language": "JSON",
-          "lines": 30,
+          "lines": 31,
           "path": "apps/optimus-ui/package.json",
-          "sha256": "988e4844ac1450d46a6100ad5bc605ed7105be8ee544c6dba44a0ef353b4cc94"
+          "sha256": "2d4d787d25b32be6600a107d10e0e2ff1a16379ca6cea055bc5606aa6442f15e"
         },
         {
           "bytes": 54,
@@ -12177,46 +12646,53 @@
           "sha256": "ebf98c8a1d92573730bacee75db4037b3260166ca724f965b3c89a6cd494508e"
         },
         {
-          "bytes": 682,
+          "bytes": 3418,
           "language": "TypeScript",
-          "lines": 13,
+          "lines": 62,
           "path": "apps/optimus-ui/src/app/OptimusApp.test.tsx",
-          "sha256": "cb797c2a824aa55d76f0d08cb5e283d14954e3cf871bfc8a89ace003c790f644"
+          "sha256": "635f338d808c4799a153d9d5735c62b572e0433b2a608cebeab52460d42e2010"
         },
         {
-          "bytes": 22950,
+          "bytes": 24386,
           "language": "TypeScript",
-          "lines": 515,
+          "lines": 568,
           "path": "apps/optimus-ui/src/app/OptimusApp.tsx",
-          "sha256": "ba2af493fcf1da51d132da5d987bc8ec3e58430f0ca1ce437d73fb7d31c87f97"
+          "sha256": "f199806752910d6f3a3010c191c4e01a71716dbc4d3eb9e48db66e8d7c5f6dfe"
         },
         {
-          "bytes": 24899,
+          "bytes": 33400,
+          "language": "Other",
+          "lines": null,
+          "path": "apps/optimus-ui/src/assets/fonts/Atmosphere-Bold.ttf",
+          "sha256": "e3095eb4904ff974effa075436f0d4f9fb6a90e491ecc08f0c2c229e51546745"
+        },
+        {
+          "bytes": 28979,
           "language": "CSS",
-          "lines": 1441,
+          "lines": 1623,
           "path": "apps/optimus-ui/src/codex-shell.css",
-          "sha256": "d2426872e070bdf1faed891ec844c8f0c94527780aa21c413e8241c6a5d74da7"
+          "sha256": "bcccb44dd07d7cefdc2cdd13b87662f7422ecf6a17284b408978e8be9b226e27"
         },
         {
-          "bytes": 3673,
+          "bytes": 3682,
           "language": "TypeScript",
           "lines": 83,
           "path": "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-          "sha256": "916920229a6eb0b61a9b781a50893f022844c61ed49b7bbfaea6dee8d35d9685"
+          "sha256": "13f3f11a2ad31f947654bf57215f651549f1b365d9684916108ef7463f093e89"
         },
         {
-          "bytes": 4769,
+          "bytes": 2466,
           "language": "TypeScript",
-          "lines": 107,
+          "lines": 145,
           "path": "apps/optimus-ui/src/components/chrome/Icon.tsx",
-          "sha256": "34c86edd89612a42dd96bd5457ad5af8aa91f23ef75bfbc60a1d9ee548ccdd90"
+          "sha256": "ce06ac6c8c35dc181e5fd0d205983449ab41afe5a47ca0606fdf159232f7d410"
         },
         {
-          "bytes": 3520,
+          "bytes": 4839,
           "language": "TypeScript",
-          "lines": 125,
+          "lines": 164,
           "path": "apps/optimus-ui/src/components/chrome/TopBar.tsx",
-          "sha256": "32d1aa2406eab2b789771c6d73ca4691770151e513a9e6b60bf3df992bd25c26"
+          "sha256": "7a6cbc41e7f42bc73704e18d380de1f8422e416e878e30fc413bdfcf63f111f9"
         },
         {
           "bytes": 864,
@@ -12240,6 +12716,20 @@
           "sha256": "3f51d6288ddaa658b3ea9d6192dd01306476265002dcd3ca2003ebebffd46b8d"
         },
         {
+          "bytes": 1391,
+          "language": "TypeScript",
+          "lines": 36,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.test.tsx",
+          "sha256": "2efc271ca664a760f3bfd073c80f8a4f781b5ecca37cc7a4c9f523ca165026e9"
+        },
+        {
+          "bytes": 6931,
+          "language": "TypeScript",
+          "lines": 193,
+          "path": "apps/optimus-ui/src/components/mail/MailPage.tsx",
+          "sha256": "9abcfc7ed46e41604c7033a2bd98a7c6ce653c158c2671145ab9887772b8d137"
+        },
+        {
           "bytes": 6250,
           "language": "TypeScript",
           "lines": 188,
@@ -12247,11 +12737,11 @@
           "sha256": "34ab77d86297c57bdc0f21ca30d88b6b453b22d495cd1f74edeae679c39a69c7"
         },
         {
-          "bytes": 10315,
+          "bytes": 10018,
           "language": "TypeScript",
-          "lines": 279,
+          "lines": 283,
           "path": "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-          "sha256": "237157d66862c5e900d00ff2f04cadc736dff81c6905760e08573366c1588d88"
+          "sha256": "cbcc16d026596bf19942a34896147b5f110443e7a169c26ac6979abc6aaf070f"
         },
         {
           "bytes": 19043,
@@ -12261,32 +12751,46 @@
           "sha256": "f3451639617a320a5d88eb577b4f58d5f88b382b4b7839aacf3007f2a36e2787"
         },
         {
-          "bytes": 982,
+          "bytes": 3967,
           "language": "TypeScript",
-          "lines": 32,
+          "lines": 106,
           "path": "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-          "sha256": "ef6841240fc4c0d95698bf4543ff9e3a2267a9aa938d399d75783249ea6e47d5"
+          "sha256": "ba54e0fe2c4d9f71b00e7f0590a708653c0733bee119f408432068b8210c33d1"
         },
         {
-          "bytes": 1776,
+          "bytes": 4770,
           "language": "TypeScript",
-          "lines": 59,
+          "lines": 128,
           "path": "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
-          "sha256": "0384d6394aaa1653a4f9e9ffcd56a98d84a51427eade47b67d79c60c3052c254"
+          "sha256": "ff251b3e31072a3efb4c212c76589c73905c9e9b0a87c915cf6f959fc9a6a937"
         },
         {
-          "bytes": 5672,
+          "bytes": 12670,
           "language": "TypeScript",
-          "lines": 160,
+          "lines": 313,
           "path": "apps/optimus-ui/src/components/workbench/Composer.tsx",
-          "sha256": "d6ad7a1c97747c8455747ab9f433e953301e86e4af3833af8b1272bb7466a6ce"
+          "sha256": "2b31bbd72c34494a4ce5a0ab48e53a403d9f6b5475c7165616047e7c92a41956"
         },
         {
-          "bytes": 6058,
+          "bytes": 2526,
           "language": "TypeScript",
-          "lines": 172,
+          "lines": 71,
+          "path": "apps/optimus-ui/src/components/workbench/SessionBar.tsx",
+          "sha256": "86dbad957dcc23613ddb134f860f0e9cf7f847ecc2d1b2556a28504b148260b3"
+        },
+        {
+          "bytes": 3986,
+          "language": "TypeScript",
+          "lines": 118,
+          "path": "apps/optimus-ui/src/components/workbench/Transcript.test.tsx",
+          "sha256": "f87206ba39abafd5c04e3f825ff40a2e8c3e6318c929cd175832a9008a5c1606"
+        },
+        {
+          "bytes": 9186,
+          "language": "TypeScript",
+          "lines": 262,
           "path": "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-          "sha256": "c16b4515cc1d5d6b5d70fa4549346feb214c2fb6af39d30f1d944cac15f7d5b3"
+          "sha256": "a8f440744201fa71fce1432564de83e152c9fefbd8a07d195555c7d5ed4348c4"
         },
         {
           "bytes": 2450,
@@ -12303,18 +12807,18 @@
           "sha256": "ff3f5d6700e26b2b712ed0170fc90ef1219b1b53e2905fe3e687236398c93f49"
         },
         {
-          "bytes": 2173,
+          "bytes": 2694,
           "language": "TypeScript",
-          "lines": 74,
+          "lines": 88,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-          "sha256": "9177d5468501bf1b849d4d089c232360130d1b6728631b58e57c4598f2b01e04"
+          "sha256": "f5c31302def4bf3e4e6c22ade1ad0d476bd145720d59b63ee42bc5fd07764c85"
         },
         {
-          "bytes": 10347,
+          "bytes": 9384,
           "language": "TypeScript",
-          "lines": 311,
+          "lines": 289,
           "path": "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-          "sha256": "d4405c5de5cb8bc1878255cb4fdd21abe4ffc085c61fa3b799fbfb7932ca392c"
+          "sha256": "8ae08f9f0182867de18c6d82e2332c226faf3b95dde6f7687115dbd0298c1f2f"
         },
         {
           "bytes": 4497,
@@ -12324,11 +12828,11 @@
           "sha256": "dc610906f1793a7ec4ddb180fa9c4ad551bcb4aa875b826f73fd87475f3c7222"
         },
         {
-          "bytes": 3564,
+          "bytes": 1517,
           "language": "TypeScript",
-          "lines": 83,
+          "lines": 33,
           "path": "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx",
-          "sha256": "c371239c0ce04631020c2e7f44afe286ba50f2609c0ff80e90726bb94d2702eb"
+          "sha256": "e301d0e6480ef54ce381caab0f8a74e6104aa3f371218eb3bd59df9668cb6e78"
         },
         {
           "bytes": 29,
@@ -12338,11 +12842,11 @@
           "sha256": "1dcb9fd412f6c810cf667705cf024d5c22ea4c55d6634c5399cd94e8ffee945c"
         },
         {
-          "bytes": 7284,
+          "bytes": 7333,
           "language": "TypeScript",
-          "lines": 321,
+          "lines": 323,
           "path": "apps/optimus-ui/src/ipc/contracts.ts",
-          "sha256": "de3e2a3a75f6d1f6389f1374d1eb2ae8caca1ff4491bf0568192b840a3b53791"
+          "sha256": "83c1c927b7f29c7bed4eeb4f8992dd92cbd94b044bbc5909e09362a85767336a"
         },
         {
           "bytes": 4006,
@@ -12387,18 +12891,18 @@
           "sha256": "228c017ef4197a57eca5143471ed43fc6a2c89154558efe80a23f5fc8c097230"
         },
         {
-          "bytes": 1342,
+          "bytes": 1830,
           "language": "TypeScript",
-          "lines": 39,
+          "lines": 52,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
-          "sha256": "1d3a36858dff2e50d2c8ddcfa5dcdb66c342368c2ebcbcf97f33a1785214c5d1"
+          "sha256": "8b9c9d0936d6b319f016fb88fe433c25cd50e2c932ddffcf55bfbf17e8d123d9"
         },
         {
-          "bytes": 1659,
+          "bytes": 2127,
           "language": "TypeScript",
-          "lines": 73,
+          "lines": 86,
           "path": "apps/optimus-ui/src/performance/frameCoordinator.ts",
-          "sha256": "2e3e32b2ba3f1fc1dd326547c85257f40aadfcc1b8074a411a9f2651015a6a0a"
+          "sha256": "be72f2af0317ab55ee40e590738f2b0595eb641e240d27209ce03210e711c4a2"
         },
         {
           "bytes": 1303,
@@ -12408,18 +12912,18 @@
           "sha256": "8ce5bca802624fcff4106fee0505f242462efc05763e4b6f573956a5f8c47f46"
         },
         {
-          "bytes": 3085,
+          "bytes": 5911,
           "language": "TypeScript",
-          "lines": 67,
+          "lines": 138,
           "path": "apps/optimus-ui/src/state/conversationStore.test.ts",
-          "sha256": "0bca482cfb2ca967c011f85e90e21c68123b4982bb90a5b9a9b2180141838e6d"
+          "sha256": "6f5e707a95a526822a055abc55aa9b7394a884ed9ce836321590240e275a70e9"
         },
         {
-          "bytes": 7448,
+          "bytes": 10863,
           "language": "TypeScript",
-          "lines": 236,
+          "lines": 338,
           "path": "apps/optimus-ui/src/state/conversationStore.ts",
-          "sha256": "0d4f4fd8e4d0e2c1049640f8ca6b494260ed37e0868f9de962cc35cbcc614435"
+          "sha256": "5424a66306f79944fb593b8abbd21eb64238e2b69eb7886606d1ecff26bdd0e4"
         },
         {
           "bytes": 1112,
@@ -12429,11 +12933,11 @@
           "sha256": "5bae774efc1282975386d2d3ff6c47bba9709f180e20dc348e48552697568f24"
         },
         {
-          "bytes": 2405,
+          "bytes": 2513,
           "language": "TypeScript",
-          "lines": 72,
+          "lines": 74,
           "path": "apps/optimus-ui/src/state/layoutStore.ts",
-          "sha256": "66b03d31ab1f473a6fc4565059d5264cafb0cbef2d65dd73b2ed7d7eaae711dc"
+          "sha256": "cb7c0050f75815b5bae4183d92a6537db11ea81a62f4c32235a292f0f0262ed3"
         },
         {
           "bytes": 2240,
@@ -12450,11 +12954,11 @@
           "sha256": "b006f8d24af45ae0a1b5a85f12034d767dcf97cd7dca98dad35f2c132aa5b7bc"
         },
         {
-          "bytes": 51516,
+          "bytes": 63441,
           "language": "CSS",
-          "lines": 2923,
+          "lines": 3594,
           "path": "apps/optimus-ui/src/styles.css",
-          "sha256": "8d0d65bb04081ab84ed1f1ecc8c85f79e68bf7a8c3bb92241582f6b58961f2ab"
+          "sha256": "f442169e6752df610540bbd64741ad71ae0a8c20379635e8021ce9f1f40a3ec3"
         },
         {
           "bytes": 631,
@@ -12485,11 +12989,11 @@
           "sha256": "30b13183f89d3a1f77d5cbefffd97dcce4353449a49781dbdbe650aff07abe4f"
         },
         {
-          "bytes": 1579,
+          "bytes": 1751,
           "language": "Other",
           "lines": 1,
           "path": "apps/optimus-ui/tsconfig.tsbuildinfo",
-          "sha256": "829a5d6ab9c876c34e9708e9207901840b248c02101734933b6bb07cc2a48bc2"
+          "sha256": "8954da40f4dea7dd0a1173113d89d7db6493d33c2ef7dac7c0bf63b3d759862d"
         },
         {
           "bytes": 422,
@@ -12513,21 +13017,21 @@
           "sha256": "c1f209b818f93fd73ffba83eb404d633328f65f8062bafeef74bdb2eadef1c5d"
         },
         {
-          "bytes": 10672,
+          "bytes": 12215,
           "language": "Markdown",
-          "lines": 212,
+          "lines": 238,
           "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-          "sha256": "a8bb7935965a4e3fd89344b6bbc1473b7785a55849725bac6c60721f4c5eff35"
+          "sha256": "7e091dc4c6e6f576ae7e2c3d2022a80870118c24a5d422a0c3a2154de66f5130"
         }
       ],
-      "current_tree_sha256": "e29a5babf6baf3766a714537e0c98e5b52a4f273f7bf58978e2ec66a0e61ef27",
+      "current_tree_sha256": "f2e62c45a5e1f61dfc70c53be4428d4b995c562f306e37a64d2410ba680ab893",
       "document": "docs/specifications/react-workbench-electron-preview-cutover.md",
       "knowledge_status": "active",
       "knowledge_type": "specification",
       "last_verified_commit": null,
       "stale": false,
       "verification_basis": "sha256_tree",
-      "verified_tree_sha256": "e29a5babf6baf3766a714537e0c98e5b52a4f273f7bf58978e2ec66a0e61ef27"
+      "verified_tree_sha256": "f2e62c45a5e1f61dfc70c53be4428d4b995c562f306e37a64d2410ba680ab893"
     },
     {
       "covered_files": [

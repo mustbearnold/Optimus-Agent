@@ -72,7 +72,7 @@ export function CapabilitiesPage({
           </div>
         </header>
         <ul>
-          <li><strong>Messaging</strong><span>Unavailable</span></li>
+          <li><strong>External messaging</strong><span>Unavailable</span></li>
           <li><strong>Specialist agents</strong><span>Unavailable</span></li>
           <li><strong>Parallel child orchestration</strong><span>Unavailable</span></li>
           <li><strong>Project isolation enforcement</strong><span>Configured intent only</span></li>

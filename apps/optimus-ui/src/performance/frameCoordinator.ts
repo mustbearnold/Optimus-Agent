@@ -18,7 +18,7 @@ const order: FrameLane[] = [
 export class FrameCoordinator {
   private scheduled = 0;
   private hidden = false;
-  private readonly jobs = new Map<FrameLane, () => void>();
+  private readonly jobs = new Map<FrameLane, Map<string, () => void>>();
 
   constructor() {
     if (typeof document !== 'undefined') {
@@ -28,9 +28,22 @@ export class FrameCoordinator {
   }
 
   schedule(lane: FrameLane, job: () => void) {
-    this.jobs.set(lane, job);
+    this.scheduleKeyed(lane, 'default', job);
+  }
+
+  scheduleKeyed(lane: FrameLane, key: string, job: () => void) {
+    const laneJobs = this.jobs.get(lane) || new Map<string, () => void>();
+    laneJobs.set(key, job);
+    this.jobs.set(lane, laneJobs);
     if (this.hidden || this.scheduled) return;
     this.scheduled = requestAnimationFrame(this.flush);
+  }
+
+  cancelKeyed(lane: FrameLane, key: string) {
+    const laneJobs = this.jobs.get(lane);
+    if (!laneJobs) return;
+    laneJobs.delete(key);
+    if (!laneJobs.size) this.jobs.delete(lane);
   }
 
   flushNow() {
@@ -62,10 +75,10 @@ export class FrameCoordinator {
 
   private runJobs() {
     for (const lane of order) {
-      const job = this.jobs.get(lane);
-      if (!job) continue;
+      const laneJobs = this.jobs.get(lane);
+      if (!laneJobs) continue;
       this.jobs.delete(lane);
-      job();
+      laneJobs.forEach((job) => job());
     }
   }
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState, type DragEvent } from 'react';
 import type { Project, SessionMeta } from '../../ipc/contracts';
 import type { AppRoute } from '../../state/layoutStore';
+import type { SessionIndicatorState } from '../../state/conversationStore';
 import { Icon } from '../chrome/Icon';
 
 type Props = {
@@ -11,7 +12,7 @@ type Props = {
   pins: string[];
   expanded: Record<string, boolean>;
   selectedSessionId: string | null;
-  activeRunSessionId: string | null;
+  sessionIndicators: Record<string, SessionIndicatorState>;
   route: AppRoute;
   onSelectSession: (id: string) => void;
   onNewSession: (projectId?: string) => void;
@@ -38,18 +39,22 @@ export function ProjectsRail(props: Props) {
     [needle, props.sessions]
   );
   const pinnedSessions = visibleSessions.filter((session) => props.pins.includes(session.id));
-  const assignedIds = new Set(Object.keys(props.assignments));
-  const inbox = visibleSessions.filter(
-    (session) => !assignedIds.has(session.id) && !props.pins.includes(session.id)
-  );
 
   const renderSession = (session: SessionMeta, projectId?: string) => {
     const active = session.id === props.selectedSessionId;
-    const working = session.id === props.activeRunSessionId;
+    const indicator = props.sessionIndicators[session.id] || null;
+    const indicatorLabel =
+      indicator === 'working'
+        ? 'Optimus is working'
+        : indicator === 'attention'
+          ? 'Optimus needs your attention'
+          : indicator === 'error'
+            ? 'Optimus encountered an error'
+            : '';
     const menuOpen = menuSession === session.id;
     return (
       <div
-        className={`session-row${active ? ' is-active' : ''}${working ? ' is-working' : ''}`}
+        className={`session-row${active ? ' is-active' : ''}`}
         key={`${projectId || 'root'}:${session.id}`}
         draggable
         onDragStart={(event) => {
@@ -63,12 +68,14 @@ export function ProjectsRail(props: Props) {
           onClick={() => props.onSelectSession(session.id)}
           title={session.title || session.id}
         >
-          <span className="session-state" aria-hidden="true" />
+          <span
+            className={`session-status-dot is-${indicator || 'idle'}`}
+            aria-hidden="true"
+          />
+          {indicatorLabel ? <span className="sr-only">{indicatorLabel}</span> : null}
           <span className="session-copy">
             <strong>{session.title || session.id.slice(0, 8)}</strong>
-            <small>
-              {working ? 'Working' : `${session.message_count || 0} messages`}
-            </small>
+            <small>{`${session.message_count || 0} messages`}</small>
           </span>
         </button>
         <button
@@ -104,7 +111,7 @@ export function ProjectsRail(props: Props) {
     );
   };
 
-  const dropInto = (projectId: string | null) => (event: DragEvent) => {
+  const dropInto = (projectId: string) => (event: DragEvent) => {
     event.preventDefault();
     const id = event.dataTransfer.getData('text/optimus-session');
     if (id) props.onAssign(id, projectId);
@@ -116,6 +123,16 @@ export function ProjectsRail(props: Props) {
       aria-label="Projects and sessions"
     >
       <div className="rail-primary">
+        <button
+          type="button"
+          className="rail-product-mark"
+          onClick={() => props.onRoute('work')}
+          aria-label="Optimus"
+          title="Optimus"
+        >
+          <span>Optimus</span>
+          <Icon name="chevron" />
+        </button>
         <div className="rail-action-row">
           <label className="rail-search">
             <Icon name="search" />
@@ -143,11 +160,11 @@ export function ProjectsRail(props: Props) {
       <nav className="rail-nav" aria-label="Primary">
         <button
           type="button"
-          className={props.route === 'work' ? 'is-active' : ''}
-          onClick={() => props.onRoute('work')}
+          className={props.route === 'mail' ? 'is-active' : ''}
+          onClick={() => props.onRoute('mail')}
         >
-          <Icon name="chat" />
-          <span>Work</span>
+          <Icon name="mail" />
+          <span>Mail</span>
         </button>
         <button
           type="button"
@@ -181,10 +198,16 @@ export function ProjectsRail(props: Props) {
         ) : null}
 
         <section className="rail-section">
-          <div className="rail-section-heading">
+          <div className="rail-section-heading projects-heading">
             <span>Projects</span>
-            <button type="button" aria-label="Add project" title="Add project" onClick={props.onAddProject}>
-              <Icon name="plus" />
+            <button
+              type="button"
+              className="add-project-button"
+              aria-label="Add project"
+              title="Add project"
+              onClick={props.onAddProject}
+            >
+              <Icon name="project" />
             </button>
           </div>
           {props.projects.map((project) => {
@@ -201,8 +224,12 @@ export function ProjectsRail(props: Props) {
                 onDrop={dropInto(project.id)}
               >
                 <div className="project-heading">
-                  <button type="button" onClick={() => props.onToggleProject(project.id)}>
-                    <Icon name="chevron" />
+                  <button
+                    className="project-toggle"
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => props.onToggleProject(project.id)}
+                  >
                     <Icon name="folder" />
                     <span className="project-copy">
                       <strong>{project.name}</strong>
@@ -212,10 +239,6 @@ export function ProjectsRail(props: Props) {
                           : 'No sources'}
                       </small>
                     </span>
-                    {props.activeRunSessionId &&
-                    props.assignments[props.activeRunSessionId] === project.id ? (
-                      <span className="working-dot" title="Working" />
-                    ) : null}
                   </button>
                   <button
                     type="button"
@@ -246,24 +269,6 @@ export function ProjectsRail(props: Props) {
               </div>
             );
           })}
-          <div
-            className={`project-group inbox-group${
-              props.expanded.inbox !== false ? ' is-open' : ''
-            }`}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={dropInto(null)}
-          >
-            <div className="project-heading">
-              <button type="button" onClick={() => props.onToggleProject('inbox')}>
-                <Icon name="chevron" />
-                <Icon name="folder" />
-                <span>Inbox</span>
-              </button>
-            </div>
-            <div className="project-sessions">
-              {inbox.length ? inbox.map((session) => renderSession(session)) : <div className="rail-empty">No unassigned sessions</div>}
-            </div>
-          </div>
         </section>
       </div>
 
@@ -272,7 +277,6 @@ export function ProjectsRail(props: Props) {
           <Icon name="settings" />
           <span>Settings</span>
         </button>
-        <span className="rail-brand-dot" aria-hidden="true" />
       </div>
     </aside>
   );

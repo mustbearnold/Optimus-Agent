@@ -59,7 +59,8 @@ paid model, commit, push, publish, or deploy.
   surface, and 320 px single-surface reflow.
 - The Codex-measured convergence layer uses a 36 px title row, 240 px project
   rail, 720 px evidence workspace, 736 px composer cap, system UI typography,
-  neutral light/dark tokens, and an original local line-icon set.
+  neutral light/dark tokens, and Reicon Outline icons that inherit those tokens
+  through `currentColor`.
 - Local project catalog version 2 stores `rootPaths[]` and a `primaryRoot`,
   migrates the prior single `path`, and keeps session-to-project assignment
   separate. Adding a source does not broaden runtime filesystem permission.
@@ -70,9 +71,51 @@ paid model, commit, push, publish, or deploy.
   preview so the Electron child view cannot cover renderer overlays.
 - Empty-session starters are compact task rows, not equal-weight cards.
   Capabilities presents Rust packs and tools as an inspectable registry with a
-  separate unavailable boundary. At 320 CSS px the composer uses a two-column
-  control layout so provider, model, effort, access, and fast mode remain
-  visible without horizontal clipping.
+  separate unavailable boundary. The composer keeps Access as its first
+  control and collapses Provider, Model, effort, and Fast into one summary
+  button with a wider settings popover. At 320 CSS px both compact controls
+  remain reachable without horizontal clipping.
+- Completed assistant replies present their content directly rather than
+  repeating the Optimus sender name; active replies retain their terminal or
+  progress status where applicable.
+- Inactive primary-rail destinations use dim neutral text and icons; hover and
+  the active destination retain the brighter readable treatment.
+- Secondary rail section labels, including Projects, use the darker neutral
+  treatment without changing their adjacent action controls.
+- Project rows align their folder icon with the project-name line rather than
+  centering it across the project name and source-count stack.
+- User transcript cards use the one-step-lighter neutral surface while
+  assistant replies remain directly on the work surface.
+- User and assistant transcript body text uses a compact 13 px reading scale.
+- Session rows use an 8 px corner radius for a subtly softer active-state
+  outline.
+- Child session cards stay within their parent project title column and do not
+  extend into the project's reserved action area.
+- The top-bar separator is intentionally omitted only above the desktop project
+  rail; the work-surface separator remains visible.
+- The session-bar project disclosure is a folder-only accessible button; the
+  adjacent session title is context text and does not trigger the menu.
+- Browser chrome contains only navigation and the address field; the inactive
+  single-tab strip and redundant preview-status strip are omitted.
+- The session-bar folder control and session title sit on an 8 px left inset,
+  keeping the mini header aligned closely with its work-surface edge.
+- Completed assistant replies with a runtime-provided elapsed duration display a
+  compact “Worked for Xm XXs” header; historical replies without timing do not
+  invent one.
+- The composer omits its redundant local-checkout and ready-status footer.
+- Back/Forward, project-rail/workspace toggles, and Terminal share the slightly
+  lighter neutral chrome-icon treatment while hover and active states remain
+  high contrast.
+- Access uses an icon-first listbox without a trailing disclosure arrow; every
+  option has the same neutral icon treatment and remains keyboard selectable.
+- Codex and OpenAI-compatible model summaries use the concise visible order
+  “model number, model name, thinking level” (for example, “5.6 Terra High
+  effort”) rather than their internal model identifier.
+- Composer focus uses a neutral border treatment instead of a blue selection
+  outline while preserving visible keyboard focus.
+- The top bar keeps process-local browser-style history for visited app routes.
+  Back and Forward use full arrow glyphs, enable only when a matching history
+  entry exists, and a new route choice truncates the forward branch.
 
 ### Planned behaviour
 
@@ -196,6 +239,9 @@ work; they do not certify physical-monitor FPS.
   reduced-motion, and forced-color modes.
 - Compact navigation exposes a visible surface switcher and restores the work
   surface without relying on gesture-only behavior.
+- The Composer settings popover moves focus into its first field, closes on
+  Escape or outside interaction, and restores focus to its trigger on keyboard
+  dismissal.
 
 ## Safety and honesty
 
@@ -207,15 +253,21 @@ work; they do not certify physical-monitor FPS.
 - Artifact deletion opens an accessible confirmation boundary, focuses the
   non-destructive Cancel action first, and restores the initiating control
   after cancellation.
-- Messaging and specialist-agent orchestration remain visibly unavailable.
+- Mail provides a local, read-only Optimus update preview with list, reader,
+  and unread projection. External message delivery, account sync, notification
+  schedules, and customization remain visibly unavailable.
+- Specialist-agent orchestration remains visibly unavailable.
 - Browser annotations enter the composer only after an explicit one-shot page
   selection and remain untrusted text.
+- Tool activity is summary-first and expands with a native disclosure. Each
+  live tool projection belongs to its assistant turn; current transport data
+  does not claim persisted tool-call replay after renderer reload.
 
 ## Verification matrix
 
 | Gate | Proof |
 |---|---|
-| React unit/component | Typed transport races, layout migration, frame convergence, terminal de-duplication, IME and Send/Stop, confirmed/cancelled artifact deletion, static motion audit |
+| React unit/component | Typed transport races, layout migration, app-route back/forward history, local Mail list/reader/unread projection, Composer settings disclosure and keyboard dismissal, frame convergence, terminal de-duplication, IME and Send/Stop, confirmed/cancelled artifact deletion, static motion audit |
 | React build | TypeScript project build plus relative Vite production assets |
 | Browser contract | 1919, 1600, 960, 640, 480, 320, dark/light/reduced-motion, contrast, multi-folder sources, Settings navigation, and zero root overflow |
 | Electron policy | URL allow/deny and preload/main syntax checks |
@@ -226,11 +278,12 @@ work; they do not certify physical-monitor FPS.
 
 ## Engineering Memory baseline
 
-**Confirmed current behaviour at implementation entry on 2026-07-24:**
+**Confirmed current behaviour at this implementation entry on 2026-07-24:**
 `python3 scripts/engineering_memory.py check` reported
-`ENGINEERING_MEMORY_CURRENT`. The final handoff reports the post-generation
-source-tree identity and any validation gap separately; it does not invent a
-Git commit SHA.
+`ENGINEERING_MEMORY_STALE` because broader in-progress shell work had already
+changed mapped source and documentation. The final handoff reports the
+post-generation validation state and any remaining gap separately; it does not
+invent a Git commit SHA.
 
 ## Completion and rollback
 

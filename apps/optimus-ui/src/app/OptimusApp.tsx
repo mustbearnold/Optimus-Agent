@@ -22,7 +22,11 @@ import type {
 } from '../ipc/contracts';
 import { getTransport } from '../ipc';
 import { appReducer } from '../state/appReducer';
-import { conversationStore, useConversation } from '../state/conversationStore';
+import {
+  conversationStore,
+  useConversation,
+  useConversationIndicators,
+} from '../state/conversationStore';
 import {
   defaultLayout,
   loadLayout,
@@ -44,14 +48,15 @@ import {
 } from '../state/projectStore';
 import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
 import { TopBar } from '../components/chrome/TopBar';
-import { TruthStrip } from '../components/chrome/TruthStrip';
 import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
 import { TaskPanel } from '../components/execution/TaskPanel';
+import { MailPage } from '../components/mail/MailPage';
 import { ProjectsRail } from '../components/projects/ProjectsRail';
 import { ProjectSourcesDialog } from '../components/projects/ProjectSourcesDialog';
 import { SettingsDialog } from '../components/settings/SettingsDialog';
 import { Composer } from '../components/workbench/Composer';
+import { SessionBar } from '../components/workbench/SessionBar';
 import { Transcript } from '../components/workbench/Transcript';
 import { ArtifactsSurface } from '../components/workspace/ArtifactsSurface';
 import { WorkspacePane } from '../components/workspace/WorkspacePane';
@@ -66,6 +71,11 @@ type ComposerSettings = {
   fast: boolean;
 };
 
+type AreaHistory = {
+  entries: AppRoute[];
+  index: number;
+};
+
 const initialComposer: ComposerSettings = {
   provider: 'offline',
   model: 'offline-echo',
@@ -73,6 +83,12 @@ const initialComposer: ComposerSettings = {
   access: 'ask',
   fast: false,
 };
+
+function projectMentionedInSessionTitle(session: SessionMeta, projects: Project[]) {
+  const title = session.title?.trim().toLocaleLowerCase();
+  if (!title) return null;
+  return projects.find((project) => title.includes(project.name.trim().toLocaleLowerCase())) || null;
+}
 
 export function OptimusApp() {
   const [state, dispatch] = useReducer(appReducer, undefined, () => ({
@@ -97,6 +113,10 @@ export function OptimusApp() {
   const [sourceProjectId, setSourceProjectId] = useState<string | null>(null);
   const [composer, setComposer] = useState(initialComposer);
   const [bootError, setBootError] = useState('');
+  const [areaHistory, setAreaHistory] = useState<AreaHistory>(() => ({
+    entries: [state.layout.route],
+    index: 0,
+  }));
   const activeHandle = useRef<ChatHandle | null>(null);
   const draggingLayout = useRef(false);
   const latestLayout = useRef(state.layout);
@@ -111,6 +131,9 @@ export function OptimusApp() {
     state.settingsOpen || state.taskPanelOpen || Boolean(sourceProject);
   const conversation = useConversation(state.selectedSessionId);
   const activeConversation = useConversation(state.activeRunSessionId);
+  const sessionIndicators = useConversationIndicators(
+    sessions.map((session) => session.id)
+  );
 
   const refreshRuntime = useCallback(async () => {
     try {
@@ -165,21 +188,66 @@ export function OptimusApp() {
   useEffect(() => {
     if (!draggingLayout.current) saveLayout(state.layout);
   }, [state.layout]);
+  useEffect(() => {
+    if (!sessions.length || !projects.length) return;
+    setAssignments((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const session of sessions) {
+        if (next[session.id]) continue;
+        const project = projectMentionedInSessionTitle(session, projects) || projects[0];
+        if (!project) continue;
+        next[session.id] = project.id;
+        changed = true;
+      }
+      return changed ? next : current;
+    });
+  }, [projects, sessions]);
   useEffect(() => saveProjects(projects), [projects]);
   useEffect(() => saveSessionPins(pins), [pins]);
   useEffect(() => saveAssignments(assignments), [assignments]);
   useEffect(() => saveExpanded(expanded), [expanded]);
 
+  const applyRoute = (route: AppRoute) => {
+    dispatch({
+      type: 'patch-layout',
+      patch: {
+        route,
+        compactSurface: route === 'work' ? 'work' : state.layout.compactSurface,
+      },
+    });
+  };
+
+  const setRoute = (route: AppRoute) => {
+    setAreaHistory((current) => {
+      if (current.entries[current.index] === route) return current;
+      const entries = [...current.entries.slice(0, current.index + 1), route];
+      return { entries, index: entries.length - 1 };
+    });
+    applyRoute(route);
+  };
+
+  const moveAreaHistory = (offset: -1 | 1) => {
+    const index = areaHistory.index + offset;
+    const route = areaHistory.entries[index];
+    if (!route) return;
+    setAreaHistory((current) => ({ ...current, index }));
+    applyRoute(route);
+  };
+
   const openSession = (id: string) => {
     dispatch({ type: 'select-session', id });
-    dispatch({ type: 'patch-layout', patch: { route: 'work', compactSurface: 'work' } });
+    setRoute('work');
   };
 
   const newSession = async (projectId?: string) => {
     try {
       const created = await transport.invoke<SessionMeta>('new_session');
       setSessions((current) => [created, ...current.filter((session) => session.id !== created.id)]);
-      if (projectId) setAssignments((current) => ({ ...current, [created.id]: projectId }));
+      const targetProjectId = projectId || selectedProject?.id || projects[0]?.id;
+      if (targetProjectId) {
+        setAssignments((current) => ({ ...current, [created.id]: targetProjectId }));
+      }
       openSession(created.id);
     } catch (error) {
       setBootError(error instanceof Error ? error.message : String(error));
@@ -242,10 +310,6 @@ export function OptimusApp() {
     }
   };
 
-  const setRoute = (route: AppRoute) => {
-    dispatch({ type: 'patch-layout', patch: { route, compactSurface: route === 'work' ? 'work' : state.layout.compactSurface } });
-  };
-
   const setWorkspaceTab = (tab: WorkspaceTab) => {
     dispatch({ type: 'patch-layout', patch: { workspaceTab: tab, workspaceOpen: true, compactSurface: tab } });
   };
@@ -293,19 +357,20 @@ export function OptimusApp() {
     <ErrorBoundary>
       <div className="optimus-app" style={style} data-compact-surface={state.layout.compactSurface}>
         <TopBar
-          title={title}
-          projectName={selectedProject?.name}
-          projectSourceCount={selectedProject?.rootPaths.length}
-          route={state.layout.route}
           activeTasks={(state.activeRunSessionId ? 1 : 0) + approvals.length}
+          canGoBack={areaHistory.index > 0}
+          canGoForward={areaHistory.index < areaHistory.entries.length - 1}
           workspaceOpen={workspaceVisible}
           executionOpen={state.layout.executionOpen}
+          workspaceTab={state.layout.workspaceTab}
           theme={state.theme}
+          onBack={() => moveAreaHistory(-1)}
+          onForward={() => moveAreaHistory(1)}
           onToggleRail={() => dispatch({ type: 'patch-layout', patch: { leftCollapsed: !state.layout.leftCollapsed } })}
           onToggleWorkspace={() => dispatch({ type: 'patch-layout', patch: { workspaceOpen: !workspaceVisible } })}
           onToggleExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: !state.layout.executionOpen, compactSurface: 'execution' } })}
+          onWorkspaceTab={setWorkspaceTab}
           onToggleTasks={() => dispatch({ type: 'tasks', open: !state.taskPanelOpen })}
-          onRoute={setRoute}
           onTheme={() => dispatch({ type: 'theme', theme: state.theme === 'dark' ? 'light' : 'dark' })}
           onWindow={(action) => void transport.windowAction(action)}
         />
@@ -327,7 +392,7 @@ export function OptimusApp() {
             pins={pins}
             expanded={expanded}
             selectedSessionId={state.selectedSessionId}
-            activeRunSessionId={state.activeRunSessionId}
+            sessionIndicators={sessionIndicators}
             route={state.layout.route}
             onSelectSession={openSession}
             onNewSession={(projectId) => void newSession(projectId)}
@@ -373,9 +438,9 @@ export function OptimusApp() {
               <section className={`work-surface${workVisible ? ' is-compact-active' : ''}`} aria-label="Agent work surface">
                 {state.layout.route === 'work' ? (
                   <>
+                    <SessionBar title={title} project={selectedProject} showSeparator={workspaceVisible} />
                     <Transcript
                       messages={conversation.messages}
-                      tools={conversation.tools}
                       status={conversation.status}
                       statusText={conversation.statusText}
                       onStarter={(text) => setInput(text)}
@@ -394,11 +459,16 @@ export function OptimusApp() {
                   </>
                 ) : state.layout.route === 'capabilities' ? (
                   <CapabilitiesPage doctor={doctor} approvals={approvals} campaigns={campaigns} onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })} />
+                ) : state.layout.route === 'mail' ? (
+                  <MailPage
+                    projects={projects}
+                    sessions={sessions}
+                    assignments={assignments}
+                    activeRunSessionId={state.activeRunSessionId}
+                  />
                 ) : state.layout.route === 'artifacts' ? (
                   <ArtifactsSurface transport={transport} active standalone />
-                ) : (
-                  <UnavailableRoute />
-                )}
+                ) : null}
               </section>
 
               {workspaceVisible ? (
@@ -409,8 +479,6 @@ export function OptimusApp() {
                       tab={state.layout.workspaceTab}
                       transport={transport}
                       suspended={browserSuspended}
-                      onTab={setWorkspaceTab}
-                      onClose={() => dispatch({ type: 'patch-layout', patch: { workspaceOpen: false, compactSurface: 'work' } })}
                       onAnnotation={(text) => { setAnnotation(text); dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } }); }}
                     />
                   </div>
@@ -427,7 +495,6 @@ export function OptimusApp() {
           </section>
         </div>
 
-        <TruthStrip doctor={doctor} transport={transport.kind} runLabel={state.activeRunSessionId ? statusLabel(activeConversation.status) : 'idle'} />
         <TaskPanel open={state.taskPanelOpen} jobs={jobs} approvals={approvals} runSession={activeSession} runStatus={busyStatus} onClose={() => dispatch({ type: 'tasks', open: false })} onStop={() => void stop()} />
         <SettingsDialog
           open={state.settingsOpen}
@@ -468,20 +535,6 @@ function SurfaceButton({
   onSelect: (surface: CompactSurface) => void;
 }) {
   return <button type="button" role="tab" aria-selected={current === surface} onClick={() => onSelect(surface)}>{surface}</button>;
-}
-
-function UnavailableRoute() {
-  return (
-    <main className="unavailable-route" aria-label="Messaging unavailable">
-      <span className="unavailable-icon"><Icon name="chat" /></span>
-      <h1>Messaging is unavailable</h1>
-      <p>This build does not implement cross-user messaging. Optimus will not pretend that a configured route is a working capability.</p>
-    </main>
-  );
-}
-
-function statusLabel(status: string) {
-  return status.replaceAll('_', ' ');
 }
 
 function clamp(value: number, minimum: number, maximum: number) {

@@ -17,6 +17,20 @@ const nativeState: BrowserState = {
 };
 
 describe('BrowserSurface annotations', () => {
+  it('keeps browser navigation compact without a tab strip or status strip', async () => {
+    render(
+      <BrowserSurface
+        transport={transportWithBrowser(vi.fn(async () => ({ cancelled: true })))}
+        active
+        onAnnotation={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByRole('toolbar', { name: 'Browser navigation' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Preview tabs')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('projects bounded native element context into a human-readable composer note', async () => {
     const onAnnotation = vi.fn();
     const annotate = vi.fn(async () => ({

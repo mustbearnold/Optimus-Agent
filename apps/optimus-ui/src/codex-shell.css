@@ -6,11 +6,21 @@
  * and keeps its runtime/safety contracts authoritative.
  */
 
+@font-face {
+  font-family: "Atmosphere";
+  src: url("./assets/fonts/Atmosphere-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
   --canvas: #ffffff;
   --rail: #f7f7f7;
+  --project-rail-bg: #f2f2f2;
+  --work-surface-bg: #f7f7f7;
   --surface: #ffffff;
   --surface-2: #f5f5f5;
   --surface-3: #eeeeee;
@@ -23,6 +33,9 @@
   --text-2: #303030;
   --muted: #686868;
   --faint: #8b8b8b;
+  --rail-nav-text: #787878;
+  --rail-nav-drop-shadow-color: rgba(0, 0, 0, 0.32);
+  --chrome-control-icon: #606060;
   --accent: #2f6feb;
   --accent-strong: #225fc9;
   --accent-soft: rgba(47, 111, 235, 0.1);
@@ -36,6 +49,8 @@
   --radius-sm: 5px;
   --radius: 8px;
   --radius-lg: 12px;
+  --rail-card-inset: inset 0 1px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.12);
   --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.14), 0 1px 4px rgba(0, 0, 0, 0.08);
   --shadow-dialog: 0 18px 60px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -48,6 +63,8 @@
   color-scheme: dark;
   --canvas: #202020;
   --rail: #191919;
+  --project-rail-bg: #151515;
+  --work-surface-bg: #1b1b1b;
   --surface: #202020;
   --surface-2: #292929;
   --surface-3: #323232;
@@ -60,6 +77,9 @@
   --text-2: #dddddd;
   --muted: #a2a2a2;
   --faint: #7e7e7e;
+  --rail-nav-text: #b8b8b8;
+  --rail-nav-drop-shadow-color: rgba(0, 0, 0, 0.9);
+  --chrome-control-icon: #b2b2b2;
   --accent: #7aa2f7;
   --accent-strong: #a8c1ff;
   --accent-soft: rgba(122, 162, 247, 0.14);
@@ -68,6 +88,8 @@
   --danger: #e36876;
   --danger-contrast: #191919;
   --danger-soft: rgba(227, 104, 118, 0.12);
+  --rail-card-inset: inset 0 1px 2px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.34);
   --shadow-popover: 0 10px 28px rgba(0, 0, 0, 0.42);
   --shadow-dialog: 0 22px 70px rgba(0, 0, 0, 0.52);
 }
@@ -131,8 +153,19 @@ svg {
 }
 
 .topbar {
+  position: relative;
   grid-template-columns: minmax(0, 1fr) auto auto;
   border-bottom-color: var(--border);
+  background: var(--rail);
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: var(--rail-width);
+  height: 1px;
   background: var(--rail);
 }
 
@@ -151,6 +184,33 @@ svg {
   gap: 6px;
   padding-inline: 8px;
   color: var(--muted);
+}
+
+.toolbar-button.chrome-icon-button,
+.window-controls .window-workspace-control {
+  color: var(--chrome-control-icon);
+}
+
+.toolbar-button.chrome-icon-button:hover,
+.toolbar-button.chrome-icon-button[aria-pressed="true"],
+.window-controls .window-workspace-control:hover,
+.window-controls .window-workspace-control[aria-pressed="true"] {
+  color: var(--text);
+}
+
+.toolbar-button.chrome-icon-button:disabled {
+  color: var(--chrome-control-icon);
+  opacity: 0.82;
+}
+
+.toolbar-button-icon-only {
+  min-width: 30px;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.toolbar-button-with-count {
+  min-width: 40px;
 }
 
 .toolbar-label {
@@ -234,17 +294,33 @@ svg {
   height: 14px;
 }
 
+.window-controls .window-control-icon {
+  width: 11px;
+  height: 11px;
+  stroke: currentColor;
+  stroke-width: 1.1;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  shape-rendering: geometricPrecision;
+}
+
 .app-body {
   grid-template-columns: var(--rail-width) 1px minmax(0, 1fr);
 }
 
 .project-rail {
   border-right: 0;
-  background: var(--rail);
+  background: var(--project-rail-bg);
 }
 
 .rail-primary {
   padding: 8px 8px 5px;
+}
+
+.rail-product-mark > span {
+  font-family: "Atmosphere", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.1em;
+  font-weight: 700;
 }
 
 .rail-action-row {
@@ -270,6 +346,15 @@ svg {
   font-size: 12px;
 }
 
+.rail-search input:focus-visible {
+  box-shadow: none;
+}
+
+.rail-search > svg {
+  width: 13px;
+  height: 13px;
+}
+
 .rail-search kbd {
   border: 0;
   color: var(--faint);
@@ -291,20 +376,49 @@ svg {
 .rail-nav button,
 .rail-footer button {
   height: 31px;
-  gap: 9px;
+  gap: 7px;
   padding-inline: 8px;
   border-radius: 6px;
-  color: var(--text-2);
+  color: var(--faint);
   font-size: 13px;
+}
+
+/* Keep rail glyphs optically level with the 13px navigation labels. */
+.rail-nav button > svg {
+  width: 13px;
+  height: 13px;
+}
+
+.rail-nav button {
+  color: var(--rail-nav-text);
+  transition: color 70ms linear, background-color 70ms linear, text-shadow 70ms linear;
+}
+
+.rail-nav button > svg {
+  transition: filter 70ms linear;
+}
+
+.rail-nav button:hover,
+.rail-nav button:active,
+.rail-nav button.is-active {
+  color: var(--rail-nav-text);
+  text-shadow: 0 1px 0 var(--rail-nav-drop-shadow-color);
+}
+
+.rail-nav button:hover > svg,
+.rail-nav button:active > svg,
+.rail-nav button.is-active > svg {
+  filter: drop-shadow(0 1px 0 var(--rail-nav-drop-shadow-color));
 }
 
 .rail-nav button.is-active {
   box-shadow: none;
   background: var(--selected);
+  color: var(--rail-nav-text);
 }
 
 .rail-scroll {
-  padding: 2px 6px 14px;
+  padding: 2px 8px 14px;
   scrollbar-color: var(--border-strong) transparent;
 }
 
@@ -315,11 +429,35 @@ svg {
 .rail-section-heading {
   height: 28px;
   padding: 0 8px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--faint);
+  font-size: 13px;
+  font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.rail-section-heading.projects-heading {
+  padding-right: 2px;
+}
+
+.add-project-button {
+  width: 24px;
+  min-width: 24px;
+  height: 28px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+.add-project-button > svg {
+  width: 13px;
+  height: 13px;
+}
+
+.add-project-button:hover,
+.add-project-button:focus-visible {
+  color: var(--text-2);
+  background: transparent;
 }
 
 .project-group {
@@ -327,31 +465,59 @@ svg {
 }
 
 .project-heading {
-  grid-template-columns: minmax(0, 1fr) 28px 28px;
+  grid-template-columns: minmax(0, 1fr) 14px 14px;
   min-width: 0;
+  column-gap: 1px;
+  padding-right: 2px;
+  border-radius: 5px;
 }
 
 .project-heading > button {
-  height: 44px;
-  padding-inline: 5px;
+  height: 22px;
+  padding: 0 5px 0 8px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.project-heading > .project-toggle {
+  min-width: 0;
+}
+
+.project-heading > .project-toggle > svg {
+  align-self: center;
+  margin-top: 0;
+  width: 12px;
+  height: 12px;
 }
 
 .project-heading > button:not(:first-child) {
   visibility: hidden;
-  width: 28px;
+  width: 14px;
+  min-width: 14px;
   justify-content: center;
+  align-items: center;
   padding: 0;
   color: var(--muted);
+  background: transparent;
+}
+
+.project-heading > button:not(:first-child) > svg {
+  width: 12px;
+  height: 12px;
+  transform: none;
 }
 
 .project-heading:hover > button:not(:first-child),
+.project-heading:focus-within > button:not(:first-child),
 .project-heading > button:not(:first-child):focus,
 .project-heading > button:not(:first-child):focus-visible {
   visibility: visible;
 }
 
-.project-heading > button.project-manage-button {
-  visibility: visible;
+.project-heading > button:not(:first-child):hover,
+.project-heading > button:not(:first-child):focus-visible {
+  color: var(--text-2);
+  background: transparent;
 }
 
 .project-heading .project-copy {
@@ -373,28 +539,43 @@ svg {
 .project-copy strong {
   color: var(--text-2);
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 450;
 }
 
 .project-copy small {
-  color: var(--faint);
-  font-size: 10px;
-  font-weight: 400;
+  display: none;
 }
 
 .project-sessions {
-  padding-left: 18px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.project-sessions .session-row {
+  width: 100%;
 }
 
 .session-row {
   grid-template-columns: minmax(0, 1fr) 26px;
+  border-radius: 5px;
+  box-shadow: none;
+}
+
+.session-row:hover,
+.session-row.is-active {
+  box-shadow: var(--rail-card-inset);
 }
 
 .session-select {
-  height: 36px;
-  grid-template-columns: 7px minmax(0, 1fr);
-  gap: 5px;
-  padding-inline: 6px 2px;
+  min-height: 20.16px;
+  height: 20.16px;
+  grid-template-columns: minmax(0, 1fr);
+  padding-inline: 27px 2px;
+}
+
+.session-row .row-more {
+  min-height: 20.16px;
+  height: 20.16px;
 }
 
 .session-copy {
@@ -407,7 +588,7 @@ svg {
 }
 
 .session-copy small {
-  font-size: 10px;
+  display: none;
 }
 
 .row-menu {
@@ -443,13 +624,17 @@ svg {
   background: var(--border);
 }
 
+.rail-resizer {
+  box-shadow: -4px 0 10px -2px rgba(0, 0, 0, 0.35);
+}
+
 .rail-resizer::after,
 .workspace-resizer::after {
-  inset: 0 -3px;
+  inset: 0 -5px;
 }
 
 .execution-resizer::after {
-  inset: -3px 0;
+  inset: -5px 0;
 }
 
 .surface-row {
@@ -457,7 +642,7 @@ svg {
 }
 
 .work-surface {
-  background: var(--canvas);
+  background: var(--work-surface-bg);
 }
 
 .workspace-shell {
@@ -489,22 +674,6 @@ svg {
   background: transparent;
 }
 
-.browser-tabs {
-  height: 32px;
-  gap: 3px;
-  padding: 3px 5px 0;
-  background: var(--rail);
-}
-
-.browser-tab {
-  width: min(220px, 55%);
-  height: 29px;
-  padding-inline: 8px;
-  border-radius: 7px 7px 0 0;
-  background: var(--surface);
-  font-size: 12px;
-}
-
 .browser-chrome {
   height: 40px;
   gap: 2px;
@@ -529,27 +698,6 @@ svg {
   font-size: 12px;
 }
 
-.browser-status {
-  height: 24px;
-  padding-inline: 10px;
-  font-size: 11px;
-}
-
-.browser-status > span:last-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.annotation-pulse {
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
-  animation: annotation-pulse 900ms ease-out infinite alternate;
-}
-
 .browser-hole.is-annotating {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
@@ -563,7 +711,7 @@ svg {
 
 .transcript-inner {
   width: min(100%, 768px);
-  padding: 38px 34px 28px;
+  padding: 38px 17px 28px;
 }
 
 .message {
@@ -576,9 +724,20 @@ svg {
   font-size: 11px;
 }
 
+.message-worked {
+  margin-bottom: 6px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.message-worked span {
+  margin-left: 2px;
+}
+
 .message-body {
-  color: var(--text-2);
-  font-size: 14px;
+  color: var(--text);
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -587,7 +746,7 @@ svg {
   padding: 10px 13px;
   border-color: transparent;
   border-radius: 16px;
-  background: var(--surface-2);
+  background: var(--surface-3);
 }
 
 .work-empty {
@@ -630,7 +789,7 @@ svg {
 .composer-shell {
   width: min(calc(100% - 32px), 736px);
   padding: 5px 0 12px;
-  background: linear-gradient(180deg, transparent, var(--canvas) 16px);
+  background: linear-gradient(180deg, transparent, var(--work-surface-bg) 16px);
 }
 
 .composer-card {
@@ -643,6 +802,14 @@ svg {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.34);
 }
 
+:root[data-theme="dark"] .session-title,
+:root[data-theme="dark"] .session-project-trigger > svg:first-child,
+:root[data-theme="dark"] .message-meta,
+:root[data-theme="dark"] .message-body,
+:root[data-theme="dark"] .composer-card textarea {
+  color: #ffffff;
+}
+
 .composer-card textarea {
   min-height: 48px;
   padding: 13px 14px 5px;
@@ -653,12 +820,15 @@ svg {
 .composer-controls {
   min-height: 40px;
   gap: 5px;
-  padding: 4px 7px 6px 10px;
+  padding: 5px 7px 5px 10px;
 }
 
 .composer-selects select,
-.fast-toggle {
-  height: 29px;
+.fast-toggle,
+.composer-settings-trigger,
+.composer-access-trigger {
+  height: 27px;
+  border-radius: 999px;
   font-size: 12px;
 }
 
@@ -1121,7 +1291,12 @@ svg {
 }
 
 :root[data-density="compact"] .session-select {
-  height: 32px;
+  height: 23.04px;
+}
+
+:root[data-density="compact"] .session-row .row-more {
+  min-height: 23.04px;
+  height: 23.04px;
 }
 
 :root[data-density="compact"] .project-heading > button {
@@ -1135,7 +1310,6 @@ svg {
 
 @media (max-width: 1279px) {
   .optimus-app {
-    --rail-width: 240px !important;
     --workspace-width: min(var(--workspace-width), 44vw);
   }
 
@@ -1144,7 +1318,7 @@ svg {
   }
 
   .transcript-inner {
-    padding-inline: 26px;
+    padding-inline: 13px;
   }
 }
 
@@ -1180,8 +1354,12 @@ svg {
 }
 
 @media (max-width: 899px) {
+  .topbar::after {
+    display: none;
+  }
+
   .optimus-app {
-    grid-template-rows: var(--topbar-h) 34px 1fr var(--truth-h);
+    grid-template-rows: var(--topbar-h) 34px 1fr;
   }
 
   .compact-switcher {
@@ -1312,7 +1490,7 @@ svg {
   }
 
   .transcript-inner {
-    padding: 28px 14px 18px;
+    padding: 28px 7px 18px;
   }
 
   .composer-shell {
@@ -1389,7 +1567,11 @@ svg {
 
   .composer-selects label,
   .composer-selects select,
-  .fast-toggle {
+  .composer-access,
+  .composer-access-trigger,
+  .fast-toggle,
+  .composer-settings-control,
+  .composer-settings-trigger {
     width: 100%;
     min-width: 0;
     max-width: none;

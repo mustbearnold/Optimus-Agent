@@ -1,37 +1,123 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { Message, RunStatus, ToolActivity } from '../../ipc/contracts';
+import type { Message, RunStatus } from '../../ipc/contracts';
+import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
 import { ActivityTimeline } from './ActivityTimeline';
 
 const MessageRow = memo(function MessageRow({ message }: { message: Message }) {
+  const visibleContent = useTypewriterContent(message);
+  const revealing = visibleContent !== message.content;
+  const activeAssistantStatus =
+    message.role === 'assistant' && message.status && message.status !== 'completed';
+
   return (
     <article
       className={`message message-${message.role}`}
       data-status={message.status || 'completed'}
       data-message-id={message.id}
     >
-      <div className="message-meta">
-        <span>{message.role === 'user' ? 'You' : 'Optimus'}</span>
-        {message.role === 'assistant' && message.status && message.status !== 'completed' ? (
-          <span className="message-status">{statusLabel(message.status)}</span>
-        ) : null}
-      </div>
+      {activeAssistantStatus ? (
+        <div className="message-meta">
+          <span className="message-status">{statusLabel(message.status!)}</span>
+        </div>
+      ) : null}
+      {message.role === 'assistant' && message.status === 'completed' && !revealing && typeof message.durationMs === 'number' ? (
+        <div className="message-worked" aria-label={`Worked for ${formatDuration(message.durationMs)}`}>
+          Worked for {formatDuration(message.durationMs)} <span aria-hidden="true">›</span>
+        </div>
+      ) : null}
       <div className="message-body">
-        {message.content || (message.status === 'working' ? <span className="stream-caret">Working</span> : null)}
+        {visibleContent || (message.status === 'working' ? <span className="stream-caret">Working</span> : null)}
       </div>
+      {message.role === 'assistant' && message.tools?.length ? (
+        <ActivityTimeline tools={message.tools} />
+      ) : null}
     </article>
   );
 });
 
+const typewriterTailLength = 180;
+const liveStatuses = new Set<RunStatus>([
+  'submitting',
+  'working',
+  'awaiting_approval',
+  'cancelling',
+]);
+
+function useTypewriterContent(message: Message) {
+  const liveAssistant =
+    message.role === 'assistant' && Boolean(message.status && liveStatuses.has(message.status));
+  const streamed = useRef(liveAssistant);
+  const visibleRef = useRef(message.content);
+  const visibleCharacterCount = useRef(Array.from(message.content).length);
+  const targetCharacters = useRef(Array.from(message.content));
+  const [visible, setVisible] = useState(message.content);
+  const frameKey = `typewriter:${message.id}`;
+  const revealNext = useRef<() => void>(() => undefined);
+
+  if (liveAssistant) streamed.current = true;
+  targetCharacters.current = Array.from(message.content);
+
+  revealNext.current = () => {
+    const target = targetCharacters.current;
+    let nextCount = visibleCharacterCount.current;
+    const backlog = target.length - nextCount;
+    if (backlog <= 0) return;
+
+    nextCount =
+      backlog > typewriterTailLength
+        ? target.length - typewriterTailLength
+        : nextCount + 1;
+    const next = target.slice(0, nextCount).join('');
+    visibleCharacterCount.current = nextCount;
+    visibleRef.current = next;
+    setVisible(next);
+
+    if (nextCount < target.length) {
+      frameCoordinator.scheduleKeyed('content', frameKey, () => revealNext.current());
+    }
+  };
+
+  useEffect(() => {
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const currentIsPrefix = message.content.startsWith(visibleRef.current);
+    const animate =
+      message.role === 'assistant' &&
+      streamed.current &&
+      !reducedMotion &&
+      !document.hidden &&
+      currentIsPrefix;
+
+    if (!animate) {
+      frameCoordinator.cancelKeyed('content', frameKey);
+      visibleRef.current = message.content;
+      visibleCharacterCount.current = targetCharacters.current.length;
+      setVisible(message.content);
+      return;
+    }
+
+    if (visibleRef.current !== message.content) {
+      frameCoordinator.scheduleKeyed('content', frameKey, () => revealNext.current());
+    }
+  }, [frameKey, message.content, message.role, message.status]);
+
+  useEffect(
+    () => () => frameCoordinator.cancelKeyed('content', frameKey),
+    [frameKey]
+  );
+
+  return visible;
+}
+
 export function Transcript({
   messages,
-  tools,
   status,
   statusText,
   onStarter,
 }: {
   messages: Message[];
-  tools: ToolActivity[];
   status: RunStatus;
   statusText: string;
   onStarter: (text: string) => void;
@@ -101,7 +187,6 @@ export function Transcript({
         {visible.map((message) => (
           <MessageRow message={message} key={message.id} />
         ))}
-        {messages.length ? <ActivityTimeline tools={tools} statusText={statusText} /> : null}
         {status === 'disconnected' || status === 'failed' ? (
           <div className="inline-notice is-error" role="status">
             <Icon name="warning" />
@@ -169,4 +254,9 @@ function statusLabel(status: RunStatus) {
     default:
       return '';
   }
+}
+
+function formatDuration(durationMs: number) {
+  const seconds = Math.max(0, Math.round(durationMs / 1000));
+  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
 }
