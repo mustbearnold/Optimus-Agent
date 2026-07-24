@@ -74,6 +74,13 @@ EXCLUDED_PARTS = {
     "dist",
     "build",
 }
+EXCLUDED_SUFFIXES = {
+    ".tsbuildinfo",
+    ".pyc",
+    ".pyo",
+    ".pdb",
+    ".rs.bk",
+}
 SENSITIVE_NAMES = {
     ".env",
     "auth.json",
@@ -234,7 +241,12 @@ def is_excluded(path: Path) -> bool:
         parts = path.relative_to(ROOT).parts
     except ValueError:
         return True
-    return any(part in EXCLUDED_PARTS for part in parts)
+    if any(part in EXCLUDED_PARTS for part in parts):
+        return True
+    name = path.name.lower()
+    if name.endswith(tuple(EXCLUDED_SUFFIXES)):
+        return True
+    return False
 
 
 def is_sensitive(path: Path) -> bool:
@@ -2306,14 +2318,26 @@ def build_context_pack(
     model_registry = loaded.get("model-registry.json", {})
     gaps.extend(model_registry.get("known_gaps", [])[:2])
     if gaps:
-        lines.append("GAPS:")
-        for gap in gaps:
-            lines.append(f"  - {gap}")
+        gap_block = ["GAPS:", *[f"  - {gap}" for gap in gaps]]
+        candidate_lines = lines + gap_block
+        if estimate_tokens("\n".join(candidate_lines) + "\n") <= budget_tokens:
+            lines.extend(gap_block)
+        else:
+            lines.append("GAPS: (omitted for budget)")
+    # Hard-clamp: never exceed the declared budget for agent prompt loading.
+    while len(lines) > 4 and estimate_tokens("\n".join(lines) + "\n") > budget_tokens:
+        lines.pop()
     text = "\n".join(lines) + "\n"
+    used = estimate_tokens(text)
+    if used > budget_tokens:
+        # Pathological tiny budgets: keep header only.
+        header = lines[:3] if len(lines) >= 3 else lines
+        text = "\n".join(header) + "\n# truncated_to_budget\n"
+        used = estimate_tokens(text)
     return {
         "ok": True,
         "budget_tokens": budget_tokens,
-        "used_tokens": estimate_tokens(text),
+        "used_tokens": used,
         "elapsed_ms": int((time.perf_counter() - started) * 1000),
         "tree_sha256": tree,
         "text": text,
