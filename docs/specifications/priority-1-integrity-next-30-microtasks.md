@@ -23,7 +23,7 @@ depends_on:
   - docs/contracts/high-risk-contracts.md
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
 validated_by:
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
   - apps/optimus-cli/tests/gateway_http.rs
   - scripts/test_engineering_memory.py
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894

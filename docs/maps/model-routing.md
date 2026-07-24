@@ -15,7 +15,7 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/tests/codex_oauth.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
   - apps/optimus-cli/tests/**
   - apps/optimus-desktop/e2e/**
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec

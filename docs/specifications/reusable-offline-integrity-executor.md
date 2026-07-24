@@ -2,9 +2,9 @@
 knowledge_type: specification
 status: historical
 covers:
-  - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-eval/src/eval.rs
   - crates/optimus-kernel/src/lib.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
   - docs/maps/observability-and-evaluations.md
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
@@ -12,7 +12,7 @@ depends_on:
   - docs/specifications/fail-closed-evaluation-report-validation.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
 validated_by:
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
 last_verified_commit: c3aa28fb78a47a485dc1cb57d7066695f8d0d195
 ---
 

@@ -7,7 +7,9 @@ members = [
     "crates/optimus-memory",
     "crates/optimus-skills",
     "crates/optimus-packs",
+    "crates/optimus-ops",
     "crates/optimus-kernel",
+    "crates/optimus-eval",
     "crates/optimus-browser",
     "apps/optimus-cli",
     "apps/optimus-desktop",
@@ -19,7 +21,9 @@ default-members = [
     "crates/optimus-memory",
     "crates/optimus-skills",
     "crates/optimus-packs",
+    "crates/optimus-ops",
     "crates/optimus-kernel",
+    "crates/optimus-eval",
     "apps/optimus-cli",
 ]
 
@@ -38,7 +42,9 @@ optimus-runtime = { path = "crates/optimus-runtime" }
 optimus-memory = { path = "crates/optimus-memory" }
 optimus-skills = { path = "crates/optimus-skills" }
 optimus-packs = { path = "crates/optimus-packs" }
+optimus-ops = { path = "crates/optimus-ops" }
 optimus-kernel = { path = "crates/optimus-kernel" }
+optimus-eval = { path = "crates/optimus-eval" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

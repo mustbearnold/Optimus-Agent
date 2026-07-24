@@ -26,7 +26,7 @@ depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
 validated_by:
   - crates/optimus-memory/tests/metamemory_mvp.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
   - scripts/test_engineering_memory.py
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---

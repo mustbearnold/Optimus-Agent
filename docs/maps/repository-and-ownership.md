@@ -40,9 +40,11 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ## Audit basis
 
 **Confirmed current behaviour:** this is a Rust 2021 workspace with Rust 1.85 as
-the declared minimum. `cargo metadata --no-deps` reports nine workspace
-packages: seven libraries and two applications. The desktop application is not
-a default workspace member, but it is a workspace member.
+the declared minimum. `cargo metadata --no-deps` reports eleven workspace
+packages among default members plus desktop: libraries include store, graph,
+runtime, memory, skills, packs, ops, kernel, eval, browser; applications are
+cli and desktop. The desktop application is not a default workspace member, but
+it is a workspace member.
 
 **Confirmed current behaviour:** the repository is a Git checkout on `main` with
 GitHub `origin`; Engineering Memory records both commit identity and deterministic
@@ -62,8 +64,10 @@ the root Cargo workspace.
 | `optimus-memory` | library | Evidence-native runtime memory and temporal recall | none |
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
 | `optimus-packs` | library | Canonical tool/pack descriptor, operational metadata, and capability budgets | none |
-| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution/replay/trace manifests, routing telemetry, versioned evaluation, credentials, and high-level operator services | graph, runtime, memory, skills, packs |
-| `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, graph, runtime, skills, packs |
+| `optimus-ops` | library | Operator gateway delivery authority and cron schedule store | none |
+| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution/trace manifests, routing telemetry, credentials; re-exports ops | graph, runtime, memory, skills, packs, ops |
+| `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
+| `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Rust host plus Wry/Tao rollback shell, native IPC, and HTTP test harness | kernel, graph, runtime, packs |
 
 ## Application surfaces

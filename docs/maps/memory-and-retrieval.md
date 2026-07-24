@@ -4,8 +4,8 @@ status: current
 owns:
   - crates/optimus-memory/src/lib.rs
   - crates/optimus-kernel/src/session.rs
-  - crates/optimus-kernel/src/gateway.rs
-  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-ops/src/gateway.rs
+  - crates/optimus-ops/src/cron.rs
   - crates/optimus-skills/src/lib.rs
   - crates/optimus-runtime/src/campaign.rs
 watches:
@@ -14,8 +14,8 @@ watches:
 covers:
   - crates/optimus-memory/src/lib.rs
   - crates/optimus-kernel/src/session.rs
-  - crates/optimus-kernel/src/gateway.rs
-  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-ops/src/gateway.rs
+  - crates/optimus-ops/src/cron.rs
   - crates/optimus-skills/src/lib.rs
   - crates/optimus-runtime/src/campaign.rs
 depends_on:

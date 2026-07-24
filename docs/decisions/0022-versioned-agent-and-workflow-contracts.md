@@ -4,16 +4,16 @@ status: current
 covers:
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs
-  - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-eval/src/eval.rs
   - crates/optimus-kernel/tests/agent_contracts.rs
   - crates/optimus-kernel/tests/workflow_contracts.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
 depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
 validated_by:
   - crates/optimus-kernel/tests/agent_contracts.rs
   - crates/optimus-kernel/tests/workflow_contracts.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
@@ -138,10 +138,10 @@ terminal outcomes, evaluations, and refreshed Engineering Memory.
 
 - `crates/optimus-kernel/src/agent.rs`
 - `crates/optimus-kernel/src/workflow.rs`
-- `crates/optimus-kernel/src/eval.rs`
+- `crates/optimus-eval/src/eval.rs`
 
 ## Relevant tests
 
 - `crates/optimus-kernel/tests/agent_contracts.rs`
 - `crates/optimus-kernel/tests/workflow_contracts.rs`
-- `crates/optimus-kernel/tests/integrity_integration.rs`
+- `crates/optimus-eval/tests/integrity_integration.rs`

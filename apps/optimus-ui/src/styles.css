@@ -1036,6 +1036,20 @@ code {
   background: var(--surface);
 }
 
+.browser-role-note {
+  margin: 0;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.browser-role-note code {
+  font-size: 10px;
+  color: var(--text);
+}
+
 .browser-chrome {
   height: 38px;
   gap: 3px;

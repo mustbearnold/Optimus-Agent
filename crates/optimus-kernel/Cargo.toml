@@ -1,6 +1,6 @@
 [package]
 name = "optimus-kernel"
-description = "Provider-agnostic agent turn loop assembling packs, memory, skills, jobs"
+description = "Provider-agnostic agent turn loop assembling packs, memory, skills, jobs (ops re-exported; offline eval is optimus-eval)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,6 +12,7 @@ optimus-runtime.workspace = true
 optimus-memory.workspace = true
 optimus-skills.workspace = true
 optimus-packs.workspace = true
+optimus-ops.workspace = true
 optimus-browser = { path = "../../crates/optimus-browser", optional = true }
 serde.workspace = true
 serde_json.workspace = true

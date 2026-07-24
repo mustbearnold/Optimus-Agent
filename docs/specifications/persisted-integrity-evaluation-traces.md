@@ -2,8 +2,8 @@
 knowledge_type: specification
 status: historical
 covers:
-  - crates/optimus-kernel/src/eval.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/src/eval.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
   - docs/architecture/system-overview.md
   - docs/maps/observability-and-evaluations.md
   - scripts/engineering_memory.py

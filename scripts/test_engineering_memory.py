@@ -34,9 +34,11 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "optimus-browser",
                 "optimus-cli",
                 "optimus-desktop",
+                "optimus-eval",
                 "optimus-graph",
                 "optimus-kernel",
                 "optimus-memory",
+                "optimus-ops",
                 "optimus-packs",
                 "optimus-runtime",
                 "optimus-skills",
@@ -83,10 +85,15 @@ class EngineeringMemoryTests(unittest.TestCase):
             {row["id"]: row["approval"] for row in tools},
         )
 
-    def test_agent_registry_does_not_invent_specialists(self) -> None:
+    def test_agent_registry_records_builtin_workspace_writer(self) -> None:
         registry = EM.build_agent_registry()
-        self.assertEqual(registry["agents"], [])
-        self.assertEqual(registry["implemented_specialist_agent_count"], 0)
+        self.assertEqual(registry["implemented_specialist_agent_count"], 1)
+        self.assertEqual(len(registry["agents"]), 1)
+        self.assertEqual(registry["agents"][0]["id"], "workspace_writer")
+        self.assertEqual(registry["agents"][0]["version"], "1.0.0")
+        self.assertEqual(
+            registry["status"], "implemented_builtin_specialist_vertical"
+        )
         self.assertEqual(registry["contract_substrate"]["status"], "implemented")
         self.assertEqual(
             registry["contract_substrate"]["source"],
@@ -101,6 +108,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "kernel-turn",
                 "work-graph-job",
                 "durable-campaign",
+                "write-file-handoff",
                 "interval-cron-tick",
                 "gateway-inbox-drain",
                 "general-workflow-contract",
@@ -159,7 +167,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         for contract_id in ("C-08", "C-09", "C-10", "C-11", "C-12", "C-13", "C-14", "C-18"):
             self.assertEqual(by_id[contract_id]["implementation_status"], "implemented")
             self.assertTrue(by_id[contract_id]["validated_by"])
-        self.assertIn("crates/optimus-kernel/src/replay.rs", by_id["C-13"]["sources"])
+        self.assertIn("crates/optimus-eval/src/replay.rs", by_id["C-13"]["sources"])
         self.assertIn("crates/optimus-kernel/src/lib.rs", by_id["C-13"]["sources"])
         self.assertIn(
             "crates/optimus-kernel/tests/kernel_turn.rs",
@@ -204,8 +212,8 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(
             coverage["integrity_executor"],
             {
-                "source": "crates/optimus-kernel/src/eval.rs",
-                "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+                "source": "crates/optimus-eval/src/eval.rs",
+                "validated_by": "crates/optimus-eval/tests/integrity_integration.rs",
                 "case_count": 6,
                 "isolated_runs": True,
                 "trace_store": "per_run_integrity-traces.db",
@@ -216,8 +224,8 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(
             coverage["trajectory_executor"],
             {
-                "source": "crates/optimus-kernel/src/eval.rs",
-                "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+                "source": "crates/optimus-eval/src/eval.rs",
+                "validated_by": "crates/optimus-eval/tests/evaluation_contracts.rs",
                 "case_count": 4,
                 "typed_evidence": [
                     "assistant_text",
@@ -231,8 +239,8 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(
             coverage["priority2_report_executor"],
             {
-                "source": "crates/optimus-kernel/src/evaluation.rs",
-                "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+                "source": "crates/optimus-eval/src/evaluation.rs",
+                "validated_by": "crates/optimus-eval/tests/evaluation_contracts.rs",
                 "case_count": 10,
                 "resource_measurements": "explicit_caller_supplied_per_case",
                 "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
@@ -281,7 +289,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(binding["source_tree_sha256"], repository["tree_sha256"])
         self.assertEqual(
             binding["contract_sha256"],
-            EM.sha256_file(ROOT / "crates/optimus-kernel/src/evaluation.rs"),
+            EM.sha256_file(ROOT / "crates/optimus-eval/src/evaluation.rs"),
         )
         self.assertEqual(
             binding["tool_catalog_sha256"],

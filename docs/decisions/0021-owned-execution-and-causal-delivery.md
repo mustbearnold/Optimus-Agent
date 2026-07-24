@@ -7,8 +7,8 @@ covers:
   - crates/optimus-runtime/src/lib.rs
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/codex_oauth.rs
-  - crates/optimus-kernel/src/cron.rs
-  - crates/optimus-kernel/src/gateway.rs
+  - crates/optimus-ops/src/cron.rs
+  - crates/optimus-ops/src/gateway.rs
   - crates/optimus-kernel/src/session.rs
   - apps/optimus-desktop/src/ipc/chat.rs
   - apps/optimus-desktop/src/bridge.rs
@@ -22,8 +22,8 @@ validated_by:
   - crates/optimus-runtime/tests/cancellation.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - crates/optimus-kernel/tests/session_resume.rs
-  - crates/optimus-kernel/src/cron.rs
-  - crates/optimus-kernel/src/gateway.rs
+  - crates/optimus-ops/src/cron.rs
+  - crates/optimus-ops/src/gateway.rs
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/e2e/**
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
@@ -171,8 +171,8 @@ requirement rather than an approval boundary.
 
 - `crates/optimus-runtime/src/lib.rs`
 - `crates/optimus-kernel/src/codex_oauth.rs`
-- `crates/optimus-kernel/src/cron.rs`
-- `crates/optimus-kernel/src/gateway.rs`
+- `crates/optimus-ops/src/cron.rs`
+- `crates/optimus-ops/src/gateway.rs`
 - `crates/optimus-kernel/src/session.rs`
 
 ## Relevant tests

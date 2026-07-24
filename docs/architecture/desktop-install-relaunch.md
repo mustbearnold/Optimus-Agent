@@ -1,8 +1,17 @@
 # Desktop install and relaunch convention
 
+## Default shell
+
+**Confirmed current behaviour:** the installer stages **Electron + React** as the
+primary desktop entry and keeps the **Wry/Tao** binary as a desktop-action
+rollback (`LegacyWry`). The Rust host (`optimus-desktop --host-only`) remains
+authority for IPC and durable effects. See
+[desktop-shell-and-ipc-matrix.md](../contracts/desktop-shell-and-ipc-matrix.md).
+
 ## Rule
 
-After rebuilding `optimus-desktop`, install and relaunch the stable user copy before calling the desktop ready.
+After rebuilding the host and Electron app, install and relaunch the stable user
+copy before calling the desktop ready.
 
 Do not leave the user on an older binary from a Cargo target directory.
 

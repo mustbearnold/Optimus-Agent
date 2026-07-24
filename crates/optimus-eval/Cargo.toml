@@ -1,0 +1,22 @@
+[package]
+name = "optimus-eval"
+description = "Offline evaluation, integrity harnesses, fixture replay, and report comparison"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+optimus-graph.workspace = true
+optimus-runtime.workspace = true
+optimus-memory.workspace = true
+optimus-packs.workspace = true
+optimus-kernel.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+rusqlite.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

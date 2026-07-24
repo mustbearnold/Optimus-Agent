@@ -26,7 +26,10 @@ describe('BrowserSurface annotations', () => {
       />
     );
 
-    expect(await screen.findByRole('toolbar', { name: 'Browser navigation' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('toolbar', { name: 'Preview browser navigation' })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Preview browser — sandboxed user navigation/i)).toBeInTheDocument();
     expect(screen.queryByLabelText('Preview tabs')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });

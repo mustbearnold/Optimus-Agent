@@ -5,14 +5,20 @@ use std::process::ExitCode;
 mod gateway_http;
 
 use clap::{Parser, Subcommand};
+use optimus_eval::{
+    compare_evaluation_reports, run_offline_trajectory_suite, run_priority2_offline_evaluation,
+    CandidateBinding, EvaluationReportV1, EvaluationResourceMeasurement, MetricThreshold,
+    MAX_EVALUATION_DATASET_BYTES,
+};
+use optimus_graph::PolicyMode;
 use optimus_kernel::{
-    compare_evaluation_reports, device_code_login, drain_one, enqueue, list_inbox, list_outbox,
-    list_sessions, open_cron, resolve_route, run_offline_trajectory_suite,
-    run_priority2_offline_evaluation, sanitize_codex_oauth_model, tick_cron, BrowserSession,
-    CandidateBinding, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse,
-    EvaluationReportV1, EvaluationResourceMeasurement, Kernel, KernelConfig, MetricThreshold,
-    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
-    ToolCall, MAX_EVALUATION_DATASET_BYTES,
+    device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_recent_causal_turns,
+    list_sessions, load_causal_turn, open_cron, open_seeded_agent_registry,
+    open_seeded_workflow_registry, parse_causal_query, resolve_route, run_write_file_handoff,
+    sanitize_codex_oauth_model, tick_cron, BrowserSession, CodexAuthStore, CodexOAuthConfig,
+    CodexOAuthModel, CompletionResponse, Kernel, KernelConfig, OpenAiCompatConfig,
+    OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel, ToolCall,
+    WriteFileHandoffRequest,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{
@@ -144,6 +150,16 @@ enum Commands {
     Campaign {
         #[command(subcommand)]
         cmd: CampaignCmd,
+    },
+    /// Built-in specialist + workflow vertical (Phase 3)
+    Vertical {
+        #[command(subcommand)]
+        cmd: VerticalCmd,
+    },
+    /// Reconstruct durable turn causality (Phase 5; stores, not logs)
+    Trace {
+        #[command(subcommand)]
+        cmd: TraceCmd,
     },
 }
 
@@ -355,6 +371,47 @@ enum CampaignCmd {
     },
     /// Deterministically repair projection drift, then report unresolved issues
     Repair {
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum TraceCmd {
+    /// Show one causal turn report by trace:, manifest:, turn:, or bare trace UUID
+    Show {
+        /// Identity: bare UUID (trace), or prefixed trace:|manifest:|turn:
+        id: String,
+        #[arg(long)]
+        json: bool,
+    },
+    /// List recent execution manifests (newest first)
+    Recent {
+        #[arg(long, default_value_t = 20)]
+        limit: usize,
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum VerticalCmd {
+    /// List seeded built-in specialists and workflows
+    List,
+    /// Run write_file_handoff → workspace_writer vertical
+    WriteFile {
+        /// Relative path under the Optimus workspace
+        #[arg(long)]
+        path: String,
+        /// File contents (UTF-8)
+        #[arg(long)]
+        contents: String,
+        /// Auto-grant SmartDeny for the exact WriteFile effect
+        #[arg(long, default_value_t = false)]
+        auto_grant: bool,
+        /// Runtime policy: smart_deny (default) or unrestricted
+        #[arg(long, default_value = "smart_deny")]
+        policy: String,
         #[arg(long)]
         json: bool,
     },
@@ -1253,6 +1310,158 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                 diagnostic.field,
                                 diagnostic.repairable,
                                 diagnostic.detail
+                            );
+                        }
+                    }
+                }
+            }
+            Ok(())
+        }
+        Commands::Trace { cmd } => match cmd {
+            TraceCmd::Show { id, json } => {
+                let query = parse_causal_query(&id)?;
+                let report = load_causal_turn(&cli.home, query)?;
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                } else {
+                    println!(
+                        "manifest={} status={:?} session={} turn={}",
+                        report.manifest.id,
+                        report.manifest.status,
+                        report.manifest.session_id,
+                        report.manifest.turn_id
+                    );
+                    if let Some(trace) = &report.trace_context {
+                        println!(
+                            "trace={} span={}",
+                            trace.trace_id, trace.span_id
+                        );
+                    }
+                    println!(
+                        "provider={} model={} model_calls={} tool_calls={} replay={:?}",
+                        report.manifest.provider,
+                        report.manifest.model,
+                        report.model_calls.len(),
+                        report.tool_calls.len(),
+                        report.replay.classification
+                    );
+                    println!(
+                        "timings total_ms={} first_response_ms={:?} model_ms={} tool_ms={}",
+                        report.timings.total_ms,
+                        report.timings.first_response_ms,
+                        report.timings.model_ms,
+                        report.timings.tool_ms
+                    );
+                    println!(
+                        "effect_transcript_consistent={}",
+                        report.effect_transcript_consistent
+                    );
+                    for call in &report.tool_calls {
+                        println!(
+                            "  tool {} {} suppressed={} effect={}",
+                            call.call_id,
+                            call.tool_id,
+                            call.suppressed,
+                            call.effect_sha256.as_deref().unwrap_or("-")
+                        );
+                    }
+                }
+                Ok(())
+            }
+            TraceCmd::Recent { limit, json } => {
+                let rows = list_recent_causal_turns(&cli.home, limit)?;
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&rows)?);
+                } else if rows.is_empty() {
+                    println!("no execution manifests");
+                } else {
+                    for row in rows {
+                        println!(
+                            "{}  {:?}  session={} turn={} {}/{}",
+                            row.id,
+                            row.status,
+                            row.session_id,
+                            row.turn_id,
+                            row.provider,
+                            row.model
+                        );
+                    }
+                }
+                Ok(())
+            }
+        },
+        Commands::Vertical { cmd } => {
+            match cmd {
+                VerticalCmd::List => {
+                    let agents =
+                        open_seeded_agent_registry(cli.home.join("agent-registry.db"))?;
+                    let workflows =
+                        open_seeded_workflow_registry(cli.home.join("workflow-registry.db"))?;
+                    println!("agents:");
+                    for agent in agents.list()? {
+                        println!(
+                            "  {}@{} — {}",
+                            agent.id.as_str(),
+                            agent.version.as_str(),
+                            agent.responsibility
+                        );
+                    }
+                    println!("workflows:");
+                    for workflow in workflows.list()? {
+                        println!(
+                            "  {}@{} — {}",
+                            workflow.id.as_str(),
+                            workflow.version.as_str(),
+                            workflow.description
+                        );
+                    }
+                }
+                VerticalCmd::WriteFile {
+                    path,
+                    contents,
+                    auto_grant,
+                    policy,
+                    json,
+                } => {
+                    let policy = match policy.to_ascii_lowercase().as_str() {
+                        "smart_deny" | "smartdeny" | "deny" => PolicyMode::SmartDeny,
+                        "unrestricted" | "open" => PolicyMode::Unrestricted,
+                        other => {
+                            return Err(format!(
+                                "unknown policy {other}; use smart_deny or unrestricted"
+                            )
+                            .into())
+                        }
+                    };
+                    let report = run_write_file_handoff(
+                        &cli.home,
+                        WriteFileHandoffRequest {
+                            relative_path: path,
+                            contents,
+                            auto_grant,
+                            policy,
+                        },
+                    )?;
+                    if json {
+                        println!("{}", serde_json::to_string_pretty(&report)?);
+                    } else {
+                        println!(
+                            "workflow={}@{} terminal={:?} agent={}@{} invocation={}",
+                            report.workflow_id,
+                            report.workflow_version,
+                            report.workflow_terminal,
+                            report.agent_id,
+                            report.agent_version,
+                            report.invocation_id
+                        );
+                        if let Some(job) = report.job_id {
+                            println!("job={job}");
+                        }
+                        println!("summary={}", report.agent_result.summary);
+                        if let Some(artifact) = report.artifact {
+                            println!(
+                                "artifact={} bytes={}",
+                                artifact.sha256, artifact.size_bytes
                             );
                         }
                     }

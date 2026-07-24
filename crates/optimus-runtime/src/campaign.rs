@@ -156,12 +156,12 @@ fn parse_u32(field: &'static str, value: i64) -> Result<u32> {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum StepKind {
-    /// Durable WriteFile effector (no approval needed).
+    /// Durable WriteFile effector (SmartDeny high-risk; may await approval).
     WriteFile {
         relative_path: String,
         contents: String,
     },
-    /// SmartDeny-gated RunCommand.
+    /// SmartDeny-gated RunCommand (high-risk).
     RunCommand { program: String, args: Vec<String> },
 }
 
@@ -1524,6 +1524,29 @@ mod tests {
         }
     }
 
+    /// Run a campaign, granting each SmartDeny-blocked high-risk step until terminal.
+    fn run_granting_high_risk(store: &CampaignStore, id: Uuid) -> CampaignView {
+        let mut view = store.run(id).unwrap();
+        for _ in 0..32 {
+            if view.campaign.status != CampaignStatus::AwaitingApproval {
+                return view;
+            }
+            let step = view
+                .steps
+                .iter()
+                .find(|step| step.status == StepStatus::AwaitingApproval)
+                .expect("awaiting approval without a blocked step");
+            let jid = job_id(step.job_id.expect("blocked step job"));
+            store
+                .runtime()
+                .unwrap()
+                .grant_and_resume(jid)
+                .expect("grant blocked high-risk step");
+            view = store.continue_after_grant(id).unwrap();
+        }
+        panic!("campaign {id} still awaiting approval after grants");
+    }
+
     #[test]
     fn sequential_write_campaign_succeeds() {
         let d = tempdir().unwrap();
@@ -1549,7 +1572,7 @@ mod tests {
                 ],
             )
             .unwrap();
-        let done = store.run(view.campaign.id).unwrap();
+        let done = run_granting_high_risk(&store, view.campaign.id);
         assert_eq!(done.campaign.status, CampaignStatus::Succeeded);
         assert!(done.steps.iter().all(|s| s.status == StepStatus::Succeeded));
         let a = std::fs::read_to_string(d.path().join("workspace/agents/a.txt")).unwrap();
@@ -1743,7 +1766,7 @@ mod tests {
         assert!(matches!(rejected, Err(CampaignError::LeaseHeld { .. })));
         assert!(!d.path().join("workspace/leased-run.txt").exists());
         owner.release(&capability).unwrap();
-        let done = contender.run(campaign_id).unwrap();
+        let done = run_granting_high_risk(&contender, campaign_id);
         assert_eq!(done.campaign.status, CampaignStatus::Succeeded);
     }
 
@@ -1776,17 +1799,14 @@ mod tests {
                 ],
             )
             .unwrap();
+        // First host-mutating step is the WriteFile prep (now high-risk).
         let blocked = store.run(view.campaign.id).unwrap();
         assert_eq!(blocked.campaign.status, CampaignStatus::AwaitingApproval);
-        assert_eq!(blocked.steps[0].status, StepStatus::Succeeded);
-        assert_eq!(blocked.steps[1].status, StepStatus::AwaitingApproval);
+        assert_eq!(blocked.steps[0].status, StepStatus::AwaitingApproval);
+        assert_eq!(blocked.steps[1].status, StepStatus::Pending);
         assert_eq!(blocked.steps[2].status, StepStatus::Pending);
 
-        let jid = blocked.steps[1].job_id.expect("job");
-        let rt = store.runtime().unwrap();
-        rt.grant_and_resume(crate::JobId(jid)).unwrap();
-
-        let done = store.continue_after_grant(view.campaign.id).unwrap();
+        let done = run_granting_high_risk(&store, view.campaign.id);
         assert_eq!(done.campaign.status, CampaignStatus::Succeeded);
         assert!(done.steps.iter().all(|s| s.status == StepStatus::Succeeded));
         assert_eq!(
@@ -2090,7 +2110,7 @@ mod tests {
         let store = CampaignStore::open(d.path()).expect("migrate legacy schema");
         let view = store.get(campaign_id).unwrap().expect("legacy campaign");
         assert_eq!(view.steps.len(), 1);
-        let done = store.run(campaign_id).expect("run migrated campaign");
+        let done = run_granting_high_risk(&store, campaign_id);
         assert_eq!(done.campaign.status, CampaignStatus::Succeeded);
         assert_eq!(
             std::fs::read_to_string(d.path().join("workspace/legacy.txt")).unwrap(),
@@ -2321,7 +2341,7 @@ mod tests {
         drop(store);
 
         let reopened = CampaignStore::open(d.path()).unwrap();
-        let done = reopened.run(view.campaign.id).unwrap();
+        let done = run_granting_high_risk(&reopened, view.campaign.id);
         assert_eq!(done.campaign.status, CampaignStatus::Succeeded);
         assert_eq!(done.steps[0].status, StepStatus::Succeeded);
         let job_count: i64 = reopened
@@ -2361,7 +2381,7 @@ mod tests {
         drop(store);
 
         let reopened = CampaignStore::open(d.path()).unwrap();
-        let done = reopened.run(view.campaign.id).unwrap();
+        let done = run_granting_high_risk(&reopened, view.campaign.id);
         assert_eq!(done.campaign.status, CampaignStatus::Succeeded);
         assert_eq!(done.steps[0].status, StepStatus::Succeeded);
         assert_eq!(
@@ -2391,7 +2411,14 @@ mod tests {
         runtime
             .create_job_with_id(jid, write_step_job(&view))
             .unwrap();
-        assert_eq!(runtime.run_all(jid).unwrap(), JobStatus::Succeeded);
+        assert_eq!(
+            runtime.run_all(jid).unwrap(),
+            JobStatus::AwaitingApproval
+        );
+        assert_eq!(
+            runtime.grant_and_resume(jid).unwrap(),
+            JobStatus::Succeeded
+        );
 
         let derived = store.get(view.campaign.id).unwrap().unwrap();
         assert_eq!(derived.steps[0].status, StepStatus::Succeeded);

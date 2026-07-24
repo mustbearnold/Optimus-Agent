@@ -772,15 +772,45 @@ impl Runtime {
             .map_err(|error| RuntimeError::Effector(format!("system clock before epoch: {error}")))
     }
 
-    /// If the skill authorizes `Terminal`, issue a durable job approval grant.
-    /// Skills without Terminal cannot unlock RunCommand.
+    /// Issue a durable job approval grant when the skill's closed permission set
+    /// covers the pending high-risk effect class.
+    ///
+    /// - Write effects require `FsWorkspace`
+    /// - Command effects require `Terminal`
     pub fn grant_from_skill(
         &self,
         job_id: JobId,
         skills: &SkillRegistry,
         skill_id: Uuid,
     ) -> Result<()> {
-        skills.authorize(skill_id, &[Permission::Terminal])?;
+        let (target_id, effect_hash) = self.approval_target(job_id)?;
+        let nodes = self.store.list_nodes(job_id.0).map_err(GraphError::from)?;
+        let node = nodes
+            .iter()
+            .find(|node| node.id == target_id)
+            .ok_or_else(|| {
+                RuntimeError::NotRunnable(format!("job {job_id} approval target node missing"))
+            })?;
+        let effect: Effect = serde_json::from_str(&node.effect_json).map_err(GraphError::Serde)?;
+        if Self::effect_hash(&node.effect_json) != effect_hash {
+            return Err(RuntimeError::NotRunnable(
+                "approval target effect hash drifted".into(),
+            ));
+        }
+        let (required, permission_label) = match &effect {
+            Effect::WriteFile { .. } | Effect::ProjectWriteFile { .. } => {
+                (Permission::FsWorkspace, "fs_workspace")
+            }
+            Effect::RunCommand { .. } | Effect::ProjectRunCommand { .. } => {
+                (Permission::Terminal, "terminal")
+            }
+            Effect::AssertFileEquals { .. } => {
+                return Err(RuntimeError::NotRunnable(
+                    "assert effects do not require skill approval grants".into(),
+                ));
+            }
+        };
+        skills.authorize(skill_id, &[required])?;
         self.grant_approval(ApprovalGrant::for_job_by(
             job_id,
             format!("skill:{skill_id}"),
@@ -791,7 +821,10 @@ impl Runtime {
                 Some(job_id.0),
                 None,
                 "approval_from_skill",
-                &serde_json::json!({ "skill_id": skill_id }),
+                &serde_json::json!({
+                    "skill_id": skill_id,
+                    "permission": permission_label,
+                }),
             )
             .map_err(GraphError::from)?;
         Ok(())
@@ -1018,6 +1051,9 @@ impl Runtime {
 
         let effect: Effect = serde_json::from_str(&node.effect_json).map_err(GraphError::Serde)?;
         let effect_hash = Self::effect_hash(&node.effect_json);
+
+        // Reject illegal path shapes before asking the user to approve.
+        self.preflight_effect(&effect)?;
 
         if effect.is_high_risk()
             && self.config.policy == PolicyMode::SmartDeny
@@ -1366,6 +1402,7 @@ impl Runtime {
             .current_dir(&self.workspace)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        sanitize_command_environment(&mut command);
         #[cfg(target_os = "linux")]
         let mut guard = KillOnDrop::spawn(&mut command, linux_unit)
             .map_err(|e| RuntimeError::Effector(format!("spawn {program}: {e}")))?;
@@ -1493,6 +1530,23 @@ impl Runtime {
         }))
     }
 
+    /// Validate effect shape before SmartDeny wait or execution.
+    fn preflight_effect(&self, effect: &Effect) -> Result<()> {
+        match effect {
+            Effect::WriteFile { relative_path, .. }
+            | Effect::AssertFileEquals { relative_path, .. }
+            | Effect::ProjectWriteFile { relative_path, .. } => {
+                self.safe_relative_path(relative_path)?;
+            }
+            Effect::RunCommand { program, .. } | Effect::ProjectRunCommand { program, .. } => {
+                if program.trim().is_empty() {
+                    return Err(RuntimeError::Effector("empty command program".into()));
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn safe_relative_path(&self, relative: &str) -> Result<PathBuf> {
         if relative.is_empty() {
             return Err(RuntimeError::PathEscape("empty path".into()));
@@ -1527,6 +1581,30 @@ impl Runtime {
 
     fn path_sha256(path: &Path) -> String {
         format!("{:x}", Sha256::digest(path.to_string_lossy().as_bytes()))
+    }
+}
+
+/// Strip loader and dynamic-link injection variables from child process env.
+///
+/// Does not claim full filesystem sandboxing; workspace cwd remains the primary
+/// confinement for non-Linux hosts. Linux uses bwrap via systemd-run separately.
+fn sanitize_command_environment(command: &mut Command) {
+    const STRIP: &[&str] = &[
+        "LD_PRELOAD",
+        "LD_LIBRARY_PATH",
+        "LD_AUDIT",
+        "LD_DEBUG",
+        "LD_DYNAMIC_WEAK",
+        "LD_USE_LOAD_BIAS",
+        "DYLD_INSERT_LIBRARIES",
+        "DYLD_LIBRARY_PATH",
+        "DYLD_FRAMEWORK_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
+        "DYLD_IMAGE_SUFFIX",
+        "DYLD_PRINT_TO_FILE",
+    ];
+    for key in STRIP {
+        command.env_remove(key);
     }
 }
 

@@ -118,6 +118,42 @@ pub struct ReplayReport {
     pub tool_call_count: usize,
 }
 
+/// Bounded projection of one model step for causal reconstruction.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ExecutionModelCallSummary {
+    pub step: u32,
+    pub provider: String,
+    pub model: String,
+    pub request_sha256: String,
+    pub response_sha256: String,
+    pub replay_class: String,
+    pub duration_ms: u64,
+}
+
+/// Bounded projection of one tool invocation for causal reconstruction.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ExecutionToolCallSummary {
+    pub call_id: String,
+    pub tool_id: String,
+    pub arguments_sha256: String,
+    pub outcome_sha256: String,
+    pub replay_class: String,
+    pub effect_attempt_id: Option<String>,
+    pub effect_sha256: Option<String>,
+    pub receipt_sha256: Option<String>,
+    pub duration_ms: u64,
+    pub suppressed: bool,
+}
+
+/// Ordered tool lifecycle phase row for causal reconstruction.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ExecutionToolLifecycleSummary {
+    pub sequence: u64,
+    pub event_id: String,
+    pub call_id: String,
+    pub phase: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PersistedToolLifecycle {
     pub sequence: u64,
@@ -333,6 +369,100 @@ impl ExecutionStore {
             .optional()?
             .map(|id| Uuid::parse_str(&id).map_err(KernelError::Uuid))
             .transpose()
+    }
+
+    /// Locate the execution manifest bound to a root (or any) trace identity.
+    pub fn find_by_trace_id(&self, trace_id: TraceId) -> Result<Option<Uuid>> {
+        self.conn
+            .query_row(
+                "SELECT manifest_id FROM execution_trace_links WHERE trace_id=?1
+                 ORDER BY manifest_id LIMIT 1",
+                params![trace_id.to_string()],
+                |row| row.get::<_, String>(0),
+            )
+            .optional()?
+            .map(|id| Uuid::parse_str(&id).map_err(KernelError::Uuid))
+            .transpose()
+    }
+
+    pub fn list_model_calls(&self, manifest_id: Uuid) -> Result<Vec<ExecutionModelCallSummary>> {
+        let mut statement = self.conn.prepare(
+            "SELECT step,provider,model,request_sha256,response_sha256,replay_class,duration_ms
+             FROM execution_model_calls WHERE manifest_id=?1 ORDER BY step",
+        )?;
+        let rows = statement.query_map(params![manifest_id.to_string()], |row| {
+            Ok(ExecutionModelCallSummary {
+                step: row.get::<_, i64>(0)? as u32,
+                provider: row.get(1)?,
+                model: row.get(2)?,
+                request_sha256: row.get(3)?,
+                response_sha256: row.get(4)?,
+                replay_class: row.get(5)?,
+                duration_ms: row.get::<_, i64>(6)? as u64,
+            })
+        })?;
+        rows.collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(KernelError::Sqlite)
+    }
+
+    pub fn list_tool_calls(&self, manifest_id: Uuid) -> Result<Vec<ExecutionToolCallSummary>> {
+        let mut statement = self.conn.prepare(
+            "SELECT call_id,tool_id,arguments_sha256,outcome_sha256,replay_class,
+                    effect_attempt_id,effect_sha256,receipt_sha256,duration_ms,suppressed
+             FROM execution_tool_calls WHERE manifest_id=?1 ORDER BY call_id",
+        )?;
+        let rows = statement.query_map(params![manifest_id.to_string()], |row| {
+            Ok(ExecutionToolCallSummary {
+                call_id: row.get(0)?,
+                tool_id: row.get(1)?,
+                arguments_sha256: row.get(2)?,
+                outcome_sha256: row.get(3)?,
+                replay_class: row.get(4)?,
+                effect_attempt_id: row.get(5)?,
+                effect_sha256: row.get(6)?,
+                receipt_sha256: row.get(7)?,
+                duration_ms: row.get::<_, i64>(8)? as u64,
+                suppressed: row.get::<_, i64>(9)? != 0,
+            })
+        })?;
+        rows.collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(KernelError::Sqlite)
+    }
+
+    pub fn list_tool_lifecycle_phases(
+        &self,
+        manifest_id: Uuid,
+    ) -> Result<Vec<ExecutionToolLifecycleSummary>> {
+        let mut statement = self.conn.prepare(
+            "SELECT event_id,call_id,phase,sequence FROM execution_tool_events
+             WHERE manifest_id=?1 ORDER BY sequence",
+        )?;
+        let rows = statement.query_map(params![manifest_id.to_string()], |row| {
+            Ok(ExecutionToolLifecycleSummary {
+                event_id: row.get(0)?,
+                call_id: row.get(1)?,
+                phase: row.get(2)?,
+                sequence: row.get::<_, i64>(3)? as u64,
+            })
+        })?;
+        rows.collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(KernelError::Sqlite)
+    }
+
+    pub fn list_recent_manifests(&self, limit: usize) -> Result<Vec<ExecutionManifest>> {
+        let limit = limit.clamp(1, 200) as i64;
+        let mut statement = self.conn.prepare(
+            "SELECT id FROM execution_manifests ORDER BY created_unix DESC, id DESC LIMIT ?1",
+        )?;
+        let ids = statement
+            .query_map(params![limit], |row| row.get::<_, String>(0))?
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(KernelError::Sqlite)?;
+        let mut out = Vec::with_capacity(ids.len());
+        for id in ids {
+            out.push(self.manifest(Uuid::parse_str(&id)?)?);
+        }
+        Ok(out)
     }
 
     pub fn bind_trace(&self, manifest_id: Uuid, context: TraceContext) -> Result<()> {

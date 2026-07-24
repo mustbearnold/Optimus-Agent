@@ -395,7 +395,7 @@ def build_priority2_candidate_binding() -> dict[str, str]:
     repository = build_repository_index(cargo_metadata())
     records = {record["path"]: record["sha256"] for record in repository["files"]}
     authorities = {
-        "contract_sha256": "crates/optimus-kernel/src/evaluation.rs",
+        "contract_sha256": "crates/optimus-eval/src/evaluation.rs",
         "tool_catalog_sha256": "crates/optimus-packs/src/lib.rs",
         "route_policy_sha256": "crates/optimus-kernel/src/routing.rs",
     }
@@ -775,6 +775,7 @@ def build_agent_registry() -> dict[str, Any]:
     if definitions:
         raise MemoryError(f"specialist agent definitions require registry review: {definitions}")
     contract = ROOT / "crates/optimus-kernel/src/agent.rs"
+    vertical = ROOT / "crates/optimus-kernel/src/specialist_vertical.rs"
     required_symbols = [
         "pub struct AgentDescriptor",
         "pub struct AgentRequest",
@@ -786,10 +787,35 @@ def build_agent_registry() -> dict[str, Any]:
     missing = [symbol for symbol in required_symbols if symbol not in text]
     if missing:
         raise MemoryError(f"agent contract extraction is stale; missing symbols: {missing}")
+    if not vertical.is_file():
+        raise MemoryError("specialist vertical module is missing")
+    vertical_text = vertical.read_text(encoding="utf-8")
+    for symbol in (
+        "pub fn workspace_writer_descriptor",
+        "pub fn write_file_handoff_workflow",
+        "pub fn run_write_file_handoff",
+        'WORKSPACE_WRITER_ID: &str = "workspace_writer"',
+    ):
+        if symbol not in vertical_text:
+            raise MemoryError(f"specialist vertical is stale; missing {symbol}")
+    agents = [
+        {
+            "id": "workspace_writer",
+            "version": "1.0.0",
+            "status": "implemented",
+            "owner": "optimus-kernel",
+            "responsibility": "Write a single relative-path workspace file through durable SmartDeny effects",
+            "required_tools": ["write_file"],
+            "permissions": {"filesystem_roots": ["workspace"], "effects": ["write_file"]},
+            "source": relative(vertical),
+            "validated_by": ["crates/optimus-kernel/tests/specialist_vertical.rs"],
+            "workflow": "write_file_handoff@1.0.0",
+        }
+    ]
     return {
         **generated_header(),
-        "agents": [],
-        "implemented_specialist_agent_count": 0,
+        "agents": agents,
+        "implemented_specialist_agent_count": len(agents),
         "contract_substrate": {
             "id": "specialist-agent-contract",
             "version": 1,
@@ -805,20 +831,21 @@ def build_agent_registry() -> dict[str, Any]:
             ],
             "validated_by": [
                 "crates/optimus-kernel/tests/agent_contracts.rs",
-                "crates/optimus-kernel/tests/integrity_integration.rs",
+                "crates/optimus-kernel/tests/specialist_vertical.rs",
+                "crates/optimus-eval/tests/integrity_integration.rs",
             ],
         },
-        "status": "implemented_contract_no_builtin_specialists",
-        "statement": "A universal typed agent contract and durable invocation substrate exist; no built-in specialist definition is registered.",
+        "status": "implemented_builtin_specialist_vertical",
+        "statement": "Typed agent contracts plus one built-in specialist (workspace_writer) executed by the write_file_handoff workflow vertical.",
         "not_agents": [
             {"symbol": "optimus_kernel::ModelProvider", "reason": "provider adapter interface"},
             {"symbol": "optimus_kernel::ScriptedModel", "reason": "offline/test model adapter"},
             {"symbol": "optimus_runtime::CampaignStep", "reason": "deterministic effect step, not typed agent invocation"},
         ],
-        "required_before_first_agent": [
+        "required_before_next_agent": [
             "purpose and non-responsibilities",
-            "version, owner, status, and evaluation cases",
-            "overlap/routing check",
+            "overlap/routing check against workspace_writer",
+            "evaluation case for the specialist path",
         ],
     }
 
@@ -853,7 +880,7 @@ def build_workflow_registry() -> dict[str, Any]:
             cancellation={"status": "implemented", "contract": "cloneable cooperative token reaches active providers and every model/tool loop boundary; Codex SSE polls on bounded reads; desktop native/HTTP stream delivery loss and explicit capability-local Stop request the same token; native ownership is exact-ID and bounded"},
             failure=["model/provider error", "invalid tool batch", "turn budget exceeded", "effect error", "synchronous transport connect/write is not force-abortable"],
             observability=["TurnEvent sink", "session transcript", "session tool-call to effect-attempt hash links", "runtime events for durable effects"],
-            validated_by=["crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/src/eval.rs"],
+            validated_by=["crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-eval/src/eval.rs"],
             source=["crates/optimus-kernel/src/lib.rs"],
         ),
         workflow_record(
@@ -895,6 +922,33 @@ def build_workflow_registry() -> dict[str, Any]:
             source=["crates/optimus-runtime/src/campaign.rs"],
         ),
         workflow_record(
+            id="write-file-handoff",
+            owner="optimus-kernel",
+            trigger="CLI/API run_write_file_handoff after seeding registries",
+            inputs=["relative_path", "contents", "policy", "auto_grant"],
+            outputs=["WriteFileHandoffReport", "workspace file", "handoff artifact", "agent invocation terminal"],
+            stages=[
+                "seed agent+workflow registries",
+                "begin workspace_writer invocation",
+                "create WriteFile Work Graph job",
+                "SmartDeny gate or auto-grant",
+                "link exact effect provenance",
+                "publish content-addressed artifact",
+                "settle one agent terminal; map workflow terminal",
+            ],
+            dependencies=["work-graph-job", "workspace_writer specialist", "artifact store"],
+            state_transitions="agent invocation running→terminal; job pending→awaiting_approval|succeeded|failed|cancelled",
+            timeout="workflow node timeout_ms (60s default)",
+            approvals="SmartDeny exact-effect grant for WriteFile unless unrestricted or auto_grant",
+            cancellation={"status": "implemented", "contract": "request_cancellation fences late success; optional cancel_job for linked Work Graph job"},
+            validation="path shape preflight; immutable registry descriptors; effect provenance match",
+            completion=["succeeded", "failed", "cancelled"],
+            failure=["approval_required without grant", "effect failure", "invalid path/contents"],
+            observability=["agent invocation events", "job events", "artifact index"],
+            validated_by=["crates/optimus-kernel/tests/specialist_vertical.rs"],
+            source=["crates/optimus-kernel/src/specialist_vertical.rs"],
+        ),
+        workflow_record(
             id="interval-cron-tick",
             owner="optimus-kernel",
             trigger="manual tick against due interval records",
@@ -911,8 +965,8 @@ def build_workflow_registry() -> dict[str, Any]:
             completion=["tick reports each due job status"],
             failure=["provider or kernel error recorded as last status", "expired or stale owner cannot commit completion"],
             observability=["cron lease projection plus kernel/runtime evidence"],
-            validated_by=["crates/optimus-kernel/src/cron.rs"],
-            source=["crates/optimus-kernel/src/cron.rs", "apps/optimus-cli/src/main.rs"],
+            validated_by=["crates/optimus-ops/src/cron.rs"],
+            source=["crates/optimus-ops/src/cron.rs", "apps/optimus-cli/src/main.rs"],
         ),
         workflow_record(
             id="gateway-inbox-drain",
@@ -931,8 +985,8 @@ def build_workflow_registry() -> dict[str, Any]:
             completion=["processed", "dead_lettered", "cancelled", "no message"],
             failure=["turn error commits one failed attempt/outbound", "stale owners are fenced", "materialization conflict fails closed"],
             observability=["SQLite claims/attempts/terminal outbox JSON", "reconciled files", "kernel/runtime evidence"],
-            validated_by=["crates/optimus-kernel/src/gateway.rs", "apps/optimus-cli/tests/gateway_http.rs"],
-            source=["crates/optimus-kernel/src/gateway.rs", "apps/optimus-cli/src/gateway_http.rs"],
+            validated_by=["crates/optimus-ops/src/gateway.rs", "apps/optimus-cli/tests/gateway_http.rs"],
+            source=["crates/optimus-ops/src/gateway.rs", "apps/optimus-cli/src/gateway_http.rs"],
         ),
         workflow_record(
             id="general-workflow-contract",
@@ -952,7 +1006,7 @@ def build_workflow_registry() -> dict[str, Any]:
             completion=["succeeded", "failed", "cancelled", "ambiguous"],
             failure=["invalid/cyclic/unbounded definition", "duplicate identity/version", "unknown persisted adapter status", "unsupported capability remains explicit"],
             observability=["immutable registry definition", "adapter capability matrix", "owner event stores"],
-            validated_by=["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"],
+            validated_by=["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"],
             source=["crates/optimus-kernel/src/workflow.rs"],
         ),
     ]
@@ -1019,7 +1073,7 @@ def build_model_registry() -> dict[str, Any]:
                 "selection": "canonical_route_resolver",
                 "models": ["offline-scripted"],
                 "fallback": None,
-                "evidence": ["crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/eval.rs"],
+                "evidence": ["crates/optimus-kernel/src/lib.rs", "crates/optimus-eval/src/eval.rs"],
             },
             {
                 "id": "openai-compatible",
@@ -1142,16 +1196,16 @@ def build_contract_coverage() -> dict[str, Any]:
         ("C-06", "fail-closed-workflow-decoding", "implemented", ["crates/optimus-runtime/src/campaign.rs"], ["crates/optimus-runtime/src/campaign.rs"]),
         ("C-07", "provider-call-envelope-and-batch-authorization", "implemented", ["crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/openai_compat.rs", "crates/optimus-kernel/src/codex_oauth.rs", "crates/optimus-packs/src/lib.rs"], ["crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/codex_oauth.rs", "crates/optimus-packs/tests/packs_budget.rs"]),
         ("C-08", "canonical-tool-result", "implemented", ["crates/optimus-packs/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/execution.rs"], ["crates/optimus-packs/tests/packs_budget.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
-        ("C-09", "agent-lifecycle", "implemented", ["crates/optimus-kernel/src/agent.rs"], ["crates/optimus-kernel/tests/agent_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
-        ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-kernel/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
-        ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
+        ("C-09", "agent-lifecycle", "implemented", ["crates/optimus-kernel/src/agent.rs"], ["crates/optimus-kernel/tests/agent_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
+        ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-kernel/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-ops/src/cron.rs", "crates/optimus-ops/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
+        ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
         ("C-12", "credential-and-local-transport-security", "implemented", ["crates/optimus-kernel/src/credential.rs", "crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], ["crates/optimus-kernel/tests/codex_oauth.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
-        ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-kernel/src/replay.rs", "crates/optimus-kernel/src/trace.rs", "crates/optimus-kernel/src/lib.rs"], ["crates/optimus-kernel/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
-        ("C-14", "memory-clock-retention-erasure", "implemented", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
+        ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-eval/src/replay.rs", "crates/optimus-kernel/src/trace.rs", "crates/optimus-kernel/src/lib.rs"], ["crates/optimus-eval/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
+        ("C-14", "memory-clock-retention-erasure", "implemented", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
         ("C-15", "atomic-projection-and-event-transitions", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-graph/src/lib.rs"], ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/tests/cancellation.rs"]),
         ("C-16", "campaign-job-consistency-and-recovery", "implemented", ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-store/src/lib.rs"], ["crates/optimus-runtime/src/campaign.rs", "crates/optimus-store/src/lib.rs"]),
-        ("C-17", "cron-gateway-claim-and-delivery", "implemented", ["crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs"], ["crates/optimus-kernel/src/cron.rs", "crates/optimus-kernel/src/gateway.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
-        ("C-18", "session-causality-around-durable-effects", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/session.rs"], ["crates/optimus-kernel/tests/session_resume.rs", "crates/optimus-kernel/tests/integrity_integration.rs"]),
+        ("C-17", "cron-gateway-claim-and-delivery", "implemented", ["crates/optimus-ops/src/cron.rs", "crates/optimus-ops/src/gateway.rs"], ["crates/optimus-ops/src/cron.rs", "crates/optimus-ops/src/gateway.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
+        ("C-18", "session-causality-around-durable-effects", "implemented", ["crates/optimus-store/src/lib.rs", "crates/optimus-runtime/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/session.rs"], ["crates/optimus-kernel/tests/session_resume.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
     ]
     return {
         **generated_header(),
@@ -1170,7 +1224,7 @@ def build_contract_coverage() -> dict[str, Any]:
 
 
 def build_evaluation_coverage() -> dict[str, Any]:
-    path = ROOT / "crates/optimus-kernel/src/eval.rs"
+    path = ROOT / "crates/optimus-eval/src/eval.rs"
     text = path.read_text(encoding="utf-8")
     start = text.find("pub fn builtin_suite")
     end = text.find("pub fn run_case")
@@ -1183,7 +1237,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
     )
     if ids != ["offline-echo", "memory-then-answer", "pack-activate-browser", "write-file-job"]:
         raise MemoryError(f"unexpected built-in eval IDs: {ids}")
-    trajectory_test_path = ROOT / "crates/optimus-kernel/tests/evaluation_contracts.rs"
+    trajectory_test_path = ROOT / "crates/optimus-eval/tests/evaluation_contracts.rs"
     trajectory_test = trajectory_test_path.read_text(encoding="utf-8")
     trajectory_symbols = [
         "pub fn run_offline_trajectory_suite",
@@ -1212,7 +1266,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
     ]
     if integrity_ids != expected_integrity:
         raise MemoryError(f"unexpected integrity eval IDs: {integrity_ids}")
-    integration_path = ROOT / "crates/optimus-kernel/tests/integrity_integration.rs"
+    integration_path = ROOT / "crates/optimus-eval/tests/integrity_integration.rs"
     integration = integration_path.read_text(encoding="utf-8")
     if "pub fn run_offline_integrity_suite" not in text or not re.search(
         r"run_offline_integrity_suite\s*\(", integration
@@ -1234,7 +1288,7 @@ def build_evaluation_coverage() -> dict[str, Any]:
         raise MemoryError(
             f"integrity trace evidence is stale; missing: {missing_integrity_trace}"
         )
-    typed_path = ROOT / "crates/optimus-kernel/src/evaluation.rs"
+    typed_path = ROOT / "crates/optimus-eval/src/evaluation.rs"
     typed = typed_path.read_text(encoding="utf-8")
     required_typed_symbols = [
         "pub struct EvaluationDataset",
@@ -1306,20 +1360,20 @@ def build_evaluation_coverage() -> dict[str, Any]:
         **generated_header(),
         "framework_status": "produced_priority2_offline_reports_and_immutable_baselines",
         "builtin_cases": [
-            {"id": case_id, "source": "crates/optimus-kernel/src/eval.rs"}
+            {"id": case_id, "source": "crates/optimus-eval/src/eval.rs"}
             for case_id in ids
         ],
         "integrity_cases": [
             {
                 "id": case_id,
-                "source": "crates/optimus-kernel/src/eval.rs",
-                "executed_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+                "source": "crates/optimus-eval/src/eval.rs",
+                "executed_by": "crates/optimus-eval/tests/integrity_integration.rs",
             }
             for case_id in integrity_ids
         ],
         "integrity_executor": {
-            "source": "crates/optimus-kernel/src/eval.rs",
-            "validated_by": "crates/optimus-kernel/tests/integrity_integration.rs",
+            "source": "crates/optimus-eval/src/eval.rs",
+            "validated_by": "crates/optimus-eval/tests/integrity_integration.rs",
             "case_count": len(integrity_ids),
             "isolated_runs": True,
             "trace_store": "per_run_integrity-traces.db",
@@ -1327,8 +1381,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "retry_identity": "fresh_trace_ids_stable_normalized_semantics",
         },
         "trajectory_executor": {
-            "source": "crates/optimus-kernel/src/eval.rs",
-            "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+            "source": "crates/optimus-eval/src/eval.rs",
+            "validated_by": "crates/optimus-eval/tests/evaluation_contracts.rs",
             "case_count": len(ids),
             "typed_evidence": [
                 "assistant_text",
@@ -1339,8 +1393,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
             ],
         },
         "priority2_report_executor": {
-            "source": "crates/optimus-kernel/src/evaluation.rs",
-            "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+            "source": "crates/optimus-eval/src/evaluation.rs",
+            "validated_by": "crates/optimus-eval/tests/evaluation_contracts.rs",
             "case_count": len(ids) + len(integrity_ids),
             "resource_measurements": "explicit_caller_supplied_per_case",
             "retry_identity": "fresh_run_and_trace_ids_stable_report_bytes",
@@ -1378,8 +1432,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
             "id": "priority2-integrity",
             "version": 1,
             "case_count": 10,
-            "source": "crates/optimus-kernel/src/evaluation.rs",
-            "validated_by": "crates/optimus-kernel/tests/evaluation_contracts.rs",
+            "source": "crates/optimus-eval/src/evaluation.rs",
+            "validated_by": "crates/optimus-eval/tests/evaluation_contracts.rs",
         },
         "metrics": ["exact_text", "tool_precision", "tool_recall", "terminal_accuracy", "replay_accuracy", "latency_millis", "cost_microunits"],
         "baseline_comparison": True,

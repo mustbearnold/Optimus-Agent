@@ -38,8 +38,12 @@ fn crash_mid_job_then_resume_finishes() {
     let workspace = root.path().join("workspace");
     fs::create_dir_all(&workspace).expect("workspace");
 
+    // Unrestricted: this golden tests crash/resume durability, not SmartDeny.
+    let unrestricted = RuntimeConfig {
+        policy: PolicyMode::Unrestricted,
+    };
     let job_id = {
-        let rt = Runtime::open(&db, &workspace).expect("open A");
+        let rt = Runtime::open_with_config(&db, &workspace, unrestricted.clone()).expect("open A");
         let job_id = rt
             .create_job(JobSpec {
                 label: "crash-resume-golden".into(),
@@ -78,7 +82,7 @@ fn crash_mid_job_then_resume_finishes() {
         job_id
     };
 
-    let rt = Runtime::open(&db, &workspace).expect("open B");
+    let rt = Runtime::open_with_config(&db, &workspace, unrestricted).expect("open B");
     let recovered = rt.recover_crashed_running().expect("recover");
     assert!(
         recovered.contains(&job_id),
@@ -183,7 +187,14 @@ fn write_file_atomically_replaces_target_and_closes_attempt_with_receipt() {
     let workspace = root.path().join("workspace");
     fs::create_dir_all(&workspace).expect("workspace");
     fs::write(workspace.join("replace.txt"), "old").expect("old target");
-    let rt = Runtime::open(&db, &workspace).expect("open");
+    let rt = Runtime::open_with_config(
+        &db,
+        &workspace,
+        RuntimeConfig {
+            policy: PolicyMode::Unrestricted,
+        },
+    )
+    .expect("open");
     let job_id = rt
         .create_job(JobSpec {
             label: "atomic replacement".into(),

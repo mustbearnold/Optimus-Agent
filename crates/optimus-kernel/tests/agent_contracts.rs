@@ -352,7 +352,14 @@ fn effect_link_requires_exact_terminal_runtime_provenance() {
     let dir = tempdir().unwrap();
     let workspace = dir.path().join("workspace");
     fs::create_dir_all(&workspace).unwrap();
-    let runtime = Runtime::open(&dir.path().join("runtime.db"), &workspace).unwrap();
+    let runtime = Runtime::open_with_config(
+        &dir.path().join("runtime.db"),
+        &workspace,
+        RuntimeConfig {
+            policy: PolicyMode::Unrestricted,
+        },
+    )
+    .unwrap();
     let job = runtime
         .create_job(JobSpec {
             label: "agent-effect".into(),

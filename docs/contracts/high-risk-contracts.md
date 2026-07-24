@@ -9,8 +9,8 @@ owns:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/src/fs_sandbox.rs
-  - crates/optimus-kernel/src/gateway.rs
-  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-ops/src/gateway.rs
+  - crates/optimus-ops/src/cron.rs
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-packs/src/lib.rs
@@ -32,8 +32,8 @@ covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/src/fs_sandbox.rs
-  - crates/optimus-kernel/src/gateway.rs
-  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-ops/src/gateway.rs
+  - crates/optimus-ops/src/cron.rs
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-packs/src/lib.rs
@@ -48,7 +48,7 @@ depends_on:
 validated_by:
   - crates/optimus-runtime/tests/cancellation.rs
   - crates/optimus-runtime/tests/path_confinement.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
   - apps/optimus-cli/tests/gateway_http.rs
   - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
@@ -101,6 +101,10 @@ it does not replace executable enforcement.
 - **Evidence:** every decision is bound to job ID, node ID, and SHA-256 of the
   persisted effect JSON, with actor, creation time, expiry, denial, revocation,
   and ledger events. Changed effects and later nodes cannot reuse a grant.
+- **Evidence:** SmartDeny high-risk effects are `WriteFile`, `ProjectWriteFile`,
+  `RunCommand`, and `ProjectRunCommand`. Illegal write path shapes fail in
+  preflight before an approval wait. Skill grants require `FsWorkspace` for
+  writes and `Terminal` for commands.
 - **Evidence:** project writes and commands additionally persist the canonical
   workspace hash. Approval execution reopens the matching Rust-authorized root
   and rejects a foreign or changed workspace before any effect.
@@ -125,7 +129,9 @@ it does not replace executable enforcement.
 - **Confirmed current behaviour:** new project roots require a short-lived,
   single-use grant staged by a native folder picker. Canonical authorized roots
   persist under Rust ownership; absent scope does not fall back to shared work.
-- **Boundary:** approved arbitrary child processes are not filesystem-sandboxed.
+- **Boundary:** approved arbitrary child processes are not `cap-std`-sandboxed;
+  they use workspace `cwd`, loader-env sanitisation, and (on Linux) bwrap via
+  systemd-run, but can still open absolute paths outside the workspace.
 - **Owner:** runtime; align with kernel `FsRoots`.
 
 ### C-05 Loopback API authorization

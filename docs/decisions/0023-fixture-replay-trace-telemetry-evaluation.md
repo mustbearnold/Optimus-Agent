@@ -2,26 +2,26 @@
 knowledge_type: decision
 status: current
 covers:
-  - crates/optimus-kernel/src/replay.rs
+  - crates/optimus-eval/src/replay.rs
   - crates/optimus-kernel/src/trace.rs
   - crates/optimus-kernel/src/telemetry.rs
   - crates/optimus-kernel/src/routing.rs
-  - crates/optimus-kernel/src/evaluation.rs
+  - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-packs/src/lib.rs
-  - crates/optimus-kernel/tests/replay_contracts.rs
+  - crates/optimus-eval/tests/replay_contracts.rs
   - crates/optimus-kernel/tests/trace_contracts.rs
   - crates/optimus-kernel/tests/routing_telemetry.rs
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
 depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - docs/decisions/0022-versioned-agent-and-workflow-contracts.md
   - docs/contracts/high-risk-contracts.md
 validated_by:
-  - crates/optimus-kernel/tests/replay_contracts.rs
+  - crates/optimus-eval/tests/replay_contracts.rs
   - crates/optimus-kernel/tests/trace_contracts.rs
   - crates/optimus-kernel/tests/routing_telemetry.rs
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
   - crates/optimus-packs/tests/packs_budget.rs
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
@@ -147,18 +147,18 @@ permission isolation, one terminal outcome, CPU fallback, and executable tests.
 
 ## Relevant code
 
-- `crates/optimus-kernel/src/replay.rs`
+- `crates/optimus-eval/src/replay.rs`
 - `crates/optimus-kernel/src/trace.rs`
 - `crates/optimus-kernel/src/telemetry.rs`
 - `crates/optimus-kernel/src/routing.rs`
-- `crates/optimus-kernel/src/evaluation.rs`
+- `crates/optimus-eval/src/evaluation.rs`
 - `crates/optimus-kernel/src/execution.rs`
 - `crates/optimus-packs/src/lib.rs`
 
 ## Relevant tests
 
-- `crates/optimus-kernel/tests/replay_contracts.rs`
+- `crates/optimus-eval/tests/replay_contracts.rs`
 - `crates/optimus-kernel/tests/trace_contracts.rs`
 - `crates/optimus-kernel/tests/routing_telemetry.rs`
-- `crates/optimus-kernel/tests/evaluation_contracts.rs`
+- `crates/optimus-eval/tests/evaluation_contracts.rs`
 - `crates/optimus-packs/tests/packs_budget.rs`

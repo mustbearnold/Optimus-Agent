@@ -89,9 +89,10 @@ variant; malformed OpenAI/Codex containers and completed SSE forms fail closed.
 ## Work Graph and approval flow
 
 1. **Confirmed:** a high-risk effect is persisted as a job/node before execution.
-2. **Confirmed:** SmartDeny classifies `RunCommand` as high-risk; `WriteFile` and
-   `AssertFileEquals` are not high-risk.
-3. **Confirmed:** execution marks the command node `awaiting_approval` and stops.
+2. **Confirmed:** SmartDeny classifies host-mutating effects as high-risk:
+   `RunCommand`, `ProjectRunCommand`, `WriteFile`, and `ProjectWriteFile`.
+   `AssertFileEquals` remains non-high-risk (read/compare only).
+3. **Confirmed:** execution marks the high-risk node `awaiting_approval` and stops.
 4. **Confirmed:** desktop `term_run` cannot self-grant; a separate
    `approvals_grant(job_id)` call resolves the awaiting node, persists a grant
    bound to job/node/SHA-256 effect identity, and resumes.
@@ -129,6 +130,14 @@ versioned allowlist. A new canonical root requires a short-lived single-use
 token staged by a native folder selection; the renderer cannot mint one.
 Project file and command effects persist the canonical workspace hash and
 fail before execution if approval is replayed against another root.
+
+**Confirmed current behaviour:** skill grants are effect-class scoped. A skill
+may grant only when its closed permission set includes `Terminal` for command
+effects or `FsWorkspace` for write effects.
+
+**Confirmed current behaviour:** command execution uses the runtime workspace as
+`current_dir` and strips loader-injection environment variables (`LD_PRELOAD`,
+`LD_LIBRARY_PATH`, `DYLD_*`, and similar) before spawn.
 
 **Known boundary:** approved arbitrary child processes are not governed by the
 built-in file-effect directory capability and can use their own filesystem

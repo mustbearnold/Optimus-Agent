@@ -2,14 +2,14 @@
 knowledge_type: specification
 status: historical
 covers:
-  - crates/optimus-kernel/src/evaluation.rs
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/src/evaluation.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
   - docs/maps/observability-and-evaluations.md
 depends_on:
   - docs/specifications/candidate-aware-evaluation-comparison.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
 validated_by:
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
 last_verified_commit: df70591ab07a67c1589651c266b836879f8ced9b
 ---
 
