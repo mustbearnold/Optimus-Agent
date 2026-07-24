@@ -1,17 +1,23 @@
 ---
 knowledge_type: specification
 status: historical
-covers:
+owns:
+  - docs/specifications/priority-1-integrity-100-nanotasks.md
+  - docs/contracts/high-risk-contracts.md
+  - docs/decisions/0021-owned-execution-and-causal-delivery.md
+  - scripts/engineering_memory.py
+  - scripts/test_engineering_memory.py
+watches:
   - crates/optimus-memory/src/**
-  - crates/optimus-memory/tests/**
   - crates/optimus-kernel/src/**
-  - crates/optimus-kernel/tests/**
   - crates/optimus-runtime/src/**
   - crates/optimus-store/src/**
   - docs/architecture/**
-  - docs/contracts/**
-  - docs/decisions/**
   - docs/maps/**
+covers:
+  - docs/specifications/priority-1-integrity-100-nanotasks.md
+  - docs/contracts/high-risk-contracts.md
+  - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
 depends_on:
@@ -19,8 +25,8 @@ depends_on:
   - docs/contracts/high-risk-contracts.md
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
 validated_by:
-  - crates/optimus-memory/tests/**
-  - crates/optimus-kernel/tests/**
+  - crates/optimus-memory/tests/metamemory_mvp.rs
+  - crates/optimus-kernel/tests/integrity_integration.rs
   - scripts/test_engineering_memory.py
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---

@@ -1,21 +1,56 @@
 ---
 knowledge_type: contract-risk-register
 status: current
-covers:
+owns:
+  - crates/optimus-store/src/lib.rs
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-runtime/src/campaign.rs
+  - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-kernel/src/execution.rs
+  - crates/optimus-kernel/src/fs_sandbox.rs
+  - crates/optimus-kernel/src/gateway.rs
+  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-kernel/src/agent.rs
+  - crates/optimus-kernel/src/workflow.rs
+  - crates/optimus-packs/src/lib.rs
+  - apps/optimus-desktop/src/server.rs
+  - apps/optimus-cli/src/gateway_http.rs
+watches:
+  - crates/optimus-kernel/src/**
+  - crates/optimus-runtime/src/**
   - crates/optimus-store/src/**
   - crates/optimus-graph/src/**
-  - crates/optimus-runtime/src/**
-  - crates/optimus-kernel/src/**
-  - crates/optimus-packs/src/**
   - apps/optimus-desktop/src/**
   - apps/optimus-electron/**
   - apps/optimus-ui/src/ipc/**
+covers:
+  - crates/optimus-store/src/lib.rs
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-runtime/src/campaign.rs
+  - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-kernel/src/execution.rs
+  - crates/optimus-kernel/src/fs_sandbox.rs
+  - crates/optimus-kernel/src/gateway.rs
+  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-kernel/src/agent.rs
+  - crates/optimus-kernel/src/workflow.rs
+  - crates/optimus-packs/src/lib.rs
+  - apps/optimus-desktop/src/server.rs
   - apps/optimus-cli/src/gateway_http.rs
 depends_on:
-  - docs/decisions/**
+  - docs/decisions/0018-fail-closed-runtime-safety.md
+  - docs/decisions/0019-capability-files-and-unified-campaign-authority.md
+  - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
+  - docs/decisions/0021-owned-execution-and-causal-delivery.md
+  - docs/decisions/0031-safe-project-work-loop.md
 validated_by:
-  - crates/**/tests/**
-  - apps/optimus-desktop/e2e/**
+  - crates/optimus-runtime/tests/cancellation.rs
+  - crates/optimus-runtime/tests/path_confinement.rs
+  - crates/optimus-kernel/tests/integrity_integration.rs
+  - apps/optimus-cli/tests/gateway_http.rs
+  - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 

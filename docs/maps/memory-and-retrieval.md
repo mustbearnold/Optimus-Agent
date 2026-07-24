@@ -1,21 +1,31 @@
 ---
 knowledge_type: memory-map
 status: current
-covers:
-  - crates/optimus-memory/src/**
+owns:
+  - crates/optimus-memory/src/lib.rs
   - crates/optimus-kernel/src/session.rs
   - crates/optimus-kernel/src/gateway.rs
   - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-skills/src/lib.rs
+  - crates/optimus-runtime/src/campaign.rs
+watches:
+  - crates/optimus-memory/src/**
   - crates/optimus-skills/src/**
+covers:
+  - crates/optimus-memory/src/lib.rs
+  - crates/optimus-kernel/src/session.rs
+  - crates/optimus-kernel/src/gateway.rs
+  - crates/optimus-kernel/src/cron.rs
+  - crates/optimus-skills/src/lib.rs
   - crates/optimus-runtime/src/campaign.rs
 depends_on:
   - docs/decisions/0002-memory-invariants.md
   - docs/decisions/0004-metamemory-mvp.md
 validated_by:
-  - crates/optimus-memory/tests/**
+  - crates/optimus-memory/tests/metamemory_mvp.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
-  - crates/optimus-skills/tests/**
+  - crates/optimus-skills/tests/skills_lifecycle.rs
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 

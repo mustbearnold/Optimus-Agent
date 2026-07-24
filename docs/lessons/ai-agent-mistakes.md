@@ -1,13 +1,24 @@
 ---
 knowledge_type: lesson-ledger
 status: current
-covers:
+owns:
   - AGENTS.md
+  - docs/engineering-memory/README.md
+  - docs/contracts/high-risk-contracts.md
+  - scripts/engineering_memory.py
+  - scripts/test_engineering_memory.py
+watches:
   - docs/architecture/**
   - docs/contracts/**
+covers:
+  - AGENTS.md
+  - docs/engineering-memory/README.md
+  - docs/contracts/high-risk-contracts.md
   - scripts/engineering_memory.py
+  - scripts/test_engineering_memory.py
 depends_on:
-  - docs/decisions/**
+  - docs/decisions/0017-engineering-memory-separation.md
+  - docs/decisions/0032-engineering-memory-compact-lenses.md
 validated_by:
   - scripts/test_engineering_memory.py
 last_verified_commit: null

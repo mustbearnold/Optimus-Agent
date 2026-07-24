@@ -1,23 +1,48 @@
 ---
 knowledge_type: architecture
 status: current
-covers:
+owns:
   - Cargo.toml
+  - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-packs/src/lib.rs
+  - crates/optimus-memory/src/lib.rs
+  - crates/optimus-store/src/lib.rs
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-skills/src/lib.rs
+  - apps/optimus-cli/src/main.rs
+  - apps/optimus-desktop/src/main.rs
+  - docs/maps/repository-and-ownership.md
+  - docs/maps/memory-and-retrieval.md
+  - docs/maps/model-routing.md
+  - docs/maps/security-and-approvals.md
+  - docs/maps/observability-and-evaluations.md
+watches:
   - apps/optimus-cli/src/**
   - apps/optimus-desktop/src/**
-  - crates/optimus-store/src/**
-  - crates/optimus-graph/src/**
-  - crates/optimus-runtime/src/**
-  - crates/optimus-memory/src/**
-  - crates/optimus-skills/src/**
-  - crates/optimus-packs/src/**
-  - crates/optimus-kernel/src/**
+  - crates/*/src/**
+covers:
+  - Cargo.toml
+  - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-packs/src/lib.rs
+  - crates/optimus-memory/src/lib.rs
+  - crates/optimus-store/src/lib.rs
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-skills/src/lib.rs
+  - apps/optimus-cli/src/main.rs
+  - apps/optimus-desktop/src/main.rs
 depends_on:
-  - docs/decisions/**
+  - docs/decisions/0017-engineering-memory-separation.md
+  - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
+  - docs/decisions/0026-separate-development-and-runtime-agents.md
+  - docs/decisions/0031-safe-project-work-loop.md
+  - docs/decisions/0032-engineering-memory-compact-lenses.md
 validated_by:
-  - crates/**/tests/**
-  - apps/optimus-cli/tests/**
-  - apps/optimus-desktop/e2e/**
+  - crates/optimus-kernel/tests/kernel_turn.rs
+  - crates/optimus-runtime/tests/cancellation.rs
+  - apps/optimus-cli/tests/gateway_http.rs
+  - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 

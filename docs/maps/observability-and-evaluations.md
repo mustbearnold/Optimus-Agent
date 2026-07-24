@@ -1,11 +1,12 @@
 ---
 knowledge_type: observability-evaluation-map
 status: current
-covers:
-  - crates/optimus-store/src/**
-  - crates/optimus-graph/src/**
-  - crates/optimus-runtime/src/**
+owns:
+  - crates/optimus-store/src/lib.rs
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
   - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-kernel/src/evaluation.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs
@@ -16,14 +17,35 @@ covers:
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/ui/app.js
+watches:
+  - crates/optimus-store/src/**
+  - crates/optimus-graph/src/**
+  - crates/optimus-runtime/src/**
   - apps/optimus-desktop/e2e/**
+covers:
+  - crates/optimus-store/src/lib.rs
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-kernel/src/evaluation.rs
+  - crates/optimus-kernel/src/execution.rs
+  - crates/optimus-kernel/src/agent.rs
+  - crates/optimus-kernel/src/workflow.rs
+  - crates/optimus-kernel/src/lib.rs
+  - apps/optimus-desktop/src/server.rs
+  - apps/optimus-desktop/src/native_workers.rs
+  - apps/optimus-desktop/src/ipc/chat.rs
+  - apps/optimus-desktop/src/bridge.rs
+  - apps/optimus-desktop/src/main.rs
+  - apps/optimus-desktop/ui/app.js
 depends_on:
   - docs/decisions/0001-kernel-and-work-graph.md
-  - docs/decisions/0006-trajectory-evals.md
+  - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
 validated_by:
-  - crates/**/tests/**
-  - apps/optimus-cli/tests/**
-  - apps/optimus-desktop/e2e/**
+  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-kernel/tests/integrity_integration.rs
+  - apps/optimus-cli/tests/eval_report.rs
+  - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 

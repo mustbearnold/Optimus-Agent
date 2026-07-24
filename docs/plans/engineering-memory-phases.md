@@ -1,14 +1,28 @@
 ---
 knowledge_type: implementation-plan
 status: current
-covers:
+owns:
   - AGENTS.md
   - docs/architecture/system-overview.md
+  - docs/engineering-memory/README.md
+  - docs/decisions/0017-engineering-memory-separation.md
+  - docs/decisions/0032-engineering-memory-compact-lenses.md
+  - scripts/engineering_memory.py
+  - scripts/test_engineering_memory.py
+  - skills/update-engineering-memory/SKILL.md
+watches:
   - docs/maps/**
   - docs/contracts/**
   - docs/decisions/**
+covers:
+  - AGENTS.md
+  - docs/architecture/system-overview.md
+  - docs/engineering-memory/README.md
+  - docs/decisions/0017-engineering-memory-separation.md
+  - docs/decisions/0032-engineering-memory-compact-lenses.md
   - scripts/engineering_memory.py
-  - skills/update-engineering-memory/**
+  - scripts/test_engineering_memory.py
+  - skills/update-engineering-memory/SKILL.md
 depends_on:
   - Cargo.toml
 validated_by:
@@ -87,13 +101,28 @@ coverage entry. Documentation does not grant implementation status.
   human corrections.
 - Add project integration docs only alongside real adapters/workflows.
 
-## Phase 6 — retrieval and optional acceleration
+## Phase 6 — compact facts and agent lenses
+
+**Status: implemented in ADR-0032 (2026-07-25 worktree redesign).**
+
+- Compact staleness to hash/count/pattern storage.
+- Compact impact to pattern→document relations with query-time expansion.
+- Add budgeted lenses: `context`, `impact`, `owner`, `tools`, `stale`, `report`,
+  `stat`.
+- Add `validate --quick`, local hash cache, and `manifest.json` serving metadata.
+- Keep full rebuild validate for CI/release.
+
+**Exit evidence:** schema v2 generated artifacts, lens budget tests, and size
+reduction versus pre-redesign dumps while preserving fail-closed validation.
+
+## Phase 7 — retrieval and optional acceleration
 
 **Status: planned behaviour.**
 
 - Build CPU fixture baselines for relevance, recall, deduplication, temporal
-  scoring, and context packing.
-- Use replaceable established vector/embedding/reranking backends.
+  scoring, and context packing on top of lenses.
+- Use replaceable established vector/embedding/reranking backends only as
+  non-authoritative discovery aids.
 - Benchmark transfer cost, batching, VRAM, latency, and quality before enabling
   GPU acceleration.
 - Fit the development target (RTX 5070 12 GB) with headroom and retain a tested

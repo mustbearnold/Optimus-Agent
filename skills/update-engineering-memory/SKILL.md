@@ -13,6 +13,8 @@ memory or turning documentation into speculative architecture.
 - Source and executable tests outrank documentation.
 - Run `check` before `generate`; generation refreshes the recorded baseline.
 - Never edit `.engineering-memory/*.json` manually.
+- Do not load raw `.engineering-memory/*.json` into prompts. Use lenses:
+  `context`, `impact`, `owner`, `tools`, `stale`, `report`, `stat`.
 - Preserve old ADRs. Add a superseding ADR instead of rewriting history.
 - Label important claims as confirmed, inferred, planned, or unresolved.
 - Do not register a specialist agent, workflow, tool, model, prompt, GPU path, or
@@ -20,7 +22,9 @@ memory or turning documentation into speculative architecture.
 - Do not mark a gap resolved because code compiles.
 - Use generated source-tree hashes in Git checkouts, worktrees, and archives;
   never embed or invent a commit SHA as generated self-identity.
-- Keep tiny changes cheap: update only impacted knowledge.
+- Keep tiny changes cheap: update only impacted owned knowledge.
+- Prefer precise `owns` over broad `covers: crate/**` globs. Use `watches` for
+  advisory breadth.
 
 ## Procedure
 
@@ -33,18 +37,25 @@ python scripts/engineering_memory.py check
 ```
 
 A nonzero result is expected when covered source changed. Save the listed
-`CHANGED`, `STALE`, and `IMPACT` paths before doing anything else.
+`CHANGED`, `STALE`, `IMPACT`, and `WATCH` paths before doing anything else.
 
-Inspect Git status/diff when available, but use the repository index and direct
-file comparison as deterministic generated identity in every environment.
+If anything changed or is stale, build a budgeted pack:
+
+```text
+python scripts/engineering_memory.py context --budget 3000
+```
+
+Work from that pack. Do not open whole generated maps unless debugging the
+generator itself.
 
 ### 2. Trace ownership and evidence
 
 For every changed behavior:
 
 1. Identify the owning application/crate and canonical type.
-2. Read impacted documents from `.engineering-memory/change-impact.json`.
-3. Read relevant ADRs and high-risk contracts.
+2. Run `python scripts/engineering_memory.py owner --path <file>` and/or
+   `impact --path <file>`.
+3. Read relevant ADRs and high-risk contracts named by the lens.
 4. Inspect focused tests and evaluation cases.
 5. Determine whether behavior is current, inferred, planned, or unresolved.
 
@@ -60,8 +71,9 @@ accurate:
 ---
 knowledge_type: architecture
 status: current
-covers:
+owns:
   - crates/owner/src/**
+watches: []
 depends_on:
   - docs/decisions/NNNN-decision.md
 validated_by:
@@ -74,6 +86,9 @@ last_verified_commit: <historical source commit or null>
 commit containing the document. A commit cannot embed its own identity; keep
 remote/commit receipts in external delivery evidence. Record reusable lessons
 only when they can change future implementation or validation behavior.
+
+If no owned document is impacted and registries are unchanged, skip prose edits
+after tests pass.
 
 ### 4. Reconcile deterministic extractors
 
@@ -106,8 +121,15 @@ Fix parser, reference, or frontmatter failures before generation.
 
 ```text
 python scripts/engineering_memory.py generate
-python scripts/engineering_memory.py validate
+python scripts/engineering_memory.py validate --quick
 python scripts/engineering_memory.py check
+python scripts/engineering_memory.py report
+```
+
+Before merge/release, also run full validation:
+
+```text
+python scripts/engineering_memory.py validate
 ```
 
 Expected final markers:
@@ -123,6 +145,13 @@ checks to approve a poor change.
 
 ### 7. Report
 
+Prefer:
+
+```text
+python scripts/engineering_memory.py report
+python scripts/engineering_memory.py stat
+```
+
 Report:
 
 - changed code/knowledge surfaces;
@@ -130,15 +159,17 @@ Report:
 - focused and integration/evaluation results;
 - remaining warnings and stale knowledge;
 - security, cancellation, replay, approval, and CPU-fallback implications;
-- exact tree hash from `.engineering-memory/repository-index.json`.
+- exact tree hash from `report` / `repository-index.json`;
+- context-lens token usage when used.
 
 ## Pitfalls
 
 - **Generate first:** destroys the useful old-vs-current staleness comparison.
 - **Manual JSON repair:** will be overwritten and hides extractor drift.
+- **Loading raw maps into prompts:** wastes tokens; use `context`.
 - **Planned-as-current prose:** creates false capabilities for later agents.
 - **Broad `covers` globs:** make unrelated tiny changes expensive and obscure
-  ownership.
+  ownership. Prefer `owns` + optional `watches`.
 - **Missing tests disguised as docs:** a contract documents behavior; it does not
   enforce it.
 - **Ambient archive conversion:** use `git -c core.autocrlf=false archive` for

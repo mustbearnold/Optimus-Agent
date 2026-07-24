@@ -51,6 +51,7 @@ implemented.
 | 0029 | React workbench and Electron preview view | Accepted; repository cutover implemented | React is the default Electron renderer, main mediates the token and SSE, and a sandboxed `WebContentsView` owns user-preview pixels; installed cutover remains planned. |
 | 0030 | Codex-measured shell and multi-folder projects | Accepted; project-authority boundary superseded by 0031 | Measured neutral geometry, versioned `rootPaths[]` projects, categorized Settings, bounded native annotations, and overlay-aware preview suspension are implemented. |
 | 0031 | Safe project work loop and durable tool lifecycle | Accepted | Rust-authorized canonical project roots, root-bound SmartDeny effects, typed persisted tool events, and reload/reconnect projection are implemented. |
+| 0032 | Compact Engineering Memory facts and budgeted agent lenses | Accepted | Schema v2 compact indexes, hash-only staleness, pattern impact, and context/report lenses are implemented. |
 
 ## Known documentary debt
 

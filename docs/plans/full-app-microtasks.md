@@ -1,7 +1,12 @@
 ---
 knowledge_type: implementation-plan
 status: current
-covers:
+owns:
+  - docs/architecture/parity-capability-ledger.json
+  - docs/architecture/sota-scorecard.md
+  - docs/architecture/system-overview.md
+  - scripts/check-parity-ledger.py
+watches:
   - apps/optimus-ui/**
   - apps/optimus-electron/**
   - apps/optimus-desktop/**
@@ -11,8 +16,11 @@ covers:
   - crates/optimus-runtime/**
   - crates/optimus-skills/**
   - crates/optimus-memory/**
+covers:
   - docs/architecture/parity-capability-ledger.json
   - docs/architecture/sota-scorecard.md
+  - docs/architecture/system-overview.md
+  - scripts/check-parity-ledger.py
 depends_on:
   - docs/architecture/parity-capability-ledger.json
   - docs/architecture/sota-scorecard.md
@@ -23,8 +31,7 @@ depends_on:
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
 validated_by:
   - scripts/check-parity-ledger.py
-  - scripts/engineering_memory.py
-  - cargo test --workspace -- --test-threads=1
+  - scripts/test_engineering_memory.py
 last_verified_commit: null
 ---
 

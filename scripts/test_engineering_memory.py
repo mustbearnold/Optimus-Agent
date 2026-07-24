@@ -31,6 +31,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(
             names,
             {
+                "optimus-browser",
                 "optimus-cli",
                 "optimus-desktop",
                 "optimus-graph",
@@ -72,6 +73,15 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertTrue(terminal["observability_contract"]["trace_span_required"])
         read_file = next(row for row in tools if row["id"] == "read_file")
         self.assertEqual(read_file["idempotency"]["status"], "keyed")
+
+        compressed = EM.compress_tool_registry(registry)
+        self.assertEqual(compressed.get("storage"), "templated_v2")
+        self.assertTrue(compressed.get("templates"))
+        expanded = EM.expand_tool_registry(compressed)
+        self.assertEqual(
+            {row["id"]: row["approval"] for row in expanded["tools"]},
+            {row["id"]: row["approval"] for row in tools},
+        )
 
     def test_agent_registry_does_not_invent_specialists(self) -> None:
         registry = EM.build_agent_registry()
@@ -383,12 +393,77 @@ class EngineeringMemoryTests(unittest.TestCase):
 
         staleness = EM.build_knowledge_staleness(refresh=True)
         self.assertTrue(staleness["documents"])
+        self.assertEqual(staleness.get("storage"), "hash_only_v2")
         self.assertTrue(
             all(
                 document["verification_basis"] == "sha256_tree"
+                and "covered_files" not in document
+                and "covered_file_count" in document
                 for document in staleness["documents"]
             )
         )
+
+    def test_change_impact_is_pattern_indexed_not_path_expanded(self) -> None:
+        impact = EM.build_change_impact()
+        self.assertIn("pattern_to_knowledge", impact)
+        self.assertNotIn("source_to_knowledge", impact)
+        self.assertTrue(impact["pattern_to_knowledge"])
+        sample = next(iter(impact["documents"]))
+        self.assertIn("owns", sample)
+        self.assertIn("resolved_test_count", sample)
+        self.assertNotIn("resolved_tests", sample)
+
+        hits = EM.impact_for_paths(["crates/optimus-packs/src/lib.rs"], impact)
+        self.assertIn("crates/optimus-packs/src/lib.rs", hits)
+        self.assertTrue(hits["crates/optimus-packs/src/lib.rs"])
+
+    def test_system_overview_no_longer_owns_entire_kernel_tree(self) -> None:
+        overview = EM.parse_frontmatter(ROOT / "docs/architecture/system-overview.md")
+        assert overview is not None
+        owns = EM.ownership_patterns(overview)
+        self.assertIn("crates/optimus-kernel/src/lib.rs", owns)
+        self.assertFalse(any(item.endswith("/**") and "optimus-kernel" in item for item in owns))
+        watches = EM.watch_patterns(overview)
+        self.assertTrue(any("crates/*/src/**" == item or item.endswith("src/**") for item in watches))
+
+        impact = EM.build_change_impact()
+        leaf = "crates/optimus-kernel/src/openai_compat.rs"
+        hits = EM.impact_for_paths([leaf], impact).get(leaf, [])
+        overview_relations = {
+            row["relation"]
+            for row in hits
+            if row["document"] == "docs/architecture/system-overview.md"
+        }
+        self.assertIn("watches", overview_relations)
+        self.assertNotIn("owns", overview_relations)
+
+    def test_context_lens_stays_within_budget(self) -> None:
+        pack = EM.build_context_pack(
+            budget_tokens=3000,
+            paths=["crates/optimus-kernel/src/execution.rs"],
+        )
+        self.assertTrue(pack["ok"])
+        self.assertLessEqual(pack["used_tokens"], 3000)
+        self.assertIn("EM_CONTEXT v2", pack["text"])
+        self.assertIn("crates/optimus-kernel/src/execution.rs", pack["text"])
+
+    def test_canonical_json_is_compact(self) -> None:
+        payload = {"b": 1, "a": [2, 3]}
+        rendered = EM.canonical_json(payload)
+        self.assertEqual(rendered, '{"a":[2,3],"b":1}\n')
+
+    def test_file_record_hash_cache_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="engineering-memory-cache-", dir=ROOT
+        ) as directory:
+            path = Path(directory) / "cached.txt"
+            path.write_text("alpha\n", encoding="utf-8")
+            first = EM.file_record(path)
+            second = EM.file_record(path)
+            self.assertEqual(first, second)
+            path.write_text("beta\n", encoding="utf-8")
+            third = EM.file_record(path)
+            self.assertNotEqual(first["sha256"], third["sha256"])
 
     def test_repository_files_excludes_linked_worktree_git_pointer(self) -> None:
         fake_root = Path("C:/repo")

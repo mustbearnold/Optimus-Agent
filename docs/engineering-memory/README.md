@@ -8,6 +8,8 @@ covers:
   - skills/update-engineering-memory/**
 depends_on:
   - Cargo.toml
+  - docs/decisions/0017-engineering-memory-separation.md
+  - docs/decisions/0032-engineering-memory-compact-lenses.md
 validated_by:
   - scripts/test_engineering_memory.py
 last_verified_commit: null
@@ -18,6 +20,15 @@ last_verified_commit: null
 Optimus Engineering Memory is repository-local development knowledge for
 building Optimus itself. It is not runtime memory, conversation memory,
 project-content memory, or a production retrieval index.
+
+## Planes
+
+1. **Authority** — curated laws, maps, contracts, ADRs, lessons, skills
+2. **Facts** — compact deterministic indexes in `.engineering-memory/`
+3. **Lenses** — budgeted query views for agents and humans
+
+Raw generated JSON is machine truth. Agents should load lenses, not whole map
+files, into prompts.
 
 ## Claim labels
 
@@ -59,43 +70,75 @@ be reported and resolved rather than blended.
 - `skills/update-engineering-memory/` — refresh procedure.
 - `.engineering-memory/` — deterministic indexes; never edit directly.
 
-## Generated indexes
-
-Run:
+## Commands
 
 ```text
 python scripts/engineering_memory.py check
+python scripts/engineering_memory.py context --budget 3000
+python scripts/engineering_memory.py impact --path crates/optimus-kernel/src/lib.rs
+python scripts/engineering_memory.py owner --path crates/optimus-packs/src/lib.rs
+python scripts/engineering_memory.py tools --available
+python scripts/engineering_memory.py stale
+python scripts/engineering_memory.py report
+python scripts/engineering_memory.py stat
 python scripts/engineering_memory.py generate
 python scripts/engineering_memory.py validate
+python scripts/engineering_memory.py validate --quick
 python scripts/engineering_memory.py binding > ../optimus-binding.json
 ```
 
-`check` compares covered code with the recorded tree hashes before changing
-anything. `generate` refreshes deterministic maps. `validate` checks generated
-integrity, frontmatter, local links, duplicate IDs, registry completeness, ADR
-shape, contract/evaluation gaps, and staleness.
+Hot path for coding agents:
 
-`binding` is read-only and emits the exact Priority-2 offline `CandidateBinding`
-for the current canonical source tree. It derives contract, tool-catalog, and route
-policy identities from the same source records and prints no JSON on failure.
-The redirected file must remain outside the indexed repository; writing it into
-the source tree would correctly change that tree immediately after hashing it.
+1. `check`
+2. `context --budget 3000` when anything is stale/changed
+3. update only owned docs
+4. `generate`
+5. `validate --quick` (use full `validate` before merge/release)
+6. `report`
+
+## Frontmatter ownership
+
+```yaml
+---
+knowledge_type: map
+status: current
+covers:                 # legacy alias of owns
+  - crates/owner/src/file.rs
+owns:                   # preferred hard invalidation set
+  - crates/owner/src/file.rs
+watches:                # warn only; do not auto-stale
+  - crates/owner/src/**
+depends_on:
+  - docs/decisions/NNNN-decision.md
+validated_by:
+  - crates/owner/tests/**
+last_verified_commit: <historical source commit or null>
+---
+```
+
+`owns`/`covers` + `depends_on` drive staleness. `watches` is advisory impact only.
+
+## Generated facts (schema v2)
+
+- Compact canonical JSON (sorted keys, no pretty indent).
+- `knowledge-staleness.json` stores hashes/counts/patterns only.
+- `change-impact.json` stores pattern→document relations; path expansion is
+  query-time.
+- `manifest.json` summarizes counts, artifact hashes, and serving policy.
+- `.engineering-memory/.hash-cache.json` is a local speed cache, not authority,
+  and is gitignored.
 
 **Confirmed current behaviour:** generated indexes use sorted source-file
 SHA-256 records and an aggregate `tree_sha256` as their deterministic identity.
 UTF-8 text is canonicalized to LF for cross-platform identity; binary bytes are
-retained exactly.
-They do not embed ambient `.git`, branch, worktree, `HEAD`, or remote state, so
-the same indexed bytes validate in a Git checkout and a source archive.
+retained exactly. They do not embed ambient `.git`, branch, worktree, `HEAD`, or
+remote state.
 
-Curated `last_verified_commit` values are historical provenance only. They may
-name an earlier source commit or remain `null`; they are not a generated
-self-identity because a commit cannot embed its own SHA. Commit and remote
-identities belong in external delivery evidence.
+Curated `last_verified_commit` values are historical provenance only.
 
 ## Cost boundary
 
 Tiny changes do not require a documentation rewrite. They do require `check`;
-only affected knowledge is refreshed. A source change with no matching
-frontmatter coverage is itself a coverage gap to report, not permission to add
+only affected owned knowledge is refreshed. A source change with no matching
+ownership coverage is itself a coverage gap to report, not permission to add
 speculative prose.

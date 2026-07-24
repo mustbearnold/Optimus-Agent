@@ -1,8 +1,12 @@
 ---
 knowledge_type: specification
 status: historical
-covers:
+owns:
+  - docs/specifications/priority-1-integrity-next-30-microtasks.md
+  - docs/contracts/high-risk-contracts.md
+  - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - Cargo.toml
+watches:
   - crates/optimus-packs/src/**
   - crates/optimus-kernel/src/**
   - crates/optimus-memory/src/**
@@ -10,13 +14,17 @@ covers:
   - crates/optimus-store/src/**
   - apps/optimus-cli/src/**
   - apps/optimus-desktop/src/**
+covers:
+  - docs/specifications/priority-1-integrity-next-30-microtasks.md
+  - docs/contracts/high-risk-contracts.md
+  - docs/decisions/0021-owned-execution-and-causal-delivery.md
+  - Cargo.toml
 depends_on:
   - docs/contracts/high-risk-contracts.md
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
 validated_by:
-  - crates/**/tests/**
-  - apps/optimus-cli/tests/**
-  - apps/optimus-desktop/e2e/**
+  - crates/optimus-kernel/tests/integrity_integration.rs
+  - apps/optimus-cli/tests/gateway_http.rs
   - scripts/test_engineering_memory.py
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 """Generate and validate repository-local Optimus Engineering Memory indexes.
 
+Engineering Memory is a three-plane system:
+1. Authority plane — curated docs/skills/laws
+2. Fact plane — compact deterministic generated indexes
+3. Lens plane — budgeted query views for agents (`context`, `impact`, ...)
+
 The generator intentionally uses only Python's standard library plus `cargo
 metadata`. It treats Rust source as canonical for the current tool catalog and
 fails closed when the expected catalog shape cannot be reconciled.
+
+Agents should prefer query lenses over loading raw generated JSON into prompts.
 """
 
 from __future__ import annotations
@@ -17,15 +24,19 @@ import os
 import re
 import subprocess
 import sys
+import time
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 MEMORY_DIR = ROOT / ".engineering-memory"
+HASH_CACHE_PATH = MEMORY_DIR / ".hash-cache.json"
 GENERATOR = "scripts/engineering_memory.py"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+DEFAULT_CONTEXT_BUDGET_TOKENS = 3000
 GENERATED_NAMES = (
+    "manifest.json",
     "repository-index.json",
     "agent-registry.json",
     "tool-registry.json",
@@ -38,6 +49,19 @@ GENERATED_NAMES = (
     "evaluation-coverage.json",
     "change-impact.json",
     "knowledge-staleness.json",
+)
+COMMANDS = (
+    "generate",
+    "check",
+    "validate",
+    "binding",
+    "impact",
+    "stale",
+    "tools",
+    "owner",
+    "context",
+    "report",
+    "stat",
 )
 EXCLUDED_PARTS = {
     ".git",
@@ -118,12 +142,91 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(canonical_file_bytes(path))
 
 
+_HASH_CACHE: dict[str, Any] | None = None
+_HASH_CACHE_DIRTY = False
+
+
+def _load_hash_cache() -> dict[str, Any]:
+    global _HASH_CACHE
+    if _HASH_CACHE is not None:
+        return _HASH_CACHE
+    if HASH_CACHE_PATH.exists():
+        try:
+            payload = json.loads(HASH_CACHE_PATH.read_text(encoding="utf-8"))
+            if isinstance(payload, dict) and isinstance(payload.get("entries"), dict):
+                _HASH_CACHE = payload
+                return _HASH_CACHE
+        except (OSError, json.JSONDecodeError):
+            pass
+    _HASH_CACHE = {"version": 1, "entries": {}}
+    return _HASH_CACHE
+
+
+def _save_hash_cache() -> None:
+    global _HASH_CACHE_DIRTY
+    if not _HASH_CACHE_DIRTY or _HASH_CACHE is None:
+        return
+    MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+    HASH_CACHE_PATH.write_text(
+        json.dumps(_HASH_CACHE, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    _HASH_CACHE_DIRTY = False
+
+
+def _file_cache_fingerprint(path: Path) -> str:
+    stat = path.stat()
+    return f"{stat.st_mtime_ns}:{stat.st_size}:{getattr(stat, 'st_ino', 0)}"
+
+
 def generated_header() -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_by": GENERATOR,
         "do_not_edit": True,
     }
+
+
+def estimate_tokens(text: str) -> int:
+    return max(1, (len(text) + 3) // 4)
+
+
+def ownership_patterns(frontmatter: dict[str, Any]) -> list[str]:
+    """Patterns whose source changes make the document stale."""
+    if "owns" in frontmatter and frontmatter["owns"] is not None:
+        owns = frontmatter["owns"]
+        return list(owns) if isinstance(owns, list) else [owns]
+    covers = frontmatter.get("covers", [])
+    return list(covers) if isinstance(covers, list) else [covers]
+
+
+def watch_patterns(frontmatter: dict[str, Any]) -> list[str]:
+    """Patterns that warrant inspection but do not auto-stale."""
+    watches = frontmatter.get("watches", [])
+    if watches is None:
+        return []
+    return list(watches) if isinstance(watches, list) else [watches]
+
+
+def depends_patterns(frontmatter: dict[str, Any]) -> list[str]:
+    depends = frontmatter.get("depends_on", [])
+    if depends is None:
+        return []
+    return list(depends) if isinstance(depends, list) else [depends]
+
+
+def validated_patterns(frontmatter: dict[str, Any]) -> list[str]:
+    validated = frontmatter.get("validated_by", [])
+    if validated is None:
+        return []
+    return list(validated) if isinstance(validated, list) else [validated]
+
+
+def pattern_matches(path: str, pattern: str) -> bool:
+    if path == pattern:
+        return True
+    return fnmatch.fnmatch(path, pattern)
 
 
 def is_excluded(path: Path) -> bool:
@@ -154,18 +257,35 @@ def repository_files() -> tuple[Path, ...]:
 
 
 def file_record(path: Path) -> dict[str, Any]:
+    global _HASH_CACHE_DIRTY
+    rel = relative(path)
+    fingerprint = _file_cache_fingerprint(path)
+    cache = _load_hash_cache()
+    entries = cache.setdefault("entries", {})
+    hit = entries.get(rel)
+    if (
+        isinstance(hit, dict)
+        and hit.get("fingerprint") == fingerprint
+        and isinstance(hit.get("record"), dict)
+        and hit["record"].get("path") == rel
+    ):
+        return dict(hit["record"])
+
     data = canonical_file_bytes(path)
     try:
         lines = len(data.decode("utf-8").splitlines())
     except UnicodeDecodeError:
         lines = None
-    return {
-        "path": relative(path),
+    record = {
+        "path": rel,
         "sha256": sha256_bytes(data),
         "bytes": len(data),
         "lines": lines,
         "language": LANGUAGE_BY_SUFFIX.get(path.suffix.lower(), "Other"),
     }
+    entries[rel] = {"fingerprint": fingerprint, "record": record}
+    _HASH_CACHE_DIRTY = True
+    return dict(record)
 
 
 def records_tree_hash(records: Iterable[dict[str, Any]]) -> str:
@@ -370,6 +490,69 @@ def source_test_hits(tool_id: str) -> list[str]:
         if tool_id in text:
             hits.append(rel)
     return sorted(hits)
+
+
+TOOL_TEMPLATE_FIELDS = (
+    "side_effects",
+    "permissions",
+    "timeout",
+    "supports_cancellation",
+    "cancellation_status",
+    "retry",
+    "idempotency",
+    "determinism",
+    "replay",
+    "observability_contract",
+    "approval",
+    "error_taxonomy",
+    "logging",
+    "output_schema",
+)
+
+
+def compress_tool_registry(registry: dict[str, Any]) -> dict[str, Any]:
+    """Factor repeated operational envelopes into templates."""
+    templates: dict[str, dict[str, Any]] = {}
+    template_ids: dict[str, str] = {}
+    compressed_tools: list[dict[str, Any]] = []
+    for tool in registry.get("tools", []):
+        operational = {field: tool[field] for field in TOOL_TEMPLATE_FIELDS if field in tool}
+        fingerprint = sha256_bytes(canonical_json(operational).encode("utf-8"))[:16]
+        template_id = template_ids.get(fingerprint)
+        if template_id is None:
+            template_id = f"op_{len(templates) + 1:02d}_{fingerprint}"
+            template_ids[fingerprint] = template_id
+            templates[template_id] = operational
+        slim = {key: value for key, value in tool.items() if key not in TOOL_TEMPLATE_FIELDS}
+        slim["template"] = template_id
+        compressed_tools.append(slim)
+    out = dict(registry)
+    out["templates"] = dict(sorted(templates.items()))
+    out["tools"] = compressed_tools
+    out["storage"] = "templated_v2"
+    return out
+
+
+def expand_tool_registry(registry: dict[str, Any]) -> dict[str, Any]:
+    """Expand templated tool records for validation and lenses."""
+    templates = registry.get("templates") or {}
+    if not templates:
+        return registry
+    expanded = []
+    for tool in registry.get("tools", []):
+        row = dict(tool)
+        template_id = row.pop("template", None)
+        if template_id:
+            if template_id not in templates:
+                raise MemoryError(f"tool {row.get('id')} references missing template {template_id}")
+            merged = dict(templates[template_id])
+            merged.update(row)
+            expanded.append(merged)
+        else:
+            expanded.append(row)
+    out = dict(registry)
+    out["tools"] = expanded
+    return out
 
 
 def tool_operational_metadata(tool_id: str, policy: str, available: bool) -> dict[str, Any]:
@@ -1099,9 +1282,12 @@ def build_evaluation_coverage() -> dict[str, Any]:
         not in compare_test
     ):
         raise MemoryError("read-only bounded evaluation comparison CLI is not implemented and exercised")
+    source_text = Path(__file__).read_text(encoding="utf-8")
     if (
-        "def build_priority2_candidate_binding" not in Path(__file__).read_text(encoding="utf-8")
-        or 'choices=("generate", "check", "validate", "binding")' not in Path(__file__).read_text(encoding="utf-8")
+        "def build_priority2_candidate_binding" not in source_text
+        or "COMMANDS = (" not in source_text
+        or '"binding"' not in source_text
+        or '"context"' not in source_text
     ):
         raise MemoryError("authoritative Priority-2 binding generation is not implemented")
     return {
@@ -1251,6 +1437,41 @@ def tree_for_paths(paths: Iterable[Path]) -> tuple[str, list[dict[str, Any]]]:
     return records_tree_hash(records), records
 
 
+def expand_patterns_against_sha_map(
+    patterns: Iterable[str], sha_map: dict[str, str]
+) -> list[str]:
+    """Resolve ownership globs against an in-memory path→sha map."""
+    paths: set[str] = set()
+    all_paths = list(sha_map)
+    for pattern in patterns:
+        if any(token in pattern for token in ("*", "?", "[")):
+            paths.update(path for path in all_paths if fnmatch.fnmatch(path, pattern))
+        elif pattern in sha_map:
+            paths.add(pattern)
+        else:
+            # Fall back to filesystem for exact paths missing from the index snapshot.
+            exact = ROOT / pattern
+            if exact.is_file() and not is_excluded(exact) and not is_sensitive(exact):
+                paths.add(relative(exact))
+    return sorted(paths)
+
+
+def tree_hash_for_patterns(
+    patterns: Iterable[str], sha_map: dict[str, str] | None = None
+) -> tuple[str, int]:
+    if sha_map is None:
+        paths = expand_patterns(patterns)
+        digest, records = tree_for_paths(paths)
+        return digest, len(records)
+    matched = expand_patterns_against_sha_map(patterns, sha_map)
+    records = [{"path": path, "sha256": sha_map[path]} for path in matched if path in sha_map]
+    # Include any exact paths resolved outside the map.
+    missing = [path for path in matched if path not in sha_map]
+    for rel in missing:
+        records.append(file_record(ROOT / rel))
+    return records_tree_hash(records), len(records)
+
+
 def knowledge_documents() -> list[tuple[Path, dict[str, Any]]]:
     out = []
     for path in sorted((ROOT / "docs").rglob("*.md")):
@@ -1261,36 +1482,71 @@ def knowledge_documents() -> list[tuple[Path, dict[str, Any]]]:
 
 
 def build_change_impact() -> dict[str, Any]:
+    """Compact impact index: patterns only; path expansion is query-time."""
     documents = []
-    reverse: dict[str, list[str]] = defaultdict(list)
+    pattern_to_knowledge: dict[str, list[dict[str, str]]] = defaultdict(list)
     for path, frontmatter in knowledge_documents():
-        covers = list(frontmatter.get("covers", []))
-        depends = list(frontmatter.get("depends_on", []))
-        validated = list(frontmatter.get("validated_by", []))
-        resolved = expand_patterns(covers + depends)
+        owns = ownership_patterns(frontmatter)
+        watches = watch_patterns(frontmatter)
+        depends = depends_patterns(frontmatter)
+        validated = validated_patterns(frontmatter)
+        covers = list(frontmatter.get("covers", [])) if isinstance(frontmatter.get("covers", []), list) else []
+        resolved = expand_patterns(owns + depends)
         doc_rel = relative(path)
-        for source in resolved:
-            reverse[relative(source)].append(doc_rel)
+        for pattern in owns:
+            pattern_to_knowledge[pattern].append({"document": doc_rel, "relation": "owns"})
+        for pattern in depends:
+            pattern_to_knowledge[pattern].append({"document": doc_rel, "relation": "depends_on"})
+        for pattern in watches:
+            pattern_to_knowledge[pattern].append({"document": doc_rel, "relation": "watches"})
         documents.append(
             {
                 "document": doc_rel,
                 "knowledge_type": frontmatter["knowledge_type"],
                 "status": frontmatter.get("status"),
-                "covers": covers,
+                "owns": owns,
+                "covers": covers or owns,
+                "watches": watches,
                 "depends_on": depends,
                 "validated_by": validated,
                 "resolved_source_count": len(resolved),
-                "resolved_tests": [relative(item) for item in expand_patterns(validated)],
+                "resolved_test_count": len(expand_patterns(validated)),
             }
         )
+    compact_patterns = {
+        pattern: sorted(entries, key=lambda item: (item["document"], item["relation"]))
+        for pattern, entries in sorted(pattern_to_knowledge.items())
+    }
     return {
         **generated_header(),
         "documents": documents,
-        "source_to_knowledge": {
-            source: sorted(documents) for source, documents in sorted(reverse.items())
-        },
-        "algorithm": "frontmatter glob expansion; source or dependency changes affect every reverse-mapped document",
+        "pattern_to_knowledge": compact_patterns,
+        "algorithm": (
+            "frontmatter owns/covers+depends_on stale on match; watches warn only; "
+            "path expansion is query-time against repository index"
+        ),
     }
+
+
+def impact_for_paths(paths: Iterable[str], impact: dict[str, Any] | None = None) -> dict[str, list[dict[str, str]]]:
+    impact = impact or build_change_impact()
+    patterns = impact.get("pattern_to_knowledge", {})
+    affected: dict[str, list[dict[str, str]]] = {}
+    for path in paths:
+        hits: list[dict[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for pattern, entries in patterns.items():
+            if not pattern_matches(path, pattern):
+                continue
+            for entry in entries:
+                key = (entry["document"], entry["relation"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                hits.append(dict(entry))
+        if hits:
+            affected[path] = sorted(hits, key=lambda item: (item["document"], item["relation"]))
+    return affected
 
 
 def existing_staleness() -> dict[str, dict[str, Any]]:
@@ -1304,12 +1560,18 @@ def existing_staleness() -> dict[str, dict[str, Any]]:
     return {item["document"]: item for item in data.get("documents", [])}
 
 
-def build_knowledge_staleness(refresh: bool) -> dict[str, Any]:
+def build_knowledge_staleness(
+    refresh: bool, sha_map: dict[str, str] | None = None
+) -> dict[str, Any]:
+    """Hash-only staleness. Covered path lists are derived at query time."""
     previous = existing_staleness()
+    if sha_map is None:
+        sha_map = live_file_sha_map()
     documents = []
     for path, frontmatter in knowledge_documents():
-        covered = expand_patterns(list(frontmatter.get("covers", [])) + list(frontmatter.get("depends_on", [])))
-        current_hash, records = tree_for_paths(covered)
+        owns = ownership_patterns(frontmatter)
+        depends = depends_patterns(frontmatter)
+        current_hash, covered_count = tree_hash_for_patterns(owns + depends, sha_map)
         doc_rel = relative(path)
         old = previous.get(doc_rel)
         baseline_hash = current_hash if refresh or not old else old.get("verified_tree_sha256")
@@ -1323,22 +1585,70 @@ def build_knowledge_staleness(refresh: bool) -> dict[str, Any]:
                 "verified_tree_sha256": baseline_hash,
                 "current_tree_sha256": current_hash,
                 "stale": baseline_hash != current_hash,
-                "covered_files": records,
+                "covered_file_count": covered_count,
+                "owns_patterns": owns,
+                "depends_on_patterns": depends,
             }
         )
     return {
         **generated_header(),
         "documents": documents,
         "stale_count": sum(1 for item in documents if item["stale"]),
+        "storage": "hash_only_v2",
+    }
+
+
+def build_manifest(maps: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    repository = maps["repository-index.json"]
+    tools = expand_tool_registry(maps["tool-registry.json"]).get("tools", [])
+    workflows = maps["workflow-registry.json"].get("workflows", [])
+    agents = maps["agent-registry.json"].get("agents", [])
+    staleness = maps["knowledge-staleness.json"]
+    impact = maps["change-impact.json"]
+    artifact_sha = {
+        name: sha256_bytes(canonical_json(maps[name]).encode("utf-8"))
+        for name in GENERATED_NAMES
+        if name != "manifest.json" and name in maps
+    }
+    return {
+        **generated_header(),
+        "tree_sha256": repository.get("tree_sha256"),
+        "verification_basis": "sha256_tree",
+        "artifact_sha256": artifact_sha,
+        "counts": {
+            "files": repository.get("file_count"),
+            "knowledge_documents": len(impact.get("documents", [])),
+            "stale_documents": staleness.get("stale_count", 0),
+            "tools": len(tools),
+            "available_tools": sum(1 for tool in tools if tool.get("available")),
+            "workflows": len(workflows),
+            "agents": len(agents),
+            "impact_patterns": len(impact.get("pattern_to_knowledge", {})),
+        },
+        "serving": {
+            "agent_interface": [
+                "check",
+                "context",
+                "impact",
+                "stale",
+                "tools",
+                "owner",
+                "report",
+                "stat",
+            ],
+            "raw_json_not_for_prompt_loading": True,
+            "default_context_budget_tokens": DEFAULT_CONTEXT_BUDGET_TOKENS,
+            "schema_version": SCHEMA_VERSION,
+        },
     }
 
 
 def build_maps(refresh_staleness: bool) -> dict[str, dict[str, Any]]:
     metadata = cargo_metadata()
-    return {
+    maps = {
         "repository-index.json": build_repository_index(metadata),
         "agent-registry.json": build_agent_registry(),
-        "tool-registry.json": parse_tool_catalog(),
+        "tool-registry.json": compress_tool_registry(parse_tool_catalog()),
         "workflow-registry.json": build_workflow_registry(),
         "prompt-registry.json": build_prompt_registry(),
         "model-registry.json": build_model_registry(),
@@ -1349,16 +1659,22 @@ def build_maps(refresh_staleness: bool) -> dict[str, dict[str, Any]]:
         "change-impact.json": build_change_impact(),
         "knowledge-staleness.json": build_knowledge_staleness(refresh_staleness),
     }
+    maps["manifest.json"] = build_manifest(maps)
+    # Recompute artifact hashes now that manifest payload shape is fixed without self-hash.
+    maps["manifest.json"] = build_manifest(maps)
+    return maps
 
 
 def canonical_json(value: Any) -> str:
-    return json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    """Compact deterministic JSON for token-efficient on-disk facts."""
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
 def write_maps(maps: dict[str, dict[str, Any]]) -> None:
     MEMORY_DIR.mkdir(parents=True, exist_ok=True)
     for name in GENERATED_NAMES:
         (MEMORY_DIR / name).write_text(canonical_json(maps[name]), encoding="utf-8", newline="\n")
+    _save_hash_cache()
 
 
 def local_link_problems(path: Path) -> list[str]:
@@ -1515,10 +1831,24 @@ def current_architecture_semantic_errors(
     return errors
 
 
-def validate_maps(strict: bool = False) -> dict[str, Any]:
+def load_generated_maps() -> dict[str, Any]:
+    loaded: dict[str, Any] = {}
+    for name in GENERATED_NAMES:
+        path = MEMORY_DIR / name
+        if not path.exists():
+            continue
+        loaded[name] = json.loads(path.read_text(encoding="utf-8"))
+    return loaded
+
+
+def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
+    if mode not in {"full", "quick"}:
+        raise MemoryError(f"unknown validate mode: {mode}")
     errors: list[str] = []
     warnings: list[str] = []
-    expected = build_maps(refresh_staleness=True)
+    expected: dict[str, Any] | None = None
+    if mode == "full":
+        expected = build_maps(refresh_staleness=True)
     loaded: dict[str, Any] = {}
     for name in GENERATED_NAMES:
         path = MEMORY_DIR / name
@@ -1530,10 +1860,47 @@ def validate_maps(strict: bool = False) -> dict[str, Any]:
         except json.JSONDecodeError as exc:
             errors.append(f"invalid JSON {relative(path)}: {exc}")
             continue
-        if loaded[name] != expected[name]:
+        if expected is not None and loaded[name] != expected[name]:
             errors.append(f"generated file drift: {relative(path)} (run generate; do not edit manually)")
         if loaded[name].get("generated_by") != GENERATOR or loaded[name].get("do_not_edit") is not True:
             errors.append(f"missing generated marker: {relative(path)}")
+        if loaded[name].get("schema_version") != SCHEMA_VERSION:
+            errors.append(
+                f"schema_version mismatch in {relative(path)}: "
+                f"{loaded[name].get('schema_version')} != {SCHEMA_VERSION}"
+            )
+
+    live_sha_map: dict[str, str] | None = None
+    docs_changed = True
+    if mode == "quick" and "repository-index.json" in loaded:
+        try:
+            live_sha_map = live_file_sha_map()
+            live_tree = records_tree_hash(
+                [{"path": path, "sha256": digest} for path, digest in live_sha_map.items()]
+            )
+            if live_tree != loaded["repository-index.json"].get("tree_sha256"):
+                errors.append("quick validate: repository tree_sha256 drift (run generate)")
+            old_files = {
+                item["path"]: item["sha256"]
+                for item in loaded["repository-index.json"].get("files", [])
+            }
+            changed = sorted(
+                path
+                for path in set(old_files) | set(live_sha_map)
+                if old_files.get(path) != live_sha_map.get(path)
+            )
+            docs_changed = any(path.startswith("docs/") and path.endswith(".md") for path in changed)
+            live_staleness = build_knowledge_staleness(refresh=False, sha_map=live_sha_map)
+            for document in live_staleness.get("documents", []):
+                if document.get("stale"):
+                    errors.append(f"stale Engineering Memory: {document['document']}")
+            live_impact = build_change_impact()
+            if live_impact.get("pattern_to_knowledge") != loaded.get("change-impact.json", {}).get(
+                "pattern_to_knowledge"
+            ):
+                errors.append("quick validate: change-impact pattern drift (run generate)")
+        except (MemoryError, OSError, subprocess.SubprocessError) as exc:
+            errors.append(f"quick validate failed: {exc}")
 
     for rel in IMPORTANT_DOCS:
         path = ROOT / rel
@@ -1544,24 +1911,43 @@ def validate_maps(strict: bool = False) -> dict[str, Any]:
         if not frontmatter:
             errors.append(f"missing frontmatter: {rel}")
             continue
-        for field in ("knowledge_type", "status", "covers", "depends_on", "validated_by", "last_verified_commit"):
+        for field in ("knowledge_type", "status", "depends_on", "validated_by", "last_verified_commit"):
             if field not in frontmatter:
                 errors.append(f"frontmatter missing {field}: {rel}")
+        if "covers" not in frontmatter and "owns" not in frontmatter:
+            errors.append(f"frontmatter missing covers/owns: {rel}")
         if frontmatter.get("status") not in {"current", "planned", "historical", "stale"}:
             errors.append(f"invalid frontmatter status in {rel}: {frontmatter.get('status')}")
-        covered = expand_patterns(frontmatter.get("covers", []))
-        if not covered:
+        if live_sha_map is not None:
+            covered_count = tree_hash_for_patterns(ownership_patterns(frontmatter), live_sha_map)[1]
+            covered_ok = covered_count > 0
+        else:
+            covered_ok = bool(expand_patterns(ownership_patterns(frontmatter)))
+        if not covered_ok:
             errors.append(f"frontmatter covers no files: {rel}")
 
-    for path in sorted((ROOT / "docs").rglob("*.md")):
-        errors.extend(f"broken local link: {problem}" for problem in local_link_problems(path))
+    if mode == "full" or docs_changed:
+        for path in sorted((ROOT / "docs").rglob("*.md")):
+            errors.extend(f"broken local link: {problem}" for problem in local_link_problems(path))
 
-    if loaded:
+    if loaded and mode == "full":
         for name, data in loaded.items():
             for problem in sorted(set(reference_problems(data))):
                 errors.append(f"{name}: {problem}")
+    elif loaded and mode == "quick":
+        # Quick mode still checks path refs on compact registries without full rebuild.
+        for name in ("tool-registry.json", "workflow-registry.json", "contract-coverage.json"):
+            if name in loaded:
+                for problem in sorted(set(reference_problems(loaded[name]))):
+                    errors.append(f"{name}: {problem}")
 
-    tools = loaded.get("tool-registry.json", expected["tool-registry.json"]).get("tools", [])
+    fallback_tools_registry = (expected or {}).get("tool-registry.json", {})
+    tools_registry = loaded.get("tool-registry.json", fallback_tools_registry)
+    try:
+        tools = expand_tool_registry(tools_registry).get("tools", [])
+    except MemoryError as exc:
+        errors.append(str(exc))
+        tools = tools_registry.get("tools", [])
     tool_ids = [item["id"] for item in tools]
     if len(tool_ids) != len(set(tool_ids)):
         errors.append("duplicate tool identifiers")
@@ -1585,80 +1971,404 @@ def validate_maps(strict: bool = False) -> dict[str, Any]:
         ("workflow-registry.json", "workflows"),
         ("prompt-registry.json", "prompts"),
     ):
-        rows = loaded.get(registry_name, expected[registry_name]).get(array_name, [])
+        fallback_rows = (expected or {}).get(registry_name, {}).get(array_name, [])
+        rows = loaded.get(registry_name, {}).get(array_name, fallback_rows)
         ids = [row.get("id") for row in rows]
         if len(ids) != len(set(ids)):
             errors.append(f"duplicate IDs in {registry_name}")
-    agent_registry = loaded.get("agent-registry.json", expected["agent-registry.json"])
-    agents = agent_registry["agents"]
+    fallback_agents = (expected or {}).get("agent-registry.json", {})
+    agent_registry = loaded.get("agent-registry.json", fallback_agents)
+    agents = agent_registry.get("agents", [])
     if not agents and agent_registry.get("contract_substrate", {}).get("status") != "implemented":
         warnings.append("no implemented specialist agents or universal agent schema")
-    workflows = loaded.get("workflow-registry.json", expected["workflow-registry.json"])["workflows"]
+    fallback_workflows = (expected or {}).get("workflow-registry.json", {}).get("workflows", [])
+    workflows = loaded.get("workflow-registry.json", {}).get("workflows", fallback_workflows)
     for workflow in workflows:
         if workflow.get("cancellation", {}).get("status") != "implemented":
             warnings.append(f"workflow {workflow['id']} lacks implemented cancellation contract")
         if not workflow.get("completion") or not workflow.get("failure"):
             errors.append(f"workflow {workflow['id']} lacks terminal outcome declarations")
 
-    contracts = loaded.get("contract-coverage.json", expected["contract-coverage.json"])["contracts"]
+    fallback_contracts = (expected or {}).get("contract-coverage.json", {}).get("contracts", [])
+    contracts = loaded.get("contract-coverage.json", {}).get("contracts", fallback_contracts)
     errors.extend(current_architecture_semantic_errors(workflows, contracts))
 
     warnings.extend(adr_warnings())
-    staleness = loaded.get("knowledge-staleness.json", expected["knowledge-staleness.json"])
-    for document in staleness.get("documents", []):
-        if document.get("stale"):
-            errors.append(f"stale Engineering Memory: {document['document']}")
+    if mode == "full":
+        staleness = loaded.get(
+            "knowledge-staleness.json",
+            (expected or {}).get("knowledge-staleness.json", {}),
+        )
+        for document in staleness.get("documents", []):
+            if document.get("stale"):
+                errors.append(f"stale Engineering Memory: {document['document']}")
+        for document in staleness.get("documents", []):
+            if "covered_files" in document:
+                errors.append(
+                    f"legacy covered_files payload present in staleness for {document.get('document')}"
+                )
+        impact = loaded.get("change-impact.json", (expected or {}).get("change-impact.json", {}))
+        if "source_to_knowledge" in impact:
+            errors.append("legacy source_to_knowledge payload present in change-impact")
+        if "pattern_to_knowledge" not in impact:
+            errors.append("change-impact missing pattern_to_knowledge")
 
     gpu_sources = [
         relative(path)
         for path in repository_files()
-        if path.suffix == ".rs" and re.search(r"(?:^|[-_/])(gpu|cuda)(?:[-_/]|$)", relative(path), re.I)
+        if path.suffix == ".rs" and re.search(r"(?:^|[-_/])(gpu|cuda)(?:[-_/]|$)" , relative(path), re.I)
     ]
     if gpu_sources:
         warnings.append(f"GPU source requires CPU-fallback declaration review: {gpu_sources}")
 
     if strict and warnings:
         errors.extend(f"strict: {warning}" for warning in warnings)
+    _save_hash_cache()
     return {
         "ok": not errors,
+        "mode": mode,
         "errors": sorted(set(errors)),
         "warnings": sorted(set(warnings)),
         "generated_files": len(GENERATED_NAMES),
         "tool_count": len(tools),
-        "available_tool_count": sum(1 for tool in tools if tool["available"]),
+        "available_tool_count": sum(1 for tool in tools if tool.get("available")),
         "workflow_count": len(workflows),
         "agent_count": len(agents),
     }
 
 
+def live_file_sha_map() -> dict[str, str]:
+    """Path→sha256 for the live tree without cargo metadata."""
+    return {record["path"]: record["sha256"] for record in (file_record(path) for path in repository_files())}
+
+
 def check_staleness() -> dict[str, Any]:
-    current = build_knowledge_staleness(refresh=False)
+    new_files = live_file_sha_map()
+    current = build_knowledge_staleness(refresh=False, sha_map=new_files)
     old_index_path = MEMORY_DIR / "repository-index.json"
     changed_files: list[str] = []
     if old_index_path.exists():
         try:
             old = json.loads(old_index_path.read_text(encoding="utf-8"))
             old_files = {item["path"]: item["sha256"] for item in old.get("files", [])}
-            new_files = {item["path"]: item["sha256"] for item in build_repository_index(cargo_metadata())["files"]}
             changed_files = sorted(
-                path for path in set(old_files) | set(new_files) if old_files.get(path) != new_files.get(path)
+                path
+                for path in set(old_files) | set(new_files)
+                if old_files.get(path) != new_files.get(path)
             )
         except (OSError, json.JSONDecodeError, MemoryError) as exc:
             changed_files = [f"unable to compare repository index: {exc}"]
     else:
         changed_files = ["no generated repository baseline"]
     stale_documents = [item["document"] for item in current["documents"] if item["stale"]]
-    impact = build_change_impact()
+    impact = None
+    impact_path = MEMORY_DIR / "change-impact.json"
+    if impact_path.exists():
+        try:
+            impact = json.loads(impact_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            impact = None
+    if not impact or "pattern_to_knowledge" not in impact:
+        impact = build_change_impact()
+    affected_raw = impact_for_paths(
+        [path for path in changed_files if not path.startswith("unable to ")],
+        impact,
+    )
     affected: dict[str, list[str]] = {}
-    reverse = impact["source_to_knowledge"]
-    for path in changed_files:
-        if path in reverse:
-            affected[path] = reverse[path]
+    watch_hits: dict[str, list[str]] = {}
+    for path, entries in affected_raw.items():
+        stale_docs = sorted(
+            {
+                entry["document"]
+                for entry in entries
+                if entry["relation"] in {"owns", "depends_on"}
+            }
+        )
+        watch_docs = sorted(
+            {entry["document"] for entry in entries if entry["relation"] == "watches"}
+        )
+        if stale_docs:
+            affected[path] = stale_docs
+        if watch_docs:
+            watch_hits[path] = watch_docs
+    _save_hash_cache()
     return {
         "ok": not stale_documents and not changed_files,
         "changed_files": changed_files,
         "stale_documents": stale_documents,
         "affected_knowledge": affected,
+        "watch_knowledge": watch_hits,
+    }
+
+
+def tool_card(tool: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": tool.get("id"),
+        "available": tool.get("available"),
+        "policy": tool.get("policy"),
+        "pack": tool.get("pack"),
+        "description": tool.get("description"),
+        "approval": (tool.get("approval") or {}).get("status"),
+        "cancellation": tool.get("cancellation_status"),
+        "schema_tokens": tool.get("schema_tokens"),
+    }
+
+
+def query_tools(available_only: bool = False) -> dict[str, Any]:
+    loaded = load_generated_maps()
+    registry = loaded.get("tool-registry.json")
+    if registry is None:
+        registry = compress_tool_registry(parse_tool_catalog())
+    tools = expand_tool_registry(registry).get("tools", [])
+    cards = [tool_card(tool) for tool in tools if tool.get("available") or not available_only]
+    return {
+        "ok": True,
+        "count": len(cards),
+        "tools": cards,
+    }
+
+
+def query_owner(path: str) -> dict[str, Any]:
+    impact = None
+    impact_path = MEMORY_DIR / "change-impact.json"
+    if impact_path.exists():
+        try:
+            impact = json.loads(impact_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            impact = None
+    if not impact or "pattern_to_knowledge" not in impact:
+        impact = build_change_impact()
+    hits = impact_for_paths([path], impact).get(path, [])
+    return {
+        "ok": True,
+        "path": path,
+        "owners": [row for row in hits if row["relation"] in {"owns", "depends_on"}],
+        "watches": [row for row in hits if row["relation"] == "watches"],
+    }
+
+
+def query_impact(paths: list[str]) -> dict[str, Any]:
+    impact = None
+    impact_path = MEMORY_DIR / "change-impact.json"
+    if impact_path.exists():
+        try:
+            impact = json.loads(impact_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            impact = None
+    if not impact or "pattern_to_knowledge" not in impact:
+        impact = build_change_impact()
+    return {
+        "ok": True,
+        "paths": paths,
+        "affected": impact_for_paths(paths, impact),
+    }
+
+
+def query_stale() -> dict[str, Any]:
+    current = build_knowledge_staleness(refresh=False)
+    stale = [item for item in current["documents"] if item.get("stale")]
+    _save_hash_cache()
+    return {
+        "ok": not stale,
+        "stale_count": len(stale),
+        "documents": [
+            {
+                "document": item["document"],
+                "verified_tree_sha256": item.get("verified_tree_sha256"),
+                "current_tree_sha256": item.get("current_tree_sha256"),
+                "covered_file_count": item.get("covered_file_count"),
+                "owns_patterns": item.get("owns_patterns"),
+            }
+            for item in stale
+        ],
+    }
+
+
+def _heading_snippets(path: Path, limit_chars: int = 900) -> list[str]:
+    text = path.read_text(encoding="utf-8", errors="replace")
+    body = text
+    if text.startswith("---"):
+        end = text.find("\n---", 3)
+        if end > 0:
+            body = text[end + 4 :]
+    snippets: list[str] = []
+    current_heading = "(intro)"
+    current_lines: list[str] = []
+    for line in body.splitlines():
+        if line.startswith("#"):
+            if current_lines:
+                block = f"## {current_heading}\n" + "\n".join(current_lines).strip()
+                if block.strip():
+                    snippets.append(block[:limit_chars])
+            current_heading = line.lstrip("#").strip() or "(section)"
+            current_lines = []
+        else:
+            if line.strip():
+                current_lines.append(line.rstrip())
+    if current_lines:
+        block = f"## {current_heading}\n" + "\n".join(current_lines).strip()
+        snippets.append(block[:limit_chars])
+    return snippets
+
+
+def build_context_pack(
+    budget_tokens: int = DEFAULT_CONTEXT_BUDGET_TOKENS,
+    paths: list[str] | None = None,
+) -> dict[str, Any]:
+    started = time.perf_counter()
+    check = check_staleness()
+    selected_paths = paths or [
+        path for path in check.get("changed_files", []) if not path.startswith("unable to ")
+    ]
+    impact = query_impact(selected_paths) if selected_paths else {"affected": {}}
+    stale = query_stale()
+    loaded = load_generated_maps()
+    tree = loaded.get("repository-index.json", {}).get("tree_sha256", "unknown")
+    lines = [
+        f"EM_CONTEXT v2 tree={tree} budget={budget_tokens}",
+        f"STATUS: {'CURRENT' if check.get('ok') and stale.get('ok') else 'STALE_OR_CHANGED'}",
+    ]
+    if stale.get("documents"):
+        lines.append("STALE:")
+        for item in stale["documents"]:
+            lines.append(f"  - {item['document']} files={item.get('covered_file_count')}")
+    if selected_paths:
+        lines.append("CHANGED:")
+        for path in selected_paths[:40]:
+            lines.append(f"  - {path}")
+        if len(selected_paths) > 40:
+            lines.append(f"  - ... ({len(selected_paths) - 40} more)")
+    owner_docs: list[str] = []
+    watch_docs: list[str] = []
+    if impact.get("affected"):
+        lines.append("IMPACT:")
+        for path, entries in sorted(impact["affected"].items()):
+            owns = [e["document"] for e in entries if e["relation"] in {"owns", "depends_on"}]
+            watches = [e["document"] for e in entries if e["relation"] == "watches"]
+            owner_docs.extend(owns)
+            watch_docs.extend(watches)
+            if owns:
+                lines.append(f"  {path}")
+                lines.append(f"    owns/depends -> {', '.join(sorted(set(owns)))}")
+            if watches:
+                lines.append(f"    watches -> {', '.join(sorted(set(watches)))}")
+    # Fact cards for touched tools/workflows when source paths suggest them.
+    tools = expand_tool_registry(loaded.get("tool-registry.json", {})).get("tools", [])
+    if any("optimus-packs" in path or path.endswith("packs/src/lib.rs") for path in selected_paths):
+        available = [tool_card(tool) for tool in tools if tool.get("available")]
+        lines.append("TOOLS_AVAILABLE:")
+        for card in available:
+            lines.append(
+                f"  - {card['id']} policy={card['policy']} approval={card['approval']} "
+                f"cancel={card['cancellation']} tokens={card['schema_tokens']}"
+            )
+    workflows = loaded.get("workflow-registry.json", {}).get("workflows", [])
+    if any(
+        any(token in path for token in ("campaign", "gateway", "cron", "runtime", "graph"))
+        for path in selected_paths
+    ):
+        lines.append("WORKFLOWS:")
+        for workflow in workflows:
+            lines.append(
+                f"  - {workflow.get('id')} cancel={workflow.get('cancellation', {}).get('status')} "
+                f"owner={workflow.get('owner')}"
+            )
+    lines.append("READ:")
+    stale_docs = [item["document"] for item in stale.get("documents", [])]
+    read_docs = list(dict.fromkeys([*stale_docs, *owner_docs]))
+    if not read_docs:
+        read_docs = [
+            "docs/engineering-memory/README.md",
+            "docs/architecture/system-overview.md",
+        ]
+    used_tokens = estimate_tokens("\n".join(lines))
+    for doc in read_docs:
+        path = ROOT / doc if isinstance(doc, str) else None
+        if path is None or not path.exists():
+            continue
+        snippets = _heading_snippets(path)
+        # Prefer first two non-empty sections.
+        for snippet in snippets[:2]:
+            candidate = f"  DOC {doc}\n{snippet}"
+            cost = estimate_tokens(candidate)
+            if used_tokens + cost > budget_tokens:
+                lines.append(f"  DOC {doc} (truncated for budget)")
+                break
+            lines.append(candidate)
+            used_tokens += cost
+        else:
+            continue
+        break
+    gaps = []
+    agent_registry = loaded.get("agent-registry.json", {})
+    if agent_registry.get("implemented_specialist_agent_count") == 0:
+        gaps.append("no specialist agents registered")
+    model_registry = loaded.get("model-registry.json", {})
+    gaps.extend(model_registry.get("known_gaps", [])[:2])
+    if gaps:
+        lines.append("GAPS:")
+        for gap in gaps:
+            lines.append(f"  - {gap}")
+    text = "\n".join(lines) + "\n"
+    return {
+        "ok": True,
+        "budget_tokens": budget_tokens,
+        "used_tokens": estimate_tokens(text),
+        "elapsed_ms": int((time.perf_counter() - started) * 1000),
+        "tree_sha256": tree,
+        "text": text,
+        "stale_documents": [item["document"] for item in stale.get("documents", [])],
+        "changed_files": selected_paths,
+        "watch_documents": sorted(set(watch_docs)),
+    }
+
+
+def build_report() -> dict[str, Any]:
+    loaded = load_generated_maps()
+    check = check_staleness()
+    stale = query_stale()
+    manifest = loaded.get("manifest.json", {})
+    tools = expand_tool_registry(loaded.get("tool-registry.json", {})).get("tools", [])
+    return {
+        "ok": bool(check.get("ok") and stale.get("ok")),
+        "tree_sha256": loaded.get("repository-index.json", {}).get("tree_sha256"),
+        "manifest_counts": manifest.get("counts", {}),
+        "changed_files": check.get("changed_files", []),
+        "stale_documents": stale.get("documents", []),
+        "agents": loaded.get("agent-registry.json", {}).get("implemented_specialist_agent_count"),
+        "tools": len(tools),
+        "available_tools": sum(1 for tool in tools if tool.get("available")),
+        "workflows": len(loaded.get("workflow-registry.json", {}).get("workflows", [])),
+        "serving": manifest.get("serving", {}),
+        "recommendation": (
+            "no knowledge refresh required"
+            if check.get("ok") and stale.get("ok")
+            else "run context lens, update owned docs, then generate+validate"
+        ),
+    }
+
+
+def build_stat() -> dict[str, Any]:
+    total = 0
+    per_file: dict[str, dict[str, int]] = {}
+    for name in GENERATED_NAMES:
+        path = MEMORY_DIR / name
+        if not path.exists():
+            continue
+        raw = path.read_bytes()
+        total += len(raw)
+        per_file[name] = {
+            "bytes": len(raw),
+            "approx_tokens": max(1, (len(raw) + 3) // 4),
+        }
+    return {
+        "ok": True,
+        "schema_version": SCHEMA_VERSION,
+        "total_bytes": total,
+        "approx_tokens_if_fully_loaded": max(1, (total + 3) // 4),
+        "files": per_file,
+        "hash_cache_entries": len(_load_hash_cache().get("entries", {})),
+        "note": "Agents should use context/report lenses; do not load raw JSON into prompts.",
     }
 
 
@@ -1666,11 +2376,20 @@ def print_result(result: dict[str, Any], as_json: bool) -> None:
     if as_json:
         print(canonical_json(result), end="")
         return
+    if "text" in result and result.get("text"):
+        print(result["text"], end="" if str(result["text"]).endswith("\n") else "\n")
+        print(
+            f"# used_tokens={result.get('used_tokens')} budget={result.get('budget_tokens')} "
+            f"elapsed_ms={result.get('elapsed_ms')}"
+        )
+        return
     if "errors" in result:
         print("ENGINEERING_MEMORY_VALID" if result["ok"] else "ENGINEERING_MEMORY_INVALID")
+        if result.get("mode"):
+            print(f"mode={result['mode']}")
         for error in result["errors"]:
             print(f"ERROR: {error}")
-        for warning in result["warnings"]:
+        for warning in result.get("warnings", []):
             print(f"WARNING: {warning}")
         if "generated_files" in result:
             print(
@@ -1678,34 +2397,139 @@ def print_result(result: dict[str, Any], as_json: bool) -> None:
                 f"tools={result['tool_count']} available_tools={result['available_tool_count']} "
                 f"workflows={result['workflow_count']}"
             )
-    else:
-        print("ENGINEERING_MEMORY_CURRENT" if result["ok"] else "ENGINEERING_MEMORY_STALE")
+        return
+    if "approx_tokens_if_fully_loaded" in result:
+        print("ENGINEERING_MEMORY_STAT")
+        print(
+            f"total_bytes={result['total_bytes']} approx_tokens={result['approx_tokens_if_fully_loaded']} "
+            f"schema={result['schema_version']} hash_cache_entries={result['hash_cache_entries']}"
+        )
+        for name, info in sorted(result.get("files", {}).items()):
+            print(f"FILE: {name} bytes={info['bytes']} tokens~{info['approx_tokens']}")
+        print(result.get("note", ""))
+        return
+    if "recommendation" in result and "manifest_counts" in result:
+        print("ENGINEERING_MEMORY_REPORT" if result["ok"] else "ENGINEERING_MEMORY_REPORT_STALE")
+        print(f"tree={result.get('tree_sha256')}")
+        print(f"counts={result.get('manifest_counts')}")
+        print(
+            f"agents={result.get('agents')} tools={result.get('tools')} "
+            f"available_tools={result.get('available_tools')} workflows={result.get('workflows')}"
+        )
         for path in result.get("changed_files", []):
             print(f"CHANGED: {path}")
-        for document in result.get("stale_documents", []):
-            print(f"STALE: {document}")
-        for path, documents in result.get("affected_knowledge", {}).items():
-            print(f"IMPACT: {path} -> {', '.join(documents)}")
+        for item in result.get("stale_documents", []):
+            print(f"STALE: {item.get('document')}")
+        print(f"RECOMMENDATION: {result.get('recommendation')}")
+        return
+    if "tools" in result and isinstance(result.get("tools"), list) and "count" in result:
+        print("ENGINEERING_MEMORY_TOOLS")
+        for tool in result["tools"]:
+            print(
+                f"TOOL: {tool.get('id')} available={tool.get('available')} "
+                f"policy={tool.get('policy')} approval={tool.get('approval')} "
+                f"cancel={tool.get('cancellation')}"
+            )
+        return
+    if "owners" in result and "path" in result:
+        print("ENGINEERING_MEMORY_OWNER")
+        print(f"PATH: {result['path']}")
+        for row in result.get("owners", []):
+            print(f"OWNER: {row['document']} relation={row['relation']}")
+        for row in result.get("watches", []):
+            print(f"WATCH: {row['document']} relation={row['relation']}")
+        return
+    if "affected" in result and "paths" in result:
+        print("ENGINEERING_MEMORY_IMPACT")
+        for path, entries in sorted(result.get("affected", {}).items()):
+            owns = [e["document"] for e in entries if e["relation"] in {"owns", "depends_on"}]
+            watches = [e["document"] for e in entries if e["relation"] == "watches"]
+            print(f"PATH: {path}")
+            if owns:
+                print(f"  OWNS/DEPENDS: {', '.join(sorted(set(owns)))}")
+            if watches:
+                print(f"  WATCHES: {', '.join(sorted(set(watches)))}")
+        return
+    if "stale_count" in result and "documents" in result and "changed_files" not in result:
+        print("ENGINEERING_MEMORY_STALE_QUERY" if not result["ok"] else "ENGINEERING_MEMORY_NO_STALE")
+        for item in result.get("documents", []):
+            print(
+                f"STALE: {item['document']} files={item.get('covered_file_count')} "
+                f"owns={','.join(item.get('owns_patterns') or [])}"
+            )
+        return
+    print("ENGINEERING_MEMORY_CURRENT" if result["ok"] else "ENGINEERING_MEMORY_STALE")
+    for path in result.get("changed_files", []):
+        print(f"CHANGED: {path}")
+    for document in result.get("stale_documents", []):
+        print(f"STALE: {document}")
+    for path, documents in result.get("affected_knowledge", {}).items():
+        print(f"IMPACT: {path} -> {', '.join(documents)}")
+    for path, documents in result.get("watch_knowledge", {}).items():
+        print(f"WATCH: {path} -> {', '.join(documents)}")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("generate", "check", "validate", "binding"))
+    parser.add_argument("command", choices=COMMANDS)
     parser.add_argument("--strict", action="store_true", help="treat known gaps/warnings as failures")
     parser.add_argument("--json", action="store_true", help="emit machine-readable result")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="validate mode: structural + tree/staleness/impact without full rebuild compare",
+    )
+    parser.add_argument(
+        "--budget",
+        type=int,
+        default=DEFAULT_CONTEXT_BUDGET_TOKENS,
+        help="token budget for context lens",
+    )
+    parser.add_argument(
+        "--path",
+        action="append",
+        default=[],
+        help="path for impact/owner/context (repeatable)",
+    )
+    parser.add_argument(
+        "--available",
+        action="store_true",
+        help="tools lens: only available tools",
+    )
     args = parser.parse_args(argv)
     try:
         if args.command == "binding":
             print(canonical_json(build_priority2_candidate_binding()), end="")
+            _save_hash_cache()
             return 0
         if args.command == "generate":
             maps = build_maps(refresh_staleness=True)
             write_maps(maps)
-            result = validate_maps(strict=args.strict)
+            result = validate_maps(strict=args.strict, mode="full")
         elif args.command == "check":
             result = check_staleness()
+        elif args.command == "validate":
+            result = validate_maps(strict=args.strict, mode="quick" if args.quick else "full")
+        elif args.command == "impact":
+            paths = args.path or check_staleness().get("changed_files", [])
+            paths = [path for path in paths if not str(path).startswith("unable to ")]
+            result = query_impact(paths)
+        elif args.command == "stale":
+            result = query_stale()
+        elif args.command == "tools":
+            result = query_tools(available_only=args.available)
+        elif args.command == "owner":
+            if not args.path:
+                raise MemoryError("owner requires --path")
+            result = query_owner(args.path[0])
+        elif args.command == "context":
+            result = build_context_pack(budget_tokens=args.budget, paths=args.path or None)
+        elif args.command == "report":
+            result = build_report()
+        elif args.command == "stat":
+            result = build_stat()
         else:
-            result = validate_maps(strict=args.strict)
+            raise MemoryError(f"unknown command: {args.command}")
     except (MemoryError, OSError, subprocess.SubprocessError) as exc:
         if args.command == "binding":
             print(f"ERROR: {exc}", file=sys.stderr)

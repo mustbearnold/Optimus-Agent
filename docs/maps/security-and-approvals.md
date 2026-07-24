@@ -1,28 +1,54 @@
 ---
 knowledge_type: security-map
 status: current
-covers:
-  - crates/optimus-graph/src/**
-  - crates/optimus-runtime/src/**
+owns:
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
   - crates/optimus-kernel/src/fs_sandbox.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-kernel/src/codex_oauth.rs
   - crates/optimus-kernel/src/credential.rs
   - crates/optimus-kernel/src/agent.rs
-  - crates/optimus-packs/src/**
+  - crates/optimus-kernel/src/project_authority.rs
+  - crates/optimus-packs/src/lib.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/server.rs
+  - apps/optimus-desktop/src/ipc/router.rs
+  - apps/optimus-desktop/src/ipc/chat.rs
+  - apps/optimus-desktop/src/ipc/runtime_ops.rs
+  - apps/optimus-cli/src/gateway_http.rs
+watches:
+  - crates/optimus-graph/src/**
+  - crates/optimus-runtime/src/**
+  - crates/optimus-packs/src/**
   - apps/optimus-desktop/src/ipc/**
+covers:
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-kernel/src/fs_sandbox.rs
+  - crates/optimus-kernel/src/browser.rs
+  - crates/optimus-kernel/src/codex_oauth.rs
+  - crates/optimus-kernel/src/credential.rs
+  - crates/optimus-kernel/src/agent.rs
+  - crates/optimus-kernel/src/project_authority.rs
+  - crates/optimus-packs/src/lib.rs
+  - apps/optimus-desktop/src/bridge.rs
+  - apps/optimus-desktop/src/server.rs
+  - apps/optimus-desktop/src/ipc/router.rs
+  - apps/optimus-desktop/src/ipc/chat.rs
+  - apps/optimus-desktop/src/ipc/runtime_ops.rs
   - apps/optimus-cli/src/gateway_http.rs
 depends_on:
   - docs/decisions/0003-phase1-policy-budgets.md
-  - docs/decisions/0012-desktop-approval-boundary.md
   - docs/decisions/0016-canonical-tool-contract.md
+  - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
+  - docs/decisions/0031-safe-project-work-loop.md
 validated_by:
-  - crates/optimus-runtime/tests/**
-  - crates/optimus-kernel/tests/**
-  - crates/optimus-packs/tests/**
-  - apps/optimus-desktop/e2e/**
+  - crates/optimus-runtime/tests/approvals_surface.rs
+  - crates/optimus-runtime/tests/path_confinement.rs
+  - crates/optimus-kernel/tests/kernel_turn.rs
+  - crates/optimus-packs/tests/packs_budget.rs
+  - apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 

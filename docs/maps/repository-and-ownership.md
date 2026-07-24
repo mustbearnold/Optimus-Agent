@@ -1,12 +1,33 @@
 ---
 knowledge_type: repository-map
 status: current
-covers:
+owns:
   - Cargo.toml
-  - apps/**/Cargo.toml
-  - crates/**/Cargo.toml
+  - apps/optimus-cli/Cargo.toml
+  - apps/optimus-desktop/Cargo.toml
+  - crates/optimus-browser/Cargo.toml
+  - crates/optimus-graph/Cargo.toml
+  - crates/optimus-kernel/Cargo.toml
+  - crates/optimus-memory/Cargo.toml
+  - crates/optimus-packs/Cargo.toml
+  - crates/optimus-runtime/Cargo.toml
+  - crates/optimus-skills/Cargo.toml
+  - crates/optimus-store/Cargo.toml
+watches:
   - apps/**/src/**
   - crates/**/src/**
+covers:
+  - Cargo.toml
+  - apps/optimus-cli/Cargo.toml
+  - apps/optimus-desktop/Cargo.toml
+  - crates/optimus-browser/Cargo.toml
+  - crates/optimus-graph/Cargo.toml
+  - crates/optimus-kernel/Cargo.toml
+  - crates/optimus-memory/Cargo.toml
+  - crates/optimus-packs/Cargo.toml
+  - crates/optimus-runtime/Cargo.toml
+  - crates/optimus-skills/Cargo.toml
+  - crates/optimus-store/Cargo.toml
 depends_on:
   - README.md
 validated_by:

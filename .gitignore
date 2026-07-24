@@ -1,5 +1,6 @@
 /target
 /local/
+.engineering-memory/.hash-cache.json
 **/node_modules/
 **/test-results/
 **/playwright-report/
