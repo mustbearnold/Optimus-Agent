@@ -57,6 +57,17 @@ paid model, commit, push, publish, or deploy.
   display-frame lanes.
 - Responsive modes are wide three-surface, medium split, compact selected
   surface, and 320 px single-surface reflow.
+- The Codex-measured convergence layer uses a 36 px title row, 240 px project
+  rail, 720 px evidence workspace, 736 px composer cap, system UI typography,
+  neutral light/dark tokens, and an original local line-icon set.
+- Local project catalog version 2 stores `rootPaths[]` and a `primaryRoot`,
+  migrates the prior single `path`, and keeps session-to-project assignment
+  separate. Adding a source does not broaden runtime filesystem permission.
+- The native preview annotation mode returns only bounded page/element
+  metadata, consumes the selected click, supports cancellation/expiry, and
+  never adds page HTML or a selector to the composer.
+- Settings, project-source management, and the task panel suspend the native
+  preview so the Electron child view cannot cover renderer overlays.
 - Empty-session starters are compact task rows, not equal-weight cards.
   Capabilities presents Rust packs and tools as an inspectable registry with a
   separate unavailable boundary. At 320 CSS px the composer uses a two-column
@@ -86,10 +97,10 @@ paid model, commit, push, publish, or deploy.
 
 | Width | Project scope | Work/evidence relationship |
 |---|---|---|
-| `>=1280` | 232 px default; 196–360 px resize | Central work surface at least 520 px; evidence workspace defaults near 48%, at least 360 px |
-| `960–1279` | 208 px | Evidence workspace near 40%; low-priority labels collapse |
-| `720–959` | 52 px command rail | Explicitly selected evidence overlay/replacement; never a squeezed third column |
-| `<720` and 320 px proof | Contextual Back/surface switcher | Exactly one of Work, Browser, Files, Artifacts, or Execution is primary |
+| `>=1280` | 240 px default; 200–400 px resize | Central work surface at least 420 px; evidence workspace defaults to 720 px and remains at least 360 px |
+| `1100–1279` | 240 px | Evidence workspace caps near 44%; low-priority top-bar labels collapse |
+| `900–1099` | 52 px command rail | Work and evidence remain a resizable split without a full text rail |
+| `<900`, native 480 px, and 320 px proof | Surface switcher, rail removed | Exactly one of Work, Browser, Files, Artifacts, or Execution is primary; composer controls reflow by 520 px |
 
 The composer retains model, effort, access, Send/Stop, IME behavior, and a
 usable full-width text area in every mode.
@@ -150,6 +161,10 @@ evidence of native paint. Native evidence requires Electron launch,
 `WebContentsView.capturePage`, an injected native click, and equality between
 the settled native bounds and the DOM content-hole rectangle.
 
+When renderer UI must overlay the preview, React suspends the child view first.
+The compiled test proves Settings is unobstructed while the native view reports
+hidden, then proves the view is restored after close.
+
 ## Motion and frame contract
 
 One `requestAnimationFrame` coordinator owns dirty lanes for stream text,
@@ -189,31 +204,33 @@ work; they do not certify physical-monitor FPS.
 - `AwaitingApproval`, Working, cancelling, Cancelled, Failed, Completed, and
   connection loss remain distinct.
 - Settings describe non-shared work isolation as configured intent.
+- Artifact deletion opens an accessible confirmation boundary, focuses the
+  non-destructive Cancel action first, and restores the initiating control
+  after cancellation.
 - Messaging and specialist-agent orchestration remain visibly unavailable.
-- Browser annotations enter the composer only through the Add-to-prompt action
-  and remain untrusted text.
+- Browser annotations enter the composer only after an explicit one-shot page
+  selection and remain untrusted text.
 
 ## Verification matrix
 
 | Gate | Proof |
 |---|---|
-| React unit/component | Typed transport races, layout migration, frame convergence, terminal de-duplication, IME and Send/Stop, static motion audit |
+| React unit/component | Typed transport races, layout migration, frame convergence, terminal de-duplication, IME and Send/Stop, confirmed/cancelled artifact deletion, static motion audit |
 | React build | TypeScript project build plus relative Vite production assets |
-| Browser contract | 1600, 960, 640, 320, dark/light/reduced-motion and secondary surfaces; zero console errors |
+| Browser contract | 1919, 1600, 960, 640, 480, 320, dark/light/reduced-motion, contrast, multi-folder sources, Settings navigation, and zero root overflow |
 | Electron policy | URL allow/deny and preload/main syntax checks |
-| Compiled Electron shell | Production protocol, no renderer token, offline Rust session/chat/cancel, files/artifacts/settings, native preview paint/click/alignment/resize/lifecycle |
+| Compiled Electron shell | Production protocol, no renderer token, offline Rust session/chat/cancel, files/artifacts/settings, native preview paint/click/alignment/resize, bounded annotation capture, and modal suspension/restoration |
 | Rust desktop | `cargo test -p optimus-desktop` |
 | Legacy Wry | `npm --prefix apps/optimus-desktop run test:e2e` |
 | Engineering Memory | check, generate, validate, strict validate; generated JSON only |
 
 ## Engineering Memory baseline
 
-**Confirmed current behaviour at implementation entry:** the Engineering Memory
-currentness check was already stale because the workspace contained pre-existing
-changes. That stale baseline predates this React cutover and is not evidence
-that these UI changes caused the original drift. The final handoff reports the
-post-generation source-tree identity and any strict validation gap separately;
-it does not invent a Git commit SHA.
+**Confirmed current behaviour at implementation entry on 2026-07-24:**
+`python3 scripts/engineering_memory.py check` reported
+`ENGINEERING_MEMORY_CURRENT`. The final handoff reports the post-generation
+source-tree identity and any validation gap separately; it does not invent a
+Git commit SHA.
 
 ## Completion and rollback
 

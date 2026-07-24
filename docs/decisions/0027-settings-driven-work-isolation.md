@@ -57,3 +57,48 @@ daily workbench. Forcing shared-only forever cannot deliver true non-interferenc
 - Default remains shared; no behavior regression for existing installs.
 - Later phases bind tool FS, memory, browser, and job leases to the selected mode.
 - Doctor reports both configured mode and whether enforcement is active.
+
+## Reasons
+
+A durable mode gives every product surface one truth source while preserving a
+low-ceremony shared default. Explicitly separating configured intent from
+enforcement prevents the Settings UI and local project catalog from implying a
+security boundary that the runtime has not implemented.
+
+## Risks and unresolved boundaries
+
+- **Planned behaviour:** `project_bound` does not yet bind tool roots, memory,
+  browser profiles, or job leases.
+- **Planned behaviour:** `isolated_profiles` does not yet provision sealed
+  homes or migration/recovery flows.
+- **Unknown or unresolved behaviour:** concurrent-project denial has no runtime
+  effect until project ownership and leases are typed.
+
+## Evaluation evidence
+
+- Product-setting unit tests cover missing, valid, malformed, and unknown mode
+  persistence.
+- Desktop system IPC tests cover get/set and Doctor projection.
+- React Settings and multi-folder contracts label enforcement independently
+  from the local catalog.
+
+## Relevant code
+
+- `crates/optimus-kernel/src/product_settings.rs`
+- `apps/optimus-desktop/src/ipc/system.rs`
+- `apps/optimus-ui/src/components/settings/SettingsDialog.tsx`
+- `apps/optimus-ui/src/state/projectStore.ts`
+
+## Relevant tests
+
+- Unit tests colocated with `crates/optimus-kernel/src/product_settings.rs`
+- Unit tests colocated with `apps/optimus-desktop/src/ipc/system.rs`
+- `apps/optimus-ui/src/state/projectStore.test.ts`
+- `apps/optimus-electron/e2e/react-browser-contract.spec.cjs`
+
+## Conditions for reconsideration
+
+Reconsider the mode vocabulary only with a migration for durable
+`settings.json` values. Reconsider the shared default after project-bound
+enforcement, migration, rollback, and installed multi-project evidence are
+green.

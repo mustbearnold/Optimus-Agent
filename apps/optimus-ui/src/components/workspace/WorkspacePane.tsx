@@ -9,12 +9,14 @@ import { FilesSurface } from './FilesSurface';
 export function WorkspacePane({
   tab,
   transport,
+  suspended,
   onTab,
   onClose,
   onAnnotation,
 }: {
   tab: WorkspaceTab;
   transport: OptimusTransport;
+  suspended: boolean;
   onTab: (tab: WorkspaceTab) => void;
   onClose: () => void;
   onAnnotation: (text: string) => void;
@@ -67,7 +69,7 @@ export function WorkspacePane({
       </div>
       <div className="workspace-body">
         <div id="workspace-panel-browser" aria-labelledby="workspace-tab-browser" hidden={tab !== 'browser'} className={tab === 'browser' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
-          <BrowserSurface transport={transport} active={tab === 'browser'} onAnnotation={onAnnotation} />
+          <BrowserSurface transport={transport} active={tab === 'browser' && !suspended} onAnnotation={onAnnotation} />
         </div>
         <div id="workspace-panel-files" aria-labelledby="workspace-tab-files" hidden={tab !== 'files'} className={tab === 'files' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
           <FilesSurface transport={transport} active={tab === 'files'} />

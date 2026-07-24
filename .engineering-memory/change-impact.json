@@ -20,7 +20,7 @@
       ],
       "document": "docs/architecture/system-overview.md",
       "knowledge_type": "architecture",
-      "resolved_source_count": 80,
+      "resolved_source_count": 81,
       "resolved_tests": [
         "apps/optimus-cli/tests/eval_compare.rs",
         "apps/optimus-cli/tests/eval_report.rs",
@@ -92,6 +92,8 @@
         "crates/optimus-kernel/src/**",
         "crates/optimus-packs/src/**",
         "apps/optimus-desktop/src/**",
+        "apps/optimus-electron/**",
+        "apps/optimus-ui/src/ipc/**",
         "apps/optimus-cli/src/gateway_http.rs"
       ],
       "depends_on": [
@@ -99,7 +101,7 @@
       ],
       "document": "docs/contracts/high-risk-contracts.md",
       "knowledge_type": "contract-risk-register",
-      "resolved_source_count": 76,
+      "resolved_source_count": 94,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -501,7 +503,7 @@
       ],
       "document": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "knowledge_type": "decision",
-      "resolved_source_count": 70,
+      "resolved_source_count": 75,
       "resolved_tests": [
         "apps/optimus-desktop/src/main.rs",
         "apps/optimus-electron/package.json"
@@ -526,17 +528,20 @@
       ],
       "document": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "knowledge_type": "decision",
-      "resolved_source_count": 70,
+      "resolved_source_count": 75,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
         "apps/optimus-electron/test/browser-policy.test.cjs",
         "apps/optimus-ui/src/app/OptimusApp.test.tsx",
         "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
+        "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx",
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
         "apps/optimus-ui/src/ipc/electronTransport.test.ts",
         "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
         "apps/optimus-ui/src/state/conversationStore.test.ts",
-        "apps/optimus-ui/src/state/layoutStore.test.ts"
+        "apps/optimus-ui/src/state/layoutStore.test.ts",
+        "apps/optimus-ui/src/state/projectStore.test.ts"
       ],
       "status": "current",
       "validated_by": [
@@ -548,6 +553,41 @@
     },
     {
       "covers": [
+        "apps/optimus-ui/**",
+        "apps/optimus-electron/**",
+        "docs/design/codex-convergence-*.md",
+        "docs/specifications/react-workbench-electron-preview-cutover.md"
+      ],
+      "depends_on": [
+        "docs/decisions/0027-settings-driven-work-isolation.md",
+        "docs/decisions/0029-react-workbench-and-electron-preview-view.md"
+      ],
+      "document": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "knowledge_type": "decision",
+      "resolved_source_count": 66,
+      "resolved_tests": [
+        "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
+        "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
+        "apps/optimus-ui/src/app/OptimusApp.test.tsx",
+        "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
+        "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx",
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
+        "apps/optimus-ui/src/ipc/electronTransport.test.ts",
+        "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
+        "apps/optimus-ui/src/state/conversationStore.test.ts",
+        "apps/optimus-ui/src/state/layoutStore.test.ts",
+        "apps/optimus-ui/src/state/projectStore.test.ts"
+      ],
+      "status": "current",
+      "validated_by": [
+        "apps/optimus-ui/src/**/*.test.ts",
+        "apps/optimus-ui/src/**/*.test.tsx",
+        "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
+        "apps/optimus-electron/e2e/compiled-shell.spec.cjs"
+      ]
+    },
+    {
+      "covers": [
         "docs/decisions/*.md"
       ],
       "depends_on": [
@@ -555,13 +595,71 @@
       ],
       "document": "docs/decisions/README.md",
       "knowledge_type": "decision-index",
-      "resolved_source_count": 33,
+      "resolved_source_count": 34,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
       "status": "current",
       "validated_by": [
         "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "apps/optimus-ui/**",
+        "apps/optimus-electron/**"
+      ],
+      "depends_on": [
+        "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+        "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md"
+      ],
+      "document": "docs/design/codex-convergence-experience-contract.md",
+      "knowledge_type": "design-contract",
+      "resolved_source_count": 63,
+      "resolved_tests": [
+        "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
+        "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
+        "apps/optimus-ui/src/app/OptimusApp.test.tsx",
+        "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
+        "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx",
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
+        "apps/optimus-ui/src/ipc/electronTransport.test.ts",
+        "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
+        "apps/optimus-ui/src/state/conversationStore.test.ts",
+        "apps/optimus-ui/src/state/layoutStore.test.ts",
+        "apps/optimus-ui/src/state/projectStore.test.ts"
+      ],
+      "status": "current",
+      "validated_by": [
+        "apps/optimus-ui/src/**/*.test.ts",
+        "apps/optimus-ui/src/**/*.test.tsx",
+        "apps/optimus-electron/e2e/*.spec.cjs"
+      ]
+    },
+    {
+      "covers": [
+        "apps/optimus-ui/**",
+        "apps/optimus-electron/**"
+      ],
+      "depends_on": [
+        "docs/design/codex-convergence-experience-contract.md"
+      ],
+      "document": "docs/design/codex-convergence-state-matrix.md",
+      "knowledge_type": "design-state-matrix",
+      "resolved_source_count": 62,
+      "resolved_tests": [
+        "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
+        "apps/optimus-electron/e2e/react-browser-contract.spec.cjs",
+        "apps/optimus-ui/src/ipc/electronTransport.test.ts",
+        "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
+        "apps/optimus-ui/src/state/conversationStore.test.ts",
+        "apps/optimus-ui/src/state/layoutStore.test.ts",
+        "apps/optimus-ui/src/state/projectStore.test.ts"
+      ],
+      "status": "current",
+      "validated_by": [
+        "apps/optimus-ui/src/**/*.test.ts",
+        "apps/optimus-electron/e2e/*.spec.cjs"
       ]
     },
     {
@@ -597,7 +695,7 @@
       ],
       "document": "docs/lessons/ai-agent-mistakes.md",
       "knowledge_type": "lesson-ledger",
-      "resolved_source_count": 73,
+      "resolved_source_count": 74,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -760,7 +858,7 @@
       ],
       "document": "docs/maps/repository-and-ownership.md",
       "knowledge_type": "repository-map",
-      "resolved_source_count": 100,
+      "resolved_source_count": 105,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
@@ -847,13 +945,50 @@
       ],
       "document": "docs/plans/engineering-memory-phases.md",
       "knowledge_type": "implementation-plan",
-      "resolved_source_count": 44,
+      "resolved_source_count": 45,
       "resolved_tests": [
         "scripts/test_engineering_memory.py"
       ],
       "status": "current",
       "validated_by": [
         "scripts/test_engineering_memory.py"
+      ]
+    },
+    {
+      "covers": [
+        "apps/optimus-ui/**",
+        "apps/optimus-electron/**",
+        "apps/optimus-desktop/**",
+        "apps/optimus-cli/**",
+        "crates/optimus-kernel/**",
+        "crates/optimus-packs/**",
+        "crates/optimus-runtime/**",
+        "crates/optimus-skills/**",
+        "crates/optimus-memory/**",
+        "docs/architecture/parity-capability-ledger.json",
+        "docs/architecture/sota-scorecard.md"
+      ],
+      "depends_on": [
+        "docs/architecture/parity-capability-ledger.json",
+        "docs/architecture/sota-scorecard.md",
+        "docs/architecture/system-overview.md",
+        "docs/specifications/react-workbench-electron-preview-cutover.md",
+        "docs/decisions/0027-settings-driven-work-isolation.md",
+        "docs/decisions/0028-electron-react-shell-rust-host.md",
+        "docs/decisions/0029-react-workbench-and-electron-preview-view.md"
+      ],
+      "document": "docs/plans/full-app-microtasks.md",
+      "knowledge_type": "implementation-plan",
+      "resolved_source_count": 162,
+      "resolved_tests": [
+        "scripts/check-parity-ledger.py",
+        "scripts/engineering_memory.py"
+      ],
+      "status": "current",
+      "validated_by": [
+        "scripts/check-parity-ledger.py",
+        "scripts/engineering_memory.py",
+        "cargo test --workspace -- --test-threads=1"
       ]
     },
     {
@@ -965,7 +1100,7 @@
       ],
       "document": "docs/specifications/electron-react-migration-slice-1.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 59,
+      "resolved_source_count": 64,
       "resolved_tests": [
         "apps/optimus-electron/e2e/compiled-shell.spec.cjs",
         "apps/optimus-electron/package.json"
@@ -1267,7 +1402,7 @@
       ],
       "document": "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 120,
+      "resolved_source_count": 121,
       "resolved_tests": [
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -1378,7 +1513,7 @@
       ],
       "document": "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 117,
+      "resolved_source_count": 118,
       "resolved_tests": [
         "crates/optimus-kernel/tests/agent_contracts.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
@@ -1418,7 +1553,7 @@
       ],
       "document": "docs/specifications/react-workbench-electron-preview-cutover.md",
       "knowledge_type": "specification",
-      "resolved_source_count": 70,
+      "resolved_source_count": 75,
       "resolved_tests": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js",
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -1433,10 +1568,13 @@
         "apps/optimus-electron/test/browser-policy.test.cjs",
         "apps/optimus-ui/src/app/OptimusApp.test.tsx",
         "apps/optimus-ui/src/components/workbench/Composer.test.tsx",
+        "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx",
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
         "apps/optimus-ui/src/ipc/electronTransport.test.ts",
         "apps/optimus-ui/src/performance/frameCoordinator.test.ts",
         "apps/optimus-ui/src/state/conversationStore.test.ts",
-        "apps/optimus-ui/src/state/layoutStore.test.ts"
+        "apps/optimus-ui/src/state/layoutStore.test.ts",
+        "apps/optimus-ui/src/state/projectStore.test.ts"
       ],
       "status": "active",
       "validated_by": [
@@ -1621,7 +1759,8 @@
       "docs/maps/repository-and-ownership.md"
     ],
     "apps/optimus-cli/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "apps/optimus-cli/src/gateway_http.rs": [
       "docs/architecture/system-overview.md",
@@ -1630,6 +1769,7 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "apps/optimus-cli/src/main.rs": [
@@ -1638,59 +1778,81 @@
       "docs/decisions/0024-hermes-parity-version-gate.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/read-only-cli-evaluation-comparison.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md",
       "docs/specifications/typed-offline-trajectory-evidence.md"
     ],
     "apps/optimus-cli/tests/eval_compare.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/read-only-cli-evaluation-comparison.md"
     ],
     "apps/optimus-cli/tests/eval_report.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/safe-cli-exact-evaluation-report.md"
     ],
     "apps/optimus-cli/tests/gateway_http.rs": [
-      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
+      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "apps/optimus-desktop/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js": [
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js": [
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js": [
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js": [
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js": [
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/06-preview-browser.spec.js": [
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20d-packaging-gates.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/07-vantage-design.spec.js": [
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/e2e/support.js": [
       "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
+    ],
+    "apps/optimus-desktop/package-lock.json": [
+      "docs/plans/full-app-microtasks.md"
+    ],
+    "apps/optimus-desktop/package.json": [
+      "docs/plans/full-app-microtasks.md"
+    ],
+    "apps/optimus-desktop/playwright.config.js": [
+      "docs/plans/full-app-microtasks.md"
     ],
     "apps/optimus-desktop/src/bridge.rs": [
       "docs/architecture/system-overview.md",
@@ -1701,6 +1863,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
@@ -1716,6 +1879,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -1730,6 +1894,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1741,6 +1906,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/phase-21d-artifacts-bulk-delete.md",
@@ -1754,6 +1920,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1765,6 +1932,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1777,6 +1945,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/phase-21d-artifacts-bulk-delete.md",
@@ -1790,6 +1959,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -1802,6 +1972,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1813,6 +1984,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
@@ -1825,6 +1997,7 @@
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-0-work-isolation-settings.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20d-packaging-gates.md",
@@ -1840,6 +2013,7 @@
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
@@ -1852,6 +2026,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -1862,6 +2037,7 @@
       "docs/contracts/desktop-ipc-methods.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
@@ -1875,6 +2051,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md",
@@ -1885,6 +2062,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
@@ -1893,6 +2071,7 @@
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/decisions/0027-settings-driven-work-isolation.md",
       "docs/maps/observability-and-evaluations.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/phase-0-work-isolation-settings.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
@@ -1903,6 +2082,7 @@
     "apps/optimus-desktop/ui/index.html": [
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "docs/decisions/0027-settings-driven-work-isolation.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/phase-0-work-isolation-settings.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
@@ -1912,394 +2092,692 @@
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/ui/style.css": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/desktop-turn-cancellation.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "apps/optimus-desktop/ui/vantage.css": [
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md"
     ],
     "apps/optimus-electron/README.md": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/browser-policy.cjs": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/e2e/compiled-shell.spec.cjs": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/e2e/react-browser-contract.spec.cjs": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/main.cjs": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/package-lock.json": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/package.json": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/playwright.config.cjs": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/preload.cjs": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/scripts/dev.cjs": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-electron/test/browser-policy.test.cjs": [
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/index.html": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/package-lock.json": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/package.json": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/App.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/app/OptimusApp.test.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/app/OptimusApp.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
+      "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "apps/optimus-ui/src/codex-shell.css": [
+      "docs/decisions/0028-electron-react-shell-rust-host.md",
+      "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/chrome/Icon.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/chrome/TopBar.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/chrome/TruthStrip.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/execution/ExecutionDock.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/execution/TaskPanel.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
+      "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "apps/optimus-ui/src/components/projects/ProjectSourcesDialog.tsx": [
+      "docs/decisions/0028-electron-react-shell-rust-host.md",
+      "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/projects/ProjectsRail.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/settings/SettingsDialog.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Composer.test.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Composer.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workbench/Transcript.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
+      "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "apps/optimus-ui/src/components/workspace/ArtifactsSurface.test.tsx": [
+      "docs/decisions/0028-electron-react-shell-rust-host.md",
+      "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
+      "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx": [
+      "docs/decisions/0028-electron-react-shell-rust-host.md",
+      "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/FilesSurface.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/components/workspace/WorkspacePane.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/contracts.ts": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/electronTransport.test.ts": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/electronTransport.ts": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/fixtureTransport.ts": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/httpTransport.ts": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/ipc/index.ts": [
       "docs/contracts/desktop-ipc-methods.md",
+      "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/main.tsx": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/performance/frameCoordinator.test.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/performance/frameCoordinator.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/appReducer.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/conversationStore.test.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/conversationStore.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/layoutStore.test.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/layoutStore.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
+      "docs/specifications/electron-react-migration-slice-1.md",
+      "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "apps/optimus-ui/src/state/projectStore.test.ts": [
+      "docs/decisions/0028-electron-react-shell-rust-host.md",
+      "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/state/projectStore.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/styles.css": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/styles.test.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/test/setup.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/src/vite-env.d.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/tsconfig.json": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/tsconfig.tsbuildinfo": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
     "apps/optimus-ui/vite.config.ts": [
       "docs/decisions/0028-electron-react-shell-rust-host.md",
       "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/design/codex-convergence-state-matrix.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
     ],
@@ -2330,7 +2808,8 @@
       "docs/maps/security-and-approvals.md"
     ],
     "crates/optimus-kernel/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-kernel/src/agent.rs": [
       "docs/architecture/system-overview.md",
@@ -2339,6 +2818,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2348,6 +2828,7 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/phase-21d-artifacts-bulk-delete.md",
@@ -2360,6 +2841,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20b-kernel-cdp-integration.md",
       "docs/specifications/phase-20c-desktop-browser-sidebar.md",
@@ -2375,6 +2857,7 @@
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2384,6 +2867,7 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2394,6 +2878,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2405,6 +2890,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2416,6 +2902,7 @@
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -2429,6 +2916,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
@@ -2446,6 +2934,7 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -2459,6 +2948,7 @@
       "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2470,6 +2960,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2483,6 +2974,7 @@
       "docs/maps/model-routing.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/desktop-turn-cancellation.md",
@@ -2503,6 +2995,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2513,6 +3006,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0027-settings-driven-work-isolation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-0-work-isolation-settings.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
@@ -2524,6 +3018,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2535,6 +3030,7 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/model-routing.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2546,6 +3042,7 @@
       "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2556,6 +3053,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2566,6 +3064,7 @@
       "docs/contracts/high-risk-contracts.md",
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2575,6 +3074,7 @@
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2586,6 +3086,7 @@
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
@@ -2593,23 +3094,28 @@
     ],
     "crates/optimus-kernel/tests/agent_contracts.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/browser_live.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/codex_oauth.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/compression_turn.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/evaluation_contracts.rs": [
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/candidate-aware-evaluation-comparison.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
@@ -2622,12 +3128,14 @@
     ],
     "crates/optimus-kernel/tests/integrity_integration.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/persisted-integrity-evaluation-traces.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/reusable-offline-integrity-executor.md"
     ],
     "crates/optimus-kernel/tests/kernel_turn.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -2635,53 +3143,64 @@
       "docs/specifications/turn-timing-and-tool-loop-control.md"
     ],
     "crates/optimus-kernel/tests/openai_http.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/replay_contracts.rs": [
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/routing_telemetry.rs": [
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/session_resume.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/trace_contracts.rs": [
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/web_search_live.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-kernel/tests/workflow_contracts.rs": [
       "docs/decisions/0022-versioned-agent-and-workflow-contracts.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-memory/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-memory/src/lib.rs": [
       "docs/architecture/system-overview.md",
       "docs/maps/memory-and-retrieval.md",
       "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-memory/tests/metamemory_mvp.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md"
     ],
     "crates/optimus-packs/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-packs/src/lib.rs": [
       "docs/architecture/system-overview.md",
@@ -2689,16 +3208,19 @@
       "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-20-cdp-preview-browser.md",
       "docs/specifications/phase-20b-kernel-cdp-integration.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-packs/tests/packs_budget.rs": [
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "crates/optimus-runtime/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-runtime/src/campaign.rs": [
       "docs/architecture/system-overview.md",
@@ -2710,6 +3232,7 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
@@ -2723,32 +3246,49 @@
       "docs/maps/observability-and-evaluations.md",
       "docs/maps/repository-and-ownership.md",
       "docs/maps/security-and-approvals.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-1-integrity-next-30-microtasks.md"
     ],
     "crates/optimus-runtime/tests/approvals_surface.rs": [
-      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
+      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-runtime/tests/cancellation.rs": [
-      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
+      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-runtime/tests/command_capture.rs": [
-      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
+      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-runtime/tests/crash_resume.rs": [
-      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md"
+      "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-runtime/tests/path_confinement.rs": [
       "docs/decisions/0018-fail-closed-runtime-safety.md",
-      "docs/decisions/0019-capability-files-and-unified-campaign-authority.md"
+      "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
+      "docs/plans/full-app-microtasks.md"
+    ],
+    "crates/optimus-runtime/tests/phase1_policy_budget.rs": [
+      "docs/plans/full-app-microtasks.md"
+    ],
+    "crates/optimus-runtime/tests/skill_bridge.rs": [
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-skills/Cargo.toml": [
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-skills/src/lib.rs": [
       "docs/architecture/system-overview.md",
       "docs/maps/memory-and-retrieval.md",
-      "docs/maps/repository-and-ownership.md"
+      "docs/maps/repository-and-ownership.md",
+      "docs/plans/full-app-microtasks.md"
+    ],
+    "crates/optimus-skills/tests/skills_lifecycle.rs": [
+      "docs/plans/full-app-microtasks.md"
     ],
     "crates/optimus-store/Cargo.toml": [
       "docs/maps/repository-and-ownership.md"
@@ -2832,6 +3372,7 @@
     "docs/architecture/parity-capability-ledger.json": [
       "docs/decisions/0024-hermes-parity-version-gate.md",
       "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-21a-artifacts-store.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -2949,6 +3490,7 @@
     ],
     "docs/architecture/sota-scorecard.md": [
       "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
@@ -2957,6 +3499,7 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/atomic-kernel-turn-trace-binding.md",
       "docs/specifications/authoritative-offline-candidate-binding.md",
       "docs/specifications/exact-priority2-offline-report-production.md",
@@ -3277,9 +3820,11 @@
     "docs/decisions/0027-settings-driven-work-isolation.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/phase-0-work-isolation-settings.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
@@ -3291,6 +3836,7 @@
       "docs/decisions/README.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/electron-react-migration-slice-1.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
@@ -3299,12 +3845,25 @@
     "docs/decisions/0029-react-workbench-and-electron-preview-view.md": [
       "docs/architecture/system-overview.md",
       "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "docs/decisions/README.md",
+      "docs/design/codex-convergence-experience-contract.md",
       "docs/lessons/ai-agent-mistakes.md",
       "docs/plans/engineering-memory-phases.md",
+      "docs/plans/full-app-microtasks.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md",
       "docs/specifications/react-workbench-electron-preview-cutover.md"
+    ],
+    "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md": [
+      "docs/architecture/system-overview.md",
+      "docs/contracts/high-risk-contracts.md",
+      "docs/decisions/README.md",
+      "docs/design/codex-convergence-experience-contract.md",
+      "docs/lessons/ai-agent-mistakes.md",
+      "docs/plans/engineering-memory-phases.md",
+      "docs/specifications/priority-1-integrity-100-nanotasks.md",
+      "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
     ],
     "docs/decisions/README.md": [
       "docs/architecture/system-overview.md",
@@ -3314,6 +3873,13 @@
       "docs/plans/engineering-memory-phases.md",
       "docs/specifications/priority-1-integrity-100-nanotasks.md",
       "docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md"
+    ],
+    "docs/design/codex-convergence-experience-contract.md": [
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/design/codex-convergence-state-matrix.md"
+    ],
+    "docs/design/codex-convergence-state-matrix.md": [
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md"
     ],
     "docs/design/optimus-vantage-2027/01-primary-workbench.png": [
       "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md"
@@ -3402,6 +3968,10 @@
     ],
     "docs/specifications/priority-1-integrity-next-30-microtasks.md": [
       "docs/specifications/priority-1-integrity-100-nanotasks.md"
+    ],
+    "docs/specifications/react-workbench-electron-preview-cutover.md": [
+      "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
+      "docs/plans/full-app-microtasks.md"
     ],
     "docs/specifications/stream-delivery-cancellation.md": [
       "docs/specifications/desktop-turn-cancellation.md"

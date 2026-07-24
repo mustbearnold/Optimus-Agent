@@ -81,6 +81,8 @@ export function createElectronTransport(): OptimusTransport {
       forward: (): Promise<BrowserState> => bridge.browser.forward(),
       reload: (): Promise<BrowserState> => bridge.browser.reload(),
       state: (): Promise<BrowserState> => bridge.browser.state(),
+      annotate: () => bridge.browser.annotate(),
+      cancelAnnotation: () => bridge.browser.cancelAnnotation(),
       subscribe: (listener) => bridge.browser.subscribe(listener),
     },
   };

@@ -97,6 +97,8 @@ function bridge(
       forward: async () => browserState,
       reload: async () => browserState,
       state: async () => browserState,
+      annotate: async () => ({ cancelled: true }),
+      cancelAnnotation: async () => ({ cancelled: true }),
       subscribe: () => () => undefined,
     },
     windowAction: async () => ({}),

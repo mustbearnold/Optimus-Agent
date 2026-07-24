@@ -28,7 +28,21 @@ export type IconName =
   | 'check'
   | 'warning'
   | 'close'
-  | 'more';
+  | 'more'
+  | 'annotation'
+  | 'minimize'
+  | 'maximize'
+  | 'project'
+  | 'appearance'
+  | 'agent'
+  | 'shield'
+  | 'memory'
+  | 'automation'
+  | 'accessibility'
+  | 'advanced'
+  | 'globe'
+  | 'source'
+  | 'info';
 
 const paths: Record<IconName, ReactNode> = {
   sidebar: <path d="M3.5 4.5h17v15h-17zM8 4.5v15" />,
@@ -59,6 +73,20 @@ const paths: Record<IconName, ReactNode> = {
   warning: <><path d="M12 3.5 21 20H3z" /><path d="M12 9v5M12 17.5h.1" /></>,
   close: <path d="m6 6 12 12M18 6 6 18" />,
   more: <><circle cx="5" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="19" cy="12" r="1" fill="currentColor" /></>,
+  annotation: <><circle cx="12" cy="12" r="7.5" /><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M9.5 12h5M12 9.5v5" /></>,
+  minimize: <path d="M6 17.5h12" />,
+  maximize: <rect x="5.5" y="5.5" width="13" height="13" rx="1" />,
+  project: <><path d="M3.5 6.5h6l2 2h9v10h-17z" /><path d="M8 12h8M12 10v4" /></>,
+  appearance: <><circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 0 0 0 16z" /></>,
+  agent: <><rect x="5" y="7" width="14" height="12" rx="3" /><path d="M9 12h.1M15 12h.1M9 16h6M12 7V4M9.5 4h5" /></>,
+  shield: <><path d="M12 3.5 19 6v5.5c0 4.2-2.8 7.2-7 9-4.2-1.8-7-4.8-7-9V6z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
+  memory: <><rect x="5.5" y="5.5" width="13" height="13" rx="2" /><path d="M9 9h6v6H9zM9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M18.5 9h3M2.5 15h3M18.5 15h3" /></>,
+  automation: <><path d="M7 7h10v10H7zM4 12H2.5M21.5 12H20M12 4V2.5M12 21.5V20" /><path d="m10 10 4 2-4 2z" /></>,
+  accessibility: <><circle cx="12" cy="5" r="2" /><path d="M5 9h14M12 7v12M8 21l4-8 4 8" /></>,
+  advanced: <><path d="M4 7h10M17 7h3M4 12h3M10 12h10M4 17h8M15 17h5" /><circle cx="15.5" cy="7" r="1.5" /><circle cx="8.5" cy="12" r="1.5" /><circle cx="13.5" cy="17" r="1.5" /></>,
+  globe: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.2 2.3 3.3 5.1 3.3 8.5S14.2 18.2 12 20.5M12 3.5C9.8 5.8 8.7 8.6 8.7 12s1.1 6.2 3.3 8.5" /></>,
+  source: <><path d="M4 6.5h6l2 2h8v10H4z" /><path d="M12 11v5M9.5 13.5h5" /></>,
+  info: <><circle cx="12" cy="12" r="8.5" /><path d="M12 10.5v6M12 7.5h.1" /></>,
 };
 
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {

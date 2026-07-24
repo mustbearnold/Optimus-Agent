@@ -257,6 +257,8 @@ export function createFixtureTransport(): OptimusTransport {
         return browserState;
       },
       state: async () => browserState,
+      annotate: async () => ({ cancelled: true }),
+      cancelAnnotation: async () => ({ cancelled: true }),
       subscribe: (listener) => {
         browserListeners.add(listener);
         return () => browserListeners.delete(listener);

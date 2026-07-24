@@ -8,6 +8,8 @@ covers:
   - crates/optimus-kernel/src/**
   - crates/optimus-packs/src/**
   - apps/optimus-desktop/src/**
+  - apps/optimus-electron/**
+  - apps/optimus-ui/src/ipc/**
   - apps/optimus-cli/src/gateway_http.rs
 depends_on:
   - docs/decisions/**
@@ -139,6 +141,22 @@ it does not replace executable enforcement.
   fence concurrent runners, expire, renew, release, and reject stale owners.
 - **Remaining boundary:** effect execution and durable success are at-least-once.
 - **Owner:** runtime campaign/work-graph boundary.
+
+### C-17 Native preview annotation and overlay isolation
+
+- **State:** Confirmed current behaviour for the Electron user-preview path.
+- **Evidence:** remote content runs in a sandboxed `WebContentsView` without a
+  Node preload; permissions, downloads, popups, insecure remote HTTP, and
+  privileged schemes are denied. Annotation is user-triggered and one-shot,
+  consumes the selected click, length-bounds every returned string, omits HTML
+  and selectors, supports cancellation/expiry, and projects only a readable
+  bounded note into the composer.
+- **Evidence:** compiled Electron tests prove the child view is hidden while
+  renderer Settings is open and restored afterward, preventing native pixels
+  from covering approval/settings controls.
+- **Boundary:** this is the user preview, not the Rust agent Browser effector;
+  cookies, history, and automation identity are not shared.
+- **Owner:** Electron main/preload plus React Browser surface.
 
 ## Priority 1
 

@@ -200,3 +200,13 @@ channel that preserves the same sender, cancellation, and payload boundaries.
 Reconsider the native Browser surface if Electron replaces `WebContentsView`.
 Retire the legacy rollback only after installed packaging, migration, Browser
 geometry, accessibility, and recovery evidence are independently green.
+
+## 2026-07-24 shell-convergence addendum
+
+ADR-0030 refines this accepted shell without changing its Rust authority or
+transport boundaries. The current presentation uses the measured 240 px rail,
+36 px header, 720 px evidence default, and 736 px composer cap; local projects
+store `rootPaths[]`; native annotations return bounded element context; and
+renderer overlays suspend the `WebContentsView`. The React contract now covers
+1919, 1600, 960, 640, 480, and 320 CSS-pixel states. Runtime project
+enforcement and installed-product proof remain planned.

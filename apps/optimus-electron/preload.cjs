@@ -30,6 +30,8 @@ contextBridge.exposeInMainWorld('optimusElectron', {
     forward: () => ipcRenderer.invoke('optimus:browser-forward'),
     reload: () => ipcRenderer.invoke('optimus:browser-reload'),
     state: () => ipcRenderer.invoke('optimus:browser-state'),
+    annotate: () => ipcRenderer.invoke('optimus:browser-annotate'),
+    cancelAnnotation: () => ipcRenderer.invoke('optimus:browser-annotation-cancel'),
     subscribe: (listener) => subscribe('optimus:browser-state', listener),
   },
   windowAction: (action) => ipcRenderer.invoke('optimus:window', action),

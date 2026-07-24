@@ -32,6 +32,7 @@ import {
   type WorkspaceTab,
 } from '../state/layoutStore';
 import {
+  createProject,
   loadAssignments,
   loadExpanded,
   loadProjects,
@@ -48,6 +49,7 @@ import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
 import { TaskPanel } from '../components/execution/TaskPanel';
 import { ProjectsRail } from '../components/projects/ProjectsRail';
+import { ProjectSourcesDialog } from '../components/projects/ProjectSourcesDialog';
 import { SettingsDialog } from '../components/settings/SettingsDialog';
 import { Composer } from '../components/workbench/Composer';
 import { Transcript } from '../components/workbench/Transcript';
@@ -79,7 +81,7 @@ export function OptimusApp() {
     layout: typeof localStorage === 'undefined' ? defaultLayout : loadLayout(),
     settingsOpen: false,
     taskPanelOpen: false,
-    theme: (localStorage.getItem('optimus.react.theme') === 'light' ? 'light' : 'dark') as 'dark' | 'light',
+    theme: (localStorage.getItem('optimus.react.theme') === 'dark' ? 'dark' : 'light') as 'dark' | 'light',
   }));
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
@@ -92,6 +94,7 @@ export function OptimusApp() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(loadExpanded);
   const [input, setInput] = useState('');
   const [annotation, setAnnotation] = useState('');
+  const [sourceProjectId, setSourceProjectId] = useState<string | null>(null);
   const [composer, setComposer] = useState(initialComposer);
   const [bootError, setBootError] = useState('');
   const activeHandle = useRef<ChatHandle | null>(null);
@@ -100,6 +103,12 @@ export function OptimusApp() {
   latestLayout.current = state.layout;
   const selectedSession = sessions.find((session) => session.id === state.selectedSessionId) || null;
   const activeSession = sessions.find((session) => session.id === state.activeRunSessionId) || null;
+  const selectedProject = projects.find(
+    (project) => selectedSession && assignments[selectedSession.id] === project.id
+  ) || null;
+  const sourceProject = projects.find((project) => project.id === sourceProjectId) || null;
+  const browserSuspended =
+    state.settingsOpen || state.taskPanelOpen || Boolean(sourceProject);
   const conversation = useConversation(state.selectedSessionId);
   const activeConversation = useConversation(state.activeRunSessionId);
 
@@ -253,7 +262,7 @@ export function OptimusApp() {
     event.currentTarget.setPointerCapture(event.pointerId);
     const move = (nextEvent: PointerEvent) => {
       if (lane === 'rail') {
-        dispatch({ type: 'patch-layout', patch: { leftWidth: clamp(original.leftWidth + nextEvent.clientX - startX, 196, 360) } });
+        dispatch({ type: 'patch-layout', patch: { leftWidth: clamp(original.leftWidth + nextEvent.clientX - startX, 200, 400) } });
       } else if (lane === 'workspace') {
         dispatch({ type: 'patch-layout', patch: { workspaceWidth: clamp(original.workspaceWidth + startX - nextEvent.clientX, 360, 1200) } });
       } else {
@@ -285,6 +294,8 @@ export function OptimusApp() {
       <div className="optimus-app" style={style} data-compact-surface={state.layout.compactSurface}>
         <TopBar
           title={title}
+          projectName={selectedProject?.name}
+          projectSourceCount={selectedProject?.rootPaths.length}
           route={state.layout.route}
           activeTasks={(state.activeRunSessionId ? 1 : 0) + approvals.length}
           workspaceOpen={workspaceVisible}
@@ -325,10 +336,12 @@ export function OptimusApp() {
               const result = await transport.pickFolder();
               if (!result.ok || !result.path) return;
               const parts = result.path.split(/[\\/]/).filter(Boolean);
-              const project: Project = { id: `project-${Date.now()}`, name: parts.at(-1) || result.path, path: result.path, pinned: true };
+              const project = createProject(parts.at(-1) || result.path, result.path);
               setProjects((current) => [...current, project]);
               setExpanded((current) => ({ ...current, [project.id]: true }));
+              setSourceProjectId(project.id);
             }}
+            onManageProject={(project) => setSourceProjectId(project.id)}
             onToggleProject={(id) => setExpanded((current) => ({ ...current, [id]: current[id] === false }))}
             onTogglePin={(id) => setPins((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])}
             onAssign={(id, projectId) => setAssignments((current) => {
@@ -395,6 +408,7 @@ export function OptimusApp() {
                     <WorkspacePane
                       tab={state.layout.workspaceTab}
                       transport={transport}
+                      suspended={browserSuspended}
                       onTab={setWorkspaceTab}
                       onClose={() => dispatch({ type: 'patch-layout', patch: { workspaceOpen: false, compactSurface: 'work' } })}
                       onAnnotation={(text) => { setAnnotation(text); dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } }); }}
@@ -415,7 +429,30 @@ export function OptimusApp() {
 
         <TruthStrip doctor={doctor} transport={transport.kind} runLabel={state.activeRunSessionId ? statusLabel(activeConversation.status) : 'idle'} />
         <TaskPanel open={state.taskPanelOpen} jobs={jobs} approvals={approvals} runSession={activeSession} runStatus={busyStatus} onClose={() => dispatch({ type: 'tasks', open: false })} onStop={() => void stop()} />
-        <SettingsDialog open={state.settingsOpen} transport={transport} theme={state.theme} onTheme={(theme) => dispatch({ type: 'theme', theme })} onClose={() => dispatch({ type: 'settings', open: false })} />
+        <SettingsDialog
+          open={state.settingsOpen}
+          transport={transport}
+          theme={state.theme}
+          projects={projects}
+          onTheme={(theme) => dispatch({ type: 'theme', theme })}
+          onManageProject={(project) => setSourceProjectId(project.id)}
+          onClose={() => dispatch({ type: 'settings', open: false })}
+        />
+        <ProjectSourcesDialog
+          project={sourceProject}
+          onPickSource={async () => {
+            const result = await transport.pickFolder();
+            return result.ok && result.path ? result.path : null;
+          }}
+          onSave={(project) => setProjects((current) => current.map((item) => item.id === project.id ? project : item))}
+          onClose={() => {
+            const projectId = sourceProjectId;
+            setSourceProjectId(null);
+            window.setTimeout(() => {
+              if (projectId) document.getElementById(`project-manage-${projectId}`)?.focus();
+            }, 0);
+          }}
+        />
       </div>
     </ErrorBoundary>
   );

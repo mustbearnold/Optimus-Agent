@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ArtifactDetail, ArtifactRecord, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -16,6 +16,11 @@ export function ArtifactsSurface({
   const [detail, setDetail] = useState<ArtifactDetail | null>(null);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
+  const deleteTrigger = useRef<HTMLElement | null>(null);
+  const cancelDeleteButton = useRef<HTMLButtonElement>(null);
+  const confirmDeleteButton = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -30,6 +35,10 @@ export function ArtifactsSurface({
   useEffect(() => {
     if (active) void load();
   }, [active, load]);
+
+  useEffect(() => {
+    if (pendingDelete.length) cancelDeleteButton.current?.focus();
+  }, [pendingDelete]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -55,6 +64,38 @@ export function ArtifactsSurface({
     await load();
   };
 
+  const requestDelete = (sha256s: string[]) => {
+    if (!sha256s.length) return;
+    deleteTrigger.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPendingDelete([...sha256s]);
+  };
+
+  const closeDeleteConfirmation = () => {
+    if (deleting) return;
+    setPendingDelete([]);
+    requestAnimationFrame(() => deleteTrigger.current?.focus());
+  };
+
+  const confirmDelete = async () => {
+    const sha256s = [...pendingDelete];
+    if (!sha256s.length || deleting) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await removeMany(sha256s);
+      setPendingDelete([]);
+      requestAnimationFrame(() => deleteTrigger.current?.focus());
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteLabel =
+    pendingDelete.length === 1 ? 'Delete 1 artifact?' : `Delete ${pendingDelete.length} artifacts?`;
+
   return (
     <section className={`artifacts-surface${standalone ? ' is-standalone' : ''}`} aria-label="Artifacts">
       <div className="surface-toolbar">
@@ -73,7 +114,7 @@ export function ArtifactsSurface({
           type="button"
           className="danger-text"
           disabled={!selected.length}
-          onClick={() => void removeMany(selected)}
+          onClick={() => requestDelete(selected)}
         >
           <Icon name="trash" />
           Delete {selected.length || ''}
@@ -125,7 +166,7 @@ export function ArtifactsSurface({
                 <button
                   type="button"
                   className="danger-text"
-                  onClick={() => void removeMany([detail.artifact.sha256])}
+                  onClick={() => requestDelete([detail.artifact.sha256])}
                 >
                   <Icon name="trash" />
                   Delete
@@ -144,6 +185,65 @@ export function ArtifactsSurface({
           )}
         </div>
       </div>
+      {pendingDelete.length ? (
+        <div
+          className="dialog-backdrop"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              closeDeleteConfirmation();
+            } else if (event.key === 'Tab') {
+              if (event.shiftKey && document.activeElement === cancelDeleteButton.current) {
+                event.preventDefault();
+                confirmDeleteButton.current?.focus();
+              } else if (!event.shiftKey && document.activeElement === confirmDeleteButton.current) {
+                event.preventDefault();
+                cancelDeleteButton.current?.focus();
+              }
+            }
+          }}
+        >
+          <div
+            className="artifact-delete-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="artifact-delete-title"
+            aria-describedby="artifact-delete-description"
+          >
+            <header>
+              <span className="artifact-delete-mark"><Icon name="trash" /></span>
+              <div>
+                <h2 id="artifact-delete-title">{deleteLabel}</h2>
+                <span>Permanent local deletion</span>
+              </div>
+            </header>
+            <p id="artifact-delete-description">
+              This removes the selected content from the local artifact store. It cannot be undone.
+            </p>
+            <footer>
+              <button
+                type="button"
+                aria-label="Cancel deletion"
+                disabled={deleting}
+                ref={cancelDeleteButton}
+                onClick={closeDeleteConfirmation}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="confirm-danger"
+                aria-label="Confirm delete"
+                disabled={deleting}
+                ref={confirmDeleteButton}
+                onClick={() => void confirmDelete()}
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </footer>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

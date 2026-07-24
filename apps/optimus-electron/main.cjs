@@ -83,6 +83,7 @@ let previewView = null;
 let previewVisible = false;
 let previewBounds = null;
 let previewError = '';
+let previewAnnotationActive = false;
 let previewSession = null;
 let previewDownloadHandler = null;
 let httpToken = process.env.OPTIMUS_HTTP_TOKEN || '';
@@ -406,6 +407,135 @@ function setPreviewBounds(value) {
   previewView.setBounds(next);
 }
 
+async function cancelPreviewAnnotation() {
+  const contents = previewView?.webContents;
+  if (!contents || contents.isDestroyed() || !previewAnnotationActive) {
+    return { cancelled: false };
+  }
+  try {
+    await contents.executeJavaScript(
+      'typeof window.__optimusCancelPreviewAnnotation === "function" && window.__optimusCancelPreviewAnnotation()',
+      true
+    );
+  } catch {
+    // Navigation can destroy the captured page context. That is a cancellation.
+  }
+  return { cancelled: true };
+}
+
+async function capturePreviewAnnotation() {
+  const contents = previewView?.webContents;
+  if (!contents || contents.isDestroyed()) {
+    throw new Error('Native preview unavailable');
+  }
+  if (previewAnnotationActive) await cancelPreviewAnnotation();
+  previewAnnotationActive = true;
+  const script = `(() => new Promise((resolve) => {
+    const prior = window.__optimusCancelPreviewAnnotation;
+    if (typeof prior === "function") prior();
+    const marker = document.createElement("div");
+    marker.setAttribute("data-optimus-preview-annotation", "");
+    Object.assign(marker.style, {
+      position: "fixed",
+      zIndex: "2147483647",
+      pointerEvents: "none",
+      border: "2px solid #2f6feb",
+      borderRadius: "4px",
+      background: "rgba(47,111,235,.08)",
+      boxSizing: "border-box",
+      display: "none"
+    });
+    document.documentElement.appendChild(marker);
+    let settled = false;
+    let timeout = 0;
+    const clean = () => {
+      document.removeEventListener("pointermove", move, true);
+      document.removeEventListener("click", click, true);
+      document.removeEventListener("keydown", keydown, true);
+      marker.remove();
+      window.clearTimeout(timeout);
+      delete window.__optimusCancelPreviewAnnotation;
+    };
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clean();
+      resolve(value);
+    };
+    const targetAt = (event) => {
+      const candidate = document.elementFromPoint(event.clientX, event.clientY);
+      return candidate instanceof HTMLElement && candidate !== marker ? candidate : null;
+    };
+    const move = (event) => {
+      const target = targetAt(event);
+      if (!target) {
+        marker.style.display = "none";
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      marker.style.display = "block";
+      marker.style.left = rect.left + "px";
+      marker.style.top = rect.top + "px";
+      marker.style.width = rect.width + "px";
+      marker.style.height = rect.height + "px";
+    };
+    const click = (event) => {
+      const target = targetAt(event);
+      if (!target) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const rect = target.getBoundingClientRect();
+      const label = target.getAttribute("aria-label") || target.getAttribute("alt") || target.getAttribute("title") || "";
+      finish({
+        cancelled: false,
+        url: String(location.href).slice(0, 2048),
+        pageTitle: String(document.title || "").slice(0, 240),
+        tag: String(target.tagName || "").toLowerCase().slice(0, 32),
+        role: String(target.getAttribute("role") || "").slice(0, 64),
+        label: String(label).replace(/\\s+/g, " ").trim().slice(0, 240),
+        text: String(target.innerText || target.textContent || "").replace(/\\s+/g, " ").trim().slice(0, 240),
+        rect: {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height)
+        }
+      });
+    };
+    const keydown = (event) => {
+      if (event.key === "Escape") finish({ cancelled: true });
+    };
+    window.__optimusCancelPreviewAnnotation = () => finish({ cancelled: true });
+    document.addEventListener("pointermove", move, true);
+    document.addEventListener("click", click, true);
+    document.addEventListener("keydown", keydown, true);
+    timeout = window.setTimeout(() => finish({ cancelled: true }), 120000);
+  }))()`;
+  try {
+    const result = await contents.executeJavaScript(script, true);
+    if (!result || typeof result !== 'object') return { cancelled: true };
+    return {
+      cancelled: Boolean(result.cancelled),
+      url: String(result.url || '').slice(0, 2048),
+      pageTitle: String(result.pageTitle || '').slice(0, 240),
+      tag: String(result.tag || '').slice(0, 32),
+      role: String(result.role || '').slice(0, 64),
+      label: String(result.label || '').slice(0, 240),
+      text: String(result.text || '').slice(0, 240),
+      rect: {
+        x: boundedInteger(result.rect?.x, -10000, 10000),
+        y: boundedInteger(result.rect?.y, -10000, 10000),
+        width: boundedInteger(result.rect?.width, 0, 10000),
+        height: boundedInteger(result.rect?.height, 0, 10000),
+      },
+    };
+  } catch {
+    return { cancelled: true };
+  } finally {
+    previewAnnotationActive = false;
+  }
+}
+
 function boundedInteger(value, minimum, maximum) {
   const number = Number(value);
   if (!Number.isFinite(number)) return minimum;
@@ -632,6 +762,7 @@ function setupIpc() {
     try {
       assertMainSender(event);
       previewVisible = Boolean(visible);
+      if (!previewVisible) void cancelPreviewAnnotation();
       if (previewVisible && previewBounds) previewView?.setBounds(previewBounds);
       previewView?.setVisible(previewVisible);
       emitBrowserState();
@@ -671,6 +802,16 @@ function setupIpc() {
     assertMainSender(event);
     previewView?.webContents.reload();
     return browserState();
+  });
+
+  ipcMain.handle('optimus:browser-annotate', async (event) => {
+    assertMainSender(event);
+    return capturePreviewAnnotation();
+  });
+
+  ipcMain.handle('optimus:browser-annotation-cancel', async (event) => {
+    assertMainSender(event);
+    return cancelPreviewAnnotation();
   });
 }
 

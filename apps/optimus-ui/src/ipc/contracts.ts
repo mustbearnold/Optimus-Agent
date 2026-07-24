@@ -240,11 +240,30 @@ export type BrowserState = {
   native: boolean;
 };
 
+export type BrowserAnnotation = {
+  cancelled?: boolean;
+  url?: string;
+  pageTitle?: string;
+  tag?: string;
+  role?: string;
+  label?: string;
+  text?: string;
+  rect?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
 export type Project = {
   id: string;
   name: string;
-  path: string;
+  rootPaths: string[];
+  primaryRoot?: string;
   pinned?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export interface OptimusTransport {
@@ -262,6 +281,8 @@ export interface OptimusTransport {
     forward(): Promise<BrowserState>;
     reload(): Promise<BrowserState>;
     state(): Promise<BrowserState>;
+    annotate(): Promise<BrowserAnnotation>;
+    cancelAnnotation(): Promise<{ cancelled: boolean }>;
     subscribe(listener: (state: BrowserState) => void): () => void;
   };
 }
@@ -283,6 +304,8 @@ export type OptimusElectronBridge = {
     forward: () => Promise<BrowserState>;
     reload: () => Promise<BrowserState>;
     state: () => Promise<BrowserState>;
+    annotate: () => Promise<BrowserAnnotation>;
+    cancelAnnotation: () => Promise<{ cancelled: boolean }>;
     subscribe: (listener: (state: BrowserState) => void) => () => void;
   };
   windowAction: (action: string) => Promise<unknown>;

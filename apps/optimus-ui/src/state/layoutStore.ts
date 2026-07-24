@@ -19,7 +19,7 @@ const KEY = 'optimus.react.layout.v1';
 
 export const defaultLayout: LayoutState = {
   version: 1,
-  leftWidth: 232,
+  leftWidth: 240,
   leftCollapsed: false,
   workspaceWidth: 720,
   workspaceOpen: true,
@@ -40,7 +40,7 @@ export function loadLayout(): LayoutState {
     const value = JSON.parse(localStorage.getItem(KEY) || '{}') as Partial<LayoutState>;
     return {
       version: 1,
-      leftWidth: clamp(value.leftWidth, 196, 360, defaultLayout.leftWidth),
+      leftWidth: clamp(value.leftWidth, 200, 400, defaultLayout.leftWidth),
       leftCollapsed: Boolean(value.leftCollapsed),
       workspaceWidth: clamp(value.workspaceWidth, 360, 1200, defaultLayout.workspaceWidth),
       workspaceOpen: value.workspaceOpen !== false,

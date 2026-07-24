@@ -172,6 +172,36 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
       })
     ).toBe(1);
 
+    await page.getByRole('button', { name: 'Annotate preview' }).click();
+    await page.waitForTimeout(50);
+    await application.evaluate(async ({ BrowserWindow }) => {
+      const window = BrowserWindow.getAllWindows()[0];
+      const view = window.contentView.children.find((child) => child.webContents);
+      const bounds = view.getBounds();
+      view.webContents.sendInputEvent({ type: 'mouseMove', x: bounds.width / 2, y: bounds.height / 2 });
+      view.webContents.sendInputEvent({ type: 'mouseDown', x: bounds.width / 2, y: bounds.height / 2, button: 'left', clickCount: 1 });
+      view.webContents.sendInputEvent({ type: 'mouseUp', x: bounds.width / 2, y: bounds.height / 2, button: 'left', clickCount: 1 });
+    });
+    await expect(composer).toHaveValue(
+      `Preview context: button “Native preview target 1” on 127.0.0.1:${previewPort}, 240 × 90px.`
+    );
+    await expect.poll(() =>
+      application.evaluate(async ({ BrowserWindow }) => {
+        const window = BrowserWindow.getAllWindows()[0];
+        const view = window.contentView.children.find((child) => child.webContents);
+        return view.webContents.executeJavaScript('window.nativeClicks');
+      })
+    ).toBe(1);
+
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+    await expect.poll(async () => (await nativeViewState(application)).visible).toBe(false);
+    await page.screenshot({
+      path: path.join(EVIDENCE_DIR, 'compiled-electron-settings-overlay.png'),
+    });
+    await page.getByRole('button', { name: 'Done' }).click();
+    await expect.poll(async () => (await nativeViewState(application)).visible).toBe(true);
+
     const divider = page.getByRole('separator', { name: 'Resize evidence workspace' });
     const dividerBox = await divider.boundingBox();
     expect(dividerBox).not.toBeNull();

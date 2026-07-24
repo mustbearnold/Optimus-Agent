@@ -72,8 +72,8 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 |---|---|---|
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
 | `apps/optimus-desktop` | Confirmed current behaviour | Native Wry/Tao desktop shell with WebKitGTK on Linux and WebView2 on Windows, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
-| `apps/optimus-electron` | Confirmed current behaviour | Default repository-level React shell; authenticates bounded Rust host requests in main, exposes a context-isolated preload, owns chat AbortControllers and one sandboxed `WebContentsView`, and retains `OPTIMUS_ELECTRON_UI=legacy` rollback. |
-| `apps/optimus-ui` | Confirmed current behaviour | React 19 Vantage workbench with typed transports, session-owned conversations, frame-coordinated streaming/Browser geometry, responsive Work/Browser/Files/Artifacts/Execution surfaces, and fixture-driven browser contracts. |
+| `apps/optimus-electron` | Confirmed current behaviour | Default repository-level React shell; authenticates bounded Rust host requests in main, exposes a context-isolated preload, owns chat AbortControllers and one sandboxed `WebContentsView`, mediates bounded one-shot page annotations, and retains `OPTIMUS_ELECTRON_UI=legacy` rollback. |
+| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench with a Codex-measured neutral shell, typed transports, versioned local multi-folder projects, session-owned conversations, frame-coordinated streaming/Browser geometry, categorized Settings, and responsive Work/Browser/Files/Artifacts/Execution surfaces. |
 | `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, cron, gateway, browser/search effectors, filesystem sandbox, and offline eval harnesses. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
@@ -233,6 +233,7 @@ Optimus home:
 | `routing.db` telemetry tables | kernel/telemetry | Provenance-bound provider/model outcome, latency, and cost observations. |
 | caller-selected evaluation DB | kernel/evaluation | Immutable candidate-bound baseline reports. |
 | `workspace/.optimus/browser_state.json` | kernel/browser | Last HTTP page and bounded navigation history. |
+| renderer local storage | React presentation | Versioned pane geometry, theme/density, local project `rootPaths[]`/primary root, session-to-project assignment, pins, and expansion state. This is not runtime permission authority. |
 
 **Unknown or unresolved behaviour:** the remaining stores do not share a
 transaction, migration framework, backup policy, or universal retention
@@ -340,6 +341,19 @@ denies remote insecure HTTP, privileged/non-web schemes, permissions,
 downloads, and new windows, and is physically aligned to a React-measured
 content hole. This preview is not the Rust agent `browser_*` effector and no
 shared cookies, history, or automation target is claimed.
+
+**Confirmed current behaviour:** explicit native annotation mode captures one
+clicked element and returns bounded URL/title/tag/role/label/text/rectangle
+context; it consumes the click and supports Escape, surface-change, and timeout
+cancellation. It does not return HTML or selectors. Renderer overlays suspend
+the child view before Settings, project-source management, or task UI appears,
+then restore it at settled bounds after close.
+
+**Confirmed current behaviour:** the React project catalog can group several
+folder paths under one local project identity and nominate one primary root.
+Legacy single-path records migrate to `rootPaths[]`. This presentation state
+does not edit Rust filesystem allowlists or activate project-isolation
+enforcement.
 
 **Confirmed current behaviour:** desktop HTTP mode is explicitly development-only
 and requires a 32-character bearer token. Effectful POSTs additionally require

@@ -21,7 +21,7 @@ describe('layout persistence', () => {
       })
     );
     expect(loadLayout()).toMatchObject({
-      leftWidth: 196,
+      leftWidth: 200,
       workspaceWidth: 1200,
       executionHeight: 120,
       workspaceTab: 'files',

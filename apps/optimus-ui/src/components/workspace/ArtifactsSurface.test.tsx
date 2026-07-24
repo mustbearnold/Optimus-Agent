@@ -1,0 +1,70 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import type { ArtifactRecord, DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { ArtifactsSurface } from './ArtifactsSurface';
+
+const artifacts: ArtifactRecord[] = [
+  {
+    sha256: 'a'.repeat(64),
+    label: 'First artifact',
+    source: 'test',
+    media_type: 'text/plain',
+  },
+  {
+    sha256: 'b'.repeat(64),
+    label: 'Second artifact',
+    source: 'test',
+    media_type: 'text/plain',
+  },
+];
+
+function createTransport() {
+  const invoke = vi.fn(async (method: DesktopMethod) => {
+    if (method === 'artifacts_list') return { artifacts };
+    if (method === 'artifacts_delete_many') {
+      return { ok: true, deleted: artifacts.map((artifact) => artifact.sha256), failed: [] };
+    }
+    throw new Error(`unexpected method: ${method}`);
+  });
+
+  return {
+    invoke,
+    transport: {
+      kind: 'fixture',
+      invoke,
+      chat: vi.fn(),
+      windowAction: vi.fn(),
+      pickFolder: vi.fn(),
+      openPath: vi.fn(),
+    } as unknown as OptimusTransport,
+  };
+}
+
+describe('ArtifactsSurface deletion', () => {
+  it('requires confirmation, cancels safely, and deletes the exact selected hashes', async () => {
+    const user = userEvent.setup();
+    const { invoke, transport } = createTransport();
+    render(<ArtifactsSurface transport={transport} active />);
+
+    await user.click(await screen.findByLabelText('Select First artifact'));
+    await user.click(screen.getByLabelText('Select Second artifact'));
+    await user.click(screen.getByRole('button', { name: 'Delete 2' }));
+
+    expect(screen.getByRole('alertdialog', { name: 'Delete 2 artifacts?' })).toBeInTheDocument();
+    expect(invoke).not.toHaveBeenCalledWith('artifacts_delete_many', expect.anything());
+
+    await user.click(screen.getByRole('button', { name: 'Cancel deletion' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(invoke).not.toHaveBeenCalledWith('artifacts_delete_many', expect.anything());
+
+    await user.click(screen.getByRole('button', { name: 'Delete 2' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete' }));
+
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith('artifacts_delete_many', {
+        sha256s: artifacts.map((artifact) => artifact.sha256),
+      })
+    );
+  });
+});

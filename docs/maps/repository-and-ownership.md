@@ -43,7 +43,7 @@ the root Cargo workspace.
 | `optimus-packs` | library | Canonical tool/pack descriptor, operational metadata, and capability budgets | none |
 | `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution/replay/trace manifests, routing telemetry, versioned evaluation, credentials, and high-level operator services | graph, runtime, memory, skills, packs |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, graph, runtime, skills, packs |
-| `optimus-desktop` | binary | Wry/Tao desktop shell, native IPC, UI, HTTP test harness | kernel, graph, runtime, packs |
+| `optimus-desktop` | binary | Rust host plus Wry/Tao rollback shell, native IPC, and HTTP test harness | kernel, graph, runtime, packs |
 
 ## Application surfaces
 
@@ -64,6 +64,15 @@ scheduling, runtime, files, chat, and OS modules. Linux user installation and
 desktop registration are owned by `scripts/rebuild-install-relaunch.sh` and the
 XDG data/bin/application/icon locations it manages.
 
+**Confirmed current behaviour:** `apps/optimus-electron` is the default
+repository-level shell and owns the context-isolated preload, host
+authentication, foreground stream controller, native preview view, bounded
+preview annotations, window actions, and native-view overlay lifecycle.
+`apps/optimus-ui` owns the React presentation, Codex-measured token layer,
+responsive panel composition, local project `rootPaths[]` catalog,
+session-to-project grouping, and layout/theme/density state. None of that local
+project state grants Rust filesystem access.
+
 ## Current ownership boundaries
 
 - **Confirmed:** provider adapters and the turn loop belong to `optimus-kernel`.
@@ -73,8 +82,10 @@ XDG data/bin/application/icon locations it manages.
   graph/store; surfaces should not execute high-risk model effects directly.
 - **Confirmed:** runtime semantic memory belongs to `optimus-memory`.
 - **Confirmed:** runtime procedural skills belong to `optimus-skills`.
-- **Confirmed:** desktop transport and presentation belong to
-  `apps/optimus-desktop`; domain behavior should remain in libraries.
+- **Confirmed:** the Rust host and Wry rollback belong to
+  `apps/optimus-desktop`; the default Electron transport boundary belongs to
+  `apps/optimus-electron`; React presentation and local multi-folder grouping
+  belong to `apps/optimus-ui`. Domain behavior remains in Rust libraries.
 - **Confirmed:** `optimus-kernel` owns typed agent/workflow contracts,
   registries/adapters, invocation evidence, canonical routing and telemetry,
   execution/replay/trace contracts, and versioned offline evaluation/baselines.

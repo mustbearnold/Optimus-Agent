@@ -3,6 +3,8 @@ import type { AppRoute } from '../../state/layoutStore';
 
 type Props = {
   title: string;
+  projectName?: string;
+  projectSourceCount?: number;
   route: AppRoute;
   activeTasks: number;
   workspaceOpen: boolean;
@@ -47,6 +49,8 @@ function ToolbarButton({
 }
 export function TopBar({
   title,
+  projectName,
+  projectSourceCount,
   route,
   activeTasks,
   workspaceOpen,
@@ -70,7 +74,12 @@ export function TopBar({
         </button>
         <span className="topbar-divider" />
         <div className="breadcrumb" title={title}>
-          <span>Optimus Agent</span>
+          <span>{projectName || 'Optimus Agent'}</span>
+          {projectSourceCount && projectSourceCount > 1 ? (
+            <span className="source-count" title={`${projectSourceCount} project sources`}>
+              {projectSourceCount}
+            </span>
+          ) : null}
           <span aria-hidden="true">/</span>
           <strong>{route === 'work' ? title : route}</strong>
         </div>
@@ -97,10 +106,10 @@ export function TopBar({
       </nav>
       <div className="window-controls" aria-label="Window controls">
         <button type="button" aria-label="Minimize" onClick={() => onWindow('minimize')}>
-          <span aria-hidden="true">−</span>
+          <Icon name="minimize" />
         </button>
         <button type="button" aria-label="Maximize" onClick={() => onWindow('maximize')}>
-          <span aria-hidden="true">□</span>
+          <Icon name="maximize" />
         </button>
         <button
           type="button"

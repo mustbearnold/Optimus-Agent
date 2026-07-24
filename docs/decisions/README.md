@@ -49,6 +49,7 @@ implemented.
 | 0027 | Settings-driven work isolation modes | Accepted; Phase 0 store/UI | Durable `settings.json` + Settings UI; project-bound/profile enforcement planned. |
 | 0028 | Electron + React shell over Rust host | Accepted; migration in progress | Electron/React frontend; durable authority stays Rust; strangler via host HTTP. |
 | 0029 | React workbench and Electron preview view | Accepted; repository cutover implemented | React is the default Electron renderer, main mediates the token and SSE, and a sandboxed `WebContentsView` owns user-preview pixels; installed cutover remains planned. |
+| 0030 | Codex-measured shell and multi-folder projects | Accepted | Measured neutral geometry, versioned `rootPaths[]` projects, categorized Settings, bounded native annotations, and overlay-aware preview suspension are implemented; Rust project enforcement remains planned. |
 
 ## Known documentary debt
 

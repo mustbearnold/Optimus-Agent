@@ -20,6 +20,7 @@
   --success: #54cf95;
   --warning: #efb463;
   --danger: #ff737f;
+  --danger-contrast: #090b11;
   --danger-soft: rgba(255, 115, 127, 0.1);
   --topbar-h: 36px;
   --truth-h: 22px;
@@ -55,6 +56,7 @@
   --success: #168a57;
   --warning: #a96c19;
   --danger: #c83e4a;
+  --danger-contrast: #ffffff;
   --danger-soft: rgba(200, 62, 74, 0.09);
 }
 
@@ -1333,6 +1335,78 @@ code {
 
 .artifacts-surface.is-standalone .artifact-layout {
   grid-template-columns: minmax(300px, 38%) minmax(0, 1fr);
+}
+
+.artifact-delete-dialog {
+  width: min(420px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--elevated);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+  animation: dialog-in 120ms var(--ease-out);
+}
+
+.artifact-delete-dialog > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 15px 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.artifact-delete-mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.artifact-delete-dialog h2 {
+  margin: 0 0 2px;
+  font-size: 15px;
+}
+
+.artifact-delete-dialog header span:last-child {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.artifact-delete-dialog > p {
+  margin: 0;
+  padding: 14px 15px 16px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.artifact-delete-dialog > footer {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.artifact-delete-dialog > footer button {
+  min-height: 30px;
+  padding: 0 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+
+.artifact-delete-dialog .confirm-danger {
+  border-color: color-mix(in srgb, var(--danger) 72%, var(--border-strong));
+  color: var(--danger-contrast);
+  background: var(--danger);
+  font-weight: 650;
 }
 
 .transcript {

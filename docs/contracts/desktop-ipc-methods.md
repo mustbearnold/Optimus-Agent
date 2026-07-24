@@ -89,6 +89,8 @@ type OptimusElectronBridge = {
     forward(): Promise<BrowserState>;
     reload(): Promise<BrowserState>;
     state(): Promise<BrowserState>;
+    annotate(): Promise<BrowserAnnotation>;
+    cancelAnnotation(): Promise<{ cancelled: boolean }>;
     subscribe(listener: (state: BrowserState) => void): () => void;
   };
   windowAction(action: "minimize" | "maximize" | "close"): Promise<unknown>;
@@ -105,3 +107,11 @@ legacy compatibility but omits the token in React mode.
 The Electron Browser methods control a user-facing `WebContentsView`; they are
 not aliases for Rust `browser_navigate`, `browser_click`, or
 `browser_reload`.
+
+`annotate()` is an explicit one-shot user-preview capability. Main injects a
+temporary capture into the sandboxed page and returns at most bounded URL,
+title, tag, role, accessible label/short text, and rounded geometry. It
+consumes the selected click, times out after two minutes, and is cancelled by
+Escape, `cancelAnnotation()`, or preview suspension. No page HTML or selector
+crosses the preload boundary. Settings, project-source management, and task
+overlays set the preview invisible before their renderer UI is shown.

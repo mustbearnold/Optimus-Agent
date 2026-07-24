@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { BrowserState, OptimusTransport } from '../../ipc/contracts';
+import type { BrowserAnnotation, BrowserState, OptimusTransport } from '../../ipc/contracts';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
 
@@ -50,6 +50,18 @@ export function BrowserSurface({
       unsubscribe();
     };
   }, [transport]);
+
+  useEffect(() => () => {
+    if (annotationMode && state.native) {
+      void transport.browser?.cancelAnnotation();
+    }
+  }, [annotationMode, state.native, transport]);
+
+  useEffect(() => {
+    if (active || !annotationMode) return;
+    setAnnotationMode(false);
+    if (state.native) void transport.browser?.cancelAnnotation();
+  }, [active, annotationMode, state.native, transport]);
 
   useLayoutEffect(() => {
     const node = hole.current;
@@ -122,6 +134,22 @@ export function BrowserSurface({
     }
   };
 
+  const toggleAnnotation = async () => {
+    if (annotationMode) {
+      setAnnotationMode(false);
+      if (state.native) await transport.browser?.cancelAnnotation();
+      return;
+    }
+    setAnnotationMode(true);
+    if (!state.native || !transport.browser) return;
+    try {
+      const result = await transport.browser.annotate();
+      if (!result.cancelled) onAnnotation(formatAnnotation(result));
+    } finally {
+      setAnnotationMode(false);
+    }
+  };
+
   return (
     <section className="browser-surface" aria-label="Preview browser">
       <div className="browser-tabs" aria-label="Preview tabs">
@@ -185,14 +213,22 @@ export function BrowserSurface({
           aria-pressed={annotationMode}
           aria-label="Annotate preview"
           title="Annotate preview"
-          onClick={() => setAnnotationMode((value) => !value)}
+          onClick={() => void toggleAnnotation()}
         >
-          <span className="annotation-target" aria-hidden="true">⌾</span>
+          <Icon name="annotation" />
         </button>
       </div>
       <div className="browser-status" role="status">
-        <span className={state.loading ? 'status-spinner' : 'status-dot'} />
-        <span>{state.error ? `Preview error · ${state.error}` : state.loading ? 'Loading preview…' : `${state.native ? 'Live' : 'Contract preview'} · ${safeHost(state.url)}`}</span>
+        <span className={state.loading ? 'status-spinner' : annotationMode ? 'annotation-pulse' : 'status-dot'} />
+        <span>
+          {annotationMode
+            ? `Select a page element · Esc cancels`
+            : state.error
+              ? `Preview error · ${state.error}`
+              : state.loading
+                ? 'Loading preview…'
+                : `${state.native ? 'Live' : 'Contract preview'} · ${safeHost(state.url)}`}
+        </span>
       </div>
       <div
         ref={hole}
@@ -216,7 +252,7 @@ export function BrowserSurface({
         ) : null}
       </div>
       {annotationMode ? (
-        <div className="annotation-hint">Select an element to add bounded context to the composer.</div>
+        <div className="annotation-hint">Select one element to add bounded preview context.</div>
       ) : null}
     </section>
   );
@@ -262,4 +298,14 @@ function safeHost(url: string) {
   } catch {
     return url || 'idle';
   }
+}
+
+function formatAnnotation(annotation: BrowserAnnotation) {
+  const kind = annotation.role || annotation.tag || 'element';
+  const label = annotation.label || annotation.text || 'Unlabelled element';
+  const host = safeHost(annotation.url || '');
+  const size = annotation.rect
+    ? `, ${annotation.rect.width} × ${annotation.rect.height}px`
+    : '';
+  return `Preview context: ${kind} “${label}” on ${host || 'the current page'}${size}.`;
 }

@@ -17,6 +17,7 @@ type Props = {
   onNewSession: (projectId?: string) => void;
   onRoute: (route: AppRoute) => void;
   onAddProject: () => void;
+  onManageProject: (project: Project) => void;
   onToggleProject: (id: string) => void;
   onTogglePin: (sessionId: string) => void;
   onAssign: (sessionId: string, projectId: string | null) => void;
@@ -203,11 +204,28 @@ export function ProjectsRail(props: Props) {
                   <button type="button" onClick={() => props.onToggleProject(project.id)}>
                     <Icon name="chevron" />
                     <Icon name="folder" />
-                    <span>{project.name}</span>
+                    <span className="project-copy">
+                      <strong>{project.name}</strong>
+                      <small>
+                        {project.rootPaths.length
+                          ? `${project.rootPaths.length} source${project.rootPaths.length === 1 ? '' : 's'}`
+                          : 'No sources'}
+                      </small>
+                    </span>
                     {props.activeRunSessionId &&
                     props.assignments[props.activeRunSessionId] === project.id ? (
                       <span className="working-dot" title="Working" />
                     ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    id={`project-manage-${project.id}`}
+                    className="project-manage-button"
+                    aria-label={`Manage sources for ${project.name}`}
+                    title={`Manage sources for ${project.name}`}
+                    onClick={() => props.onManageProject(project)}
+                  >
+                    <Icon name="source" />
                   </button>
                   <button
                     type="button"
