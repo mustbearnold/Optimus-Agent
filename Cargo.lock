@@ -2755,6 +2755,7 @@ name = "optimus-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "optimus-eval",
  "optimus-graph",
  "optimus-kernel",
  "optimus-packs",
@@ -2791,6 +2792,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "optimus-eval"
+version = "0.1.0"
+dependencies = [
+ "optimus-graph",
+ "optimus-kernel",
+ "optimus-memory",
+ "optimus-packs",
+ "optimus-runtime",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "uuid",
+]
+
+[[package]]
 name = "optimus-graph"
 version = "0.1.0"
 dependencies = [
@@ -2814,6 +2832,7 @@ dependencies = [
  "optimus-browser",
  "optimus-graph",
  "optimus-memory",
+ "optimus-ops",
  "optimus-packs",
  "optimus-runtime",
  "optimus-skills",
@@ -2832,6 +2851,18 @@ dependencies = [
 
 [[package]]
 name = "optimus-memory"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
+name = "optimus-ops"
 version = "0.1.0"
 dependencies = [
  "rusqlite",

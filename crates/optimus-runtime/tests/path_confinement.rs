@@ -4,8 +4,15 @@ use std::fs;
 use std::path::Path;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
-use optimus_runtime::{Runtime, RuntimeError};
+use optimus_runtime::{ApprovalGrant, Runtime, RuntimeError};
 use tempfile::tempdir;
+
+fn grant_if_needed(rt: &Runtime, job: optimus_graph::JobId) {
+    if let Err(RuntimeError::NeedsApproval { .. }) = rt.run_next(job) {
+        rt.grant_approval(ApprovalGrant::for_job(job)).expect("grant");
+        rt.run_next(job).expect("run after grant");
+    }
+}
 
 fn create_single_effect_job(rt: &Runtime, label: &str, effect: Effect) -> optimus_graph::JobId {
     rt.create_job(JobSpec {
@@ -58,6 +65,14 @@ fn write_rejects_missing_parent_below_linked_ancestor() {
         },
     );
 
+    // Illegal path shape is not always preflightable (symlink escape is execute-time).
+    // Grant, then expect PathEscape on execution.
+    let first = rt.run_next(job);
+    assert!(
+        matches!(first, Err(RuntimeError::NeedsApproval { .. })),
+        "write is high-risk under SmartDeny: {first:?}"
+    );
+    rt.grant_approval(ApprovalGrant::for_job(job)).expect("grant");
     let error = rt
         .run_next(job)
         .expect_err("linked ancestor must be denied");
@@ -82,7 +97,7 @@ fn nested_write_remains_available_inside_workspace() {
         },
     );
 
-    rt.run_next(job).expect("nested write");
+    grant_if_needed(&rt, job);
     assert_eq!(
         fs::read_to_string(workspace.join("nested/inside.txt")).unwrap(),
         "inside"
@@ -249,7 +264,7 @@ fn workspace_root_replacement_cannot_redirect_effects() {
             contents: "original capability".into(),
         },
     );
-    rt.run_next(job).expect("write through pinned workspace");
+    grant_if_needed(&rt, job);
 
     if replacement_succeeded {
         assert_eq!(

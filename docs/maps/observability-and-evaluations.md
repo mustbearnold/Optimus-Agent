@@ -5,12 +5,15 @@ owns:
   - crates/optimus-store/src/lib.rs
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
-  - crates/optimus-kernel/src/eval.rs
-  - crates/optimus-kernel/src/evaluation.rs
+  - crates/optimus-eval/src/eval.rs
+  - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-kernel/src/execution.rs
+  - crates/optimus-kernel/src/causal.rs
+  - crates/optimus-kernel/src/security_denial.rs
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-kernel/src/lib.rs
+  - scripts/check-observability-gate.py
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/src/native_workers.rs
   - apps/optimus-desktop/src/ipc/chat.rs
@@ -21,17 +24,22 @@ watches:
   - crates/optimus-store/src/**
   - crates/optimus-graph/src/**
   - crates/optimus-runtime/src/**
+  - crates/optimus-kernel/src/causal.rs
+  - crates/optimus-kernel/src/execution.rs
   - apps/optimus-desktop/e2e/**
 covers:
   - crates/optimus-store/src/lib.rs
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
-  - crates/optimus-kernel/src/eval.rs
-  - crates/optimus-kernel/src/evaluation.rs
+  - crates/optimus-eval/src/eval.rs
+  - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-kernel/src/execution.rs
+  - crates/optimus-kernel/src/causal.rs
+  - crates/optimus-kernel/src/security_denial.rs
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-kernel/src/lib.rs
+  - scripts/check-observability-gate.py
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/src/native_workers.rs
   - apps/optimus-desktop/src/ipc/chat.rs
@@ -41,12 +49,15 @@ covers:
 depends_on:
   - docs/decisions/0001-kernel-and-work-graph.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
+  - docs/architecture/architecture-marks.md
 validated_by:
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
-  - crates/optimus-kernel/tests/integrity_integration.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
+  - crates/optimus-eval/tests/integrity_integration.rs
+  - crates/optimus-kernel/tests/causal_trace.rs
+  - scripts/check-observability-gate.py
   - apps/optimus-cli/tests/eval_report.rs
   - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
-last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
+last_verified_commit: null
 ---
 
 # Observability, replay, and evaluation map
@@ -65,10 +76,12 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 | Campaign/cron/gateway | Confirmed current behaviour | Campaign and cron leases; gateway message claims, generation/token/deadline state, attempt history, terminal outbox JSON, and reconciled files. |
 | Memory/skills | Confirmed current behaviour | Dedicated event/evidence tables and outcome records. |
 | Desktop logs | Confirmed current behaviour | Process stderr and browser console messages; not durable operational truth. |
+| Causal reconstruction | Confirmed current behaviour | `load_causal_turn` / `optimus trace show` rebuilds one turn from `execution.db` (+ session effect links) by trace, manifest, or turn id. Logs are not consulted. |
+| Security denial codes | Confirmed current behaviour | Closed `SecurityDenialCode` vocabulary mapped from known kernel/runtime/browser fences (`fs_sandbox_deny`, `approval_required`, `network_ssrf_deny`, …). |
 
 **Partially implemented behaviour:** event order is strong inside a single Work
-Graph database, but subsystem events do not share a trace, transaction, clock,
-or total order.
+Graph database, but subsystem events do not share one cross-store transaction or
+OpenTelemetry export.
 
 **Confirmed current behaviour:** accepted Work Graph projection transitions and
 their events commit atomically. Storage also reserves one terminal-event slot;

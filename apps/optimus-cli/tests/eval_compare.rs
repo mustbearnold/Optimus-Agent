@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use optimus_kernel::{
+use optimus_eval::{
     build_evaluation_report, priority2_dataset, priority2_offline_candidate_binding,
     CandidateBinding, EvaluationComparison, EvaluationMetric, EvaluationObservation,
     EvaluationReportV1, MAX_EVALUATION_DATASET_BYTES,

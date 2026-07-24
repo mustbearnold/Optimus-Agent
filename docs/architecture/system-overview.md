@@ -96,10 +96,12 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 | Component | State | Current responsibility |
 |---|---|---|
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
-| `apps/optimus-desktop` | Confirmed current behaviour | Native Wry/Tao desktop shell with WebKitGTK on Linux and WebView2 on Windows, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
-| `apps/optimus-electron` | Confirmed current behaviour | Default repository-level React shell; authenticates bounded Rust host requests in main, exposes a context-isolated preload, owns chat AbortControllers and one sandboxed `WebContentsView`, mediates bounded one-shot page annotations, and retains `OPTIMUS_ELECTRON_UI=legacy` rollback. |
-| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench with a Codex-measured neutral shell, typed transports, multi-folder project presentation plus Rust scope authorization, session-owned conversations, durable tool-card replay, frame-coordinated streaming/Browser geometry, categorized Settings, and responsive Work/Browser/Files/Artifacts/Execution surfaces. |
-| `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, cron, gateway, browser/search effectors, filesystem sandbox, and offline eval harnesses. |
+| `apps/optimus-desktop` | Confirmed current behaviour | Rust host (`--host-only`) for Electron + legacy Wry/Tao shell (WebKitGTK / WebView2), frozen IPC registry, bounded worker queues, inline legacy UI, and loopback HTTP. |
+| `apps/optimus-electron` | Confirmed current behaviour | **Default installed** React shell; main authenticates host IPC, context-isolated preload, chat AbortControllers, sandboxed preview `WebContentsView`, bounded annotations; `OPTIMUS_ELECTRON_UI=legacy` and Wry install action remain rollback. |
+| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench; typed `DesktopMethod` transport matching Electron allowlist; multi-folder presentation with Rust scope authority; Preview browser distinct from agent `browser_*` tools. |
+| `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, browser/search effectors, and filesystem sandbox. Operator gateway/cron and offline eval are separate crates re-exported or depended on by surfaces. |
+| `crates/optimus-ops` | Confirmed current behaviour | Operator services: durable local gateway delivery authority and cron schedule store. Kernel re-exports for surface convenience; does not own the turn loop. |
+| `crates/optimus-eval` | Confirmed current behaviour | Offline integrity/trajectory harnesses, versioned evaluation reports/baselines, and zero-effect fixture replay. Depends on kernel; kernel does not depend on eval. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
 | `crates/optimus-graph` | Confirmed current behaviour | Job/node/effect domain and state-transition helpers. |
@@ -208,9 +210,17 @@ cancellation, retry lineage, and exact runtime-effect provenance links are
 implemented. Descriptor and request validation use canonical available
 `ToolId`s and exact permission ceilings.
 
-**Unknown or unresolved behaviour:** there are no built-in specialist-agent
-definitions, specialist router, parallel scheduler, or child hierarchy. The
-agent contract does not bypass runtime SmartDeny or filesystem confinement.
+**Confirmed current behaviour:** one built-in specialist vertical is implemented:
+`workspace_writer@1.0.0` registered via `open_seeded_agent_registry`, executed by
+`write_file_handoff@1.0.0` (`run_write_file_handoff`). The vertical begins a durable
+agent invocation, runs a Work Graph `WriteFile` under SmartDeny (optional
+auto-grant), links exact effect provenance, publishes a content-addressed handoff
+artifact, and settles exactly one agent terminal outcome. CLI:
+`optimus vertical list` and `optimus vertical write-file`.
+
+**Unknown or unresolved behaviour:** there is no general specialist router,
+parallel child hierarchy, or universal multi-agent DAG executor. The agent
+contract still does not bypass runtime SmartDeny or filesystem confinement.
 
 ## Tool system
 
@@ -407,9 +417,14 @@ origin. Both surfaces cap request bodies, apply fixed-window request limits,
 bound aggregate operations, omit home paths from health responses, and return
 stable redacted errors while retaining local stderr diagnostics.
 
-**Known security boundary:** `WriteFile` is not currently high-risk under
-SmartDeny, and an approved arbitrary command is not filesystem-sandboxed by the
-built-in file-effect capability.
+**Confirmed current behaviour:** SmartDeny treats `WriteFile`,
+`ProjectWriteFile`, `RunCommand`, and `ProjectRunCommand` as high-risk.
+`AssertFileEquals` does not require approval.
+
+**Known security boundary:** an approved arbitrary command is not
+filesystem-sandboxed by the built-in `cap-std` file-effect capability; it runs
+with workspace `cwd` and sanitised loader env, but can still open absolute paths
+outside the workspace.
 
 ## Events, observability, and replay
 
@@ -489,12 +504,17 @@ cooperative token used by active providers and tool-loop boundaries. A turn can
 still commit a durable effect and then fail before the session transcript is
 saved.
 
-**Unknown or unresolved behaviour:** there is no OpenTelemetry export,
-structured security-denial stream, token accounting, artifact publication
-lineage, GPU/fallback telemetry, or transaction spanning trace, route,
-execution, runtime, agent, workflow, and session stores. Fixture replay does not
-rerun live providers or external effects. Logs are not a complete source of
-operational truth.
+**Confirmed current behaviour:** operators can reconstruct a turn from durable
+stores via `load_causal_turn` / `optimus trace show` using a root trace id,
+manifest id, or turn id. Security/policy fences map to a closed
+`SecurityDenialCode` vocabulary when classifiable. Offline integrity + causal
+tests are the Phase-5 observability gate (`scripts/check-observability-gate.py`).
+
+**Unknown or unresolved behaviour:** there is no OpenTelemetry export, live
+security-denial event stream, token accounting, artifact publication lineage,
+GPU/fallback telemetry, or transaction spanning trace, route, execution,
+runtime, agent, workflow, and session stores. Fixture replay does not rerun live
+providers or external effects. Logs remain non-authoritative.
 
 ## GPU and CPU fallback
 
@@ -510,19 +530,27 @@ availability mandatory.
 
 ## Current architectural debt and open decisions
 
-1. **Confirmed contract, unresolved product:** no built-in specialists or router.
-2. **Confirmed contract, unresolved product:** no universal workflow executor.
+1. **Partial product:** one built-in specialist vertical exists
+   (`workspace_writer` / `write_file_handoff`); no general router or multi-agent DAG.
+2. **Partial product:** one workflow executor path exists for that vertical; no
+   universal workflow executor for arbitrary definitions.
 3. **Partially implemented:** cancellation remains owner-specific.
 4. **Confirmed contract, unresolved product:** metadata declarations do not create universal runtime cancellation/retry.
 5. **Partially implemented:** policy and telemetry routing exist; evaluation-driven routing does not.
 6. **Confirmed bounded behaviour:** fixture replay and local causal traces exist; live-effect replay and distributed tracing do not.
 7. **Unknown/unresolved:** provenance and artifact publishing contracts.
 8. **Known boundary:** approved arbitrary child processes are not governed by
-   the built-in file-effect directory capability.
+   the built-in file-effect directory capability (workspace cwd + env sanitise
+   only). Tracked under the S+++ trust-spine residual.
 9. **Confirmed bounded behaviour:** Work Graph terminal uniqueness and campaign,
    cron, and gateway owner/generation/token/deadline fencing are implemented;
    external exactly-once delivery remains unresolved.
-10. **Known debt:** durable effects and session transcript persistence can diverge.
+10. **Confirmed current behaviour (S+++ Phase 1B):** if durable effect links
+    exist without matching tool transcript messages, session open injects
+    deterministic repaired tool messages from the links and persists them.
 11. **Known debt:** duplicate ADR number `0016`.
 12. **Known debt:** existing blueprint and phase notes mix future targets with
     historical/current claims; they require gradual labeling, not deletion.
+13. **Program:** architecture quality marks and phase order live in
+    [architecture-marks.md](./architecture-marks.md) and
+    [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md).

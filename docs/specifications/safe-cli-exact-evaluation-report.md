@@ -4,8 +4,8 @@ status: historical
 covers:
   - apps/optimus-cli/src/main.rs
   - apps/optimus-cli/tests/eval_report.rs
-  - crates/optimus-kernel/src/evaluation.rs
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/src/evaluation.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
   - docs/architecture/phase-14-gateway-eval.md
   - docs/architecture/system-overview.md
   - docs/maps/observability-and-evaluations.md

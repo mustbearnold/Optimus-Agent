@@ -5,8 +5,8 @@ owns:
   - docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md
   - docs/contracts/high-risk-contracts.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
-  - crates/optimus-kernel/src/evaluation.rs
-  - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-eval/src/evaluation.rs
+  - crates/optimus-eval/src/eval.rs
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
 watches:
@@ -18,8 +18,8 @@ covers:
   - docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md
   - docs/contracts/high-risk-contracts.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
-  - crates/optimus-kernel/src/evaluation.rs
-  - crates/optimus-kernel/src/eval.rs
+  - crates/optimus-eval/src/evaluation.rs
+  - crates/optimus-eval/src/eval.rs
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
 depends_on:
@@ -29,7 +29,7 @@ depends_on:
   - docs/decisions/0022-versioned-agent-and-workflow-contracts.md
 validated_by:
   - crates/optimus-packs/tests/packs_budget.rs
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
   - scripts/test_engineering_memory.py
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---

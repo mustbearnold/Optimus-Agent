@@ -14,6 +14,10 @@ covers:
 
 # Desktop IPC method inventory (frozen for shell migration)
 
+Cross-surface allowlist matrix (Rust registry vs Electron vs React):
+[desktop-shell-and-ipc-matrix.md](./desktop-shell-and-ipc-matrix.md) and
+`python3 scripts/check-desktop-ipc-matrix.py`.
+
 Wire request: `{ "id": number, "method": string, "params": object }`  
 Wire reply: `{ "id": number, "ok": true, "result": any }` or `{ "id": number, "ok": false, "error": string }`
 

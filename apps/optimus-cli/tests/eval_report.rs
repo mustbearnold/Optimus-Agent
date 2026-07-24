@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::sync::OnceLock;
 
-use optimus_kernel::{
+use optimus_eval::{
     priority2_dataset, CandidateBinding, EvalReport, EvaluationMetric, EvaluationReportV1,
     EvaluationResourceMeasurement, MetricDirection, MetricThreshold, MAX_EVALUATION_DATASET_BYTES,
 };

@@ -6,7 +6,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{KernelError, Message, Result};
+use crate::{KernelError, Message, Result, Role};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionMeta {
@@ -411,6 +411,52 @@ impl SessionStore {
         let packs: Vec<String> = serde_json::from_str(&row.0)?;
         let messages: Vec<Message> = serde_json::from_str(&row.1)?;
         Ok((packs, messages, row.2))
+    }
+
+    /// Load a session and inject missing tool messages for durable effect links.
+    ///
+    /// When an effect commits but the transcript save fails, effect links can
+    /// outlive tool messages. Reopen reconstructs a deterministic tool message
+    /// from the link so users see provenance rather than a silent gap.
+    pub fn load_repairing_effect_transcript(
+        &self,
+        id: Uuid,
+    ) -> Result<(Vec<String>, Vec<Message>, String, usize)> {
+        let (packs, mut messages, title) = self.load(id)?;
+        let links = self.effect_links(id)?;
+        let mut injected = 0usize;
+        for link in &links {
+            let present = messages.iter().any(|message| {
+                message.role == Role::Tool
+                    && message.tool_call_id.as_deref() == Some(link.tool_call_id.as_str())
+            });
+            if present {
+                continue;
+            }
+            let content = serde_json::json!({
+                "repaired": true,
+                "ok": link.outcome == "succeeded",
+                "data": {
+                    "job": link.job_id,
+                    "node_id": link.node_id,
+                    "effect_attempt_id": link.effect_attempt_id,
+                    "effect_hash": link.effect_hash,
+                    "outcome": link.outcome,
+                    "receipt_hash": link.receipt_hash,
+                }
+            });
+            messages.push(Message {
+                role: Role::Tool,
+                content: content.to_string(),
+                tool_call_id: Some(link.tool_call_id.clone()),
+                name: None,
+            });
+            injected += 1;
+        }
+        if injected > 0 {
+            self.save(id, &title, &packs, &messages)?;
+        }
+        Ok((packs, messages, title, injected))
     }
 
     pub fn list(&self) -> Result<Vec<SessionMeta>> {

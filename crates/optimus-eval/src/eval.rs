@@ -13,7 +13,7 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::{
+use optimus_kernel::{
     delivery_state, drain_one, enqueue, resolve_route, AgentBudget, AgentDescriptor, AgentFailure,
     AgentId, AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
     AgentResultKind, AgentVersion, CancellationToken, CompletionResponse, ExecutionStatus, Kernel,
@@ -648,22 +648,22 @@ pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResul
     model.stream_chunks = case.stream_chunks;
     let result: TurnResult = k.turn(&mut model, &case.user)?;
     let turn = k
-        .sessions
+        .session_store()
         .turns(k.session_id())?
         .pop()
         .ok_or_else(|| KernelError::Model("evaluation turn evidence is missing".into()))?;
     let manifest_id = k
-        .executions
+        .execution_store()
         .find_by_turn(turn.id)?
         .ok_or_else(|| KernelError::Model("evaluation execution manifest is missing".into()))?;
-    let manifest = k.executions.manifest(manifest_id)?;
+    let manifest = k.execution_store().manifest(manifest_id)?;
     if manifest.status != ExecutionStatus::Succeeded {
         return Err(KernelError::Model(
             "evaluation execution manifest is not successful".into(),
         ));
     }
     let persisted_trace = k
-        .executions
+        .execution_store()
         .trace_context(manifest_id)?
         .ok_or_else(|| KernelError::Model("evaluation execution trace is missing".into()))?;
     if persisted_trace != result.trace_context {
@@ -671,7 +671,10 @@ pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResul
             "evaluation result trace does not match persisted execution".into(),
         ));
     }
-    let replay = k.executions.replay_report(manifest_id)?.classification;
+    let replay = k
+        .execution_store()
+        .replay_report(manifest_id)?
+        .classification;
 
     let mut problems = Vec::new();
     for tool in &case.expect_tools {

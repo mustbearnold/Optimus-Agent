@@ -152,7 +152,11 @@ export function BrowserSurface({
 
   return (
     <section className="browser-surface" aria-label="Preview browser">
-      <div className="browser-chrome" role="toolbar" aria-label="Browser navigation">
+      <p className="browser-role-note">
+        Preview browser — sandboxed user navigation. Not the agent <code>browser_*</code> tool session
+        (no shared cookies, history, or automation target).
+      </p>
+      <div className="browser-chrome" role="toolbar" aria-label="Preview browser navigation">
         <button
           type="button"
           aria-label="Back"

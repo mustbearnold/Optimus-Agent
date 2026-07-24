@@ -134,6 +134,65 @@ fn durable_tool_message_is_bound_to_terminal_effect_attempt() {
 }
 
 #[test]
+fn missing_tool_message_is_repaired_from_effect_link_on_reopen() {
+    let directory = tempdir().unwrap();
+    let mut kernel = Kernel::open(
+        directory.path(),
+        KernelConfig {
+            effect_policy: PolicyMode::Unrestricted,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
+    let session_id = kernel.session_id();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "write-call-repair".into(),
+                name: "write_file".into(),
+                arguments: json!({"path":"repair-me.txt","contents":"durable"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("done".into()),
+            tool_calls: vec![],
+        },
+    ]);
+    kernel.turn(&mut model, "write then lose tool card").unwrap();
+
+    let store = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    let links = store.effect_links(session_id).unwrap();
+    assert_eq!(links.len(), 1);
+    let (packs, mut messages, title) = store.load(session_id).unwrap();
+    messages.retain(|message| {
+        !(message.role == optimus_kernel::Role::Tool
+            && message.tool_call_id.as_deref() == Some("write-call-repair"))
+    });
+    store
+        .save(session_id, &title, &packs, &messages)
+        .unwrap();
+    assert!(!store.load(session_id).unwrap().1.iter().any(|message| {
+        message.tool_call_id.as_deref() == Some("write-call-repair")
+    }));
+
+    let reopened =
+        Kernel::open_session(directory.path(), KernelConfig::default(), Some(session_id)).unwrap();
+    assert!(reopened.messages.iter().any(|message| {
+        message.role == optimus_kernel::Role::Tool
+            && message.tool_call_id.as_deref() == Some("write-call-repair")
+            && message.content.contains("repaired")
+            && message.content.contains(links[0].job_id.to_string().as_str())
+    }));
+    // Repair is durable for the next open.
+    let (_, messages_after, _) = store.load(session_id).unwrap();
+    assert!(messages_after.iter().any(|message| {
+        message.tool_call_id.as_deref() == Some("write-call-repair")
+            && message.content.contains("repaired")
+    }));
+}
+
+#[test]
 fn conflicting_effect_link_rolls_back_session_snapshot() {
     let directory = tempdir().unwrap();
     let mut kernel = Kernel::open(

@@ -182,8 +182,11 @@ fn resume_all_recovers_multiple_interrupted_jobs() {
     let workspace = root.path().join("workspace");
     fs::create_dir_all(&workspace).unwrap();
 
+    let unrestricted = RuntimeConfig {
+        policy: PolicyMode::Unrestricted,
+    };
     let (j1, j2) = {
-        let rt = Runtime::open(&db, &workspace).unwrap();
+        let rt = Runtime::open_with_config(&db, &workspace, unrestricted.clone()).unwrap();
         let j1 = rt
             .create_job(JobSpec {
                 label: "one".into(),
@@ -235,7 +238,7 @@ fn resume_all_recovers_multiple_interrupted_jobs() {
         (j1, j2)
     };
 
-    let rt = Runtime::open(&db, &workspace).unwrap();
+    let rt = Runtime::open_with_config(&db, &workspace, unrestricted).unwrap();
     let results = rt.resume_all().unwrap();
     assert_eq!(results.len(), 2);
     assert!(results.iter().all(|(_, s)| *s == JobStatus::Succeeded));

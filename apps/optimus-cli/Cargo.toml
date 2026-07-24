@@ -17,6 +17,7 @@ optimus-graph.workspace = true
 optimus-skills.workspace = true
 optimus-packs.workspace = true
 optimus-kernel.workspace = true
+optimus-eval.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true

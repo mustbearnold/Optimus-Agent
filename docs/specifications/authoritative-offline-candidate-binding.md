@@ -2,9 +2,9 @@
 knowledge_type: specification
 status: historical
 covers:
-  - crates/optimus-kernel/src/evaluation.rs
+  - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-kernel/src/lib.rs
-  - crates/optimus-kernel/tests/evaluation_contracts.rs
+  - crates/optimus-eval/tests/evaluation_contracts.rs
   - apps/optimus-cli/tests/eval_report.rs
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py

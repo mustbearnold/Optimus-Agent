@@ -8,14 +8,16 @@ Ubuntu is the primary desktop target. Windows remains supported through platform
 
 The daily-use path includes:
 
-- Native Wry desktop shell using WebKitGTK on Ubuntu
+- **Default desktop:** Electron + React workbench over a Rust host (`optimus-desktop --host-only`)
+- **Legacy rollback:** Wry/Tao native shell (WebKitGTK on Ubuntu / WebView2 on Windows)
 - Durable Rust runtime and SQLite state
 - Local command capture with approval controls
 - Owned process-tree cancellation and timeouts
 - Streaming chat, projects, sessions, campaigns, and cron
 - User-scoped Ubuntu install, application launcher, CLI links, and uninstaller
 
-See [sota-scorecard.md](docs/architecture/sota-scorecard.md) for the broader capability scorecard.
+See [sota-scorecard.md](docs/architecture/sota-scorecard.md) for the broader capability scorecard and
+[desktop-shell-and-ipc-matrix.md](docs/contracts/desktop-shell-and-ipc-matrix.md) for shell/IPC authority.
 
 Optimus uses independent product SemVer plus a fail-closed Hermes parity version. It is currently Optimus `0.1.0`, tracking Hermes `0.19.0`, with parity unverified. Run `optimus version` or see [optimus-versioning.md](docs/architecture/optimus-versioning.md). Installers reject a numerical Hermes version match unless every feature and comparative performance gate passes.
 
@@ -117,10 +119,13 @@ cargo fmt --all -- --check
 python3 scripts/optimus_version.py validate
 python3 scripts/optimus_version.py release-check
 python3 scripts/test_optimus_version.py
+python3 scripts/check-desktop-ipc-matrix.py
+python3 scripts/test_desktop_ipc_matrix.py
+python3 scripts/check-observability-gate.py
 cargo test --workspace --all-targets -- --test-threads=1
 
-cd apps/optimus-desktop
-npx playwright test
+cd apps/optimus-electron && npm test
+cd ../optimus-desktop && npx playwright test
 ```
 
 The runtime cancellation suite includes a Linux descendant-process regression. It proves that cancellation removes the full owned Unix process group and prevents delayed child effects.
@@ -128,31 +133,34 @@ The runtime cancellation suite includes a Linux descendant-process regression. I
 ## Workspace
 
 ```text
-apps/optimus-cli          jobs, skills, packs, chat, sessions, auth
-apps/optimus-desktop      Wry shell (legacy) + Rust HTTP host (--host-only)
-apps/optimus-electron     Electron shell (T3-style; loads host UI)
-apps/optimus-ui           React + Vite SPA (migration in progress)
-crates/optimus-kernel     turns, providers, sessions, compression, tools
+apps/optimus-cli          jobs, skills, packs, chat, sessions, auth, vertical
+apps/optimus-desktop      Rust host (--host-only) + legacy Wry shell
+apps/optimus-electron     Default Electron shell (React workbench)
+apps/optimus-ui           React + Vite SPA (default workbench UI)
+crates/optimus-kernel     turns, providers, sessions, specialist vertical
+crates/optimus-ops        gateway + cron store
+crates/optimus-eval       offline eval / replay
 crates/optimus-store      job ledger and events
 crates/optimus-graph      job and node domain
-crates/optimus-runtime    effectors, process ownership, capture, policy, skills
+crates/optimus-runtime    effectors, process ownership, capture, policy
 crates/optimus-memory     MetaMemory
 crates/optimus-skills     Skills 2.0
 crates/optimus-packs      progressive capability packs
 ```
 
-### Electron shell (migration)
+### Default desktop (Electron + React)
 
 ```bash
 cargo build -p optimus-desktop
-cd apps/optimus-electron && npm install
-cd ../optimus-ui && npm install
-cd ../optimus-electron
-npm run dev:legacy-html   # existing HTML via Rust host
-npm run dev:ui            # React SPA + host
+npm --prefix apps/optimus-ui install && npm --prefix apps/optimus-ui run build
+npm --prefix apps/optimus-electron install
+npm --prefix apps/optimus-electron run dev   # React workbench + Rust host
 ```
 
-See `apps/optimus-electron/README.md` and ADR-0028.
+Legacy HTML-in-Electron rollback: `npm --prefix apps/optimus-electron run dev:legacy-html`  
+Legacy Wry native shell: `cargo run -p optimus-desktop` (no Electron).
+
+See `apps/optimus-electron/README.md`, ADR-0028, and the IPC matrix contract.
 
 ## Windows
 

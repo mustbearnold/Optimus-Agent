@@ -185,6 +185,81 @@ fn corrupt_effect_is_rejected_before_projection_or_event_mutation() {
 }
 
 #[test]
+fn plain_write_file_is_high_risk_under_smart_deny() {
+    let dir = tempdir().unwrap();
+    let ws = dir.path().join("ws");
+    std::fs::create_dir_all(&ws).unwrap();
+    let rt = Runtime::open_with_config(
+        &dir.path().join("write.db"),
+        &ws,
+        RuntimeConfig {
+            policy: PolicyMode::SmartDeny,
+        },
+    )
+    .unwrap();
+    let job = rt
+        .create_job(JobSpec {
+            label: "write high-risk".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "write".into(),
+                effect: Effect::WriteFile {
+                    relative_path: "proof.txt".into(),
+                    contents: "needs approval".into(),
+                },
+            }],
+        })
+        .unwrap();
+
+    let err = rt.run_next(job).unwrap_err();
+    assert!(matches!(
+        err,
+        optimus_runtime::RuntimeError::NeedsApproval { .. }
+    ));
+    assert!(!ws.join("proof.txt").exists());
+    assert_eq!(
+        rt.grant_and_resume(job).unwrap(),
+        optimus_graph::JobStatus::Succeeded
+    );
+    assert_eq!(
+        std::fs::read_to_string(ws.join("proof.txt")).unwrap(),
+        "needs approval"
+    );
+}
+
+#[test]
+fn illegal_write_path_is_rejected_before_approval_wait() {
+    let dir = tempdir().unwrap();
+    let ws = dir.path().join("ws");
+    std::fs::create_dir_all(&ws).unwrap();
+    let rt = Runtime::open(&dir.path().join("preflight.db"), &ws).unwrap();
+    let job = rt
+        .create_job(JobSpec {
+            label: "preflight".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "write".into(),
+                effect: Effect::WriteFile {
+                    relative_path: "../escape.txt".into(),
+                    contents: "no".into(),
+                },
+            }],
+        })
+        .unwrap();
+
+    let err = rt.run_next(job).unwrap_err();
+    assert!(
+        matches!(err, optimus_runtime::RuntimeError::PathEscape(_)),
+        "expected path preflight, got {err:?}"
+    );
+    assert_eq!(
+        rt.job_status(job).unwrap(),
+        optimus_graph::JobStatus::Pending
+    );
+    assert!(rt.list_pending_approvals().unwrap().is_empty());
+}
+
+#[test]
 fn project_write_approval_cannot_replay_in_a_different_workspace() {
     let dir = tempdir().unwrap();
     let db = dir.path().join("project-bound.db");

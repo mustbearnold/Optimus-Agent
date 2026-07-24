@@ -1,4 +1,8 @@
 //! Provider-agnostic Kernel turn loop.
+//!
+//! Offline evaluation and fixture replay live in `optimus-eval` (depends on this
+//! crate). Operator gateway and cron storage live in `optimus-ops` and are
+//! re-exported here for surface convenience without growing the turn-loop waist.
 
 mod agent;
 mod artifacts;
@@ -6,18 +10,16 @@ mod browser;
 mod codex_oauth;
 mod compress;
 mod credential;
-mod cron;
-mod eval;
-mod evaluation;
 mod execution;
 mod fs_sandbox;
-mod gateway;
 mod openai_compat;
 mod product_settings;
 mod project_authority;
-mod replay;
 mod routing;
+mod causal;
+mod security_denial;
 mod session;
+mod specialist_vertical;
 mod telemetry;
 mod trace;
 mod web_search;
@@ -69,48 +71,34 @@ pub use credential::{
     atomic_write_user_only, harden_user_only, verify_user_only, CredentialProtector,
     SystemCredentialProtector,
 };
-pub use cron::{CronClaim, CronJob, CronStore};
-pub use eval::{
-    builtin_suite, evaluate_integrity_observations, run_case, run_offline_integrity_suite,
-    run_offline_trajectory_suite, run_suite, EvalCase, EvalCaseResult, EvalReport,
-    IntegrityObservation, REQUIRED_INTEGRITY_EVALS,
-};
-pub use evaluation::{
-    build_evaluation_report, compare_evaluation_reports, priority2_dataset,
-    priority2_offline_candidate_binding, project_evaluation_observations,
-    run_priority2_offline_evaluation, BaselineStore, CandidateBinding, EvaluationCaseContract,
-    EvaluationComparison, EvaluationDataset, EvaluationMetric, EvaluationObservation,
-    EvaluationReportV1, EvaluationResourceMeasurement, MetricDirection, MetricScore,
-    MetricThreshold, EVALUATION_DATASET_VERSION, EVALUATION_REPORT_VERSION, MAX_EVALUATION_CASES,
-    MAX_EVALUATION_DATASET_BYTES,
+pub use causal::{
+    list_recent_causal_turns, load_causal_turn, parse_causal_query, CausalQuery, CausalQueryKind,
+    CausalTurnReport,
 };
 pub use execution::{
-    ExecutionManifest, ExecutionStatus, ExecutionStore, ExecutionTimingSummary,
+    ExecutionManifest, ExecutionModelCallSummary, ExecutionStatus, ExecutionStore,
+    ExecutionTimingSummary, ExecutionToolCallSummary, ExecutionToolLifecycleSummary,
     PersistedToolLifecycle, ReplayClassification, ReplayReport, TimingEvent, TimingEventKind,
     EXECUTION_MANIFEST_VERSION,
 };
 pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
 };
-pub use gateway::{
-    acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
-    enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim,
-    DrainResult, GatewayClaim, GatewayError, GatewayPaths, InboundMessage, OutboundMessage,
-};
 pub use openai_compat::{
     from_openai_response, to_openai_request, OpenAiCompatConfig, OpenAiCompatModel,
 };
 pub use optimus_graph::PolicyMode;
+/// Operator gateway + cron store (owned by `optimus-ops`).
+pub use optimus_ops::{
+    acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
+    enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim, CronClaim,
+    CronError, CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths,
+    InboundMessage, OutboundMessage,
+};
 pub use optimus_packs::ToolDesc as ToolSchema;
 pub use product_settings::{ProductSettings, WorkIsolationMode};
 pub use project_authority::{
     ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
-};
-pub use replay::{
-    FixtureId, FixtureKind, ReplayBundle, ReplayBundleId, ReplayExecutionReport,
-    ReplayExecutionStatus, ReplayFixture, ReplayPlan, ReplayStage, ReplayStore,
-    MAX_REPLAY_BUNDLE_BYTES, MAX_REPLAY_FIXTURES, MAX_REPLAY_FIXTURE_BYTES, REPLAY_BUNDLE_VERSION,
-    REPLAY_REPORT_VERSION,
 };
 pub use routing::{
     is_known_codex_model, provider_catalog, resolve_route, resolve_route_traced,
@@ -118,7 +106,17 @@ pub use routing::{
     ProviderDescriptor, ProviderId, RouteDecision, RouteRequest, RouteSurface,
     RouteTelemetryPolicy, CODEX_MODEL_CATALOG, DEFAULT_CODEX_MODEL,
 };
+pub use security_denial::{
+    classify_security_denial, kernel_or_security_code, SecurityDenialCode,
+};
 pub use session::{SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus};
+pub use specialist_vertical::{
+    builtin_agent_permission_ceiling, cancel_write_file_handoff, content_sha256,
+    open_seeded_agent_registry, open_seeded_workflow_registry, run_write_file_handoff,
+    vertical_workspace, workspace_writer_descriptor, write_file_handoff_workflow,
+    WriteFileHandoffReport, WriteFileHandoffRequest, WORKSPACE_WRITER_ID,
+    WORKSPACE_WRITER_VERSION, WRITE_FILE_HANDOFF_WORKFLOW_ID, WRITE_FILE_HANDOFF_WORKFLOW_VERSION,
+};
 pub use telemetry::{
     record_route_telemetry, route_telemetry_aggregate, RouteTelemetryAggregate,
     RouteTelemetryObservation, RouteTelemetryOutcome, MAX_TELEMETRY_LATENCY_MILLIS,
@@ -169,6 +167,20 @@ pub enum KernelError {
     CronLeaseLost { job_id: Uuid },
     #[error("cron lease expired for {job_id}")]
     CronLeaseExpired { job_id: Uuid },
+    #[error("cron: {0}")]
+    Cron(String),
+    #[error("gateway: {0}")]
+    Gateway(#[from] optimus_ops::GatewayError),
+}
+
+impl From<optimus_ops::CronError> for KernelError {
+    fn from(error: optimus_ops::CronError) -> Self {
+        match error {
+            optimus_ops::CronError::LeaseLost { job_id } => Self::CronLeaseLost { job_id },
+            optimus_ops::CronError::LeaseExpired { job_id } => Self::CronLeaseExpired { job_id },
+            other => Self::Cron(other.to_string()),
+        }
+    }
 }
 
 pub type Result<T> = std::result::Result<T, KernelError>;
@@ -591,7 +603,8 @@ impl Kernel {
         let mut packs = CapabilitySession::new(config.pack_budget.clone())?;
 
         let (session_id, session_title, messages) = if let Some(id) = session_id {
-            let (pack_names, messages, title) = sessions.load(id)?;
+            let (pack_names, messages, title, _repaired) =
+                sessions.load_repairing_effect_transcript(id)?;
             let pack_ids: Vec<PackId> = pack_names
                 .iter()
                 .map(|name| PackId::parse(name).ok_or_else(|| PackError::UnknownPack(name.clone())))
@@ -638,6 +651,16 @@ impl Kernel {
 
     pub fn home(&self) -> &Path {
         &self.home
+    }
+
+    /// Durable session projection store (for offline eval / operator inspection).
+    pub fn session_store(&self) -> &SessionStore {
+        &self.sessions
+    }
+
+    /// Durable execution manifest store (for offline eval / operator inspection).
+    pub fn execution_store(&self) -> &ExecutionStore {
+        &self.executions
     }
 
     pub fn set_title(&mut self, title: impl Into<String>) -> Result<()> {
@@ -2254,23 +2277,7 @@ fn is_control_plane_tool_error(error: &KernelError) -> bool {
 }
 
 fn kernel_error_code(error: &KernelError) -> &'static str {
-    match error {
-        KernelError::Runtime(_) => "runtime_error",
-        KernelError::Memory(_) => "memory_error",
-        KernelError::Skills(_) => "skill_error",
-        KernelError::Packs(_) => "pack_error",
-        KernelError::Model(_) => "model_error",
-        KernelError::Tool(_) => "tool_error",
-        KernelError::MaxSteps(_) => "max_steps",
-        KernelError::Io(_) => "io_error",
-        KernelError::Json(_) => "json_error",
-        KernelError::Sqlite(_) => "sqlite_error",
-        KernelError::Uuid(_) => "uuid_error",
-        KernelError::Browser(_) => "browser_error",
-        KernelError::Cancelled => "turn_cancelled",
-        KernelError::CronLeaseLost { .. } => "cron_lease_lost",
-        KernelError::CronLeaseExpired { .. } => "cron_lease_expired",
-    }
+    security_denial::kernel_or_security_code(error)
 }
 
 /// Normalize UI thinking levels for ChatGPT Codex OAuth.
@@ -2310,7 +2317,7 @@ fn pack_names(packs: &CapabilitySession) -> Vec<String> {
 
 /// Open cron DB under Optimus home.
 pub fn open_cron(home: impl AsRef<Path>) -> Result<CronStore> {
-    CronStore::open(home.as_ref().join("cron.db"))
+    Ok(CronStore::open(home.as_ref().join("cron.db"))?)
 }
 
 /// Run all due cron jobs with offline/codex/openai providers. Returns per-job result rows.

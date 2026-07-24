@@ -65,13 +65,15 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 
 ## Current architecture truth
 
-- Desktop: **tao + wry WebView2**, not Tauri/React
-- Native IPC: ADR-0014 `window.ipc`; HTTP mode is a test path
-- Browser: CDP when Chromium is available, HTTP SSRF-safe fallback otherwise; desktop preview + annotations wired
+- **Default installed desktop:** Electron + React workbench over Rust `optimus-desktop --host-only` (ADR-0028). Not Tauri.
+- **Legacy rollback:** tao + wry native shell (WebKitGTK / WebView2) via install “Legacy Wry” action.
+- Native Wry IPC: ADR-0014 custom-protocol path; host HTTP mode is a test / Electron transport path.
+- Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available) is separate from the Electron sandboxed preview `WebContentsView`.
 - Artifacts: content-addressed blobs under `{home}/artifacts` with list IPC; gallery incomplete
 - Campaigns today: durable sequential `WriteFile`/`RunCommand`; not general subagent parity
 - Gateway today: durable local inbox/outbox + loopback webhook; no Telegram adapter or delivery receipts
 - Capabilities today: packs/skills/eval backends exist; desktop console remains incomplete
+- Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 
 ## Baseline commands of record
 

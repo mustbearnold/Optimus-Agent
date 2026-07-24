@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::{ExecutionManifest, ExecutionStatus, KernelError, Result, TraceId};
+use optimus_kernel::{ExecutionManifest, ExecutionStatus, KernelError, Result, TraceId};
 
 pub const REPLAY_BUNDLE_VERSION: u16 = 1;
 pub const REPLAY_REPORT_VERSION: u16 = 1;

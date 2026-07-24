@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 use std::fs;
 
-use optimus_kernel::{
-    ExecutionManifest, ExecutionStatus, FixtureId, FixtureKind, ReplayBundle, ReplayBundleId,
-    ReplayExecutionStatus, ReplayFixture, ReplayStage, ReplayStore, REPLAY_BUNDLE_VERSION,
+use optimus_eval::{
+    FixtureId, FixtureKind, ReplayBundle, ReplayBundleId, ReplayExecutionStatus, ReplayFixture,
+    ReplayStage, ReplayStore, REPLAY_BUNDLE_VERSION,
 };
+use optimus_kernel::{ExecutionManifest, ExecutionStatus};
 use tempfile::tempdir;
 use uuid::Uuid;
 

@@ -9,9 +9,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
+use optimus_kernel::{ExecutionStatus, KernelError, ReplayClassification, Result};
+
 use crate::{
-    run_offline_integrity_suite, run_offline_trajectory_suite, EvalCaseResult, ExecutionStatus,
-    KernelError, ReplayClassification, Result,
+    run_offline_integrity_suite, run_offline_trajectory_suite, EvalCaseResult,
 };
 
 pub const EVALUATION_DATASET_VERSION: u16 = 1;
@@ -443,7 +444,9 @@ pub fn priority2_offline_candidate_binding(
         tool_catalog_sha256: canonical_source_digest(include_str!(
             "../../optimus-packs/src/lib.rs"
         )),
-        route_policy_sha256: canonical_source_digest(include_str!("routing.rs")),
+        route_policy_sha256: canonical_source_digest(include_str!(
+            "../../optimus-kernel/src/routing.rs"
+        )),
         provider: "offline".into(),
         model: "offline-scripted".into(),
     };

@@ -49,11 +49,15 @@ pub enum Effect {
 }
 
 impl Effect {
+    /// Host-mutating effects require SmartDeny approval (or Unrestricted policy).
+    ///
+    /// `AssertFileEquals` is intentionally excluded: it only reads and compares.
     pub fn is_high_risk(&self) -> bool {
         matches!(
             self,
-            Effect::RunCommand { .. }
+            Effect::WriteFile { .. }
                 | Effect::ProjectWriteFile { .. }
+                | Effect::RunCommand { .. }
                 | Effect::ProjectRunCommand { .. }
         )
     }

@@ -1,11 +1,11 @@
-use optimus_kernel::{
+use optimus_eval::{
     build_evaluation_report, compare_evaluation_reports, priority2_dataset,
     priority2_offline_candidate_binding, project_evaluation_observations,
     run_offline_integrity_suite, run_offline_trajectory_suite, run_priority2_offline_evaluation,
     BaselineStore, CandidateBinding, EvaluationDataset, EvaluationMetric, EvaluationObservation,
-    EvaluationReportV1, EvaluationResourceMeasurement, ExecutionStatus, MetricDirection,
-    MetricThreshold, ReplayClassification,
+    EvaluationReportV1, EvaluationResourceMeasurement, MetricDirection, MetricThreshold,
 };
+use optimus_kernel::{ExecutionStatus, ReplayClassification};
 use optimus_packs::ToolId;
 use sha2::{Digest, Sha256};
 use tempfile::tempdir;

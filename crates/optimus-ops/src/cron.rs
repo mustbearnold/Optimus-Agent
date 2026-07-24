@@ -7,7 +7,23 @@ use rusqlite::{params, Connection, OptionalExtension, Row, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{KernelError, Result};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum CronError {
+    #[error("sqlite: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+    #[error("io: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("cron lease ownership was lost for {job_id}")]
+    LeaseLost { job_id: Uuid },
+    #[error("cron lease expired for {job_id}")]
+    LeaseExpired { job_id: Uuid },
+    #[error("{0}")]
+    Msg(String),
+}
+
+pub type Result<T> = std::result::Result<T, CronError>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CronJob {
@@ -160,7 +176,7 @@ impl CronStore {
         let rows = stmt.query_map([], cron_job_from_row)?;
         let mut out = Vec::new();
         for row in rows {
-            out.push(row.map_err(KernelError::Sqlite)?);
+            out.push(row.map_err(CronError::Sqlite)?);
         }
         Ok(out)
     }
@@ -391,10 +407,10 @@ impl CronStore {
                 |row| row.get(0),
             )
             .optional()
-            .map_err(KernelError::Sqlite)
+            .map_err(CronError::Sqlite)
     }
 
-    fn lease_error(&self, claim: &CronClaim, now: u64) -> Result<KernelError> {
+    fn lease_error(&self, claim: &CronClaim, now: u64) -> Result<CronError> {
         let current = self
             .conn
             .query_row(
@@ -418,11 +434,11 @@ impl CronStore {
                 && deadline.is_some_and(|value| value <= now as i64)
         });
         if exact_but_expired {
-            Ok(KernelError::CronLeaseExpired {
+            Ok(CronError::LeaseExpired {
                 job_id: claim.job.id,
             })
         } else {
-            Ok(KernelError::CronLeaseLost {
+            Ok(CronError::LeaseLost {
                 job_id: claim.job.id,
             })
         }
@@ -562,7 +578,7 @@ mod tests {
         );
         assert!(matches!(
             store.complete_claim(&claim, "ok", 12),
-            Err(KernelError::CronLeaseLost { job_id }) if job_id == job.id
+            Err(CronError::LeaseLost { job_id }) if job_id == job.id
         ));
         let projected = store.list().unwrap().pop().unwrap();
         assert_eq!(projected.last_status.as_deref(), Some("cancelled"));
@@ -626,7 +642,7 @@ mod tests {
 
         assert!(matches!(
             first.complete_claim(&stale, "stale", 16),
-            Err(KernelError::CronLeaseLost { job_id }) if job_id == job.id
+            Err(CronError::LeaseLost { job_id }) if job_id == job.id
         ));
         second.complete_claim(&live, "ok", 16).unwrap();
         let projected = second.list().unwrap().pop().unwrap();
@@ -652,7 +668,7 @@ mod tests {
 
         assert!(matches!(
             store.complete_claim(&claim, "stale", 11),
-            Err(KernelError::CronLeaseLost { job_id }) if job_id == job.id
+            Err(CronError::LeaseLost { job_id }) if job_id == job.id
         ));
         assert!(!store.list().unwrap().pop().unwrap().enabled);
     }
