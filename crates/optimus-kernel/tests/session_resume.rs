@@ -2,7 +2,8 @@
 
 use optimus_kernel::{
     list_sessions, CompletionResponse, ExecutionStatus, ExecutionStore, Kernel, KernelConfig,
-    KernelError, Message, ReplayClassification, ScriptedModel, SessionStore, ToolCall, TurnStatus,
+    KernelError, Message, PolicyMode, ReplayClassification, ScriptedModel, SessionStore, ToolCall,
+    TurnStatus,
 };
 use optimus_packs::{PackError, PackId};
 use serde_json::json;
@@ -90,7 +91,14 @@ fn session_resume_rejects_unknown_persisted_pack() {
 #[test]
 fn durable_tool_message_is_bound_to_terminal_effect_attempt() {
     let directory = tempdir().unwrap();
-    let mut kernel = Kernel::open(directory.path(), KernelConfig::default()).unwrap();
+    let mut kernel = Kernel::open(
+        directory.path(),
+        KernelConfig {
+            effect_policy: PolicyMode::Unrestricted,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
     let session_id = kernel.session_id();
     let mut model = ScriptedModel::new(vec![
         CompletionResponse {
@@ -128,7 +136,14 @@ fn durable_tool_message_is_bound_to_terminal_effect_attempt() {
 #[test]
 fn conflicting_effect_link_rolls_back_session_snapshot() {
     let directory = tempdir().unwrap();
-    let mut kernel = Kernel::open(directory.path(), KernelConfig::default()).unwrap();
+    let mut kernel = Kernel::open(
+        directory.path(),
+        KernelConfig {
+            effect_policy: PolicyMode::Unrestricted,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
     let session_id = kernel.session_id();
     let mut model = ScriptedModel::new(vec![
         CompletionResponse {

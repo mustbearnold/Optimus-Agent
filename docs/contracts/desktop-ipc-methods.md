@@ -28,6 +28,11 @@ HTTP stream: `POST /api/chat/stream` SSE with the same event shapes.
 ### Sessions
 `sessions`, `new_session`, `get_session`, `delete_session`, `rename_session`
 
+`get_session` returns presentation-safe user/assistant messages. Provider
+tool-call arrays and tool-result protocol messages are omitted; ordered durable
+`tool_events` are attached to their owning assistant turn. `run_status` reports
+the latest durable turn state.
+
 ### Scheduling
 `cron_list`, `cron_add`, `cron_tick`
 
@@ -37,13 +42,30 @@ HTTP stream: `POST /api/chat/stream` SSE with the same event shapes.
 **Note:** On Wry, navigate/reload may hit PreviewEmbed first. Agent tools use the same names via host workers/HTTP.
 
 ### Files
-`fs_roots`, `fs_list`, `fs_read`, `artifacts_list`, `artifacts_put_text`, `artifacts_get`, `artifacts_delete`, `artifacts_delete_many`
+`fs_roots`, `fs_list`, `fs_read`, `project_scopes_list`,
+`project_scopes_authorize`, `artifacts_list`, `artifacts_put_text`,
+`artifacts_get`, `artifacts_delete`, `artifacts_delete_many`
 
 ### Chat
 `chat`, `chat_offline`
 
 ### OS / window
 `window_minimize`, `window_maximize`, `window_close`, `window_drag`, `window_outer_position`, `window_set_outer_position`, `pick_folder`, `open_path`, `open_url`
+
+`pick_folder` stages the native selection as a short-lived, single-use project
+root grant and returns its opaque token. Electron main exchanges the native
+path through internal `project_root_stage_native`; that method is not in the
+renderer `invoke` allowlist and requires a separate random main-process secret
+that is not sent to renderer code.
+
+## Chat tool lifecycle
+
+Chat streams carry versioned `tool` events with stable `event_id`, `run_id`,
+and `call_id`, canonical `tool_id`, an explicit lifecycle `phase`, bounded
+summary, optional duration, and optional validated terminal `outcome`. The
+phase set is `started`, `approval_required`, `succeeded`, `failed`, `cancelled`,
+`suppressed`, and `ambiguous`. These events are persisted before delivery and
+may be replayed by `get_session`; consumers deduplicate by `event_id`.
 
 ## Non-registry stream / embed methods
 

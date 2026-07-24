@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import type { Project } from '../../ipc/contracts';
+import type { Project, ProjectRootSelection } from '../../ipc/contracts';
 import {
   addProjectRoot,
   removeProjectRoot,
@@ -14,15 +14,21 @@ export function ProjectSourcesDialog({
   onClose,
 }: {
   project: Project | null;
-  onPickSource: () => Promise<string | null>;
-  onSave: (project: Project) => void;
+  onPickSource: () => Promise<ProjectRootSelection>;
+  onSave: (project: Project, grantTokens: string[]) => Promise<void>;
   onClose: () => void;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<Project | null>(project);
+  const [grantTokens, setGrantTokens] = useState<Record<string, string>>({});
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setDraft(project);
+    setGrantTokens({});
+    setError('');
+    setSaving(false);
     if (!project) return;
     requestAnimationFrame(() => panel.current?.focus());
   }, [project]);
@@ -80,8 +86,14 @@ export function ProjectSourcesDialog({
               type="button"
               className="secondary-action"
               onClick={async () => {
-                const path = await onPickSource();
-                if (path) setDraft((current) => current ? addProjectRoot(current, path) : current);
+                const selection = await onPickSource();
+                if (selection.ok && selection.path && selection.grantToken) {
+                  setDraft((current) => current ? addProjectRoot(current, selection.path!) : current);
+                  setGrantTokens((current) => ({
+                    ...current,
+                    [selection.path!]: selection.grantToken!,
+                  }));
+                }
               }}
             >
               <Icon name="source" />
@@ -112,7 +124,14 @@ export function ProjectSourcesDialog({
                       type="button"
                       aria-label={`Remove ${basename(path)} from project`}
                       title="Remove source"
-                      onClick={() => setDraft(removeProjectRoot(draft, path))}
+                      onClick={() => {
+                        setDraft(removeProjectRoot(draft, path));
+                        setGrantTokens((current) => {
+                          const next = { ...current };
+                          delete next[path];
+                          return next;
+                        });
+                      }}
                     >
                       <Icon name="close" />
                     </button>
@@ -131,9 +150,10 @@ export function ProjectSourcesDialog({
           <div className="settings-callout project-source-note">
             <Icon name="info" />
             <span>
-              This catalog is confirmed local presentation state. Runtime folder access remains governed by Optimus approvals and filesystem allowlists.
+              Saving consumes native folder selections into the Rust project allowlist. Every file mutation still requires an exact SmartDeny approval.
             </span>
           </div>
+          {error ? <p className="project-source-error" role="alert">{error}</p> : null}
         </div>
 
         <footer>
@@ -141,18 +161,25 @@ export function ProjectSourcesDialog({
           <button
             type="button"
             className="primary-action"
-            disabled={!draft.name.trim()}
-            onClick={() => {
-              onSave({
-                ...draft,
-                name: draft.name.trim(),
-                primaryRoot: draft.primaryRoot || draft.rootPaths[0],
-                updatedAt: new Date().toISOString(),
-              });
-              onClose();
+            disabled={!draft.name.trim() || saving}
+            onClick={async () => {
+              setSaving(true);
+              setError('');
+              try {
+                await onSave({
+                  ...draft,
+                  name: draft.name.trim(),
+                  primaryRoot: draft.primaryRoot || draft.rootPaths[0],
+                  updatedAt: new Date().toISOString(),
+                }, Object.values(grantTokens));
+                onClose();
+              } catch (saveError) {
+                setError(saveError instanceof Error ? saveError.message : String(saveError));
+                setSaving(false);
+              }
             }}
           >
-            Save project
+            {saving ? 'Authorizing…' : 'Save & authorize'}
           </button>
         </footer>
       </div>

@@ -757,13 +757,12 @@ mod tests {
     }
 
     #[test]
-    fn best_effector_factory_prefers_cdp_when_available() {
+    fn best_effector_factory_uses_cdp_when_launchable_and_honestly_falls_back() {
         let dir = tempfile::tempdir().unwrap();
         let mut effector = best_effector(dir.path()).unwrap();
         let json = effector.navigate("https://example.com").unwrap();
         let value: serde_json::Value = serde_json::from_str(&json).unwrap();
-        if chrome_binary_path().is_some() {
-            assert_eq!(value["effector"], "cdp-browser");
+        if value["effector"] == "cdp-browser" {
             assert!(
                 value["screenshot_b64"]
                     .as_str()

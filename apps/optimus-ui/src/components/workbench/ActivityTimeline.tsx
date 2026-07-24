@@ -6,15 +6,16 @@ type ToolCategory = 'read' | 'command' | 'search' | 'edit' | 'browser' | 'other'
 export function ActivityTimeline({ tools }: { tools: ToolActivity[] }) {
   if (!tools.length) return null;
   const summary = summarizeTools(tools);
-  const failed = tools.some((tool) => tool.status === 'failed');
-  const running = tools.some((tool) => tool.status === 'running');
+  const failed = tools.some((tool) => isFailed(tool.status));
+  const attention = tools.some((tool) => isAttention(tool.status));
+  const running = tools.some((tool) => isActive(tool.status));
 
   return (
     <details
-      className={`activity-timeline${running ? ' is-running' : ''}${failed ? ' is-failed' : ''}`}
+      className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}
     >
       <summary className="activity-heading">
-        <Icon name={failed ? 'warning' : 'source'} />
+        <Icon name={failed || attention ? 'warning' : 'source'} />
         <span>{summary}</span>
         <Icon className="activity-chevron" name="chevron" />
       </summary>
@@ -25,7 +26,10 @@ export function ActivityTimeline({ tools }: { tools: ToolActivity[] }) {
             <div className={`activity-row is-${tool.status}`} key={tool.id}>
               <Icon name={toolIcon(category, tool.status)} />
               <strong>{toolLabel(category, tool.name, tool.status)}</strong>
-              <span>{tool.detail}</span>
+              <span>
+                {tool.detail}
+                {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
+              </span>
             </div>
           );
         })}
@@ -35,12 +39,22 @@ export function ActivityTimeline({ tools }: { tools: ToolActivity[] }) {
 }
 
 function summarizeTools(tools: ToolActivity[]) {
-  const running = tools.some((tool) => tool.status === 'running');
-  const failed = tools.some((tool) => tool.status === 'failed');
+  const running = tools.some((tool) => isActive(tool.status));
+  const failed = tools.some((tool) => isFailed(tool.status));
   const categories = [...new Set(tools.map((tool) => categorizeTool(tool.name)))];
-  const phrases = categories.map((category) => summaryPhrase(category, running));
-  const summary = formatList(phrases);
-  return failed && !running ? `${summary} — failed` : summary;
+  if (tools.some((tool) => tool.status === 'awaiting_approval')) return 'Approval required';
+  if (running) {
+    const summary = formatList(categories.map((category) => summaryPhrase(category, true)));
+    return failed ? `${summary} — another tool failed` : summary;
+  }
+  const summary = formatList(categories.map((category) => summaryPhrase(category, false)));
+  if (failed) return `${summary} — failed`;
+  if (tools.some((tool) => tool.status === 'ambiguous')) return `${summary} — outcome unknown`;
+  if (tools.every((tool) => tool.status === 'cancelled')) return `${summary} — cancelled`;
+  if (tools.every((tool) => tool.status === 'suppressed')) {
+    return tools.length === 1 ? 'Tool call skipped' : 'Tool calls skipped';
+  }
+  return summary;
 }
 
 function categorizeTool(name: string): ToolCategory {
@@ -76,7 +90,7 @@ function lowercaseFirst(value: string) {
 }
 
 function toolIcon(category: ToolCategory, status: ToolActivity['status']): IconName {
-  if (status === 'failed') return 'warning';
+  if (isFailed(status) || isAttention(status)) return 'warning';
   const icons: Record<ToolCategory, IconName> = {
     read: 'source',
     command: 'terminal',
@@ -93,6 +107,10 @@ function toolLabel(
   name: string,
   status: ToolActivity['status']
 ) {
+  if (status === 'awaiting_approval') return `Approve ${name}`;
+  if (status === 'cancelled') return `Cancelled ${name}`;
+  if (status === 'suppressed') return `Skipped ${name}`;
+  if (status === 'ambiguous') return `Check ${name}`;
   const active = status === 'running';
   const labels: Record<ToolCategory, [string, string]> = {
     read: ['Read file', 'Reading file'],
@@ -103,4 +121,21 @@ function toolLabel(
     other: [`Called ${name}`, `Calling ${name}`],
   };
   return labels[category][active ? 1 : 0];
+}
+
+function isActive(status: ToolActivity['status']) {
+  return status === 'running';
+}
+
+function isFailed(status: ToolActivity['status']) {
+  return status === 'failed';
+}
+
+function isAttention(status: ToolActivity['status']) {
+  return status === 'awaiting_approval' || status === 'ambiguous';
+}
+
+function formatDuration(durationMs: number) {
+  if (durationMs < 1_000) return `${durationMs}ms`;
+  return `${(durationMs / 1_000).toFixed(durationMs < 10_000 ? 1 : 0)}s`;
 }

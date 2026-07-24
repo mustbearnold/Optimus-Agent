@@ -493,7 +493,7 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
                                 error: None,
                             }
                         }
-                        "pick_folder" => match pick_folder_dialog() {
+                        "pick_folder" => match pick_folder_dialog(&home) {
                             Ok(v) => IpcReply {
                                 id,
                                 ok: true,

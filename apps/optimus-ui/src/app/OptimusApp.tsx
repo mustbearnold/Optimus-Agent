@@ -17,6 +17,7 @@ import type {
   Doctor,
   Job,
   Project,
+  ProjectRuntimeScope,
   SessionDetail,
   SessionMeta,
 } from '../ipc/contracts';
@@ -105,6 +106,7 @@ export function OptimusApp() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [projects, setProjects] = useState<Project[]>(loadProjects);
+  const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
   const [pins, setPins] = useState<string[]>(loadSessionPins);
   const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(loadExpanded);
@@ -137,12 +139,13 @@ export function OptimusApp() {
 
   const refreshRuntime = useCallback(async () => {
     try {
-      const [doctorResult, sessionsResult, approvalResult, jobResult, campaignResult] = await Promise.all([
+      const [doctorResult, sessionsResult, approvalResult, jobResult, campaignResult, scopeResult] = await Promise.all([
         transport.invoke<Doctor>('doctor'),
         transport.invoke<{ sessions?: SessionMeta[] } | SessionMeta[]>('sessions'),
         transport.invoke<{ pending?: Approval[] }>('approvals_list'),
         transport.invoke<{ jobs?: Job[] }>('jobs_list'),
         transport.invoke<{ campaigns?: Campaign[] }>('campaign_list'),
+        transport.invoke<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list'),
       ]);
       const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
       setDoctor(doctorResult);
@@ -150,6 +153,7 @@ export function OptimusApp() {
       setApprovals(approvalResult.pending || []);
       setJobs(jobResult.jobs || []);
       setCampaigns(campaignResult.campaigns || []);
+      setAuthorizedProjects(new Set((scopeResult.projects || []).map((project) => project.project_id)));
       dispatch({
         type: 'select-session',
         id:
@@ -264,6 +268,12 @@ export function OptimusApp() {
       sessionId = created.id;
       dispatch({ type: 'select-session', id: created.id });
     }
+    const projectId = assignments[sessionId];
+    if (projectId && !authorizedProjects.has(projectId)) {
+      setBootError('Authorize this project folder before running its session.');
+      setSourceProjectId(projectId);
+      return;
+    }
     conversationStore.begin(sessionId, text);
     setInput('');
     setAnnotation('');
@@ -277,6 +287,7 @@ export function OptimusApp() {
         thinking_level: composer.thinking,
         fast: composer.fast,
         access: composer.access,
+        ...(projectId ? { project_id: projectId } : {}),
       },
       (event) => conversationStore.apply(sessionId, event)
     );
@@ -399,9 +410,16 @@ export function OptimusApp() {
             onRoute={setRoute}
             onAddProject={async () => {
               const result = await transport.pickFolder();
-              if (!result.ok || !result.path) return;
+              if (!result.ok || !result.path || !result.grantToken) return;
               const parts = result.path.split(/[\\/]/).filter(Boolean);
               const project = createProject(parts.at(-1) || result.path, result.path);
+              await transport.invoke('project_scopes_authorize', {
+                project_id: project.id,
+                root_paths: project.rootPaths,
+                primary_root: project.primaryRoot,
+                grant_tokens: [result.grantToken],
+              });
+              setAuthorizedProjects((current) => new Set(current).add(project.id));
               setProjects((current) => [...current, project]);
               setExpanded((current) => ({ ...current, [project.id]: true }));
               setSourceProjectId(project.id);
@@ -509,9 +527,26 @@ export function OptimusApp() {
           project={sourceProject}
           onPickSource={async () => {
             const result = await transport.pickFolder();
-            return result.ok && result.path ? result.path : null;
+            return result;
           }}
-          onSave={(project) => setProjects((current) => current.map((item) => item.id === project.id ? project : item))}
+          onSave={async (project, grantTokens) => {
+            const result = await transport.invoke<{ project?: ProjectRuntimeScope | null }>(
+              'project_scopes_authorize',
+              {
+                project_id: project.id,
+                root_paths: project.rootPaths,
+                primary_root: project.primaryRoot,
+                grant_tokens: grantTokens,
+              }
+            );
+            setAuthorizedProjects((current) => {
+              const next = new Set(current);
+              if (result.project) next.add(project.id);
+              else next.delete(project.id);
+              return next;
+            });
+            setProjects((current) => current.map((item) => item.id === project.id ? project : item));
+          }}
           onClose={() => {
             const projectId = sourceProjectId;
             setSourceProjectId(null);

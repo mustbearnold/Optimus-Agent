@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
-use optimus_kernel::{ArtifactStore, BrowserEffector};
+use optimus_kernel::{ArtifactStore, BrowserEffector, ProjectAuthorityStore};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, StepKind};
 use serde_json::json;
 
@@ -65,7 +65,7 @@ pub(super) fn handle(
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| "job_id required".to_string())?;
             let id = uuid::Uuid::parse_str(id).map_err(|e| e.to_string())?;
-            let rt = open_runtime(home)?;
+            let rt = open_runtime_for_job(home, optimus_runtime::job_id(id))?;
             let status = rt
                 .grant_and_resume(optimus_runtime::job_id(id))
                 .map_err(|e| e.to_string())?;
@@ -338,6 +338,44 @@ pub(super) fn open_runtime(home: &std::path::Path) -> Result<optimus_runtime::Ru
     optimus_runtime::Runtime::open(&db, &ws).map_err(|e| e.to_string())
 }
 
+fn open_runtime_for_job(
+    home: &Path,
+    job_id: optimus_graph::JobId,
+) -> Result<optimus_runtime::Runtime, String> {
+    let shared = open_runtime(home)?;
+    let pending = shared
+        .list_pending_approvals()
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .find(|approval| approval.job_id == job_id)
+        .ok_or_else(|| format!("job {job_id} has no pending exact action"))?;
+    let effect: Effect =
+        serde_json::from_str(&pending.effect_json).map_err(|error| error.to_string())?;
+    let expected = match effect {
+        Effect::ProjectWriteFile {
+            workspace_sha256, ..
+        }
+        | Effect::ProjectRunCommand {
+            workspace_sha256, ..
+        } => workspace_sha256,
+        _ => return Ok(shared),
+    };
+    let store = ProjectAuthorityStore::open(home).map_err(|error| error.to_string())?;
+    for scope in store.list_scopes().map_err(|error| error.to_string())? {
+        let Ok(actual) = optimus_runtime::Runtime::canonical_workspace_sha256(&scope.primary_root)
+        else {
+            continue;
+        };
+        if actual == expected {
+            return optimus_runtime::Runtime::open(&home.join("optimus.db"), &scope.primary_root)
+                .map_err(|error| error.to_string());
+        }
+    }
+    Err(format!(
+        "project root for pending job {job_id} is no longer authorized"
+    ))
+}
+
 /// IPC handler: navigate the browser to a URL and return page state.
 fn browser_navigate(
     home: &PathBuf,
@@ -452,9 +490,11 @@ fn maybe_publish_browser_screenshot(home: &Path, value: &mut serde_json::Value) 
 
 #[cfg(test)]
 mod tests {
-    use optimus_graph::Effect;
+    use optimus_graph::{Effect, JobSpec, JobStatus, NodeSpec};
+    use optimus_kernel::ProjectAuthorityStore;
+    use tempfile::tempdir;
 
-    use super::{term_effect, term_line_denied};
+    use super::{handle, term_effect, term_line_denied};
 
     #[test]
     fn terminal_effect_uses_the_host_shell() {
@@ -480,5 +520,53 @@ mod tests {
         ] {
             assert!(term_line_denied(line).is_some(), "allowed: {line}");
         }
+    }
+
+    #[test]
+    fn approval_grant_reopens_the_exact_authorized_project_root() {
+        let home = tempdir().unwrap();
+        let project = tempdir().unwrap();
+        let authority = ProjectAuthorityStore::open(home.path()).unwrap();
+        let selection = authority.stage_native_selection(project.path()).unwrap();
+        authority
+            .authorize_project(
+                "project-a",
+                std::slice::from_ref(&selection.path),
+                Some(&selection.path),
+                std::slice::from_ref(&selection.grant_token),
+            )
+            .unwrap();
+        let runtime =
+            optimus_runtime::Runtime::open(&home.path().join("optimus.db"), project.path())
+                .unwrap();
+        let job = runtime
+            .create_job(JobSpec {
+                label: "project write".into(),
+                budget: Default::default(),
+                nodes: vec![NodeSpec {
+                    label: "write".into(),
+                    effect: Effect::ProjectWriteFile {
+                        workspace_sha256: runtime.workspace_sha256(),
+                        relative_path: "approved.txt".into(),
+                        contents: "exact".into(),
+                    },
+                }],
+            })
+            .unwrap();
+        assert_eq!(runtime.run_all(job).unwrap(), JobStatus::AwaitingApproval);
+
+        let response = handle(
+            &home.path().to_path_buf(),
+            "approvals_grant",
+            serde_json::json!({"job_id": job.to_string()}),
+        )
+        .unwrap();
+
+        assert_eq!(response["status"], "Succeeded");
+        assert_eq!(
+            std::fs::read_to_string(project.path().join("approved.txt")).unwrap(),
+            "exact"
+        );
+        assert!(!home.path().join("workspace/approved.txt").exists());
     }
 }

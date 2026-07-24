@@ -2,8 +2,9 @@
 
 use optimus_kernel::{
     CancellationToken, CompletionRequest, CompletionResponse, ExecutionStatus, ExecutionStore,
-    Kernel, KernelConfig, KernelError, ModelProvider, ScriptedModel, SessionStore, StreamControl,
-    StreamEvent, TimingEventKind, ToolCall, TurnStatus,
+    Kernel, KernelConfig, KernelError, ModelProvider, PolicyMode, ProjectAuthorityStore,
+    ScriptedModel, SessionStore, StreamControl, StreamEvent, TimingEventKind, ToolCall,
+    ToolLifecyclePhase, TurnStatus,
 };
 use optimus_packs::{PackError, ToolId, ToolOutcome, ToolOutcomeKind};
 use optimus_runtime::RuntimeError;
@@ -61,6 +62,115 @@ impl ModelProvider for DeliveryAwareModel {
             panic!("stream delivery rejection did not cancel the shared token");
         }
     }
+}
+
+#[test]
+fn tool_stream_events_keep_runtime_identity_and_validated_outcome() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    kernel.remember_demo("user", "editor", "helix").unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "call-1".into(),
+                name: "memory_recall".into(),
+                arguments: json!({"subject":"user","predicate":"editor"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("You prefer helix.".into()),
+            tool_calls: vec![],
+        },
+    ]);
+    let mut events = Vec::new();
+
+    kernel
+        .turn_with_sink(&mut model, "Which editor?", &mut |event| events.push(event))
+        .unwrap();
+
+    let tools = events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Tool(tool) => Some(tool),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(tools.len(), 2);
+    assert_eq!(tools[0].phase, ToolLifecyclePhase::Started);
+    assert_eq!(tools[1].phase, ToolLifecyclePhase::Succeeded);
+    assert_eq!(tools[0].run_id, tools[1].run_id);
+    assert_eq!(tools[0].call_id, "call-1");
+    assert_eq!(tools[1].call_id, "call-1");
+    assert_ne!(tools[0].event_id, tools[1].event_id);
+    assert!(tools[0].outcome.is_none());
+    assert_eq!(
+        tools[1].outcome.as_ref().map(|outcome| outcome.kind),
+        Some(ToolOutcomeKind::Succeeded)
+    );
+    assert!(tools[1].duration_ms.is_some());
+}
+
+#[test]
+fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
+    let home = tempdir().unwrap();
+    let project = tempdir().unwrap();
+    let authority = ProjectAuthorityStore::open(home.path()).unwrap();
+    let selection = authority.stage_native_selection(project.path()).unwrap();
+    authority
+        .authorize_project(
+            "project-a",
+            std::slice::from_ref(&selection.path),
+            Some(&selection.path),
+            std::slice::from_ref(&selection.grant_token),
+        )
+        .unwrap();
+    let mut kernel =
+        Kernel::open_project_session(home.path(), KernelConfig::default(), None, "project-a")
+            .unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: None,
+        tool_calls: vec![ToolCall {
+            id: "write-1".into(),
+            name: "write_file".into(),
+            arguments: json!({"path":"src/proof.txt","contents":"safe"}),
+        }],
+    }]);
+    let mut events = Vec::new();
+
+    let error = kernel
+        .turn_with_sink(&mut model, "write the proof", &mut |event| {
+            events.push(event)
+        })
+        .unwrap_err();
+
+    assert!(matches!(
+        error,
+        KernelError::Runtime(RuntimeError::NeedsApproval { .. })
+    ));
+    let tools = events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Tool(tool) => Some(tool),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(tools.len(), 2);
+    assert_eq!(tools[0].phase, ToolLifecyclePhase::Started);
+    assert_eq!(tools[1].phase, ToolLifecyclePhase::ApprovalRequired);
+    assert_eq!(tools[0].call_id, tools[1].call_id);
+    assert_eq!(tools[1].summary, "Write src/proof.txt (4 bytes)");
+    assert!(tools[1].outcome.is_none());
+    assert!(!project.path().join("src/proof.txt").exists());
+
+    let pending = kernel.runtime.list_pending_approvals().unwrap();
+    assert_eq!(pending.len(), 1);
+    let effect: optimus_graph::Effect = serde_json::from_str(&pending[0].effect_json).unwrap();
+    assert!(matches!(
+        effect,
+        optimus_graph::Effect::ProjectWriteFile { relative_path, .. }
+            if relative_path == "src/proof.txt"
+    ));
 }
 
 #[test]
@@ -329,7 +439,14 @@ fn skill_resolve_returns_body() {
 #[test]
 fn write_file_tool_uses_durable_job() {
     let dir = tempdir().unwrap();
-    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut k = Kernel::open(
+        dir.path(),
+        KernelConfig {
+            effect_policy: PolicyMode::Unrestricted,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
     let mut model = ScriptedModel::new(vec![
         CompletionResponse {
             text: None,

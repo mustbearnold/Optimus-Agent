@@ -59,4 +59,37 @@ describe('OptimusApp fixture contract', () => {
     expect(screen.getByRole('log', { name: 'Conversation' })).toBeInTheDocument();
     expect(forward).toBeDisabled();
   });
+
+  it('blocks an assigned session instead of falling back to an unauthorized workspace', async () => {
+    localStorage.setItem(
+      'optimus.ui.projects',
+      JSON.stringify({
+        version: 2,
+        projects: [
+          {
+            id: 'private-project',
+            name: 'Private Project',
+            rootPaths: ['/private/project'],
+            primaryRoot: '/private/project',
+          },
+        ],
+      })
+    );
+    localStorage.setItem(
+      'optimus.ui.sessionProjects',
+      JSON.stringify({ 'fixture-assess': 'private-project' })
+    );
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+
+    const composer = await screen.findByLabelText('Message Optimus');
+    await user.type(composer, 'Do not run this elsewhere');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Authorize this project folder before running its session.'
+    );
+    expect(screen.getByRole('dialog', { name: 'Project sources' })).toBeInTheDocument();
+    expect(composer).toHaveValue('Do not run this elsewhere');
+  });
 });

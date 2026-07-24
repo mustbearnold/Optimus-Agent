@@ -10,8 +10,8 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::{
-    CompletionRequest, CompletionResponse, KernelError, Result, SpanId, ToolCall, TraceContext,
-    TraceId,
+    CompletionRequest, CompletionResponse, KernelError, Result, SpanId, ToolCall,
+    ToolLifecycleEvent, TraceContext, TraceId,
 };
 
 pub const EXECUTION_MANIFEST_VERSION: u16 = 1;
@@ -118,6 +118,13 @@ pub struct ReplayReport {
     pub tool_call_count: usize,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PersistedToolLifecycle {
+    pub sequence: u64,
+    pub turn_id: Uuid,
+    pub event: ToolLifecycleEvent,
+}
+
 pub struct ExecutionStore {
     conn: Connection,
 }
@@ -208,6 +215,13 @@ impl ExecutionStore {
                kind TEXT NOT NULL,step INTEGER,call_id TEXT,name TEXT,duration_ms INTEGER,
                elapsed_ms INTEGER NOT NULL CHECK(elapsed_ms >= 0),status TEXT,
                suppressed INTEGER NOT NULL CHECK(suppressed IN (0,1))
+             );
+             CREATE TABLE IF NOT EXISTS execution_tool_events(
+               sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+               event_id TEXT NOT NULL UNIQUE,
+               manifest_id TEXT NOT NULL REFERENCES execution_manifests(id) ON DELETE CASCADE,
+               call_id TEXT NOT NULL,phase TEXT NOT NULL,
+               event_json TEXT NOT NULL
              );",
         )?;
         ensure_column(
@@ -414,6 +428,76 @@ impl ExecutionStore {
             ],
         )?;
         Ok(())
+    }
+
+    /// Persist the runtime-owned lifecycle transition before it is projected to a stream.
+    /// Repeated delivery attempts are idempotent by stable event identity.
+    pub fn record_tool_lifecycle_event(
+        &self,
+        manifest_id: Uuid,
+        event: &ToolLifecycleEvent,
+    ) -> Result<()> {
+        if event.run_id != manifest_id.to_string() {
+            return Err(KernelError::Model(
+                "tool lifecycle event run identity does not match execution manifest".into(),
+            ));
+        }
+        let event_json = serde_json::to_string(event)?;
+        let inserted = self.conn.execute(
+            "INSERT OR IGNORE INTO execution_tool_events(
+               event_id,manifest_id,call_id,phase,event_json
+             ) VALUES(?1,?2,?3,?4,?5)",
+            params![
+                event.event_id,
+                manifest_id.to_string(),
+                event.call_id,
+                event.phase.as_str(),
+                event_json
+            ],
+        )?;
+        if inserted == 0 {
+            let existing: String = self.conn.query_row(
+                "SELECT event_json FROM execution_tool_events WHERE event_id=?1",
+                params![event.event_id],
+                |row| row.get(0),
+            )?;
+            if existing != event_json {
+                return Err(KernelError::Model(format!(
+                    "conflicting durable tool lifecycle event: {}",
+                    event.event_id
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn tool_lifecycle_for_session(
+        &self,
+        session_id: Uuid,
+    ) -> Result<Vec<PersistedToolLifecycle>> {
+        let mut statement = self.conn.prepare(
+            "SELECT e.sequence,m.turn_id,e.event_json
+             FROM execution_tool_events e
+             JOIN execution_manifests m ON m.id=e.manifest_id
+             WHERE m.session_id=?1
+             ORDER BY e.sequence",
+        )?;
+        let rows = statement.query_map(params![session_id.to_string()], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })?;
+        rows.map(|row| {
+            let (sequence, turn_id, event_json) = row?;
+            Ok(PersistedToolLifecycle {
+                sequence: sequence as u64,
+                turn_id: Uuid::parse_str(&turn_id)?,
+                event: serde_json::from_str(&event_json)?,
+            })
+        })
+        .collect()
     }
 
     pub fn record_timing_event(&self, manifest_id: Uuid, event: &TimingEvent) -> Result<()> {
@@ -716,5 +800,72 @@ mod tests {
             store.replay_report(manifest).unwrap().classification,
             ReplayClassification::Ambiguous
         );
+    }
+
+    #[test]
+    fn tool_lifecycle_is_durable_ordered_and_idempotent() {
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("execution.db");
+        let session_id = Uuid::new_v4();
+        let turn_id = Uuid::new_v4();
+        let store = ExecutionStore::open(&path).unwrap();
+        let manifest = store
+            .begin(
+                session_id,
+                turn_id,
+                "offline",
+                "offline-scripted",
+                b"prompt",
+                b"tools",
+                b"policy",
+            )
+            .unwrap();
+        let started = ToolLifecycleEvent {
+            schema_version: crate::TOOL_LIFECYCLE_SCHEMA_VERSION,
+            event_id: format!("{manifest}:call-1:started"),
+            run_id: manifest.to_string(),
+            call_id: "call-1".into(),
+            tool_id: optimus_packs::ToolId::new("read_file"),
+            phase: crate::ToolLifecyclePhase::Started,
+            summary: "Reading".into(),
+            duration_ms: None,
+            outcome: None,
+        };
+        let completed = ToolLifecycleEvent {
+            event_id: format!("{manifest}:call-1:succeeded"),
+            phase: crate::ToolLifecyclePhase::Succeeded,
+            summary: "Read file".into(),
+            duration_ms: Some(8),
+            outcome: Some(ToolOutcome::succeeded(
+                "call-1",
+                "read_file",
+                "Read file",
+                json!({"text":"ok"}),
+                ReplayClass::Deterministic,
+            )),
+            ..started.clone()
+        };
+        store
+            .record_tool_lifecycle_event(manifest, &started)
+            .unwrap();
+        store
+            .record_tool_lifecycle_event(manifest, &started)
+            .unwrap();
+        store
+            .record_tool_lifecycle_event(manifest, &completed)
+            .unwrap();
+        drop(store);
+
+        let reopened = ExecutionStore::open(&path).unwrap();
+        let events = reopened.tool_lifecycle_for_session(session_id).unwrap();
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].turn_id, turn_id);
+        assert_eq!(events[0].event.phase, crate::ToolLifecyclePhase::Started);
+        assert_eq!(events[1].event.phase, crate::ToolLifecyclePhase::Succeeded);
+        assert_eq!(
+            events[1].event.outcome.as_ref().unwrap().summary,
+            "Read file"
+        );
+        assert!(events[0].sequence < events[1].sequence);
     }
 }

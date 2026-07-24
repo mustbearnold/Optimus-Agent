@@ -218,6 +218,7 @@
         "crates/optimus-kernel/src/lib.rs",
         "crates/optimus-kernel/src/openai_compat.rs",
         "crates/optimus-kernel/src/product_settings.rs",
+        "crates/optimus-kernel/src/project_authority.rs",
         "crates/optimus-kernel/src/replay.rs",
         "crates/optimus-kernel/src/routing.rs",
         "crates/optimus-kernel/src/session.rs",
@@ -305,6 +306,8 @@
         },
         {
           "cases": [
+            "tool_stream_events_keep_runtime_identity_and_validated_outcome",
+            "project_write_emits_exact_approval_lifecycle_before_any_effect",
             "active_model_completion_observes_turn_cancellation",
             "stream_delivery_rejection_cancels_turn_and_execution_once",
             "successful_turn_returns_exact_persisted_root_trace",
@@ -477,6 +480,8 @@
         },
         {
           "cases": [
+            "tool_stream_events_keep_runtime_identity_and_validated_outcome",
+            "project_write_emits_exact_approval_lifecycle_before_any_effect",
             "active_model_completion_observes_turn_cancellation",
             "stream_delivery_rejection_cancels_turn_and_execution_once",
             "successful_turn_returns_exact_persisted_root_trace",
@@ -713,6 +718,8 @@
             "grant_approval_marks_has_grant",
             "grant_is_bound_to_exact_node_effect_hash_actor_and_expiry",
             "corrupt_effect_is_rejected_before_projection_or_event_mutation",
+            "project_write_approval_cannot_replay_in_a_different_workspace",
+            "exact_project_write_runs_after_approval_in_the_bound_workspace",
             "denial_revocation_and_expiry_never_authorize_execution",
             "grants_do_not_transfer_to_changed_effects_or_other_nodes"
           ],
@@ -781,6 +788,8 @@
             "grant_approval_marks_has_grant",
             "grant_is_bound_to_exact_node_effect_hash_actor_and_expiry",
             "corrupt_effect_is_rejected_before_projection_or_event_mutation",
+            "project_write_approval_cannot_replay_in_a_different_workspace",
+            "exact_project_write_runs_after_approval_in_the_bound_workspace",
             "denial_revocation_and_expiry_never_authorize_execution",
             "grants_do_not_transfer_to_changed_effects_or_other_nodes"
           ],

@@ -73,6 +73,10 @@ pub fn verify_user_only(path: &Path) -> Result<()> {
     platform::verify_user_only(path)
 }
 
+pub fn harden_user_only(path: &Path) -> Result<()> {
+    platform::harden_user_only(path)
+}
+
 #[cfg(windows)]
 mod platform {
     use std::ffi::OsStr;

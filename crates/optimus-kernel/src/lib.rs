@@ -14,6 +14,7 @@ mod fs_sandbox;
 mod gateway;
 mod openai_compat;
 mod product_settings;
+mod project_authority;
 mod replay;
 mod routing;
 mod session;
@@ -35,7 +36,7 @@ use optimus_memory::{
 };
 use optimus_packs::{
     CapabilitySession, DurableEffectProvenance, PackBudgetConfig, PackError, PackId,
-    ToolErrorDetail, ToolId, ToolInvocation, ToolOutcome,
+    ToolErrorDetail, ToolId, ToolInvocation, ToolOutcome, ToolOutcomeKind,
 };
 use optimus_runtime::{Runtime, RuntimeError};
 use optimus_skills::SkillRegistry;
@@ -64,7 +65,8 @@ pub use codex_oauth::{
 };
 pub use compress::{estimate_chars, CompressionConfig, COMPRESSED_MARKER};
 pub use credential::{
-    atomic_write_user_only, verify_user_only, CredentialProtector, SystemCredentialProtector,
+    atomic_write_user_only, harden_user_only, verify_user_only, CredentialProtector,
+    SystemCredentialProtector,
 };
 pub use cron::{CronClaim, CronJob, CronStore};
 pub use eval::{
@@ -83,7 +85,8 @@ pub use evaluation::{
 };
 pub use execution::{
     ExecutionManifest, ExecutionStatus, ExecutionStore, ExecutionTimingSummary,
-    ReplayClassification, ReplayReport, TimingEvent, TimingEventKind, EXECUTION_MANIFEST_VERSION,
+    PersistedToolLifecycle, ReplayClassification, ReplayReport, TimingEvent, TimingEventKind,
+    EXECUTION_MANIFEST_VERSION,
 };
 pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
@@ -96,8 +99,12 @@ pub use gateway::{
 pub use openai_compat::{
     from_openai_response, to_openai_request, OpenAiCompatConfig, OpenAiCompatModel,
 };
-pub use product_settings::{ProductSettings, WorkIsolationMode};
+pub use optimus_graph::PolicyMode;
 pub use optimus_packs::ToolDesc as ToolSchema;
+pub use product_settings::{ProductSettings, WorkIsolationMode};
+pub use project_authority::{
+    ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
+};
 pub use replay::{
     FixtureId, FixtureKind, ReplayBundle, ReplayBundleId, ReplayExecutionReport,
     ReplayExecutionStatus, ReplayFixture, ReplayPlan, ReplayStage, ReplayStore,
@@ -216,12 +223,55 @@ pub struct CompletionResponse {
 pub enum StreamEvent {
     /// UTF-8 text fragment of the assistant answer.
     TextDelta(String),
-    /// Model is about to / is executing a tool.
-    ToolStatus { name: String, detail: String },
+    /// Versioned, runtime-owned lifecycle state for one stable tool call.
+    Tool(ToolLifecycleEvent),
     /// Soft status line for the UI (e.g. "thinking").
     Status(String),
     /// Typed monotonic timing evidence for the active turn.
     Timing(TimingEvent),
+}
+
+pub const TOOL_LIFECYCLE_SCHEMA_VERSION: u16 = 1;
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolLifecyclePhase {
+    Started,
+    ApprovalRequired,
+    Succeeded,
+    Failed,
+    Cancelled,
+    Suppressed,
+    Ambiguous,
+}
+
+impl ToolLifecyclePhase {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Started => "started",
+            Self::ApprovalRequired => "approval_required",
+            Self::Succeeded => "succeeded",
+            Self::Failed => "failed",
+            Self::Cancelled => "cancelled",
+            Self::Suppressed => "suppressed",
+            Self::Ambiguous => "ambiguous",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ToolLifecycleEvent {
+    pub schema_version: u16,
+    pub event_id: String,
+    pub run_id: String,
+    pub call_id: String,
+    pub tool_id: ToolId,
+    pub phase: ToolLifecyclePhase,
+    pub summary: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<ToolOutcome>,
 }
 
 /// Control returned by a streaming consumer after each event delivery attempt.
@@ -363,6 +413,8 @@ pub struct KernelConfig {
     /// Reasoning effort: low|medium|high|xhigh|max|ultra (None or "off" = omit).
     pub thinking_level: Option<String>,
     pub fast_mode: bool,
+    /// SmartDeny by default; unrestricted is an explicit user/test choice.
+    pub effect_policy: optimus_graph::PolicyMode,
 }
 
 impl Default for KernelConfig {
@@ -383,6 +435,7 @@ impl Default for KernelConfig {
             compression: CompressionConfig::default(),
             thinking_level: None,
             fast_mode: false,
+            effect_policy: optimus_graph::PolicyMode::SmartDeny,
         }
     }
 }
@@ -437,6 +490,7 @@ pub struct Kernel {
     session_title: String,
     sessions: SessionStore,
     executions: ExecutionStore,
+    project_roots: Vec<PathBuf>,
 }
 
 impl Kernel {
@@ -450,11 +504,49 @@ impl Kernel {
         config: KernelConfig,
         session_id: Option<Uuid>,
     ) -> Result<Self> {
+        Self::open_session_with_project(home, config, session_id, None)
+    }
+
+    /// Open a session with filesystem and effect authority bound to a durable project scope.
+    pub fn open_project_session(
+        home: impl AsRef<Path>,
+        config: KernelConfig,
+        session_id: Option<Uuid>,
+        project_id: &str,
+    ) -> Result<Self> {
+        Self::open_session_with_project(home, config, session_id, Some(project_id))
+    }
+
+    fn open_session_with_project(
+        home: impl AsRef<Path>,
+        mut config: KernelConfig,
+        session_id: Option<Uuid>,
+        project_id: Option<&str>,
+    ) -> Result<Self> {
         let home = home.as_ref().to_path_buf();
         std::fs::create_dir_all(&home)?;
-        let workspace = home.join("workspace");
+        let (workspace, project_roots) = if let Some(project_id) = project_id {
+            let scope = ProjectAuthorityStore::open(&home)?
+                .scope(project_id)?
+                .ok_or_else(|| {
+                    KernelError::Tool(format!(
+                        "project {project_id} has no runtime-authorized root"
+                    ))
+                })?;
+            config.memory_ctx.project = project_id.to_string();
+            (scope.primary_root, scope.roots)
+        } else {
+            let workspace = home.join("workspace");
+            (workspace.clone(), vec![workspace])
+        };
         std::fs::create_dir_all(&workspace)?;
-        let runtime = Runtime::open(&home.join("optimus.db"), &workspace)?;
+        let runtime = Runtime::open_with_config(
+            &home.join("optimus.db"),
+            &workspace,
+            optimus_graph::RuntimeConfig {
+                policy: config.effect_policy,
+            },
+        )?;
         let memory = Memory::open(home.join("memory.db"))?;
         let skills = SkillRegistry::open(home.join("skills.db"))?;
         let sessions = SessionStore::open(home.join("sessions.db"))?;
@@ -495,6 +587,7 @@ impl Kernel {
             session_title,
             sessions,
             executions,
+            project_roots,
         })
     }
 
@@ -997,17 +1090,24 @@ impl Kernel {
                     self.executions
                         .record_timing_event(execution.manifest_id, &start_event)?;
                     sink(StreamEvent::Timing(start_event));
-                    sink(StreamEvent::ToolStatus {
-                        name: call.name.clone(),
-                        detail: if over_budget {
-                            "budget suppressed"
+                    let lifecycle = tool_lifecycle_event(
+                        execution.manifest_id,
+                        &call,
+                        descriptor.id.clone(),
+                        ToolLifecyclePhase::Started,
+                        if over_budget {
+                            "Checking tool-call budget"
                         } else if duplicate {
-                            "duplicate suppressed"
+                            "Checking duplicate tool evidence"
                         } else {
-                            "running"
-                        }
-                        .into(),
-                    });
+                            "Running"
+                        },
+                        None,
+                        None,
+                    );
+                    self.executions
+                        .record_tool_lifecycle_event(execution.manifest_id, &lifecycle)?;
+                    sink(StreamEvent::Tool(lifecycle));
                     let (tool_id, mut outcome) = if suppressed {
                         (
                             descriptor.id.clone(),
@@ -1052,8 +1152,50 @@ impl Kernel {
                                 )
                             }
                             Err(
-                                error @ KernelError::Runtime(RuntimeError::NeedsApproval { .. }),
+                                error @ KernelError::Runtime(RuntimeError::NeedsApproval {
+                                    job_id,
+                                    ..
+                                }),
                             ) => {
+                                let tool_duration_ms = elapsed_ms(tool_started);
+                                let summary = self
+                                    .runtime
+                                    .list_pending_approvals()?
+                                    .into_iter()
+                                    .find(|pending| pending.job_id == job_id)
+                                    .map(|pending| exact_action_summary(&pending.effect_json))
+                                    .unwrap_or_else(|| "Exact action requires approval".into());
+                                let mut finish_event = timing_event(
+                                    TimingEventKind::ToolFinished,
+                                    turn_started,
+                                    Some(tool_duration_ms),
+                                    Some(steps),
+                                    Some(&call),
+                                );
+                                finish_event.status = Some("approval_required".into());
+                                self.executions
+                                    .record_timing_event(execution.manifest_id, &finish_event)?;
+                                let lifecycle = tool_lifecycle_event(
+                                    execution.manifest_id,
+                                    &call,
+                                    descriptor.id.clone(),
+                                    ToolLifecyclePhase::ApprovalRequired,
+                                    summary,
+                                    Some(tool_duration_ms),
+                                    None,
+                                );
+                                self.executions.record_tool_lifecycle_event(
+                                    execution.manifest_id,
+                                    &lifecycle,
+                                )?;
+                                sink(StreamEvent::Tool(lifecycle));
+                                sink(StreamEvent::Timing(finish_event));
+                                self.sessions.save(
+                                    self.session_id,
+                                    &self.session_title,
+                                    &pack_names(&self.packs),
+                                    &self.messages,
+                                )?;
                                 return Err(error);
                             }
                             Err(error) if is_control_plane_tool_error(&error) => return Err(error),
@@ -1133,10 +1275,28 @@ impl Kernel {
                         invoked_tools.push(tool_id);
                     }
                     tool_trace.push(format!("{} -> {}", call.name, outcome.summary));
-                    sink(StreamEvent::ToolStatus {
-                        name: call.name.clone(),
-                        detail: outcome.summary,
-                    });
+                    let phase = if suppressed {
+                        ToolLifecyclePhase::Suppressed
+                    } else {
+                        match outcome.kind {
+                            ToolOutcomeKind::Succeeded => ToolLifecyclePhase::Succeeded,
+                            ToolOutcomeKind::Failed => ToolLifecyclePhase::Failed,
+                            ToolOutcomeKind::Cancelled => ToolLifecyclePhase::Cancelled,
+                            ToolOutcomeKind::Ambiguous => ToolLifecyclePhase::Ambiguous,
+                        }
+                    };
+                    let lifecycle = tool_lifecycle_event(
+                        execution.manifest_id,
+                        &call,
+                        descriptor.id.clone(),
+                        phase,
+                        outcome.summary.clone(),
+                        Some(tool_duration_ms),
+                        Some(outcome.clone()),
+                    );
+                    self.executions
+                        .record_tool_lifecycle_event(execution.manifest_id, &lifecycle)?;
+                    sink(StreamEvent::Tool(lifecycle));
                     sink(StreamEvent::Timing(finish_event));
                     self.messages.push(Message {
                         role: Role::Tool,
@@ -1332,13 +1492,28 @@ impl Kernel {
                     budget: Default::default(),
                     nodes: vec![NodeSpec {
                         label: "write".into(),
-                        effect: Effect::WriteFile {
+                        effect: Effect::ProjectWriteFile {
+                            workspace_sha256: self.runtime.workspace_sha256(),
                             relative_path: path.into(),
                             contents: contents.into(),
                         },
                     }],
                 })?;
                 let status = self.runtime.run_all(job)?;
+                if status == optimus_runtime::JobStatus::AwaitingApproval {
+                    let node_index = self
+                        .runtime
+                        .list_pending_approvals()?
+                        .into_iter()
+                        .find(|pending| pending.job_id == job)
+                        .and_then(|pending| pending.node_index)
+                        .unwrap_or(0);
+                    return Err(optimus_runtime::RuntimeError::NeedsApproval {
+                        job_id: job,
+                        node_index,
+                    }
+                    .into());
+                }
                 Ok(json!({
                     "ok": status == optimus_runtime::JobStatus::Succeeded,
                     "job": job.to_string(),
@@ -1353,7 +1528,7 @@ impl Kernel {
                     .get("path")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| KernelError::Tool("read_file requires path".into()))?;
-                let roots = FsRoots::new(vec![self.workspace.clone()])
+                let roots = FsRoots::new(self.project_roots.clone())
                     .map_err(|error| KernelError::Tool(format!("read {path}: {error}")))?;
                 let body = roots
                     .read_text(path, 1024 * 1024, false)
@@ -1386,7 +1561,8 @@ impl Kernel {
                     budget: Default::default(),
                     nodes: vec![NodeSpec {
                         label: "run".into(),
-                        effect: Effect::RunCommand {
+                        effect: Effect::ProjectRunCommand {
+                            workspace_sha256: self.runtime.workspace_sha256(),
                             program: program.into(),
                             args,
                         },
@@ -1544,6 +1720,30 @@ fn elapsed_ms(started: Instant) -> u64 {
     started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64
 }
 
+fn exact_action_summary(effect_json: &str) -> String {
+    match serde_json::from_str::<Effect>(effect_json) {
+        Ok(Effect::ProjectWriteFile {
+            relative_path,
+            contents,
+            ..
+        }) => format!("Write {relative_path} ({} bytes)", contents.len()),
+        Ok(Effect::ProjectRunCommand { program, args, .. })
+        | Ok(Effect::RunCommand { program, args }) => {
+            let program = serde_json::to_string(&program).unwrap_or_else(|_| "<invalid>".into());
+            let args = serde_json::to_string(&args).unwrap_or_else(|_| "<invalid>".into());
+            format!("Run {program} with args {args}")
+        }
+        Ok(Effect::WriteFile {
+            relative_path,
+            contents,
+        }) => format!("Write {relative_path} ({} bytes)", contents.len()),
+        Ok(Effect::AssertFileEquals { relative_path, .. }) => {
+            format!("Verify {relative_path}")
+        }
+        Err(_) => "Exact action requires approval".into(),
+    }
+}
+
 fn timing_event(
     kind: TimingEventKind,
     turn_started: Instant,
@@ -1598,6 +1798,29 @@ fn summarize(s: &str) -> String {
         s.to_string()
     } else {
         format!("{}…", &s[..MAX])
+    }
+}
+
+fn tool_lifecycle_event(
+    run_id: Uuid,
+    call: &ToolCall,
+    tool_id: ToolId,
+    phase: ToolLifecyclePhase,
+    summary: impl Into<String>,
+    duration_ms: Option<u64>,
+    outcome: Option<ToolOutcome>,
+) -> ToolLifecycleEvent {
+    let run_id = run_id.to_string();
+    ToolLifecycleEvent {
+        schema_version: TOOL_LIFECYCLE_SCHEMA_VERSION,
+        event_id: format!("{run_id}:{}:{}", call.id, phase.as_str()),
+        run_id,
+        call_id: call.id.clone(),
+        tool_id,
+        phase,
+        summary: summary.into(),
+        duration_ms,
+        outcome,
     }
 }
 
@@ -1802,5 +2025,18 @@ mod turn_guard_tests {
             arguments: json!({}),
         })
         .is_none());
+    }
+
+    #[test]
+    fn approval_summary_keeps_command_arguments_unambiguous() {
+        let effect = Effect::ProjectRunCommand {
+            workspace_sha256: "0".repeat(64),
+            program: "tool runner".into(),
+            args: vec!["--label".into(), "two words".into()],
+        };
+        assert_eq!(
+            exact_action_summary(&serde_json::to_string(&effect).unwrap()),
+            "Run \"tool runner\" with args [\"--label\",\"two words\"]"
+        );
     }
 }

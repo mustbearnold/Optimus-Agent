@@ -73,7 +73,7 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
 | `apps/optimus-desktop` | Confirmed current behaviour | Native Wry/Tao desktop shell with WebKitGTK on Linux and WebView2 on Windows, native IPC, bounded worker queues, inline HTML/JS/CSS UI, and loopback HTTP test mode. |
 | `apps/optimus-electron` | Confirmed current behaviour | Default repository-level React shell; authenticates bounded Rust host requests in main, exposes a context-isolated preload, owns chat AbortControllers and one sandboxed `WebContentsView`, mediates bounded one-shot page annotations, and retains `OPTIMUS_ELECTRON_UI=legacy` rollback. |
-| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench with a Codex-measured neutral shell, typed transports, versioned local multi-folder projects, session-owned conversations, frame-coordinated streaming/Browser geometry, categorized Settings, and responsive Work/Browser/Files/Artifacts/Execution surfaces. |
+| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench with a Codex-measured neutral shell, typed transports, multi-folder project presentation plus Rust scope authorization, session-owned conversations, durable tool-card replay, frame-coordinated streaming/Browser geometry, categorized Settings, and responsive Work/Browser/Files/Artifacts/Execution surfaces. |
 | `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, typed agent/workflow contracts and registries, durable agent invocation ledger, sessions, execution manifests, credential protection, canonical routing, cron, gateway, browser/search effectors, filesystem sandbox, and offline eval harnesses. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
@@ -208,6 +208,17 @@ job/node/SHA-256 effect identity. Browser tools use an HTTP text/link effector,
 not CDP. `read_file`
 uses the filesystem sandbox and denies secret basenames.
 
+**Confirmed current behaviour:** project sessions load canonical roots from the
+Rust-owned project authority store. Reads use the authorized root set. Writes
+and commands persist the primary workspace hash, are high-risk under SmartDeny,
+and reopen the exact matching authorized root when an approval is granted.
+
+**Confirmed current behaviour:** tool streams use stable run/call/event IDs and
+explicit lifecycle phases. Each transition is stored before delivery in an
+ordered execution event table. Desktop session reload removes provider protocol
+messages and attaches those events to the owning assistant turn; React reduces
+them by call identity and deduplicates reconnect delivery by event identity.
+
 **Unknown or unresolved behaviour:** owner-specific runtime paths do not yet
 implement universal cooperative cancellation or retries merely because the
 descriptor declares their support boundary.
@@ -223,7 +234,8 @@ Optimus home:
 | `memory.db` | memory | Evidence ledger and bitemporal claims. |
 | `skills.db` | skills | Skill versions, permissions, outcomes, and events. |
 | `sessions.db` | kernel/session | Session title, loaded pack names, serialized messages, and hash-only durable effect causal links. |
-| `execution.db` | kernel/execution | Versioned execution manifests, exact model/tool hashes and outcomes, monotonic duration fields, ordered timing events, terminal status, trace links, and replay classification. |
+| `execution.db` | kernel/execution | Versioned execution manifests, exact model/tool hashes and outcomes, ordered full tool lifecycle events, monotonic duration fields, ordered timing events, terminal status, trace links, and replay classification. |
+| `project-authority.json` | kernel/project authority | Versioned canonical project roots, primary-root selection, and consumed native selection grants; renderer project state is not authority. |
 | `cron.db` | kernel/cron | Interval schedules, exact lease owner/generation/token/deadline state, and latest status. |
 | `gateway/gateway.db` plus files | kernel/gateway | Authoritative message claims/attempts/terminal outbox JSON plus reconciled inbox/outbox/processed/failed adapter files. |
 | caller-selected agent registry/invocation DBs | kernel/agent | Immutable descriptor versions plus accepted invocation projections, ordered events, retry lineage, cancellation, terminal results, and validated effect links. |
@@ -351,9 +363,9 @@ then restore it at settled bounds after close.
 
 **Confirmed current behaviour:** the React project catalog can group several
 folder paths under one local project identity and nominate one primary root.
-Legacy single-path records migrate to `rootPaths[]`. This presentation state
-does not edit Rust filesystem allowlists or activate project-isolation
-enforcement.
+Legacy single-path records migrate to `rootPaths[]`. New roots become runtime
+authority only after a native picker stages a single-use token and Rust accepts
+the canonical scope; renderer presentation state alone grants nothing.
 
 **Confirmed current behaviour:** desktop HTTP mode is explicitly development-only
 and requires a 32-character bearer token. Effectful POSTs additionally require

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { ToolLifecycleEvent } from '../ipc/contracts';
 import { frameCoordinator } from '../performance/frameCoordinator';
 import { conversationStore } from './conversationStore';
 
@@ -99,8 +100,8 @@ describe('ConversationStore', () => {
     const id = `tools-${Date.now()}`;
     conversationStore.load({ id, messages: [] });
     conversationStore.begin(id, 'inspect');
-    conversationStore.apply(id, { type: 'tool', name: 'read_file', detail: 'running' });
-    conversationStore.apply(id, { type: 'tool', name: 'read_file', detail: 'Read AGENTS.md' });
+    conversationStore.apply(id, toolEvent('call-1', 'started', 'Running'));
+    conversationStore.apply(id, toolEvent('call-1', 'succeeded', 'Read AGENTS.md'));
     conversationStore.apply(id, { type: 'done' });
 
     const firstAssistant = conversationStore
@@ -126,13 +127,168 @@ describe('ConversationStore', () => {
     const id = `tool-failure-${Date.now()}`;
     conversationStore.load({ id, messages: [] });
     conversationStore.begin(id, 'inspect');
-    conversationStore.apply(id, {
-      type: 'tool',
-      name: 'run_command',
-      detail: 'npm test',
-    });
+    conversationStore.apply(id, toolEvent('call-1', 'started', 'npm test', 'run_command'));
     conversationStore.apply(id, { type: 'error', error: 'command failed' });
 
     expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]?.status).toBe('failed');
   });
+
+  it('keeps an exact-action tool awaiting approval when the stream closes', () => {
+    const id = `tool-approval-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'update the file');
+    conversationStore.apply(id, toolEvent('call-1', 'started', 'Running', 'write_file'));
+    conversationStore.apply(
+      id,
+      toolEvent('call-1', 'approval_required', 'Write src/app.ts (12 bytes)', 'write_file')
+    );
+    conversationStore.apply(id, { type: 'error', error: 'approval required' });
+
+    expect(conversationStore.get(id).status).toBe('awaiting_approval');
+    expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]).toEqual(
+      expect.objectContaining({
+        status: 'awaiting_approval',
+        detail: 'Write src/app.ts (12 bytes)',
+      })
+    );
+  });
+
+  it('replays durable tool receipts on reload and ignores reconnect duplicates', () => {
+    const id = `tool-reload-${Date.now()}`;
+    const started = toolEvent('call-1', 'started', 'Reading', 'read_file');
+    const succeeded = toolEvent('call-1', 'succeeded', 'Read README.md', 'read_file');
+    conversationStore.load({
+      id,
+      run_status: 'succeeded',
+      messages: [
+        { role: 'user', content: 'inspect' },
+        { role: 'assistant', content: 'Done.', tool_events: [started, succeeded] },
+      ],
+    });
+
+    expect(conversationStore.get(id).status).toBe('idle');
+    expect(conversationStore.get(id).messages.at(-1)?.tools).toEqual([
+      expect.objectContaining({
+        callId: 'call-1',
+        detail: 'Read README.md',
+        status: 'completed',
+      }),
+    ]);
+
+    conversationStore.apply(id, succeeded);
+    expect(conversationStore.get(id).messages.at(-1)?.tools).toHaveLength(1);
+  });
+
+  it('restores exact approval state even though the interrupted turn settled as failed', () => {
+    const id = `approval-reload-${Date.now()}`;
+    conversationStore.load({
+      id,
+      run_status: 'failed',
+      messages: [
+        { role: 'user', content: 'update the file' },
+        {
+          role: 'assistant',
+          content: '',
+          tool_events: [
+            toolEvent('call-1', 'started', 'Running', 'write_file'),
+            toolEvent(
+              'call-1',
+              'approval_required',
+              'Write src/app.ts (12 bytes)',
+              'write_file'
+            ),
+          ],
+        },
+      ],
+    });
+
+    expect(conversationStore.get(id).status).toBe('awaiting_approval');
+    expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]?.status).toBe(
+      'awaiting_approval'
+    );
+  });
+
+  it('restores a failed run even when its last tool completed successfully', () => {
+    const id = `failed-after-tool-${Date.now()}`;
+    conversationStore.load({
+      id,
+      run_status: 'failed',
+      messages: [
+        { role: 'user', content: 'inspect then answer' },
+        {
+          role: 'assistant',
+          content: '',
+          tool_events: [
+            toolEvent('call-1', 'started', 'Reading', 'read_file'),
+            toolEvent('call-1', 'succeeded', 'Read README.md', 'read_file'),
+          ],
+        },
+      ],
+    });
+
+    expect(conversationStore.get(id).status).toBe('failed');
+    expect(conversationStore.get(id).statusText).toBe('Run failed');
+  });
+
+  it('does not let an older approval override a newer completed turn', () => {
+    const id = `stale-approval-${Date.now()}`;
+    conversationStore.load({
+      id,
+      run_status: 'succeeded',
+      messages: [
+        { role: 'user', content: 'update the file' },
+        {
+          role: 'assistant',
+          content: '',
+          tool_events: [
+            toolEvent('call-1', 'started', 'Running', 'write_file'),
+            toolEvent('call-1', 'approval_required', 'Write src/app.ts (12 bytes)', 'write_file'),
+          ],
+        },
+        { role: 'user', content: 'leave it unchanged' },
+        { role: 'assistant', content: 'Left unchanged.' },
+      ],
+    });
+
+    expect(conversationStore.get(id).status).toBe('idle');
+    expect(conversationStore.get(id).statusText).toBe('');
+    expect(conversationStore.get(id).messages[1]?.tools?.[0]?.status).toBe(
+      'awaiting_approval'
+    );
+  });
+
+  it('uses call identity and explicit phase for overlapping and duplicate tool events', () => {
+    const id = `tool-identity-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'inspect twice');
+
+    conversationStore.apply(id, toolEvent('call-1', 'started', 'First read'));
+    conversationStore.apply(id, toolEvent('call-2', 'started', 'Second read'));
+    conversationStore.apply(id, toolEvent('call-1', 'succeeded', 'No failure despite this word'));
+    conversationStore.apply(id, toolEvent('call-1', 'succeeded', 'No failure despite this word'));
+
+    expect(conversationStore.get(id).messages.at(-1)?.tools).toEqual([
+      expect.objectContaining({ callId: 'call-1', status: 'completed' }),
+      expect.objectContaining({ callId: 'call-2', status: 'running' }),
+    ]);
+  });
 });
+
+function toolEvent(
+  callId: string,
+  phase: 'started' | 'approval_required' | 'succeeded',
+  summary: string,
+  toolId = 'read_file'
+): ToolLifecycleEvent {
+  return {
+    type: 'tool',
+    schema_version: 1,
+    event_id: `run-1:${callId}:${phase}`,
+    run_id: 'run-1',
+    call_id: callId,
+    tool_id: toolId,
+    phase,
+    summary,
+    duration_ms: phase === 'started' ? undefined : 12,
+  };
+}

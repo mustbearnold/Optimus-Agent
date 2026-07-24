@@ -1777,6 +1777,10 @@ code {
   color: var(--accent-strong);
 }
 
+.activity-timeline.is-attention .activity-heading > svg:first-child {
+  color: var(--warning);
+}
+
 .activity-timeline.is-failed .activity-heading > svg:first-child {
   color: var(--danger);
 }
@@ -1817,6 +1821,11 @@ code {
 
 .activity-row.is-running > svg {
   color: var(--accent-strong);
+}
+
+.activity-row.is-awaiting_approval > svg,
+.activity-row.is-ambiguous > svg {
+  color: var(--warning);
 }
 
 .activity-row.is-failed > svg {

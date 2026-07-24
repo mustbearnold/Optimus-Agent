@@ -37,6 +37,9 @@ pub struct EvalCase {
     /// Disable stream chunking for offline scripted model.
     #[serde(default = "default_true")]
     pub stream_chunks: bool,
+    /// Explicit runtime policy for deterministic effect fixtures.
+    #[serde(default)]
+    pub effect_policy: PolicyMode,
 }
 
 fn default_true() -> bool {
@@ -552,6 +555,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             expect_tools: vec![],
             expect_text_contains: Some("pong".into()),
             stream_chunks: false,
+            effect_policy: PolicyMode::SmartDeny,
         },
         EvalCase {
             id: "memory-then-answer".into(),
@@ -576,6 +580,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             expect_tools: vec!["memory_recall".into()],
             expect_text_contains: Some("helix".into()),
             stream_chunks: false,
+            effect_policy: PolicyMode::SmartDeny,
         },
         EvalCase {
             id: "pack-activate-browser".into(),
@@ -597,6 +602,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             expect_tools: vec!["activate_pack".into()],
             expect_text_contains: Some("browser".into()),
             stream_chunks: false,
+            effect_policy: PolicyMode::SmartDeny,
         },
         EvalCase {
             id: "write-file-job".into(),
@@ -621,12 +627,19 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             expect_tools: vec!["write_file".into()],
             expect_text_contains: Some("wrote".into()),
             stream_chunks: false,
+            effect_policy: PolicyMode::Unrestricted,
         },
     ]
 }
 
 pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResult, KernelError> {
-    let mut k = Kernel::open(home.as_ref(), KernelConfig::default())?;
+    let mut k = Kernel::open(
+        home.as_ref(),
+        KernelConfig {
+            effect_policy: case.effect_policy,
+            ..KernelConfig::default()
+        },
+    )?;
     // Seed memory for the recall case (deterministic fixture).
     if case.id == "memory-then-answer" {
         k.remember_demo("user", "prefers_editor", "helix")?;

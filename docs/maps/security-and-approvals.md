@@ -98,6 +98,12 @@ existing targets or missing descendants below symlinks/Windows junctions cannot
 redirect built-in effects. Runtime and `FsRoots` share one case-insensitive
 secret-basename predicate.
 
+**Confirmed current behaviour:** project scopes are a separate Rust-owned,
+versioned allowlist. A new canonical root requires a short-lived single-use
+token staged by a native folder selection; the renderer cannot mint one.
+Project file and command effects persist the canonical workspace hash and
+fail before execution if approval is replayed against another root.
+
 **Known boundary:** approved arbitrary child processes are not governed by the
 built-in file-effect directory capability and can use their own filesystem
 syscalls.

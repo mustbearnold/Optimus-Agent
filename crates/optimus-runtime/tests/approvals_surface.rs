@@ -185,6 +185,83 @@ fn corrupt_effect_is_rejected_before_projection_or_event_mutation() {
 }
 
 #[test]
+fn project_write_approval_cannot_replay_in_a_different_workspace() {
+    let dir = tempdir().unwrap();
+    let db = dir.path().join("project-bound.db");
+    let root_a = dir.path().join("project-a");
+    let root_b = dir.path().join("project-b");
+    std::fs::create_dir_all(&root_a).unwrap();
+    std::fs::create_dir_all(&root_b).unwrap();
+    let runtime_a = Runtime::open(&db, &root_a).unwrap();
+    let job = runtime_a
+        .create_job(JobSpec {
+            label: "project-bound write".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "write".into(),
+                effect: Effect::ProjectWriteFile {
+                    workspace_sha256: runtime_a.workspace_sha256(),
+                    relative_path: "proof.txt".into(),
+                    contents: "bound to project a".into(),
+                },
+            }],
+        })
+        .unwrap();
+
+    assert_eq!(
+        runtime_a.run_all(job).unwrap(),
+        optimus_graph::JobStatus::AwaitingApproval
+    );
+
+    let runtime_b = Runtime::open(&db, &root_b).unwrap();
+    runtime_b
+        .grant_approval(ApprovalGrant::for_job(job))
+        .unwrap();
+    assert_eq!(
+        runtime_b.run_all(job).unwrap(),
+        optimus_graph::JobStatus::Failed
+    );
+    assert!(!root_a.join("proof.txt").exists());
+    assert!(!root_b.join("proof.txt").exists());
+}
+
+#[test]
+fn exact_project_write_runs_after_approval_in_the_bound_workspace() {
+    let dir = tempdir().unwrap();
+    let db = dir.path().join("project-approved.db");
+    let root = dir.path().join("project");
+    std::fs::create_dir_all(&root).unwrap();
+    let runtime = Runtime::open(&db, &root).unwrap();
+    let job = runtime
+        .create_job(JobSpec {
+            label: "approved project write".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "write".into(),
+                effect: Effect::ProjectWriteFile {
+                    workspace_sha256: runtime.workspace_sha256(),
+                    relative_path: "nested/proof.txt".into(),
+                    contents: "approved".into(),
+                },
+            }],
+        })
+        .unwrap();
+
+    assert_eq!(
+        runtime.run_all(job).unwrap(),
+        optimus_graph::JobStatus::AwaitingApproval
+    );
+    assert_eq!(
+        runtime.grant_and_resume(job).unwrap(),
+        optimus_graph::JobStatus::Succeeded
+    );
+    assert_eq!(
+        std::fs::read_to_string(root.join("nested/proof.txt")).unwrap(),
+        "approved"
+    );
+}
+
+#[test]
 fn denial_revocation_and_expiry_never_authorize_execution() {
     let dir = tempdir().unwrap();
     let db = dir.path().join("lifecycle.db");

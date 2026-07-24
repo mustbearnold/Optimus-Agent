@@ -23,7 +23,10 @@ pub(crate) use system::{auth_status_json, doctor_json};
 mod tests {
     use std::path::PathBuf;
 
-    use optimus_kernel::{StreamEvent, TimingEvent, TimingEventKind};
+    use optimus_kernel::{
+        StreamEvent, TimingEvent, TimingEventKind, ToolLifecycleEvent, ToolLifecyclePhase,
+    };
+    use optimus_packs::{ReplayClass, ToolId, ToolOutcome};
     use serde_json::json;
 
     use super::{handle_ipc, stream_event_to_json, IpcEnvelope, IpcReply};
@@ -64,13 +67,35 @@ mod tests {
             stream_event_to_json(&StreamEvent::TextDelta("x".into())),
             json!({"type":"delta","text":"x"})
         );
-        assert_eq!(
-            stream_event_to_json(&StreamEvent::ToolStatus {
-                name: "web_search".into(),
-                detail: "run".into()
-            }),
-            json!({"type":"tool","name":"web_search","detail":"run"})
+        let outcome = ToolOutcome::succeeded(
+            "call-1",
+            ToolId::new("web_search"),
+            "Found 3 sources",
+            json!({"result_count": 3}),
+            ReplayClass::ExternalNondeterministic,
         );
+        let tool = stream_event_to_json(&StreamEvent::Tool(ToolLifecycleEvent {
+            schema_version: 1,
+            event_id: "run-1:call-1:succeeded".into(),
+            run_id: "run-1".into(),
+            call_id: "call-1".into(),
+            tool_id: ToolId::new("web_search"),
+            phase: ToolLifecyclePhase::Succeeded,
+            summary: "Found 3 sources".into(),
+            duration_ms: Some(17),
+            outcome: Some(outcome),
+        }));
+        assert_eq!(tool["type"], "tool");
+        assert_eq!(tool["schema_version"], 1);
+        assert_eq!(tool["event_id"], "run-1:call-1:succeeded");
+        assert_eq!(tool["run_id"], "run-1");
+        assert_eq!(tool["call_id"], "call-1");
+        assert_eq!(tool["tool_id"], "web_search");
+        assert_eq!(tool["phase"], "succeeded");
+        assert_eq!(tool["summary"], "Found 3 sources");
+        assert_eq!(tool["duration_ms"], 17);
+        assert_eq!(tool["outcome"]["kind"], "succeeded");
+        assert_eq!(tool["outcome"]["data"]["result_count"], 3);
         assert_eq!(
             stream_event_to_json(&StreamEvent::Status("working".into())),
             json!({"type":"status","text":"working"})

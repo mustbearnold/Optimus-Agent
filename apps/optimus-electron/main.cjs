@@ -13,6 +13,7 @@ const {
   shell,
 } = require('electron');
 const { spawn } = require('child_process');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -77,6 +78,8 @@ const DESKTOP_METHODS = new Set([
   'fs_roots',
   'fs_list',
   'fs_read',
+  'project_scopes_list',
+  'project_scopes_authorize',
   'artifacts_list',
   'artifacts_put_text',
   'artifacts_get',
@@ -94,6 +97,7 @@ let previewAnnotationActive = false;
 let previewSession = null;
 let previewDownloadHandler = null;
 let httpToken = process.env.OPTIMUS_HTTP_TOKEN || '';
+let nativeSelectionToken = process.env.OPTIMUS_NATIVE_SELECTION_TOKEN || '';
 let hostBase = `http://127.0.0.1:${HOST_PORT}`;
 let requestId = 1;
 let streamId = 1;
@@ -149,6 +153,8 @@ function waitForHealth(base, token, timeoutMs = 45000) {
 function startHost() {
   if (process.env.OPTIMUS_HOST_EXTERNAL === '1') {
     httpToken = process.env.OPTIMUS_HTTP_TOKEN || httpToken;
+    nativeSelectionToken =
+      process.env.OPTIMUS_NATIVE_SELECTION_TOKEN || nativeSelectionToken;
     hostBase = process.env.OPTIMUS_HOST_URL || hostBase;
     return waitForHealth(hostBase, httpToken);
   }
@@ -164,7 +170,11 @@ function startHost() {
   if (!env.OPTIMUS_HTTP_TOKEN || env.OPTIMUS_HTTP_TOKEN.length < 32) {
     env.OPTIMUS_HTTP_TOKEN = `optimus-electron-${process.pid}-${Date.now()}-0123456789ab`;
   }
+  if (!env.OPTIMUS_NATIVE_SELECTION_TOKEN || env.OPTIMUS_NATIVE_SELECTION_TOKEN.length < 32) {
+    env.OPTIMUS_NATIVE_SELECTION_TOKEN = crypto.randomBytes(32).toString('hex');
+  }
   httpToken = env.OPTIMUS_HTTP_TOKEN;
+  nativeSelectionToken = env.OPTIMUS_NATIVE_SELECTION_TOKEN;
   hostBase = `http://127.0.0.1:${HOST_PORT}`;
 
   const args = ['--host-only', '--host-port', String(HOST_PORT)];
@@ -569,6 +579,10 @@ function assertBounded(value, label) {
 
 async function invokeHost(method, params = {}) {
   if (!DESKTOP_METHODS.has(method)) throw new Error(`Unsupported desktop method: ${method}`);
+  return invokeHostInternal(method, params);
+}
+
+async function invokeHostInternal(method, params = {}) {
   assertBounded(params, 'IPC params');
   const response = await fetch(`${hostBase}/api/ipc`, {
     method: 'POST',
@@ -735,7 +749,16 @@ function setupIpc() {
       properties: ['openDirectory', 'createDirectory'],
     });
     if (result.canceled || !result.filePaths[0]) return { ok: false, cancelled: true };
-    return { ok: true, path: result.filePaths[0] };
+    const staged = await invokeHostInternal('project_root_stage_native', {
+      path: result.filePaths[0],
+      native_selection_token: nativeSelectionToken,
+    });
+    return {
+      ok: true,
+      path: staged.path,
+      grantToken: staged.grant_token,
+      grantExpiresUnix: staged.expires_unix,
+    };
   });
 
   ipcMain.handle('optimus:open-path', async (event, targetPath) => {

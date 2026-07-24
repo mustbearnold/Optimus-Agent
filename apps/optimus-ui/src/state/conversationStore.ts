@@ -1,5 +1,12 @@
 import { useSyncExternalStore } from 'react';
-import type { Message, RunStatus, SessionDetail, StreamEvent, ToolActivity } from '../ipc/contracts';
+import type {
+  Message,
+  RunStatus,
+  SessionDetail,
+  StreamEvent,
+  ToolActivity,
+  ToolLifecyclePhase,
+} from '../ipc/contracts';
 import { frameCoordinator } from '../performance/frameCoordinator';
 
 type SessionProjection = {
@@ -24,6 +31,7 @@ class ConversationStore {
   private readonly listeners = new Map<string, Set<() => void>>();
   private readonly allListeners = new Set<() => void>();
   private readonly streamText = new Map<string, string>();
+  private readonly toolEventIds = new Map<string, Set<string>>();
   private readonly sessionVersions = new Map<string, number>();
   private allVersion = 0;
 
@@ -68,18 +76,59 @@ class ConversationStore {
   }
 
   load(detail: SessionDetail) {
-    const messages: Message[] = detail.messages.map((message, index) => ({
-      id: `${detail.id}:persisted:${index}`,
-      role: message.role,
-      content: message.content,
-      status: 'completed',
-    }));
+    const eventIds = new Set<string>();
+    let lastLifecycle: ToolLifecyclePhase | undefined;
+    let lastSummary = '';
+    const messages: Message[] = detail.messages.map((message, index) => {
+      if (message.role === 'user') {
+        lastLifecycle = undefined;
+        lastSummary = '';
+      }
+      const tools = new Map<string, ToolActivity>();
+      for (const event of message.tool_events || []) {
+        if (eventIds.has(event.event_id)) continue;
+        eventIds.add(event.event_id);
+        lastLifecycle = event.phase;
+        lastSummary = event.summary;
+        const current = tools.get(event.call_id);
+        tools.set(event.call_id, { ...current, ...toolActivityFromEvent(event) });
+      }
+      const persistedTools = [...tools.values()];
+      return {
+        id: `${detail.id}:persisted:${index}`,
+        role: message.role,
+        content: message.content,
+        status: persistedMessageStatus(persistedTools),
+        ...(persistedTools.length ? { tools: persistedTools } : {}),
+      };
+    });
+    const status: RunStatus =
+      lastLifecycle === 'approval_required'
+        ? 'awaiting_approval'
+        : lastLifecycle === 'failed' ||
+            lastLifecycle === 'ambiguous' ||
+            detail.run_status === 'failed'
+          ? 'failed'
+          : lastLifecycle === 'cancelled' || detail.run_status === 'cancelled'
+            ? 'cancelled'
+            : detail.run_status === 'running'
+            ? 'working'
+            : 'idle';
+    const statusText =
+      status === 'idle'
+        ? ''
+        : status === 'failed' && lastLifecycle !== 'failed' && lastLifecycle !== 'ambiguous'
+          ? 'Run failed'
+          : status === 'cancelled' && lastLifecycle !== 'cancelled'
+            ? 'Run cancelled'
+            : lastSummary;
     this.sessions.set(detail.id, {
       messages,
-      status: 'idle',
-      statusText: '',
+      status,
+      statusText,
       loaded: true,
     });
+    this.toolEventIds.set(detail.id, eventIds);
     this.emit(detail.id);
   }
 
@@ -109,6 +158,7 @@ class ConversationStore {
       ],
     });
     this.streamText.set(sessionId, '');
+    this.toolEventIds.set(sessionId, new Set());
     this.emit(sessionId);
   }
 
@@ -123,32 +173,18 @@ class ConversationStore {
       return;
     }
     if (event.type === 'tool') {
+      if (!this.acceptToolEvent(sessionId, event.event_id)) return;
       const messages = current.messages.slice();
       const messageIndex = findLastAssistantIndex(messages);
       if (messageIndex < 0) return;
       const message = messages[messageIndex]!;
       const tools = [...(message.tools || [])];
-      const openToolIndex = findLastOpenToolIndex(tools, event.name);
-      if (openToolIndex >= 0 && event.detail !== 'running') {
-        const tool = tools[openToolIndex]!;
-        tools[openToolIndex] = {
-          ...tool,
-          detail: event.detail,
-          status: toolResultStatus(event.detail),
-        };
-      } else if (openToolIndex >= 0) {
-        tools[openToolIndex] = { ...tools[openToolIndex]!, detail: event.detail };
+      const toolIndex = tools.findIndex((tool) => tool.callId === event.call_id);
+      const activity = toolActivityFromEvent(event);
+      if (toolIndex >= 0) {
+        tools[toolIndex] = { ...tools[toolIndex]!, ...activity };
       } else {
-        const priorToolCount = current.messages.reduce(
-          (count, candidate) => count + (candidate.tools?.length || 0),
-          0
-        );
-        tools.push({
-          id: `${message.id}:tool:${priorToolCount}`,
-          name: event.name,
-          detail: event.detail,
-          status: 'running',
-        });
+        tools.push(activity);
       }
       messages[messageIndex] = {
         ...message,
@@ -156,8 +192,8 @@ class ConversationStore {
       };
       this.sessions.set(sessionId, {
         ...current,
-        status: 'working',
-        statusText: event.detail || `${event.name}…`,
+        status: event.phase === 'approval_required' ? 'awaiting_approval' : 'working',
+        statusText: event.summary || `${event.tool_id}…`,
         messages,
       });
     } else if (event.type === 'status') {
@@ -186,6 +222,14 @@ class ConversationStore {
       return;
     } else if (event.type === 'error') {
       this.flushText(sessionId);
+      const pending = this.sessions.get(sessionId);
+      const hasExactApproval = pending?.messages.some((message) =>
+        message.tools?.some((tool) => tool.status === 'awaiting_approval')
+      );
+      if (pending?.status === 'awaiting_approval' && hasExactApproval) {
+        this.emit(sessionId);
+        return;
+      }
       const status: RunStatus = /abort|cancel/i.test(event.error) ? 'cancelled' : 'failed';
       this.setTerminal(
         sessionId,
@@ -259,12 +303,14 @@ class ConversationStore {
         ...message,
         status,
         tools: message.tools?.map((tool) =>
-          tool.status === 'running'
+          tool.status === 'running' || tool.status === 'awaiting_approval'
             ? {
                 ...tool,
                 status:
                   status === 'failed' || status === 'disconnected'
                     ? ('failed' as const)
+                    : status === 'cancelled'
+                      ? ('cancelled' as const)
                     : ('completed' as const),
               }
             : tool
@@ -282,6 +328,18 @@ class ConversationStore {
     this.emit(sessionId);
   }
 
+  private acceptToolEvent(sessionId: string, eventId: string) {
+    const ids = this.toolEventIds.get(sessionId) || new Set<string>();
+    if (ids.has(eventId)) return false;
+    ids.add(eventId);
+    if (ids.size > 512) {
+      const oldest = ids.values().next().value;
+      if (oldest) ids.delete(oldest);
+    }
+    this.toolEventIds.set(sessionId, ids);
+    return true;
+  }
+
   private emit(sessionId: string) {
     this.sessionVersions.set(sessionId, this.version(sessionId) + 1);
     this.allVersion += 1;
@@ -297,18 +355,39 @@ function findLastAssistantIndex(messages: Message[]) {
   return -1;
 }
 
-function findLastOpenToolIndex(tools: ToolActivity[], name: string) {
-  for (let index = tools.length - 1; index >= 0; index -= 1) {
-    const tool = tools[index];
-    if (tool?.name === name && tool.status === 'running') return index;
+function toolActivityStatus(phase: ToolLifecyclePhase): ToolActivity['status'] {
+  switch (phase) {
+    case 'started':
+      return 'running';
+    case 'approval_required':
+      return 'awaiting_approval';
+    case 'succeeded':
+      return 'completed';
+    default:
+      return phase;
   }
-  return -1;
 }
 
-function toolResultStatus(detail: string): ToolActivity['status'] {
-  return /\b(?:fail(?:ed|ure)?|error|denied|suppressed)\b/i.test(detail)
-    ? 'failed'
-    : 'completed';
+function toolActivityFromEvent(
+  event: Extract<StreamEvent, { type: 'tool' }>
+): ToolActivity {
+  return {
+    id: event.call_id,
+    runId: event.run_id,
+    callId: event.call_id,
+    name: event.tool_id,
+    detail: event.summary,
+    status: toolActivityStatus(event.phase),
+    ...(typeof event.duration_ms === 'number' ? { durationMs: event.duration_ms } : {}),
+    ...(event.outcome ? { outcome: event.outcome } : {}),
+  };
+}
+
+function persistedMessageStatus(tools: ToolActivity[]): RunStatus {
+  if (tools.some((tool) => tool.status === 'awaiting_approval')) return 'awaiting_approval';
+  if (tools.some((tool) => tool.status === 'failed' || tool.status === 'ambiguous')) return 'failed';
+  if (tools.some((tool) => tool.status === 'running')) return 'working';
+  return 'completed';
 }
 
 export const conversationStore = new ConversationStore();

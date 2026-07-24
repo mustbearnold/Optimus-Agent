@@ -28,6 +28,8 @@ export type DesktopMethod =
   | 'fs_roots'
   | 'fs_list'
   | 'fs_read'
+  | 'project_scopes_list'
+  | 'project_scopes_authorize'
   | 'artifacts_list'
   | 'artifacts_put_text'
   | 'artifacts_get'
@@ -65,7 +67,12 @@ export type SessionMeta = {
 };
 
 export type SessionDetail = SessionMeta & {
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  run_status?: 'running' | 'succeeded' | 'failed' | 'cancelled';
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    tool_events?: ToolLifecycleEvent[];
+  }>;
 };
 
 export type ProductSettings = {
@@ -181,9 +188,55 @@ export type ArtifactDetail = {
 
 export type ToolActivity = {
   id: string;
+  runId: string;
+  callId: string;
   name: string;
   detail: string;
-  status: 'running' | 'completed' | 'failed';
+  status:
+    | 'running'
+    | 'awaiting_approval'
+    | 'completed'
+    | 'failed'
+    | 'cancelled'
+    | 'suppressed'
+    | 'ambiguous';
+  durationMs?: number;
+  outcome?: ToolOutcome;
+};
+
+export type ToolLifecyclePhase =
+  | 'started'
+  | 'approval_required'
+  | 'succeeded'
+  | 'failed'
+  | 'cancelled'
+  | 'suppressed'
+  | 'ambiguous';
+
+export type ToolOutcome = {
+  version: number;
+  call_id: string;
+  tool_id: string;
+  kind: 'succeeded' | 'failed' | 'cancelled' | 'ambiguous';
+  summary: string;
+  data: unknown;
+  artifacts: Array<Record<string, unknown>>;
+  error?: { code: string; message: string; retryable: boolean } | null;
+  replay: string;
+  provenance?: Record<string, unknown> | null;
+};
+
+export type ToolLifecycleEvent = {
+  type: 'tool';
+  schema_version: 1;
+  event_id: string;
+  run_id: string;
+  call_id: string;
+  tool_id: string;
+  phase: ToolLifecyclePhase;
+  summary: string;
+  duration_ms?: number;
+  outcome?: ToolOutcome;
 };
 
 export type TimingEvent = {
@@ -195,7 +248,7 @@ export type TimingEvent = {
 
 export type StreamEvent =
   | { type: 'delta'; text: string }
-  | { type: 'tool'; name: string; detail: string }
+  | ToolLifecycleEvent
   | { type: 'status'; text: string }
   | TimingEvent
   | { type: 'done'; result?: Record<string, unknown> }
@@ -210,6 +263,7 @@ export type ChatRequest = {
   thinking_level?: string;
   fast?: boolean;
   access?: string;
+  project_id?: string;
 };
 
 export type ChatEnvelope = {
@@ -268,12 +322,27 @@ export type Project = {
   updatedAt?: string;
 };
 
+export type ProjectRootSelection = {
+  ok: boolean;
+  cancelled?: boolean;
+  path?: string;
+  grantToken?: string;
+  grantExpiresUnix?: number;
+};
+
+export type ProjectRuntimeScope = {
+  project_id: string;
+  roots: string[];
+  primary_root: string;
+  updated_unix: number;
+};
+
 export interface OptimusTransport {
   readonly kind: 'electron' | 'http' | 'fixture';
   invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
   chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle;
   windowAction(action: 'minimize' | 'maximize' | 'close'): Promise<unknown>;
-  pickFolder(): Promise<{ ok: boolean; cancelled?: boolean; path?: string }>;
+  pickFolder(): Promise<ProjectRootSelection>;
   openPath(path: string): Promise<unknown>;
   browser?: {
     setBounds(bounds: BrowserBounds): void;
@@ -311,7 +380,7 @@ export type OptimusElectronBridge = {
     subscribe: (listener: (state: BrowserState) => void) => () => void;
   };
   windowAction: (action: string) => Promise<unknown>;
-  pickFolder: () => Promise<{ ok: boolean; cancelled?: boolean; path?: string }>;
+  pickFolder: () => Promise<ProjectRootSelection>;
   openPath: (path: string) => Promise<unknown>;
   openUrl: (url: string) => Promise<unknown>;
 };

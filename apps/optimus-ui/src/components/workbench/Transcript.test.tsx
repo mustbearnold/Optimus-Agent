@@ -86,12 +86,16 @@ describe('Transcript', () => {
             tools: [
               {
                 id: 'read-1',
+                runId: 'run-1',
+                callId: 'read-1',
                 name: 'read_file',
                 detail: 'AGENTS.md',
                 status: 'completed',
               },
               {
                 id: 'command-1',
+                runId: 'run-1',
+                callId: 'command-1',
                 name: 'run_command',
                 detail: 'npm test',
                 status: 'completed',
@@ -114,5 +118,37 @@ describe('Transcript', () => {
     expect(details).toHaveAttribute('open');
     expect(screen.getByText('AGENTS.md')).toBeVisible();
     expect(screen.getByText('npm test')).toBeVisible();
+  });
+
+  it('labels approval-required tool activity without implying it ran', () => {
+    const { container } = render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-approval',
+            role: 'assistant',
+            content: '',
+            status: 'awaiting_approval',
+            tools: [
+              {
+                id: 'write-1',
+                runId: 'run-1',
+                callId: 'write-1',
+                name: 'write_file',
+                detail: 'Write src/app.ts (12 bytes)',
+                status: 'awaiting_approval',
+              },
+            ],
+          },
+        ]}
+        status="awaiting_approval"
+        statusText="Permission required"
+        onStarter={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Approval required')).toBeInTheDocument();
+    expect(container.querySelector('.activity-timeline')).toHaveClass('is-attention');
+    expect(screen.queryByText('Editing files')).not.toBeInTheDocument();
   });
 });

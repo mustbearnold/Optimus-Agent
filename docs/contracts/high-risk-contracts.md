@@ -66,6 +66,9 @@ it does not replace executable enforcement.
 - **Evidence:** every decision is bound to job ID, node ID, and SHA-256 of the
   persisted effect JSON, with actor, creation time, expiry, denial, revocation,
   and ledger events. Changed effects and later nodes cannot reuse a grant.
+- **Evidence:** project writes and commands additionally persist the canonical
+  workspace hash. Approval execution reopens the matching Rust-authorized root
+  and rejects a foreign or changed workspace before any effect.
 - **Required contract:** request includes exact side effects and effect hash;
   grant is actor/time/scope bound, non-transferable, expirable/revocable, and
   retained in trace; denial has a defined outcome.
@@ -80,6 +83,9 @@ it does not replace executable enforcement.
   workspace directory capability. Root replacement and existing linked targets
   or missing descendants below Windows junctions/Unix symlinks are rejected by
   public-effect tests. Runtime and `FsRoots` share one secret-basename predicate.
+- **Confirmed current behaviour:** new project roots require a short-lived,
+  single-use grant staged by a native folder picker. Canonical authorized roots
+  persist under Rust ownership; absent scope does not fall back to shared work.
 - **Boundary:** approved arbitrary child processes are not filesystem-sandboxed.
 - **Owner:** runtime; align with kernel `FsRoots`.
 
@@ -259,6 +265,10 @@ it does not replace executable enforcement.
   provenance rolls back the snapshot update.
 - **Evidence:** accepted turns settle exactly once as success/failure/cancelled;
   interrupted accepted turns resume without duplicating the user segment.
+- **Evidence:** every typed tool lifecycle transition commits to the execution
+  store before stream delivery. Stable event IDs make duplicate reconnect
+  delivery idempotent; session reload attaches ordered events to the owning
+  assistant turn without exposing provider protocol messages.
 - **Boundary:** no transaction spans `optimus.db`, `sessions.db`, or agent stores;
   causal links reference previously committed authoritative attempts.
 - **Owner:** kernel/session/runtime.

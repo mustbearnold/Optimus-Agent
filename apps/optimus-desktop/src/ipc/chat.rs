@@ -71,29 +71,34 @@ pub(crate) fn chat_turn_cancellable(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let mut kernel = Kernel::open_session(
-        home,
-        KernelConfig {
-            thinking_level: params
-                .get("thinking_level")
-                .and_then(|v| v.as_str())
-                .filter(|s| !s.is_empty() && *s != "off")
-                .map(|s| s.to_string())
-                .or_else(|| {
-                    if params.get("thinking").and_then(|v| v.as_bool()) == Some(true) {
-                        Some("medium".into())
-                    } else {
-                        None
-                    }
-                }),
-            fast_mode: params
-                .get("fast")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false),
-            ..KernelConfig::default()
+    let config = KernelConfig {
+        thinking_level: params
+            .get("thinking_level")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty() && *s != "off")
+            .map(|s| s.to_string())
+            .or_else(|| {
+                if params.get("thinking").and_then(|v| v.as_bool()) == Some(true) {
+                    Some("medium".into())
+                } else {
+                    None
+                }
+            }),
+        fast_mode: params
+            .get("fast")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false),
+        effect_policy: if params.get("access").and_then(|value| value.as_str()) == Some("full") {
+            optimus_graph::PolicyMode::Unrestricted
+        } else {
+            optimus_graph::PolicyMode::SmartDeny
         },
-        session,
-    )
+        ..KernelConfig::default()
+    };
+    let mut kernel = match params.get("project_id").and_then(|value| value.as_str()) {
+        Some(project_id) => Kernel::open_project_session(home, config, session, project_id),
+        None => Kernel::open_session(home, config, session),
+    }
     .map_err(|e| e.to_string())?;
 
     let routed_model = match ProviderId::parse(&provider) {
@@ -201,8 +206,12 @@ pub(crate) fn chat_turn_cancellable(
 pub(crate) fn stream_event_to_json(ev: &StreamEvent) -> serde_json::Value {
     match ev {
         StreamEvent::TextDelta(t) => json!({"type": "delta", "text": t}),
-        StreamEvent::ToolStatus { name, detail } => {
-            json!({"type": "tool", "name": name, "detail": detail})
+        StreamEvent::Tool(tool) => {
+            let mut value = serde_json::to_value(tool).unwrap_or_default();
+            if let Some(object) = value.as_object_mut() {
+                object.insert("type".into(), json!("tool"));
+            }
+            value
         }
         StreamEvent::Status(s) => json!({"type": "status", "text": s}),
         StreamEvent::Timing(timing) => {

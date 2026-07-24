@@ -15,6 +15,7 @@ import type {
   SessionDetail,
   SessionMeta,
   StreamEvent,
+  ToolLifecycleEvent,
 } from './contracts';
 
 const sessions: SessionMeta[] = [
@@ -201,9 +202,32 @@ export function createFixtureTransport(): OptimusTransport {
         'projects activity at most once per display frame, and preserves partial text if you stop it.';
       const chunks = response.match(/.{1,7}/g) || [response];
       const done = (async () => {
+        const runId = `fixture-run-${id}`;
+        const callId = `fixture-call-${id}`;
+        const startedEvent: ToolLifecycleEvent = {
+          type: 'tool',
+          schema_version: 1,
+          event_id: `${runId}:${callId}:started`,
+          run_id: runId,
+          call_id: callId,
+          tool_id: 'read_file',
+          phase: 'started',
+          summary: 'Inspecting React workbench contracts',
+        };
+        const succeededEvent: ToolLifecycleEvent = {
+          type: 'tool',
+          schema_version: 1,
+          event_id: `${runId}:${callId}:succeeded`,
+          run_id: runId,
+          call_id: callId,
+          tool_id: 'read_file',
+          phase: 'succeeded',
+          summary: 'Read React workbench contracts',
+          duration_ms: 120,
+        };
         onEvent({ type: 'status', text: 'Planning the implementation boundary…' });
         await sleep(120);
-        onEvent({ type: 'tool', name: 'read_file', detail: 'Inspecting React workbench contracts' });
+        onEvent(startedEvent);
         for (const chunk of chunks) {
           if (cancelled) {
             onEvent({ type: 'cancelled', error: 'cancelled by user' });
@@ -212,7 +236,28 @@ export function createFixtureTransport(): OptimusTransport {
           onEvent({ type: 'delta', text: chunk });
           await sleep(24);
         }
+        onEvent(succeededEvent);
         onEvent({ type: 'timing', elapsed_ms: chunks.length * 24 + 120 });
+        const detail = details.get(request.session) || {
+          ...(sessions.find((session) => session.id === request.session) || {
+            id: request.session,
+            title: 'Session',
+          }),
+          messages: [],
+        };
+        detail.messages.push(
+          { role: 'user', content: request.message },
+          {
+            role: 'assistant',
+            content: response,
+            tool_events: [startedEvent, succeededEvent],
+          }
+        );
+        detail.run_status = 'succeeded';
+        detail.message_count = detail.messages.length;
+        details.set(request.session, detail);
+        const session = sessions.find((candidate) => candidate.id === request.session);
+        if (session) session.message_count = detail.messages.length;
         onEvent({ type: 'done', result: { provider: request.provider } });
       })();
       return {
@@ -225,7 +270,11 @@ export function createFixtureTransport(): OptimusTransport {
       };
     },
     windowAction: async () => ({ ok: true }),
-    pickFolder: async () => ({ ok: true, path: '/home/dev/Projects/New Project' }),
+    pickFolder: async () => ({
+      ok: true,
+      path: '/home/dev/Projects/New Project',
+      grantToken: 'fixture-native-grant',
+    }),
     openPath: async () => ({ ok: true }),
     browser: {
       setBounds: () => undefined,
@@ -363,6 +412,26 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
         content:
           '# Optimus Agent\n\nThis deterministic preview stands in for a sandboxed file read.',
         truncated: false,
+      };
+    case 'project_scopes_list':
+      return {
+        projects: [{
+          project_id: 'optimus-agent',
+          roots: ['/home/mustbearnold/Projects/Optimus Agent'],
+          primary_root: '/home/mustbearnold/Projects/Optimus Agent',
+          updated_unix: 1,
+        }],
+      };
+    case 'project_scopes_authorize':
+      return {
+        project: Array.isArray(params.root_paths) && params.root_paths.length
+          ? {
+              project_id: params.project_id,
+              roots: params.root_paths,
+              primary_root: params.primary_root,
+              updated_unix: 1,
+            }
+          : null,
       };
     case 'artifacts_list':
       return { artifacts };

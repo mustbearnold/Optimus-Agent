@@ -6,8 +6,8 @@ use optimus_kernel::{
     AgentFailure, AgentId, AgentInvocationStatus, AgentInvocationStore, AgentPermissions,
     AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion, CompletionResponse,
     ExecutionStatus, ExecutionStore, IntegrityObservation, Kernel, KernelConfig, Message,
-    ReplayClassification, Role, ScriptedModel, SessionStore, SpanStatus, ToolCall, TraceEventKind,
-    TraceStore, TurnStatus, WorkflowAdapterKind, WorkflowAgentRef, WorkflowNode,
+    PolicyMode, ReplayClassification, Role, ScriptedModel, SessionStore, SpanStatus, ToolCall,
+    TraceEventKind, TraceStore, TurnStatus, WorkflowAdapterKind, WorkflowAgentRef, WorkflowNode,
     AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
 };
 use optimus_packs::{builtin_catalog, DurableEffectProvenance, ToolId};
@@ -93,7 +93,14 @@ fn result(invocation_id: Uuid, kind: AgentResultKind) -> AgentResult {
 fn tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity() {
     let dir = tempdir().unwrap();
     let session_id = {
-        let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+        let mut kernel = Kernel::open(
+            dir.path(),
+            KernelConfig {
+                effect_policy: PolicyMode::Unrestricted,
+                ..KernelConfig::default()
+            },
+        )
+        .unwrap();
         let session_id = kernel.session_id();
         let mut model = ScriptedModel::new(vec![
             CompletionResponse {

@@ -646,6 +646,15 @@ impl Runtime {
         &self.workspace
     }
 
+    /// Stable identity used by project-bound effects to prevent cross-root replay.
+    pub fn workspace_sha256(&self) -> String {
+        Self::path_sha256(&self.workspace)
+    }
+
+    pub fn canonical_workspace_sha256(path: &Path) -> Result<String> {
+        Ok(Self::path_sha256(&fs::canonicalize(path)?))
+    }
+
     pub fn create_job(&self, spec: JobSpec) -> Result<JobId> {
         let created = create_job(&self.store, spec)?;
         Ok(created.id)
@@ -836,11 +845,13 @@ impl Runtime {
             let effect: Effect =
                 serde_json::from_str(&attempt.intent_json).map_err(GraphError::from)?;
             let (disposition, reason) = match effect {
-                Effect::RunCommand { .. } => (
+                Effect::RunCommand { .. } | Effect::ProjectRunCommand { .. } => (
                     PreparedAttemptDisposition::Ambiguous,
                     "process outcome is unknown after runtime interruption",
                 ),
-                Effect::WriteFile { .. } | Effect::AssertFileEquals { .. } => (
+                Effect::WriteFile { .. }
+                | Effect::ProjectWriteFile { .. }
+                | Effect::AssertFileEquals { .. } => (
                     PreparedAttemptDisposition::Interrupted,
                     "replay-safe effect interrupted before receipt persistence",
                 ),
@@ -1218,6 +1229,22 @@ impl Runtime {
         job_id: JobId,
     ) -> Result<(Option<CommandCapture>, serde_json::Value)> {
         match effect {
+            Effect::ProjectWriteFile {
+                workspace_sha256,
+                relative_path,
+                contents,
+            } => {
+                self.verify_workspace_sha256(workspace_sha256)?;
+                self.execute_effect(
+                    &Effect::WriteFile {
+                        relative_path: relative_path.clone(),
+                        contents: contents.clone(),
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )
+            }
             Effect::WriteFile {
                 relative_path,
                 contents,
@@ -1300,6 +1327,22 @@ impl Runtime {
                     "capture": cap,
                 });
                 Ok((Some(cap), receipt))
+            }
+            Effect::ProjectRunCommand {
+                workspace_sha256,
+                program,
+                args,
+            } => {
+                self.verify_workspace_sha256(workspace_sha256)?;
+                self.execute_effect(
+                    &Effect::RunCommand {
+                        program: program.clone(),
+                        args: args.clone(),
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )
             }
         }
     }
@@ -1471,6 +1514,19 @@ impl Runtime {
             return Err(RuntimeError::PathEscape(relative.into()));
         }
         Ok(rel.to_path_buf())
+    }
+
+    fn verify_workspace_sha256(&self, expected: &str) -> Result<()> {
+        if expected.len() != 64 || expected != self.workspace_sha256() {
+            return Err(RuntimeError::PathEscape(
+                "project effect workspace identity does not match the active runtime root".into(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn path_sha256(path: &Path) -> String {
+        format!("{:x}", Sha256::digest(path.to_string_lossy().as_bytes()))
     }
 }
 

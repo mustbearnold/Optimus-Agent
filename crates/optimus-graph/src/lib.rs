@@ -28,17 +28,34 @@ pub enum Effect {
         relative_path: String,
         contents: String,
     },
+    /// Project-root mutation bound to the canonical workspace fingerprint.
+    ProjectWriteFile {
+        workspace_sha256: String,
+        relative_path: String,
+        contents: String,
+    },
     AssertFileEquals {
         relative_path: String,
         expected: String,
     },
     /// Run a shell command in the workspace (high-risk under SmartDeny).
     RunCommand { program: String, args: Vec<String> },
+    /// Project-root command bound to the canonical workspace fingerprint.
+    ProjectRunCommand {
+        workspace_sha256: String,
+        program: String,
+        args: Vec<String>,
+    },
 }
 
 impl Effect {
     pub fn is_high_risk(&self) -> bool {
-        matches!(self, Effect::RunCommand { .. })
+        matches!(
+            self,
+            Effect::RunCommand { .. }
+                | Effect::ProjectWriteFile { .. }
+                | Effect::ProjectRunCommand { .. }
+        )
     }
 }
 

@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use optimus_kernel::{ArtifactStore, FsRoots};
+use optimus_kernel::{ArtifactStore, FsRoots, ProjectAuthorityStore};
 use serde_json::json;
 
 #[cfg(test)]
@@ -12,6 +12,8 @@ pub(super) fn owns(method: &str) -> bool {
         "fs_roots"
             | "fs_list"
             | "fs_read"
+            | "project_scopes_list"
+            | "project_scopes_authorize"
             | "artifacts_list"
             | "artifacts_put_text"
             | "artifacts_get"
@@ -29,6 +31,8 @@ pub(super) fn handle(
         "fs_roots" => fs_roots(home),
         "fs_list" => fs_list(home, params),
         "fs_read" => fs_read(home, params),
+        "project_scopes_list" => project_scopes_list(home),
+        "project_scopes_authorize" => project_scopes_authorize(home, params),
         "artifacts_list" => artifacts_list(home),
         "artifacts_put_text" => artifacts_put_text(home, params),
         "artifacts_get" => artifacts_get(home, params),
@@ -36,6 +40,53 @@ pub(super) fn handle(
         "artifacts_delete_many" => artifacts_delete_many(home, params),
         _ => Err(format!("unknown method: {method}")),
     }
+}
+
+fn project_scopes_list(home: &Path) -> Result<serde_json::Value, String> {
+    let store = ProjectAuthorityStore::open(home).map_err(|error| error.to_string())?;
+    let projects = store.list_scopes().map_err(|error| error.to_string())?;
+    Ok(json!({ "projects": projects }))
+}
+
+fn project_scopes_authorize(
+    home: &Path,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let project_id = params
+        .get("project_id")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| "project_id required".to_string())?;
+    let root_paths = params
+        .get("root_paths")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| "root_paths array required".to_string())?
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .map(str::to_string)
+                .ok_or_else(|| "root_paths must contain strings".to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let primary_root = params.get("primary_root").and_then(|value| value.as_str());
+    let grant_tokens = match params.get("grant_tokens") {
+        None | Some(serde_json::Value::Null) => Vec::new(),
+        Some(serde_json::Value::Array(values)) => values
+            .iter()
+            .map(|value| {
+                value
+                    .as_str()
+                    .map(str::to_string)
+                    .ok_or_else(|| "grant_tokens must contain strings".to_string())
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        Some(_) => return Err("grant_tokens must be an array".into()),
+    };
+    let store = ProjectAuthorityStore::open(home).map_err(|error| error.to_string())?;
+    let scope = store
+        .authorize_project(project_id, &root_paths, primary_root, &grant_tokens)
+        .map_err(|error| error.to_string())?;
+    Ok(json!({ "project": scope }))
 }
 
 fn open_fs_roots(home: &Path) -> Result<FsRoots, String> {
@@ -255,19 +306,13 @@ mod tests {
     fn artifacts_delete_many_clears_batch() {
         let dir = tempdir().unwrap();
         let home = dir.path();
-        let a = artifacts_put_text(
-            home,
-            json!({"text": "one", "label": "a", "source": "test"}),
-        )
-        .unwrap()["artifact"]["sha256"]
+        let a = artifacts_put_text(home, json!({"text": "one", "label": "a", "source": "test"}))
+            .unwrap()["artifact"]["sha256"]
             .as_str()
             .unwrap()
             .to_string();
-        let b = artifacts_put_text(
-            home,
-            json!({"text": "two", "label": "b", "source": "test"}),
-        )
-        .unwrap()["artifact"]["sha256"]
+        let b = artifacts_put_text(home, json!({"text": "two", "label": "b", "source": "test"}))
+            .unwrap()["artifact"]["sha256"]
             .as_str()
             .unwrap()
             .to_string();
