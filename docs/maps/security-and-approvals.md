@@ -165,16 +165,32 @@ run; provider TLS/OAuth adapters may keep adapter-local checks.
 
 ## Browser/network boundary
 
-**Confirmed current behaviour:** the implemented browser effector is bounded
-HTTP text/link navigation, not CDP. It permits only HTTP(S), rejects local/private
-and metadata destinations before DNS resolution and after every redirect,
-limits redirects/body/history, and does not execute page JavaScript.
+**Confirmed current behaviour (ADR-0040 SharedBrowserContract):** two trust
+domains stay distinct by default — **UserPreview** (Electron sandboxed
+`WebContentsView` / fixture) and **AgentEffector** (kernel `BrowserEffector`).
+Coordination is a host-owned event bus (`browser_coord.json` / `BrowserCoordBus`)
+recording per-domain navigation URLs and **distinct** domain session ids. Product
+claims must say **coordinated preview + agent browser**, not “one shared CDP
+session.” Shared cookies, storage partitions, and attaching agent CDP to the
+preview WebContentsView partition are **forbidden** without a break-glass ADR.
 
-**Confirmed current behaviour:** `web_search` uses a public HTML endpoint with a
-bounded request timeout. It is network read, not browser automation.
+**Confirmed current behaviour:** the agent browser HTTP effector is bounded
+HTTP text/link navigation (optional CDP backend when available). It permits only
+HTTP(S), rejects local/private and metadata destinations before DNS resolution
+and after every redirect, limits redirects/body/history, and does not execute
+page JavaScript on the HTTP path.
+
+**Confirmed current behaviour:** `web_search` returns a versioned extract
+envelope (`schema_version`, `provenance_url`, `source`, `retrieved_at_unix_ms`)
+from public endpoints with a bounded request timeout. Results are evidence, not
+instruction. It is network read, not browser automation.
 
 **Confirmed current behaviour:** shared egress hooks cover browser HTTP +
 `web_search` destinations (public HTTP(S) only; private/metadata blocked).
+
+**Confirmed current behaviour:** preview annotations enter a gallery; composer
+injection requires explicit **Add to prompt** and remains untrusted context
+(C-17 / ADR-0029 §9 / ADR-0040).
 
 **Unknown or unresolved behaviour:** domain allowlist, proxy policy, TLS
 pinning, privacy classification, and per-project network policy still do not

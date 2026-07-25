@@ -8,18 +8,18 @@ export function WorkspacePane({
   tab,
   transport,
   suspended,
-  onAnnotation,
+  onAddToPrompt,
 }: {
   tab: WorkspaceTab;
   transport: OptimusTransport;
   suspended: boolean;
-  onAnnotation: (text: string) => void;
+  onAddToPrompt: (text: string) => void;
 }) {
   return (
     <aside className="workspace-pane" aria-label="Evidence workspace">
       <div className="workspace-body">
         <div id="workspace-panel-browser" aria-label="Preview browser" hidden={tab !== 'browser'} className={tab === 'browser' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
-          <BrowserSurface transport={transport} active={tab === 'browser' && !suspended} onAnnotation={onAnnotation} />
+          <BrowserSurface transport={transport} active={tab === 'browser' && !suspended} onAddToPrompt={onAddToPrompt} />
         </div>
         <div id="workspace-panel-files" aria-label="Files" hidden={tab !== 'files'} className={tab === 'files' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
           <FilesSurface transport={transport} active={tab === 'files'} />

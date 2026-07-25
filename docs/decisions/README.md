@@ -63,6 +63,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0037 | Local causal export (not OTLP) — P14 | Accepted | `optimus.causal.v1` JSON export + redaction; obs gate; Observability **S+++**. |
 | 0038 | UI IPC architecture completeness (P15) | Accepted | Matrix 100% host classification; expanded critical invokes; preview sandbox tests; UI **S+++**. |
 | 0039 | Files-mutate effect taxonomy (program P22) | Accepted | Mkdir/Delete/Rename/Patch (+ Project*); SmartDeny high-risk; single Work Graph plane. |
+| 0040 | SharedBrowserContract (program P23) | Accepted | Dual trust domains (UserPreview vs AgentEffector); host coordination bus; supersedes ADR-0015 shared-session claim. |
 
 ## Known documentary debt
 

@@ -76,7 +76,8 @@ core paths:
 
 1. Chat with streaming, stop/cancel, thinking + tool cards, and durable sessions.
 2. Use the agent on real work: read/write files under policy, terminal jobs,
-   web search, shared-session browser, approvals (SmartDeny).
+   web search, coordinated preview + agent browser (ADR-0040), approvals
+   (SmartDeny).
 3. Manage work: projects with enforced isolation, session search/archive/pins,
    artifacts gallery + export, cron CRUD, skills + memory consoles.
 4. Extend safely: pack budget/tool contract, MCP client, provider catalog.
@@ -114,7 +115,7 @@ finish the ship surface
 
 Never start Track Z or optional depth while Stages 0–3 still have open tasks.
 Never invent specialist orchestration before tool contract + file mutate +
-browser shared session are green.
+coordinated browser (program P23) are green.
 
 ## Status legend
 
@@ -161,7 +162,7 @@ explicitly deferred with reason; EM current for this tree.
 ## Stage 1 — Agent can do real work (tools critical path)
 
 **Why second:** UI polish on a read-only / half-tool agent wastes cycles. File
-mutation, tool contract, and shared browser are the shortest path from “chat
+mutation, tool contract, and coordinated browser are the shortest path from “chat
 demo” to “usable operator”.
 
 | ID | Status | Micro-task | Ledger | Proof |
@@ -170,14 +171,14 @@ demo” to “usable operator”.
 | S1.2 | `done` | Universal tool outcome envelope for available tools | `core.tool-loop` | turn-loop wraps `ToolOutcome` + `validate_outcome`; activate/budget typed fail; residual: table-driven every-tool envelope (SHOULD) |
 | S1.3 | `done` | `files.mutate`: write/patch/mkdir/rename/delete via SmartDeny exact-action | `files.mutate` | ADR-0039; path_confinement; Project* tools; program P22 |
 | S1.4 | `done` | Schema-token pack budget hard reject + progressive activate | `core.pack-budget` | packs hard SchemaBudget/PackLimit; kernel progressive activate + typed budget deny; program P21 |
-| S1.5 | `todo` | Shared CDP session: Electron preview ↔ kernel browser effector | `browser.cdp` | e2e URL/paint parity after tool navigate |
-| S1.6 // | `todo` | Web search extract schema + provenance URL stable | `web.search` | offline fixture + unit |
-| S1.7 // | `todo` | Annotation → composer only via “Add to prompt”; gallery of prior notes | `browser.annotations` | React + e2e regression |
-| S1.8 // | `todo` | HTTP browser fallback when Chromium absent remains SSRF-safe | `browser.http` | browser tests without CDP |
+| S1.5 | `done` | Coordinated preview ↔ agent browser (ADR-0040 host protocol; **not** shared CDP session) | `browser.cdp` | BrowserCoordBus dual-domain tests; preview security; program P23 |
+| S1.6 | `done` | Web search extract schema + provenance URL stable | `web.search` | offline fixture + unit; schema_version envelope; program P23 |
+| S1.7 | `done` | Annotation → composer only via “Add to prompt”; gallery of prior notes | `browser.annotations` | React BrowserSurface tests; program P23 |
+| S1.8 | `done` | HTTP browser fallback when Chromium absent remains SSRF-safe | `browser.http` | http_effector SSRF unit suite without CDP; program P23 |
 
-**Stage exit:** agent can mutate project files under approval, browse with user
-preview sharing state, and tool ads match handlers. Move rows toward
-`parity` only with named trajectories.
+**Stage exit:** agent can mutate project files under approval, browse with
+**coordinated** (not merged-trust) preview + agent browser, and tool ads match
+handlers. Move rows toward `parity` only with named trajectories.
 
 **Parallel note:** S1.6–S1.8 can fan out after S1.1 lands; S1.3 and S1.5 are
 the two highest-leverage serial items after S1.1.
@@ -346,7 +347,7 @@ internally; never block product fixes for these.
 
 ```text
 S0 ship surface
- └─► S1 tools (mutate + tool contract + shared browser)
+ └─► S1 tools (mutate + tool contract + coordinated browser)
       ├─► S2 workbench (// chat | artifacts | cron | isolation)
       ├─► S3 consoles (skills, memory, logs, packs, palette)
       └─► S4 extensibility (catalog, failover, MCP, signed packs)
@@ -363,7 +364,7 @@ If only one agent is working, pull in this exact order (skip `done` items):
 
 1. S0.2 (cutover matrix residual) if still open
 2. S2.14 concurrent multi-project mutate lease residual (or skip)
-3. S1.5 shared browser (program P23), then S2.1–S2.5 chat/session (P24)
+3. S1.5 coordinated browser (program P23 done), then S2.1–S2.5 chat/session (P24)
 4. S2.6–S2.11 artifacts/cron (P25) // S3 consoles (P26)
 5. S4 extensibility (P27) after P21 (already done)
 6. S5 gateway → Telegram (P28)

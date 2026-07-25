@@ -5,6 +5,7 @@
 //! re-exported here for surface convenience without growing the turn-loop waist.
 
 mod browser;
+mod browser_coord;
 mod codex_oauth;
 mod compress;
 mod credential;
@@ -60,6 +61,10 @@ pub use browser::{
     best_effector, chrome_binary_path, http_effector, page_to_tool_json, try_cdp_effector,
     BrowserEffector, BrowserError, BrowserLink, BrowserPage, BrowserState,
     HttpBrowserSession as BrowserSession,
+};
+pub use browser_coord::{
+    BrowserCoordBus, BrowserTrustDomain, CoordError, CoordEvent, CoordEventKind, CoordSnapshot,
+    BROWSER_COORD_SCHEMA_VERSION,
 };
 pub use codex_oauth::{
     chatgpt_account_id_from_jwt, device_code_login, extract_codex_tokens_from_codex_cli,
@@ -146,7 +151,10 @@ pub use telemetry::{
 pub use trace::{
     SpanId, SpanStatus, TraceContext, TraceEvent, TraceEventKind, TraceId, TraceSpan, TraceStore,
 };
-pub use web_search::{web_search, web_search_json, SearchError, SearchHit};
+pub use web_search::{
+    canonicalize_provenance_url, web_search, web_search_json, SearchError, SearchHit,
+    WEB_SEARCH_EXTRACT_SCHEMA_VERSION,
+};
 
 
 
@@ -2135,9 +2143,12 @@ impl Kernel {
                             .ok_or_else(|| {
                                 KernelError::Tool("browser_navigate requires url".into())
                             })?;
-                        browser
+                        let out = browser
                             .navigate(url)
-                            .map_err(|e| KernelError::Tool(e.to_string()))?
+                            .map_err(|e| KernelError::Tool(e.to_string()))?;
+                        // ADR-0040: record agent domain only — never UserPreview session.
+                        record_agent_browser_coord(self.home(), &out, url);
+                        out
                     }
                     ToolInvocation::BrowserSnapshot => browser
                         .snapshot()
@@ -2150,9 +2161,12 @@ impl Kernel {
                             .ok_or_else(|| {
                                 KernelError::Tool("browser_click requires index".into())
                             })? as usize;
-                        browser
+                        let out = browser
                             .click(idx)
-                            .map_err(|e| KernelError::Tool(e.to_string()))?
+                            .map_err(|e| KernelError::Tool(e.to_string()))?;
+                        // Clicks navigate the agent effector — same domain bus as navigate.
+                        record_agent_browser_coord(self.home(), &out, "");
+                        out
                     }
                     _ => unreachable!("outer match restricts browser invocations"),
                 };
@@ -2231,6 +2245,31 @@ const OPTIMUS_RUNTIME_AGENTS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../OPTIMUS_AGENTS.md"
 ));
+
+/// ADR-0040: publish agent-domain navigation onto the host coordination bus.
+/// Best-effort — coord I/O must never fail the tool turn.
+fn record_agent_browser_coord(home: &Path, tool_json: &str, fallback_url: &str) {
+    let Ok(mut bus) = BrowserCoordBus::open(home) else {
+        return;
+    };
+    let v: Value = serde_json::from_str(tool_json).unwrap_or(Value::Null);
+    let title = v
+        .get("title")
+        .or_else(|| v.get("page_title"))
+        .and_then(|t| t.as_str())
+        .map(|s| s.to_string());
+    let final_url = v
+        .get("final_url")
+        .or_else(|| v.get("url"))
+        .and_then(|u| u.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| fallback_url.to_string());
+    if final_url.is_empty() {
+        return;
+    }
+    let _ = bus.record_agent_navigate(&final_url, title);
+}
 
 fn system_prompt(packs: &CapabilitySession) -> String {
     let tools: Vec<_> = packs.loaded_tools().iter().map(|t| t.id.as_str()).collect();

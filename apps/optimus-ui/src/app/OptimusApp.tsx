@@ -62,6 +62,7 @@ import { SessionBar } from '../components/workbench/SessionBar';
 import { Transcript } from '../components/workbench/Transcript';
 import { ArtifactsSurface } from '../components/workspace/ArtifactsSurface';
 import { WorkspacePane } from '../components/workspace/WorkspacePane';
+import { composeSendMessage } from './composeSendMessage';
 
 const transport = getTransport();
 
@@ -260,7 +261,9 @@ export function OptimusApp() {
   };
 
   const send = async () => {
-    const text = input.trim();
+    // Annotation is gallery-promoted context; must be sent with the user text
+    // (display already merges them). Do not drop notes on Send (program P23).
+    const text = composeSendMessage(input, annotation);
     if (!text || state.activeRunSessionId) return;
     let sessionId = state.selectedSessionId;
     if (!sessionId) {
@@ -522,7 +525,10 @@ export function OptimusApp() {
                       tab={state.layout.workspaceTab}
                       transport={transport}
                       suspended={browserSuspended}
-                      onAnnotation={(text) => { setAnnotation(text); dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } }); }}
+                      onAddToPrompt={(text) => {
+                        setAnnotation(text);
+                        dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } });
+                      }}
                     />
                   </div>
                 </>

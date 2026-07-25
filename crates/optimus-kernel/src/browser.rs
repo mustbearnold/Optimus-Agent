@@ -448,9 +448,9 @@ pub fn fetch_page(
         .map_err(|e| BrowserError::Http(e.to_string()))?;
     let status = resp.status();
     let final_url = resp.get_url().to_string();
-    if let Ok(fu) = Url::parse(&final_url) {
-        assert_url_safe(&fu)?;
-    }
+    // Fail closed: unparsable redirect target is not a free pass (SSRF residual).
+    let fu = Url::parse(&final_url).map_err(|e| BrowserError::Url(format!("final_url: {e}")))?;
+    assert_url_safe(&fu)?;
     let mut body = Vec::new();
     resp.into_reader()
         .take(max_bytes as u64 + 1)
@@ -689,6 +689,31 @@ mod tests {
     fn allows_example_parse() {
         let u = Url::parse("https://example.com/path").unwrap();
         assert!(assert_url_safe(&u).is_ok());
+    }
+
+    /// S1.8 / browser.http: HTTP effector fails closed on SSRF without CDP.
+    #[test]
+    fn http_effector_navigate_rejects_ssrf_targets_without_cdp() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut effector = http_effector(dir.path()).unwrap();
+        for bad in [
+            "http://127.0.0.1/",
+            "http://localhost/admin",
+            "http://10.0.0.5/",
+            "http://192.168.1.1/",
+            "http://[::1]/",
+            "http://169.254.169.254/latest/meta-data/",
+            "file:///etc/passwd",
+            "ftp://example.com/",
+        ] {
+            let err = effector.navigate(bad).unwrap_err();
+            assert!(
+                matches!(err, BrowserError::Ssrf(_)),
+                "expected BrowserError::Ssrf for {bad}, got {err:?}"
+            );
+        }
+        // No page state after denied navigations.
+        assert!(matches!(effector.snapshot().unwrap_err(), BrowserError::NoPage));
     }
 
     #[test]

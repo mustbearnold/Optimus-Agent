@@ -198,18 +198,22 @@ it does not replace executable enforcement.
 
 ### C-17 Native preview annotation and overlay isolation
 
-- **State:** Confirmed current behaviour for the Electron user-preview path.
+- **State:** Confirmed current behaviour for the Electron user-preview path
+  (program P23 / ADR-0040).
 - **Evidence:** remote content runs in a sandboxed `WebContentsView` without a
   Node preload; permissions, downloads, popups, insecure remote HTTP, and
   privileged schemes are denied. Annotation is user-triggered and one-shot,
   consumes the selected click, length-bounds every returned string, omits HTML
-  and selectors, supports cancellation/expiry, and projects only a readable
-  bounded note into the composer.
+  and selectors, supports cancellation/expiry, and lands in a **notes gallery**;
+  the composer receives the note only after explicit **Add to prompt**.
 - **Evidence:** compiled Electron tests prove the child view is hidden while
   renderer Settings is open and restored afterward, preventing native pixels
   from covering approval/settings controls.
+- **Evidence:** React `BrowserSurface` tests prove gallery capture without
+  auto-inject and Add to prompt injection path.
 - **Boundary:** this is the user preview, not the Rust agent Browser effector;
-  cookies, history, and automation identity are not shared.
+  cookies, history, storage partition, and automation identity are not shared
+  (SharedBrowserContract).
 - **Owner:** Electron main/preload plus React Browser surface.
 
 ## Priority 1
