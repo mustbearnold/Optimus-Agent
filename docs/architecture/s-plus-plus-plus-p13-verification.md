@@ -1,7 +1,7 @@
 # S+++ P13 verification — domain modularity
 
 Date: 2026-07-25  
-Planes: program **P13** · decision **ADR-0036** · delivery (open PR assigns)
+Planes: program **P13** · decision **ADR-0036** · delivery **PR #23**
 
 ## Exit evidence
 
