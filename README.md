@@ -132,23 +132,26 @@ The runtime cancellation suite includes a Linux descendant-process regression. I
 
 ## Workspace
 
+Emoji matches the GitHub `area:*` label for that package (see Issues/PRs).
+
 ```text
-apps/optimus-cli          jobs, skills, packs, chat, sessions, auth, vertical
-apps/optimus-desktop      Rust host (--host-only) + legacy Wry shell
-apps/optimus-electron     Default Electron shell (React workbench)
-apps/optimus-ui           React + Vite SPA (default workbench UI)
-crates/optimus-kernel     turns, providers, sessions (re-exports peels)
-crates/optimus-agent      specialist contracts, registry, invocations
-crates/optimus-workflow   workflow defs, DAG run store, built-in verticals
-crates/optimus-artifacts  content-addressed handoff store
-crates/optimus-ops        gateway + cron store
-crates/optimus-eval       offline eval / replay
-crates/optimus-store      job ledger and events
-crates/optimus-graph      job and node domain
-crates/optimus-runtime    effectors, process ownership, capture, policy
-crates/optimus-memory     MetaMemory
-crates/optimus-skills     Skills 2.0
-crates/optimus-packs      progressive capability packs
+💻 apps/optimus-cli          jobs, skills, packs, chat, sessions, auth, vertical
+🖥️ apps/optimus-desktop      Rust host (--host-only) + legacy Wry shell
+🖥️ apps/optimus-electron     Default Electron shell (React workbench)
+🎨 apps/optimus-ui           React + Vite SPA (default workbench UI)
+🧠 crates/optimus-kernel     turns, providers, sessions (re-exports peels)
+🤖 crates/optimus-agent      specialist contracts, registry, invocations
+🔀 crates/optimus-workflow   workflow defs, DAG run store, built-in verticals
+📦 crates/optimus-artifacts  content-addressed handoff store
+🛰️ crates/optimus-ops        gateway + cron store
+📊 crates/optimus-eval       offline eval / replay
+💾 crates/optimus-store      job ledger and events
+💾 crates/optimus-graph      job and node domain
+🔁 crates/optimus-runtime    effectors, process ownership, capture, policy
+🧩 crates/optimus-memory     MetaMemory
+🎯 crates/optimus-skills     Skills 2.0
+📚 crates/optimus-packs      progressive capability packs
+🌐 crates/optimus-browser    CDP browser backend
 ```
 
 ## Contributing (GitHub)
@@ -158,7 +161,10 @@ Commits, branches, PRs, issues, and labels follow
 
 - **Commits / PR titles:** Conventional Commits (`feat(scope): …`, `fix: …`)
 - **Branches:** `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
-- **Labels:** emoji-first + namespaced (`✨ type:feat`, `🔀 area:workflow`, …)
+- **Labels (show on Issues / PRs):** one leading emoji + namespace, e.g.
+  - ✨ `type:feat` · 🔧 `type:fix` · ♻️ `type:refactor` · 📝 `type:docs`
+  - 🧠 `area:kernel` · 🔁 `area:runtime` · 🔀 `area:workflow` · 🖥️ `area:desktop`
+  - 🔥 `priority:p1` · 👀 `status:needs-review` · ▪️ `size:S` · 🔐 `risk:security`
 - **Sync labels:** `python3 scripts/sync-github-labels.py` from [`.github/labels.yml`](.github/labels.yml)
 
 ### Default desktop (Electron + React)
