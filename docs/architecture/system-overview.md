@@ -134,9 +134,10 @@ or `awaiting_approval`.
 
 **Confirmed current behaviour:** versioned agent and workflow contract
 substrates and immutable registries exist in `optimus-kernel`. They are library
-boundaries, not a new control-plane process. No built-in specialist definition
-is registered, and campaign steps remain deterministic effect specifications,
-not specialist-agent invocations.
+boundaries, not a new control-plane process. Built-in specialists are registered
+via `optimus-workflow` / `optimus-agent` peels (see Agent execution). Campaign
+steps remain deterministic effect specifications, not specialist-agent
+invocations.
 
 **Planned behaviour:** a dedicated control plane, specialist routing, parallel
 child hierarchy, and general workflow executor remain targets. The implemented

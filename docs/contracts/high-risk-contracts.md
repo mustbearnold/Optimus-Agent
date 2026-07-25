@@ -225,7 +225,9 @@ it does not replace executable enforcement.
 ### C-09 Universal agent lifecycle
 
 - **State:** Confirmed current behaviour for the typed contract, immutable
-  registry, and durable invocation lifecycle; no built-in specialists exist.
+  registry, and durable invocation lifecycle; built-in specialists
+  `workspace_writer` / `workspace_reader` exist under `optimus-agent` /
+  `optimus-workflow`.
 - **Evidence:** bounded versioned requests/results, canonical tools, permission
   subset closure, context/evidence/artifact references, cancellation, retry
   lineage, exactly one terminal result, ambiguity, reopen validation, and exact

@@ -117,15 +117,18 @@ project state grants Rust filesystem access.
 - **Confirmed:** `optimus-kernel` owns typed agent/workflow contracts,
   registries/adapters, invocation evidence, canonical routing and telemetry,
   execution/replay/trace contracts, and versioned offline evaluation/baselines.
-- **Unknown/unresolved:** no package owns built-in specialist definitions,
-  specialist routing/general workflow execution, OpenTelemetry, or GPU adapters.
+- **Confirmed:** built-in specialists and registered DAG verticals are owned by
+  `optimus-agent` + `optimus-workflow` (kernel re-exports).
+- **Unknown/unresolved:** model-chosen specialist routing, OpenTelemetry, or GPU
+  adapters.
 
 ## Missing top-level domains
 
 **Confirmed current behaviour:** there are no root `agents/`, `workflows/`,
 `tools/`, `prompts/`, `evals/`, `fixtures/`, or `packages/` directories. Their
 absence is not proof the concepts are absent: tools are in
-`optimus-packs`/kernel; general workflow and agent contracts are kernel modules;
+`optimus-packs`; general workflow and agent contracts live in `optimus-workflow`
+and `optimus-agent` (kernel re-exports);
 execution remains in jobs/campaigns/cron/gateway; prompts are inline.
 
 **Planned behaviour:** add a top-level domain only when it has an implemented,

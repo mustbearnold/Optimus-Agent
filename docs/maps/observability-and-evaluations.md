@@ -250,7 +250,7 @@ The following are **unknown or unresolved behaviour**:
 
 | Dimension | Current state |
 |---|---|
-| Agent routing and ownership | Contract/invocation/effect-link tests exist; no built-in specialists or router. |
+| Agent routing and ownership | Contract/invocation/effect-link tests exist; two built-in specialists + registered DAG; no model-chosen router. |
 | Workflow completion/retry/cancel | General schema/adapter conformance plus cross-contract tests; no universal executor. |
 | Tool correctness/security | Strong focused tests for implemented subset; no canonical output-schema conformance. |
 | Retrieval precision/recall | Missing. |

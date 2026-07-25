@@ -230,14 +230,14 @@ browser, routing, credentials, project authority, specialist verticals, and the
 
 | ID | Task | Exit evidence |
 |---|---|---|
-| C1 | Crate map ADR (names, deps, re-export policy) | pending — ADR-0034 |
-| C2 | Peel `optimus-agent`: registry + invocation ledger | pending |
-| C3 | Peel `optimus-workflow`: definitions + DAG run store + verticals | pending |
-| C4 | Peel `optimus-artifacts` | pending |
-| C5 | Browser: CDP remains `optimus-browser`; kernel facade HTTP+factory retained | pending (partial by design) |
-| C6 | Dependency lint script `scripts/check-crate-layers.py` | pending |
-| C7 | Kernel modules removed for peels; re-export waist | pending |
-| C8 | Ownership map + system-overview + marks → Control-plane **S+++** | pending |
+| C1 | Crate map ADR (names, deps, re-export policy) | done — ADR-0034 |
+| C2 | Peel `optimus-agent`: registry + invocation ledger | done |
+| C3 | Peel `optimus-workflow`: definitions + DAG run store + verticals | done |
+| C4 | Peel `optimus-artifacts` | done |
+| C5 | Browser: CDP remains `optimus-browser`; kernel facade HTTP+factory retained | done (partial by design) |
+| C6 | Dependency lint script `scripts/check-crate-layers.py` | done |
+| C7 | Kernel modules removed for peels; re-export waist | done |
+| C8 | Ownership map + system-overview + marks → Control-plane **S+++** | done |
 
 ### Hold suite
 
