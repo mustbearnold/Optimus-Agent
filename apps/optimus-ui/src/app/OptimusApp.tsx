@@ -522,7 +522,10 @@ export function OptimusApp() {
                       tab={state.layout.workspaceTab}
                       transport={transport}
                       suspended={browserSuspended}
-                      onAnnotation={(text) => { setAnnotation(text); dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } }); }}
+                      onAddToPrompt={(text) => {
+                        setAnnotation(text);
+                        dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } });
+                      }}
                     />
                   </div>
                 </>

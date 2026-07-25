@@ -13,19 +13,28 @@ const initialState: BrowserState = {
   native: false,
 };
 
+export type PreviewNote = {
+  id: string;
+  text: string;
+  createdAt: number;
+  sourceUrl?: string;
+};
+
 export function BrowserSurface({
   transport,
   active,
-  onAnnotation,
+  onAddToPrompt,
 }: {
   transport: OptimusTransport;
   active: boolean;
-  onAnnotation: (text: string) => void;
+  /** Explicit user action only — never auto-inject on annotate (ADR-0040 / ADR-0029 §9). */
+  onAddToPrompt: (text: string) => void;
 }) {
   const hole = useRef<HTMLDivElement>(null);
   const [state, setState] = useState(initialState);
   const [address, setAddress] = useState(initialState.url);
   const [annotationMode, setAnnotationMode] = useState(false);
+  const [notes, setNotes] = useState<PreviewNote[]>([]);
   const lastBounds = useRef('');
   const editingAddress = useRef(false);
   const syncGeometry = useRef<(() => void) | null>(null);
@@ -91,8 +100,6 @@ export function BrowserSurface({
     if (shell) observer.observe(shell);
     const onWindowResize = () => sync();
     window.addEventListener('resize', onWindowResize);
-    // Geometry and reveal share the latest-value lane so a later state event
-    // cannot replace the initial reveal with a bounds-only job.
     syncGeometry.current = () => sync(true);
     sync(true);
     return () => {
@@ -107,6 +114,16 @@ export function BrowserSurface({
   useLayoutEffect(() => {
     if (active) syncGeometry.current?.();
   }, [active, state.loading, state.title, state.url]);
+
+  const pushNote = (text: string, sourceUrl?: string) => {
+    const note: PreviewNote = {
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text,
+      createdAt: Date.now(),
+      sourceUrl,
+    };
+    setNotes((current) => [note, ...current].slice(0, 24));
+  };
 
   const navigate = async () => {
     let url = address.trim();
@@ -144,7 +161,10 @@ export function BrowserSurface({
     if (!state.native || !transport.browser) return;
     try {
       const result = await transport.browser.annotate();
-      if (!result.cancelled) onAnnotation(formatAnnotation(result));
+      if (!result.cancelled) {
+        // Gallery only — composer requires explicit Add to prompt.
+        pushNote(formatAnnotation(result), result.url);
+      }
     } finally {
       setAnnotationMode(false);
     }
@@ -153,8 +173,8 @@ export function BrowserSurface({
   return (
     <section className="browser-surface" aria-label="Preview browser">
       <p className="browser-role-note">
-        Preview browser — sandboxed user navigation. Not the agent <code>browser_*</code> tool session
-        (no shared cookies, history, or automation target).
+        Coordinated preview browser (ADR-0040) — sandboxed user navigation. Not the agent{' '}
+        <code>browser_*</code> tool session (no shared cookies, storage partition, or CDP target).
       </p>
       <div className="browser-chrome" role="toolbar" aria-label="Preview browser navigation">
         <button
@@ -219,7 +239,10 @@ export function BrowserSurface({
         onClick={(event) => {
           if (!annotationMode || state.native) return;
           const target = event.target as HTMLElement;
-          onAnnotation(`Preview annotation: ${target.innerText?.slice(0, 180) || target.tagName}`);
+          pushNote(
+            `Preview context: ${(target.innerText?.slice(0, 180) || target.tagName)} (untrusted fixture note).`,
+            state.url
+          );
           setAnnotationMode(false);
         }}
       >
@@ -234,9 +257,55 @@ export function BrowserSurface({
         ) : null}
       </div>
       {annotationMode ? (
-        <div className="annotation-hint">Select one element to add bounded preview context.</div>
+        <div className="annotation-hint">Select one element to capture a gallery note (not yet in the prompt).</div>
       ) : null}
+      <AnnotationGallery
+        notes={notes}
+        onAddToPrompt={(note) => onAddToPrompt(note.text)}
+        onDismiss={(id) => setNotes((current) => current.filter((n) => n.id !== id))}
+      />
     </section>
+  );
+}
+
+function AnnotationGallery({
+  notes,
+  onAddToPrompt,
+  onDismiss,
+}: {
+  notes: PreviewNote[];
+  onAddToPrompt: (note: PreviewNote) => void;
+  onDismiss: (id: string) => void;
+}) {
+  if (notes.length === 0) {
+    return (
+      <div className="annotation-gallery is-empty" aria-label="Preview annotation gallery">
+        <span>Annotation gallery empty — capture notes, then Add to prompt.</span>
+      </div>
+    );
+  }
+  return (
+    <div className="annotation-gallery" aria-label="Preview annotation gallery">
+      <header>
+        <strong>Notes</strong>
+        <span>{notes.length}</span>
+      </header>
+      <ul>
+        {notes.map((note) => (
+          <li key={note.id}>
+            <p>{note.text}</p>
+            <div className="annotation-gallery-actions">
+              <button type="button" onClick={() => onAddToPrompt(note)}>
+                Add to prompt
+              </button>
+              <button type="button" onClick={() => onDismiss(note.id)} aria-label="Dismiss note">
+                Dismiss
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -289,5 +358,5 @@ function formatAnnotation(annotation: BrowserAnnotation) {
   const size = annotation.rect
     ? `, ${annotation.rect.width} × ${annotation.rect.height}px`
     : '';
-  return `Preview context: ${kind} “${label}” on ${host || 'the current page'}${size}.`;
+  return `Preview context (untrusted): ${kind} “${label}” on ${host || 'the current page'}${size}.`;
 }

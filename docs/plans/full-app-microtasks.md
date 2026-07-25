@@ -170,14 +170,14 @@ demo” to “usable operator”.
 | S1.2 | `done` | Universal tool outcome envelope for available tools | `core.tool-loop` | turn-loop wraps `ToolOutcome` + `validate_outcome`; activate/budget typed fail; residual: table-driven every-tool envelope (SHOULD) |
 | S1.3 | `done` | `files.mutate`: write/patch/mkdir/rename/delete via SmartDeny exact-action | `files.mutate` | ADR-0039; path_confinement; Project* tools; program P22 |
 | S1.4 | `done` | Schema-token pack budget hard reject + progressive activate | `core.pack-budget` | packs hard SchemaBudget/PackLimit; kernel progressive activate + typed budget deny; program P21 |
-| S1.5 | `todo` | Shared CDP session: Electron preview ↔ kernel browser effector | `browser.cdp` | e2e URL/paint parity after tool navigate |
-| S1.6 // | `todo` | Web search extract schema + provenance URL stable | `web.search` | offline fixture + unit |
-| S1.7 // | `todo` | Annotation → composer only via “Add to prompt”; gallery of prior notes | `browser.annotations` | React + e2e regression |
-| S1.8 // | `todo` | HTTP browser fallback when Chromium absent remains SSRF-safe | `browser.http` | browser tests without CDP |
+| S1.5 | `done` | Coordinated preview ↔ agent browser (ADR-0040 host protocol; **not** shared CDP session) | `browser.cdp` | BrowserCoordBus dual-domain tests; preview security; program P23 |
+| S1.6 | `done` | Web search extract schema + provenance URL stable | `web.search` | offline fixture + unit; schema_version envelope; program P23 |
+| S1.7 | `done` | Annotation → composer only via “Add to prompt”; gallery of prior notes | `browser.annotations` | React BrowserSurface tests; program P23 |
+| S1.8 | `done` | HTTP browser fallback when Chromium absent remains SSRF-safe | `browser.http` | http_effector SSRF unit suite without CDP; program P23 |
 
-**Stage exit:** agent can mutate project files under approval, browse with user
-preview sharing state, and tool ads match handlers. Move rows toward
-`parity` only with named trajectories.
+**Stage exit:** agent can mutate project files under approval, browse with
+**coordinated** (not merged-trust) preview + agent browser, and tool ads match
+handlers. Move rows toward `parity` only with named trajectories.
 
 **Parallel note:** S1.6–S1.8 can fan out after S1.1 lands; S1.3 and S1.5 are
 the two highest-leverage serial items after S1.1.

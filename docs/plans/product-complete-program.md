@@ -160,7 +160,7 @@ After **program P21** green:
 | Tool contract / pack budget | `core.tool-loop`, `core.pack-budget` | **parity** (kernel) | **P21 done**; packs **console** residual → **P26** |
 | `files.mutate` | `files.mutate` | **parity** (kernel) | **P22 done**; concurrent lease residual |
 | Project isolation enforce | `projects.scope` | **partial** (honesty fields) | concurrent multi-project lease residual **S2.14** |
-| Browser / search | `browser.*`, `web.search` | Partial | **P23** → **parity** |
+| Browser / search | `browser.*`, `web.search` | **parity** | **P23 done** (ADR-0040 coordinated dual-domain; not shared CDP) |
 | Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | Partial | **P24** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | Partial | **P25** |
 | Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | Missing UI | **P26** |
@@ -654,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P21 done**; **program P22 files.mutate done**; isolation honesty partial (`projects.scope`).
-2. Open **program P23** (coordinated browser) or finish S2.14 concurrent mutate lease.
+1. **program P20–P23 done** (tool contract, files.mutate, coordinated browser).
+2. Open **program P24** (daily chat + session hygiene) or parallel P25–P28; residual S2.14 concurrent mutate lease remains optional.
 
 ## Success definition
 

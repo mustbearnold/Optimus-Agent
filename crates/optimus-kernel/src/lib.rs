@@ -5,6 +5,7 @@
 //! re-exported here for surface convenience without growing the turn-loop waist.
 
 mod browser;
+mod browser_coord;
 mod codex_oauth;
 mod compress;
 mod credential;
@@ -60,6 +61,10 @@ pub use browser::{
     best_effector, chrome_binary_path, http_effector, page_to_tool_json, try_cdp_effector,
     BrowserEffector, BrowserError, BrowserLink, BrowserPage, BrowserState,
     HttpBrowserSession as BrowserSession,
+};
+pub use browser_coord::{
+    BrowserCoordBus, BrowserTrustDomain, CoordError, CoordEvent, CoordEventKind, CoordSnapshot,
+    BROWSER_COORD_SCHEMA_VERSION,
 };
 pub use codex_oauth::{
     chatgpt_account_id_from_jwt, device_code_login, extract_codex_tokens_from_codex_cli,
@@ -146,7 +151,10 @@ pub use telemetry::{
 pub use trace::{
     SpanId, SpanStatus, TraceContext, TraceEvent, TraceEventKind, TraceId, TraceSpan, TraceStore,
 };
-pub use web_search::{web_search, web_search_json, SearchError, SearchHit};
+pub use web_search::{
+    canonicalize_provenance_url, web_search, web_search_json, SearchError, SearchHit,
+    WEB_SEARCH_EXTRACT_SCHEMA_VERSION,
+};
 
 
 
@@ -2135,9 +2143,30 @@ impl Kernel {
                             .ok_or_else(|| {
                                 KernelError::Tool("browser_navigate requires url".into())
                             })?;
-                        browser
+                        let out = browser
                             .navigate(url)
-                            .map_err(|e| KernelError::Tool(e.to_string()))?
+                            .map_err(|e| KernelError::Tool(e.to_string()))?;
+                        // ADR-0040: record agent domain only — never UserPreview session.
+                        if let Ok(mut bus) = BrowserCoordBus::open(self.home()) {
+                            let title = serde_json::from_str::<Value>(&out)
+                                .ok()
+                                .and_then(|v| {
+                                    v.get("title")
+                                        .and_then(|t| t.as_str())
+                                        .map(|s| s.to_string())
+                                });
+                            let final_url = serde_json::from_str::<Value>(&out)
+                                .ok()
+                                .and_then(|v| {
+                                    v.get("final_url")
+                                        .or_else(|| v.get("url"))
+                                        .and_then(|u| u.as_str())
+                                        .map(|s| s.to_string())
+                                })
+                                .unwrap_or_else(|| url.to_string());
+                            let _ = bus.record_agent_navigate(&final_url, title);
+                        }
+                        out
                     }
                     ToolInvocation::BrowserSnapshot => browser
                         .snapshot()

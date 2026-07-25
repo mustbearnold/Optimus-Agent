@@ -75,11 +75,15 @@ a claim that the user-facing Electron preview is the Rust agent Browser.
    Browser chrome and the measured content hole. Remote content has no Node
    preload, uses sandboxing and normal web security, and may navigate only to
    HTTPS or loopback HTTP. Permissions, downloads, and new windows are denied.
-9. **The two Browser paths remain distinct.** The Electron preview is a
-   user-facing surface. Rust `browser_*` methods remain the agent-effect path.
-   Cookies, history, process identity, and a shared target are not promised.
-   An annotation enters the composer only after an explicit user action and is
-   treated as untrusted context.
+9. **The two Browser paths remain distinct (SharedBrowserContract).** The
+   Electron preview is a user-facing surface. Rust `browser_*` methods remain
+   the agent-effect path. Cookies, history, process identity, and a shared
+   target are not promised. Product law is expanded and restated in
+   [ADR-0040](./0040-shared-browser-contract.md): coordination is host-owned
+   URL/state events only; never merge storage partitions or attach agent CDP to
+   the preview `WebContentsView` without a break-glass ADR. An annotation enters
+   a notes gallery first; the composer receives it only after an explicit user
+   **Add to prompt** action and is treated as untrusted context.
 10. **Motion is bounded and non-overshooting.** Interaction acknowledgment is
     immediate or 70–160 ms, uses primarily transform/opacity/color/border, and
     contains no animated blur, backdrop filter, `transition: all`, persistent

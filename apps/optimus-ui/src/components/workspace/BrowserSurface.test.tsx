@@ -22,20 +22,20 @@ describe('BrowserSurface annotations', () => {
       <BrowserSurface
         transport={transportWithBrowser(vi.fn(async () => ({ cancelled: true })))}
         active
-        onAnnotation={vi.fn()}
+        onAddToPrompt={vi.fn()}
       />
     );
 
     expect(
       await screen.findByRole('toolbar', { name: 'Preview browser navigation' })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Preview browser — sandboxed user navigation/i)).toBeInTheDocument();
+    expect(screen.getByText(/Coordinated preview browser/i)).toBeInTheDocument();
     expect(screen.queryByLabelText('Preview tabs')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('projects bounded native element context into a human-readable composer note', async () => {
-    const onAnnotation = vi.fn();
+  it('captures native annotation into the gallery without auto-injecting the prompt', async () => {
+    const onAddToPrompt = vi.fn();
     const annotate = vi.fn(async () => ({
       cancelled: false,
       url: nativeState.url,
@@ -51,15 +51,49 @@ describe('BrowserSurface annotations', () => {
       <BrowserSurface
         transport={transportWithBrowser(annotate)}
         active
-        onAnnotation={onAnnotation}
+        onAddToPrompt={onAddToPrompt}
       />
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Annotate preview' }));
     await waitFor(() => expect(annotate).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(onAnnotation).toHaveBeenCalledWith(
-      'Preview context: button “Deploy preview” on example.test, 128 × 32px.'
-    ));
+    // Gallery only — no composer inject until Add to prompt.
+    expect(onAddToPrompt).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText(/Preview context \(untrusted\): button “Deploy preview”/i)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Preview annotation gallery')).toBeInTheDocument();
+  });
+
+  it('requires explicit Add to prompt to inject composer context', async () => {
+    const onAddToPrompt = vi.fn();
+    const annotate = vi.fn(async () => ({
+      cancelled: false,
+      url: nativeState.url,
+      pageTitle: nativeState.title,
+      tag: 'button',
+      role: 'button',
+      label: 'Deploy preview',
+      text: 'Deploy',
+      rect: { x: 30, y: 40, width: 128, height: 32 },
+    }));
+
+    render(
+      <BrowserSurface
+        transport={transportWithBrowser(annotate)}
+        active
+        onAddToPrompt={onAddToPrompt}
+      />
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Annotate preview' }));
+    await waitFor(() => expect(annotate).toHaveBeenCalledTimes(1));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add to prompt' }));
+    await waitFor(() =>
+      expect(onAddToPrompt).toHaveBeenCalledWith(
+        'Preview context (untrusted): button “Deploy preview” on example.test, 128 × 32px.'
+      )
+    );
   });
 });
 

@@ -691,6 +691,33 @@ mod tests {
         assert!(assert_url_safe(&u).is_ok());
     }
 
+    /// S1.8 / browser.http: HTTP effector fails closed on SSRF without CDP.
+    #[test]
+    fn http_effector_navigate_rejects_ssrf_targets_without_cdp() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut effector = http_effector(dir.path()).unwrap();
+        for bad in [
+            "http://127.0.0.1/",
+            "http://localhost/admin",
+            "http://10.0.0.5/",
+            "http://192.168.1.1/",
+            "http://[::1]/",
+            "http://169.254.169.254/latest/meta-data/",
+            "file:///etc/passwd",
+            "ftp://example.com/",
+        ] {
+            let err = effector.navigate(bad).unwrap_err();
+            assert!(
+                matches!(err, BrowserError::Ssrf(_))
+                    || err.to_string().to_ascii_lowercase().contains("ssrf")
+                    || err.to_string().contains("scheme"),
+                "expected SSRF deny for {bad}, got {err}"
+            );
+        }
+        // No page state after denied navigations.
+        assert!(matches!(effector.snapshot().unwrap_err(), BrowserError::NoPage));
+    }
+
     #[test]
     fn chrome_binary_path_honors_explicit_env_file() {
         let dir = tempfile::tempdir().unwrap();

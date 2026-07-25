@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21 tool parity; program P22 files.mutate parity; projects.scope honesty partial; artifacts post-P11",
+  "scorecard_marker": "P17 release gates; program P21–P22 tool/mutate parity; program P23 coordinated browser + search/annotations parity; projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -266,50 +266,58 @@
       "id": "web.search",
       "capability": "Web search in model tool loop",
       "hermes_reference": "web_search/web_extract",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "crates/optimus-kernel/tests/web_search_live.rs"
+        "crates/optimus-kernel/src/web_search.rs",
+        "crates/optimus-kernel/tests/web_search_live.rs",
+        "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P23: versioned extract schema_version + provenance_url + source + retrieved_at; offline unit fixtures; live residual optional",
       "owner_ticket": "A-04"
     },
     {
       "id": "browser.http",
       "capability": "SSRF-safe HTTP navigate/snapshot/click",
       "hermes_reference": "Browser automation",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/browser.rs",
+        "crates/optimus-kernel/src/network_policy.rs",
         "crates/optimus-kernel/tests/browser_live.rs",
-        "docs/evidence/phase-20-cdp-browser-2026-07-23.md"
+        "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P23: HTTP effector SSRF unit suite without CDP (private/metadata/file/ftp deny); post-redirect assert retained",
       "owner_ticket": "B-01"
     },
     {
       "id": "browser.cdp",
-      "capability": "Shared-session CDP preview browser",
+      "capability": "Coordinated preview + agent browser (host protocol; not shared CDP session)",
       "hermes_reference": "Browser Use/CDP",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "crates/optimus-browser/src/lib.rs",
+        "docs/decisions/0040-shared-browser-contract.md",
+        "crates/optimus-kernel/src/browser_coord.rs",
         "crates/optimus-kernel/src/browser.rs",
-        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
-        "docs/evidence/phase-20-cdp-browser-2026-07-23.md"
+        "crates/optimus-browser/src/lib.rs",
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
+        "apps/optimus-electron/test/preview-security.test.cjs",
+        "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P23 ADR-0040: dual trust domains + BrowserCoordBus; optional CDP agent backend; Electron preview remains separate; no shared cookie jar",
       "owner_ticket": "B-01,B-02"
     },
     {
       "id": "browser.annotations",
       "capability": "Page annotations as structured agent instructions",
       "hermes_reference": "Codex preview annotations",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/ui/app.js",
-        "apps/optimus-desktop/e2e/06-preview-browser.spec.js"
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
+        "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
+        "docs/contracts/high-risk-contracts.md",
+        "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P23: gallery + explicit Add to prompt only; untrusted context; Electron one-shot annotate retained",
       "owner_ticket": "B-03"
     },
     {

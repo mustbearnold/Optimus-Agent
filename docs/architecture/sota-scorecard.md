@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-25 · P17 release gates; program P21 tool parity; program P22 files.mutate parity; projects.scope honesty partial; artifacts post-P11
+Updated: 2026-07-25 · P17 release gates; program P21–P22 tool/mutate parity; program P23 coordinated browser + search/annotations parity; projects.scope honesty partial
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -21,8 +21,8 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 13 | A bounded Hermes-equivalent capability has current executable evidence |
-| **partial** | 12 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
+| **parity** | 17 | A bounded Hermes-equivalent capability has current executable evidence |
+| **partial** | 8 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
 | **missing** | 22 | No complete executable path exists yet |
 | **total** | 51 | Capability rows tracked by the executable ledger |
 
@@ -102,4 +102,4 @@ PF-00 baseline evidence: `local/tmp/baselines/PF-00-report.md`.
 
 ## Honest statement
 
-Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 12 partial and 22 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.
+Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 8 partial and 22 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.

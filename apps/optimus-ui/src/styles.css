@@ -1050,6 +1050,61 @@ code {
   color: var(--text);
 }
 
+.annotation-gallery {
+  border-top: 1px solid var(--border);
+  padding: 8px 10px;
+  max-height: 160px;
+  overflow: auto;
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.annotation-gallery.is-empty {
+  color: var(--muted);
+}
+
+.annotation-gallery header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.annotation-gallery ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.annotation-gallery li p {
+  margin: 0 0 6px;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.annotation-gallery-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.annotation-gallery-actions button {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--hover);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.annotation-gallery-actions button:hover {
+  border-color: var(--text);
+}
+
 .browser-chrome {
   height: 38px;
   gap: 3px;
