@@ -9,9 +9,9 @@ Planes: program **P18** · decision (process; local SQLite durability scope) · 
 |---|---|
 | Y1 Doctor inventory | `apps/optimus-cli/src/doctor.rs`; `optimus doctor --json`; `tests/doctor_durability.rs` |
 | Y2 Backup contract | `docs/architecture/durability-and-backup.md`; `optimus doctor backup-list` |
-| Y3 Chaos WriteFile/command | `crates/optimus-runtime/tests/crash_resume.rs` (write crash + ambiguous command); campaign crash recover in `campaign.rs` tests |
-| Y4 Workflow cancel matrix | `workflow_run::durability_tests::double_request_cancellation_is_idempotent` |
-| Y5 Session multi-link repair | `session_resume` multi-link repair test |
+| Y3 Chaos WriteFile/command | `crash_resume`: pre-effect crash seam + resume terminal uniqueness; ambiguous command non-replay; campaign crash recover (existing) |
+| Y4 Workflow/agent terminals | cancel-request idempotence unit test; pre-existing `workflow_dag` / `agent_contracts` terminal uniqueness; vertical cancel fan-out |
+| Y5 Session multi-link repair | multi-link repair for `write_file` effect links; repair-on-open is link-driven (not tool-name-specific) |
 | Y6 Durability **S+++** | architecture-marks + this file |
 
 ## Commands

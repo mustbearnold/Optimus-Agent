@@ -343,14 +343,31 @@ fn crash_during_writefile_then_resume_exactly_one_terminal() {
         },
     )
     .expect("reopen");
-    let _recovered = rt.recover_crashed_running().expect("recover");
+    let recovered = rt.recover_crashed_running().expect("recover");
+    assert!(
+        recovered.contains(&job_id),
+        "expected job recovered, got {recovered:?}"
+    );
+    // Pre-effect prepared WriteFile is interrupted (replay-safe), not invented success.
+    let connection = Connection::open(&db).unwrap();
+    let attempt_status: String = connection
+        .query_row(
+            "SELECT status FROM effect_attempts WHERE job_id=?1 ORDER BY rowid DESC LIMIT 1",
+            [job_id.0.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(attempt_status, "interrupted");
     let status = rt.resume(job_id).expect("resume");
     assert_eq!(status, JobStatus::Succeeded);
+    assert_eq!(
+        fs::read_to_string(workspace.join("chaos-write.txt")).unwrap(),
+        "chaos"
+    );
     assert_eq!(
         fs::read_to_string(workspace.join("chaos-done.txt")).unwrap(),
         "done"
     );
-    let connection = Connection::open(&db).unwrap();
     let terminal: i64 = connection
         .query_row(
             "SELECT COUNT(*) FROM events WHERE job_id=?1 AND terminal_slot=1",
@@ -359,4 +376,12 @@ fn crash_during_writefile_then_resume_exactly_one_terminal() {
         )
         .unwrap();
     assert_eq!(terminal, 1);
+    let succeeded_attempts: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM effect_attempts WHERE job_id=?1 AND status='succeeded'",
+            [job_id.0.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(succeeded_attempts, 2, "exactly one success per completed node");
 }

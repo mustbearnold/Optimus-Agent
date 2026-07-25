@@ -323,11 +323,16 @@ Optimus home:
 | `workspace/.optimus/browser_state.json` | kernel/browser | Last HTTP page and bounded navigation history. |
 | renderer local storage | React presentation | Versioned pane geometry, theme/density, local project `rootPaths[]`/primary root, session-to-project assignment, pins, and expansion state. This is not runtime permission authority. |
 
-**Unknown or unresolved behaviour:** the remaining stores do not share a
-transaction, migration framework, backup policy, or universal retention
-contract. Campaigns and Work Graph jobs are the exception: both live in
-`optimus.db`. Cross-contract agent/session links reconcile committed identities;
-they are not distributed transactions.
+**Confirmed current behaviour (P18):** process-local durability is multi-file
+SQLite under one home. There is **no** distributed transaction across those DBs.
+Operators use `optimus doctor` (schema inventory + Work Graph quarantine) and
+`optimus doctor backup-list` / [durability-and-backup.md](./durability-and-backup.md)
+for the backup path set (including workflow/agent ledgers). Universal retention
+and a single migration framework across all stores remain residual.
+
+**Confirmed residual:** Campaigns and Work Graph jobs share `optimus.db`.
+Cross-contract agent/session links reconcile committed identities; they are not
+distributed transactions.
 
 **Confirmed current behaviour:** complete Work Graph job creation and later
 projection/event transitions are transactional. Legacy partial state is

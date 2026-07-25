@@ -38,7 +38,13 @@ Minimum path set (also emitted by `optimus doctor backup-list`):
 | `execution.db` (+ wal/shm) | Execution manifests / tool lifecycle |
 | `cron.db` (+ wal/shm) | Cron schedules and leases |
 | `gateway/gateway.db` (+ wal/shm) | Gateway claims/attempts |
-| `gateway/inbox`, `gateway/outbox` | Adapter file queues |
+| `gateway/inbox`, `gateway/outbox`, `gateway/processed`, `gateway/failed` | Adapter file queues |
+| `routing.db` (+ wal/shm) | Routing telemetry |
+| `settings.json` | Product settings (not secrets) |
+| `workflow-runs.db` (+ wal/shm) | Durable workflow run ledger |
+| `agent-invocations.db` (+ wal/shm) | Agent invocation ledger |
+| `workflow-registry.db` (+ wal/shm) | Workflow definition registry |
+| `agent-registry.db` (+ wal/shm) | Agent descriptor registry |
 | `project-authority.json` | Project root authority |
 | `artifacts/` | Content-addressed blobs |
 
@@ -69,8 +75,8 @@ optimus --home .optimus doctor backup-list
 optimus --home .optimus doctor backup-list --json
 ```
 
-Doctor exits non-zero when schema skew or open failures are reported, or when
-quarantined jobs exist.
+Doctor is **read-only** (never creates or migrates DBs). It exits non-zero when
+schema skew, open/inspect failures, or quarantined jobs are reported.
 
 ## Crash / resume operator notes
 

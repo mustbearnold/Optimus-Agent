@@ -11,7 +11,7 @@ use optimus_eval::{
     CandidateBinding, EvaluationReportV1, EvaluationResourceMeasurement, MetricThreshold,
     MAX_EVALUATION_DATASET_BYTES,
 };
-use optimus_graph::{PolicyMode, Store};
+use optimus_graph::PolicyMode;
 use optimus_kernel::{
     device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_recent_causal_turns,
     list_sessions, load_causal_turn, open_cron, open_seeded_agent_registry,
@@ -609,10 +609,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Commands::Version { .. } => unreachable!("version is handled before opening Optimus state"),
         Commands::Doctor { cmd, json } => match cmd {
             None => {
-                // Ensure core DBs exist so inventory reports live schema versions.
-                let _ = Store::open(&db);
-                let _ = CampaignStore::open(&cli.home);
-                let _ = SkillRegistry::open(&skills_db);
+                // Read-only: never migrate or create DBs during diagnosis.
                 let report = doctor::inventory(&cli.home, env!("CARGO_PKG_VERSION"));
                 if json {
                     println!("{}", serde_json::to_string_pretty(&report)?);

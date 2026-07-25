@@ -1,17 +1,18 @@
 //! Operator durability inventory (P18).
 //!
-//! Multi-DB homes do not share a transaction. Doctor reports schema/version
-//! presence, quarantine, and the backup file set operators must copy together.
+//! Multi-DB homes do not share a transaction. Doctor is **read-only**: it never
+//! creates or migrates databases. It reports presence, advertised schema/meta
+//! versions, Work Graph quarantine, and the backup path set.
 
 use std::path::Path;
 
-use optimus_graph::Store;
-use optimus_runtime::{CampaignStore, CAMPAIGN_SCHEMA_VERSION};
-use rusqlite::Connection;
+use rusqlite::{Connection, OpenFlags};
 use serde::Serialize;
 
 /// Expected work-graph store schema after current migrations.
 pub const WORK_GRAPH_SCHEMA_VERSION: &str = "7";
+/// Campaign plane schema embedded in optimus.db.
+pub const CAMPAIGN_SCHEMA_VERSION: &str = "4";
 /// Memory meta schema written on open.
 pub const MEMORY_SCHEMA_VERSION: &str = "2";
 
@@ -42,6 +43,8 @@ pub struct DoctorInventory {
     pub quarantined_jobs: Vec<QuarantineRow>,
     pub backup_paths: Vec<String>,
     pub issues: Vec<String>,
+    /// Doctor never migrates; true when any inspected path failed closed.
+    pub read_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -86,131 +89,198 @@ pub fn backup_relative_paths() -> &'static [(&'static str, &'static str)] {
         ("gateway/gateway.db-shm", "sqlite_shm_if_present"),
         ("gateway/inbox", "gateway_adapter_inbox_dir"),
         ("gateway/outbox", "gateway_adapter_outbox_dir"),
+        ("gateway/processed", "gateway_adapter_processed_dir"),
+        ("gateway/failed", "gateway_adapter_failed_dir"),
+        ("workflow-runs.db", "workflow_run_ledger"),
+        ("workflow-runs.db-wal", "sqlite_wal_if_present"),
+        ("workflow-runs.db-shm", "sqlite_shm_if_present"),
+        ("agent-invocations.db", "agent_invocation_ledger"),
+        ("agent-invocations.db-wal", "sqlite_wal_if_present"),
+        ("agent-invocations.db-shm", "sqlite_shm_if_present"),
+        ("workflow-registry.db", "workflow_definition_registry"),
+        ("workflow-registry.db-wal", "sqlite_wal_if_present"),
+        ("workflow-registry.db-shm", "sqlite_shm_if_present"),
+        ("agent-registry.db", "agent_descriptor_registry"),
+        ("agent-registry.db-wal", "sqlite_wal_if_present"),
+        ("agent-registry.db-shm", "sqlite_shm_if_present"),
+        ("routing.db", "routing_telemetry"),
+        ("routing.db-wal", "sqlite_wal_if_present"),
+        ("routing.db-shm", "sqlite_shm_if_present"),
         ("project-authority.json", "project_root_authority"),
+        ("settings.json", "product_settings"),
+        // auth.json intentionally omitted from minimum set (secrets); whole-home
+        // copy still preferred when operators need OAuth tokens restored.
         ("artifacts", "content_addressed_artifacts_dir"),
     ]
 }
 
-fn meta_schema_version(path: &Path) -> Result<Option<String>, String> {
-    if !path.is_file() {
-        return Ok(None);
-    }
-    let conn = Connection::open(path).map_err(|e| e.to_string())?;
-    // Prefer meta table; fall back to absence.
-    let has_meta: bool = conn
+fn open_readonly(path: &Path) -> Result<Connection, String> {
+    Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY).map_err(|e| e.to_string())
+}
+
+fn meta_value(conn: &Connection, table: &str, key: &str) -> Result<Option<String>, String> {
+    let has_table: bool = conn
         .query_row(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='meta'",
-            [],
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1",
+            [table],
             |_| Ok(true),
         )
         .unwrap_or(false);
-    if !has_meta {
+    if !has_table {
         return Ok(None);
     }
     let value: Option<String> = conn
         .query_row(
-            "SELECT value FROM meta WHERE key='schema_version'",
-            [],
+            &format!("SELECT value FROM {table} WHERE key=?1"),
+            [key],
             |row| row.get(0),
         )
-        .ok();
+        .optional_map_err(|e| e.to_string())?;
     Ok(value)
 }
 
-fn file_row(
-    home: &Path,
-    id: &str,
-    rel: &str,
-    expected: Option<&str>,
-    open_ok: Option<Result<Option<String>, String>>,
-) -> DbInventoryRow {
-    let absolute = home.join(rel);
-    let present = absolute.exists();
-    let (schema_version, ok, detail) = match open_ok {
-        None if !present => (None, true, "absent (created on first use)".into()),
-        None => (None, true, "present".into()),
-        Some(Ok(version)) => {
-            let ok = match (expected, version.as_deref()) {
-                (Some(exp), Some(got)) => exp == got,
-                (Some(_), None) if present => false,
-                _ => true,
-            };
-            let detail = if !present {
-                "absent (created on first use)".into()
-            } else if let (Some(exp), Some(got)) = (expected, version.as_deref()) {
-                if exp == got {
-                    format!("schema_version={got}")
-                } else {
-                    format!("schema skew: got {got}, expected {exp}")
-                }
-            } else if let Some(got) = version.as_deref() {
-                format!("schema_version={got}")
-            } else {
-                "present (no meta.schema_version)".into()
-            };
-            (version, ok, detail)
+trait OptionalMapErr<T> {
+    fn optional_map_err(self, f: impl FnOnce(rusqlite::Error) -> String) -> Result<T, String>;
+}
+
+impl<T> OptionalMapErr<Option<T>> for rusqlite::Result<T> {
+    fn optional_map_err(self, f: impl FnOnce(rusqlite::Error) -> String) -> Result<Option<T>, String> {
+        match self {
+            Ok(v) => Ok(Some(v)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(f(e)),
         }
-        Some(Err(err)) => (None, false, format!("open/inspect failed: {err}")),
-    };
-    DbInventoryRow {
-        id: id.into(),
-        relative_path: rel.into(),
-        absolute_path: absolute.display().to_string(),
-        present,
-        schema_version,
-        expected_schema: expected.map(str::to_string),
-        ok,
-        detail,
     }
 }
 
-/// Build multi-DB inventory + quarantine report for an Optimus home.
+fn inspect_meta_db(
+    home: &Path,
+    id: &str,
+    rel: &str,
+    meta_table: &str,
+    expected: Option<&str>,
+) -> DbInventoryRow {
+    let absolute = home.join(rel);
+    if !absolute.is_file() {
+        return DbInventoryRow {
+            id: id.into(),
+            relative_path: rel.into(),
+            absolute_path: absolute.display().to_string(),
+            present: false,
+            schema_version: None,
+            expected_schema: expected.map(str::to_string),
+            ok: true,
+            detail: "absent (created on first use)".into(),
+        };
+    }
+    match open_readonly(&absolute) {
+        Ok(conn) => match meta_value(&conn, meta_table, "schema_version") {
+            Ok(version) => {
+                let ok = match (expected, version.as_deref()) {
+                    (Some(exp), Some(got)) => exp == got,
+                    (Some(_), None) => false,
+                    _ => true,
+                };
+                let detail = match (expected, version.as_deref()) {
+                    (Some(exp), Some(got)) if exp == got => format!("schema_version={got}"),
+                    (Some(exp), Some(got)) => {
+                        format!("schema skew: got {got}, expected {exp}")
+                    }
+                    (Some(exp), None) => {
+                        format!("missing {meta_table}.schema_version (expected {exp})")
+                    }
+                    (_, Some(got)) => format!("schema_version={got}"),
+                    _ => format!("present (no {meta_table}.schema_version)"),
+                };
+                DbInventoryRow {
+                    id: id.into(),
+                    relative_path: rel.into(),
+                    absolute_path: absolute.display().to_string(),
+                    present: true,
+                    schema_version: version,
+                    expected_schema: expected.map(str::to_string),
+                    ok,
+                    detail,
+                }
+            }
+            Err(err) => DbInventoryRow {
+                id: id.into(),
+                relative_path: rel.into(),
+                absolute_path: absolute.display().to_string(),
+                present: true,
+                schema_version: None,
+                expected_schema: expected.map(str::to_string),
+                ok: false,
+                detail: format!("inspect failed: {err}"),
+            },
+        },
+        Err(err) => DbInventoryRow {
+            id: id.into(),
+            relative_path: rel.into(),
+            absolute_path: absolute.display().to_string(),
+            present: true,
+            schema_version: None,
+            expected_schema: expected.map(str::to_string),
+            ok: false,
+            detail: format!("open failed (read-only): {err}"),
+        },
+    }
+}
+
+fn list_quarantine_readonly(path: &Path) -> Result<Vec<QuarantineRow>, String> {
+    let conn = open_readonly(path)?;
+    let has: bool = conn
+        .query_row(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='job_quarantine'",
+            [],
+            |_| Ok(true),
+        )
+        .unwrap_or(false);
+    if !has {
+        return Ok(Vec::new());
+    }
+    let mut stmt = conn
+        .prepare("SELECT job_id, reason FROM job_quarantine ORDER BY job_id")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(QuarantineRow {
+                job_id: row.get(0)?,
+                reason: row.get(1)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = Vec::new();
+    for row in rows {
+        out.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
+
+/// Build multi-DB inventory + quarantine report for an Optimus home (read-only).
 pub fn inventory(home: &Path, product_version: &str) -> DoctorInventory {
     let mut issues = Vec::new();
     let mut databases = Vec::new();
 
-    // Work graph / campaigns (optimus.db)
-    let optimus_path = home.join("optimus.db");
-    let work_graph = if optimus_path.exists() {
-        match Store::open(&optimus_path) {
-            Ok(store) => match store.schema_version() {
-                Ok(v) => Some(Ok(Some(v))),
-                Err(e) => Some(Err(e.to_string())),
-            },
-            Err(e) => Some(Err(e.to_string())),
-        }
-    } else {
-        Some(Ok(None))
-    };
-    databases.push(file_row(
+    databases.push(inspect_meta_db(
         home,
         "work_graph",
         "optimus.db",
+        "meta",
         Some(WORK_GRAPH_SCHEMA_VERSION),
-        work_graph,
     ));
-
-    let campaign = if optimus_path.exists() || home.exists() {
-        match CampaignStore::open(home) {
-            Ok(store) => match store.schema_version() {
-                Ok(v) => Some(Ok(Some(v.to_string()))),
-                Err(e) => Some(Err(e.to_string())),
-            },
-            Err(e) => Some(Err(e.to_string())),
-        }
-    } else {
-        Some(Ok(None))
-    };
-    // Campaign schema lives inside optimus.db; report as logical plane.
-    let mut campaign_row = file_row(
+    // Campaign schema lives in the same file under campaign_meta.
+    let mut campaign = inspect_meta_db(
         home,
         "campaigns",
         "optimus.db",
-        Some(&CAMPAIGN_SCHEMA_VERSION.to_string()),
-        campaign,
+        "campaign_meta",
+        Some(CAMPAIGN_SCHEMA_VERSION),
     );
-    campaign_row.detail = format!("campaign plane in optimus.db; {}", campaign_row.detail);
-    databases.push(campaign_row);
+    if campaign.present {
+        campaign.detail = format!("campaign plane in optimus.db; {}", campaign.detail);
+    }
+    databases.push(campaign);
 
     for (id, rel, expected) in [
         ("sessions", "sessions.db", None),
@@ -219,20 +289,26 @@ pub fn inventory(home: &Path, product_version: &str) -> DoctorInventory {
         ("execution", "execution.db", None),
         ("cron", "cron.db", None),
         ("gateway", "gateway/gateway.db", None),
+        ("workflow_runs", "workflow-runs.db", None),
+        ("agent_invocations", "agent-invocations.db", None),
+        ("workflow_registry", "workflow-registry.db", None),
+        ("agent_registry", "agent-registry.db", None),
+        ("routing", "routing.db", None),
     ] {
-        let open = Some(meta_schema_version(&home.join(rel)));
-        databases.push(file_row(home, id, rel, expected, open));
+        databases.push(inspect_meta_db(home, id, rel, "meta", expected));
     }
 
     let mut quarantined_jobs = Vec::new();
-    if optimus_path.exists() {
-        if let Ok(store) = Store::open(&optimus_path) {
-            if let Ok(rows) = store.list_quarantined_jobs() {
-                for row in rows {
-                    quarantined_jobs.push(QuarantineRow {
-                        job_id: row.job_id.to_string(),
-                        reason: row.reason,
-                    });
+    let optimus_path = home.join("optimus.db");
+    if optimus_path.is_file() {
+        match list_quarantine_readonly(&optimus_path) {
+            Ok(rows) => quarantined_jobs = rows,
+            Err(err) => {
+                issues.push(format!("quarantine scan failed: {err}"));
+                // Mark work_graph row non-ok if still marked ok.
+                if let Some(row) = databases.iter_mut().find(|r| r.id == "work_graph") {
+                    row.ok = false;
+                    row.detail = format!("{}; quarantine scan failed: {err}", row.detail);
                 }
             }
         }
@@ -263,6 +339,7 @@ pub fn inventory(home: &Path, product_version: &str) -> DoctorInventory {
         quarantined_jobs,
         backup_paths,
         issues,
+        read_only: true,
     }
 }
 
@@ -286,7 +363,9 @@ pub fn backup_list(home: &Path) -> BackupList {
         notes: vec![
             "Copy the whole home directory when possible; at minimum every present path above.".into(),
             "Stop writers (CLI/desktop/gateway) before cold copy; include -wal/-shm when present.".into(),
+            "auth.json is intentionally omitted from the minimum set (secrets); include only if restoring OAuth.".into(),
             "External channel exactly-once delivery is out of architecture Durability S+++ scope.".into(),
+            "Doctor is read-only: it never migrates or creates databases.".into(),
             "See docs/architecture/durability-and-backup.md.".into(),
         ],
     }
@@ -294,7 +373,7 @@ pub fn backup_list(home: &Path) -> BackupList {
 
 pub fn print_inventory_text(report: &DoctorInventory) {
     println!(
-        "optimus {} — durability doctor (P18)",
+        "optimus {} — durability doctor (P18, read-only)",
         report.product_version
     );
     println!("home: {}", report.home);
@@ -346,4 +425,3 @@ pub fn print_backup_list_text(list: &BackupList) {
         println!("note: {note}");
     }
 }
-
