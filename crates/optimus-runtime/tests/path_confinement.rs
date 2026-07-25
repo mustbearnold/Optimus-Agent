@@ -303,3 +303,132 @@ fn drive_relative_path_is_rejected() {
         .expect_err("drive-relative path must be denied");
     assert!(matches!(error, RuntimeError::PathEscape(_)), "{error:?}");
 }
+
+#[test]
+fn mkdir_delete_rename_patch_under_smart_deny_and_confinement() {
+    let root = tempdir().expect("root");
+    let workspace = root.path().join("workspace");
+    let rt = Runtime::open(&root.path().join("optimus.db"), &workspace).expect("runtime");
+
+    let mkdir = create_single_effect_job(
+        &rt,
+        "mkdir",
+        Effect::Mkdir {
+            relative_path: "nested/dir".into(),
+        },
+    );
+    assert!(matches!(
+        rt.run_next(mkdir),
+        Err(RuntimeError::NeedsApproval { .. })
+    ));
+    grant_if_needed(&rt, mkdir);
+    assert!(workspace.join("nested/dir").is_dir());
+
+    // seed file for patch/rename/delete
+    let write = create_single_effect_job(
+        &rt,
+        "seed",
+        Effect::WriteFile {
+            relative_path: "nested/dir/note.txt".into(),
+            contents: "hello world".into(),
+        },
+    );
+    grant_if_needed(&rt, write);
+
+    let patch = create_single_effect_job(
+        &rt,
+        "patch",
+        Effect::PatchFile {
+            relative_path: "nested/dir/note.txt".into(),
+            old_string: "hello".into(),
+            new_string: "hola".into(),
+        },
+    );
+    assert!(matches!(
+        rt.run_next(patch),
+        Err(RuntimeError::NeedsApproval { .. })
+    ));
+    grant_if_needed(&rt, patch);
+    assert_eq!(
+        fs::read_to_string(workspace.join("nested/dir/note.txt")).unwrap(),
+        "hola world"
+    );
+
+    let rename = create_single_effect_job(
+        &rt,
+        "rename",
+        Effect::RenamePath {
+            from_relative_path: "nested/dir/note.txt".into(),
+            to_relative_path: "nested/dir/renamed.txt".into(),
+        },
+    );
+    grant_if_needed(&rt, rename);
+    assert!(workspace.join("nested/dir/renamed.txt").is_file());
+    assert!(!workspace.join("nested/dir/note.txt").exists());
+
+    let delete = create_single_effect_job(
+        &rt,
+        "delete",
+        Effect::DeletePath {
+            relative_path: "nested/dir/renamed.txt".into(),
+        },
+    );
+    grant_if_needed(&rt, delete);
+    assert!(!workspace.join("nested/dir/renamed.txt").exists());
+}
+
+#[test]
+fn patch_fails_closed_when_old_string_not_unique() {
+    let root = tempdir().expect("root");
+    let workspace = root.path().join("workspace");
+    let rt = Runtime::open(&root.path().join("optimus.db"), &workspace).expect("runtime");
+    let write = create_single_effect_job(
+        &rt,
+        "seed",
+        Effect::WriteFile {
+            relative_path: "dup.txt".into(),
+            contents: "aa aa".into(),
+        },
+    );
+    grant_if_needed(&rt, write);
+    let patch = create_single_effect_job(
+        &rt,
+        "patch-dup",
+        Effect::PatchFile {
+            relative_path: "dup.txt".into(),
+            old_string: "aa".into(),
+            new_string: "bb".into(),
+        },
+    );
+    rt.grant_approval(ApprovalGrant::for_job(patch)).expect("grant");
+    let err = rt.run_next(patch).expect_err("non-unique patch");
+    assert!(matches!(err, RuntimeError::Effector(_)), "{err:?}");
+    assert_eq!(fs::read_to_string(workspace.join("dup.txt")).unwrap(), "aa aa");
+}
+
+#[test]
+fn rename_rejects_parent_traversal_on_either_side() {
+    let root = tempdir().expect("root");
+    let workspace = root.path().join("workspace");
+    let rt = Runtime::open(&root.path().join("optimus.db"), &workspace).expect("runtime");
+    let job = create_single_effect_job(
+        &rt,
+        "bad-rename",
+        Effect::RenamePath {
+            from_relative_path: "../escape".into(),
+            to_relative_path: "ok.txt".into(),
+        },
+    );
+    let err = rt.run_next(job).expect_err("preflight");
+    assert!(
+        matches!(err, RuntimeError::PathEscape(_))
+            || matches!(err, RuntimeError::NeedsApproval { .. }),
+        "{err:?}"
+    );
+    // Even if SmartDeny first, grant then fail path escape
+    if matches!(err, RuntimeError::NeedsApproval { .. }) {
+        rt.grant_approval(ApprovalGrant::for_job(job)).unwrap();
+        let err2 = rt.run_next(job).expect_err("path");
+        assert!(matches!(err2, RuntimeError::PathEscape(_)), "{err2:?}");
+    }
+}

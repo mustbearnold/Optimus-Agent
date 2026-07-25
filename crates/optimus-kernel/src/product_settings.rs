@@ -54,13 +54,25 @@ impl WorkIsolationMode {
         }
     }
 
-    /// Whether this mode is fully enforced by runtime policy yet.
+    /// Whether **product FS isolation** beyond the command envelope is enforced.
     ///
-    /// P12: all modes select a command capability envelope that is enforced at
-    /// spawn. Broader product isolation (separate homes, memory partitions)
-    /// may still be progressive for IsolatedProfiles.
-    pub fn enforcement_active(self) -> bool {
+    /// P12 always enforces a command capability envelope. P22 honesty:
+    /// - `shared` → no product-bound project FS enforcement (envelope only)
+    /// - `project_bound` → project roots + workspace hash for mutating effects
+    /// - `isolated_profiles` → sealed homes still out of scope (After P29)
+    pub fn product_fs_enforced(self) -> bool {
+        matches!(self, Self::ProjectBound)
+    }
+
+    /// Whether the command FS envelope selected by this mode is enforced at spawn.
+    pub fn command_envelope_enforced(self) -> bool {
         true
+    }
+
+    /// Legacy alias: true only when product FS isolation is enforced.
+    /// Prefer [`product_fs_enforced`] + [`command_envelope_enforced`] in new code.
+    pub fn enforcement_active(self) -> bool {
+        self.product_fs_enforced()
     }
 
     /// Map product isolation intent to the command capability envelope.
@@ -179,22 +191,35 @@ impl ProductSettings {
     }
 
     pub fn to_public_json(&self) -> serde_json::Value {
+        let configured = self.work_isolation.as_str();
+        let product_fs = self.work_isolation.product_fs_enforced();
+        let cmd_env = self.work_isolation.command_envelope_enforced();
         serde_json::json!({
             "version": self.version,
-            "work_isolation": self.work_isolation.as_str(),
+            "work_isolation": configured,
+            "configured_mode": configured,
             "work_isolation_label": self.work_isolation.label(),
             "allow_concurrent_projects": self.allow_concurrent_projects,
-            "enforcement_active": self.work_isolation.enforcement_active(),
+            // Product FS isolation only (not command envelope).
+            "enforcement_active": product_fs,
+            "product_fs_enforced": product_fs,
+            "command_envelope_enforced": cmd_env,
+            // Honest effective product mode for status bars (never claim isolated_profiles).
+            "enforced_mode": if product_fs {
+                "project_bound"
+            } else {
+                "shared"
+            },
             "enforcement_note": match self.work_isolation {
                 WorkIsolationMode::Shared => {
-                    "Shared mode: command FS envelope is confined (workspace-only writable on Linux)."
+                    "Shared mode: command FS envelope is confined; product FS isolation is not enforced."
                 }
                 WorkIsolationMode::ProjectBound => {
-                    "Project-bound: command FS envelope is confined; project roots are Rust-authorized."
+                    "Project-bound: mutating effects bind workspace_sha256 and Rust project roots. \
+                     allow_concurrent_projects is a settings flag only until a multi-project mutate lease store ships."
                 }
                 WorkIsolationMode::IsolatedProfiles => {
-                    "Isolated profiles: confined command envelope without network (Linux); \
-                     Windows fail-closes RunCommand until AppContainer ships."
+                    "Isolated profiles (configured): command envelope ConfinedNoNetwork on Linux; sealed profile homes are not enforced yet (After P29). Status must not claim full isolation."
                 }
             },
             "command_fs_envelope": self.work_isolation.command_fs_envelope().as_str(),
@@ -215,6 +240,33 @@ mod tests {
         assert_eq!(s.work_isolation, WorkIsolationMode::Shared);
         assert!(!s.allow_concurrent_projects);
         assert!(ProductSettings::path(dir.path()).is_file());
+    }
+
+    #[test]
+    fn isolation_honesty_shared_never_claims_product_fs_enforced() {
+        let s = ProductSettings::default();
+        let j = s.to_public_json();
+        assert_eq!(j["configured_mode"], "shared");
+        assert_eq!(j["enforced_mode"], "shared");
+        assert_eq!(j["product_fs_enforced"], false);
+        assert_eq!(j["enforcement_active"], false);
+        assert_eq!(j["command_envelope_enforced"], true);
+
+        let mut bound = ProductSettings::default();
+        bound.work_isolation = WorkIsolationMode::ProjectBound;
+        let j2 = bound.to_public_json();
+        assert_eq!(j2["configured_mode"], "project_bound");
+        assert_eq!(j2["enforced_mode"], "project_bound");
+        assert_eq!(j2["product_fs_enforced"], true);
+
+        let mut isolated = ProductSettings::default();
+        isolated.work_isolation = WorkIsolationMode::IsolatedProfiles;
+        let j3 = isolated.to_public_json();
+        assert_eq!(j3["configured_mode"], "isolated_profiles");
+        // Sealed homes not enforced yet — must not claim isolated product FS.
+        assert_eq!(j3["enforced_mode"], "shared");
+        assert_eq!(j3["product_fs_enforced"], false);
+        assert_eq!(j3["command_envelope_enforced"], true);
     }
 
     #[test]

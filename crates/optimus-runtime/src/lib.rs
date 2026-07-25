@@ -822,15 +822,19 @@ impl Runtime {
             ));
         }
         let (required, permission_label) = match &effect {
-            Effect::WriteFile { .. } | Effect::ProjectWriteFile { .. } => {
-                (Permission::FsWorkspace, "fs_workspace")
-            }
+            e if e.requires_fs_workspace_skill() => (Permission::FsWorkspace, "fs_workspace"),
             Effect::RunCommand { .. } | Effect::ProjectRunCommand { .. } => {
                 (Permission::Terminal, "terminal")
             }
             Effect::AssertFileEquals { .. } => {
                 return Err(RuntimeError::NotRunnable(
                     "assert effects do not require skill approval grants".into(),
+                ));
+            }
+            // Exhaustiveness: new non-fs, non-command effects must choose a skill class.
+            _ => {
+                return Err(RuntimeError::NotRunnable(
+                    "effect class has no skill grant mapping".into(),
                 ));
             }
         };
@@ -908,6 +912,14 @@ impl Runtime {
                 ),
                 Effect::WriteFile { .. }
                 | Effect::ProjectWriteFile { .. }
+                | Effect::Mkdir { .. }
+                | Effect::ProjectMkdir { .. }
+                | Effect::DeletePath { .. }
+                | Effect::ProjectDeletePath { .. }
+                | Effect::RenamePath { .. }
+                | Effect::ProjectRenamePath { .. }
+                | Effect::PatchFile { .. }
+                | Effect::ProjectPatchFile { .. }
                 | Effect::AssertFileEquals { .. } => (
                     PreparedAttemptDisposition::Interrupted,
                     "replay-safe effect interrupted before receipt persistence",
@@ -1305,6 +1317,68 @@ impl Runtime {
                     job_id,
                 )
             }
+            Effect::ProjectMkdir {
+                workspace_sha256,
+                relative_path,
+            } => {
+                self.verify_workspace_sha256(workspace_sha256)?;
+                self.execute_effect(
+                    &Effect::Mkdir {
+                        relative_path: relative_path.clone(),
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )
+            }
+            Effect::ProjectDeletePath {
+                workspace_sha256,
+                relative_path,
+            } => {
+                self.verify_workspace_sha256(workspace_sha256)?;
+                self.execute_effect(
+                    &Effect::DeletePath {
+                        relative_path: relative_path.clone(),
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )
+            }
+            Effect::ProjectRenamePath {
+                workspace_sha256,
+                from_relative_path,
+                to_relative_path,
+            } => {
+                self.verify_workspace_sha256(workspace_sha256)?;
+                self.execute_effect(
+                    &Effect::RenamePath {
+                        from_relative_path: from_relative_path.clone(),
+                        to_relative_path: to_relative_path.clone(),
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )
+            }
+            Effect::ProjectPatchFile {
+                workspace_sha256,
+                relative_path,
+                old_string,
+                new_string,
+            } => {
+                self.verify_workspace_sha256(workspace_sha256)?;
+                self.execute_effect(
+                    &Effect::PatchFile {
+                        relative_path: relative_path.clone(),
+                        old_string: old_string.clone(),
+                        new_string: new_string.clone(),
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )
+            }
             Effect::WriteFile {
                 relative_path,
                 contents,
@@ -1350,6 +1424,110 @@ impl Runtime {
                         "effect": "write_file",
                         "relative_path": relative_path,
                         "bytes": contents.len(),
+                    }),
+                ))
+            }
+            Effect::Mkdir { relative_path } => {
+                let relative = self.safe_relative_path(relative_path)?;
+                self.workspace_dir
+                    .create_dir_all(&relative)
+                    .map_err(|error| RuntimeError::PathEscape(format!("{relative_path}: {error}")))?;
+                Ok((
+                    None,
+                    serde_json::json!({
+                        "effect": "mkdir",
+                        "relative_path": relative_path,
+                    }),
+                ))
+            }
+            Effect::DeletePath { relative_path } => {
+                let relative = self.safe_relative_path(relative_path)?;
+                // Prefer file delete; fall back to empty directory remove.
+                match self.workspace_dir.remove_file(&relative) {
+                    Ok(()) => {}
+                    Err(_) => {
+                        self.workspace_dir.remove_dir(&relative).map_err(|error| {
+                            RuntimeError::Effector(format!("delete {relative_path}: {error}"))
+                        })?;
+                    }
+                }
+                Ok((
+                    None,
+                    serde_json::json!({
+                        "effect": "delete_path",
+                        "relative_path": relative_path,
+                    }),
+                ))
+            }
+            Effect::RenamePath {
+                from_relative_path,
+                to_relative_path,
+            } => {
+                let from = self.safe_relative_path(from_relative_path)?;
+                let to = self.safe_relative_path(to_relative_path)?;
+                if let Some(parent) = to.parent() {
+                    self.workspace_dir.create_dir_all(parent).map_err(|error| {
+                        RuntimeError::PathEscape(format!("{to_relative_path}: {error}"))
+                    })?;
+                }
+                self.workspace_dir
+                    .rename(&from, &self.workspace_dir, &to)
+                    .map_err(|error| {
+                        RuntimeError::Effector(format!(
+                            "rename {from_relative_path} -> {to_relative_path}: {error}"
+                        ))
+                    })?;
+                Ok((
+                    None,
+                    serde_json::json!({
+                        "effect": "rename_path",
+                        "from_relative_path": from_relative_path,
+                        "to_relative_path": to_relative_path,
+                    }),
+                ))
+            }
+            Effect::PatchFile {
+                relative_path,
+                old_string,
+                new_string,
+            } => {
+                if old_string.is_empty() {
+                    return Err(RuntimeError::Effector(
+                        "patch old_string must be non-empty".into(),
+                    ));
+                }
+                let relative = self.safe_relative_path(relative_path)?;
+                let mut file = self.workspace_dir.open(&relative).map_err(|error| {
+                    RuntimeError::PathEscape(format!("{relative_path}: {error}"))
+                })?;
+                let mut actual = String::new();
+                file.read_to_string(&mut actual).map_err(|error| {
+                    RuntimeError::Effector(format!("read {relative_path}: {error}"))
+                })?;
+                drop(file);
+                let matches = actual.matches(old_string).count();
+                if matches != 1 {
+                    return Err(RuntimeError::Effector(format!(
+                        "patch {relative_path}: expected exactly one match of old_string, found {matches}"
+                    )));
+                }
+                let patched = actual.replacen(old_string, new_string, 1);
+                // Atomic replace via temp file (same pattern as WriteFile).
+                self.execute_effect(
+                    &Effect::WriteFile {
+                        relative_path: relative_path.clone(),
+                        contents: patched,
+                    },
+                    timeout,
+                    attempt_id,
+                    job_id,
+                )?;
+                Ok((
+                    None,
+                    serde_json::json!({
+                        "effect": "patch_file",
+                        "relative_path": relative_path,
+                        "matched": 1,
                     }),
                 ))
             }
@@ -1569,8 +1747,27 @@ impl Runtime {
         match effect {
             Effect::WriteFile { relative_path, .. }
             | Effect::AssertFileEquals { relative_path, .. }
-            | Effect::ProjectWriteFile { relative_path, .. } => {
+            | Effect::ProjectWriteFile { relative_path, .. }
+            | Effect::Mkdir { relative_path, .. }
+            | Effect::ProjectMkdir { relative_path, .. }
+            | Effect::DeletePath { relative_path, .. }
+            | Effect::ProjectDeletePath { relative_path, .. }
+            | Effect::PatchFile { relative_path, .. }
+            | Effect::ProjectPatchFile { relative_path, .. } => {
                 self.safe_relative_path(relative_path)?;
+            }
+            Effect::RenamePath {
+                from_relative_path,
+                to_relative_path,
+                ..
+            }
+            | Effect::ProjectRenamePath {
+                from_relative_path,
+                to_relative_path,
+                ..
+            } => {
+                self.safe_relative_path(from_relative_path)?;
+                self.safe_relative_path(to_relative_path)?;
             }
             Effect::RunCommand { program, .. } | Effect::ProjectRunCommand { program, .. } => {
                 if program.trim().is_empty() {

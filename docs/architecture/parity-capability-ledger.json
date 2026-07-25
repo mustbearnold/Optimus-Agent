@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21 tool-loop/pack-budget parity; artifacts path post-P11 peel",
+  "scorecard_marker": "P17 release gates; program P21 tool parity; program P22 files.mutate parity; projects.scope honesty partial; artifacts post-P11",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -228,11 +228,17 @@
       "id": "files.mutate",
       "capability": "Write/patch/mkdir/rename/delete with SmartDeny",
       "hermes_reference": "File mutation tools",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "crates/optimus-kernel/src/fs_sandbox.rs"
+        "crates/optimus-kernel/src/fs_sandbox.rs",
+        "crates/optimus-graph/src/lib.rs",
+        "crates/optimus-runtime/src/lib.rs",
+        "crates/optimus-runtime/tests/path_confinement.rs",
+        "crates/optimus-packs/src/lib.rs",
+        "docs/decisions/0039-files-mutate-effect-taxonomy.md",
+        "docs/architecture/product-complete-p22-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P22: Effect taxonomy ADR-0039 adds Mkdir/DeletePath/RenamePath/PatchFile (+ Project* twins); SmartDeny high-risk; cap-std Work Graph only; tools mkdir/delete_path/rename_path/patch_file; path_confinement + approvals_surface green. Evidence: crates/optimus-graph, optimus-runtime tests/path_confinement.rs, docs/decisions/0039-files-mutate-effect-taxonomy.md, docs/architecture/product-complete-p22-verification.md",
       "owner_ticket": "A-02,B-04"
     },
     {
@@ -431,7 +437,10 @@
       "hermes_reference": "Projects/workspaces",
       "state": "partial",
       "evidence": [
-        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js"
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+        "crates/optimus-kernel/src/product_settings.rs",
+        "docs/architecture/product-complete-p22-verification.md",
+        "docs/decisions/0027-settings-driven-work-isolation.md"
       ],
       "trajectory": null,
       "owner_ticket": "D-06"

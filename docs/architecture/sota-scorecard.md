@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-25 · P17 release gates; program P21 tool-loop/pack-budget parity; artifacts path post-P11 peel
+Updated: 2026-07-25 · P17 release gates; program P21 tool parity; program P22 files.mutate parity; projects.scope honesty partial; artifacts post-P11
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -21,9 +21,9 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 12 | A bounded Hermes-equivalent capability has current executable evidence |
+| **parity** | 13 | A bounded Hermes-equivalent capability has current executable evidence |
 | **partial** | 12 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
-| **missing** | 23 | No complete executable path exists yet |
+| **missing** | 22 | No complete executable path exists yet |
 | **total** | 51 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
@@ -49,6 +49,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Deterministic offline eval suite
 - Store-backed causal reconstruction + local export (`optimus.causal.v1`)
 - Fail-closed tool ads↔handler registry + progressive pack schema budget (program P21)
+- Files mutate under SmartDeny (mkdir/rename/delete/patch + write) (program P22)
 
 ## Material partials
 
@@ -60,7 +61,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Content-addressed artifacts store (list/publish/preview/delete/filter + bulk delete; export/zip still incomplete)
 - Cron lifecycle and desktop CRUD
 - Gateway queue without leases/delivery receipts
-- Durable project→policy/root binding
+- Project isolation honesty (configured vs enforced) with concurrent multi-project mutate lease residual
 - Slash-command/command-palette unification
 
 ## Leading product losses
@@ -70,7 +71,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 3. Interactive multi-tab ConPTY terminal
 4. General durable child-agent DAG execution with leases/handoff artifacts
 5. Comparative Hermes-vs-Optimus trajectory runner
-6. Files mutation path, Memory UI, Skills/Packs console, Messaging UI, Logs backend
+6. Memory UI, Skills/Packs console, Messaging UI, Logs backend
 7. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, updater, and ecosystem breadth
 
 ## Current architecture truth
@@ -101,4 +102,4 @@ PF-00 baseline evidence: `local/tmp/baselines/PF-00-report.md`.
 
 ## Honest statement
 
-Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 12 partial and 23 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.
+Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 12 partial and 22 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.

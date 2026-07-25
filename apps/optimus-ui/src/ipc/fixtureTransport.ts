@@ -90,7 +90,11 @@ const settings: ProductSettings = {
   work_isolation: 'shared',
   work_isolation_label: 'Shared workbench',
   allow_concurrent_projects: false,
-  enforcement_active: true,
+  enforcement_active: false,
+  product_fs_enforced: false,
+  configured_mode: 'shared',
+  enforced_mode: 'shared',
+  command_envelope_enforced: true,
 };
 
 const doctor: Doctor = {
@@ -113,7 +117,11 @@ const doctor: Doctor = {
   work_isolation: 'shared',
   work_isolation_label: 'Shared workbench',
   allow_concurrent_projects: false,
-  isolation_enforcement_active: true,
+  isolation_enforcement_active: false,
+  product_fs_enforced: false,
+  configured_mode: 'shared',
+  enforced_mode: 'shared',
+  command_envelope_enforced: true,
   settings,
   pack_catalog: [
     {

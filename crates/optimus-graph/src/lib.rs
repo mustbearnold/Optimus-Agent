@@ -34,6 +34,44 @@ pub enum Effect {
         relative_path: String,
         contents: String,
     },
+    /// Create a directory (and parents) under the workspace.
+    Mkdir {
+        relative_path: String,
+    },
+    ProjectMkdir {
+        workspace_sha256: String,
+        relative_path: String,
+    },
+    /// Delete a file or empty directory under the workspace.
+    DeletePath {
+        relative_path: String,
+    },
+    ProjectDeletePath {
+        workspace_sha256: String,
+        relative_path: String,
+    },
+    /// Rename/move within the same workspace (source and dest confined).
+    RenamePath {
+        from_relative_path: String,
+        to_relative_path: String,
+    },
+    ProjectRenamePath {
+        workspace_sha256: String,
+        from_relative_path: String,
+        to_relative_path: String,
+    },
+    /// Exact single-occurrence string replace within a file (fail if 0 or >1 matches).
+    PatchFile {
+        relative_path: String,
+        old_string: String,
+        new_string: String,
+    },
+    ProjectPatchFile {
+        workspace_sha256: String,
+        relative_path: String,
+        old_string: String,
+        new_string: String,
+    },
     AssertFileEquals {
         relative_path: String,
         expected: String,
@@ -57,8 +95,33 @@ impl Effect {
             self,
             Effect::WriteFile { .. }
                 | Effect::ProjectWriteFile { .. }
+                | Effect::Mkdir { .. }
+                | Effect::ProjectMkdir { .. }
+                | Effect::DeletePath { .. }
+                | Effect::ProjectDeletePath { .. }
+                | Effect::RenamePath { .. }
+                | Effect::ProjectRenamePath { .. }
+                | Effect::PatchFile { .. }
+                | Effect::ProjectPatchFile { .. }
                 | Effect::RunCommand { .. }
                 | Effect::ProjectRunCommand { .. }
+        )
+    }
+
+    /// FsWorkspace skill class covers all host-mutating file ops (not commands).
+    pub fn requires_fs_workspace_skill(&self) -> bool {
+        matches!(
+            self,
+            Effect::WriteFile { .. }
+                | Effect::ProjectWriteFile { .. }
+                | Effect::Mkdir { .. }
+                | Effect::ProjectMkdir { .. }
+                | Effect::DeletePath { .. }
+                | Effect::ProjectDeletePath { .. }
+                | Effect::RenamePath { .. }
+                | Effect::ProjectRenamePath { .. }
+                | Effect::PatchFile { .. }
+                | Effect::ProjectPatchFile { .. }
         )
     }
 }

@@ -416,6 +416,10 @@ pub enum ToolPolicy {
 pub enum ToolInvocation {
     ReadFile,
     WriteFile,
+    Mkdir,
+    DeletePath,
+    RenamePath,
+    PatchFile,
     Terminal,
     WebSearch,
     MemoryRecall,
@@ -481,6 +485,10 @@ impl ToolInvocation {
     pub const ALL_DISPATCHABLE: &'static [ToolInvocation] = &[
         Self::ReadFile,
         Self::WriteFile,
+        Self::Mkdir,
+        Self::DeletePath,
+        Self::RenamePath,
+        Self::PatchFile,
         Self::Terminal,
         Self::WebSearch,
         Self::MemoryRecall,
@@ -499,6 +507,10 @@ impl ToolInvocation {
         match self {
             Self::ReadFile => Some("read_file"),
             Self::WriteFile => Some("write_file"),
+            Self::Mkdir => Some("mkdir"),
+            Self::DeletePath => Some("delete_path"),
+            Self::RenamePath => Some("rename_path"),
+            Self::PatchFile => Some("patch_file"),
             Self::Terminal => Some("terminal"),
             Self::WebSearch => Some("web_search"),
             Self::MemoryRecall => Some("memory_recall"),
@@ -514,15 +526,20 @@ impl ToolInvocation {
     fn policy(self) -> Option<ToolPolicy> {
         match self {
             Self::ReadFile => Some(ToolPolicy::WorkspaceRead),
+            // One arm per variant so Engineering Memory can parse ToolPolicy maps.
             Self::WriteFile => Some(ToolPolicy::WorkspaceWrite),
+            Self::Mkdir => Some(ToolPolicy::WorkspaceWrite),
+            Self::DeletePath => Some(ToolPolicy::WorkspaceWrite),
+            Self::RenamePath => Some(ToolPolicy::WorkspaceWrite),
+            Self::PatchFile => Some(ToolPolicy::WorkspaceWrite),
             Self::Terminal => Some(ToolPolicy::Process),
             Self::WebSearch => Some(ToolPolicy::NetworkRead),
             Self::MemoryRecall => Some(ToolPolicy::MemoryRead),
             Self::SkillResolve => Some(ToolPolicy::SkillRead),
             Self::ActivatePack => Some(ToolPolicy::Capability),
-            Self::BrowserNavigate | Self::BrowserSnapshot | Self::BrowserClick => {
-                Some(ToolPolicy::Browser)
-            }
+            Self::BrowserNavigate => Some(ToolPolicy::Browser),
+            Self::BrowserSnapshot => Some(ToolPolicy::Browser),
+            Self::BrowserClick => Some(ToolPolicy::Browser),
             Self::Unavailable => None,
         }
     }
@@ -535,7 +552,11 @@ impl ToolInvocation {
             | Self::ActivatePack
             | Self::BrowserSnapshot
             | Self::Unavailable => ReplayClass::Deterministic,
-            Self::WriteFile => ReplayClass::Convergent,
+            Self::WriteFile
+            | Self::Mkdir
+            | Self::DeletePath
+            | Self::RenamePath
+            | Self::PatchFile => ReplayClass::Convergent,
             Self::Terminal | Self::WebSearch | Self::BrowserNavigate | Self::BrowserClick => {
                 ReplayClass::ExternalNondeterministic
             }
@@ -555,13 +576,26 @@ impl ToolInvocation {
             },
             timeout: ToolTimeout::CallerBounded,
             cancellation: match self {
-                Self::WriteFile | Self::Terminal => ToolCancellation::Terminal,
+                Self::WriteFile
+                | Self::Mkdir
+                | Self::DeletePath
+                | Self::RenamePath
+                | Self::PatchFile
+                | Self::Terminal => ToolCancellation::Terminal,
                 _ => ToolCancellation::Unsupported,
             },
             observability: ToolObservability {
                 call_identity: true,
                 trace_span: true,
-                effect_provenance: matches!(self, Self::WriteFile | Self::Terminal),
+                effect_provenance: matches!(
+                    self,
+                    Self::WriteFile
+                        | Self::Mkdir
+                        | Self::DeletePath
+                        | Self::RenamePath
+                        | Self::PatchFile
+                        | Self::Terminal
+                ),
             },
         }
     }
@@ -786,6 +820,43 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     object_schema(
                         json!({"path":{"type":"string"},"contents":{"type":"string"}}),
                         &["path", "contents"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::Mkdir,
+                    "Create workspace directory (and parents)",
+                    80,
+                    object_schema(json!({"path":{"type":"string"}}), &["path"]),
+                ),
+                tool(
+                    ToolInvocation::DeletePath,
+                    "Delete workspace file or empty directory",
+                    80,
+                    object_schema(json!({"path":{"type":"string"}}), &["path"]),
+                ),
+                tool(
+                    ToolInvocation::RenamePath,
+                    "Rename or move within the workspace",
+                    100,
+                    object_schema(
+                        json!({
+                            "from":{"type":"string"},
+                            "to":{"type":"string"}
+                        }),
+                        &["from", "to"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::PatchFile,
+                    "Exact single-occurrence string replace in a workspace file",
+                    140,
+                    object_schema(
+                        json!({
+                            "path":{"type":"string"},
+                            "old_string":{"type":"string"},
+                            "new_string":{"type":"string"}
+                        }),
+                        &["path", "old_string", "new_string"],
                     ),
                 ),
                 tool(

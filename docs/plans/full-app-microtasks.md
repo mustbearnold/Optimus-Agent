@@ -168,7 +168,7 @@ demo” to “usable operator”.
 |---|---|---|---|---|
 | S1.1 | `done` | Fail-closed ToolDesc ↔ handler registry (no advertised tool without handler) | `core.tool-loop`, `core.pack-budget` | `ALL_DISPATCHABLE` + `assert_dispatch_registry_closed`; packs_budget + domain_modularity; program P21 |
 | S1.2 | `done` | Universal tool outcome envelope for available tools | `core.tool-loop` | turn-loop wraps `ToolOutcome` + `validate_outcome`; activate/budget typed fail; residual: table-driven every-tool envelope (SHOULD) |
-| S1.3 | `todo` | `files.mutate`: write/patch/mkdir/rename/delete via SmartDeny exact-action | `files.mutate` | runtime approval + fs tests; desktop/CLI path |
+| S1.3 | `done` | `files.mutate`: write/patch/mkdir/rename/delete via SmartDeny exact-action | `files.mutate` | ADR-0039; path_confinement; Project* tools; program P22 |
 | S1.4 | `done` | Schema-token pack budget hard reject + progressive activate | `core.pack-budget` | packs hard SchemaBudget/PackLimit; kernel progressive activate + typed budget deny; program P21 |
 | S1.5 | `todo` | Shared CDP session: Electron preview ↔ kernel browser effector | `browser.cdp` | e2e URL/paint parity after tool navigate |
 | S1.6 // | `todo` | Web search extract schema + provenance URL stable | `web.search` | offline fixture + unit |
@@ -202,8 +202,8 @@ than new substrates and is what users touch every minute.
 | S2.9 // | `todo` | Bulk zip export | `artifacts.store-ui` | kernel + UI confirm |
 | S2.10 | `todo` | Cron list + pause/resume/remove in React | `cron.lifecycle` | cron tests + e2e |
 | S2.11 | `todo` | Cron create form + per-schedule history | `cron.lifecycle` | validation + store tests |
-| S2.12 | `todo` | Project-bound FS enforcement from work-isolation settings | `projects.scope` | fs_sandbox + settings integration |
-| S2.13 | `todo` | Status bar shows **enforced** isolation mode (not intent-only) | `projects.scope` | doctor + UI |
+| S2.12 | `done` | Project-bound FS honesty + Project* workspace hash | `projects.scope` | honesty fields; concurrent lease residual S2.14 |
+| S2.13 | `done` | Status bar shows **enforced** isolation mode (not intent-only) | `projects.scope` | doctor/settings `enforced_mode`; legacy UI uses enforced label |
 | S2.14 | `todo` | `allow_concurrent_projects=false` blocks second project open | `projects.scope` | IPC/e2e |
 
 **Stage exit:** workbench is the daily driver without CLI for sessions, cron,
@@ -362,7 +362,7 @@ S0 ship surface
 If only one agent is working, pull in this exact order (skip `done` items):
 
 1. S0.2 (cutover matrix residual) if still open
-2. **program P22** / S1.3 files.mutate + S2.12–S2.14 isolation
+2. S2.14 concurrent multi-project mutate lease residual (or skip)
 3. S1.5 shared browser (program P23), then S2.1–S2.5 chat/session (P24)
 4. S2.6–S2.11 artifacts/cron (P25) // S3 consoles (P26)
 5. S4 extensibility (P27) after P21 (already done)

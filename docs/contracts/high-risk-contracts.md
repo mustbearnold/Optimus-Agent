@@ -102,7 +102,9 @@ it does not replace executable enforcement.
   persisted effect JSON, with actor, creation time, expiry, denial, revocation,
   and ledger events. Changed effects and later nodes cannot reuse a grant.
 - **Evidence:** SmartDeny high-risk effects are `WriteFile`, `ProjectWriteFile`,
-  `RunCommand`, and `ProjectRunCommand`. Illegal write path shapes fail in
+  `Mkdir`, `ProjectMkdir`, `DeletePath`, `ProjectDeletePath`, `RenamePath`,
+  `ProjectRenamePath`, `PatchFile`, `ProjectPatchFile`, `RunCommand`, and
+  `ProjectRunCommand` (ADR-0039). Illegal write path shapes fail in
   preflight before an approval wait. Skill grants require `FsWorkspace` for
   writes and `Terminal` for commands.
 - **Evidence:** project writes and commands additionally persist the canonical
