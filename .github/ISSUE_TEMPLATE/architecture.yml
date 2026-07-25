@@ -1,0 +1,48 @@
+name: Architecture / ADR / S+++ task
+description: Structural program work, ADRs, marks, peels, trust spine.
+title: "architecture: "
+labels:
+  - type:architecture
+  - program:s+++
+  - status:triage
+body:
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Program phase (if known)
+      options:
+        - P10 multi-agent
+        - P11 control-plane
+        - P12 security envelope
+        - P13 domain modularity
+        - P14 observability
+        - P15 UI
+        - P16 doc hygiene
+        - P17 release gates
+        - P18 durability
+        - P19 review board
+        - other / not S+++
+    validations:
+      required: true
+  - type: textarea
+    id: mark
+    attributes:
+      label: Architecture mark impact
+      description: Which marks move (e.g. Multi-agent S→S+++)? Cite architecture-marks.md.
+    validations:
+      required: true
+  - type: textarea
+    id: work
+    attributes:
+      label: Work package
+      description: Microtasks, owning crates, exit gate tests.
+    validations:
+      required: true
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: Required process
+      options:
+        - label: ADR required (process:adr)
+        - label: Engineering Memory refresh (process:em-refresh)
+        - label: Security residual / risk:security review

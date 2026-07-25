@@ -137,7 +137,10 @@ apps/optimus-cli          jobs, skills, packs, chat, sessions, auth, vertical
 apps/optimus-desktop      Rust host (--host-only) + legacy Wry shell
 apps/optimus-electron     Default Electron shell (React workbench)
 apps/optimus-ui           React + Vite SPA (default workbench UI)
-crates/optimus-kernel     turns, providers, sessions, specialist vertical
+crates/optimus-kernel     turns, providers, sessions (re-exports peels)
+crates/optimus-agent      specialist contracts, registry, invocations
+crates/optimus-workflow   workflow defs, DAG run store, built-in verticals
+crates/optimus-artifacts  content-addressed handoff store
 crates/optimus-ops        gateway + cron store
 crates/optimus-eval       offline eval / replay
 crates/optimus-store      job ledger and events
@@ -147,6 +150,16 @@ crates/optimus-memory     MetaMemory
 crates/optimus-skills     Skills 2.0
 crates/optimus-packs      progressive capability packs
 ```
+
+## Contributing (GitHub)
+
+Commits, branches, PRs, issues, and labels follow
+[docs/contributing/github-conventions.md](docs/contributing/github-conventions.md).
+
+- **Commits / PR titles:** Conventional Commits (`feat(scope): …`, `fix: …`)
+- **Branches:** `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
+- **Labels:** namespaced `type:` + `area:` (+ `size:`, `risk:`, `program:`, …)
+- **Sync labels:** `python3 scripts/sync-github-labels.py` from [`.github/labels.yml`](.github/labels.yml)
 
 ### Default desktop (Electron + React)
 
