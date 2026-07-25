@@ -2,9 +2,9 @@ name: Architecture / ADR / S+++ task
 description: Structural program work, ADRs, marks, peels, trust spine.
 title: "architecture: "
 labels:
-  - type:architecture
-  - program:s+++
-  - status:triage
+  - "🏗️ type:architecture"
+  - "🏆 program:s+++"
+  - "🔍 status:triage"
 body:
   - type: dropdown
     id: phase
@@ -43,6 +43,6 @@ body:
     attributes:
       label: Required process
       options:
-        - label: ADR required (process:adr)
-        - label: Engineering Memory refresh (process:em-refresh)
-        - label: Security residual / risk:security review
+        - label: ADR required (📋 process:adr)
+        - label: Engineering Memory refresh (🔄 process:em-refresh)
+        - label: Security residual / 🔐 risk:security review

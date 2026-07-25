@@ -16,15 +16,15 @@ Examples:
 
 ## Type / labels
 
-<!-- Apply on the PR (namespace:value). Minimum: one type: + one area: -->
+<!-- Apply on the PR. Format: emoji + space + namespace:value. Minimum: one type: + one area: + size: -->
 
-- **type:** `type:feat` | `type:fix` | `type:refactor` | `type:docs` | `type:test` | `type:chore` | `type:ci` | `type:security` | `type:architecture` | `type:perf`
-- **area:** e.g. `area:kernel` `area:runtime` `area:workflow` `area:desktop` …
-- **priority:** `priority:p0` … `priority:p3` (if issue-linked)
-- **size:** `size:XS` … `size:XL`
-- **risk:** `risk:low` | `risk:data` | `risk:security` | `risk:breaking` as applicable
-- **program:** `program:s+++` / `program:parity` when relevant
-- **process:** `process:adr` / `process:em-refresh` when required
+- **type:** `✨ type:feat` | `🔧 type:fix` | `♻️ type:refactor` | `📝 type:docs` | `✅ type:test` | `🧹 type:chore` | `⚙️ type:ci` | `🔒 type:security` | `🏗️ type:architecture` | `⚡ type:perf` | `🐛 type:bug`
+- **area:** e.g. `🧠 area:kernel` `🔁 area:runtime` `🔀 area:workflow` `🖥️ area:desktop` …
+- **priority:** `🚨 priority:p0` … `⬇️ priority:p3` (if issue-linked)
+- **size:** `▫️ size:XS` … `🟪 size:XL`
+- **risk:** `🍃 risk:low` | `📀 risk:data` | `🔐 risk:security` | `💥 risk:breaking` as applicable
+- **program:** `🏆 program:s+++` / `⚖️ program:parity` when relevant
+- **process:** `📋 process:adr` / `🔄 process:em-refresh` when required
 
 ## Test plan
 
@@ -44,4 +44,4 @@ Examples:
 - [ ] Branch named `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
 - [ ] No secrets or home paths in logs/diffs
 - [ ] Docs/ADR updated when contracts or architecture change
-- [ ] Labels applied (type + area minimum)
+- [ ] Labels applied (emoji + `type:` + `area:` + `size:` minimum)

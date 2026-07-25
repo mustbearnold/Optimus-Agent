@@ -2,8 +2,8 @@ name: Bug report
 description: Something is broken or incorrect in Optimus Agent.
 title: "bug: "
 labels:
-  - type:bug
-  - status:triage
+  - "🐛 type:bug"
+  - "🔍 status:triage"
 body:
   - type: markdown
     attributes:
@@ -45,18 +45,18 @@ body:
       label: Primary area
       multiple: false
       options:
-        - area:kernel
-        - area:runtime
-        - area:agent
-        - area:workflow
-        - area:desktop
-        - area:ui
-        - area:cli
-        - area:security
-        - area:eval
-        - area:browser
-        - area:memory
-        - area:other
+        - "🧠 area:kernel"
+        - "🔁 area:runtime"
+        - "🤖 area:agent"
+        - "🔀 area:workflow"
+        - "🖥️ area:desktop"
+        - "🎨 area:ui"
+        - "💻 area:cli"
+        - "🛡️ area:security"
+        - "📊 area:eval"
+        - "🌐 area:browser"
+        - "🧩 area:memory"
+        - "other"
     validations:
       required: true
   - type: dropdown
@@ -64,10 +64,10 @@ body:
     attributes:
       label: Priority guess
       options:
-        - priority:p3
-        - priority:p2
-        - priority:p1
-        - priority:p0
+        - "⬇️ priority:p3"
+        - "⚠️ priority:p2"
+        - "🔥 priority:p1"
+        - "🚨 priority:p0"
     validations:
       required: true
   - type: textarea
@@ -80,4 +80,4 @@ body:
     attributes:
       label: Security
       options:
-        - label: This may be a security-sensitive issue (add risk:security after triage)
+        - label: This may be a security-sensitive issue (add 🔐 risk:security after triage)

@@ -26,54 +26,81 @@ and synced with `python3 scripts/sync-github-labels.py`.
 
 ## Principles
 
-1. **Namespaced labels** — `namespace:value` (lowercase, hyphens in values).
-2. **Conventional Commits** for titles and preferred commit subjects.
-3. **One concern per PR** — prefer a stack of small PRs over `size:XL`.
-4. **Executable evidence** outranks prose (see `AGENTS.md` status legend).
-5. **Do not invent labels ad hoc** — extend `.github/labels.yml` and re-sync.
+1. **Emoji-first labels** — each label is `emoji + space + namespace:value`
+   (e.g. `✨ type:feat`). Exactly one leading emoji.
+2. **Namespaced tokens** — `namespace:value` (lowercase, hyphens in values).
+3. **Conventional Commits** for titles and preferred commit subjects.
+4. **One concern per PR** — prefer a stack of small PRs over `🟪 size:XL`.
+5. **Executable evidence** outranks prose (see `AGENTS.md` status legend).
+6. **Do not invent labels ad hoc** — extend `.github/labels.yml` and re-sync.
+
+## Label format
+
+```text
+<emoji> <namespace>:<value>
+```
+
+Examples: `🐛 type:bug`, `🔀 area:workflow`, `🔥 priority:p1`,
+`👀 status:needs-review`.
+
+When filtering or scripting, match the **full label name including emoji and
+space**, or match the `namespace:value` suffix.
 
 ## Label namespaces
 
 | Namespace | Purpose | Examples | How many |
 |---|---|---|---|
-| `type:` | Kind of change | `type:feat`, `type:fix`, `type:refactor` | **exactly one** on PRs |
-| `area:` | Owning subsystem | `area:workflow`, `area:desktop` | **≥1** (primary first) |
-| `priority:` | Urgency | `priority:p0` … `priority:p3` | issues; optional on PRs |
-| `status:` | Workflow state | `status:needs-review` | issues/PRs; keep current |
-| `size:` | Review bulk | `size:S` … `size:XL` | **one** on PRs |
-| `risk:` | Blast radius | `risk:security`, `risk:data` | as applicable |
-| `program:` | Initiative | `program:s+++`, `program:parity` | when relevant |
-| `process:` | Meta process | `process:adr`, `process:em-refresh` | as applicable |
+| `type:` | Kind of change | `✨ type:feat`, `🔧 type:fix` | **exactly one** on PRs |
+| `area:` | Owning subsystem | `🔀 area:workflow`, `🖥️ area:desktop` | **≥1** (primary first) |
+| `priority:` | Urgency | `🚨 priority:p0` … `⬇️ priority:p3` | issues; optional on PRs |
+| `status:` | Workflow state | `👀 status:needs-review` | issues/PRs; keep current |
+| `size:` | Review bulk | `▪️ size:S` … `🟪 size:XL` | **one** on PRs |
+| `risk:` | Blast radius | `🔐 risk:security`, `📀 risk:data` | as applicable |
+| `program:` | Initiative | `🏆 program:s+++`, `⚖️ program:parity` | when relevant |
+| `process:` | Meta process | `📋 process:adr`, `🔄 process:em-refresh` | as applicable |
+
+### Emoji legend (quick)
+
+| Namespace | Emoji map |
+|---|---|
+| **type** | 🐛 bug · ✨ feat · 🔧 fix · ♻️ refactor · 📝 docs · ✅ test · 🧹 chore · ⚙️ ci · ⚡ perf · 🔒 security · 🏗️ architecture |
+| **area** | 🧠 kernel · 🔁 runtime · 🤖 agent · 🔀 workflow · 📦 artifacts · 🧩 memory · 🎯 skills · 📚 packs · 💾 store · 🛰️ ops · 📊 eval · 💻 cli · 🖥️ desktop · 🎨 ui · 🌐 browser · 🛡️ security · 📖 docs · 🧬 em · 🏭 ci |
+| **priority** | 🚨 p0 · 🔥 p1 · ⚠️ p2 · ⬇️ p3 |
+| **status** | 🔍 triage · 🟢 ready · 🚧 in-progress · ⛔ blocked · 👀 needs-review · ✏️ changes-requested · ✔️ approved · 🚫 do-not-merge |
+| **size** | ▫️ XS · ▪️ S · ◾ M · ⬛ L · 🟪 XL |
+| **risk** | 💥 breaking · 🔐 security · 📀 data · 🍃 low |
+| **program** | 🏆 s+++ · ⚖️ parity |
+| **process** | 📋 adr · 🔄 em-refresh · 🌱 good-first-issue · 🙋 help-wanted · 👯 duplicate · 🙅 wontfix · ❌ invalid · ❓ question |
 
 ### Minimum label set
 
 | Artifact | Required labels |
 |---|---|
-| **Pull request** | `type:*` + ≥1 `area:*` + `size:*` |
-| **Bug issue** | `type:bug` + `status:triage` (+ area after triage) |
-| **Feature issue** | `type:feat` + `status:triage` |
-| **Architecture task** | `type:architecture` + `program:s+++` when S+++ |
+| **Pull request** | one `type:*` + ≥1 `area:*` + one `size:*` |
+| **Bug issue** | `🐛 type:bug` + `🔍 status:triage` (+ area after triage) |
+| **Feature issue** | `✨ type:feat` + `🔍 status:triage` |
+| **Architecture task** | `🏗️ type:architecture` + `🏆 program:s+++` when S+++ |
 
 ### Priority scale
 
 | Label | Use when |
 |---|---|
-| `priority:p0` | Production break, security exploitability, data loss |
-| `priority:p1` | Blocks the current milestone / release gate |
-| `priority:p2` | Important; not blocking the active milestone |
-| `priority:p3` | Backlog / polish |
+| `🚨 priority:p0` | Production break, security exploitability, data loss |
+| `🔥 priority:p1` | Blocks the current milestone / release gate |
+| `⚠️ priority:p2` | Important; not blocking the active milestone |
+| `⬇️ priority:p3` | Backlog / polish |
 
 ### Status lifecycle (issues)
 
 ```text
-status:triage → status:ready → status:in-progress
-       ↘ status:blocked
-status:in-progress → status:needs-review → status:approved → (closed)
-                   ↘ status:changes-requested → status:in-progress
+🔍 status:triage → 🟢 status:ready → 🚧 status:in-progress
+       ↘ ⛔ status:blocked
+🚧 status:in-progress → 👀 status:needs-review → ✔️ status:approved → (closed)
+                   ↘ ✏️ status:changes-requested → 🚧 status:in-progress
 ```
 
-PRs typically use `status:needs-review` / `status:changes-requested` /
-`status:approved` / `status:do-not-merge` rather than issue-only states.
+PRs typically use `👀 status:needs-review` / `✏️ status:changes-requested` /
+`✔️ status:approved` / `🚫 status:do-not-merge`.
 
 ## Conventional Commits
 
@@ -91,16 +118,16 @@ Format:
 
 | Commit type | PR label | Meaning |
 |---|---|---|
-| `feat` | `type:feat` | User-visible capability |
-| `fix` | `type:fix` | Bug fix |
-| `docs` | `type:docs` | Docs only |
-| `refactor` | `type:refactor` | Behaviour-preserving restructure |
-| `test` | `type:test` | Tests only |
-| `chore` | `type:chore` | Tooling, deps, housekeeping |
-| `ci` | `type:ci` | CI workflows |
-| `perf` | `type:perf` | Performance |
-| `build` | `type:chore` | Build system (map to chore) |
-| `style` | `type:chore` | Formatting only |
+| `feat` | `✨ type:feat` | User-visible capability |
+| `fix` | `🔧 type:fix` | Bug fix |
+| `docs` | `📝 type:docs` | Docs only |
+| `refactor` | `♻️ type:refactor` | Behaviour-preserving restructure |
+| `test` | `✅ type:test` | Tests only |
+| `chore` | `🧹 type:chore` | Tooling, deps, housekeeping |
+| `ci` | `⚙️ type:ci` | CI workflows |
+| `perf` | `⚡ type:perf` | Performance |
+| `build` | `🧹 type:chore` | Build system (map to chore) |
+| `style` | `🧹 type:chore` | Formatting only |
 | `revert` | match original | Reverts a prior commit |
 
 ### Scopes (optional; align with `area:`)
@@ -146,8 +173,6 @@ Examples:
 agent/<topic-kebab>
 ```
 
-Example: `agent/s-plus-p11-control-plane-peels` (historical series OK).
-
 Rules:
 
 - Lowercase, hyphens, no spaces
@@ -168,6 +193,18 @@ Use the PR template. Always include:
 2. Test plan with commands actually run
 3. Risk notes (API, schema, install)
 
+### Labeling on the CLI
+
+```bash
+gh pr create ... \
+  --label "✨ type:feat" \
+  --label "🔀 area:workflow" \
+  --label "▪️ size:S" \
+  --label "🍃 risk:low"
+```
+
+Quote labels: the emoji and space are part of the name.
+
 ### Stacking
 
 For multi-phase work (e.g. S+++ P10 then P11):
@@ -178,9 +215,9 @@ For multi-phase work (e.g. S+++ P10 then P11):
 
 ### Review
 
-- Prefer ≥1 review on `risk:security` / `risk:breaking` / `size:L+`
+- Prefer ≥1 review on `🔐 risk:security` / `💥 risk:breaking` / `⬛ size:L+`
 - Architecture peels and SmartDeny changes: call out tests that prove fences
-- Use `status:do-not-merge` while CI or EM is red
+- Use `🚫 status:do-not-merge` while CI or EM is red
 
 ### Merge style
 
@@ -195,7 +232,7 @@ Never force-push `main`.
 
 - Prefer issue templates (bug / feature / architecture)
 - Title: `bug: …`, `feat: …`, or `architecture: …`
-- After triage: set `area:*`, `priority:*`, and move off `status:triage`
+- After triage: set `area:*`, `priority:*`, and move off `🔍 status:triage`
 - Close with commit footer `Fixes #n` when the PR lands
 
 ## Syncing labels
@@ -213,26 +250,27 @@ python3 scripts/sync-github-labels.py --prune
 
 Adding a label:
 
-1. Edit `.github/labels.yml`
+1. Edit `.github/labels.yml` (include a leading emoji + space)
 2. Run `sync-github-labels.py`
-3. Document the label here if it introduces a new namespace
+3. Document the emoji in the legend above if it is a new namespace
 
 ## Mapping quick reference (PR)
 
 | Change | type | area examples | risk / process |
 |---|---|---|---|
-| New workflow vertical | `type:feat` | `area:workflow` `area:agent` | `process:em-refresh` |
-| SmartDeny fix | `type:fix` | `area:runtime` `area:security` | `risk:security` |
-| Crate peel | `type:refactor` | `area:kernel` + peels | `type:architecture` `process:adr` |
-| Docs only | `type:docs` | `area:docs` | — |
-| EM generator | `type:chore` | `area:em` | `process:em-refresh` |
-| Install script | `type:ci` or `type:chore` | `area:ci` `area:desktop` | — |
+| New workflow vertical | `✨ type:feat` | `🔀 area:workflow` `🤖 area:agent` | `🔄 process:em-refresh` |
+| SmartDeny fix | `🔧 type:fix` | `🔁 area:runtime` `🛡️ area:security` | `🔐 risk:security` |
+| Crate peel | `♻️ type:refactor` | `🧠 area:kernel` + peels | `🏗️ type:architecture` `📋 process:adr` |
+| Docs only | `📝 type:docs` | `📖 area:docs` | — |
+| EM generator | `🧹 type:chore` | `🧬 area:em` | `🔄 process:em-refresh` |
+| Install script | `⚙️ type:ci` or `🧹 type:chore` | `🏭 area:ci` `🖥️ area:desktop` | — |
 
 ## Anti-patterns
 
+- Labels without a leading emoji
 - Free-text labels (`WIP`, `Johns PR`, `urgent!!!`)
 - Multiple competing `type:` labels
-- `size:XL` without a split plan
+- `🟪 size:XL` without a split plan
 - Commit subjects that describe files instead of outcomes
 - Branches named `update`, `tmp`, `fix2`
 - Claiming Confirmed architecture behaviour without tests/source
