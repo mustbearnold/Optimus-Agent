@@ -422,12 +422,19 @@ Electron main. Main validates that calls originate from the owning Optimus
 renderer, caps serialized requests, allowlists method names, and permits one
 foreground SSE stream.
 
+**Confirmed current behaviour (P15):** IPC matrix gate requires host registry ⊇
+Electron `DESKTOP_METHODS` = React `DesktopMethod`; every host method is
+invoke-allowlisted or classified non-invoke/main-only. Critical invokes include
+approvals, project scopes, sessions, fs, settings, `term_run`, and `jobs_list`.
+`project_root_stage_native` stays main-only. See ADR-0038.
+
 **Confirmed current behaviour:** the user-facing Electron preview is a
-main-owned sandboxed `WebContentsView`. It accepts HTTPS and loopback HTTP,
-denies remote insecure HTTP, privileged/non-web schemes, permissions,
-downloads, and new windows, and is physically aligned to a React-measured
-content hole. This preview is not the Rust agent `browser_*` effector and no
-shared cookies, history, or automation target is claimed.
+main-owned sandboxed `WebContentsView` (`nodeIntegration: false`,
+`contextIsolation: true`, `sandbox: true`, separate partition). It accepts HTTPS
+and loopback HTTP, denies remote insecure HTTP, privileged/non-web schemes,
+permissions, downloads, and new windows, and is physically aligned to a
+React-measured content hole. This preview is not the Rust agent `browser_*`
+effector and no shared cookies, history, or automation target is claimed.
 
 **Confirmed current behaviour:** explicit native annotation mode captures one
 clicked element and returns bounded URL/title/tag/role/label/text/rectangle

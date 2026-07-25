@@ -45,8 +45,41 @@ class DesktopIpcMatrixTests(unittest.TestCase):
         critical = self.mod.CRITICAL_INVOKE_METHODS
         self.assertIn("chat_approval_resolve", critical)
         self.assertIn("project_scopes_authorize", critical)
+        self.assertIn("approvals_grant", critical)
         self.assertIn("get_session", critical)
+        self.assertIn("term_run", critical)
+        self.assertIn("jobs_list", critical)
         self.assertNotIn("project_root_stage_native", critical)
+
+    def test_main_only_not_on_renderer_allowlists(self) -> None:
+        electron = set(
+            self.mod.parse_electron_allowlist(
+                ROOT / "apps/optimus-electron/main.cjs"
+            )
+        )
+        react = set(
+            self.mod.parse_react_desktop_methods(
+                ROOT / "apps/optimus-ui/src/ipc/contracts.ts"
+            )
+        )
+        for method in self.mod.MAIN_ONLY_METHODS:
+            self.assertNotIn(method, electron)
+            self.assertNotIn(method, react)
+            self.assertIn(method, self.mod.HOST_NON_INVOKE_CHANNELS)
+
+    def test_every_host_method_is_classified(self) -> None:
+        rust = set(
+            self.mod.parse_rust_registry(
+                ROOT / "apps/optimus-desktop/src/ipc/router.rs"
+            )
+        )
+        electron = set(
+            self.mod.parse_electron_allowlist(
+                ROOT / "apps/optimus-electron/main.cjs"
+            )
+        )
+        self.assertEqual(rust - electron, rust & self.mod.HOST_NON_INVOKE_CHANNELS)
+        self.assertFalse(rust - electron - self.mod.HOST_NON_INVOKE_CHANNELS)
 
     def test_parsers_return_sorted_unique_critical_subset(self) -> None:
         rust = self.mod.parse_rust_registry(

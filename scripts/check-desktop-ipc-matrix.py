@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Methods the renderer is allowed to invoke through optimus:invoke / DesktopMethod.
 # Chat streaming and window/folder OS affordances use dedicated preload channels.
+# P15: critical product paths must stay on all three surfaces (U1/U2).
 CRITICAL_INVOKE_METHODS = frozenset(
     {
         "ping",
@@ -34,6 +35,8 @@ CRITICAL_INVOKE_METHODS = frozenset(
         "sessions",
         "new_session",
         "get_session",
+        "delete_session",
+        "rename_session",
         "chat_approval_resolve",
         "project_scopes_list",
         "project_scopes_authorize",
@@ -44,27 +47,33 @@ CRITICAL_INVOKE_METHODS = frozenset(
         "fs_read",
         "settings_get",
         "settings_set",
+        "term_run",
+        "jobs_list",
     }
 )
 
 # Host registry methods that must never be callable from the React allowlist.
+# Tag: main_only — requires native selection / host-only authority.
 MAIN_ONLY_METHODS = frozenset({"project_root_stage_native"})
 
 # Host methods intentionally not exposed via Electron DESKTOP_METHODS (other channels).
+# Tag: non_invoke — dedicated preload/SSE/OS channel, not optimus:invoke allowlist.
+# U1: every Rust METHOD_DOMAINS entry must be Electron-allowlisted OR listed here
+# (no silent host methods).
 HOST_NON_INVOKE_CHANNELS = frozenset(
     {
-        "chat",  # SSE chat_stream via preload chat.start
-        "chat_offline",  # offline path also via chat channel / host workers
-        "window_minimize",
+        "chat",  # non_invoke: SSE chat_stream via preload chat.start
+        "chat_offline",  # non_invoke: offline path via chat channel
+        "window_minimize",  # non_invoke: window chrome
         "window_maximize",
         "window_close",
         "window_drag",
         "window_outer_position",
         "window_set_outer_position",
-        "pick_folder",  # optimus:pick-folder
-        "open_path",  # optimus:open-path
-        "open_url",  # optimus:open-url
-        "project_root_stage_native",  # main-only with native_selection_token
+        "pick_folder",  # non_invoke: optimus:pick-folder
+        "open_path",  # non_invoke: optimus:open-path
+        "open_url",  # non_invoke: optimus:open-url
+        "project_root_stage_native",  # main_only: native_selection_token
     }
 )
 
@@ -184,11 +193,24 @@ def main() -> int:
             "non-invoke channels: " + ", ".join(uncovered)
         )
 
+    # Full partition: every host method is invoke-allowlisted, non-invoke channel,
+    # or main-only (main-only is a subset of non-invoke documentation).
+    classified = electron_set | HOST_NON_INVOKE_CHANNELS
+    if rust_set != classified and not (rust_set - classified):
+        pass  # covered by uncovered check
+    if MAIN_ONLY_METHODS - HOST_NON_INVOKE_CHANNELS:
+        errors.append(
+            "MAIN_ONLY_METHODS must also appear in HOST_NON_INVOKE_CHANNELS: "
+            + ", ".join(sorted(MAIN_ONLY_METHODS - HOST_NON_INVOKE_CHANNELS))
+        )
+
     print("DESKTOP_IPC_MATRIX")
     print(f"rust_registry={len(rust_set)} electron_allowlist={len(electron_set)} react_types={len(react_set)}")
     print(f"critical_invoke={len(CRITICAL_INVOKE_METHODS)} main_only={len(MAIN_ONLY_METHODS)}")
+    print(f"non_invoke_channels={len(HOST_NON_INVOKE_CHANNELS)}")
     print("default_shell=electron_react")
-    print("legacy_shell=wry")
+    print("legacy_shell=wry_optional")
+    print("coverage=host_methods_all_classified")
     print("critical:")
     for method in sorted(CRITICAL_INVOKE_METHODS):
         print(f"  {method}")

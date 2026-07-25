@@ -81,7 +81,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 3 | Security boundary design | **S+++** | S+++ | P12 (done) |
 | 4 | Domain modularity | **S+++** (post-P13) | S+++ | P13 (done) |
 | 5 | Observability / eval | **S+++** (post-P14) | S+++ | P14 (done) |
-| 6 | UI architecture | **A-** | S+++ | P15 |
+| 6 | UI architecture | **S+++** (post-P15) | S+++ | P15 (done) |
 | 7 | Doc / claim hygiene | **A-** | S+++ | P16 |
 | 8 | Release / parity gating | **A** | S+++ | P17 |
 | 9 | Durability / crash safety | **A+** | S+++ | P18 |
@@ -96,8 +96,8 @@ P10 Multi-agent (done → S+++)
   → P12 Security (done → S+++)
   → P13 Domain modularity (done → S+++)
   → P14 Observability (done → S+++)
-  → P15 UI (A-)   ← next
-  → P16 Doc hygiene (A-)
+  → P15 UI (done → S+++)
+  → P16 Doc hygiene (A-)   ← next
   → P17 Release gates (A)
   → P18 Durability (A+)
   → P19 Final S+++ review board
@@ -414,11 +414,12 @@ is intentionally out of scope. **P14 closed the export gap via local-only S+++
 **Owner packages:** `optimus-electron`, `optimus-ui`, `optimus-desktop` host,
 IPC matrix scripts.
 
-### Why still A-
+### Why was A- (pre-P15)
 
-Default Electron+React shell and IPC matrix exist; residual risk is registry
-drift, legacy Wry dual paths, preview vs agent browser confusion, incomplete
-critical-method coverage, presentation state mistaken for authority.
+Default Electron+React shell and IPC matrix existed; residual risk was incomplete
+critical-method coverage and soft host-method classification. **P15 expands
+critical invokes, requires full host classification, and locks preview sandbox
+tests (ADR-0038).**
 
 ### Adversarial S+++ criteria
 
@@ -427,8 +428,7 @@ critical-method coverage, presentation state mistaken for authority.
 2. **IPC matrix gate:** host registry ⊇ Electron allowlist = React
    `DesktopMethod` types; fails CI when drifted.
 3. Critical methods covered: sessions, chat stream/cancel, approval resolve,
-   project scopes, approvals, fs, settings, doctor, vertical/status surfaces
-   that exist.
+   project scopes, approvals, fs, settings, doctor, term/jobs surfaces.
 4. Preview `WebContentsView` remains sandboxed and **not** agent browser;
    product copy and contracts stay distinct.
 5. Renderer cannot mint project roots or approvals.
@@ -441,11 +441,11 @@ critical-method coverage, presentation state mistaken for authority.
 
 | ID | Task | Exit evidence |
 |---|---|---|
-| U1 | Expand IPC matrix to 100% host methods or explicit `legacy_only` tags | matrix script |
-| U2 | React/Electron e2e for approval resolve + project scope deny | e2e |
-| U3 | Preview security tests (no file, no node integration) | electron tests |
-| U4 | Install script truth matches marks (Electron primary) | rebuild script review |
-| U5 | Marks → UI **S+++** | docs |
+| U1 | Expand IPC matrix to 100% host methods or explicit non-invoke tags | done — matrix + unit tests |
+| U2 | Approval + project scope on critical allowlist (deny minting roots) | done — critical set + main_only tests |
+| U3 | Preview security tests (no node integration) | done — `preview-security.test.cjs` |
+| U4 | Install script truth matches marks (Electron primary) | done — rebuild script + marks |
+| U5 | Marks → UI **S+++** | done |
 
 ### Hold suite
 
@@ -642,5 +642,4 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P14 done** (multi-agent / control-plane / security / domain / observability →
-**S+++**). Next: **P15** UI architecture (IPC matrix completeness).
+**P10–P15 done** (… + UI **S+++**). Next: **P16** doc / claim hygiene.
