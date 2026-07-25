@@ -774,8 +774,8 @@ def build_agent_registry() -> dict[str, Any]:
             definitions.append({"name": name, "source": relative(path)})
     if definitions:
         raise MemoryError(f"specialist agent definitions require registry review: {definitions}")
-    contract = ROOT / "crates/optimus-kernel/src/agent.rs"
-    vertical = ROOT / "crates/optimus-kernel/src/specialist_vertical.rs"
+    contract = ROOT / "crates/optimus-agent/src/lib.rs"
+    vertical = ROOT / "crates/optimus-workflow/src/specialist_vertical.rs"
     required_symbols = [
         "pub struct AgentDescriptor",
         "pub struct AgentRequest",
@@ -805,7 +805,7 @@ def build_agent_registry() -> dict[str, Any]:
     ):
         if symbol not in vertical_text:
             raise MemoryError(f"specialist vertical is stale; missing {symbol}")
-    run_module = ROOT / "crates/optimus-kernel/src/workflow_run.rs"
+    run_module = ROOT / "crates/optimus-workflow/src/workflow_run.rs"
     if not run_module.is_file():
         raise MemoryError("workflow_run module is missing")
     run_text = run_module.read_text(encoding="utf-8")
@@ -822,7 +822,7 @@ def build_agent_registry() -> dict[str, Any]:
             "id": "workspace_writer",
             "version": "1.0.0",
             "status": "implemented",
-            "owner": "optimus-kernel",
+            "owner": "optimus-agent",
             "responsibility": "Write a single relative-path workspace file through durable SmartDeny effects",
             "required_tools": ["write_file"],
             "permissions": {"filesystem_roots": ["workspace"], "effects": ["write_file"]},
@@ -837,7 +837,7 @@ def build_agent_registry() -> dict[str, Any]:
             "id": "workspace_reader",
             "version": "1.0.0",
             "status": "implemented",
-            "owner": "optimus-kernel",
+            "owner": "optimus-agent",
             "responsibility": "Read a single relative-path workspace file and publish a content-addressed handoff artifact",
             "required_tools": ["read_file"],
             "permissions": {"filesystem_roots": ["workspace"], "effects": ["read_file"]},
@@ -959,7 +959,7 @@ def build_workflow_registry() -> dict[str, Any]:
         ),
         workflow_record(
             id="write-file-handoff",
-            owner="optimus-kernel",
+            owner="optimus-workflow",
             trigger="CLI/API run_write_file_handoff after seeding registries",
             inputs=["relative_path", "contents", "policy", "auto_grant"],
             outputs=["WriteFileHandoffReport", "workspace file", "handoff artifact", "agent invocation terminal", "workflow run id"],
@@ -983,11 +983,11 @@ def build_workflow_registry() -> dict[str, Any]:
             failure=["approval_required without grant", "effect failure", "invalid path/contents"],
             observability=["workflow run events", "agent invocation events", "job events", "artifact index"],
             validated_by=["crates/optimus-kernel/tests/specialist_vertical.rs", "crates/optimus-kernel/tests/workflow_dag.rs"],
-            source=["crates/optimus-kernel/src/specialist_vertical.rs", "crates/optimus-kernel/src/workflow_run.rs"],
+            source=["crates/optimus-workflow/src/specialist_vertical.rs", "crates/optimus-workflow/src/workflow_run.rs"],
         ),
         workflow_record(
             id="read-file-handoff",
-            owner="optimus-kernel",
+            owner="optimus-workflow",
             trigger="CLI/API run_read_file_handoff",
             inputs=["relative_path"],
             outputs=["WorkflowDagReport", "handoff artifact", "agent invocation terminal"],
@@ -1008,11 +1008,11 @@ def build_workflow_registry() -> dict[str, Any]:
             failure=["file_not_found", "read_too_large", "invalid path"],
             observability=["workflow run events", "agent invocation events", "artifact index"],
             validated_by=["crates/optimus-kernel/tests/workflow_dag.rs"],
-            source=["crates/optimus-kernel/src/specialist_vertical.rs"],
+            source=["crates/optimus-workflow/src/specialist_vertical.rs"],
         ),
         workflow_record(
             id="write-then-read-handoff",
-            owner="optimus-kernel",
+            owner="optimus-workflow",
             trigger="CLI/API run_write_then_read_handoff / run_registered_workflow",
             inputs=["relative_path", "contents", "policy", "auto_grant"],
             outputs=["WorkflowDagReport", "two handoff artifacts", "two child invocations"],
@@ -1032,7 +1032,7 @@ def build_workflow_registry() -> dict[str, Any]:
             failure=["approval_required", "node failure", "cancel"],
             observability=["workflow_run_events", "per-node projections", "child links"],
             validated_by=["crates/optimus-kernel/tests/workflow_dag.rs"],
-            source=["crates/optimus-kernel/src/specialist_vertical.rs", "crates/optimus-kernel/src/workflow_run.rs"],
+            source=["crates/optimus-workflow/src/specialist_vertical.rs", "crates/optimus-workflow/src/workflow_run.rs"],
         ),
         workflow_record(
             id="interval-cron-tick",
@@ -1093,7 +1093,7 @@ def build_workflow_registry() -> dict[str, Any]:
             failure=["invalid/cyclic/unbounded definition", "duplicate identity/version", "unknown persisted adapter status", "unsupported capability remains explicit"],
             observability=["immutable registry definition", "adapter capability matrix", "owner event stores"],
             validated_by=["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"],
-            source=["crates/optimus-kernel/src/workflow.rs"],
+            source=["crates/optimus-workflow/src/workflow.rs"],
         ),
     ]
     return {
@@ -1282,8 +1282,8 @@ def build_contract_coverage() -> dict[str, Any]:
         ("C-06", "fail-closed-workflow-decoding", "implemented", ["crates/optimus-runtime/src/campaign.rs"], ["crates/optimus-runtime/src/campaign.rs"]),
         ("C-07", "provider-call-envelope-and-batch-authorization", "implemented", ["crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/openai_compat.rs", "crates/optimus-kernel/src/codex_oauth.rs", "crates/optimus-packs/src/lib.rs"], ["crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/codex_oauth.rs", "crates/optimus-packs/tests/packs_budget.rs"]),
         ("C-08", "canonical-tool-result", "implemented", ["crates/optimus-packs/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/execution.rs"], ["crates/optimus-packs/tests/packs_budget.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
-        ("C-09", "agent-lifecycle", "implemented", ["crates/optimus-kernel/src/agent.rs"], ["crates/optimus-kernel/tests/agent_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
-        ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-kernel/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-ops/src/cron.rs", "crates/optimus-ops/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
+        ("C-09", "agent-lifecycle", "implemented", ["crates/optimus-agent/src/lib.rs"], ["crates/optimus-kernel/tests/agent_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
+        ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-workflow/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-ops/src/cron.rs", "crates/optimus-ops/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
         ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
         ("C-12", "credential-and-local-transport-security", "implemented", ["crates/optimus-kernel/src/credential.rs", "crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], ["crates/optimus-kernel/tests/codex_oauth.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
         ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-eval/src/replay.rs", "crates/optimus-kernel/src/trace.rs", "crates/optimus-kernel/src/lib.rs"], ["crates/optimus-eval/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),

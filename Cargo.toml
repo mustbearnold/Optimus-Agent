@@ -8,6 +8,9 @@ members = [
     "crates/optimus-skills",
     "crates/optimus-packs",
     "crates/optimus-ops",
+    "crates/optimus-artifacts",
+    "crates/optimus-agent",
+    "crates/optimus-workflow",
     "crates/optimus-kernel",
     "crates/optimus-eval",
     "crates/optimus-browser",
@@ -22,6 +25,9 @@ default-members = [
     "crates/optimus-skills",
     "crates/optimus-packs",
     "crates/optimus-ops",
+    "crates/optimus-artifacts",
+    "crates/optimus-agent",
+    "crates/optimus-workflow",
     "crates/optimus-kernel",
     "crates/optimus-eval",
     "apps/optimus-cli",
@@ -43,6 +49,9 @@ optimus-memory = { path = "crates/optimus-memory" }
 optimus-skills = { path = "crates/optimus-skills" }
 optimus-packs = { path = "crates/optimus-packs" }
 optimus-ops = { path = "crates/optimus-ops" }
+optimus-artifacts = { path = "crates/optimus-artifacts" }
+optimus-agent = { path = "crates/optimus-agent" }
+optimus-workflow = { path = "crates/optimus-workflow" }
 optimus-kernel = { path = "crates/optimus-kernel" }
 optimus-eval = { path = "crates/optimus-eval" }
 

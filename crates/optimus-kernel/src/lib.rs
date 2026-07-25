@@ -4,8 +4,6 @@
 //! crate). Operator gateway and cron storage live in `optimus-ops` and are
 //! re-exported here for surface convenience without growing the turn-loop waist.
 
-mod agent;
-mod artifacts;
 mod browser;
 mod codex_oauth;
 mod compress;
@@ -19,18 +17,13 @@ mod routing;
 mod causal;
 mod security_denial;
 mod session;
-mod specialist_vertical;
 mod telemetry;
 mod trace;
 mod web_search;
-mod workflow;
-mod workflow_run;
 
 use std::cell::Cell;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::Instant;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
@@ -42,6 +35,7 @@ use optimus_packs::{
     ToolErrorDetail, ToolId, ToolInvocation, ToolOutcome, ToolOutcomeKind,
 };
 use optimus_runtime::{ApprovalGrant, JobId, JobStatus, Runtime, RuntimeError};
+
 use optimus_skills::SkillRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -49,13 +43,18 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
-pub use agent::{
-    AgentArtifactRef, AgentBudget, AgentContextRef, AgentDescriptor, AgentFailure, AgentId,
-    AgentInvocation, AgentInvocationEvent, AgentInvocationStatus, AgentInvocationStore,
+/// Cooperative cancellation (owned by optimus-runtime).
+pub use optimus_runtime::CancellationToken;
+
+pub use optimus_agent::{
+    AgentArtifactRef, AgentBudget, AgentContextRef, AgentDescriptor, AgentError, AgentFailure,
+    AgentId, AgentInvocation, AgentInvocationEvent, AgentInvocationStatus, AgentInvocationStore,
     AgentPermissions, AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion,
     AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
 };
-pub use artifacts::{ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult};
+pub use optimus_artifacts::{
+    ArtifactError, ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult,
+};
 pub use browser::{
     best_effector, chrome_binary_path, http_effector, page_to_tool_json, try_cdp_effector,
     BrowserEffector, BrowserError, BrowserLink, BrowserPage, BrowserState,
@@ -111,19 +110,28 @@ pub use security_denial::{
     classify_security_denial, kernel_or_security_code, SecurityDenialCode,
 };
 pub use session::{SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus};
-pub use specialist_vertical::{
-    builtin_agent_permission_ceiling, cancel_workflow_run, cancel_write_file_handoff,
-    content_sha256, get_workflow_run, open_seeded_agent_registry, open_seeded_workflow_registry,
-    open_workflow_run_store, read_file_handoff_workflow, run_read_file_handoff,
-    run_registered_workflow, run_write_file_handoff, run_write_then_read_handoff,
-    vertical_workspace, workspace_reader_descriptor, workspace_writer_descriptor,
-    write_file_handoff_workflow, write_then_read_handoff_workflow, ReadFileHandoffRequest,
-    WorkflowDagReport, WorkflowDagRequest, WriteFileHandoffReport, WriteFileHandoffRequest,
-    READ_FILE_HANDOFF_WORKFLOW_ID, READ_FILE_HANDOFF_WORKFLOW_VERSION, WORKSPACE_READER_ID,
+pub use optimus_workflow::{
+    adapt_campaign_status, adapt_cron_attempt_status, adapt_gateway_status, adapt_job_status,
+    builtin_agent_permission_ceiling, builtin_workflow_adapters, cancel_workflow_run,
+    cancel_write_file_handoff, content_sha256, get_workflow_run, open_seeded_agent_registry,
+    open_seeded_workflow_registry, open_workflow_run_store, read_file_handoff_workflow,
+    run_read_file_handoff, run_registered_workflow, run_write_file_handoff,
+    run_write_then_read_handoff, vertical_workspace, workspace_reader_descriptor,
+    workspace_writer_descriptor, write_file_handoff_workflow, write_then_read_handoff_workflow,
+    AdapterCapability, AdapterLifecycleStatus, ApprovalPolicy, CancellationPolicy,
+    CapabilitySupport, ReadFileHandoffRequest, RetryPolicy, RollbackPolicy,
+    WorkflowAdapterDescriptor, WorkflowAdapterKind, WorkflowAgentRef, WorkflowDagReport,
+    WorkflowDagRequest, WorkflowDefinition, WorkflowError, WorkflowId, WorkflowNode,
+    WorkflowNodeRun, WorkflowNodeRunStatus, WorkflowObservability, WorkflowPort, WorkflowRegistry,
+    WorkflowRun, WorkflowRunChild, WorkflowRunEvent, WorkflowRunLease, WorkflowRunStatus,
+    WorkflowRunStore, WorkflowTerminalKind, WorkflowTerminalPolicy, WorkflowTrigger,
+    WorkflowVersion, WriteFileHandoffReport, WriteFileHandoffRequest, READ_FILE_HANDOFF_WORKFLOW_ID,
+    READ_FILE_HANDOFF_WORKFLOW_VERSION, WORKFLOW_SCHEMA_VERSION, WORKSPACE_READER_ID,
     WORKSPACE_READER_VERSION, WORKSPACE_WRITER_ID, WORKSPACE_WRITER_VERSION,
     WRITE_FILE_HANDOFF_WORKFLOW_ID, WRITE_FILE_HANDOFF_WORKFLOW_VERSION,
     WRITE_THEN_READ_HANDOFF_WORKFLOW_ID, WRITE_THEN_READ_HANDOFF_WORKFLOW_VERSION,
 };
+
 pub use telemetry::{
     record_route_telemetry, route_telemetry_aggregate, RouteTelemetryAggregate,
     RouteTelemetryObservation, RouteTelemetryOutcome, MAX_TELEMETRY_LATENCY_MILLIS,
@@ -133,18 +141,8 @@ pub use trace::{
     SpanId, SpanStatus, TraceContext, TraceEvent, TraceEventKind, TraceId, TraceSpan, TraceStore,
 };
 pub use web_search::{web_search, web_search_json, SearchError, SearchHit};
-pub use workflow::{
-    adapt_campaign_status, adapt_cron_attempt_status, adapt_gateway_status, adapt_job_status,
-    builtin_workflow_adapters, AdapterCapability, AdapterLifecycleStatus, ApprovalPolicy,
-    CancellationPolicy, CapabilitySupport, RetryPolicy, RollbackPolicy, WorkflowAdapterDescriptor,
-    WorkflowAdapterKind, WorkflowAgentRef, WorkflowDefinition, WorkflowId, WorkflowNode,
-    WorkflowObservability, WorkflowPort, WorkflowRegistry, WorkflowTerminalKind,
-    WorkflowTerminalPolicy, WorkflowTrigger, WorkflowVersion, WORKFLOW_SCHEMA_VERSION,
-};
-pub use workflow_run::{
-    WorkflowNodeRun, WorkflowNodeRunStatus, WorkflowRun, WorkflowRunChild, WorkflowRunEvent,
-    WorkflowRunLease, WorkflowRunStatus, WorkflowRunStore,
-};
+
+
 
 #[derive(Debug, Error)]
 pub enum KernelError {
@@ -156,6 +154,12 @@ pub enum KernelError {
     Skills(#[from] optimus_skills::SkillError),
     #[error("packs: {0}")]
     Packs(#[from] optimus_packs::PackError),
+    #[error("agent: {0}")]
+    Agent(#[from] optimus_agent::AgentError),
+    #[error("workflow: {0}")]
+    Workflow(#[from] optimus_workflow::WorkflowError),
+    #[error("artifact: {0}")]
+    Artifact(#[from] optimus_artifacts::ArtifactError),
     #[error("model: {0}")]
     Model(String),
     #[error("tool: {0}")]
@@ -341,28 +345,11 @@ pub enum StreamControl {
     Cancel,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct CancellationToken(Arc<AtomicBool>);
-
-impl CancellationToken {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn cancel(&self) {
-        self.0.store(true, Ordering::SeqCst);
-    }
-
-    pub fn is_cancelled(&self) -> bool {
-        self.0.load(Ordering::SeqCst)
-    }
-
-    pub(crate) fn check(&self) -> Result<()> {
-        if self.is_cancelled() {
-            Err(KernelError::Cancelled)
-        } else {
-            Ok(())
-        }
+pub(crate) fn check_cancellation(token: &CancellationToken) -> Result<()> {
+    if token.is_cancelled() {
+        Err(KernelError::Cancelled)
+    } else {
+        Ok(())
     }
 }
 
@@ -394,9 +381,9 @@ pub trait ModelProvider {
         sink: &mut dyn FnMut(StreamEvent),
         cancellation: &CancellationToken,
     ) -> Result<CompletionResponse> {
-        cancellation.check()?;
+        check_cancellation(cancellation)?;
         let response = self.complete_streaming(request, sink)?;
-        cancellation.check()?;
+        check_cancellation(cancellation)?;
         Ok(response)
     }
 }
@@ -749,7 +736,7 @@ impl Kernel {
         sink: &mut dyn FnMut(StreamEvent),
         cancellation: &CancellationToken,
     ) -> Result<TurnResult> {
-        cancellation.check()?;
+        check_cancellation(cancellation)?;
         if self.sessions.active_turn(self.session_id)?.is_some() {
             return Err(KernelError::Model(
                 "session has an interrupted turn; resume it before starting another".into(),
@@ -798,7 +785,7 @@ impl Kernel {
         sink: &mut dyn FnMut(StreamEvent),
         cancellation: &CancellationToken,
     ) -> Result<TurnResult> {
-        cancellation.check()?;
+        check_cancellation(cancellation)?;
         let turn = self.sessions.active_turn(self.session_id)?.ok_or_else(|| {
             KernelError::Model("session has no interrupted turn to resume".into())
         })?;
@@ -1311,7 +1298,7 @@ impl Kernel {
         let mut synthesis_only = false;
 
         loop {
-            cancellation.check()?;
+            check_cancellation(cancellation)?;
             if steps >= self.config.max_steps {
                 let _ = self.save_session();
                 return Err(KernelError::MaxSteps(self.config.max_steps));
@@ -1487,7 +1474,7 @@ impl Kernel {
                 });
                 let execution_budget = self.config.max_tool_calls_per_step.max(1);
                 for (call_index, call) in resp.tool_calls.into_iter().enumerate() {
-                    cancellation.check()?;
+                    check_cancellation(cancellation)?;
                     let descriptor = self.packs.resolve_loaded_tool(&call.name)?.clone();
                     let over_budget = call_index >= execution_budget;
                     let duplicate = if over_budget {

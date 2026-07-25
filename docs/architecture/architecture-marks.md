@@ -49,7 +49,7 @@ tests. Planned work must not be graded as current behaviour.
 | Durability / crash safety | **A+** | Work Graph, ambiguous effects, process-tree ownership. Session open repairs missing tool messages from effect links. |
 | Security boundary design | **A-** | SmartDeny high-risk: WriteFile, ProjectWriteFile, RunCommand, ProjectRunCommand. Path preflight before approval. Skill grants class-scoped. Linux commands use bwrap/systemd-run; residual absolute-path access outside cap-std still known. |
 | Domain modularity (packs/memory/skills/store) | **A-** | Deep modules; keep second catalogs out of kernel. |
-| Control-plane modularity | **B+** | Offline eval/replay extracted to `optimus-eval`; gateway+cron store to `optimus-ops`. Kernel still owns agents/workflows/artifacts/routing/turn loop. Further peel planned (P11). |
+| Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
 | Multi-agent readiness | **S** | Two specialists (`workspace_writer`, `workspace_reader`); three registered workflows including `write_then_read_handoff` DAG; durable `WorkflowRunStore`; parent cancel tree. **Interim S (not S+++):** no command specialist; command FS residual owned by P12. |
 | Observability / eval | **A-** | Offline integrity gate + causal reconstruction CLI (`optimus trace show`); stable security-denial codes. No OTel export yet. |
 | UI architecture | **A-** | Electron + React default installed shell; Wry legacy only. IPC matrix enforces host registry ⊇ Electron allowlist = React types; critical paths gated. Preview browser product language separated from agent tools. |
@@ -136,7 +136,7 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 | 4 | One shell matrix + IPC contract checker | UI | done |
 | 5 | Causal observability (`optimus trace`, denial codes, obs gate) | Observability | done |
 | P10 | Multi-agent platform (DAG, ≥2 specialists, cancel tree) | Multi-agent B→**S** (S+++ after P12) | **done** |
-| P11 | Control-plane peels (agent/workflow/artifacts crates) | Control-plane B+→S+++ | pending |
+| P11 | Control-plane peels (agent/workflow/artifacts crates) | Control-plane B+→**S+++** | **done** |
 | P12 | Command capability envelope (real FS confinement) | Security A-→S+++ | pending |
 | P13 | Domain modularity audit (single catalogs, plane separation) | Domain A-→S+++ | pending |
 | P14 | Observability export + gate strength | Observability A-→S+++ | pending |

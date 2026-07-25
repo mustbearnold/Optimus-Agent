@@ -1,0 +1,25 @@
+[package]
+name = "optimus-workflow"
+description = "Workflow contracts, durable DAG run ledger, and built-in specialist verticals"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+optimus-agent.workspace = true
+optimus-artifacts.workspace = true
+optimus-graph.workspace = true
+optimus-runtime.workspace = true
+optimus-packs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+rusqlite.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

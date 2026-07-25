@@ -637,6 +637,6 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10 done (multi-agent → S).** Next: **P11** control-plane modularity (peel
-agent/workflow/run/artifacts crates; dependency lint). Re-grade Multi-agent to
-**S+++** only after **P12** closes the command capability envelope residual.
+**P10 done (multi-agent → S). P11 done (control-plane → S+++).** Next: **P12**
+security command capability envelope (real FS confinement; then multi-agent
+re-grade to S+++).

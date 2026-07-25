@@ -13,7 +13,24 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::{KernelError, Result};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ArtifactError {
+    #[error("io: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("json: {0}")]
+    Json(#[from] serde_json::Error),
+    #[error("{0}")]
+    Msg(String),
+}
+
+pub type Result<T> = std::result::Result<T, ArtifactError>;
+
+fn tool_err(msg: impl AsRef<str>) -> ArtifactError {
+    ArtifactError::Msg(msg.as_ref().to_string())
+}
+
 
 const MAX_LIST: usize = 200;
 const MAX_BULK_DELETE: usize = 50;
@@ -85,10 +102,10 @@ impl ArtifactStore {
         session_id: Option<&str>,
     ) -> Result<ArtifactRecord> {
         if bytes.is_empty() {
-            return Err(KernelError::Tool("artifact bytes must be non-empty".into()));
+            return Err(tool_err("artifact bytes must be non-empty"));
         }
         if bytes.len() > MAX_BYTES {
-            return Err(KernelError::Tool(format!(
+            return Err(tool_err(format!(
                 "artifact exceeds max size {MAX_BYTES} bytes"
             )));
         }
@@ -131,20 +148,20 @@ impl ArtifactStore {
     ) -> Result<ArtifactRecord> {
         use base64::Engine;
         if b64.len() > MAX_BASE64_INPUT {
-            return Err(KernelError::Tool(format!(
+            return Err(tool_err(format!(
                 "base64 payload exceeds max encoded size {MAX_BASE64_INPUT} bytes"
             )));
         }
         let encoded_chars = b64.chars().filter(|c| !c.is_whitespace()).count();
         if encoded_chars > ((MAX_BYTES + 2) / 3) * 4 {
-            return Err(KernelError::Tool(format!(
+            return Err(tool_err(format!(
                 "base64 payload exceeds max decoded size {MAX_BYTES} bytes"
             )));
         }
         let cleaned: String = b64.chars().filter(|c| !c.is_whitespace()).collect();
         let bytes = base64::engine::general_purpose::STANDARD
             .decode(cleaned.as_bytes())
-            .map_err(|e| KernelError::Tool(format!("invalid base64 artifact payload: {e}")))?;
+            .map_err(|e| tool_err(format!("invalid base64 artifact payload: {e}")))?;
         self.put_bytes(&bytes, media_type, source, label, session_id)
     }
 
@@ -190,7 +207,7 @@ impl ArtifactStore {
         }
         match found {
             Some(row) if !row.deleted => Ok(row),
-            _ => Err(KernelError::Tool(format!(
+            _ => Err(tool_err(format!(
                 "artifact metadata not found: {sha256}"
             ))),
         }
@@ -207,10 +224,10 @@ impl ArtifactStore {
     pub fn delete(&self, sha256: &str) -> Result<()> {
         let result = self.delete_many(std::slice::from_ref(&sha256.to_string()))?;
         if let Some(fail) = result.failed.first() {
-            return Err(KernelError::Tool(fail.error.clone()));
+            return Err(tool_err(fail.error.clone()));
         }
         if result.deleted.is_empty() {
-            return Err(KernelError::Tool(format!("artifact not found: {sha256}")));
+            return Err(tool_err(format!("artifact not found: {sha256}")));
         }
         Ok(())
     }
@@ -221,12 +238,12 @@ impl ArtifactStore {
     /// `failed` without aborting the rest of the batch.
     pub fn delete_many(&self, sha256s: &[String]) -> Result<BulkDeleteResult> {
         if sha256s.is_empty() {
-            return Err(KernelError::Tool(
-                "artifacts_delete_many requires at least one sha256".into(),
+            return Err(tool_err(
+                "artifacts_delete_many requires at least one sha256",
             ));
         }
         if sha256s.len() > MAX_BULK_DELETE {
-            return Err(KernelError::Tool(format!(
+            return Err(tool_err(format!(
                 "artifacts_delete_many supports at most {MAX_BULK_DELETE} items"
             )));
         }
@@ -240,8 +257,8 @@ impl ArtifactStore {
             ordered.push(sha.to_string());
         }
         if ordered.is_empty() {
-            return Err(KernelError::Tool(
-                "artifacts_delete_many requires at least one sha256".into(),
+            return Err(tool_err(
+                "artifacts_delete_many requires at least one sha256",
             ));
         }
         let _lock = self.lock_exclusive()?;
@@ -265,7 +282,7 @@ impl ArtifactStore {
         let path = self.blob_path(sha256);
         let blob_existed = path.try_exists()?;
         if meta.is_none() && !blob_existed {
-            return Err(KernelError::Tool(format!("artifact not found: {sha256}")));
+            return Err(tool_err(format!("artifact not found: {sha256}")));
         }
         let mut tombstone = meta.unwrap_or_else(|| ArtifactRecord {
             sha256: sha256.to_string(),
@@ -283,7 +300,7 @@ impl ArtifactStore {
         if blob_existed {
             let metadata = fs::symlink_metadata(&path)?;
             if metadata.file_type().is_symlink() {
-                return Err(KernelError::Tool("refusing symlinked artifact blob".into()));
+                return Err(tool_err("refusing symlinked artifact blob"));
             }
             fs::remove_file(path)?;
         }
@@ -345,7 +362,7 @@ impl ArtifactStore {
         }
         let parent = path
             .parent()
-            .ok_or_else(|| KernelError::Tool("artifact blob has no parent".into()))?;
+            .ok_or_else(|| tool_err("artifact blob has no parent"))?;
         let temp = parent.join(format!(".{sha256}.{}.tmp", Uuid::new_v4()));
         let mut file = OpenOptions::new()
             .write(true)
@@ -375,16 +392,16 @@ impl ArtifactStore {
         let metadata = match fs::symlink_metadata(path) {
             Ok(metadata) => metadata,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                return Err(KernelError::Tool(format!("artifact not found: {sha256}")));
+                return Err(tool_err(format!("artifact not found: {sha256}")));
             }
             Err(error) => return Err(error.into()),
         };
         if metadata.file_type().is_symlink() {
-            return Err(KernelError::Tool("refusing symlinked artifact blob".into()));
+            return Err(tool_err("refusing symlinked artifact blob"));
         }
         if !metadata.is_file() || metadata.len() > MAX_BYTES as u64 {
-            return Err(KernelError::Tool(
-                "artifact blob is not a bounded regular file".into(),
+            return Err(tool_err(
+                "artifact blob is not a bounded regular file",
             ));
         }
         let mut file = File::open(path)?;
@@ -393,12 +410,12 @@ impl ArtifactStore {
             .take(MAX_BYTES as u64 + 1)
             .read_to_end(&mut bytes)?;
         if bytes.len() > MAX_BYTES {
-            return Err(KernelError::Tool(format!(
+            return Err(tool_err(format!(
                 "artifact exceeds max size {MAX_BYTES} bytes"
             )));
         }
         if hex_sha256(&bytes) != sha256 {
-            return Err(KernelError::Tool("artifact digest mismatch".into()));
+            return Err(tool_err("artifact digest mismatch"));
         }
         Ok(bytes)
     }
@@ -408,7 +425,7 @@ fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
     match fs::symlink_metadata(path) {
         Ok(metadata) => {
             if metadata.file_type().is_symlink() || !metadata.is_dir() {
-                return Err(KernelError::Tool(format!(
+                return Err(tool_err(format!(
                     "{label} must be a non-symlink directory"
                 )));
             }
@@ -418,7 +435,7 @@ fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
                 let metadata = fs::symlink_metadata(path)?;
                 if metadata.file_type().is_symlink() || !metadata.is_dir() {
-                    return Err(KernelError::Tool(format!(
+                    return Err(tool_err(format!(
                         "{label} must be a non-symlink directory"
                     )));
                 }
@@ -433,7 +450,7 @@ fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
 fn reject_symlink(path: &Path, label: &str) -> Result<()> {
     let metadata = fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return Err(KernelError::Tool(format!(
+        return Err(tool_err(format!(
             "{label} must be a non-symlink file"
         )));
     }
@@ -445,8 +462,8 @@ fn open_owned_file(path: &Path, append: bool) -> Result<File> {
         match fs::symlink_metadata(path) {
             Ok(metadata) => {
                 if metadata.file_type().is_symlink() || !metadata.is_file() {
-                    return Err(KernelError::Tool(
-                        "artifact state file must not be a symlink".into(),
+                    return Err(tool_err(
+                        "artifact state file must not be a symlink",
                     ));
                 }
                 return Ok(OpenOptions::new()
@@ -480,8 +497,8 @@ fn hex_sha256(bytes: &[u8]) -> String {
 
 fn validate_sha256(value: &str) -> Result<()> {
     if value.len() != 64 || !value.bytes().all(|b| b.is_ascii_hexdigit()) {
-        return Err(KernelError::Tool(
-            "artifact sha256 must be 64 hex characters".into(),
+        return Err(tool_err(
+            "artifact sha256 must be 64 hex characters",
         ));
     }
     Ok(())

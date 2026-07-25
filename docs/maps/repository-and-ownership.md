@@ -65,7 +65,10 @@ the root Cargo workspace.
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
 | `optimus-packs` | library | Canonical tool/pack descriptor, operational metadata, and capability budgets | none |
 | `optimus-ops` | library | Operator gateway delivery authority and cron schedule store | none |
-| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution/trace manifests, routing telemetry, credentials; re-exports ops | graph, runtime, memory, skills, packs, ops |
+| `optimus-artifacts` | library | Content-addressed artifact store | none (serde/sha2/fs2 only) |
+| `optimus-agent` | library | Specialist contracts, registry, invocation ledger | packs, runtime, graph |
+| `optimus-workflow` | library | Workflow contracts, run ledger, built-in DAG verticals | agent, artifacts, packs, runtime, graph |
+| `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
 | `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Rust host plus Wry/Tao rollback shell, native IPC, and HTTP test harness | kernel, graph, runtime, packs |
