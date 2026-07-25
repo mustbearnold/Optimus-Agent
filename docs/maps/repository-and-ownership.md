@@ -40,11 +40,11 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ## Audit basis
 
 **Confirmed current behaviour:** this is a Rust 2021 workspace with Rust 1.85 as
-the declared minimum. `cargo metadata --no-deps` reports eleven workspace
+the declared minimum. `cargo metadata --no-deps` reports fourteen workspace
 packages among default members plus desktop: libraries include store, graph,
-runtime, memory, skills, packs, ops, kernel, eval, browser; applications are
-cli and desktop. The desktop application is not a default workspace member, but
-it is a workspace member.
+runtime, memory, skills, packs, ops, artifacts, agent, workflow, kernel, eval,
+browser; applications are cli and desktop. The desktop application is not a
+default workspace member, but it is a workspace member.
 
 **Confirmed current behaviour:** the repository is a Git checkout on `main` with
 GitHub `origin`; Engineering Memory records both commit identity and deterministic
@@ -114,9 +114,10 @@ project state grants Rust filesystem access.
   `apps/optimus-desktop`; the default Electron transport boundary belongs to
   `apps/optimus-electron`; React presentation and local multi-folder grouping
   belong to `apps/optimus-ui`. Domain behavior remains in Rust libraries.
-- **Confirmed:** `optimus-kernel` owns typed agent/workflow contracts,
-  registries/adapters, invocation evidence, canonical routing and telemetry,
-  execution/replay/trace contracts, and versioned offline evaluation/baselines.
+- **Confirmed:** `optimus-agent` / `optimus-workflow` own typed agent/workflow
+  contracts, registries, invocation evidence, and DAG verticals; kernel owns
+  canonical routing and telemetry, sessions, execution/trace production paths,
+  and re-exports the peels. Offline evaluation/baselines live in `optimus-eval`.
 - **Confirmed:** built-in specialists and registered DAG verticals are owned by
   `optimus-agent` + `optimus-workflow` (kernel re-exports).
 - **Unknown/unresolved:** model-chosen specialist routing, OpenTelemetry, or GPU

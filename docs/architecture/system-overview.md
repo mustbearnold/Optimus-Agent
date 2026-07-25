@@ -133,11 +133,11 @@ fence concurrent runners. Campaigns can end `succeeded`, `failed`, `cancelled`,
 or `awaiting_approval`.
 
 **Confirmed current behaviour:** versioned agent and workflow contract
-substrates and immutable registries exist in `optimus-kernel`. They are library
-boundaries, not a new control-plane process. Built-in specialists are registered
-via `optimus-workflow` / `optimus-agent` peels (see Agent execution). Campaign
-steps remain deterministic effect specifications, not specialist-agent
-invocations.
+substrates and immutable registries exist in `optimus-agent` and
+`optimus-workflow` (re-exported by the kernel). They are library boundaries, not
+a new control-plane process. Built-in specialists are registered via those peels
+(see Agent execution). Campaign steps remain deterministic effect specifications,
+not specialist-agent invocations.
 
 **Planned behaviour:** a dedicated control plane, specialist routing, parallel
 child hierarchy, and general workflow executor remain targets. The implemented
