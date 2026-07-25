@@ -523,7 +523,7 @@ complete, documented, and cannot be “greenwashed” by partial evidence.
 | R1 | Document pre-merge vs pre-release gate matrix | done — `docs/architecture/release-and-parity-gates.md` |
 | R2 | Optional `check-architecture-marks.py` for S+++ claim hygiene | done — script + `test_architecture_marks.py` |
 | R3 | Version/ledger tests remain green | done — ledger path fix + `check-parity-ledger.py` / `release-check` |
-| R4 | Marks → Release **S+++** | done — this PR |
+| R4 | Marks → Release **S+++** | done — PR #27 + `s-plus-plus-plus-p17-verification.md` |
 
 ### Hold suite
 

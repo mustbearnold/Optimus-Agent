@@ -23,8 +23,10 @@ MARKS = ROOT / "docs" / "architecture" / "architecture-marks.md"
 PROGRAM = ROOT / "docs" / "plans" / "s-plus-plus-plus-program.md"
 
 # Grade cell in the current-grades table: | Name | **GRADE** | notes |
+# Accept bold or plain grade tokens so unbolded S+++ cannot skip the gate.
 GRADE_ROW = re.compile(
-    r"^\|\s*(?P<name>[^|]+?)\s*\|\s*\*\*(?P<grade>[^*]+)\*\*\s*\|",
+    r"^\|\s*(?P<name>[^|]+?)\s*\|\s*(?:\*\*(?P<grade_bold>[^*]+)\*\*|"
+    r"(?P<grade_plain>S\+{0,3}|A\+?|B\+?|C))\s*\|",
     re.MULTILINE,
 )
 # Program phase table: | P17 | … | … | pending|**done** |
@@ -33,6 +35,8 @@ PHASE_ROW = re.compile(
     r"\s*(?P<marks>[^|]+?)\s*\|\s*(?P<status>[^|]+?)\s*\|",
     re.MULTILINE,
 )
+# "done" only at start of status (after bold strip). "not done" / "undone" ≠ done.
+DONE_STATUS = re.compile(r"^done\b")
 
 
 @dataclass(frozen=True)
@@ -147,8 +151,8 @@ def parse_grades(text: str) -> dict[str, str]:
     grades: dict[str, str] = {}
     for match in GRADE_ROW.finditer(section):
         name = match.group("name").strip()
-        grade = match.group("grade").strip()
-        if name.lower() in {"mark", "grade"}:
+        grade = (match.group("grade_bold") or match.group("grade_plain") or "").strip()
+        if name.lower() in {"mark", "grade"} or not grade:
             continue
         grades[name] = grade
     return grades
@@ -164,10 +168,9 @@ def parse_phase_status(text: str) -> dict[str, str]:
     statuses: dict[str, str] = {}
     for match in PHASE_ROW.finditer(section):
         phase = match.group("phase").strip()
-        raw = match.group("status").strip().lower()
-        # Strip markdown bold markers.
-        raw = raw.replace("*", "")
-        if "done" in raw and "pending" not in raw:
+        raw = match.group("status").strip().lower().replace("*", "").strip()
+        # Fail-closed: only leading "done" counts (not "not done" / "undone").
+        if DONE_STATUS.match(raw):
             statuses[phase] = "done"
         elif "pending" in raw:
             statuses[phase] = "pending"

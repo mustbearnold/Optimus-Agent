@@ -128,6 +128,122 @@ class ArchitectureMarksGateTests(unittest.TestCase):
         )
         self.assertEqual(findings, [])
 
+    def test_not_done_status_is_not_done(self) -> None:
+        """Negated status must not greenwash S+++ (substring 'done')."""
+        for status in ("not done", "undone", "**not done**"):
+            with self.subTest(status=status):
+                fake_marks = f"""
+## Current grades (test)
+
+| Mark | Grade | Notes |
+|---|:---:|---|
+| Release / parity gating | **S+++** | greenwash |
+
+## Program phases
+
+| Phase | Focus | Marks moved | Status |
+|---|---|---|---|
+| P17 | Release | Release | {status} |
+"""
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    for rel in (
+                        "scripts/optimus_version.py",
+                        "scripts/check-parity-ledger.py",
+                        "scripts/check-architecture-marks.py",
+                        "docs/architecture/release-and-parity-gates.md",
+                        "docs/architecture/s-plus-plus-plus-p17-verification.md",
+                    ):
+                        path = root / rel
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_text("stub\n", encoding="utf-8")
+                    findings = self.mod.check(
+                        fake_marks,
+                        root=root,
+                        require_program_mentions=False,
+                    )
+                self.assertTrue(
+                    any(
+                        "P17" in f and "status is" in f and "'done'" not in f
+                        for f in findings
+                    ),
+                    findings,
+                )
+
+    def test_unbolded_splus_is_detected(self) -> None:
+        fake_marks = """
+## Current grades (test)
+
+| Mark | Grade | Notes |
+|---|:---:|---|
+| Release / parity gating | S+++ | unbolded |
+
+## Program phases
+
+| Phase | Focus | Marks moved | Status |
+|---|---|---|---|
+| P17 | Release | Release | pending |
+"""
+        findings = self.mod.check(
+            fake_marks,
+            root=ROOT,
+            require_program_mentions=False,
+        )
+        self.assertTrue(any("P17" in f for f in findings), findings)
+
+    def test_missing_verification_only_fails(self) -> None:
+        fake_marks = """
+## Current grades (test)
+
+| Mark | Grade | Notes |
+|---|:---:|---|
+| Release / parity gating | **S+++** | missing ver |
+
+## Program phases
+
+| Phase | Focus | Marks moved | Status |
+|---|---|---|---|
+| P17 | Release | Release A→**S+++** | **done** |
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in (
+                "scripts/optimus_version.py",
+                "scripts/check-parity-ledger.py",
+                "scripts/check-architecture-marks.py",
+                "docs/architecture/release-and-parity-gates.md",
+            ):
+                path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("stub\n", encoding="utf-8")
+            findings = self.mod.check(
+                fake_marks,
+                root=root,
+                require_program_mentions=False,
+            )
+        self.assertTrue(any("verification" in f for f in findings), findings)
+
+    def test_unregistered_mark_splus_fails(self) -> None:
+        fake_marks = """
+## Current grades (test)
+
+| Mark | Grade | Notes |
+|---|:---:|---|
+| Totally new mark | **S+++** | unregistered |
+
+## Program phases
+
+| Phase | Focus | Marks moved | Status |
+|---|---|---|---|
+| P99 | x | x | **done** |
+"""
+        findings = self.mod.check(
+            fake_marks,
+            root=ROOT,
+            require_program_mentions=False,
+        )
+        self.assertTrue(any("no requirement map" in f for f in findings), findings)
+
 
 if __name__ == "__main__":
     unittest.main()

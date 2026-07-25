@@ -8,7 +8,7 @@ Planes: program **P17** · decision (process; version/parity policy) · delivery
 | Microtask | Evidence |
 |---|---|
 | R1 Gate matrix | `docs/architecture/release-and-parity-gates.md` (pre-merge / pre-release / pre-parity-claim) |
-| R2 Marks claim hygiene | `scripts/check-architecture-marks.py` + `scripts/test_architecture_marks.py` |
+| R2 Marks claim hygiene | `scripts/check-architecture-marks.py` + `scripts/test_architecture_marks.py` (negated status / unbolded S+++ fail-closed) |
 | R3 Version/ledger green | `check-parity-ledger.py` OK; `optimus_version.py release-check` PASS; artifacts evidence path post-P11 peel |
 | R4 Release **S+++** | `architecture-marks.md` + program microtasks done |
 
