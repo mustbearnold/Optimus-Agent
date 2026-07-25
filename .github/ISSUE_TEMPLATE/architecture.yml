@@ -6,10 +6,16 @@ labels:
   - "🏆 program:s+++"
   - "🔍 status:triage"
 body:
+  - type: markdown
+    attributes:
+      value: |
+        **Naming planes (mandatory):** `P##` (program) ≠ GitHub issue/PR number ≠ `ADR-NNNN` ≠ grade.
+        See `docs/contributing/artifact-naming.md` and `AGENTS.md`.
   - type: dropdown
     id: phase
     attributes:
       label: Program phase (if known)
+      description: S+++ program id from docs/plans/s-plus-plus-plus-program.md — not a GitHub issue number.
       options:
         - P10 multi-agent
         - P11 control-plane
@@ -31,11 +37,17 @@ body:
       description: Which marks move (e.g. Multi-agent S→S+++)? Cite architecture-marks.md.
     validations:
       required: true
+  - type: input
+    id: adr
+    attributes:
+      label: ADR (if known)
+      description: Next free ADR-NNNN only after scanning docs/decisions/. Leave blank if none yet. Never invent ADR-P12 or renumber.
+      placeholder: "ADR-0035 or none"
   - type: textarea
     id: work
     attributes:
       label: Work package
-      description: Microtasks, owning crates, exit gate tests.
+      description: Microtasks (plan-local M/C/S ids), owning crates, exit gate tests. Delivery will be PR #N assigned by GitHub — do not pre-assign PR numbers.
     validations:
       required: true
   - type: checkboxes
@@ -46,3 +58,4 @@ body:
         - label: ADR required (📋 process:adr)
         - label: Engineering Memory refresh (🔄 process:em-refresh)
         - label: Security residual / 🔐 risk:security review
+        - label: Naming planes understood (P## ≠ PR# ≠ ADR-NNNN)

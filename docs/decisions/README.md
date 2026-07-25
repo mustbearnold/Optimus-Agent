@@ -16,6 +16,10 @@ This index preserves existing decisions and exposes their current documentary
 state. Source and tests still determine whether an accepted design is fully
 implemented.
 
+**Identity:** `ADR-NNNN` is the **decision** plane only. It is never equal to
+S+++ program phase `P##` or delivery `PR #N`. See
+[artifact-naming.md](../contributing/artifact-naming.md).
+
 | ID | Decision | Documentary status | Implementation interpretation |
 |---|---|---|---|
 | 0000 | Locked defaults | Historical locked-defaults note; not full ADR shape | Mixed product constraints; verify individually. |

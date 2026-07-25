@@ -10,13 +10,16 @@ owns:
   - docs/contributing/github-conventions.md
 watches:
   - AGENTS.md
+  - docs/contributing/artifact-naming.md
 covers:
   - docs/contributing/github-conventions.md
 depends_on:
   - docs/architecture/architecture-marks.md
+  - docs/contributing/artifact-naming.md
 validated_by:
   - scripts/sync-github-labels.py
   - scripts/github_pr_branch.py
+  - scripts/test_github_pr_branch.py
 last_verified_commit: null
 ---
 
@@ -25,6 +28,10 @@ last_verified_commit: null
 This document is the **single process source** for commits, branches, PRs,
 issues, and labels. Labels are defined in [`.github/labels.yml`](../../.github/labels.yml)
 and synced with `python3 scripts/sync-github-labels.py`.
+
+**Identity planes** (what `P12` vs `PR #N` vs `ADR-NNNN` mean) are defined in
+[artifact-naming.md](./artifact-naming.md) and enforced in `AGENTS.md`. This
+file covers **delivery mechanics only**. Coding agents must load both.
 
 ## Principles
 
@@ -35,6 +42,8 @@ and synced with `python3 scripts/sync-github-labels.py`.
 4. **One concern per PR** — prefer a stack of small PRs over `🟪 size:XL`.
 5. **Executable evidence** outranks prose (see `AGENTS.md` status legend).
 6. **Do not invent labels ad hoc** — extend `.github/labels.yml` and re-sync.
+7. **Do not conflate planes** — `P##` (program) ≠ `PR #N` (delivery) ≠
+   `ADR-NNNN` (decision). See [artifact-naming.md](./artifact-naming.md).
 
 ## Label format
 
@@ -163,23 +172,30 @@ Prefer short crate/app names: `kernel`, `runtime`, `workflow`, `agent`,
 🏗️ architecture: S+++ P12 command capability envelope
 ```
 
-## Branch naming (matches PR number)
+## Branch naming (matches PR number — not program phase)
 
-**Canonical local and remote branch name once a PR exists:**
+**Canonical local branch once a PR exists:**
 
 ```text
-pr/<number>-<short-kebab>
+pr/<PR-number>-<short-kebab>
 ```
 
-Examples:
+The leading digits are **always the GitHub PR number**, never the S+++ program
+phase. Program phase may appear only in the **slug** for humans.
 
-- `pr/8-p10-multi-agent-dag`
-- `pr/9-p11-control-plane-peels`
-- `pr/12-emoji-github-labels`
-- `pr/15-p12-command-fs-envelope`
+Examples (correct even when numbers diverge):
+
+| Program | Delivery | Local branch | Remote head |
+|---|---|---|---|
+| P10 | PR #8 | `pr/8-p10-multi-agent-dag` | `wip/p10-multi-agent-dag` |
+| P11 | PR #9 | `pr/9-p11-control-plane-peels` | `wip/p11-control-plane-peels` |
+| P12 | PR #21 | `pr/21-p12-command-fs-envelope` | `wip/p12-command-fs-envelope` |
+| (docs) | PR #20 | `pr/20-branch-pr-number-convention` | `wip/branch-pr-number-convention` |
+
+Wrong: `pr/12-…` because the work is “P12” when the open PR is `#21`.
 
 This keeps **local checkouts, worktrees, and `git branch` output aligned with
-the GitHub PR number** (`#15` ↔ `pr/15-…`).
+the GitHub PR number** (`#21` ↔ `pr/21-…`).
 
 ### Lifecycle
 
@@ -244,10 +260,17 @@ git branch --set-upstream-to=origin/wip/p12-command-fs-envelope
 Same as emoji-first Conventional Commit subject (often the squash merge
 message). This is what appears in the repository **Commits** and PR lists.
 
-### Head branch
+### Local branch vs GitHub head (after open)
 
-Must be `pr/<number>-…` matching this PR’s number before review/merge
-(except the brief `wip/` window while opening the PR).
+| Ref | Must be | Must not |
+|---|---|---|
+| **Local checkout** | `pr/<this-PR-number>-…` | `pr/<program-phase>-…` when that ≠ PR # |
+| **Remote PR head** (`headRefName`) | stable `wip/…` (or the original push name) | renamed to `pr/N-…` |
+
+Renaming or deleting the **remote** head **closes the open PR** on GitHub.
+Use `python3 scripts/github_pr_branch.py open|adopt|check` so only the **local**
+name becomes `pr/<N>-…` while the remote stays put. Before review/merge, `check`
+must exit 0.
 
 ### Description
 
@@ -256,6 +279,8 @@ Use the PR template. Always include:
 1. Summary (why / outcome)
 2. Test plan with commands actually run
 3. Risk notes (API, schema, install)
+4. Naming planes table (program / delivery / ADR / local branch / remote head)
+   when any plane applies — see [artifact-naming.md](./artifact-naming.md)
 
 ### Labeling on the CLI
 
@@ -271,11 +296,13 @@ Quote labels: the emoji and space are part of the name.
 
 ### Stacking
 
-For multi-phase work (e.g. S+++ P10 then P11):
+For multi-phase work (e.g. S+++ P10 then P11 — **program** phases, not PR #s):
 
-1. Open PR A → `main` as `pr/<A>-…`
-2. Open PR B → base **A** (or merge A first, then B → `main`) as `pr/<B>-…`
+1. Open PR A → `main`; local `pr/<A>-…` (A is GitHub’s number)
+2. Open PR B → base **A** (or merge A first, then B → `main`); local `pr/<B>-…`
 3. Prefer sequential merge after reviews over one mega-PR
+4. One primary program phase per PR; cite planes in the PR body
+   (`program P12 · delivery PR #N · ADR-…`)
 
 ### Review
 
@@ -338,3 +365,6 @@ Adding a label:
 - Commit subjects that describe files instead of outcomes
 - Branches named `update`, `tmp`, `fix2`
 - Claiming Confirmed architecture behaviour without tests/source
+- Forcing local/remote branch `pr/<P##>-…` so it “matches” the program phase
+- Renaming remote PR head to `pr/N-…` (closes the open PR)
+- Using ADR number, program phase, and PR number as if they were one sequence

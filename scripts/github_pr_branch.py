@@ -22,9 +22,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
+
+
+def _subprocess_env() -> dict[str, str]:
+    """Force plain gh/git output so JSON parsing works under agent TTY wrappers."""
+    env = os.environ.copy()
+    env.setdefault("NO_COLOR", "1")
+    env.setdefault("CLICOLOR", "0")
+    env["GH_FORCE_TTY"] = "0"
+    return env
 
 
 def run(
@@ -32,7 +42,13 @@ def run(
     *,
     check: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-    r = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    r = subprocess.run(
+        cmd,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_subprocess_env(),
+    )
     if check and r.returncode != 0:
         msg = (r.stderr or r.stdout or "").strip() or f"exit {r.returncode}"
         raise SystemExit(f"$ {' '.join(cmd)}\n{msg}")
@@ -75,20 +91,8 @@ def default_slug_from_branch(branch: str) -> str:
     return slugify(branch)
 
 
-def remote_head_for_pr(number: int) -> str:
-    r = run(
-        [
-            "gh",
-            "pr",
-            "view",
-            str(number),
-            "--json",
-            "headRefName",
-            "-q",
-            ".headRefName",
-        ]
-    )
-    return r.stdout.strip()
+def _strip_ansi(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 def pr_view(number: int | None = None) -> dict:
@@ -96,7 +100,13 @@ def pr_view(number: int | None = None) -> dict:
     if number is not None:
         cmd.insert(3, str(number))
     r = run(cmd)
-    return json.loads(r.stdout)
+    raw = _strip_ansi(r.stdout).strip()
+    if not raw:
+        raise SystemExit(f"$ {' '.join(cmd)}\nempty gh output")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"$ {' '.join(cmd)}\ninvalid JSON: {e}\n{raw[:200]!r}") from e
 
 
 def pr_for_branch(branch: str) -> dict | None:
@@ -116,8 +126,9 @@ def pr_for_branch(branch: str) -> dict | None:
     )
     if r.returncode != 0 or not r.stdout.strip():
         return None
+    raw = _strip_ansi(r.stdout).strip()
     try:
-        items = json.loads(r.stdout)
+        items = json.loads(raw)
     except json.JSONDecodeError:
         return None
     return items[0] if items else None
@@ -156,9 +167,15 @@ def adopt_local(number: int, slug: str, remote_head: str) -> str:
     run(["git", "fetch", "origin", remote_head])
 
     if old_local != new_local:
-        # If target name exists, delete it only if same tip
         existing = git("branch", "--list", new_local)
         if existing:
+            old_tip = git("rev-parse", old_local)
+            target_tip = git("rev-parse", new_local)
+            if old_tip != target_tip:
+                raise SystemExit(
+                    f"refusing to replace local {new_local!r}: tip differs from "
+                    f"{old_local!r}. Rename or delete {new_local} manually, then retry."
+                )
             run(["git", "branch", "-D", new_local], check=False)
         run(["git", "branch", "-m", new_local])
 
@@ -220,6 +237,13 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(str(e), file=sys.stderr)
         return 1
     number = int(pr["number"])
+    state = str(pr.get("state") or "").upper()
+    if state and state != "OPEN":
+        print(
+            f"MISMATCH: PR #{number} state={state!r} (expected OPEN)",
+            file=sys.stderr,
+        )
+        return 1
     expected_prefix = f"pr/{number}-"
     if not branch.startswith(expected_prefix):
         print(
@@ -231,6 +255,23 @@ def cmd_check(args: argparse.Namespace) -> int:
         return 1
     upstream = git("rev-parse", "--abbrev-ref", "@{upstream}", check=False)
     remote_head = pr["headRefName"]
+    expected_upstream = f"origin/{remote_head}"
+    if not upstream or upstream == "@{upstream}":
+        print(
+            f"MISMATCH: local {branch!r} has no upstream; "
+            f"expected {expected_upstream}",
+            file=sys.stderr,
+        )
+        print("fix: python3 scripts/github_pr_branch.py adopt", file=sys.stderr)
+        return 1
+    if upstream != expected_upstream:
+        print(
+            f"MISMATCH: upstream={upstream!r} expected {expected_upstream!r} "
+            f"(remote PR head must stay {remote_head!r}; do not rename remote)",
+            file=sys.stderr,
+        )
+        print("fix: python3 scripts/github_pr_branch.py adopt", file=sys.stderr)
+        return 1
     print(f"OK local {branch} ↔ PR #{number} (remote head {remote_head}, upstream {upstream})")
     return 0
 
