@@ -200,6 +200,7 @@ describe('ProjectsRail session actions', () => {
 
   it('dismisses the project scope menu and restores trigger focus', async () => {
     const user = userEvent.setup();
+    const onManageProject = vi.fn();
     render(
       <ProjectsRail
         collapsed={false}
@@ -213,7 +214,7 @@ describe('ProjectsRail session actions', () => {
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
         onAddProject={vi.fn()}
-        onManageProject={vi.fn()}
+        onManageProject={onManageProject}
         onToggleProject={vi.fn()}
         onTogglePin={vi.fn()}
         onToggleArchive={vi.fn()}
@@ -243,6 +244,11 @@ describe('ProjectsRail session actions', () => {
     await user.keyboard('{Enter}');
     expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
     await waitForFocus(trigger);
+
+    await user.click(trigger);
+    await user.click(screen.getByRole('menuitem', { name: 'Manage sources for Optimus Agent' }));
+    expect(onManageProject).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
   });
 
   it('shows project and worktree metadata only for an explicit assignment', () => {

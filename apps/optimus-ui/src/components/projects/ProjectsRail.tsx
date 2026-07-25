@@ -317,7 +317,10 @@ export function ProjectsRail(props: Props) {
                   role="menuitem"
                   aria-label={`Manage sources for ${project.name}`}
                   title={`Manage sources for ${project.name}`}
-                  onClick={() => props.onManageProject(project)}
+                  onClick={() => {
+                    closeProjectMenu(false);
+                    props.onManageProject(project);
+                  }}
                 >
                   <Icon name="more" />
                 </button>
