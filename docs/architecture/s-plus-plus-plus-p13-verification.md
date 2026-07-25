@@ -11,7 +11,7 @@ Planes: program **P13** · decision **ADR-0036** · delivery **PR #23**
 | D2 Pack budget / availability | `crates/optimus-packs/tests/packs_budget.rs` (hold suite green) |
 | D3 Memory plane separation | `domain_modularity.rs` ActionAuthorize fail-closed; no session/EM grant |
 | D4 Skill permission ceilings | `domain_modularity.rs` + `skill_bridge` + `skills_lifecycle` |
-| D5 Ownership map + Domain **S+++** | `repository-and-ownership.md`, `architecture-marks.md` |
+| D5 Ownership map + system-overview domain table → Domain **S+++** | `repository-and-ownership.md`, `system-overview.md` Domain modularity section, `architecture-marks.md` |
 
 ## Commands
 

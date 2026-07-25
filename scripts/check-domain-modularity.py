@@ -82,10 +82,14 @@ def main() -> int:
     kernel_lib = ROOT / "crates/optimus-kernel/src/lib.rs"
     if kernel_lib.is_file():
         text = kernel_lib.read_text()
-        if "ToolDesc as ToolSchema" not in text and "optimus_packs::ToolDesc" not in text:
+        if not REQUIRED_KERNEL_USE.search(text) and "ToolDesc as ToolSchema" not in text:
             findings.append(
                 "kernel must re-export or use optimus_packs::ToolDesc (no local catalog)"
             )
+        # Surfaces: forbid free-standing local tool schema registries in apps.
+    for rel in ("apps/optimus-cli/src", "apps/optimus-desktop/src"):
+        for path, line_no, line in scan_dir(rel, re.compile(r"struct\s+ToolDesc\b|struct\s+ToolCatalog\b")):
+            findings.append(f"{path}:{line_no}: surface second catalog :: {line}")
 
     for rel, pattern, msg in FORBIDDEN:
         for path, line_no, line in scan_dir(rel, pattern):

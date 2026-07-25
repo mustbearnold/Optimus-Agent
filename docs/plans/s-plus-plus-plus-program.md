@@ -357,7 +357,7 @@ surfaces, packs policy bypassed by kernel special cases.
 | D2 | Pack budget + availability golden tests as merge-adjacent gate | packs tests / script |
 | D3 | Memory plane separation tests (session ≠ memory ≠ skills ≠ EM) | kernel/memory tests |
 | D4 | Skill permission ceiling fuzz/table tests | skills + runtime |
-| D5 | Ownership map + system-overview domain table → Domain **S+++** | docs |
+| D5 | Ownership map + system-overview domain table → Domain **S+++** | done — ownership map + system-overview Domain modularity (P13) + marks |
 
 ### Hold suite
 

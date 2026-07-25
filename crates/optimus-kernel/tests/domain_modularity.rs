@@ -77,16 +77,15 @@ fn tool_resolution_is_packs_only_not_ad_hoc_names() {
     let session = CapabilitySession::with_defaults();
     assert!(session.resolve_loaded_tool("read_file").is_ok());
     assert!(session.resolve_loaded_tool("fabricated_super_tool").is_err());
-    // ActivatePack sibling cannot unlock browser in same response is covered in
-    // packs_budget; here we only prove defaults never invent tools.
-    assert_eq!(
-        session.loaded_tools().len(),
-        session
-            .loaded_tools()
-            .iter()
-            .filter(|t| t.id.as_str() != "does_not_exist")
-            .count()
-    );
+    // Core defaults never invent unloaded pack tools.
+    assert!(session.resolve_loaded_tool("browser_navigate").is_err());
+    let names: Vec<_> = session
+        .loaded_tools()
+        .iter()
+        .map(|t| t.id.as_str())
+        .collect();
+    assert!(names.contains(&"read_file"));
+    assert!(!names.contains(&"browser_navigate"));
     let _ = PackBudgetConfig::default();
 }
 

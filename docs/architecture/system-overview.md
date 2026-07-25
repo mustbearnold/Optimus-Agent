@@ -264,6 +264,25 @@ job/node/SHA-256 effect identity. Browser tools use an HTTP text/link effector,
 not CDP. `read_file`
 uses the filesystem sandbox and denies secret basenames.
 
+## Domain modularity (P13 / ADR-0036)
+
+**Confirmed current behaviour:** domain ownership is single-catalog and
+plane-separated (grade **S+++** in architecture-marks):
+
+| Plane | Owner | Must not |
+|---|---|---|
+| Tool identity | `optimus-packs::ToolDesc` / `ToolId` / `ToolInvocation` | Second catalog in kernel or surfaces |
+| Session transcript | `SessionStore` | Authorize host effects |
+| Semantic memory | `optimus-memory` | `ActionAuthorize` / live capability grants |
+| Procedural skills | `optimus-skills` | Expand closed permissions; grant wrong effect class |
+| Work Graph jobs | store / graph / runtime | Own chat UI schema |
+| Engineering Memory | repo docs / EM scripts | Runtime authorization |
+
+Kernel dispatch resolves only `packs.resolve_loaded_tool` then matches on
+`ToolInvocation`. Skill grants are class-scoped (`FsWorkspace` → writes,
+`Terminal` → commands). Gates: `scripts/check-domain-modularity.py` and
+`cargo test -p optimus-kernel --test domain_modularity`.
+
 **Confirmed current behaviour:** project sessions load canonical roots from the
 Rust-owned project authority store. Reads use the authorized root set. Writes
 and commands persist the primary workspace hash, are high-risk under SmartDeny,
