@@ -6,7 +6,7 @@
 mod cron;
 mod gateway;
 
-pub use cron::{CronClaim, CronError, CronJob, CronStore};
+pub use cron::{CronAttemptView, CronClaim, CronError, CronJob, CronStore};
 pub use gateway::{
     acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
     enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim,

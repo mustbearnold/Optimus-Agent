@@ -18,6 +18,9 @@ export type DesktopMethod =
   | 'cron_list'
   | 'cron_add'
   | 'cron_tick'
+  | 'cron_set_enabled'
+  | 'cron_remove'
+  | 'cron_history'
   | 'approvals_list'
   | 'approvals_grant'
   | 'jobs_list'
@@ -38,7 +41,9 @@ export type DesktopMethod =
   | 'artifacts_put_text'
   | 'artifacts_get'
   | 'artifacts_delete'
-  | 'artifacts_delete_many';
+  | 'artifacts_delete_many'
+  | 'artifacts_export'
+  | 'artifacts_export_zip';
 
 export type RunStatus =
   | 'idle'

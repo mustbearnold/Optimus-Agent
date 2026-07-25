@@ -419,6 +419,286 @@ impl ArtifactStore {
         }
         Ok(bytes)
     }
+
+    /// Export one artifact under `{root}/exports/` only (program P25 confinement).
+    /// Optional `filename` is basename-only; absolute/host paths are refused.
+    pub fn export_file(&self, sha256: &str, filename: Option<&str>) -> Result<PathBuf> {
+        validate_sha256(sha256)?;
+        let meta = self.get_meta(sha256)?;
+        let bytes = self.get_bytes(sha256)?;
+        let dest = self.resolve_export_path(
+            filename,
+            &safe_export_basename(&meta.label, sha256, &meta.media_type),
+        )?;
+        write_regular_file(&dest, &bytes)?;
+        Ok(dest)
+    }
+
+    /// Default export path under `{root}/exports/<safe-label>-<sha8>.<ext>`.
+    pub fn default_export_path(&self, sha256: &str) -> Result<PathBuf> {
+        validate_sha256(sha256)?;
+        let meta = self.get_meta(sha256)?;
+        self.resolve_export_path(
+            None,
+            &safe_export_basename(&meta.label, sha256, &meta.media_type),
+        )
+    }
+
+    /// Bulk zip under `{root}/exports/` only. Entries use safe basenames
+    /// (no directories) — prevents zip-slip on extract.
+    pub fn export_zip(&self, sha256s: &[String], filename: Option<&str>) -> Result<(PathBuf, usize)> {
+        if sha256s.is_empty() {
+            return Err(tool_err("export_zip requires at least one sha256"));
+        }
+        if sha256s.len() > MAX_BULK_DELETE {
+            return Err(tool_err(format!(
+                "export_zip supports at most {MAX_BULK_DELETE} items"
+            )));
+        }
+        let mut entries: Vec<(String, Vec<u8>)> = Vec::new();
+        let mut seen = std::collections::BTreeSet::new();
+        for raw in sha256s {
+            let sha = raw.trim();
+            if sha.is_empty() || !seen.insert(sha.to_string()) {
+                continue;
+            }
+            validate_sha256(sha)?;
+            let meta = self.get_meta(sha)?;
+            let bytes = self.get_bytes(sha)?;
+            let name = safe_export_basename(&meta.label, sha, &meta.media_type);
+            let mut final_name = name.clone();
+            let mut n = 1u32;
+            while entries.iter().any(|(e, _)| e == &final_name) {
+                n += 1;
+                final_name = format!("{n}-{name}");
+            }
+            entries.push((final_name, bytes));
+        }
+        if entries.is_empty() {
+            return Err(tool_err("export_zip requires at least one sha256"));
+        }
+        let count = entries.len();
+        let stamp = now_unix();
+        let dest = self.resolve_export_path(
+            filename,
+            &format!("artifacts-{stamp}.zip"),
+        )?;
+        let zip_bytes = write_store_zip(&entries)?;
+        write_regular_file(&dest, &zip_bytes)?;
+        Ok((dest, count))
+    }
+
+    pub fn default_zip_path(&self) -> Result<PathBuf> {
+        let stamp = now_unix();
+        self.resolve_export_path(None, &format!("artifacts-{stamp}.zip"))
+    }
+
+    /// Resolve a path strictly under `{root}/exports/`.
+    fn resolve_export_path(&self, filename: Option<&str>, default_name: &str) -> Result<PathBuf> {
+        let exports = self.root.join("exports");
+        ensure_owned_directory(&exports, "artifact exports")?;
+        let name = match filename {
+            Some(raw) => {
+                let base = Path::new(raw)
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("")
+                    .trim();
+                if base.is_empty() || base != raw.trim() {
+                    return Err(tool_err(
+                        "export filename must be a plain basename under artifacts/exports",
+                    ));
+                }
+                if base.contains("..") || base.contains('/') || base.contains('\\') {
+                    return Err(tool_err("export filename invalid"));
+                }
+                validate_export_basename(base)?;
+                base.to_string()
+            }
+            None => {
+                validate_export_basename(default_name)?;
+                default_name.to_string()
+            }
+        };
+        let dest = exports.join(&name);
+        // Canonical confinement: dest must stay under exports (no symlink escape).
+        let exports_canon = exports.canonicalize().unwrap_or(exports.clone());
+        if let Ok(parent) = dest.parent().unwrap_or(&exports).canonicalize() {
+            if !parent.starts_with(&exports_canon) {
+                return Err(tool_err("export path escapes artifacts/exports"));
+            }
+        }
+        Ok(dest)
+    }
+}
+
+fn validate_export_basename(name: &str) -> Result<()> {
+    let lower = name.to_ascii_lowercase();
+    if lower.is_empty() || lower.contains('\0') {
+        return Err(tool_err("export basename invalid"));
+    }
+    if is_secret_export_basename(&lower) {
+        return Err(tool_err(format!(
+            "refusing export basename that looks secret: {name}"
+        )));
+    }
+    Ok(())
+}
+
+fn is_secret_export_basename(name: &str) -> bool {
+    const BLOCKED: &[&str] = &[
+        ".env",
+        ".env.local",
+        "credentials",
+        "credentials.json",
+        "auth.json",
+        ".netrc",
+        "id_rsa",
+        "id_ed25519",
+        "secret",
+        "secrets",
+        "token",
+        "tokens.json",
+    ];
+    for blocked in BLOCKED {
+        if name == *blocked || name.starts_with(&format!("{blocked}.")) {
+            return true;
+        }
+    }
+    name.ends_with(".pem")
+        || name.ends_with(".key")
+        || name.ends_with(".p12")
+        || name.ends_with(".pfx")
+}
+
+fn safe_export_basename(label: &str, sha256: &str, media_type: &str) -> String {
+    let mut base: String = label
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '-'
+            }
+        })
+        .take(48)
+        .collect();
+    while base.ends_with('-') {
+        base.pop();
+    }
+    if base.is_empty() {
+        base = "artifact".into();
+    }
+    let ext = media_ext(media_type);
+    let short = &sha256[..8.min(sha256.len())];
+    format!("{base}-{short}{ext}")
+}
+
+fn media_ext(media_type: &str) -> &'static str {
+    let m = media_type.to_ascii_lowercase();
+    if m.starts_with("image/png") {
+        ".png"
+    } else if m.starts_with("image/jpeg") || m.starts_with("image/jpg") {
+        ".jpg"
+    } else if m.starts_with("image/gif") {
+        ".gif"
+    } else if m.starts_with("image/webp") {
+        ".webp"
+    } else if m.starts_with("text/") || m.contains("json") {
+        ".txt"
+    } else {
+        ".bin"
+    }
+}
+
+fn write_regular_file(path: &Path, bytes: &[u8]) -> Result<()> {
+    if path.exists() {
+        let metadata = fs::symlink_metadata(path)?;
+        if metadata.file_type().is_symlink() {
+            return Err(tool_err("refusing to overwrite symlink export path"));
+        }
+    }
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+/// Minimal ZIP (store method only) — entry names must not contain `/` or `..`.
+fn write_store_zip(entries: &[(String, Vec<u8>)]) -> Result<Vec<u8>> {
+    let mut out = Vec::new();
+    let mut central = Vec::new();
+    for (name, data) in entries {
+        if name.contains('/') || name.contains('\\') || name.contains("..") {
+            return Err(tool_err("zip entry name must be a plain basename"));
+        }
+        let name_bytes = name.as_bytes();
+        let offset = out.len() as u32;
+        let crc = crc32_ieee(data);
+        let size = data.len() as u32;
+        // Local file header
+        out.extend_from_slice(&0x04034b50u32.to_le_bytes());
+        out.extend_from_slice(&20u16.to_le_bytes()); // version needed
+        out.extend_from_slice(&0u16.to_le_bytes()); // flags
+        out.extend_from_slice(&0u16.to_le_bytes()); // store
+        out.extend_from_slice(&0u16.to_le_bytes()); // time
+        out.extend_from_slice(&0u16.to_le_bytes()); // date
+        out.extend_from_slice(&crc.to_le_bytes());
+        out.extend_from_slice(&size.to_le_bytes());
+        out.extend_from_slice(&size.to_le_bytes());
+        out.extend_from_slice(&(name_bytes.len() as u16).to_le_bytes());
+        out.extend_from_slice(&0u16.to_le_bytes()); // extra
+        out.extend_from_slice(name_bytes);
+        out.extend_from_slice(data);
+        // Central directory header
+        central.extend_from_slice(&0x02014b50u32.to_le_bytes());
+        central.extend_from_slice(&20u16.to_le_bytes());
+        central.extend_from_slice(&20u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&crc.to_le_bytes());
+        central.extend_from_slice(&size.to_le_bytes());
+        central.extend_from_slice(&size.to_le_bytes());
+        central.extend_from_slice(&(name_bytes.len() as u16).to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u16.to_le_bytes());
+        central.extend_from_slice(&0u32.to_le_bytes());
+        central.extend_from_slice(&offset.to_le_bytes());
+        central.extend_from_slice(name_bytes);
+    }
+    let central_offset = out.len() as u32;
+    let central_size = central.len() as u32;
+    out.extend_from_slice(&central);
+    // End of central directory
+    out.extend_from_slice(&0x06054b50u32.to_le_bytes());
+    out.extend_from_slice(&0u16.to_le_bytes());
+    out.extend_from_slice(&0u16.to_le_bytes());
+    out.extend_from_slice(&(entries.len() as u16).to_le_bytes());
+    out.extend_from_slice(&(entries.len() as u16).to_le_bytes());
+    out.extend_from_slice(&central_size.to_le_bytes());
+    out.extend_from_slice(&central_offset.to_le_bytes());
+    out.extend_from_slice(&0u16.to_le_bytes());
+    Ok(out)
+}
+
+fn crc32_ieee(data: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFF_FFFF;
+    for &b in data {
+        crc ^= u32::from(b);
+        for _ in 0..8 {
+            let mask = (crc & 1).wrapping_neg();
+            crc = (crc >> 1) ^ (0xEDB8_8320 & mask);
+        }
+    }
+    !crc
 }
 
 fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
@@ -753,5 +1033,36 @@ mod tests {
             .collect::<Vec<_>>();
         assert_eq!(rows.len(), 2);
         assert!(rows.last().unwrap().deleted);
+    }
+
+    #[test]
+    fn export_file_and_zip_are_confined_under_exports() {
+        let dir = tempdir().unwrap();
+        let store = ArtifactStore::open(dir.path()).unwrap();
+        let a = store
+            .put_bytes(b"one", "text/plain", "test", "Note One", None)
+            .unwrap();
+        let b = store
+            .put_bytes(b"two", "text/plain", "test", "Note Two", None)
+            .unwrap();
+        let dest = store.export_file(&a.sha256, None).unwrap();
+        assert!(dest.starts_with(store.root().join("exports")));
+        assert_eq!(fs::read(&dest).unwrap(), b"one");
+
+        let (zip_path, count) = store
+            .export_zip(&[a.sha256.clone(), b.sha256.clone(), a.sha256.clone()], None)
+            .unwrap();
+        assert_eq!(count, 2);
+        assert!(zip_path.starts_with(store.root().join("exports")));
+        let zip = fs::read(&zip_path).unwrap();
+        assert!(zip.starts_with(&[0x50, 0x4b])); // PK
+        assert!(zip.windows(8).any(|w| w == b"Note-One") || zip.len() > 40);
+
+        // Absolute host paths and secret basenames refused.
+        assert!(store.export_file(&a.sha256, Some("/tmp/evil.txt")).is_err());
+        assert!(store.export_file(&a.sha256, Some("../escape.txt")).is_err());
+        assert!(store.export_file(&a.sha256, Some(".env")).is_err());
+        assert!(store.export_file(&a.sha256, Some("auth.json")).is_err());
+        assert!(store.export_file(&a.sha256, Some("key.pem")).is_err());
     }
 }

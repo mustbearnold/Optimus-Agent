@@ -33,6 +33,13 @@ HTTP stream: `POST /api/chat/stream` SSE with the same event shapes.
 `sessions`, `new_session`, `get_session`, `delete_session`, `rename_session`,
 `session_search`, `archive_session`, `pin_session`
 
+Cron: `cron_list`, `cron_add`, `cron_tick`, `cron_set_enabled`, `cron_remove`,
+`cron_history`
+
+Artifacts: `artifacts_list`, `artifacts_put_text`, `artifacts_get`,
+`artifacts_delete`, `artifacts_delete_many`, `artifacts_export`,
+`artifacts_export_zip`
+
 `get_session` returns presentation-safe user/assistant messages. Provider
 tool-call arrays and tool-result protocol messages are omitted; ordered durable
 `tool_events` are attached to their owning assistant turn. `run_status` reports

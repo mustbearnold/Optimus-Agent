@@ -67,6 +67,9 @@ const DESKTOP_METHODS = new Set([
   'cron_list',
   'cron_add',
   'cron_tick',
+  'cron_set_enabled',
+  'cron_remove',
+  'cron_history',
   'approvals_list',
   'approvals_grant',
   'jobs_list',
@@ -89,6 +92,8 @@ const DESKTOP_METHODS = new Set([
   'artifacts_get',
   'artifacts_delete',
   'artifacts_delete_many',
+  'artifacts_export',
+  'artifacts_export_zip',
 ]);
 
 let hostProc = null;

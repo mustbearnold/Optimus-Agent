@@ -2,6 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ArtifactDetail, ArtifactRecord, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
+type TypeFilter = 'all' | 'image' | 'text' | 'binary';
+
+function artifactKind(mediaType?: string): TypeFilter {
+  const m = (mediaType || '').toLowerCase();
+  if (m.startsWith('image/')) return 'image';
+  if (m.startsWith('text/') || m.includes('json') || m.includes('xml')) return 'text';
+  return 'binary';
+}
+
 export function ArtifactsSurface({
   transport,
   active,
@@ -15,7 +24,12 @@ export function ArtifactsSurface({
   const [selected, setSelected] = useState<string[]>([]);
   const [detail, setDetail] = useState<ArtifactDetail | null>(null);
   const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [labelFilter, setLabelFilter] = useState<string | null>(null);
+  const [gallery, setGallery] = useState(false);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
   const [pendingDelete, setPendingDelete] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
   const deleteTrigger = useRef<HTMLElement | null>(null);
@@ -40,13 +54,51 @@ export function ArtifactsSurface({
     if (pendingDelete.length) cancelDeleteButton.current?.focus();
   }, [pendingDelete]);
 
+  const labels = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of artifacts) {
+      if (a.label?.trim()) set.add(a.label.trim());
+    }
+    return [...set].sort((a, b) => a.localeCompare(b)).slice(0, 24);
+  }, [artifacts]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return artifacts;
-    return artifacts.filter((artifact) =>
-      `${artifact.label} ${artifact.source} ${artifact.sha256}`.toLowerCase().includes(needle)
-    );
-  }, [artifacts, query]);
+    return artifacts.filter((artifact) => {
+      if (typeFilter !== 'all' && artifactKind(artifact.media_type) !== typeFilter) return false;
+      if (labelFilter && artifact.label !== labelFilter) return false;
+      if (!needle) return true;
+      return `${artifact.label} ${artifact.source} ${artifact.sha256} ${artifact.media_type}`
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [artifacts, query, typeFilter, labelFilter]);
+
+  // Lazy-load image thumbnails for gallery mode.
+  useEffect(() => {
+    if (!active || !gallery) return;
+    let cancelled = false;
+    const images = filtered.filter((a) => artifactKind(a.media_type) === 'image').slice(0, 24);
+    void (async () => {
+      for (const artifact of images) {
+        if (cancelled || thumbs[artifact.sha256]) continue;
+        try {
+          const detail = await transport.invoke<ArtifactDetail>('artifacts_get', {
+            sha256: artifact.sha256,
+          });
+          if (cancelled) return;
+          if (detail.kind === 'image' && detail.data_url) {
+            setThumbs((current) => ({ ...current, [artifact.sha256]: detail.data_url! }));
+          }
+        } catch {
+          // skip failed thumbs
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [active, gallery, filtered, thumbs, transport]);
 
   const open = async (artifact: ArtifactRecord) => {
     try {
@@ -93,6 +145,37 @@ export function ArtifactsSurface({
     }
   };
 
+  const exportOne = async (sha256: string) => {
+    setError('');
+    setStatus('');
+    try {
+      const result = await transport.invoke<{ path?: string }>('artifacts_export', { sha256 });
+      setStatus(`Exported to ${result.path || 'host path'}`);
+      if (result.path && transport.openPath) {
+        await transport.openPath(result.path);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  };
+
+  const exportZip = async (sha256s: string[]) => {
+    if (!sha256s.length) return;
+    setError('');
+    setStatus('');
+    try {
+      const result = await transport.invoke<{ path?: string }>('artifacts_export_zip', {
+        sha256s,
+      });
+      setStatus(`Zip exported to ${result.path || 'host path'}`);
+      if (result.path && transport.openPath) {
+        await transport.openPath(result.path);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  };
+
   const deleteLabel =
     pendingDelete.length === 1 ? 'Delete 1 artifact?' : `Delete ${pendingDelete.length} artifacts?`;
 
@@ -112,6 +195,21 @@ export function ArtifactsSurface({
         </label>
         <button
           type="button"
+          className={gallery ? 'is-active' : ''}
+          aria-pressed={gallery}
+          onClick={() => setGallery((v) => !v)}
+        >
+          Gallery
+        </button>
+        <button
+          type="button"
+          disabled={!selected.length}
+          onClick={() => void exportZip(selected)}
+        >
+          Zip {selected.length || ''}
+        </button>
+        <button
+          type="button"
           className="danger-text"
           disabled={!selected.length}
           onClick={() => requestDelete(selected)}
@@ -123,38 +221,89 @@ export function ArtifactsSurface({
           <Icon name="refresh" />
         </button>
       </div>
+      <div className="artifact-filter-chips" role="group" aria-label="Artifact type filters">
+        {(['all', 'image', 'text', 'binary'] as TypeFilter[]).map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            className={typeFilter === kind ? 'is-active' : ''}
+            aria-pressed={typeFilter === kind}
+            onClick={() => setTypeFilter(kind)}
+          >
+            {kind}
+          </button>
+        ))}
+        {labels.map((label) => (
+          <button
+            key={label}
+            type="button"
+            className={labelFilter === label ? 'is-active' : ''}
+            aria-pressed={labelFilter === label}
+            onClick={() => setLabelFilter((current) => (current === label ? null : label))}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="artifact-layout">
-        <div className="artifact-list">
-          {filtered.map((artifact) => (
-            <div
-              className={`artifact-row${detail?.artifact.sha256 === artifact.sha256 ? ' is-active' : ''}`}
-              key={artifact.sha256}
-            >
-              <input
-                type="checkbox"
-                aria-label={`Select ${artifact.label || artifact.sha256}`}
-                checked={selected.includes(artifact.sha256)}
-                onChange={(event) =>
-                  setSelected((current) =>
-                    event.target.checked
-                      ? [...current, artifact.sha256]
-                      : current.filter((sha) => sha !== artifact.sha256)
-                  )
-                }
-              />
-              <button type="button" onClick={() => void open(artifact)}>
-                <span className="artifact-icon"><Icon name="artifact" /></span>
-                <span>
-                  <strong>{artifact.label || 'Untitled artifact'}</strong>
-                  <small>{artifact.source || 'unknown source'} · {artifact.media_type || 'binary'}</small>
-                  <code>{artifact.sha256.slice(0, 16)}</code>
-                </span>
-              </button>
-            </div>
-          ))}
-          {!filtered.length ? <div className="surface-empty">No matching artifacts.</div> : null}
-          {error ? <div className="surface-error"><Icon name="warning" />{error}</div> : null}
-        </div>
+        {gallery ? (
+          <div className="artifact-gallery" aria-label="Artifact gallery">
+            {filtered.map((artifact) => {
+              const kind = artifactKind(artifact.media_type);
+              const thumb = thumbs[artifact.sha256];
+              return (
+                <button
+                  key={artifact.sha256}
+                  type="button"
+                  className={`artifact-tile${detail?.artifact.sha256 === artifact.sha256 ? ' is-active' : ''}`}
+                  onClick={() => void open(artifact)}
+                >
+                  {kind === 'image' && thumb ? (
+                    <img src={thumb} alt={artifact.label || 'Artifact'} />
+                  ) : (
+                    <span className="artifact-tile-fallback">
+                      <Icon name="artifact" />
+                      <small>{kind}</small>
+                    </span>
+                  )}
+                  <strong>{artifact.label || 'Untitled'}</strong>
+                </button>
+              );
+            })}
+            {!filtered.length ? <div className="surface-empty">No matching artifacts.</div> : null}
+          </div>
+        ) : (
+          <div className="artifact-list">
+            {filtered.map((artifact) => (
+              <div
+                className={`artifact-row${detail?.artifact.sha256 === artifact.sha256 ? ' is-active' : ''}`}
+                key={artifact.sha256}
+              >
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${artifact.label || artifact.sha256}`}
+                  checked={selected.includes(artifact.sha256)}
+                  onChange={(event) =>
+                    setSelected((current) =>
+                      event.target.checked
+                        ? [...current, artifact.sha256]
+                        : current.filter((sha) => sha !== artifact.sha256)
+                    )
+                  }
+                />
+                <button type="button" onClick={() => void open(artifact)}>
+                  <span className="artifact-icon"><Icon name="artifact" /></span>
+                  <span>
+                    <strong>{artifact.label || 'Untitled artifact'}</strong>
+                    <small>{artifact.source || 'unknown source'} · {artifact.media_type || 'binary'}</small>
+                    <code>{artifact.sha256.slice(0, 16)}</code>
+                  </span>
+                </button>
+              </div>
+            ))}
+            {!filtered.length ? <div className="surface-empty">No matching artifacts.</div> : null}
+          </div>
+        )}
         <div className="artifact-preview">
           {detail ? (
             <>
@@ -163,14 +312,19 @@ export function ArtifactsSurface({
                   <strong>{detail.artifact.label || 'Artifact'}</strong>
                   <small>{detail.artifact.source || 'unknown source'}</small>
                 </div>
-                <button
-                  type="button"
-                  className="danger-text"
-                  onClick={() => requestDelete([detail.artifact.sha256])}
-                >
-                  <Icon name="trash" />
-                  Delete
-                </button>
+                <div className="artifact-preview-actions">
+                  <button type="button" onClick={() => void exportOne(detail.artifact.sha256)}>
+                    Export
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-text"
+                    onClick={() => requestDelete([detail.artifact.sha256])}
+                  >
+                    <Icon name="trash" />
+                    Delete
+                  </button>
+                </div>
               </div>
               {detail.kind === 'image' && detail.data_url ? (
                 <img src={detail.data_url} alt={detail.artifact.label || 'Artifact preview'} />
@@ -185,6 +339,8 @@ export function ArtifactsSurface({
           )}
         </div>
       </div>
+      {error ? <div className="surface-error"><Icon name="warning" />{error}</div> : null}
+      {status ? <div className="surface-status" role="status">{status}</div> : null}
       {pendingDelete.length ? (
         <div
           className="dialog-backdrop"

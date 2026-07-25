@@ -19,6 +19,8 @@ pub(super) fn owns(method: &str) -> bool {
             | "artifacts_get"
             | "artifacts_delete"
             | "artifacts_delete_many"
+            | "artifacts_export"
+            | "artifacts_export_zip"
     )
 }
 
@@ -38,6 +40,8 @@ pub(super) fn handle(
         "artifacts_get" => artifacts_get(home, params),
         "artifacts_delete" => artifacts_delete(home, params),
         "artifacts_delete_many" => artifacts_delete_many(home, params),
+        "artifacts_export" => artifacts_export(home, params),
+        "artifacts_export_zip" => artifacts_export_zip(home, params),
         _ => Err(format!("unknown method: {method}")),
     }
 }
@@ -228,6 +232,58 @@ fn artifacts_get(home: &Path, params: serde_json::Value) -> Result<serde_json::V
         "kind": "binary",
         "hex_preview": preview,
         "size_bytes": bytes.len(),
+    }))
+}
+
+fn artifacts_export(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let sha256 = params
+        .get("sha256")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "sha256 required".to_string())?;
+    // Optional basename only — absolute `path` is intentionally ignored for confinement.
+    let filename = params
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty());
+    let store = ArtifactStore::open(home).map_err(|e| e.to_string())?;
+    let path = store
+        .export_file(sha256, filename)
+        .map_err(|e| e.to_string())?;
+    Ok(json!({
+        "ok": true,
+        "path": path.to_string_lossy(),
+        "sha256": sha256,
+        "confined_to": "artifacts/exports",
+    }))
+}
+
+fn artifacts_export_zip(
+    home: &Path,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let sha256s = params
+        .get("sha256s")
+        .and_then(|v| v.as_array())
+        .ok_or_else(|| "sha256s array required".to_string())?
+        .iter()
+        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+        .collect::<Vec<_>>();
+    if sha256s.is_empty() {
+        return Err("sha256s array required".into());
+    }
+    let filename = params
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty());
+    let store = ArtifactStore::open(home).map_err(|e| e.to_string())?;
+    let (path, count) = store
+        .export_zip(&sha256s, filename)
+        .map_err(|e| e.to_string())?;
+    Ok(json!({
+        "ok": true,
+        "path": path.to_string_lossy(),
+        "count": count,
+        "confined_to": "artifacts/exports",
     }))
 }
 

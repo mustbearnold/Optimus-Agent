@@ -20,10 +20,23 @@ const artifacts: ArtifactRecord[] = [
 ];
 
 function createTransport() {
-  const invoke = vi.fn(async (method: DesktopMethod) => {
+  const invoke = vi.fn(async (method: DesktopMethod, params?: Record<string, unknown>) => {
     if (method === 'artifacts_list') return { artifacts };
     if (method === 'artifacts_delete_many') {
       return { ok: true, deleted: artifacts.map((artifact) => artifact.sha256), failed: [] };
+    }
+    if (method === 'artifacts_export') {
+      return { ok: true, path: `/tmp/${params?.sha256}.txt` };
+    }
+    if (method === 'artifacts_export_zip') {
+      return { ok: true, path: '/tmp/batch.zip', count: 2 };
+    }
+    if (method === 'artifacts_get') {
+      return {
+        artifact: artifacts[0],
+        kind: 'text',
+        text: 'hello',
+      };
     }
     throw new Error(`unexpected method: ${method}`);
   });
@@ -63,6 +76,25 @@ describe('ArtifactsSurface deletion', () => {
 
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith('artifacts_delete_many', {
+        sha256s: artifacts.map((artifact) => artifact.sha256),
+      })
+    );
+  });
+
+  it('filters by type chip and exports a zip of the selection', async () => {
+    const user = userEvent.setup();
+    const { invoke, transport } = createTransport();
+    render(<ArtifactsSurface transport={transport} active />);
+
+    await screen.findByLabelText('Select First artifact');
+    await user.click(screen.getByRole('button', { name: 'text', pressed: false }));
+    expect(screen.getByLabelText('Select First artifact')).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText('Select First artifact'));
+    await user.click(screen.getByLabelText('Select Second artifact'));
+    await user.click(screen.getByRole('button', { name: /Zip 2/ }));
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith('artifacts_export_zip', {
         sha256s: artifacts.map((artifact) => artifact.sha256),
       })
     );
