@@ -99,7 +99,10 @@ def pr_for_branch(branch: str) -> dict | None:
     )
     if r.returncode != 0 or not r.stdout.strip():
         return None
-    items = json.loads(r.stdout)
+    try:
+        items = json.loads(r.stdout)
+    except json.JSONDecodeError:
+        return None
     if not items:
         return None
     return items[0]
@@ -140,11 +143,37 @@ def rename_branch_to_pr(number: int, slug: str, old_branch: str) -> str:
         print(f"already on {new_branch}")
         return new_branch
 
-    # local rename
+    # Prefer GitHub branch rename API so open PRs retarget head automatically.
+    repo = run(
+        ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"]
+    ).stdout.strip()
+    if old_branch:
+        r = run(
+            [
+                "gh",
+                "api",
+                "--method",
+                "POST",
+                f"repos/{repo}/branches/{old_branch}/rename",
+                "-f",
+                f"new_name={new_branch}",
+            ],
+            check=False,
+        )
+        if r.returncode == 0:
+            run(["git", "fetch", "origin", new_branch], check=False)
+            run(["git", "branch", "-m", new_branch], check=False)
+            # track remote
+            run(["git", "branch", f"--set-upstream-to=origin/{new_branch}", new_branch], check=False)
+            # checkout if rename left us wrong
+            run(["git", "checkout", new_branch], check=False)
+            print(f"branch {old_branch} → {new_branch} (github rename)")
+            return new_branch
+        # fall through to local push strategy
+        sys.stderr.write(r.stderr or r.stdout or "github rename failed; falling back\n")
+
     run(["git", "branch", "-m", new_branch])
-    # push new name
     run(["git", "push", "-u", "origin", new_branch])
-    # delete old remote if it existed and differs
     if old_branch and old_branch != new_branch:
         run(["git", "push", "origin", "--delete", old_branch], check=False)
     print(f"branch {old_branch} → {new_branch}")
