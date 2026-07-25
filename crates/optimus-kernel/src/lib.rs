@@ -73,8 +73,9 @@ pub use credential::{
     SystemCredentialProtector,
 };
 pub use causal::{
-    list_recent_causal_turns, load_causal_turn, parse_causal_query, CausalQuery, CausalQueryKind,
-    CausalTurnReport,
+    export_causal_document, export_causal_json, list_recent_causal_turns, load_causal_turn,
+    parse_causal_query, write_causal_export, CausalExportDocument, CausalQuery, CausalQueryKind,
+    CausalTurnReport, CAUSAL_EXPORT_VERSION,
 };
 pub use execution::{
     ExecutionManifest, ExecutionModelCallSummary, ExecutionStatus, ExecutionStore,

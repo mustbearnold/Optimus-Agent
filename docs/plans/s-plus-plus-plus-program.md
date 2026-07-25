@@ -80,7 +80,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 2 | Control-plane modularity | **S+++** | S+++ | P11 (done) |
 | 3 | Security boundary design | **S+++** | S+++ | P12 (done) |
 | 4 | Domain modularity | **S+++** (post-P13) | S+++ | P13 (done) |
-| 5 | Observability / eval | **A-** | S+++ | P14 |
+| 5 | Observability / eval | **S+++** (post-P14) | S+++ | P14 (done) |
 | 6 | UI architecture | **A-** | S+++ | P15 |
 | 7 | Doc / claim hygiene | **A-** | S+++ | P16 |
 | 8 | Release / parity gating | **A** | S+++ | P17 |
@@ -95,8 +95,8 @@ P10 Multi-agent (done → S+++)
   → P11 Control-plane (done → S+++)
   → P12 Security (done → S+++)
   → P13 Domain modularity (done → S+++)
-  → P14 Observability (A-)   ← next
-  → P15 UI (A-)
+  → P14 Observability (done → S+++)
+  → P15 UI (A-)   ← next
   → P16 Doc hygiene (A-)
   → P17 Release gates (A)
   → P18 Durability (A+)
@@ -641,5 +641,5 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P13 done** (multi-agent / control-plane / security / domain → **S+++**).
-Next: **P14** observability / eval (export path + gate strength).
+**P10–P14 done** (multi-agent / control-plane / security / domain / observability →
+**S+++**). Next: **P15** UI architecture (IPC matrix completeness).
