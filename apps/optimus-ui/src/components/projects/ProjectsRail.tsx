@@ -184,6 +184,14 @@ export function ProjectsRail(props: Props) {
         </button>
         <button
           type="button"
+          className={props.route === 'consoles' ? 'is-active' : ''}
+          onClick={() => props.onRoute('consoles')}
+        >
+          <Icon name="settings" />
+          <span>Consoles</span>
+        </button>
+        <button
+          type="button"
           className={props.route === 'artifacts' ? 'is-active' : ''}
           onClick={() => props.onRoute('artifacts')}
         >

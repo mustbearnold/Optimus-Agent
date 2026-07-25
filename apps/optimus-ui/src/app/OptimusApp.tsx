@@ -47,6 +47,8 @@ import {
   saveProjects,
 } from '../state/projectStore';
 import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
+import { ConsolesPage, type ConsoleTab } from '../components/consoles/ConsolesPage';
+import { CommandPalette } from '../components/chrome/CommandPalette';
 import { TopBar } from '../components/chrome/TopBar';
 import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
@@ -108,6 +110,8 @@ export function OptimusApp() {
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [consoleTab, setConsoleTab] = useState<ConsoleTab>('skills');
   const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(loadExpanded);
   const [input, setInput] = useState('');
@@ -211,6 +215,17 @@ export function OptimusApp() {
 
   useEffect(() => saveAssignments(assignments), [assignments]);
   useEffect(() => saveExpanded(expanded), [expanded]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const applyRoute = (route: AppRoute) => {
     dispatch({
@@ -539,6 +554,12 @@ export function OptimusApp() {
                   </>
                 ) : state.layout.route === 'capabilities' ? (
                   <CapabilitiesPage doctor={doctor} approvals={approvals} campaigns={campaigns} onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })} />
+                ) : state.layout.route === 'consoles' ? (
+                  <ConsolesPage
+                    key={consoleTab}
+                    transport={transport}
+                    initialTab={consoleTab}
+                  />
                 ) : state.layout.route === 'mail' ? (
                   <MailPage
                     projects={projects}
@@ -618,6 +639,30 @@ export function OptimusApp() {
             window.setTimeout(() => {
               if (projectId) document.getElementById(`project-manage-${projectId}`)?.focus();
             }, 0);
+          }}
+        />
+        <CommandPalette
+          open={paletteOpen}
+          transport={transport}
+          onClose={() => setPaletteOpen(false)}
+          onRun={(commandId) => {
+            if (
+              commandId === 'skills' ||
+              commandId === 'memory' ||
+              commandId === 'packs' ||
+              commandId === 'logs'
+            ) {
+              setConsoleTab(commandId);
+              setRoute('consoles');
+            } else if (commandId === 'artifacts') {
+              setRoute('artifacts');
+            } else if (commandId === 'cron') {
+              dispatch({ type: 'settings', open: true });
+            } else if (commandId === 'new') {
+              void newSession();
+            } else if (commandId === 'doctor') {
+              void refreshRuntime();
+            }
           }}
         />
       </div>

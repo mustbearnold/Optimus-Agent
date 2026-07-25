@@ -488,6 +488,28 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       if (campaign) campaign.status = 'Succeeded';
       return { id: params.id, status: 'Succeeded' };
     }
+
+    case 'skills_list':
+      return { skills: [] };
+    case 'skills_pin':
+    case 'skills_deprecate':
+      return { id: params.id, ok: true };
+    case 'memory_list':
+      return { fence: 'EVIDENCE_DATA_NOT_INSTRUCTION_NOT_CAPABILITY', claims: [] };
+    case 'memory_recall':
+      return { fence: 'EVIDENCE_DATA', purpose: 'inform', current: [], historical: [], conflicts: [], citations: [], abstained: true };
+    case 'memory_correct':
+    case 'memory_forget':
+      return { id: params.id, ok: true };
+    case 'packs_state':
+      return { loaded: ['core'], schema_tokens: 100, max_schema_tokens: 8000, catalog: [], on_demand_loaded: 0, max_on_demand_packs: 2 };
+    case 'packs_activate':
+    case 'packs_deactivate':
+      return { loaded: ['core'], schema_tokens: 100, max_schema_tokens: 8000, catalog: [] };
+    case 'logs_tail':
+      return { lines: ['doctor home=~'], count: 1, redacted: true };
+    case 'commands_list':
+      return { commands: [{ id: 'help', name: 'help', description: 'Show commands' }], surface: 'desktop' };
     case 'cron_list':
       return { jobs: cronJobs };
     case 'cron_add': {

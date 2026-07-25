@@ -29,16 +29,17 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
-use optimus_memory::{
-    Memory, Origin, RecallPurpose, RecallQuery, Sensitivity, TrustDomain, WriteContext,
-};
 use optimus_packs::{
     CapabilitySession, DurableEffectProvenance, PackBudgetConfig, PackError, PackId,
     ToolErrorDetail, ToolId, ToolInvocation, ToolOutcome, ToolOutcomeKind,
 };
 use optimus_runtime::{ApprovalGrant, JobId, JobStatus, Runtime, RuntimeError};
 
-use optimus_skills::SkillRegistry;
+pub use optimus_memory::{
+    ClaimDraft, ClaimView, Correction, EvidencePacket, Memory, MemoryClock, Origin, RecallPurpose,
+    RecallQuery, Sensitivity, SystemMemoryClock, TrustDomain, WriteContext,
+};
+pub use optimus_skills::{SkillDraft, SkillRegistry, SkillView};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -99,8 +100,8 @@ pub use optimus_graph::PolicyMode;
 pub use optimus_ops::{
     acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
     enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim, CronClaim,
-    CronAttemptView, CronError, CronJob, CronStore, DrainResult, GatewayClaim, GatewayError,
-    GatewayPaths,
+    builtin_surface_commands, commands_for_surface, CommandSurface, CronAttemptView, CronError,
+    CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, SurfaceCommand,
     InboundMessage, OutboundMessage,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;

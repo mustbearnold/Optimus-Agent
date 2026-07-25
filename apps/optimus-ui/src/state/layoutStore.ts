@@ -1,5 +1,5 @@
 export type WorkspaceTab = 'browser' | 'files' | 'artifacts';
-export type AppRoute = 'work' | 'mail' | 'capabilities' | 'artifacts';
+export type AppRoute = 'work' | 'mail' | 'capabilities' | 'artifacts' | 'consoles';
 export type CompactSurface = 'work' | WorkspaceTab | 'execution';
 
 export type LayoutState = {
@@ -51,7 +51,7 @@ export function loadLayout(): LayoutState {
         : defaultLayout.workspaceTab,
       executionOpen: Boolean(value.executionOpen),
       executionHeight: clamp(value.executionHeight, 120, 520, defaultLayout.executionHeight),
-      route: ['work', 'mail', 'capabilities', 'artifacts'].includes(String(storedRoute))
+      route: ['work', 'mail', 'capabilities', 'artifacts', 'consoles'].includes(String(storedRoute))
         ? (storedRoute as AppRoute)
         : defaultLayout.route,
       compactSurface: ['work', 'browser', 'files', 'artifacts', 'execution'].includes(

@@ -157,13 +157,13 @@ After **program P21** green:
 
 | Surface | Ledger | Status | Owner |
 |---|---|---|---|
-| Tool contract / pack budget | `core.tool-loop`, `core.pack-budget` | **parity** (kernel) | **P21 done**; packs **console** residual → **P26** |
+| Tool contract / pack budget | `core.tool-loop`, `core.pack-budget` | **parity** | **P21** kernel + **P26** packs console; mid-chat pack prefs residual named |
 | `files.mutate` | `files.mutate` | **parity** (kernel) | **P22 done**; concurrent lease residual |
 | Project isolation enforce | `projects.scope` | **partial** (honesty fields) | concurrent multi-project lease residual **S2.14** |
 | Browser / search | `browser.*`, `web.search` | **parity** | **P23 done** (ADR-0040 coordinated dual-domain; not shared CDP) |
 | Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | **parity** | **P24 done** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | **parity** | **P25 done** |
-| Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | Missing UI | **P26** |
+| Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | **parity** | **P26 done** |
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
 | MCP + signed packs | `mcp.client`, `plugins.signed` | Missing | **P27** |
 | Gateway / Telegram / messaging UI | `gateway.queue`, `telegram`, `ui` | Partial / Missing | **P28** |
@@ -182,7 +182,7 @@ After **program P21** green:
 - Artifacts: `optimus-artifacts`, `ArtifactsSurface.tsx`, ADR-0025
 - Cron: `optimus-ops` `cron.rs`, desktop `ipc/scheduling.rs`
 - Gateway: `optimus-ops` `gateway.rs`, CLI `gateway_http.rs`, UI `MailPage.tsx` shell
-- Skills/memory crates exist; React consoles do not yet
+- Skills/memory: crates + React consoles (`ConsolesPage`, `ipc/consoles.rs`, program P26)
 
 ---
 
@@ -654,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P25 done** (tools, mutate, browser, chat, artifacts/cron).
-2. Open **program P26** (consoles) or parallel P27–P28; residual S2.14 concurrent mutate lease remains optional.
+1. **program P20–P26 done** (through consoles).
+2. Open **program P27** (extensibility) or **P28** (messaging); residual S2.14 concurrent mutate lease remains optional.
 
 ## Success definition
 
