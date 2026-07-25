@@ -1,7 +1,7 @@
 # S+++ P14 verification — observability export
 
 Date: 2026-07-25  
-Planes: program **P14** · decision **ADR-0037** · delivery (open PR assigns)
+Planes: program **P14** · decision **ADR-0037** · delivery **PR #24**
 
 ## Exit evidence
 
