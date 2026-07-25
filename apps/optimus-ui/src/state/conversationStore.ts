@@ -226,14 +226,17 @@ class ConversationStore {
       });
     } else if (event.type === 'done') {
       this.flushText(sessionId);
+      this.flushThinking(sessionId);
       this.setTerminal(sessionId, 'completed', 'Completed');
       return;
     } else if (event.type === 'cancelled') {
       this.flushText(sessionId);
+      this.flushThinking(sessionId);
       this.setTerminal(sessionId, 'cancelled', 'Cancelled · partial response retained');
       return;
     } else if (event.type === 'error') {
       this.flushText(sessionId);
+      this.flushThinking(sessionId);
       const pending = this.sessions.get(sessionId);
       const hasExactApproval = pending?.messages.some((message) =>
         message.tools?.some((tool) => tool.status === 'awaiting_approval')

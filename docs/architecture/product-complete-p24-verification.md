@@ -19,7 +19,7 @@ last_verified_commit: null
 
 # Product-complete program P24 verification
 
-Planes: **program P24** · delivery pending PR · architecture hold (UI / Observability) ·
+Planes: **program P24** · delivery **PR #34** · architecture hold (UI / Observability) ·
 ledger `chat.thinking-tools`, `session.search-hygiene` → **parity**
 
 Date: 2026-07-25

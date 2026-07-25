@@ -474,14 +474,18 @@ export function OptimusApp() {
               const pinned = !session.pinned;
               await transport.invoke('pin_session', { id: session.id, pinned });
               setSessions((current) =>
-                current.map((item) => (item.id === session.id ? { ...item, pinned } : item))
+                sortSessions(
+                  current.map((item) => (item.id === session.id ? { ...item, pinned } : item))
+                )
               );
             }}
             onToggleArchive={async (session) => {
               const archived = !session.archived;
               await transport.invoke('archive_session', { id: session.id, archived });
               setSessions((current) =>
-                current.map((item) => (item.id === session.id ? { ...item, archived } : item))
+                sortSessions(
+                  current.map((item) => (item.id === session.id ? { ...item, archived } : item))
+                )
               );
             }}
             onAssign={(id, projectId) => setAssignments((current) => {
@@ -619,6 +623,16 @@ export function OptimusApp() {
       </div>
     </ErrorBoundary>
   );
+}
+
+function sortSessions(list: SessionMeta[]): SessionMeta[] {
+  return [...list].sort((a, b) => {
+    const pin = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+    if (pin !== 0) return pin;
+    const arch = Number(Boolean(a.archived)) - Number(Boolean(b.archived));
+    if (arch !== 0) return arch;
+    return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+  });
 }
 
 function SurfaceButton({

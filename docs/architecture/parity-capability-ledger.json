@@ -173,7 +173,7 @@
     },
     {
       "id": "session.search-hygiene",
-      "capability": "FTS, jump, archive, active sort, durable pins",
+      "capability": "FTS, archive, active sort, durable pins",
       "hermes_reference": "Session search/archive/pins",
       "state": "parity",
       "evidence": [

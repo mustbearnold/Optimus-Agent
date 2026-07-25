@@ -186,7 +186,38 @@ impl SessionStore {
             );
             ",
         )?;
-        Ok(Self { conn })
+        let store = Self { conn };
+        store.backfill_fts_if_empty()?;
+        Ok(store)
+    }
+
+    /// Rebuild FTS when empty (migration / first open after upgrade).
+    fn backfill_fts_if_empty(&self) -> Result<()> {
+        let n: i64 = self
+            .conn
+            .query_row("SELECT COUNT(*) FROM sessions_fts", [], |r| r.get(0))?;
+        if n > 0 {
+            return Ok(());
+        }
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, messages_json FROM sessions",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })?;
+        let tx = self.conn.unchecked_transaction()?;
+        for row in rows {
+            let (id_s, title, messages_json) = row.map_err(|e| KernelError::Model(e.to_string()))?;
+            let id = Uuid::parse_str(&id_s).map_err(|e| KernelError::Model(e.to_string()))?;
+            let messages: Vec<Message> = serde_json::from_str(&messages_json).unwrap_or_default();
+            Self::reindex_fts_tx(&tx, id, &title, &messages)?;
+        }
+        tx.commit()?;
+        Ok(())
     }
 
     pub fn create(&self, title: &str) -> Result<Uuid> {
@@ -324,6 +355,7 @@ impl SessionStore {
             "INSERT INTO session_turn_events(turn_id,event_type,recorded_at) VALUES(?1,'accepted',?2)",
             params![id.to_string(), now],
         )?;
+        Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
         transaction.commit()?;
         Ok(id)
     }
@@ -388,6 +420,7 @@ impl SessionStore {
             "INSERT INTO session_turn_events(turn_id,event_type,recorded_at) VALUES(?1,?2,?3)",
             params![turn_id.to_string(), status.as_str(), now],
         )?;
+        Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
         transaction.commit()?;
         Ok(())
     }
@@ -540,6 +573,10 @@ impl SessionStore {
         }
         // Escape FTS5 special chars lightly: quote terms.
         let match_q = fts_match_query(q);
+        if match_q.is_empty() {
+            // Punctuation-only / no usable tokens → empty hits, not SQLite error.
+            return Ok(vec![]);
+        }
         let mut stmt = self.conn.prepare(
             "SELECT s.id, s.title, s.created_at, s.updated_at, s.packs_json, s.messages_json,
                     COALESCE(s.pinned, 0), COALESCE(s.archived, 0)
@@ -650,10 +687,22 @@ impl SessionStore {
             return Err(KernelError::Model("title required".into()));
         }
         let now = chrono_stamp();
-        let n = self.conn.execute(
+        let tx = self.conn.unchecked_transaction()?;
+        let n = tx.execute(
             "UPDATE sessions SET title = ?1, updated_at = ?2 WHERE id = ?3",
             params![title, now, id.to_string()],
         )?;
+        if n > 0 {
+            let messages_json: String = tx.query_row(
+                "SELECT messages_json FROM sessions WHERE id = ?1",
+                params![id.to_string()],
+                |row| row.get(0),
+            )?;
+            let messages: Vec<Message> =
+                serde_json::from_str(&messages_json).unwrap_or_default();
+            Self::reindex_fts_tx(&tx, id, title, &messages)?;
+        }
+        tx.commit()?;
         Ok(n > 0)
     }
 }
@@ -792,5 +841,34 @@ mod hygiene_tests {
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].id, id);
         assert!(store.search("missingtokenxyz", false).unwrap().is_empty());
+        assert!(store.search("!!!", false).unwrap().is_empty());
+    }
+
+    #[test]
+    fn fts_indexes_finish_turn_path() {
+        let dir = tempdir().unwrap();
+        let store = SessionStore::open(dir.path().join("s.db")).unwrap();
+        let id = store.create("live").unwrap();
+        let system = msg(Role::System, "sys");
+        store.save(id, "live", &[], &[system.clone()]).unwrap();
+        let mut messages = vec![system, msg(Role::User, "needleword unique")];
+        let turn = store
+            .begin_turn(id, "live", &[], &messages, 1)
+            .unwrap();
+        messages.push(msg(Role::Assistant, "ok"));
+        store
+            .finish_turn(
+                turn,
+                id,
+                "live",
+                &[],
+                &messages,
+                TurnStatus::Succeeded,
+                None,
+            )
+            .unwrap();
+        let hits = store.search("needleword", false).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].id, id);
     }
 }

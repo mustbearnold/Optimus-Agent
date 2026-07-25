@@ -161,7 +161,7 @@ After **program P21** green:
 | `files.mutate` | `files.mutate` | **parity** (kernel) | **P22 done**; concurrent lease residual |
 | Project isolation enforce | `projects.scope` | **partial** (honesty fields) | concurrent multi-project lease residual **S2.14** |
 | Browser / search | `browser.*`, `web.search` | **parity** | **P23 done** (ADR-0040 coordinated dual-domain; not shared CDP) |
-| Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | Partial | **P24** |
+| Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | **parity** | **P24 done** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | Partial | **P25** |
 | Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | Missing UI | **P26** |
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
