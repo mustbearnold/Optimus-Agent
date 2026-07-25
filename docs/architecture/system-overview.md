@@ -619,8 +619,8 @@ availability mandatory.
     **P10–P19 done** — all architecture marks **S+++** (board:
     [s-plus-plus-plus-review-2026-07-25.md](../evidence/s-plus-plus-plus-review-2026-07-25.md);
     history: [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md)).
-    **Active app program:** [product-complete-program.md](../plans/product-complete-program.md)
-    (program P20–P29 → PRODUCT-COMPLETE); task queue
+    **Product program:** [product-complete-program.md](../plans/product-complete-program.md)
+    (program P20–P29 **PRODUCT-COMPLETE** with residuals); task queue
     [full-app-microtasks.md](../plans/full-app-microtasks.md).
     Operator gate matrix: [release-and-parity-gates.md](./release-and-parity-gates.md).
     Durability backup/doctor: [durability-and-backup.md](./durability-and-backup.md).

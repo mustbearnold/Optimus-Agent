@@ -46,8 +46,9 @@ tests. Planned work must not be graded as current behaviour.
 
 **Program status:** P10–P19 architecture S+++ climb **complete** (board:
 [s-plus-plus-plus-review-2026-07-25.md](../evidence/s-plus-plus-plus-review-2026-07-25.md)).
-**Next (product, not marks):** [product-complete-program.md](../plans/product-complete-program.md)
-(program P20–P29). Architecture marks stay S+++ as a **hold**; product work does
+**Next (product, not marks):** product-complete **P20–P29 done**
+([product-complete-program.md](../plans/product-complete-program.md)); optional
+S7 / Track Z. Architecture marks stay S+++ as a **hold**; product work does
 not auto-promote or re-prove marks.
 
 | Mark | Grade | Notes |

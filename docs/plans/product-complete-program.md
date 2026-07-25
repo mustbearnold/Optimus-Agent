@@ -167,7 +167,7 @@ After **program P21** green:
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | **parity** | **P27 done** |
 | MCP + signed packs | `mcp.client`, `plugins.signed` | **parity** | **P27 done** (mock MCP; live spawn residual) |
 | Gateway / Telegram / messaging UI | `gateway.queue`, `gateway.telegram`, `gateway.ui` | **parity** | **P28 done** (external EO residual) |
-| Install + updater | `release.updater` | Missing / Partial packaging | **P29** |
+| Install + updater | `release.updater` | **partial** | **P29** ADR-0043 no auto-updater; install script path |
 | Already parity/win product rows | streaming, durable session, shell, files.read, terminal.job, … | **HOLD** | re-evidence only if install claim changes |
 | S7 / Track Z | profiles, open subagents, PTY, CUA, Hermes gate, … | Deferred | **After P29** |
 
@@ -653,8 +653,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P28 done** (including P27 extensibility).
-2. Open **program P29** product ship + PRODUCT-COMPLETE board.
+1. **program P20–P29 done** — PRODUCT-COMPLETE (with named residuals).
+2. Optional: S7 / Track Z (profiles, open subagents, PTY, Hermes gate) — not required for product-complete.
 
 ## Success definition
 
