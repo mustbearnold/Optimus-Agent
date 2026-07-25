@@ -1,7 +1,7 @@
 # S+++ P15 verification — UI IPC architecture
 
 Date: 2026-07-25  
-Planes: program **P15** · decision **ADR-0038** · delivery (open PR assigns)
+Planes: program **P15** · decision **ADR-0038** · delivery **PR #25**
 
 ## Exit evidence
 
