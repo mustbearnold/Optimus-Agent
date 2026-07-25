@@ -23,15 +23,15 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::{
-    adapt_job_status, AgentArtifactRef, AgentBudget, AgentDescriptor, AgentFailure, AgentId,
-    AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
-    AgentResultKind, AgentVersion, ArtifactRecord, ArtifactStore, CancellationToken, KernelError,
-    Result, WorkflowAdapterKind, WorkflowAgentRef, WorkflowDefinition, WorkflowId, WorkflowNode,
-    WorkflowNodeRun, WorkflowObservability, WorkflowPort, WorkflowRegistry, WorkflowRun,
-    WorkflowRunChild, WorkflowRunLease, WorkflowRunStatus, WorkflowRunStore, WorkflowTerminalKind,
-    WorkflowTerminalPolicy, WorkflowTrigger, WorkflowVersion, AGENT_REQUEST_SCHEMA_VERSION,
-    AGENT_RESULT_SCHEMA_VERSION, WORKFLOW_SCHEMA_VERSION, ApprovalPolicy, CancellationPolicy,
-    RetryPolicy, RollbackPolicy,
+    adapt_job_status, is_denied_name, AgentArtifactRef, AgentBudget, AgentDescriptor, AgentFailure,
+    AgentId, AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
+    AgentResultKind, AgentVersion, ArtifactRecord, ArtifactStore, CancellationToken, FsRoots,
+    KernelError, Result, WorkflowAdapterKind, WorkflowAgentRef, WorkflowDefinition, WorkflowId,
+    WorkflowNode, WorkflowNodeRun, WorkflowObservability, WorkflowPort, WorkflowRegistry,
+    WorkflowRun, WorkflowRunChild, WorkflowRunLease, WorkflowRunStatus, WorkflowRunStore,
+    WorkflowTerminalKind, WorkflowTerminalPolicy, WorkflowTrigger, WorkflowVersion,
+    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION, WORKFLOW_SCHEMA_VERSION,
+    ApprovalPolicy, CancellationPolicy, RetryPolicy, RollbackPolicy,
 };
 pub const WORKSPACE_WRITER_ID: &str = "workspace_writer";
 pub const WORKSPACE_WRITER_VERSION: &str = "1.0.0";
@@ -657,14 +657,18 @@ pub fn cancel_workflow_run(
         return Ok(false);
     }
     let invocations = AgentInvocationStore::open(home.join("agent-invocations.db"))?;
+    // Always cancel child invocations first (even if Runtime/workspace unavailable).
+    for child in runs.list_children(run_id)? {
+        let _ = invocations.request_cancellation(child.invocation_id, reason)?;
+    }
     let workspace = home.join("workspace");
     if workspace.is_dir() {
         if let Ok(runtime) = Runtime::open(&home.join("optimus.db"), &workspace) {
-            let _ = fanout_cancel_children(&runs, &invocations, &runtime, run_id, reason)?;
-        }
-    } else {
-        for child in runs.list_children(run_id)? {
-            let _ = invocations.request_cancellation(child.invocation_id, reason)?;
+            for child in runs.list_children(run_id)? {
+                if let Some(job) = child.job_id {
+                    let _ = runtime.cancel_job(JobId(job));
+                }
+            }
         }
     }
     Ok(true)
@@ -805,7 +809,7 @@ fn execute_node(
             .cancellation_requested(run_id)?
             .unwrap_or_else(|| "cancellation observed before effect".into());
         settle_agent_cancelled(invocations, invocation_id, &reason)?;
-        let _ = runs.mark_node_failed(run_id, lease, &node.id, "cancelled", &reason);
+        let _ = runs.mark_node_cancelled(run_id, lease, &node.id, &reason);
         return Ok(NodeOutcome::Cancelled { reason });
     }
 
@@ -823,6 +827,7 @@ fn execute_node(
                     },
                 }],
             })?;
+            // Link job_id immediately so cancel fan-out can reach the job.
             runs.mark_node_running(run_id, lease, &node.id, invocation_id, Some(job.0))?;
 
             match runtime.run_next(job) {
@@ -907,7 +912,7 @@ fn execute_node(
                     .cancellation_requested(run_id)?
                     .unwrap_or_else(|| "cancellation observed after effect start".into());
                 settle_agent_cancelled(invocations, invocation_id, &reason)?;
-                runs.mark_node_failed(run_id, lease, &node.id, "cancelled", &reason)?;
+                runs.mark_node_cancelled(run_id, lease, &node.id, &reason)?;
                 return Ok(NodeOutcome::Cancelled { reason });
             }
 
@@ -976,21 +981,15 @@ fn execute_node(
                 }],
                 unresolved: vec![],
             };
-            // Fence late success if parent cancel raced in.
+            // Fence late success if parent cancel raced in — never settle Succeeded after cancel.
             if runs.cancellation_requested(run_id)?.is_some()
                 || invocations.sync_cancellation(invocation_id, &token)?
             {
                 let reason = runs
                     .cancellation_requested(run_id)?
                     .unwrap_or_else(|| "parent cancel before settle".into());
-                let _ = invocations.request_cancellation(invocation_id, &reason);
-                // settle may fail if cancel already set — try cancel result
-                if invocations.settle(&result).is_err() {
-                    settle_agent_cancelled(invocations, invocation_id, &reason)?;
-                } else {
-                    // success already settled — still mark node failed for cancel tree honesty
-                }
-                runs.mark_node_failed(run_id, lease, &node.id, "cancelled", &reason)?;
+                settle_agent_cancelled(invocations, invocation_id, &reason)?;
+                let _ = runs.mark_node_cancelled(run_id, lease, &node.id, &reason);
                 return Ok(NodeOutcome::Cancelled { reason });
             }
             invocations.settle(&result)?;
@@ -1001,16 +1000,71 @@ fn execute_node(
         }
         WORKSPACE_READER_ID => {
             runs.mark_node_running(run_id, lease, &node.id, invocation_id, None)?;
-            let path = workspace.join(&relative_path);
-            if !path.is_file() {
+            if let Some(name) = Path::new(&relative_path)
+                .file_name()
+                .and_then(|n| n.to_str())
+            {
+                if is_denied_name(name) {
+                    let result = AgentResult {
+                        schema_version: AGENT_RESULT_SCHEMA_VERSION,
+                        invocation_id,
+                        kind: AgentResultKind::Failed,
+                        summary: "secret basename denied".into(),
+                        error: Some(AgentFailure {
+                            code: "secret_denied".into(),
+                            message: name.into(),
+                            retryable: false,
+                        }),
+                        cancellation_reason: None,
+                        evidence: vec![],
+                        artifacts: vec![],
+                        unresolved: vec![],
+                    };
+                    invocations.settle(&result)?;
+                    runs.mark_node_failed(run_id, lease, &node.id, "secret_denied", name)?;
+                    return Ok(NodeOutcome::Failed);
+                }
+            }
+            let roots = FsRoots::new(vec![workspace.to_path_buf()]).map_err(|e| {
+                KernelError::Model(format!("workspace roots unavailable: {e}"))
+            })?;
+            let abs = match roots.resolve_existing(&relative_path) {
+                Ok(path) => path,
+                Err(e) => {
+                    let code = if e.to_string().contains("denied") || e.to_string().contains("Denied") {
+                        "path_denied"
+                    } else {
+                        "file_not_found"
+                    };
+                    let result = AgentResult {
+                        schema_version: AGENT_RESULT_SCHEMA_VERSION,
+                        invocation_id,
+                        kind: AgentResultKind::Failed,
+                        summary: format!("workspace read failed: {e}"),
+                        error: Some(AgentFailure {
+                            code: code.into(),
+                            message: e.to_string(),
+                            retryable: false,
+                        }),
+                        cancellation_reason: None,
+                        evidence: vec![],
+                        artifacts: vec![],
+                        unresolved: vec![],
+                    };
+                    invocations.settle(&result)?;
+                    runs.mark_node_failed(run_id, lease, &node.id, code, &e.to_string())?;
+                    return Ok(NodeOutcome::Failed);
+                }
+            };
+            if abs.is_dir() {
                 let result = AgentResult {
                     schema_version: AGENT_RESULT_SCHEMA_VERSION,
                     invocation_id,
                     kind: AgentResultKind::Failed,
-                    summary: "workspace file missing".into(),
+                    summary: "path is a directory".into(),
                     error: Some(AgentFailure {
-                        code: "file_not_found".into(),
-                        message: format!("missing {relative_path}"),
+                        code: "not_a_file".into(),
+                        message: relative_path.clone(),
                         retryable: false,
                     }),
                     cancellation_reason: None,
@@ -1019,16 +1073,10 @@ fn execute_node(
                     unresolved: vec![],
                 };
                 invocations.settle(&result)?;
-                runs.mark_node_failed(
-                    run_id,
-                    lease,
-                    &node.id,
-                    "file_not_found",
-                    &relative_path,
-                )?;
+                runs.mark_node_failed(run_id, lease, &node.id, "not_a_file", &relative_path)?;
                 return Ok(NodeOutcome::Failed);
             }
-            let bytes = std::fs::read(&path)?;
+            let bytes = std::fs::read(&abs)?;
             if bytes.len() > MAX_READ_BYTES {
                 let result = AgentResult {
                     schema_version: AGENT_RESULT_SCHEMA_VERSION,
@@ -1056,7 +1104,7 @@ fn execute_node(
                     .cancellation_requested(run_id)?
                     .unwrap_or_else(|| "cancellation during read".into());
                 settle_agent_cancelled(invocations, invocation_id, &reason)?;
-                runs.mark_node_failed(run_id, lease, &node.id, "cancelled", &reason)?;
+                runs.mark_node_cancelled(run_id, lease, &node.id, &reason)?;
                 return Ok(NodeOutcome::Cancelled { reason });
             }
             let artifact = artifacts.put_bytes(
@@ -1227,12 +1275,20 @@ fn compact_write_report(dag: WorkflowDagReport) -> Result<WriteFileHandoffReport
         .or_else(|| write_node.as_ref().and_then(|n| n.job_id));
     let artifact = dag.artifacts.first().cloned();
     let (kind, summary, error, cancellation_reason) = match dag.status {
-        WorkflowRunStatus::Succeeded => (
-            AgentResultKind::Succeeded,
-            dag.summary.clone(),
-            None,
-            None,
-        ),
+        WorkflowRunStatus::Succeeded => {
+            let path = dag.relative_path.clone().unwrap_or_default();
+            let bytes = artifact.as_ref().map(|a| a.size_bytes).unwrap_or(0);
+            let sha = artifact
+                .as_ref()
+                .map(|a| a.sha256.as_str())
+                .unwrap_or("unknown");
+            (
+                AgentResultKind::Succeeded,
+                format!("wrote {path} ({bytes} bytes); handoff {sha}"),
+                None,
+                None,
+            )
+        }
         WorkflowRunStatus::Cancelled => (
             AgentResultKind::Cancelled,
             "workspace_writer cancelled".into(),

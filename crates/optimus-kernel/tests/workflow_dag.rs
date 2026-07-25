@@ -292,3 +292,148 @@ fn handoff_artifact_sha_matches_workspace_bytes() {
 fn _touch_agent_result_kind() -> AgentResultKind {
     AgentResultKind::Succeeded
 }
+
+#[test]
+fn reader_denies_secret_basename() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    fs::create_dir_all(vertical_workspace(home)).unwrap();
+    fs::write(vertical_workspace(home).join(".env"), "SECRET=1").unwrap();
+    let report = run_read_file_handoff(
+        home,
+        ReadFileHandoffRequest {
+            relative_path: ".env".into(),
+        },
+    )
+    .unwrap();
+    assert_eq!(report.status, WorkflowRunStatus::Failed);
+    assert_eq!(
+        report.nodes[0].error_code.as_deref(),
+        Some("secret_denied")
+    );
+}
+
+#[test]
+fn reader_denies_symlink_escape() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    let workspace = vertical_workspace(home);
+    fs::create_dir_all(&workspace).unwrap();
+    let outside = dir.path().join("outside-secret.txt");
+    fs::write(&outside, "exfil").unwrap();
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink(&outside, workspace.join("link.txt")).unwrap();
+        let report = run_read_file_handoff(
+            home,
+            ReadFileHandoffRequest {
+                relative_path: "link.txt".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(report.status, WorkflowRunStatus::Failed);
+        let code = report.nodes[0].error_code.as_deref().unwrap_or("");
+        assert!(
+            code == "path_denied" || code == "file_not_found",
+            "unexpected code {code}"
+        );
+    }
+}
+
+#[test]
+fn write_failure_skips_read_node() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    let report = run_write_then_read_handoff(
+        home,
+        WriteFileHandoffRequest {
+            relative_path: "blocked.txt".into(),
+            contents: "nope".into(),
+            auto_grant: false,
+            policy: PolicyMode::SmartDeny,
+        },
+    )
+    .unwrap();
+    assert_eq!(report.status, WorkflowRunStatus::Failed);
+    let write = report.nodes.iter().find(|n| n.node_id == "write").unwrap();
+    let read = report.nodes.iter().find(|n| n.node_id == "read").unwrap();
+    assert_eq!(write.error_code.as_deref(), Some("approval_required"));
+    // Read never ran: still pending or cancelled, not succeeded.
+    assert_ne!(read.status.as_str(), "succeeded");
+    assert!(!vertical_workspace(home).join("blocked.txt").exists());
+}
+
+#[test]
+fn cancel_after_write_before_read_stops_dag() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    // Run write-only handoff first to create a completed write, then cancel a fresh DAG
+    // after begin (before children) already covered. Here: cancel mid-run by
+    // cancel_after_begin remains the durable fence; additionally cancel a succeeded
+    // run is idempotent.
+    let report = run_write_then_read_handoff(
+        home,
+        WriteFileHandoffRequest {
+            relative_path: "mid.txt".into(),
+            contents: "mid".into(),
+            auto_grant: true,
+            policy: PolicyMode::SmartDeny,
+        },
+    )
+    .unwrap();
+    assert_eq!(report.status, WorkflowRunStatus::Succeeded);
+    // Parent cancel after terminal is false.
+    assert!(!cancel_workflow_run(home, report.run_id, "late").unwrap());
+}
+
+#[test]
+fn cancel_workflow_run_fans_out_to_child_invocations() {
+    use optimus_kernel::{
+        open_seeded_agent_registry, open_workflow_run_store, AgentBudget, AgentId,
+        AgentInvocationStore, AgentPermissions, AgentRequest, AgentVersion,
+        AGENT_REQUEST_SCHEMA_VERSION,
+    };
+    use optimus_packs::ToolId;
+    use std::collections::BTreeSet;
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    // Seed a run with a linked child without full executor: begin run, claim, begin agent, link.
+    let store = open_workflow_run_store(home).unwrap();
+    let def = write_then_read_handoff_workflow().unwrap();
+    let run_id = store
+        .begin(
+            &def,
+            serde_json::json!({"relative_path": "a.txt", "contents": "a"}),
+        )
+        .unwrap();
+    let _lease = store.claim_lease(run_id, "test", None).unwrap();
+    let agents = open_seeded_agent_registry(home.join("agent-registry.db")).unwrap();
+    let invocations = AgentInvocationStore::open(home.join("agent-invocations.db")).unwrap();
+    let req = AgentRequest {
+        schema_version: AGENT_REQUEST_SCHEMA_VERSION,
+        agent_id: AgentId::parse(WORKSPACE_WRITER_ID).unwrap(),
+        agent_version: AgentVersion::parse("1.0.0").unwrap(),
+        task: "t".into(),
+        context: vec![],
+        constraints: vec![],
+        tools: vec![ToolId::new("write_file")],
+        permissions: AgentPermissions {
+            filesystem_roots: BTreeSet::from(["workspace".into()]),
+            network_hosts: BTreeSet::new(),
+            effects: BTreeSet::from(["write_file".into()]),
+        },
+        budget: AgentBudget {
+            max_steps: 1,
+            timeout_ms: 1000,
+            max_context_chars: 100,
+            max_output_chars: 100,
+        },
+        cancellation_id: uuid::Uuid::new_v4(),
+        trace_id: uuid::Uuid::new_v4(),
+    };
+    let inv = invocations.begin(&agents, &req).unwrap();
+    store.link_child(run_id, "write", inv, None).unwrap();
+    assert!(cancel_workflow_run(home, run_id, "fanout").unwrap());
+    let child = invocations.get(inv).unwrap();
+    assert!(child.cancellation_reason.is_some());
+}

@@ -738,6 +738,16 @@ impl WorkflowRunStore {
         let now = now_unix();
         let tx = self.conn.unchecked_transaction()?;
         self.require_live_lease(&tx, run_id, lease)?;
+        if tx
+            .query_row(
+                "SELECT cancellation_reason FROM workflow_runs WHERE id=?1",
+                params![run_id.to_string()],
+                |row| row.get::<_, Option<String>>(0),
+            )?
+            .is_some()
+        {
+            return Err(invalid("workflow run cancellation requested"));
+        }
         if let Some(ref digest) = artifact_sha256 {
             if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
                 return Err(invalid("artifact sha256 must be 64 hex chars"));
@@ -812,6 +822,50 @@ impl WorkflowRunStore {
         Ok(())
     }
 
+    pub fn mark_node_cancelled(
+        &self,
+        run_id: Uuid,
+        lease: &WorkflowRunLease,
+        node_id: &str,
+        reason: &str,
+    ) -> Result<()> {
+        let now = now_unix();
+        let tx = self.conn.unchecked_transaction()?;
+        // Prefer live lease; allow when cancel already requested even if lease expired.
+        let lease_ok = self.require_live_lease(&tx, run_id, lease);
+        if lease_ok.is_err() {
+            let reason_row: Option<String> = tx.query_row(
+                "SELECT cancellation_reason FROM workflow_runs WHERE id=?1",
+                params![run_id.to_string()],
+                |row| row.get(0),
+            )?;
+            if reason_row.is_none() {
+                return lease_ok.map(|_| ());
+            }
+        }
+        let changed = tx.execute(
+            "UPDATE workflow_run_nodes SET
+               status='cancelled',
+               error_code='cancelled',
+               error_message=?3,
+               completed_unix=?4
+             WHERE run_id=?1 AND node_id=?2 AND status IN ('pending','ready','running')",
+            params![run_id.to_string(), node_id, reason, now as i64],
+        )?;
+        if changed != 1 {
+            return Err(invalid("workflow node cancel rejected"));
+        }
+        append_event(
+            &tx,
+            run_id,
+            "node_cancelled",
+            serde_json::json!({"node_id": node_id, "reason": reason}),
+            now,
+        )?;
+        tx.commit()?;
+        Ok(())
+    }
+
     pub fn mark_remaining_cancelled(&self, run_id: Uuid, lease: &WorkflowRunLease) -> Result<()> {
         let now = now_unix();
         let tx = self.conn.unchecked_transaction()?;
@@ -856,9 +910,23 @@ impl WorkflowRunStore {
         let now = now_unix();
         let tx = self.conn.unchecked_transaction()?;
         // Terminal cancel may proceed with cancel request even if lease race lost.
+        let cancel_reason: Option<String> = tx.query_row(
+            "SELECT cancellation_reason FROM workflow_runs WHERE id=?1",
+            params![run_id.to_string()],
+            |row| row.get(0),
+        )?;
+        if status == WorkflowRunStatus::Succeeded && cancel_reason.is_some() {
+            return Err(invalid("cannot settle succeeded while cancellation requested"));
+        }
         let lease_ok = self.require_live_lease(&tx, run_id, lease);
         if lease_ok.is_err() {
-            if status != WorkflowRunStatus::Cancelled {
+            // Soft-path: Cancelled always when cancel requested; Failed when cancel requested
+            // or we still need a terminal after lease loss.
+            let allow_soft = matches!(
+                status,
+                WorkflowRunStatus::Cancelled | WorkflowRunStatus::Failed
+            ) && (cancel_reason.is_some() || status == WorkflowRunStatus::Failed);
+            if !allow_soft {
                 return lease_ok.map(|_| ());
             }
             let existing = WorkflowRunStatus::parse(
@@ -869,7 +937,10 @@ impl WorkflowRunStore {
                 )?,
             )?;
             if existing.is_terminal() {
-                return Ok(());
+                if existing == status {
+                    return Ok(());
+                }
+                return Err(invalid("workflow run terminal already differs"));
             }
         }
         let kind = status.as_str();

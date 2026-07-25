@@ -87,12 +87,12 @@ class EngineeringMemoryTests(unittest.TestCase):
 
     def test_agent_registry_records_builtin_workspace_writer(self) -> None:
         registry = EM.build_agent_registry()
-        self.assertEqual(registry["implemented_specialist_agent_count"], 1)
-        self.assertEqual(len(registry["agents"]), 1)
-        self.assertEqual(registry["agents"][0]["id"], "workspace_writer")
-        self.assertEqual(registry["agents"][0]["version"], "1.0.0")
+        self.assertEqual(registry["implemented_specialist_agent_count"], 2)
+        self.assertEqual(len(registry["agents"]), 2)
+        ids = {row["id"] for row in registry["agents"]}
+        self.assertEqual(ids, {"workspace_writer", "workspace_reader"})
         self.assertEqual(
-            registry["status"], "implemented_builtin_specialist_vertical"
+            registry["status"], "implemented_multi_agent_dag_verticals"
         )
         self.assertEqual(registry["contract_substrate"]["status"], "implemented")
         self.assertEqual(
@@ -109,6 +109,8 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "work-graph-job",
                 "durable-campaign",
                 "write-file-handoff",
+                "read-file-handoff",
+                "write-then-read-handoff",
                 "interval-cron-tick",
                 "gateway-inbox-drain",
                 "general-workflow-contract",
