@@ -133,13 +133,13 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 
 **Foundation (done):** [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md).
 
-**Active S+++ climb (lowest grade → highest):** [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
+**S+++ climb (P10–P19 complete):** [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
 
 | Phase | Focus | Marks moved | Status |
 |---|---|---|---|
 | 0 | Truth freeze | Doc | done |
 | 1 | Trust spine (policy, session repair, cancel honesty) | Security, Durability | done |
-| 2 | Kernel waist extraction (`optimus-eval`, `optimus-ops`) | Control-plane | done (partial; agents/artifacts remain) |
+| 2 | Kernel waist extraction (`optimus-eval`, `optimus-ops`) | Control-plane | done (P11 completed peels) |
 | 3 | One multi-agent vertical (`workspace_writer` + `write_file_handoff`) | Multi-agent | done |
 | 4 | One shell matrix + IPC contract checker | UI | done |
 | 5 | Causal observability (`optimus trace`, denial codes, obs gate) | Observability | done |

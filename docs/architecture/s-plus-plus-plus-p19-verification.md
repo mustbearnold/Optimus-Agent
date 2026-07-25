@@ -1,7 +1,7 @@
 # S+++ P19 verification — all-marks review board
 
 Date: 2026-07-25  
-Planes: program **P19** · decision (process; final board) · delivery **PR pending**
+Planes: program **P19** · decision (process; final board) · delivery **PR #29**
 
 ## Exit evidence
 

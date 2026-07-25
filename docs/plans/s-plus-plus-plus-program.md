@@ -651,7 +651,7 @@ L = multi-PR; M = one or few PRs; S = short.
 | Plan | Role |
 |---|---|
 | [s-plus-trust-spine.md](./s-plus-trust-spine.md) | **Done** foundation Phases 0–5 |
-| **This plan** | **Active** architecture S+++ Phases P10–P19 |
+| **This plan** | **Complete** architecture S+++ Phases P10–P19 |
 | [full-app-microtasks.md](./full-app-microtasks.md) | Product surface; yields to architecture sequencing on conflicts |
 | [engineering-memory-phases.md](./engineering-memory-phases.md) | EM system evolution; use lenses each phase |
 

@@ -1,6 +1,6 @@
 # S+++ all-marks review board — 2026-07-25
 
-Planes: program **P19** · decision (process; final adversarial board) · delivery **PR pending**
+Planes: program **P19** · decision (process; final adversarial board) · delivery **PR #29**
 
 ## Board purpose
 
