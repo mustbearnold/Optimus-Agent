@@ -14,7 +14,8 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
-    job_id, Effect, JobSpec, JobStatus, NodeSpec, PolicyMode, Runtime, RuntimeConfig, RuntimeError,
+    job_id, CommandFsEnvelope, Effect, JobSpec, JobStatus, NodeSpec, PolicyMode, Runtime,
+    RuntimeConfig, RuntimeError,
 };
 
 #[derive(Debug, Error)]
@@ -1316,13 +1317,16 @@ impl CampaignStore {
         let db = self.home.join("optimus.db");
         let ws = self.home.join("workspace");
         std::fs::create_dir_all(&ws)?;
+        // Campaigns run under SmartDeny + default Confined unless a future
+        // product settings bridge is threaded through CampaignStore (desktop
+        // open_runtime loads settings; campaign store is home-local only).
         Ok(Runtime::open_with_config(
             &db,
             &ws,
             RuntimeConfig {
                 policy: PolicyMode::SmartDeny,
-            ..Default::default()
-        },
+                command_fs_envelope: CommandFsEnvelope::Confined,
+            },
         )?)
     }
 

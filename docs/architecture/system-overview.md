@@ -232,7 +232,9 @@ blocks new children on terminal parents. CLI: `optimus vertical list`,
 **Unknown or unresolved behaviour:** there is no model-chosen specialist router,
 parallel multi-ready-node execution, command/shell specialist, or MCP agents.
 The agent contract still does not bypass runtime SmartDeny or filesystem
-confinement. Command FS envelope residual is owned by S+++ P12.
+confinement. **Confirmed (P12):** commands use `CommandFsEnvelope` (default
+Linux confined workspace-only RW; Windows Job Object residual product-visible;
+`UnrestrictedHost` explicit break-glass).
 
 ## Tool system
 
@@ -555,9 +557,10 @@ availability mandatory.
 5. **Partially implemented:** policy and telemetry routing exist; evaluation-driven routing does not.
 6. **Confirmed bounded behaviour:** fixture replay and local causal traces exist; live-effect replay and distributed tracing do not.
 7. **Unknown/unresolved:** provenance and artifact publishing contracts.
-8. **Known boundary:** approved arbitrary child processes are not governed by
-   the built-in file-effect directory capability (workspace cwd + env sanitise
-   only). Tracked under the S+++ trust-spine residual.
+8. **Confirmed (P12) / residual:** file effects use `cap-std`; approved commands
+   use `CommandFsEnvelope` (Linux Confined = workspace-only RW; Windows Confined
+   = Job Object process-tree residual; `ConfinedNoNetwork` fail-closed non-Linux;
+   `UnrestrictedHost` explicit break-glass). See ADR-0035.
 9. **Confirmed bounded behaviour:** Work Graph terminal uniqueness and campaign,
    cron, and gateway owner/generation/token/deadline fencing are implemented;
    external exactly-once delivery remains unresolved.

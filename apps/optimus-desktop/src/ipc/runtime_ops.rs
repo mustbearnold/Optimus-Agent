@@ -332,10 +332,31 @@ fn term_run(home: &Path, params: serde_json::Value) -> Result<serde_json::Value,
 }
 
 pub(super) fn open_runtime(home: &std::path::Path) -> Result<optimus_runtime::Runtime, String> {
+    open_runtime_at(home, &home.join("workspace"))
+}
+
+/// Open a Work Graph runtime with product-settings command FS envelope (P12).
+///
+/// Approval resume and term_run must not weaken IsolatedProfiles → ConfinedNoNetwork.
+fn open_runtime_at(
+    home: &std::path::Path,
+    workspace: &std::path::Path,
+) -> Result<optimus_runtime::Runtime, String> {
     let db = home.join("optimus.db");
-    let ws = home.join("workspace");
-    std::fs::create_dir_all(&ws).map_err(|e| e.to_string())?;
-    optimus_runtime::Runtime::open(&db, &ws).map_err(|e| e.to_string())
+    std::fs::create_dir_all(workspace).map_err(|e| e.to_string())?;
+    let command_fs_envelope = optimus_kernel::ProductSettings::load(home)
+        .map_err(|e| e.to_string())?
+        .work_isolation
+        .command_fs_envelope();
+    optimus_runtime::Runtime::open_with_config(
+        &db,
+        workspace,
+        optimus_graph::RuntimeConfig {
+            policy: optimus_graph::PolicyMode::SmartDeny,
+            command_fs_envelope,
+        },
+    )
+    .map_err(|e| e.to_string())
 }
 
 fn open_runtime_for_job(
@@ -367,8 +388,7 @@ fn open_runtime_for_job(
             continue;
         };
         if actual == expected {
-            return optimus_runtime::Runtime::open(&home.join("optimus.db"), &scope.primary_root)
-                .map_err(|error| error.to_string());
+            return open_runtime_at(home, &scope.primary_root);
         }
     }
     Err(format!(

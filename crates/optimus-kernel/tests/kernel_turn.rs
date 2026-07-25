@@ -686,8 +686,7 @@ fn write_file_tool_uses_durable_job() {
         dir.path(),
         KernelConfig {
             effect_policy: PolicyMode::Unrestricted,
-            ..KernelConfig::default(),
-            ..Default::default()
+            ..KernelConfig::default()
         },
     )
     .unwrap();
@@ -760,8 +759,7 @@ fn max_steps_trips() {
     let dir = tempdir().unwrap();
     let cfg = KernelConfig {
         max_steps: 2,
-        ..KernelConfig::default(),
-            ..Default::default()
+        ..KernelConfig::default()
         };
     let mut k = Kernel::open(dir.path(), cfg).unwrap();
     let mut model = ScriptedModel::new(vec![

@@ -158,7 +158,9 @@ sandbox.
 
 **Confirmed current behaviour:** browser HTTP and `web_search` share
 `network_policy::assert_public_http_url` for SSRF/private destination refusal.
-Provider TLS/OAuth adapters may keep adapter-local checks.
+Literal private IPs and blocked hostnames fail closed. **Known residual:** if
+DNS resolution fails open (resolver error), the pre-connect IP check may not
+run; provider TLS/OAuth adapters may keep adapter-local checks.
 
 ## Browser/network boundary
 

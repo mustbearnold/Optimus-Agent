@@ -641,6 +641,6 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10 done (multi-agent → S). P11 done (control-plane → S+++).** Next: **P12**
-security command capability envelope (real FS confinement; then multi-agent
-re-grade to S+++).
+**P10–P12 done** (multi-agent → **S+++** after P12 residual close; control-plane
+→ **S+++**; security → **S+++** via ADR-0035 / PR #22). Next: **P13** domain
+modularity (single catalogs, plane separation).

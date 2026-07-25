@@ -613,8 +613,8 @@ fn linux_contained_command(
     for arg in command_envelope::linux_bwrap_args(workspace, envelope) {
         command.arg(arg);
     }
-    // Mask the user bus under confined profiles so children cannot talk to the
-    // session bus even if /run was not fully replaced (UnrestrictedHost path).
+    // UnrestrictedHost still binds host `/`; mask session bus + tmpfs the
+    // systemd runtime dir. Confined profiles already replace `/run` with tmpfs.
     if matches!(envelope, CommandFsEnvelope::UnrestrictedHost) {
         let runtime_dir = format!("/run/user/{}", unsafe { libc::geteuid() });
         command

@@ -639,8 +639,7 @@ pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResul
         home.as_ref(),
         KernelConfig {
             effect_policy: case.effect_policy,
-            ..KernelConfig::default(),
-            ..Default::default()
+            ..KernelConfig::default()
         },
     )?;
     // Seed memory for the recall case (deterministic fixture).

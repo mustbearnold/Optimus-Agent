@@ -137,7 +137,7 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 | 5 | Causal observability (`optimus trace`, denial codes, obs gate) | Observability | done |
 | P10 | Multi-agent platform (DAG, ≥2 specialists, cancel tree) | Multi-agent B→**S** (S+++ after P12) | **done** |
 | P11 | Control-plane peels (agent/workflow/artifacts crates) | Control-plane B+→**S+++** | **done** |
-| P12 | Command capability envelope (real FS confinement) | Security A-→S+++ | pending |
+| P12 | Command capability envelope (real FS confinement) | Security A-→**S+++**; Multi-agent S→**S+++** | **done** |
 | P13 | Domain modularity audit (single catalogs, plane separation) | Domain A-→S+++ | pending |
 | P14 | Observability export + gate strength | Observability A-→S+++ | pending |
 | P15 | UI/IPC completeness + shell truth | UI A-→S+++ | pending |

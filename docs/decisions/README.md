@@ -56,7 +56,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0030 | Codex-measured shell and multi-folder projects | Accepted; project-authority boundary superseded by 0031 | Measured neutral geometry, versioned `rootPaths[]` projects, categorized Settings, bounded native annotations, and overlay-aware preview suspension are implemented. |
 | 0031 | Safe project work loop and durable tool lifecycle | Accepted | Rust-authorized canonical project roots, root-bound SmartDeny effects, typed persisted tool events, and reload/reconnect projection are implemented. |
 | 0032 | Compact Engineering Memory facts and budgeted agent lenses | Accepted | Schema v2 compact indexes, hash-only staleness, pattern impact, and context/report lenses are implemented. |
-| 0033 | Multi-agent DAG execution (P10) | Accepted | Two specialists, three registered workflows, durable `WorkflowRunStore`, parent cancel tree; multi-agent mark **S** (S+++ after P12). |
+| 0033 | Multi-agent DAG execution (P10) | Accepted | Two specialists, three registered workflows, durable `WorkflowRunStore`, parent cancel tree; multi-agent mark **S+++** after P12 command-FS close (registered-only; no open-ended spawn). |
 | 0034 | Control-plane crate peels (P11) | Accepted | `optimus-agent` / `optimus-workflow` / `optimus-artifacts` peels; kernel re-export waist; layer lint; control-plane mark **S+++**. |
 | 0035 | Command capability envelope + Unrestricted break-glass (P12) | Accepted | Linux confined bwrap (workspace-only RW); `CommandFsEnvelope` orthogonal to SmartDeny; Windows residual / fail-closed; shared egress helper; Security **S+++**. |
 
