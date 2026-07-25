@@ -2,8 +2,8 @@ name: Feature or enhancement
 description: Propose a product or architecture capability.
 title: "feat: "
 labels:
-  - type:feat
-  - status:triage
+  - "✨ type:feat"
+  - "🔍 status:triage"
 body:
   - type: textarea
     id: problem
@@ -24,18 +24,18 @@ body:
     attributes:
       label: Primary area
       options:
-        - area:kernel
-        - area:runtime
-        - area:agent
-        - area:workflow
-        - area:desktop
-        - area:ui
-        - area:cli
-        - area:security
-        - area:eval
-        - area:browser
-        - area:docs
-        - area:other
+        - "🧠 area:kernel"
+        - "🔁 area:runtime"
+        - "🤖 area:agent"
+        - "🔀 area:workflow"
+        - "🖥️ area:desktop"
+        - "🎨 area:ui"
+        - "💻 area:cli"
+        - "🛡️ area:security"
+        - "📊 area:eval"
+        - "🌐 area:browser"
+        - "📖 area:docs"
+        - "other"
     validations:
       required: true
   - type: checkboxes
@@ -43,9 +43,9 @@ body:
     attributes:
       label: Program linkage
       options:
-        - label: S+++ architecture program (program:s+++)
-        - label: Hermes parity / version gate (program:parity)
-        - label: Requires ADR (process:adr)
+        - label: S+++ architecture program (🏆 program:s+++)
+        - label: Hermes parity / version gate (⚖️ program:parity)
+        - label: Requires ADR (📋 process:adr)
   - type: textarea
     id: acceptance
     attributes:

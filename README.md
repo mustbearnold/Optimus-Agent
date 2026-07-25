@@ -158,7 +158,7 @@ Commits, branches, PRs, issues, and labels follow
 
 - **Commits / PR titles:** Conventional Commits (`feat(scope): …`, `fix: …`)
 - **Branches:** `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
-- **Labels:** namespaced `type:` + `area:` (+ `size:`, `risk:`, `program:`, …)
+- **Labels:** emoji-first + namespaced (`✨ type:feat`, `🔀 area:workflow`, …)
 - **Sync labels:** `python3 scripts/sync-github-labels.py` from [`.github/labels.yml`](.github/labels.yml)
 
 ### Default desktop (Electron + React)
