@@ -365,6 +365,10 @@ pub struct WorkflowDagRequest {
     /// (tests parent/child fence). Production callers use `cancel_workflow_run`.
     #[serde(default)]
     pub cancel_after_begin: bool,
+    /// When set, after this node succeeds the run is cancelled before the next
+    /// ready node (test hook for mid-DAG cancel). Production callers omit.
+    #[serde(default)]
+    pub cancel_after_node: Option<String>,
     #[serde(default)]
     pub cancel_reason: Option<String>,
 }
@@ -401,6 +405,7 @@ pub fn run_write_file_handoff(
             auto_grant: request.auto_grant,
             policy: request.policy,
             cancel_after_begin: false,
+            cancel_after_node: None,
             cancel_reason: None,
         },
     )?;
@@ -422,6 +427,7 @@ pub fn run_read_file_handoff(
             auto_grant: false,
             policy: PolicyMode::SmartDeny,
             cancel_after_begin: false,
+            cancel_after_node: None,
             cancel_reason: None,
         },
     )
@@ -445,6 +451,7 @@ pub fn run_write_then_read_handoff(
             auto_grant: request.auto_grant,
             policy: request.policy,
             cancel_after_begin: false,
+            cancel_after_node: None,
             cancel_reason: None,
         },
     )
@@ -571,7 +578,20 @@ pub fn run_registered_workflow(
             &artifacts,
             &workspace,
         ) {
-            Ok(NodeOutcome::Succeeded) => continue,
+            Ok(NodeOutcome::Succeeded) => {
+                if request
+                    .cancel_after_node
+                    .as_deref()
+                    .is_some_and(|id| id == node_id)
+                {
+                    let reason = request
+                        .cancel_reason
+                        .clone()
+                        .unwrap_or_else(|| format!("cancel_after_node:{node_id}"));
+                    let _ = runs.request_cancellation(run_id, &reason)?;
+                }
+                continue;
+            }
             Ok(NodeOutcome::AwaitingApproval { job_id: _ }) => {
                 runs.mark_awaiting_approval(run_id, &lease, &node_id)?;
                 // Map awaiting approval to failed terminal for run projection
@@ -865,13 +885,12 @@ fn execute_node(
                 Err(RuntimeError::Cancelled { .. }) => {
                     let _ = invocations.request_cancellation(invocation_id, "runtime cancelled job")?;
                     settle_agent_cancelled(invocations, invocation_id, "runtime cancelled job")?;
-                    runs.mark_node_failed(
+                    let _ = runs.mark_node_cancelled(
                         run_id,
                         lease,
                         &node.id,
-                        "cancelled",
                         "runtime cancelled job",
-                    )?;
+                    );
                     return Ok(NodeOutcome::Cancelled {
                         reason: "runtime cancelled job".into(),
                     });
@@ -1076,6 +1095,28 @@ fn execute_node(
                 runs.mark_node_failed(run_id, lease, &node.id, "not_a_file", &relative_path)?;
                 return Ok(NodeOutcome::Failed);
             }
+            if let Some(name) = abs.file_name().and_then(|n| n.to_str()) {
+                if is_denied_name(name) {
+                    let result = AgentResult {
+                        schema_version: AGENT_RESULT_SCHEMA_VERSION,
+                        invocation_id,
+                        kind: AgentResultKind::Failed,
+                        summary: "secret basename denied".into(),
+                        error: Some(AgentFailure {
+                            code: "secret_denied".into(),
+                            message: name.into(),
+                            retryable: false,
+                        }),
+                        cancellation_reason: None,
+                        evidence: vec![],
+                        artifacts: vec![],
+                        unresolved: vec![],
+                    };
+                    invocations.settle(&result)?;
+                    runs.mark_node_failed(run_id, lease, &node.id, "secret_denied", name)?;
+                    return Ok(NodeOutcome::Failed);
+                }
+            }
             let bytes = std::fs::read(&abs)?;
             if bytes.len() > MAX_READ_BYTES {
                 let result = AgentResult {
@@ -1133,6 +1174,17 @@ fn execute_node(
                 }],
                 unresolved: vec![],
             };
+            // Fence late success if parent cancel raced in.
+            if runs.cancellation_requested(run_id)?.is_some()
+                || invocations.sync_cancellation(invocation_id, &token)?
+            {
+                let reason = runs
+                    .cancellation_requested(run_id)?
+                    .unwrap_or_else(|| "parent cancel before settle".into());
+                settle_agent_cancelled(invocations, invocation_id, &reason)?;
+                let _ = runs.mark_node_cancelled(run_id, lease, &node.id, &reason);
+                return Ok(NodeOutcome::Cancelled { reason });
+            }
             invocations.settle(&result)?;
             runs.mark_node_succeeded(run_id, lease, &node.id, Some(artifact.sha256))?;
             Ok(NodeOutcome::Succeeded)

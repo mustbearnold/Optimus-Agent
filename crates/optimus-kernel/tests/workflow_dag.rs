@@ -130,6 +130,7 @@ fn cancel_after_begin_terminals_run_without_children() {
             auto_grant: true,
             policy: PolicyMode::Unrestricted,
             cancel_after_begin: true,
+            cancel_after_node: None,
             cancel_reason: Some("test cancel".into()),
         },
     )
@@ -291,6 +292,60 @@ fn handoff_artifact_sha_matches_workspace_bytes() {
 #[allow(dead_code)]
 fn _touch_agent_result_kind() -> AgentResultKind {
     AgentResultKind::Succeeded
+}
+
+#[test]
+fn reader_denies_secret_via_in_workspace_symlink() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    let workspace = vertical_workspace(home);
+    fs::create_dir_all(&workspace).unwrap();
+    fs::write(workspace.join(".env"), "SECRET=1").unwrap();
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink(workspace.join(".env"), workspace.join("alias.txt")).unwrap();
+        let report = run_read_file_handoff(
+            home,
+            ReadFileHandoffRequest {
+                relative_path: "alias.txt".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(report.status, WorkflowRunStatus::Failed);
+        assert_eq!(
+            report.nodes[0].error_code.as_deref(),
+            Some("secret_denied")
+        );
+    }
+}
+
+#[test]
+fn mid_dag_cancel_after_write_cancels_read() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    let report = run_registered_workflow(
+        home,
+        WorkflowDagRequest {
+            workflow_id: WRITE_THEN_READ_HANDOFF_WORKFLOW_ID.into(),
+            workflow_version: WRITE_THEN_READ_HANDOFF_WORKFLOW_VERSION.into(),
+            inputs: serde_json::json!({
+                "relative_path": "mid-cancel.txt",
+                "contents": "partial"
+            }),
+            auto_grant: true,
+            policy: PolicyMode::SmartDeny,
+            cancel_after_begin: false,
+            cancel_after_node: Some("write".into()),
+            cancel_reason: Some("stop after write".into()),
+        },
+    )
+    .unwrap();
+    assert_eq!(report.status, WorkflowRunStatus::Cancelled);
+    let write = report.nodes.iter().find(|n| n.node_id == "write").unwrap();
+    let read = report.nodes.iter().find(|n| n.node_id == "read").unwrap();
+    assert_eq!(write.status.as_str(), "succeeded");
+    assert_eq!(read.status.as_str(), "cancelled");
+    assert!(vertical_workspace(home).join("mid-cancel.txt").exists());
 }
 
 #[test]
