@@ -557,14 +557,16 @@ saved.
 **Confirmed current behaviour:** operators can reconstruct a turn from durable
 stores via `load_causal_turn` / `optimus trace show` using a root trace id,
 manifest id, or turn id. Security/policy fences map to a closed
-`SecurityDenialCode` vocabulary when classifiable. Offline integrity + causal
-tests are the Phase-5 observability gate (`scripts/check-observability-gate.py`).
+`SecurityDenialCode` vocabulary when classifiable. Offline integrity + causal +
+export surface tests are the observability gate
+(`scripts/check-observability-gate.py`, P14).
 
-**Unknown or unresolved behaviour:** there is no OpenTelemetry export, live
-security-denial event stream, token accounting, artifact publication lineage,
-GPU/fallback telemetry, or transaction spanning trace, route, execution,
-runtime, agent, workflow, and session stores. Fixture replay does not rerun live
-providers or external effects. Logs remain non-authoritative.
+**Unknown or unresolved behaviour:** there is no OpenTelemetry/OTLP export (local
+`optimus.causal.v1` export exists — ADR-0037), live security-denial event stream,
+token accounting, artifact publication lineage, GPU/fallback telemetry, or a
+transaction spanning trace, route, execution, runtime, agent, workflow, and
+session stores. Fixture replay does not rerun live providers or external
+effects. Logs remain non-authoritative.
 
 ## GPU and CPU fallback
 
@@ -600,10 +602,13 @@ availability mandatory.
 10. **Confirmed current behaviour (S+++ Phase 1B):** if durable effect links
     exist without matching tool transcript messages, session open injects
     deterministic repaired tool messages from the links and persists them.
-11. **Known debt:** duplicate ADR number `0016`.
-12. **Known debt:** existing blueprint and phase notes mix future targets with
-    historical/current claims; they require gradual labeling, not deletion.
+11. **Resolved (P16):** duplicate ADR number `0016` aliased as **ADR-0016-A**
+    (tool contract) and **ADR-0016-B** (FS sandbox); historical file names kept.
+12. **Residual (owned by P16 banners / ongoing):** blueprint and historical
+    phase notes may mix plan vs current; readers use status banners and the
+    Confirmed/Planned/Unknown legend. Do not rewrite history to hide priors.
 13. **Program:** architecture quality marks live in
     [architecture-marks.md](./architecture-marks.md). Foundation Phases 0–5:
-    [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md) (done). Active
-    lowest-to-highest S+++ climb: [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
+    [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md) (done). S+++ climb
+    P10–P15 done; active next: P16+ in
+    [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).

@@ -1,6 +1,15 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-23 · P21D artifacts bulk delete + Phase 20 browser partials
+Updated: 2026-07-25 · P16 claim hygiene; shell truth aligned with system-overview
+
+**Status banner:** This scorecard is a **parity/planning rollup**, not the
+architecture quality grade sheet. For modular architecture grades (S+++ climb)
+see [architecture-marks.md](./architecture-marks.md). For current topology and
+Confirmed behaviour see [system-overview.md](./system-overview.md).
+
+**Default product shell (Confirmed):** Electron + React over Rust host; Legacy
+Wry optional. Do not read “tao+wry Windows desktop shell” below as the default
+install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  
 **Validator:** `python scripts/check-parity-ledger.py`  
@@ -32,12 +41,13 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Codex OAuth Responses provider
 - Streaming desktop chat
 - Durable session reopen
-- tao+wry Windows desktop shell
+- Electron + React default desktop shell (Wry legacy optional)
 - Installed native paint/accessibility baseline
 - Sandboxed Files list/read
 - Bounded terminal job stream
 - Sequential durable write/command campaigns
 - Deterministic offline eval suite
+- Store-backed causal reconstruction + local export (`optimus.causal.v1`)
 
 ## Material partials
 

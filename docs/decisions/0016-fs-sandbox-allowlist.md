@@ -1,7 +1,10 @@
-# ADR-0016: FS sandbox allowlist for desktop Files pane
+# ADR-0016-B: FS sandbox allowlist for desktop Files pane
 
-## Status
-Accepted (implementation in progress Phase P1)
+> **Alias:** ADR-0016-B (file historically numbered `0016-fs-sandbox-allowlist.md`).
+> Distinct from ADR-0016-A (canonical tool/pack contract). See decisions index.
+
+- **Status:** Accepted; `FsRoots` read path Confirmed (implementation complete beyond original “in progress” wording)
+- **Date:** historical Phase P1; status honesty 2026-07-25 (P16)
 
 ## Context
 Optimus Desktop needs a Hermes/Codex-class Files rail. Arbitrary filesystem access is unacceptable on a personal-agent host.

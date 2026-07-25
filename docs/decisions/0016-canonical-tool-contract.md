@@ -1,6 +1,10 @@
-# ADR-0016: Canonical tool and pack contract
+# ADR-0016-A: Canonical tool and pack contract
 
-Status: Accepted for PF-04
+> **Alias:** ADR-0016-A (file historically numbered `0016-canonical-tool-contract.md`).
+> Distinct from ADR-0016-B (FS sandbox allowlist). See decisions index.
+
+- **Status:** Accepted (PF-04); current behaviour Confirmed for pack/`ToolDesc` contract
+- **Date:** historical (PF-04); identity alias formalized 2026-07-25 (P16)
 
 ## Context
 
