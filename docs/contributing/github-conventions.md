@@ -102,12 +102,15 @@ space**, or match the `namespace:value` suffix.
 PRs typically use `👀 status:needs-review` / `✏️ status:changes-requested` /
 `✔️ status:approved` / `🚫 status:do-not-merge`.
 
-## Conventional Commits
+## Conventional Commits (emoji-first)
+
+GitHub’s commit and PR lists show the **subject line only**. Put the type emoji
+**first** so it is visible on the repo home / commits tab.
 
 Format:
 
 ```text
-<type>(optional-scope): <imperative summary>
+<emoji> <type>(optional-scope): <imperative summary>
 
 [optional body]
 
@@ -116,19 +119,21 @@ Format:
 
 ### Types (align with `type:` labels)
 
-| Commit type | PR label | Meaning |
-|---|---|---|
-| `feat` | `✨ type:feat` | User-visible capability |
-| `fix` | `🔧 type:fix` | Bug fix |
-| `docs` | `📝 type:docs` | Docs only |
-| `refactor` | `♻️ type:refactor` | Behaviour-preserving restructure |
-| `test` | `✅ type:test` | Tests only |
-| `chore` | `🧹 type:chore` | Tooling, deps, housekeeping |
-| `ci` | `⚙️ type:ci` | CI workflows |
-| `perf` | `⚡ type:perf` | Performance |
-| `build` | `🧹 type:chore` | Build system (map to chore) |
-| `style` | `🧹 type:chore` | Formatting only |
-| `revert` | match original | Reverts a prior commit |
+| Emoji | Commit type | PR label | Meaning |
+|---|---|---|---|
+| ✨ | `feat` | `✨ type:feat` | User-visible capability |
+| 🔧 | `fix` | `🔧 type:fix` | Bug fix |
+| 📝 | `docs` | `📝 type:docs` | Docs only |
+| ♻️ | `refactor` | `♻️ type:refactor` | Behaviour-preserving restructure |
+| ✅ | `test` | `✅ type:test` | Tests only |
+| 🧹 | `chore` | `🧹 type:chore` | Tooling, deps, housekeeping |
+| ⚙️ | `ci` | `⚙️ type:ci` | CI workflows |
+| ⚡ | `perf` | `⚡ type:perf` | Performance |
+| 🔒 | `fix` / `feat` | `🔒 type:security` | Security (prefer `🔧 fix` or `✨ feat` + security label) |
+| 🏗️ | `refactor` / `docs` | `🏗️ type:architecture` | Architecture program (use with `type:architecture` label) |
+| 🐛 | `fix` | `🐛 type:bug` | Same as fix when filing bugs |
+| ⏪ | `revert` | match original | Reverts a prior commit |
+| 🧹 | `build` / `style` | `🧹 type:chore` | Build system / formatting only |
 
 ### Scopes (optional; align with `area:`)
 
@@ -137,20 +142,23 @@ Prefer short crate/app names: `kernel`, `runtime`, `workflow`, `agent`,
 
 ### Subject rules
 
+- **Leading emoji required** (exactly one, matching the type table)
 - Imperative mood: “add”, “fix”, “peel” — not “added” / “adds”
-- ≤72 characters
+- ≤72 characters (emoji counts; keep the text short)
 - No trailing period
 - Reference issues: `Fixes #123` / `Refs #123` in body or footer
 
-### Examples
+### Examples (what you see in the commits list)
 
 ```text
-feat(workflow): add write-then-read handoff DAG
-fix(runtime): refuse grant transfer across effect hashes
-refactor(kernel): peel agent contracts into optimus-agent
-docs(architecture): accept ADR-0034 control-plane peels
-test(workflow): cover mid-DAG cancel tree
-chore(em): refresh generated indexes after peel
+✨ feat(workflow): add write-then-read handoff DAG
+🔧 fix(runtime): refuse grant transfer across effect hashes
+♻️ refactor(kernel): peel agent contracts into optimus-agent
+📝 docs(architecture): accept ADR-0034 control-plane peels
+✅ test(workflow): cover mid-DAG cancel tree
+🧹 chore(em): refresh generated indexes after peel
+⚙️ ci: wire check-crate-layers into PR checks
+🏗️ architecture: S+++ P12 command capability envelope
 ```
 
 ## Branch naming
@@ -183,7 +191,8 @@ Rules:
 
 ### Title
 
-Same as Conventional Commit subject (often the squash merge message).
+Same as emoji-first Conventional Commit subject (often the squash merge
+message). This is what appears in the repository **Commits** and PR lists.
 
 ### Description
 

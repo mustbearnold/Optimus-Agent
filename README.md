@@ -159,9 +159,10 @@ Emoji matches the GitHub `area:*` label for that package (see Issues/PRs).
 Commits, branches, PRs, issues, and labels follow
 [docs/contributing/github-conventions.md](docs/contributing/github-conventions.md).
 
-- **Commits / PR titles:** Conventional Commits (`feat(scope): …`, `fix: …`)
+- **Commits / PR titles (visible on Commits tab):** emoji-first Conventional Commits
+  - `✨ feat(scope): …` · `🔧 fix: …` · `♻️ refactor: …` · `📝 docs: …` · `🧹 chore: …`
 - **Branches:** `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
-- **Labels (show on Issues / PRs):** one leading emoji + namespace, e.g.
+- **Labels (Issues / PRs):** one leading emoji + namespace, e.g.
   - ✨ `type:feat` · 🔧 `type:fix` · ♻️ `type:refactor` · 📝 `type:docs`
   - 🧠 `area:kernel` · 🔁 `area:runtime` · 🔀 `area:workflow` · 🖥️ `area:desktop`
   - 🔥 `priority:p1` · 👀 `status:needs-review` · ▪️ `size:S` · 🔐 `risk:security`

@@ -1,11 +1,13 @@
 <!--
-Title format (matches Conventional Commits):
-  <type>(optional-scope): <imperative summary ≤72 chars>
+Title format (emoji-first Conventional Commits — shows on repo Commits tab):
+  <emoji> <type>(optional-scope): <imperative summary>
 
 Examples:
-  feat(workflow): add write-then-read DAG handoff
-  fix(runtime): fence SmartDeny grants to effect hash
-  docs(architecture): record ADR-0034 control-plane peels
+  ✨ feat(workflow): add write-then-read DAG handoff
+  🔧 fix(runtime): fence SmartDeny grants to effect hash
+  📝 docs(architecture): record ADR-0034 control-plane peels
+  ♻️ refactor(kernel): peel agent contracts into optimus-agent
+  🧹 chore(em): refresh generated indexes
 -->
 
 ## Summary
@@ -40,7 +42,7 @@ Examples:
 
 ## Checklist
 
-- [ ] Conventional commit title (and commits if stacked)
+- [ ] Emoji-first Conventional Commit title (and commits if stacked)
 - [ ] Branch named `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
 - [ ] No secrets or home paths in logs/diffs
 - [ ] Docs/ADR updated when contracts or architecture change
