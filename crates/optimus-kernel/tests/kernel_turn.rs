@@ -586,6 +586,128 @@ fn activate_pack_increases_tools_and_tokens() {
         .tools
         .iter()
         .any(|t| t.id.as_str() == "browser_navigate"));
+    // Progressive activate outcome carries budget headroom fields in ToolOutcome.data.
+    let tool_msg = k
+        .messages
+        .iter()
+        .find(|m| m.tool_call_id.as_deref() == Some("a1"))
+        .expect("activate_pack tool message");
+    let outcome: ToolOutcome = serde_json::from_str(&tool_msg.content).unwrap();
+    assert_eq!(outcome.kind, ToolOutcomeKind::Succeeded);
+    assert_eq!(outcome.data["ok"], true);
+    assert!(
+        outcome.data["max_schema_tokens"].as_u64().unwrap()
+            >= outcome.data["schema_tokens"].as_u64().unwrap()
+    );
+    assert_eq!(outcome.data["on_demand_loaded"], 1);
+}
+
+#[test]
+fn activate_pack_schema_budget_returns_typed_tool_outcome_not_turn_abort() {
+    use optimus_packs::{builtin_catalog, PackBudgetConfig, PackId};
+
+    let dir = tempdir().unwrap();
+    let core_tokens = builtin_catalog()
+        .get(&PackId::Core)
+        .unwrap()
+        .schema_tokens();
+    let mut k = Kernel::open(
+        dir.path(),
+        KernelConfig {
+            pack_budget: PackBudgetConfig {
+                max_on_demand_packs: 5,
+                max_schema_tokens: core_tokens + 100,
+            },
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
+
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "budget-1".into(),
+                name: "activate_pack".into(),
+                arguments: json!({"name": "browser"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("stayed on core after budget deny".into()),
+            tool_calls: vec![],
+        },
+    ]);
+
+    let result = k
+        .turn(&mut model, "try to load browser under tight budget")
+        .expect("budget denial is a tool outcome, not a turn failure");
+    assert_eq!(result.assistant_text, "stayed on core after budget deny");
+    assert_eq!(k.packs.loaded_packs(), vec![PackId::Core]);
+
+    let tool_msg = k
+        .messages
+        .iter()
+        .find(|m| m.tool_call_id.as_deref() == Some("budget-1"))
+        .expect("failed activate_pack tool message");
+    let outcome: ToolOutcome = serde_json::from_str(&tool_msg.content).unwrap();
+    assert_eq!(outcome.kind, ToolOutcomeKind::Failed);
+    assert_eq!(
+        outcome.error.as_ref().map(|e| e.code.as_str()),
+        Some("pack_schema_budget_exceeded")
+    );
+    assert!(outcome.error.as_ref().unwrap().retryable);
+}
+
+#[test]
+fn activate_pack_on_demand_limit_returns_typed_tool_outcome_not_turn_abort() {
+    use optimus_packs::{PackBudgetConfig, PackId};
+
+    let dir = tempdir().unwrap();
+    let mut k = Kernel::open(
+        dir.path(),
+        KernelConfig {
+            pack_budget: PackBudgetConfig {
+                max_on_demand_packs: 0,
+                max_schema_tokens: PackBudgetConfig::default().max_schema_tokens,
+            },
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
+
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "limit-1".into(),
+                name: "activate_pack".into(),
+                arguments: json!({"name": "browser"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("stayed on core after pack limit".into()),
+            tool_calls: vec![],
+        },
+    ]);
+
+    let result = k
+        .turn(&mut model, "try to load browser with zero on-demand slots")
+        .expect("pack limit denial is a tool outcome, not a turn failure");
+    assert_eq!(result.assistant_text, "stayed on core after pack limit");
+    assert_eq!(k.packs.loaded_packs(), vec![PackId::Core]);
+
+    let tool_msg = k
+        .messages
+        .iter()
+        .find(|m| m.tool_call_id.as_deref() == Some("limit-1"))
+        .expect("failed activate_pack tool message");
+    let outcome: ToolOutcome = serde_json::from_str(&tool_msg.content).unwrap();
+    assert_eq!(outcome.kind, ToolOutcomeKind::Failed);
+    assert_eq!(
+        outcome.error.as_ref().map(|e| e.code.as_str()),
+        Some("pack_on_demand_limit_exceeded")
+    );
+    assert!(outcome.error.as_ref().unwrap().retryable);
 }
 
 #[test]

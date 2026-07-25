@@ -1,12 +1,13 @@
 ---
 knowledge_type: plan
-status: current
+status: historical
 owns:
   - docs/plans/s-plus-plus-plus-program.md
 watches:
   - docs/architecture/architecture-marks.md
   - docs/architecture/system-overview.md
   - docs/plans/s-plus-trust-spine.md
+  - docs/plans/product-complete-program.md
   - crates/optimus-runtime/src/lib.rs
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/specialist_vertical.rs
@@ -28,7 +29,8 @@ last_verified_commit: null
 
 # S+++ program — lowest-to-highest dimension plan
 
-**Authority for architecture S+++ sequencing after Phases 0–5:** this document.
+**Authority for architecture S+++ sequencing after Phases 0–5 (complete):** this
+document. **App execution after P19:** [product-complete-program.md](./product-complete-program.md).
 
 Phases 0–5 (truth freeze through causal observability) are complete in
 [s-plus-trust-spine.md](./s-plus-trust-spine.md). This plan is the **next program**:
@@ -651,14 +653,18 @@ L = multi-PR; M = one or few PRs; S = short.
 | Plan | Role |
 |---|---|
 | [s-plus-trust-spine.md](./s-plus-trust-spine.md) | **Done** foundation Phases 0–5 |
-| **This plan** | **Complete** architecture S+++ Phases P10–P19 |
-| [full-app-microtasks.md](./full-app-microtasks.md) | Product surface; yields to architecture sequencing on conflicts |
+| **This plan** | **Complete** architecture S+++ Phases P10–P19 (hold constraint) |
+| [product-complete-program.md](./product-complete-program.md) | **Active** app execution authority (program P20–P29) |
+| [full-app-microtasks.md](./full-app-microtasks.md) | Product microtask queue under product-complete exits |
 | [engineering-memory-phases.md](./engineering-memory-phases.md) | EM system evolution; use lenses each phase |
 
 ---
 
 ## Immediate next action
 
-**P10–P19 done.** Architecture marks all **S+++**. Next: product/parity work
-outside this climb (`program:parity`, full-app microtasks); optional human
-external sign-off on the board evidence.
+**P10–P19 done.** Architecture marks all **S+++**. This document is
+**historical** for mark exits and remains a **hold constraint**.
+
+**Next execution authority:** [product-complete-program.md](./product-complete-program.md)
+(program P20–P29). Task queue: [full-app-microtasks.md](./full-app-microtasks.md).
+Optional human external sign-off on the S+++ board evidence remains deferred.

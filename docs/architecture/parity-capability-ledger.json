@@ -1,60 +1,578 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; artifacts path post-P11 peel",
+  "scorecard_marker": "P17 release gates; program P21 tool-loop/pack-budget parity; artifacts path post-P11 peel",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
-  "states": ["missing", "partial", "parity", "win"],
+  "states": [
+    "missing",
+    "partial",
+    "parity",
+    "win"
+  ],
   "capabilities": [
-    {"id":"core.work-durability","capability":"Crash-resumable jobs and effects","hermes_reference":"Process-local tool execution","state":"win","evidence":["crates/optimus-runtime/tests/crash_resume.rs"],"trajectory":"cargo:optimus-runtime/crash_resume","owner_ticket":"HOLD"},
-    {"id":"core.memory-integrity","capability":"Evidence-fenced bitemporal memory","hermes_reference":"Pins plus plugin memory","state":"win","evidence":["crates/optimus-memory/tests/metamemory_mvp.rs"],"trajectory":"cargo:optimus-memory/metamemory_mvp","owner_ticket":"HOLD"},
-    {"id":"core.skills-lifecycle","capability":"Versioned skills with outcome-gated promotion","hermes_reference":"Create/patch skills","state":"win","evidence":["crates/optimus-skills/tests/skills_lifecycle.rs"],"trajectory":"cargo:optimus-skills/skills_lifecycle","owner_ticket":"HOLD"},
-    {"id":"core.smartdeny","capability":"Durable approval-gated effects","hermes_reference":"Approval modes","state":"win","evidence":["crates/optimus-runtime/tests/approvals_surface.rs","apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"],"trajectory":"cargo:optimus-runtime/approvals_surface","owner_ticket":"A-05"},
-    {"id":"core.pack-budget","capability":"Progressive tool packs and schema budget","hermes_reference":"Toolsets","state":"partial","evidence":["crates/optimus-packs/tests/packs_budget.rs","docs/decisions/0016-canonical-tool-contract.md","apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"],"trajectory":null,"owner_ticket":"D-01,D-02"},
-    {"id":"core.tool-loop","capability":"Model-to-tool dispatch loop","hermes_reference":"Broad Hermes tool loop","state":"partial","evidence":["crates/optimus-kernel/tests/kernel_turn.rs","crates/optimus-kernel/src/openai_compat.rs","crates/optimus-kernel/src/codex_oauth.rs","docs/decisions/0016-canonical-tool-contract.md"],"trajectory":null,"owner_ticket":"A-02,A-03,A-04,D-01"},
-    {"id":"provider.openai-compat","capability":"OpenAI-compatible provider client","hermes_reference":"OpenAI-compatible providers","state":"parity","evidence":["crates/optimus-kernel/tests/openai_http.rs"],"trajectory":"cargo:optimus-kernel/openai_http","owner_ticket":"A-01"},
-    {"id":"provider.codex-oauth","capability":"Codex OAuth Responses provider","hermes_reference":"OpenAI Codex OAuth","state":"parity","evidence":["crates/optimus-kernel/tests/codex_oauth.rs","docs/decisions/0011-codex-oauth.md"],"trajectory":"cargo:optimus-kernel/codex_oauth","owner_ticket":"A-01"},
-    {"id":"provider.catalog","capability":"Canonical multi-provider/model catalog and connect state","hermes_reference":"Broad provider catalog and OAuth","state":"partial","evidence":["apps/optimus-desktop/ui/index.html"],"trajectory":null,"owner_ticket":"A-01"},
-    {"id":"provider.failover","capability":"Capability-aware provider failover","hermes_reference":"Provider fallback","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"A-08"},
-    {"id":"chat.streaming","capability":"Streaming desktop chat","hermes_reference":"Streaming chat","state":"parity","evidence":["apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"],"trajectory":"playwright:Enter streams offline reply progressively","owner_ticket":"A-07"},
-    {"id":"chat.thinking-tools","capability":"Separate thinking and timed tool lifecycle cards","hermes_reference":"Thinking blocks and tool cards","state":"partial","evidence":["apps/optimus-desktop/ui/index.html"],"trajectory":null,"owner_ticket":"A-07"},
-    {"id":"session.durable","capability":"Durable session reopen","hermes_reference":"Conversation persistence","state":"parity","evidence":["crates/optimus-kernel/tests/session_resume.rs"],"trajectory":"cargo:optimus-kernel/session_resume","owner_ticket":"HOLD"},
-    {"id":"session.search-hygiene","capability":"FTS, jump, archive, active sort, durable pins","hermes_reference":"Session search/archive/pins","state":"partial","evidence":["apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js","crates/optimus-kernel/src/session.rs"],"trajectory":null,"owner_ticket":"A-06,A-10"},
-    {"id":"desktop.shell","capability":"Conversation-first Windows desktop shell","hermes_reference":"Hermes Desktop","state":"parity","evidence":["apps/optimus-desktop/e2e/02-shell-and-composer.spec.js","docs/decisions/0014-native-webview-ipc-mode.md"],"trajectory":"playwright:shell multi-pane IA","owner_ticket":"PF-02"},
-    {"id":"desktop.native-cua","capability":"Installed native paint and accessibility","hermes_reference":"Desktop application","state":"parity","evidence":["local/tmp/baselines/PF-00-report.md"],"trajectory":"cua:pf00-native-paint","owner_ticket":"P-06"},
-    {"id":"desktop.logs","capability":"Bounded redacted logs drawer","hermes_reference":"Logs surface","state":"missing","evidence":["apps/optimus-desktop/ui/index.html"],"trajectory":null,"owner_ticket":"A-09"},
-    {"id":"files.read","capability":"Sandboxed project file list/read","hermes_reference":"File tools and Files pane","state":"parity","evidence":["crates/optimus-kernel/src/fs_sandbox.rs","apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"],"trajectory":"playwright:Files pane","owner_ticket":"B-04"},
-    {"id":"files.mutate","capability":"Write/patch/mkdir/rename/delete with SmartDeny","hermes_reference":"File mutation tools","state":"missing","evidence":["crates/optimus-kernel/src/fs_sandbox.rs"],"trajectory":null,"owner_ticket":"A-02,B-04"},
-    {"id":"terminal.job","capability":"Bounded command stream","hermes_reference":"Terminal tool","state":"parity","evidence":["crates/optimus-runtime/tests/command_capture.rs","apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"],"trajectory":"playwright:term_run IPC job-stream echo","owner_ticket":"A-03"},
-    {"id":"terminal.pty","capability":"Interactive multi-tab ConPTY terminal","hermes_reference":"Interactive terminal pane","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"B-05"},
-    {"id":"web.search","capability":"Web search in model tool loop","hermes_reference":"web_search/web_extract","state":"partial","evidence":["crates/optimus-kernel/tests/web_search_live.rs"],"trajectory":null,"owner_ticket":"A-04"},
-    {"id":"browser.http","capability":"SSRF-safe HTTP navigate/snapshot/click","hermes_reference":"Browser automation","state":"partial","evidence":["crates/optimus-kernel/src/browser.rs","crates/optimus-kernel/tests/browser_live.rs","docs/evidence/phase-20-cdp-browser-2026-07-23.md"],"trajectory":null,"owner_ticket":"B-01"},
-    {"id":"browser.cdp","capability":"Shared-session CDP preview browser","hermes_reference":"Browser Use/CDP","state":"partial","evidence":["crates/optimus-browser/src/lib.rs","crates/optimus-kernel/src/browser.rs","apps/optimus-desktop/e2e/06-preview-browser.spec.js","docs/evidence/phase-20-cdp-browser-2026-07-23.md"],"trajectory":null,"owner_ticket":"B-01,B-02"},
-    {"id":"browser.annotations","capability":"Page annotations as structured agent instructions","hermes_reference":"Codex preview annotations","state":"partial","evidence":["apps/optimus-desktop/ui/app.js","apps/optimus-desktop/e2e/06-preview-browser.spec.js"],"trajectory":null,"owner_ticket":"B-03"},
-    {"id":"desktop.cua","capability":"Background computer-use pack","hermes_reference":"computer_use","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"B-06"},
-    {"id":"cron.lifecycle","capability":"Schedules, pause/resume/remove, delivery and history","hermes_reference":"Rich cron jobs","state":"partial","evidence":["crates/optimus-ops/src/cron.rs","apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"],"trajectory":null,"owner_ticket":"C-01,C-04"},
-    {"id":"gateway.queue","capability":"Durable inbox/outbox and local webhook","hermes_reference":"Gateway message bus","state":"partial","evidence":["crates/optimus-ops/src/gateway.rs","apps/optimus-cli/tests/gateway_http.rs"],"trajectory":null,"owner_ticket":"C-02"},
-    {"id":"gateway.telegram","capability":"Telegram home-channel adapter","hermes_reference":"Telegram gateway","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"C-03"},
-    {"id":"gateway.discord-slack","capability":"Discord and Slack adapters","hermes_reference":"Discord/Slack gateway","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"C-05"},
-    {"id":"gateway.ui","capability":"Messaging connection/inbox/outbox UI","hermes_reference":"Messaging surface","state":"missing","evidence":["apps/optimus-desktop/ui/index.html"],"trajectory":null,"owner_ticket":"C-04"},
-    {"id":"mcp.client","capability":"Pack-gated stdio/HTTP MCP client","hermes_reference":"Native MCP client","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"D-01"},
-    {"id":"plugins.signed","capability":"Signed permission-declared plugins/packs","hermes_reference":"Plugin ecosystem","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"D-02"},
-    {"id":"skills.ui","capability":"Skills lifecycle desktop console","hermes_reference":"Skills management UX","state":"missing","evidence":["crates/optimus-skills/src/lib.rs"],"trajectory":null,"owner_ticket":"D-03"},
-    {"id":"artifacts.store-ui","capability":"Provenance-aware artifact publication and gallery","hermes_reference":"Artifacts","state":"partial","evidence":["crates/optimus-artifacts/src/lib.rs","apps/optimus-desktop/src/ipc/files.rs","apps/optimus-desktop/ui/app.js","docs/specifications/phase-21a-artifacts-store.md","docs/evidence/phase-21b-artifacts-gallery-2026-07-23.md","docs/evidence/phase-21c-artifacts-delete-2026-07-23.md","docs/evidence/phase-21d-artifacts-bulk-delete-2026-07-23.md"],"trajectory":null,"owner_ticket":"D-04"},
-    {"id":"memory.ui","capability":"Evidence explorer, feedback, correction and forget","hermes_reference":"Memory management","state":"missing","evidence":["crates/optimus-memory/src/lib.rs"],"trajectory":null,"owner_ticket":"D-05"},
-    {"id":"projects.scope","capability":"Durable project roots and policy scope","hermes_reference":"Projects/workspaces","state":"partial","evidence":["apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js"],"trajectory":null,"owner_ticket":"D-06"},
-    {"id":"profiles.isolation","capability":"Profile-isolated homes and cross-profile links","hermes_reference":"Hermes profiles","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"D-06"},
-    {"id":"campaign.sequential","capability":"Durable sequential write/command campaigns","hermes_reference":"Delegated work","state":"parity","evidence":["crates/optimus-runtime/src/campaign.rs","crates/optimus-runtime/tests/approvals_surface.rs"],"trajectory":"cargo:optimus-runtime/campaign","owner_ticket":"D-07"},
-    {"id":"campaign.subagents","capability":"Durable child-agent DAGs, leases and handoffs","hermes_reference":"delegate_task and Kanban agents","state":"missing","evidence":["crates/optimus-runtime/src/campaign.rs"],"trajectory":null,"owner_ticket":"D-07,E-08"},
-    {"id":"eval.offline","capability":"Deterministic offline trajectory suite","hermes_reference":"Evaluation tooling","state":"parity","evidence":["crates/optimus-eval/src/eval.rs"],"trajectory":"cargo:optimus-kernel/eval","owner_ticket":"P-02"},
-    {"id":"eval.comparative","capability":"Same-task Hermes-vs-Optimus runner","hermes_reference":"Hermes baseline","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"P-01"},
-    {"id":"media.vision-image","capability":"Vision and image generation pack","hermes_reference":"vision_analyze/image_generate","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-01"},
-    {"id":"media.voice","capability":"STT/TTS and voice composer","hermes_reference":"Voice/TTS","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-02"},
-    {"id":"surface.proxy","capability":"OpenAI-compatible server/proxy","hermes_reference":"OpenAI-compatible proxy","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-03"},
-    {"id":"surface.acp","capability":"ACP/IDE bridge","hermes_reference":"ACP integration","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-04"},
-    {"id":"surface.tui","capability":"Headless TUI operator surface","hermes_reference":"Hermes TUI","state":"missing","evidence":["apps/optimus-cli/src/main.rs"],"trajectory":null,"owner_ticket":"E-05"},
-    {"id":"surface.commands","capability":"Canonical slash commands and command palette","hermes_reference":"Slash commands","state":"partial","evidence":["apps/optimus-cli/src/main.rs","apps/optimus-desktop/ui/index.html"],"trajectory":null,"owner_ticket":"E-06"},
-    {"id":"migration.hermes","capability":"Hermes session/skill/memory importer","hermes_reference":"Hermes state","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-07"},
-    {"id":"release.updater","capability":"Signed updater and rollback","hermes_reference":"Product update channel","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-09"},
-    {"id":"packs.breadth","capability":"Office/devex/social/home capability breadth","hermes_reference":"Hermes skill/tool ecosystem","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"E-11"}
+    {
+      "id": "core.work-durability",
+      "capability": "Crash-resumable jobs and effects",
+      "hermes_reference": "Process-local tool execution",
+      "state": "win",
+      "evidence": [
+        "crates/optimus-runtime/tests/crash_resume.rs"
+      ],
+      "trajectory": "cargo:optimus-runtime/crash_resume",
+      "owner_ticket": "HOLD"
+    },
+    {
+      "id": "core.memory-integrity",
+      "capability": "Evidence-fenced bitemporal memory",
+      "hermes_reference": "Pins plus plugin memory",
+      "state": "win",
+      "evidence": [
+        "crates/optimus-memory/tests/metamemory_mvp.rs"
+      ],
+      "trajectory": "cargo:optimus-memory/metamemory_mvp",
+      "owner_ticket": "HOLD"
+    },
+    {
+      "id": "core.skills-lifecycle",
+      "capability": "Versioned skills with outcome-gated promotion",
+      "hermes_reference": "Create/patch skills",
+      "state": "win",
+      "evidence": [
+        "crates/optimus-skills/tests/skills_lifecycle.rs"
+      ],
+      "trajectory": "cargo:optimus-skills/skills_lifecycle",
+      "owner_ticket": "HOLD"
+    },
+    {
+      "id": "core.smartdeny",
+      "capability": "Durable approval-gated effects",
+      "hermes_reference": "Approval modes",
+      "state": "win",
+      "evidence": [
+        "crates/optimus-runtime/tests/approvals_surface.rs",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"
+      ],
+      "trajectory": "cargo:optimus-runtime/approvals_surface",
+      "owner_ticket": "A-05"
+    },
+    {
+      "id": "core.pack-budget",
+      "capability": "Progressive tool packs and schema budget",
+      "hermes_reference": "Toolsets",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "docs/decisions/0016-canonical-tool-contract.md",
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "docs/architecture/product-complete-p21-verification.md",
+        "docs/plans/product-complete-program.md",
+        "docs/evidence/product-complete-p21-hold-2026-07-25.md"
+      ],
+      "trajectory": "program P21: hard SchemaBudget/PackLimit fail-closed at CapabilitySession; progressive activate_pack reports schema_tokens/max/on_demand headroom; over-budget and on-demand-limit activate_pack yield typed ToolOutcome (pack_schema_budget_exceeded / pack_on_demand_limit_exceeded) without loading pack (kernel_turn). Packs console product surface residual owned by program P26.",
+      "owner_ticket": "D-01,D-02"
+    },
+    {
+      "id": "core.tool-loop",
+      "capability": "Model-to-tool dispatch loop",
+      "hermes_reference": "Broad Hermes tool loop",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/tests/kernel_turn.rs",
+        "crates/optimus-kernel/src/openai_compat.rs",
+        "crates/optimus-kernel/src/codex_oauth.rs",
+        "docs/decisions/0016-canonical-tool-contract.md",
+        "crates/optimus-packs/tests/packs_budget.rs",
+        "crates/optimus-kernel/tests/domain_modularity.rs",
+        "docs/architecture/product-complete-p21-verification.md",
+        "docs/plans/product-complete-program.md",
+        "docs/evidence/product-complete-p21-hold-2026-07-25.md"
+      ],
+      "trajectory": "program P21: closed ToolInvocation::ALL_DISPATCHABLE registry (assert_dispatch_registry_closed + try_from_catalog); kernel maps PackError budget/limit to typed ToolOutcome codes (pack_schema_budget_exceeded); activate_pack activation_snapshot; tests packs_budget + kernel_turn + domain_modularity. Evidence: crates/optimus-packs/src/lib.rs, crates/optimus-packs/tests/packs_budget.rs, crates/optimus-kernel/src/lib.rs, crates/optimus-kernel/tests/kernel_turn.rs, docs/architecture/product-complete-p21-verification.md",
+      "owner_ticket": "A-02,A-03,A-04,D-01"
+    },
+    {
+      "id": "provider.openai-compat",
+      "capability": "OpenAI-compatible provider client",
+      "hermes_reference": "OpenAI-compatible providers",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/tests/openai_http.rs"
+      ],
+      "trajectory": "cargo:optimus-kernel/openai_http",
+      "owner_ticket": "A-01"
+    },
+    {
+      "id": "provider.codex-oauth",
+      "capability": "Codex OAuth Responses provider",
+      "hermes_reference": "OpenAI Codex OAuth",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/tests/codex_oauth.rs",
+        "docs/decisions/0011-codex-oauth.md"
+      ],
+      "trajectory": "cargo:optimus-kernel/codex_oauth",
+      "owner_ticket": "A-01"
+    },
+    {
+      "id": "provider.catalog",
+      "capability": "Canonical multi-provider/model catalog and connect state",
+      "hermes_reference": "Broad provider catalog and OAuth",
+      "state": "partial",
+      "evidence": [
+        "apps/optimus-desktop/ui/index.html"
+      ],
+      "trajectory": null,
+      "owner_ticket": "A-01"
+    },
+    {
+      "id": "provider.failover",
+      "capability": "Capability-aware provider failover",
+      "hermes_reference": "Provider fallback",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "A-08"
+    },
+    {
+      "id": "chat.streaming",
+      "capability": "Streaming desktop chat",
+      "hermes_reference": "Streaming chat",
+      "state": "parity",
+      "evidence": [
+        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"
+      ],
+      "trajectory": "playwright:Enter streams offline reply progressively",
+      "owner_ticket": "A-07"
+    },
+    {
+      "id": "chat.thinking-tools",
+      "capability": "Separate thinking and timed tool lifecycle cards",
+      "hermes_reference": "Thinking blocks and tool cards",
+      "state": "partial",
+      "evidence": [
+        "apps/optimus-desktop/ui/index.html"
+      ],
+      "trajectory": null,
+      "owner_ticket": "A-07"
+    },
+    {
+      "id": "session.durable",
+      "capability": "Durable session reopen",
+      "hermes_reference": "Conversation persistence",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/tests/session_resume.rs"
+      ],
+      "trajectory": "cargo:optimus-kernel/session_resume",
+      "owner_ticket": "HOLD"
+    },
+    {
+      "id": "session.search-hygiene",
+      "capability": "FTS, jump, archive, active sort, durable pins",
+      "hermes_reference": "Session search/archive/pins",
+      "state": "partial",
+      "evidence": [
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
+        "crates/optimus-kernel/src/session.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "A-06,A-10"
+    },
+    {
+      "id": "desktop.shell",
+      "capability": "Conversation-first Windows desktop shell",
+      "hermes_reference": "Hermes Desktop",
+      "state": "parity",
+      "evidence": [
+        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+        "docs/decisions/0014-native-webview-ipc-mode.md"
+      ],
+      "trajectory": "playwright:shell multi-pane IA",
+      "owner_ticket": "PF-02"
+    },
+    {
+      "id": "desktop.native-cua",
+      "capability": "Installed native paint and accessibility",
+      "hermes_reference": "Desktop application",
+      "state": "parity",
+      "evidence": [
+        "local/tmp/baselines/PF-00-report.md"
+      ],
+      "trajectory": "cua:pf00-native-paint",
+      "owner_ticket": "P-06"
+    },
+    {
+      "id": "desktop.logs",
+      "capability": "Bounded redacted logs drawer",
+      "hermes_reference": "Logs surface",
+      "state": "missing",
+      "evidence": [
+        "apps/optimus-desktop/ui/index.html"
+      ],
+      "trajectory": null,
+      "owner_ticket": "A-09"
+    },
+    {
+      "id": "files.read",
+      "capability": "Sandboxed project file list/read",
+      "hermes_reference": "File tools and Files pane",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/src/fs_sandbox.rs",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
+      ],
+      "trajectory": "playwright:Files pane",
+      "owner_ticket": "B-04"
+    },
+    {
+      "id": "files.mutate",
+      "capability": "Write/patch/mkdir/rename/delete with SmartDeny",
+      "hermes_reference": "File mutation tools",
+      "state": "missing",
+      "evidence": [
+        "crates/optimus-kernel/src/fs_sandbox.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "A-02,B-04"
+    },
+    {
+      "id": "terminal.job",
+      "capability": "Bounded command stream",
+      "hermes_reference": "Terminal tool",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-runtime/tests/command_capture.rs",
+        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
+      ],
+      "trajectory": "playwright:term_run IPC job-stream echo",
+      "owner_ticket": "A-03"
+    },
+    {
+      "id": "terminal.pty",
+      "capability": "Interactive multi-tab ConPTY terminal",
+      "hermes_reference": "Interactive terminal pane",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "B-05"
+    },
+    {
+      "id": "web.search",
+      "capability": "Web search in model tool loop",
+      "hermes_reference": "web_search/web_extract",
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-kernel/tests/web_search_live.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "A-04"
+    },
+    {
+      "id": "browser.http",
+      "capability": "SSRF-safe HTTP navigate/snapshot/click",
+      "hermes_reference": "Browser automation",
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-kernel/src/browser.rs",
+        "crates/optimus-kernel/tests/browser_live.rs",
+        "docs/evidence/phase-20-cdp-browser-2026-07-23.md"
+      ],
+      "trajectory": null,
+      "owner_ticket": "B-01"
+    },
+    {
+      "id": "browser.cdp",
+      "capability": "Shared-session CDP preview browser",
+      "hermes_reference": "Browser Use/CDP",
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-browser/src/lib.rs",
+        "crates/optimus-kernel/src/browser.rs",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js",
+        "docs/evidence/phase-20-cdp-browser-2026-07-23.md"
+      ],
+      "trajectory": null,
+      "owner_ticket": "B-01,B-02"
+    },
+    {
+      "id": "browser.annotations",
+      "capability": "Page annotations as structured agent instructions",
+      "hermes_reference": "Codex preview annotations",
+      "state": "partial",
+      "evidence": [
+        "apps/optimus-desktop/ui/app.js",
+        "apps/optimus-desktop/e2e/06-preview-browser.spec.js"
+      ],
+      "trajectory": null,
+      "owner_ticket": "B-03"
+    },
+    {
+      "id": "desktop.cua",
+      "capability": "Background computer-use pack",
+      "hermes_reference": "computer_use",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "B-06"
+    },
+    {
+      "id": "cron.lifecycle",
+      "capability": "Schedules, pause/resume/remove, delivery and history",
+      "hermes_reference": "Rich cron jobs",
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-ops/src/cron.rs",
+        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"
+      ],
+      "trajectory": null,
+      "owner_ticket": "C-01,C-04"
+    },
+    {
+      "id": "gateway.queue",
+      "capability": "Durable inbox/outbox and local webhook",
+      "hermes_reference": "Gateway message bus",
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-ops/src/gateway.rs",
+        "apps/optimus-cli/tests/gateway_http.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "C-02"
+    },
+    {
+      "id": "gateway.telegram",
+      "capability": "Telegram home-channel adapter",
+      "hermes_reference": "Telegram gateway",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "C-03"
+    },
+    {
+      "id": "gateway.discord-slack",
+      "capability": "Discord and Slack adapters",
+      "hermes_reference": "Discord/Slack gateway",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "C-05"
+    },
+    {
+      "id": "gateway.ui",
+      "capability": "Messaging connection/inbox/outbox UI",
+      "hermes_reference": "Messaging surface",
+      "state": "missing",
+      "evidence": [
+        "apps/optimus-desktop/ui/index.html"
+      ],
+      "trajectory": null,
+      "owner_ticket": "C-04"
+    },
+    {
+      "id": "mcp.client",
+      "capability": "Pack-gated stdio/HTTP MCP client",
+      "hermes_reference": "Native MCP client",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "D-01"
+    },
+    {
+      "id": "plugins.signed",
+      "capability": "Signed permission-declared plugins/packs",
+      "hermes_reference": "Plugin ecosystem",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "D-02"
+    },
+    {
+      "id": "skills.ui",
+      "capability": "Skills lifecycle desktop console",
+      "hermes_reference": "Skills management UX",
+      "state": "missing",
+      "evidence": [
+        "crates/optimus-skills/src/lib.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "D-03"
+    },
+    {
+      "id": "artifacts.store-ui",
+      "capability": "Provenance-aware artifact publication and gallery",
+      "hermes_reference": "Artifacts",
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-artifacts/src/lib.rs",
+        "apps/optimus-desktop/src/ipc/files.rs",
+        "apps/optimus-desktop/ui/app.js",
+        "docs/specifications/phase-21a-artifacts-store.md",
+        "docs/evidence/phase-21b-artifacts-gallery-2026-07-23.md",
+        "docs/evidence/phase-21c-artifacts-delete-2026-07-23.md",
+        "docs/evidence/phase-21d-artifacts-bulk-delete-2026-07-23.md"
+      ],
+      "trajectory": null,
+      "owner_ticket": "D-04"
+    },
+    {
+      "id": "memory.ui",
+      "capability": "Evidence explorer, feedback, correction and forget",
+      "hermes_reference": "Memory management",
+      "state": "missing",
+      "evidence": [
+        "crates/optimus-memory/src/lib.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "D-05"
+    },
+    {
+      "id": "projects.scope",
+      "capability": "Durable project roots and policy scope",
+      "hermes_reference": "Projects/workspaces",
+      "state": "partial",
+      "evidence": [
+        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js"
+      ],
+      "trajectory": null,
+      "owner_ticket": "D-06"
+    },
+    {
+      "id": "profiles.isolation",
+      "capability": "Profile-isolated homes and cross-profile links",
+      "hermes_reference": "Hermes profiles",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "D-06"
+    },
+    {
+      "id": "campaign.sequential",
+      "capability": "Durable sequential write/command campaigns",
+      "hermes_reference": "Delegated work",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-runtime/src/campaign.rs",
+        "crates/optimus-runtime/tests/approvals_surface.rs"
+      ],
+      "trajectory": "cargo:optimus-runtime/campaign",
+      "owner_ticket": "D-07"
+    },
+    {
+      "id": "campaign.subagents",
+      "capability": "Durable child-agent DAGs, leases and handoffs",
+      "hermes_reference": "delegate_task and Kanban agents",
+      "state": "missing",
+      "evidence": [
+        "crates/optimus-runtime/src/campaign.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "D-07,E-08"
+    },
+    {
+      "id": "eval.offline",
+      "capability": "Deterministic offline trajectory suite",
+      "hermes_reference": "Evaluation tooling",
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-eval/src/eval.rs"
+      ],
+      "trajectory": "cargo:optimus-kernel/eval",
+      "owner_ticket": "P-02"
+    },
+    {
+      "id": "eval.comparative",
+      "capability": "Same-task Hermes-vs-Optimus runner",
+      "hermes_reference": "Hermes baseline",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "P-01"
+    },
+    {
+      "id": "media.vision-image",
+      "capability": "Vision and image generation pack",
+      "hermes_reference": "vision_analyze/image_generate",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-01"
+    },
+    {
+      "id": "media.voice",
+      "capability": "STT/TTS and voice composer",
+      "hermes_reference": "Voice/TTS",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-02"
+    },
+    {
+      "id": "surface.proxy",
+      "capability": "OpenAI-compatible server/proxy",
+      "hermes_reference": "OpenAI-compatible proxy",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-03"
+    },
+    {
+      "id": "surface.acp",
+      "capability": "ACP/IDE bridge",
+      "hermes_reference": "ACP integration",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-04"
+    },
+    {
+      "id": "surface.tui",
+      "capability": "Headless TUI operator surface",
+      "hermes_reference": "Hermes TUI",
+      "state": "missing",
+      "evidence": [
+        "apps/optimus-cli/src/main.rs"
+      ],
+      "trajectory": null,
+      "owner_ticket": "E-05"
+    },
+    {
+      "id": "surface.commands",
+      "capability": "Canonical slash commands and command palette",
+      "hermes_reference": "Slash commands",
+      "state": "partial",
+      "evidence": [
+        "apps/optimus-cli/src/main.rs",
+        "apps/optimus-desktop/ui/index.html"
+      ],
+      "trajectory": null,
+      "owner_ticket": "E-06"
+    },
+    {
+      "id": "migration.hermes",
+      "capability": "Hermes session/skill/memory importer",
+      "hermes_reference": "Hermes state",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-07"
+    },
+    {
+      "id": "release.updater",
+      "capability": "Signed updater and rollback",
+      "hermes_reference": "Product update channel",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-09"
+    },
+    {
+      "id": "packs.breadth",
+      "capability": "Office/devex/social/home capability breadth",
+      "hermes_reference": "Hermes skill/tool ecosystem",
+      "state": "missing",
+      "evidence": [],
+      "trajectory": null,
+      "owner_ticket": "E-11"
+    }
   ]
 }

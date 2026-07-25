@@ -44,9 +44,17 @@ Legend: ✅ expected green for that class of change · ❌ not required (and oft
 - Performance scenario suite complete.
 - Marketing claim that Optimus “is” Hermes `X.Y.Z`.
 
-Those remain **product parity** work under `program:parity` / version promote. The
-Release mark grades the **gate system** (fail-closed scripts, docs, claim hygiene),
-not product completeness.
+Those remain **product parity** work under `program:parity` / version promote /
+Track Z after product-complete. The Release mark grades the **gate system**
+(fail-closed scripts, docs, claim hygiene), not product completeness.
+
+**Sources of truth (do not collapse):**
+
+| Question | Authority |
+|---|---|
+| Architecture mark exits / hold | [architecture-marks.md](./architecture-marks.md); history [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md) (P10–P19 done) |
+| Daily-app phase exits → PRODUCT-COMPLETE | [product-complete-program.md](../plans/product-complete-program.md) (program P20–P29) + ledger |
+| Merge vs ship vs Hermes claim | this matrix (`release-check` vs `gate`) |
 
 ## Operator quick paths
 

@@ -7,6 +7,7 @@ watches:
   - AGENTS.md
   - docs/contributing/github-conventions.md
   - docs/plans/s-plus-plus-plus-program.md
+  - docs/plans/product-complete-program.md
   - docs/architecture/architecture-marks.md
   - docs/decisions/README.md
   - .github/pull_request_template.md
@@ -16,6 +17,7 @@ covers:
 depends_on:
   - docs/contributing/github-conventions.md
   - docs/plans/s-plus-plus-plus-program.md
+  - docs/plans/product-complete-program.md
   - docs/architecture/architecture-marks.md
 validated_by:
   - scripts/github_pr_branch.py
@@ -46,7 +48,7 @@ phase to a PR number, or treat a GitHub issue number as an ADR id.
 | Plane | Token shape | Authority | Example |
 |---|---|---|---|
 | **1. Decision** | `ADR-NNNN` (zero-padded) | `docs/decisions/NNNN-*.md` | `ADR-0034` |
-| **2. Program** | `P##` (S+++ program phase) | `docs/plans/s-plus-plus-plus-program.md` | `P12` Security envelope |
+| **2. Program** | `P##` (program phase) | **Active** program doc under `docs/plans/` | program `P21` tool contract; historical `P12` Security |
 | **3. Plan / microtask** | Plan-local id (`S1`, `C3`, `M7`…) | Owning plan doc under `docs/plans/` | P12 microtask `S3` |
 | **4. Delivery** | `PR #N` + local branch `pr/N-slug` | GitHub + `scripts/github_pr_branch.py` | `PR #21`, branch `pr/21-p12-command-fs-envelope` |
 | **5. Grade / mark** | Mark name + grade | `docs/architecture/architecture-marks.md` | Security **A-** → **S+++** |
@@ -65,22 +67,32 @@ phase to a PR number, or treat a GitHub issue number as an ADR id.
 
 ### Plane 2 — Program (`P##`)
 
-- S+++ architecture climb only: **P10–P19** in
-  [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md)
-  (P0–P5 = trust spine; P6–P9 reserved).
-- Sequence is **grade-ordered**, not GitHub-ordered.
+`P##` is a **program phase** under the **active program document**. Multiple
+programs may use the same token shape; always qualify in prose as
+**program P##** and name the owning plan.
+
+| Program | Phases | Authority | Status |
+|---|---|---|---|
+| Architecture S+++ climb | P10–P19 (P0–P5 trust spine; P6–P9 reserved) | [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md) | **done / historical** (hold constraint) |
+| Product-complete daily app | **program P20–P29** | [product-complete-program.md](../plans/product-complete-program.md) | **active execution authority** |
+
+- Sequence is program-defined (S+++ was grade-ordered; product-complete is
+  critical-path ordered), **not** GitHub-ordered.
 - One program phase may span **multiple PRs**.
 - One PR may touch **at most one primary program phase** (plus hold-suite
-  regressions). Do not merge “P12+P13” in one delivery unless explicitly
+  regressions). Do not merge “P21+P22” in one delivery unless explicitly
   approved as a hold/fix exception.
+- Historical product slice docs named `docs/specifications/phase-20*` /
+  `phase-21*` and evidence `phase-20-*` are **not** program plane. Cite by full
+  path. Spec-local subheads like `P20A` in those files are not program phases.
 - In commit/PR titles, program phase is optional scope **text**, not a
   substitute for the delivery number:
 
 ```text
 🏗️ architecture: S+++ P12 command capability envelope
+✨ feat(packs): program P21 fail-closed tool registry
 ♻️ refactor(kernel): peel agent contracts for P11
 ```
-
 ### Plane 3 — Plan / microtask
 
 - Microtasks live inside plan docs (`M*`, `C*`, `S*`, exit gates).
@@ -171,7 +183,7 @@ Before naming a file, branch, commit, ADR, issue, or PR, every coding agent
 | Plane | Primary docs |
 |---|---|
 | Decision | `docs/decisions/`, [README index](../decisions/README.md) |
-| Program | `docs/plans/s-plus-plus-plus-program.md` (+ trust spine for P0–P5) |
+| Program | Active: `docs/plans/product-complete-program.md` (P20–P29). Historical S+++: `docs/plans/s-plus-plus-plus-program.md` (+ trust spine for P0–P5) |
 | Plan / microtask | `docs/plans/**` |
 | Delivery | [github-conventions.md](./github-conventions.md), PR template, `github_pr_branch.py` |
 | Grade | `docs/architecture/architecture-marks.md` |

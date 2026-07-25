@@ -43,7 +43,9 @@ fn write_ctx() -> WriteContext {
 /// catalog tool — kernel dispatch must not invent a second catalog.
 #[test]
 fn packs_catalog_covers_all_dispatchable_invocations() {
+    use optimus_packs::assert_dispatch_registry_closed;
     let catalog = builtin_catalog();
+    assert_dispatch_registry_closed(&catalog).expect("builtin catalog closed over ALL_DISPATCHABLE");
     let mut seen = Vec::new();
     for pack in catalog.values() {
         for tool in &pack.tools {
@@ -52,20 +54,9 @@ fn packs_catalog_covers_all_dispatchable_invocations() {
             }
         }
     }
-    for inv in [
-        ToolInvocation::ReadFile,
-        ToolInvocation::WriteFile,
-        ToolInvocation::Terminal,
-        ToolInvocation::WebSearch,
-        ToolInvocation::MemoryRecall,
-        ToolInvocation::SkillResolve,
-        ToolInvocation::ActivatePack,
-        ToolInvocation::BrowserNavigate,
-        ToolInvocation::BrowserSnapshot,
-        ToolInvocation::BrowserClick,
-    ] {
+    for inv in ToolInvocation::ALL_DISPATCHABLE {
         assert!(
-            seen.contains(&inv),
+            seen.contains(inv),
             "packs catalog missing ToolInvocation::{inv:?} — would force a second catalog"
         );
     }
