@@ -1,7 +1,7 @@
 # S+++ P12 verification — command capability envelope
 
 Date: 2026-07-25  
-Planes: program **P12** · decision **ADR-0035** · delivery (see open PR)
+Planes: program **P12** · decision **ADR-0035** · delivery **PR #22**
 
 ## Exit evidence
 
