@@ -46,7 +46,7 @@ tests. Planned work must not be graded as current behaviour.
 
 | Mark | Grade | Notes |
 |---|:---:|---|
-| Durability / crash safety | **A+** | Work Graph, ambiguous effects, process-tree ownership. Session open repairs missing tool messages from effect links. |
+| Durability / crash safety | **S+++** | Work Graph crash-resume + ambiguous command non-replay; process-tree ownership before settle; session multi-link repair-on-open; campaign crash recover; workflow cancel idempotent. Operator contract: `optimus doctor` multi-DB inventory/quarantine + `doctor backup-list`; scope = process-local SQLite (external messaging exactly-once out of scope). |
 | Security boundary design | **S+++** | SmartDeny high-risk effects; exact grants; path preflight; skill class grants. Linux commands: confined bwrap (workspace-only RW; no full-root bind) under default `CommandFsEnvelope::Confined`; `UnrestrictedHost` is explicit break-glass. Windows: Job Object residual for Confined; `ConfinedNoNetwork` fail-closed. Shared egress helper for browser/web_search. Credential encryption residual is not a runtime authorization hole (documented). |
 | Domain modularity (packs/memory/skills/store) | **S+++** | Single `ToolDesc` authority in packs; kernel dispatches via `ToolInvocation` only. Memory/session/skills/EM planes separated with fail-closed ActionAuthorize + class-scoped skill grants. Store has no chat schema. Gate: `check-domain-modularity.py` + `domain_modularity` tests. |
 | Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
@@ -83,6 +83,8 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 - Crash at any phase yields exactly one terminal outcome.
 - Effect receipts and session/tool transcript either share a transaction or have deterministic **repair on open**.
 - Resume never invents success for `running` work.
+- Operator backup set + doctor multi-DB inventory:
+  [durability-and-backup.md](./durability-and-backup.md).
 
 ### Security (foundation floor)
 
@@ -146,5 +148,5 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 | P15 | UI/IPC completeness + shell truth | UI A-→**S+++** | **done** |
 | P16 | Doc / claim hygiene pass | Doc A-→**S+++** | **done** |
 | P17 | Release / parity gate completeness | Release A→**S+++** | **done** |
-| P18 | Durability chaos + multi-DB doctor/backup contract | Durability A+→S+++ | pending |
+| P18 | Durability chaos + multi-DB doctor/backup contract | Durability A+→**S+++** | **done** |
 | P19 | All-marks adversarial review board | **All S+++** | pending |

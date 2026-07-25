@@ -511,3 +511,58 @@ fn kernel_turn_persists_versioned_manifest_and_replay_report() {
     assert_eq!(report.model_call_count, 1);
     assert_eq!(report.tool_call_count, 0);
 }
+
+
+#[test]
+fn missing_tool_messages_for_two_effect_links_are_both_repaired() {
+    let directory = tempdir().unwrap();
+    let mut kernel = Kernel::open(
+        directory.path(),
+        KernelConfig {
+            effect_policy: PolicyMode::Unrestricted,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
+    let session_id = kernel.session_id();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![
+                ToolCall {
+                    id: "write-a".into(),
+                    name: "write_file".into(),
+                    arguments: json!({"path":"a.txt","contents":"A"}),
+                },
+                ToolCall {
+                    id: "write-b".into(),
+                    name: "write_file".into(),
+                    arguments: json!({"path":"b.txt","contents":"B"}),
+                },
+            ],
+        },
+        CompletionResponse {
+            text: Some("done".into()),
+            tool_calls: vec![],
+        },
+    ]);
+    kernel.turn(&mut model, "two durable writes").unwrap();
+    let store = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    let links = store.effect_links(session_id).unwrap();
+    assert!(links.len() >= 2, "links={}", links.len());
+    let (packs, mut messages, title) = store.load(session_id).unwrap();
+    messages.retain(|message| message.role != optimus_kernel::Role::Tool);
+    store.save(session_id, &title, &packs, &messages).unwrap();
+    let reopened =
+        Kernel::open_session(directory.path(), KernelConfig::default(), Some(session_id)).unwrap();
+    for call_id in ["write-a", "write-b"] {
+        assert!(
+            reopened.messages.iter().any(|message| {
+                message.role == optimus_kernel::Role::Tool
+                    && message.tool_call_id.as_deref() == Some(call_id)
+                    && message.content.contains("repaired")
+            }),
+            "missing repaired tool for {call_id}"
+        );
+    }
+}

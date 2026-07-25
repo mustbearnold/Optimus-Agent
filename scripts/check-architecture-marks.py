@@ -132,7 +132,11 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
     MarkRequirement(
         name_prefixes=("Durability",),
         phases_done=("P18",),
-        required_paths=("crates/optimus-runtime/tests/crash_resume.rs",),
+        required_paths=(
+            "crates/optimus-runtime/tests/crash_resume.rs",
+            "apps/optimus-cli/src/doctor.rs",
+            "docs/architecture/durability-and-backup.md",
+        ),
         verification_any=(
             "docs/architecture/s-plus-plus-plus-p18-verification.md",
         ),

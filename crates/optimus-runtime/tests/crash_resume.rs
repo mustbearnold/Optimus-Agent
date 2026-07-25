@@ -290,3 +290,98 @@ fn prepared_command_becomes_ambiguous_and_is_not_blindly_replayed() {
         .unwrap();
     assert_eq!(status, "ambiguous");
 }
+
+
+
+#[test]
+fn crash_during_writefile_then_resume_exactly_one_terminal() {
+    let root = tempdir().expect("tempdir");
+    let db = root.path().join("optimus.db");
+    let workspace = root.path().join("workspace");
+    fs::create_dir_all(&workspace).expect("workspace");
+    let job_id = {
+        let rt = Runtime::open_with_config(
+            &db,
+            &workspace,
+            RuntimeConfig {
+                policy: PolicyMode::Unrestricted,
+                ..Default::default()
+            },
+        )
+        .expect("open");
+        let job_id = rt
+            .create_job(JobSpec {
+                label: "write-crash".into(),
+                budget: Default::default(),
+                nodes: vec![
+                    NodeSpec {
+                        label: "write".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "chaos-write.txt".into(),
+                            contents: "chaos".into(),
+                        },
+                    },
+                    NodeSpec {
+                        label: "marker".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "chaos-done.txt".into(),
+                            contents: "done".into(),
+                        },
+                    },
+                ],
+            })
+            .expect("create");
+        rt.begin_node_and_crash(job_id).expect("crash seam");
+        job_id
+    };
+    let rt = Runtime::open_with_config(
+        &db,
+        &workspace,
+        RuntimeConfig {
+            policy: PolicyMode::Unrestricted,
+            ..Default::default()
+        },
+    )
+    .expect("reopen");
+    let recovered = rt.recover_crashed_running().expect("recover");
+    assert!(
+        recovered.contains(&job_id),
+        "expected job recovered, got {recovered:?}"
+    );
+    // Pre-effect prepared WriteFile is interrupted (replay-safe), not invented success.
+    let connection = Connection::open(&db).unwrap();
+    let attempt_status: String = connection
+        .query_row(
+            "SELECT status FROM effect_attempts WHERE job_id=?1 ORDER BY rowid DESC LIMIT 1",
+            [job_id.0.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(attempt_status, "interrupted");
+    let status = rt.resume(job_id).expect("resume");
+    assert_eq!(status, JobStatus::Succeeded);
+    assert_eq!(
+        fs::read_to_string(workspace.join("chaos-write.txt")).unwrap(),
+        "chaos"
+    );
+    assert_eq!(
+        fs::read_to_string(workspace.join("chaos-done.txt")).unwrap(),
+        "done"
+    );
+    let terminal: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM events WHERE job_id=?1 AND terminal_slot=1",
+            [job_id.0.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(terminal, 1);
+    let succeeded_attempts: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM effect_attempts WHERE job_id=?1 AND status='succeeded'",
+            [job_id.0.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(succeeded_attempts, 2, "exactly one success per completed node");
+}
