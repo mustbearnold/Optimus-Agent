@@ -41,12 +41,15 @@ function parseDesktopMethod(source) {
   return new Set([...block.matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]));
 }
 
+// Keep aligned with scripts/check-desktop-ipc-matrix.py CRITICAL_INVOKE_METHODS (P15).
 const CRITICAL = new Set([
   'ping',
   'doctor',
   'sessions',
   'new_session',
   'get_session',
+  'delete_session',
+  'rename_session',
   'chat_approval_resolve',
   'project_scopes_list',
   'project_scopes_authorize',
@@ -57,6 +60,8 @@ const CRITICAL = new Set([
   'fs_read',
   'settings_get',
   'settings_set',
+  'term_run',
+  'jobs_list',
 ]);
 
 test('approval resolution remains an explicit renderer-to-host allowlist entry', () => {

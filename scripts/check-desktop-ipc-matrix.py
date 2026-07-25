@@ -193,15 +193,18 @@ def main() -> int:
             "non-invoke channels: " + ", ".join(uncovered)
         )
 
-    # Full partition: every host method is invoke-allowlisted, non-invoke channel,
-    # or main-only (main-only is a subset of non-invoke documentation).
-    classified = electron_set | HOST_NON_INVOKE_CHANNELS
-    if rust_set != classified and not (rust_set - classified):
-        pass  # covered by uncovered check
+    # main_only must be documented as non-invoke (never renderer-callable).
     if MAIN_ONLY_METHODS - HOST_NON_INVOKE_CHANNELS:
         errors.append(
             "MAIN_ONLY_METHODS must also appear in HOST_NON_INVOKE_CHANNELS: "
             + ", ".join(sorted(MAIN_ONLY_METHODS - HOST_NON_INVOKE_CHANNELS))
+        )
+    # Phantom non-invoke tags (not in host registry) are documentation drift.
+    phantom_non_invoke = sorted(HOST_NON_INVOKE_CHANNELS - rust_set)
+    if phantom_non_invoke:
+        errors.append(
+            "HOST_NON_INVOKE_CHANNELS entries missing from Rust registry: "
+            + ", ".join(phantom_non_invoke)
         )
 
     print("DESKTOP_IPC_MATRIX")

@@ -449,7 +449,8 @@ tests (ADR-0038).**
 
 ### Hold suite
 
-- `check-desktop-ipc-matrix.py`, electron allowlist tests, desktop e2e subset
+- `check-desktop-ipc-matrix.py`, `test_desktop_ipc_matrix.py`, electron
+  `ipc-allowlist` + `preview-security` tests (Playwright e2e supplementary)
 
 ---
 
