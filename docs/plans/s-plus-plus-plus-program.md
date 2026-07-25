@@ -85,7 +85,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 7 | Doc / claim hygiene | **S+++** (post-P16) | S+++ | P16 (done) |
 | 8 | Release / parity gating | **S+++** (post-P17) | S+++ | P17 (done) |
 | 9 | Durability / crash safety | **S+++** (post-P18) | S+++ | P18 (done) |
-| — | **All-marks adversarial review** | mixed | **all S+++** | P19 |
+| — | **All-marks adversarial review** | **all S+++** | **all S+++** | P19 (done) |
 
 Phase numbers continue from trust-spine 0–5; P6–P9 are reserved for any
 interim hold/fix if needed. Execution starts at **P10**.
@@ -100,7 +100,7 @@ P10 Multi-agent (done → S+++)
   → P16 Doc hygiene (done → S+++)
   → P17 Release gates (done → S+++)
   → P18 Durability (done → S+++)
-  → P19 Final S+++ review board   ← next
+  → P19 Final S+++ review board (done — all marks S+++)
 ```
 
 ### Dependency honesty (exceptions allowed by Rule 4)
@@ -585,24 +585,28 @@ Core Work Graph durability was already strong. Residuals closed or scoped:
 
 ## P19 — Final all-marks S+++ review board
 
-**Purpose:** adversarial pass after P10–P18. No new features.
+**Purpose:** adversarial pass after P10–P18. No new features. **Done — board PASS.**
 
 ### Checklist
 
 1. Every row in `architecture-marks.md` is **S+++** with notes pointing at
-   exit evidence.
+   exit evidence. **done**
 2. Re-run hold suites for all dimensions in one report under `local/tmp/`.
+   **done** — `docs/evidence/s-plus-plus-plus-p19-hold-suite-2026-07-25.{txt,json}`
 3. Re-read security map and system-overview debt list: no unowned structural
-   holes.
-4. EM `report`: stale_documents=0; agent/tool counts match claims.
+   holes. **done** — owned residuals listed in board evidence
+4. EM `report`: stale_documents=0; agent/tool counts match claims. **done**
 5. Install story + IPC matrix + observability + version/parity gates green.
-6. Optional external reviewer (human) sign-off recorded in
-   `docs/evidence/s-plus-plus-plus-review-YYYY-MM-DD.md`.
+   **done**
+6. Review board write-up recorded in
+   `docs/evidence/s-plus-plus-plus-review-2026-07-25.md`. **done**
+   (optional external human sign-off still welcome later)
 
 ### Failure handling
 
 If any mark fails adversarial review: **do not** keep S+++. Open a patch phase
 `P19.x` owned by that dimension only; re-enter review board after green.
+**P19 board found no demotions.**
 
 ---
 
@@ -655,4 +659,6 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P18 done** (… + Durability **S+++**). Next: **P19** all-marks adversarial review board.
+**P10–P19 done.** Architecture marks all **S+++**. Next: product/parity work
+outside this climb (`program:parity`, full-app microtasks); optional human
+external sign-off on the board evidence.

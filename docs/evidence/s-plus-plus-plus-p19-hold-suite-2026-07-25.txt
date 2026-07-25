@@ -1,0 +1,87 @@
+P19 hold suite report
+date: 2026-07-25T03:17:52Z
+branch: wip/p19-all-marks-review-board
+commit: fc09070785c4edcedd09ee0cca650fffacacde2b
+
+=== architecture marks ===
++ python3 scripts/check-architecture-marks.py
+RESULT: PASS
+
+=== parity ledger ===
++ python3 scripts/check-parity-ledger.py
+RESULT: PASS
+
+=== release-check ===
++ python3 scripts/optimus_version.py release-check
+RESULT: PASS
+
+=== domain modularity ===
++ python3 scripts/check-domain-modularity.py
+RESULT: PASS
+
+=== crate layers ===
++ python3 scripts/check-crate-layers.py
+RESULT: PASS
+
+=== desktop ipc matrix ===
++ python3 scripts/check-desktop-ipc-matrix.py
+RESULT: PASS
+
+=== observability gate ===
++ python3 scripts/check-observability-gate.py
+RESULT: PASS
+
+=== EM check ===
++ python3 scripts/engineering_memory.py check
+RESULT: PASS
+
+=== EM report ===
++ python3 scripts/engineering_memory.py report
+RESULT: PASS
+
+=== runtime crash_resume ===
++ cargo test -p optimus-runtime --test crash_resume -- --test-threads=1
+RESULT: PASS
+
+=== runtime cancellation ===
++ cargo test -p optimus-runtime --test cancellation -- --test-threads=1
+RESULT: PASS
+
+=== kernel session_resume ===
++ cargo test -p optimus-kernel --test session_resume -- --test-threads=1
+RESULT: PASS
+
+=== kernel domain_modularity ===
++ cargo test -p optimus-kernel --test domain_modularity -- --test-threads=1
+RESULT: PASS
+
+=== cli doctor_durability ===
++ cargo test -p optimus-cli --test doctor_durability -- --test-threads=1
+RESULT: PASS
+
+=== architecture marks unit ===
++ python3 scripts/test_architecture_marks.py
+RESULT: PASS
+
+=== desktop ipc unit ===
++ python3 scripts/test_desktop_ipc_matrix.py
+RESULT: PASS
+
+
+=== EM report detail ===
+ENGINEERING_MEMORY_REPORT
+tree=110a4aa2feac997d00d4ebe8469241280c295b82b09a2c6839aa1194f1091cb4
+counts={'agents': 2, 'available_tools': 10, 'files': 391, 'impact_patterns': 224, 'knowledge_documents': 72, 'stale_documents': 0, 'tools': 22, 'workflows': 9}
+agents=2 tools=22 available_tools=10 workflows=9
+RECOMMENDATION: no knowledge refresh required
+
+=== marks grades ===
+| Durability / crash safety | **S+++** | Work Graph crash-resume + ambiguous command non-replay; process-tree ownership before settle; session multi-link repair-on-open; campaign crash recover; workflow cancel idempotent. Operator contract: `optimus doctor` multi-DB inventory/quarantine + `doctor backup-list`; scope = process-local SQLite (external messaging exactly-once out of scope). |
+| Security boundary design | **S+++** | SmartDeny high-risk effects; exact grants; path preflight; skill class grants. Linux commands: confined bwrap (workspace-only RW; no full-root bind) under default `CommandFsEnvelope::Confined`; `UnrestrictedHost` is explicit break-glass. Windows: Job Object residual for Confined; `ConfinedNoNetwork` fail-closed. Shared egress helper for browser/web_search. Credential encryption residual is not a runtime authorization hole (documented). |
+| Domain modularity (packs/memory/skills/store) | **S+++** | Single `ToolDesc` authority in packs; kernel dispatches via `ToolInvocation` only. Memory/session/skills/EM planes separated with fail-closed ActionAuthorize + class-scoped skill grants. Store has no chat schema. Gate: `check-domain-modularity.py` + `domain_modularity` tests. |
+| Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
+| Multi-agent readiness | **S+++** | Two specialists (`workspace_writer`, `workspace_reader`); three registered workflows including `write_then_read_handoff` DAG; durable `WorkflowRunStore`; parent cancel tree. P12 closed the command-FS residual that blocked S+++ after P10. Still registered-only (no open-ended model spawn — out of P10 scope). |
+| Observability / eval | **S+++** | Offline integrity gate; store-backed causal reconstruction (`trace show` / `load_causal_turn`); versioned local export `optimus.causal.v1` (`trace export`) with home redaction; stable security-denial codes; cancel terminals reconstructible without logs. OTLP deferred (ADR-0037). |
+| UI architecture | **S+++** | Electron + React default install; Wry optional. IPC matrix: host ⊇ Electron = React; every host method classified invoke vs non-invoke; expanded critical set (approvals, scopes, term_run, jobs, sessions). Preview WebContentsView sandboxed (static tests). Renderer cannot mint `project_root_stage_native`. Cancel via host stream. |
+| Doc / claim hygiene | **S+++** | ADR-0016 A/B aliases; ownership map matches crate graph; sota-scorecard shell banner; blueprint banners; system-overview debt honest; EM refresh on P16. |
+| Release / parity gating | **S+++** | Fail-closed version + parity ledger; operator pre-merge vs pre-release matrix; `check-architecture-marks.py` blocks S+++ greenwash; architecture S+++ does not require Hermes `gate` PASS. |
