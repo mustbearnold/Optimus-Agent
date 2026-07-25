@@ -199,12 +199,13 @@ mod tests {
         .unwrap();
         assert_eq!(set["settings"]["work_isolation"], "isolated_profiles");
         assert_eq!(set["settings"]["allow_concurrent_projects"], true);
-        assert_eq!(set["settings"]["enforcement_active"], false);
+        assert_eq!(set["settings"]["enforcement_active"], true);
+        assert_eq!(set["settings"]["command_fs_envelope"], "confined_no_network");
         let again = settings_get(&home).unwrap();
         assert_eq!(again["settings"]["work_isolation"], "isolated_profiles");
         let doc = doctor_json(&home);
         assert_eq!(doc["work_isolation"], "isolated_profiles");
         assert_eq!(doc["allow_concurrent_projects"], true);
-        assert_eq!(doc["isolation_enforcement_active"], false);
+        assert_eq!(doc["isolation_enforcement_active"], true);
     }
 }

@@ -32,6 +32,7 @@ fn pending_approval_list_and_grant_resume() {
         &ws,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .unwrap();
@@ -194,6 +195,7 @@ fn plain_write_file_is_high_risk_under_smart_deny() {
         &ws,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .unwrap();

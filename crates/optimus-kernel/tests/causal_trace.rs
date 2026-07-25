@@ -16,7 +16,8 @@ fn successful_turn_is_reconstructible_by_trace_and_manifest_id() {
         home,
         KernelConfig {
             effect_policy: PolicyMode::Unrestricted,
-            ..KernelConfig::default()
+            ..KernelConfig::default(),
+            ..Default::default()
         },
     )
     .unwrap();

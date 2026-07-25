@@ -58,6 +58,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0032 | Compact Engineering Memory facts and budgeted agent lenses | Accepted | Schema v2 compact indexes, hash-only staleness, pattern impact, and context/report lenses are implemented. |
 | 0033 | Multi-agent DAG execution (P10) | Accepted | Two specialists, three registered workflows, durable `WorkflowRunStore`, parent cancel tree; multi-agent mark **S** (S+++ after P12). |
 | 0034 | Control-plane crate peels (P11) | Accepted | `optimus-agent` / `optimus-workflow` / `optimus-artifacts` peels; kernel re-export waist; layer lint; control-plane mark **S+++**. |
+| 0035 | Command capability envelope + Unrestricted break-glass (P12) | Accepted | Linux confined bwrap (workspace-only RW); `CommandFsEnvelope` orthogonal to SmartDeny; Windows residual / fail-closed; shared egress helper; Security **S+++**. |
 
 ## Known documentary debt
 

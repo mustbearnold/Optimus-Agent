@@ -1321,7 +1321,8 @@ impl CampaignStore {
             &ws,
             RuntimeConfig {
                 policy: PolicyMode::SmartDeny,
-            },
+            ..Default::default()
+        },
         )?)
     }
 

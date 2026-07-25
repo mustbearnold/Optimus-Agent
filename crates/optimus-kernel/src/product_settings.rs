@@ -1,11 +1,13 @@
 //! Durable product settings under `{home}/settings.json`.
 //!
-//! Phase 0 stores work-isolation *intent*. Runtime enforcement of
-//! `project_bound` / `isolated_profiles` lands in later phases (ADR-0027).
+//! Work-isolation modes map to [`optimus_graph::CommandFsEnvelope`] strength
+//! (P12). Project-bound FS/memory product isolation beyond the command
+//! envelope remains progressive (ADR-0027 / ADR-0031).
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use optimus_graph::CommandFsEnvelope;
 use serde::{Deserialize, Serialize};
 
 use crate::{atomic_write_user_only, KernelError, Result};
@@ -53,8 +55,20 @@ impl WorkIsolationMode {
     }
 
     /// Whether this mode is fully enforced by runtime policy yet.
+    ///
+    /// P12: all modes select a command capability envelope that is enforced at
+    /// spawn. Broader product isolation (separate homes, memory partitions)
+    /// may still be progressive for IsolatedProfiles.
     pub fn enforcement_active(self) -> bool {
-        matches!(self, Self::Shared)
+        true
+    }
+
+    /// Map product isolation intent to the command capability envelope.
+    pub fn command_fs_envelope(self) -> CommandFsEnvelope {
+        match self {
+            Self::Shared | Self::ProjectBound => CommandFsEnvelope::Confined,
+            Self::IsolatedProfiles => CommandFsEnvelope::ConfinedNoNetwork,
+        }
     }
 }
 
@@ -171,11 +185,19 @@ impl ProductSettings {
             "work_isolation_label": self.work_isolation.label(),
             "allow_concurrent_projects": self.allow_concurrent_projects,
             "enforcement_active": self.work_isolation.enforcement_active(),
-            "enforcement_note": if self.work_isolation.enforcement_active() {
-                "Shared mode is the active runtime path."
-            } else {
-                "Mode stored as intent; project-bound/profile enforcement ships in a later phase."
+            "enforcement_note": match self.work_isolation {
+                WorkIsolationMode::Shared => {
+                    "Shared mode: command FS envelope is confined (workspace-only writable on Linux)."
+                }
+                WorkIsolationMode::ProjectBound => {
+                    "Project-bound: command FS envelope is confined; project roots are Rust-authorized."
+                }
+                WorkIsolationMode::IsolatedProfiles => {
+                    "Isolated profiles: confined command envelope without network (Linux); \
+                     Windows fail-closes RunCommand until AppContainer ships."
+                }
             },
+            "command_fs_envelope": self.work_isolation.command_fs_envelope().as_str(),
             "load_note": self.load_note,
         })
     }

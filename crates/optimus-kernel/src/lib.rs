@@ -19,6 +19,7 @@ mod security_denial;
 mod session;
 mod telemetry;
 mod trace;
+mod network_policy;
 mod web_search;
 
 use std::cell::Cell;
@@ -96,6 +97,10 @@ pub use optimus_ops::{
     InboundMessage, OutboundMessage,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;
+pub use network_policy::{
+    assert_public_http_url, assert_public_http_url_str, host_blocked, ip_blocked, socket_blocked,
+    EgressError,
+};
 pub use product_settings::{ProductSettings, WorkIsolationMode};
 pub use project_authority::{
     ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
@@ -462,6 +467,9 @@ pub struct KernelConfig {
     pub fast_mode: bool,
     /// SmartDeny by default; unrestricted is an explicit user/test choice.
     pub effect_policy: optimus_graph::PolicyMode,
+    /// When set, overrides product-settings mapping for the command FS envelope.
+    /// `None` → load `settings.json` work_isolation → [`WorkIsolationMode::command_fs_envelope`].
+    pub command_fs_envelope: Option<optimus_graph::CommandFsEnvelope>,
 }
 
 impl Default for KernelConfig {
@@ -483,6 +491,7 @@ impl Default for KernelConfig {
             thinking_level: None,
             fast_mode: false,
             effect_policy: optimus_graph::PolicyMode::SmartDeny,
+            command_fs_envelope: None,
         }
     }
 }
@@ -587,11 +596,16 @@ impl Kernel {
             (workspace.clone(), vec![workspace])
         };
         std::fs::create_dir_all(&workspace)?;
+        let command_fs_envelope = match config.command_fs_envelope {
+            Some(envelope) => envelope,
+            None => ProductSettings::load(&home)?.work_isolation.command_fs_envelope(),
+        };
         let runtime = Runtime::open_with_config(
             &home.join("optimus.db"),
             &workspace,
             optimus_graph::RuntimeConfig {
                 policy: config.effect_policy,
+                command_fs_envelope,
             },
         )?;
         let memory = Memory::open(home.join("memory.db"))?;

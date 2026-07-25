@@ -11,7 +11,6 @@
 
 use std::fs;
 use std::io::Read;
-use std::net::ToSocketAddrs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -488,53 +487,9 @@ fn chrono_stamp() -> String {
 }
 
 fn assert_url_safe(url: &Url) -> Result<()> {
-    match url.scheme() {
-        "http" | "https" => {}
-        other => return Err(BrowserError::Ssrf(format!("scheme {other}"))),
-    }
-    let host = url
-        .host_str()
-        .ok_or_else(|| BrowserError::Ssrf("missing host".into()))?
-        .to_ascii_lowercase();
-    if host == "localhost"
-        || host.ends_with(".localhost")
-        || host.ends_with(".local")
-        || host == "metadata.google.internal"
-    {
-        return Err(BrowserError::Ssrf(format!("host {host}")));
-    }
-    if let Ok(addr) = host.parse::<std::net::IpAddr>() {
-        if ip_blocked(addr) {
-            return Err(BrowserError::Ssrf(format!("ip {addr}")));
-        }
-    } else {
-        let port = url.port_or_known_default().unwrap_or(80);
-        let key = format!("{host}:{port}");
-        if let Ok(iter) = key.to_socket_addrs() {
-            for sa in iter.take(8) {
-                if ip_blocked(sa.ip()) {
-                    return Err(BrowserError::Ssrf(format!("resolved {}", sa.ip())));
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn ip_blocked(ip: std::net::IpAddr) -> bool {
-    match ip {
-        std::net::IpAddr::V4(v4) => {
-            v4.is_loopback()
-                || v4.is_private()
-                || v4.is_link_local()
-                || v4.is_broadcast()
-                || v4.octets()[0] == 169 && v4.octets()[1] == 254
-                || v4.octets()[0] == 0
-        }
-        std::net::IpAddr::V6(v6) => {
-            v6.is_loopback() || v6.is_unique_local() || v6.is_unicast_link_local()
-        }
-    }
+    crate::network_policy::assert_public_http_url(url).map_err(|e| match e {
+        crate::network_policy::EgressError::Ssrf(msg) => BrowserError::Ssrf(msg),
+    })
 }
 
 fn extract_title(html: &str) -> String {

@@ -357,6 +357,7 @@ fn effect_link_requires_exact_terminal_runtime_provenance() {
         &workspace,
         RuntimeConfig {
             policy: PolicyMode::Unrestricted,
+            ..Default::default()
         },
     )
     .unwrap();
@@ -417,6 +418,7 @@ fn registered_agent_cannot_bypass_smart_deny() {
         &workspace,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .unwrap();

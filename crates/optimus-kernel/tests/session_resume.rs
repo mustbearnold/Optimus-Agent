@@ -95,7 +95,8 @@ fn durable_tool_message_is_bound_to_terminal_effect_attempt() {
         directory.path(),
         KernelConfig {
             effect_policy: PolicyMode::Unrestricted,
-            ..KernelConfig::default()
+            ..KernelConfig::default(),
+            ..Default::default()
         },
     )
     .unwrap();
@@ -140,7 +141,8 @@ fn missing_tool_message_is_repaired_from_effect_link_on_reopen() {
         directory.path(),
         KernelConfig {
             effect_policy: PolicyMode::Unrestricted,
-            ..KernelConfig::default()
+            ..KernelConfig::default(),
+            ..Default::default()
         },
     )
     .unwrap();
@@ -199,7 +201,8 @@ fn conflicting_effect_link_rolls_back_session_snapshot() {
         directory.path(),
         KernelConfig {
             effect_policy: PolicyMode::Unrestricted,
-            ..KernelConfig::default()
+            ..KernelConfig::default(),
+            ..Default::default()
         },
     )
     .unwrap();
@@ -245,8 +248,9 @@ fn failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event() {
     let directory = tempdir().unwrap();
     let config = KernelConfig {
         max_steps: 0,
-        ..KernelConfig::default()
-    };
+        ..KernelConfig::default(),
+            ..Default::default()
+        };
     let mut kernel = Kernel::open(directory.path(), config).unwrap();
     let session_id = kernel.session_id();
     let mut model = ScriptedModel::new(vec![]);

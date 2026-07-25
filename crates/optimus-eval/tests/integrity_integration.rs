@@ -100,8 +100,9 @@ fn tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity() {
             dir.path(),
             KernelConfig {
                 effect_policy: PolicyMode::Unrestricted,
-                ..KernelConfig::default()
-            },
+                ..KernelConfig::default(),
+            ..Default::default()
+        },
         )
         .unwrap();
         let session_id = kernel.session_id();

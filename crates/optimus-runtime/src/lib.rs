@@ -1,6 +1,7 @@
 //! Work Graph executor with crash-resume, policy, budgets, and bounded commands.
 
 mod campaign;
+mod command_envelope;
 
 use std::fs;
 use std::io::{Read, Write};
@@ -37,8 +38,10 @@ pub use campaign::{
     CampaignStatus, CampaignStep, CampaignStepSpec, CampaignStore, CampaignView, StepKind,
     StepStatus, CAMPAIGN_SCHEMA_VERSION,
 };
+pub use command_envelope::{command_envelope_supported, linux_bwrap_args, parent_dirs_for_bind};
 pub use optimus_graph::{
-    Effect, JobBudget, JobId, JobSpec, JobStatus, NodeSpec, NodeStatus, PolicyMode, RuntimeConfig,
+    CommandFsEnvelope, Effect, JobBudget, JobId, JobSpec, JobStatus, NodeSpec, NodeStatus,
+    PolicyMode, RuntimeConfig,
 };
 
 /// Construct a [`JobId`] from a raw UUID (stable API for CLI/desktop).
@@ -582,11 +585,15 @@ impl Drop for KillOnDrop {
 static NEXT_LINUX_UNIT_ID: AtomicU64 = AtomicU64::new(1);
 
 #[cfg(target_os = "linux")]
-fn linux_contained_command(program: &str, args: &[String], workspace: &Path) -> (Command, String) {
+fn linux_contained_command(
+    program: &str,
+    args: &[String],
+    workspace: &Path,
+    envelope: CommandFsEnvelope,
+) -> (Command, String) {
     let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, AtomicOrdering::Relaxed);
     let unit_base = format!("optimus-command-{}-{sequence}", std::process::id());
     let linux_unit = format!("{unit_base}.service");
-    let runtime_dir = format!("/run/user/{}", unsafe { libc::geteuid() });
     let mut command = Command::new("/usr/bin/systemd-run");
     command
         .args([
@@ -602,29 +609,25 @@ fn linux_contained_command(program: &str, args: &[String], workspace: &Path) -> 
         ])
         .arg(format!("--unit={unit_base}"))
         .arg("--")
-        .args([
-            "/usr/bin/bwrap",
-            "--die-with-parent",
-            "--unshare-pid",
-            "--bind",
-            "/",
-            "/",
-            "--dev-bind",
-            "/dev",
-            "/dev",
-            "--proc",
-            "/proc",
-            "--ro-bind",
-            "/sys/fs/cgroup",
-            "/sys/fs/cgroup",
-            "--ro-bind",
-            "/dev/null",
-        ])
-        .arg(format!("{runtime_dir}/bus"))
-        .arg("--tmpfs")
-        .arg(format!("{runtime_dir}/systemd"))
-        .arg("--chdir")
-        .arg(workspace)
+        .arg("/usr/bin/bwrap");
+    for arg in command_envelope::linux_bwrap_args(workspace, envelope) {
+        command.arg(arg);
+    }
+    // Mask the user bus under confined profiles so children cannot talk to the
+    // session bus even if /run was not fully replaced (UnrestrictedHost path).
+    if matches!(envelope, CommandFsEnvelope::UnrestrictedHost) {
+        let runtime_dir = format!("/run/user/{}", unsafe { libc::geteuid() });
+        command
+            .arg("--ro-bind")
+            .arg("/sys/fs/cgroup")
+            .arg("/sys/fs/cgroup")
+            .arg("--ro-bind")
+            .arg("/dev/null")
+            .arg(format!("{runtime_dir}/bus"))
+            .arg("--tmpfs")
+            .arg(format!("{runtime_dir}/systemd"));
+    }
+    command
         .arg("--")
         .arg(program)
         .args(args)
@@ -1413,8 +1416,18 @@ impl Runtime {
     ) -> Result<CommandCapture> {
         ensure_owned_command_containment(std::env::consts::OS)
             .map_err(|error| RuntimeError::Effector(error.to_string()))?;
+        command_envelope::command_envelope_supported(
+            std::env::consts::OS,
+            self.config.command_fs_envelope,
+        )
+        .map_err(RuntimeError::Effector)?;
         #[cfg(target_os = "linux")]
-        let (mut command, linux_unit) = linux_contained_command(program, args, &self.workspace);
+        let (mut command, linux_unit) = linux_contained_command(
+            program,
+            args,
+            &self.workspace,
+            self.config.command_fs_envelope,
+        );
         #[cfg(not(target_os = "linux"))]
         let mut command = Command::new(program);
         #[cfg(not(target_os = "linux"))]
@@ -1607,8 +1620,9 @@ impl Runtime {
 
 /// Strip loader and dynamic-link injection variables from child process env.
 ///
-/// Does not claim full filesystem sandboxing; workspace cwd remains the primary
-/// confinement for non-Linux hosts. Linux uses bwrap via systemd-run separately.
+/// Linux FS confinement is applied by [`command_envelope::linux_bwrap_args`].
+/// Non-Linux hosts retain process-tree ownership only unless the envelope
+/// fail-closes (see [`command_envelope_supported`]).
 fn sanitize_command_environment(command: &mut Command) {
     const STRIP: &[&str] = &[
         "LD_PRELOAD",

@@ -78,7 +78,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 |:---:|---|:---:|:---:|---|
 | 1 | Multi-agent readiness | **B** | S+++ | P10 |
 | 2 | Control-plane modularity | **B+** | S+++ | P11 |
-| 3 | Security boundary design | **A-** | S+++ | P12 |
+| 3 | Security boundary design | **S+++** (post-P12) | S+++ | P12 |
 | 4 | Domain modularity | **A-** | S+++ | P13 |
 | 5 | Observability / eval | **A-** | S+++ | P14 |
 | 6 | UI architecture | **A-** | S+++ | P15 |

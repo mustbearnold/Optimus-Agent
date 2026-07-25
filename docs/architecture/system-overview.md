@@ -150,11 +150,12 @@ executors.
 step/failure/time budgets. A running node recovered after process death becomes
 `interrupted`, never silently `succeeded`. `run_all` stops on success, failure,
 approval wait, or a non-runnable/error condition. Commands are killed and reaped
-at a bounded timeout, and stdout/stderr capture is capped. On Unix each command
-enters a private process group before `exec`; cancellation, timeout, normal root
-exit, and guard drop terminate that owned group and verify it is empty. On
-Windows commands launch suspended, enter a private kill-on-close Job Object
-before resume, and settlement verifies the Job has zero active processes.
+at a bounded timeout, and stdout/stderr capture is capped. On Linux each command
+runs under systemd-run + bwrap with a `CommandFsEnvelope` profile (default:
+workspace-only writable FS). Cancellation, timeout, normal root exit, and guard
+drop terminate the owned unit/process tree and verify it is empty. On Windows
+commands launch suspended, enter a private kill-on-close Job Object before
+resume, and settlement verifies the Job has zero active processes.
 
 **Confirmed current behaviour:** jobs, nodes, campaign steps, and campaigns have
 typed `cancelled` outcomes. Cancellation requests are durable and idempotent;
@@ -432,10 +433,13 @@ stable redacted errors while retaining local stderr diagnostics.
 `ProjectWriteFile`, `RunCommand`, and `ProjectRunCommand` as high-risk.
 `AssertFileEquals` does not require approval.
 
-**Known security boundary:** an approved arbitrary command is not
-filesystem-sandboxed by the built-in `cap-std` file-effect capability; it runs
-with workspace `cwd` and sanitised loader env, but can still open absolute paths
-outside the workspace.
+**Confirmed current behaviour (P12):** approved commands use `CommandFsEnvelope`
+(default confined): Linux bwrap binds the workspace read-write only (no full
+root rw bind); `UnrestrictedHost` is explicit break-glass. See ADR-0035.
+
+**Known residual (product-visible):** Windows command FS is Job Object process-
+tree ownership under confined mode; `ConfinedNoNetwork` fail-closes on non-
+Linux. Provider/OAuth TLS is adapter-local beyond shared browser/search egress.
 
 ## Events, observability, and replay
 

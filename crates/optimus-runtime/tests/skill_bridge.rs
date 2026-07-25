@@ -44,6 +44,7 @@ fn skill_with_terminal_unlocks_run_command() {
         &ws,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .unwrap();
@@ -89,6 +90,7 @@ fn skill_without_terminal_cannot_grant_run_command() {
         &ws,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .unwrap();

@@ -284,6 +284,7 @@ fn observe_smartdeny_approval(home: &Path) -> std::result::Result<(), &'static s
         &workspace,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .map_err(|_| "policy_runtime_open_failed")?;
@@ -638,7 +639,8 @@ pub fn run_case(home: impl AsRef<Path>, case: &EvalCase) -> Result<EvalCaseResul
         home.as_ref(),
         KernelConfig {
             effect_policy: case.effect_policy,
-            ..KernelConfig::default()
+            ..KernelConfig::default(),
+            ..Default::default()
         },
     )?;
     // Seed memory for the recall case (deterministic fixture).
