@@ -13,6 +13,11 @@ owns:
   - crates/optimus-runtime/Cargo.toml
   - crates/optimus-skills/Cargo.toml
   - crates/optimus-store/Cargo.toml
+  - crates/optimus-ops/Cargo.toml
+  - crates/optimus-artifacts/Cargo.toml
+  - crates/optimus-agent/Cargo.toml
+  - crates/optimus-workflow/Cargo.toml
+  - crates/optimus-eval/Cargo.toml
 watches:
   - apps/**/src/**
   - crates/**/src/**
@@ -28,6 +33,11 @@ covers:
   - crates/optimus-runtime/Cargo.toml
   - crates/optimus-skills/Cargo.toml
   - crates/optimus-store/Cargo.toml
+  - crates/optimus-ops/Cargo.toml
+  - crates/optimus-artifacts/Cargo.toml
+  - crates/optimus-agent/Cargo.toml
+  - crates/optimus-workflow/Cargo.toml
+  - crates/optimus-eval/Cargo.toml
 depends_on:
   - README.md
 validated_by:
@@ -39,12 +49,15 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 
 ## Audit basis
 
-**Confirmed current behaviour:** this is a Rust 2021 workspace with Rust 1.85 as
-the declared minimum. `cargo metadata --no-deps` reports fourteen workspace
-packages among default members plus desktop: libraries include store, graph,
-runtime, memory, skills, packs, ops, artifacts, agent, workflow, kernel, eval,
-browser; applications are cli and desktop. The desktop application is not a
-default workspace member, but it is a workspace member.
+**Confirmed current behaviour (P16):** this is a Rust 2021 workspace with Rust
+1.85 as the declared minimum. `cargo metadata --no-deps` reports **fifteen**
+workspace packages: libraries `optimus-store`, `optimus-graph`,
+`optimus-runtime`, `optimus-memory`, `optimus-skills`, `optimus-packs`,
+`optimus-ops`, `optimus-artifacts`, `optimus-agent`, `optimus-workflow`,
+`optimus-kernel`, `optimus-eval`, `optimus-browser`; applications `optimus-cli`
+and `optimus-desktop`. Electron (`apps/optimus-electron`) and React UI
+(`apps/optimus-ui`) are npm packages outside Cargo metadata but are the default
+desktop shell.
 
 **Confirmed current behaviour:** the repository is a Git checkout on `main` with
 GitHub `origin`; Engineering Memory records both commit identity and deterministic
@@ -70,8 +83,11 @@ the root Cargo workspace.
 | `optimus-workflow` | library | Workflow contracts, run ledger, built-in DAG verticals | agent, artifacts, packs, runtime, graph |
 | `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops; **no second tool catalog** | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
 | `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
+| `optimus-browser` | library | CDP browser backend (optional agent tools; not the Electron preview view) | (see crate Cargo.toml) |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
-| `optimus-desktop` | binary | Rust host plus Wry/Tao rollback shell, native IPC, and HTTP test harness | kernel, graph, runtime, packs |
+| `optimus-desktop` | binary | Rust host (`--host-only` for Electron) + Legacy Wry shell, native IPC, HTTP test harness | kernel, graph, runtime, packs |
+| `apps/optimus-electron` | npm app | Default Electron shell, preload, preview `WebContentsView` | host IPC |
+| `apps/optimus-ui` | npm app | React workbench presentation (no FS authority) | Electron transport |
 
 ## Domain modularity (P13 / ADR-0036)
 
@@ -136,8 +152,8 @@ project state grants Rust filesystem access.
   and re-exports the peels. Offline evaluation/baselines live in `optimus-eval`.
 - **Confirmed:** built-in specialists and registered DAG verticals are owned by
   `optimus-agent` + `optimus-workflow` (kernel re-exports).
-- **Unknown/unresolved:** model-chosen specialist routing, OpenTelemetry, or GPU
-  adapters.
+- **Unknown/unresolved:** model-chosen specialist routing, OTLP/OpenTelemetry
+  export (local causal export exists — ADR-0037), or GPU adapters.
 
 ## Missing top-level domains
 

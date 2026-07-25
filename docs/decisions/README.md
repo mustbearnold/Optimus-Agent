@@ -38,8 +38,8 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0013 | Command capture | Accepted | Confirmed current behavior. |
 | 0014 | Native WebView IPC mode | Accepted | Confirmed current native/HTTP split. |
 | 0015 | Preview Browser via CDP | Design accepted; implementation phased | Planned behavior; current browser is bounded HTTP and preview UI is absent. |
-| 0016-A | Canonical tool/pack contract | Accepted for PF-04 | Confirmed current canonical contract; independent security review remains separate delivery evidence. |
-| 0016-B | Filesystem sandbox allowlist | Accepted, described as in progress | `FsRoots` reads are implemented; runtime write confinement is governed separately by ADR-0018. |
+| 0016-A | Canonical tool/pack contract | Accepted (aliased; file `0016-canonical-tool-contract.md`) | Confirmed current canonical contract; independent security review remains separate delivery evidence. |
+| 0016-B | Filesystem sandbox allowlist | Accepted (aliased; file `0016-fs-sandbox-allowlist.md`) | `FsRoots` reads Confirmed; runtime write confinement governed by ADR-0018 / envelope ADR-0035. |
 | 0017 | Repository-local Engineering Memory | Accepted | Implemented by docs, skill, generator, tests, and generated indexes. |
 | 0018 | Fail-closed runtime path and campaign decoding | Accepted; limitations superseded by 0019 | Historical normal-component and strict-decoding decision; see 0019 for current filesystem and campaign authority. |
 | 0019 | Capability files and unified campaign authority | Accepted; limitations superseded by 0020 | Retained workspace capability, shared secret policy, unified campaign authority, deterministic handoff, and job-derived campaign status. |
@@ -65,8 +65,9 @@ S+++ program phase `P##` or delivery `PR #N`. See
 
 ## Known documentary debt
 
-- **Confirmed current behaviour:** two files use ADR number `0016`. They remain
-  unchanged to preserve history; use the A/B labels only in this index.
+- **Resolved (P16):** two historical files share number `0016`; titles and index
+  use **ADR-0016-A** / **ADR-0016-B** aliases without renumbering files (history
+  preserved). Residual is dual pathnames only, not ambiguous identity.
 - **Confirmed current behaviour:** two files use ADR number `0022`. They remain
   unchanged to preserve history; use the A/B labels only in this index.
 - **Confirmed current behaviour:** ADRs 0000–0016 predate the full template and

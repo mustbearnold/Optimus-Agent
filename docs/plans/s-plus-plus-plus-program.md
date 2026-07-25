@@ -82,7 +82,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 4 | Domain modularity | **S+++** (post-P13) | S+++ | P13 (done) |
 | 5 | Observability / eval | **S+++** (post-P14) | S+++ | P14 (done) |
 | 6 | UI architecture | **S+++** (post-P15) | S+++ | P15 (done) |
-| 7 | Doc / claim hygiene | **A-** | S+++ | P16 |
+| 7 | Doc / claim hygiene | **S+++** (post-P16) | S+++ | P16 (done) |
 | 8 | Release / parity gating | **A** | S+++ | P17 |
 | 9 | Durability / crash safety | **A+** | S+++ | P18 |
 | — | **All-marks adversarial review** | mixed | **all S+++** | P19 |
@@ -97,8 +97,8 @@ P10 Multi-agent (done → S+++)
   → P13 Domain modularity (done → S+++)
   → P14 Observability (done → S+++)
   → P15 UI (done → S+++)
-  → P16 Doc hygiene (A-)   ← next
-  → P17 Release gates (A)
+  → P16 Doc hygiene (done → S+++)
+  → P17 Release gates (A)   ← next
   → P18 Durability (A+)
   → P19 Final S+++ review board
 ```
@@ -459,10 +459,11 @@ tests (ADR-0038).**
 **Owner packages:** docs only (+ EM refresh). Run **after** P10–P15 behaviour
 settles; may do light fixes earlier but final S+++ is here.
 
-### Why still A-
+### Why was A- (pre-P16)
 
-Status legends are strong; known debt remains (duplicate ADR `0016`, ownership
-map specialist line, scorecard lag vs system-overview).
+Status legends were strong; debt included duplicate ADR `0016`, scorecard shell
+drift, and unbannered blueprints. **P16 aliases 0016 A/B, aligns scorecard shell
+truth, banners blueprints, refreshes ownership map.**
 
 ### Adversarial S+++ criteria
 
@@ -480,11 +481,11 @@ map specialist line, scorecard lag vs system-overview).
 
 | ID | Task | Exit evidence |
 |---|---|---|
-| H1 | Fix ADR 0016 collision | decisions/ |
-| H2 | Refresh ownership map specialists + crate list | maps/ |
-| H3 | Align sota-scorecard dated claims with system-overview | scorecard |
-| H4 | Banner pass on historical phase notes | architecture/ |
-| H5 | EM generate + validate; marks → Doc **S+++** | EM + marks |
+| H1 | Fix ADR 0016 collision | done — ADR-0016-A / ADR-0016-B aliases |
+| H2 | Refresh ownership map specialists + crate list | done — 15 Cargo packages + electron/ui |
+| H3 | Align sota-scorecard dated claims with system-overview | done — banner + Electron shell |
+| H4 | Banner pass on historical phase notes | done — optimus-exceeds + scorecard |
+| H5 | EM generate + validate; marks → Doc **S+++** | done — this PR |
 
 ### Hold suite
 
@@ -643,4 +644,4 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P15 done** (… + UI **S+++**). Next: **P16** doc / claim hygiene.
+**P10–P16 done** (… + Doc **S+++**). Next: **P17** release / parity gating.
