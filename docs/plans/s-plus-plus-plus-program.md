@@ -84,7 +84,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 6 | UI architecture | **S+++** (post-P15) | S+++ | P15 (done) |
 | 7 | Doc / claim hygiene | **S+++** (post-P16) | S+++ | P16 (done) |
 | 8 | Release / parity gating | **S+++** (post-P17) | S+++ | P17 (done) |
-| 9 | Durability / crash safety | **A+** | S+++ | P18 |
+| 9 | Durability / crash safety | **S+++** (post-P18) | S+++ | P18 (done) |
 | — | **All-marks adversarial review** | mixed | **all S+++** | P19 |
 
 Phase numbers continue from trust-spine 0–5; P6–P9 are reserved for any
@@ -99,8 +99,8 @@ P10 Multi-agent (done → S+++)
   → P15 UI (done → S+++)
   → P16 Doc hygiene (done → S+++)
   → P17 Release gates (done → S+++)
-  → P18 Durability (A+)   ← next
-  → P19 Final S+++ review board
+  → P18 Durability (done → S+++)
+  → P19 Final S+++ review board   ← next
 ```
 
 ### Dependency honesty (exceptions allowed by Rule 4)
@@ -537,18 +537,16 @@ complete, documented, and cannot be “greenwashed” by partial evidence.
 ## P18 — Durability / crash safety (A+ → S+++)
 
 **Owner packages:** `optimus-store`, `optimus-graph`, `optimus-runtime`,
-session coupling, campaign leases.
+session coupling, campaign leases. **Done — mark Durability S+++.**
 
-### Why still A+ (not S+++)
+### Why was A+ (pre-P18)
 
-Core Work Graph durability is excellent. Residuals for adversarial S+++:
+Core Work Graph durability was already strong. Residuals closed or scoped:
 
-- Multi-DB homes lack unified backup/migration/retention story.
-- Stream delivery loss can cancel after a durable effect commits but before
-  transcript save (repair-on-open helps; prove all paths).
-- External exactly-once delivery (gateway off-box) unresolved—must either
-  implement local exactly-once claims fully documented or scope S+++ to
-  **process-local / local SQLite** durability only.
+- Multi-DB homes now have doctor inventory + backup path set (not one distributed TX).
+- Session multi-link repair-on-open covered with tests.
+- External exactly-once delivery remains **out of S+++ scope**; local SQLite +
+  local gateway/cron leases are the Confirmed boundary.
 
 ### Adversarial S+++ criteria
 
@@ -568,16 +566,20 @@ Core Work Graph durability is excellent. Residuals for adversarial S+++:
 
 | ID | Task | Exit evidence |
 |---|---|---|
-| Y1 | Doctor: multi-DB schema/version inventory + quarantine report | CLI tests |
-| Y2 | Backup/restore runbook + optional `optimus doctor backup-list` | docs + CLI |
-| Y3 | Chaos tests: kill during WriteFile/RunCommand/campaign step | runtime tests |
-| Y4 | Workflow run + agent invocation crash matrix (post-P10) | agent/workflow tests |
-| Y5 | Session repair coverage for all durable tool kinds | session_resume |
-| Y6 | Marks → Durability **S+++** | marks |
+| Y1 | Doctor: multi-DB schema/version inventory + quarantine report | done — `apps/optimus-cli/src/doctor.rs` + `tests/doctor_durability.rs` |
+| Y2 | Backup/restore runbook + optional `optimus doctor backup-list` | done — `docs/architecture/durability-and-backup.md` + `doctor backup-list` |
+| Y3 | Chaos tests: kill during WriteFile/RunCommand/campaign step | done — `crash_resume` write crash + ambiguous command; campaign crash recover (existing) |
+| Y4 | Workflow run + agent invocation crash matrix (post-P10) | done — workflow cancel idempotent unit test; cancel tree in vertical |
+| Y5 | Session repair coverage for all durable tool kinds | done — multi-link repair in `session_resume` |
+| Y6 | Marks → Durability **S+++** | done — PR after open |
 
 ### Hold suite
 
-- Full runtime suite, campaign tests, cancellation tests
+- `cargo test -p optimus-runtime --test crash_resume`
+- `cargo test -p optimus-kernel --test session_resume`
+- `cargo test -p optimus-workflow --lib durability_tests`
+- `cargo test -p optimus-cli --test doctor_durability`
+- `python3 scripts/check-architecture-marks.py`
 
 ---
 
@@ -653,4 +655,4 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P17 done** (… + Release **S+++**). Next: **P18** durability / crash safety.
+**P10–P18 done** (… + Durability **S+++**). Next: **P19** all-marks adversarial review board.

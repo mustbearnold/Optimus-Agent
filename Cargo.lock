@@ -2791,6 +2791,7 @@ dependencies = [
  "optimus-packs",
  "optimus-runtime",
  "optimus-skills",
+ "rusqlite",
  "serde",
  "serde_json",
  "tempfile",

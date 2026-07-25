@@ -1176,3 +1176,27 @@ fn invalid(message: impl Into<String>) -> WorkflowError {
 }
 
 
+
+
+#[cfg(test)]
+mod durability_tests {
+    use super::*;
+    use crate::write_file_handoff_workflow;
+    use tempfile::tempdir;
+
+    #[test]
+    fn double_request_cancellation_is_idempotent() {
+        let dir = tempdir().unwrap();
+        let store = WorkflowRunStore::open(dir.path().join("workflow-runs.db")).unwrap();
+        let definition = write_file_handoff_workflow().unwrap();
+        let run_id = store
+            .begin(&definition, serde_json::json!({"relative_path":"x.txt","contents":"x"}))
+            .unwrap();
+        assert!(store.request_cancellation(run_id, "first").unwrap());
+        // Second request returns false (already requested) without error.
+        assert!(!store.request_cancellation(run_id, "second").unwrap());
+        let reason = store.cancellation_requested(run_id).unwrap();
+        assert_eq!(reason.as_deref(), Some("first"));
+    }
+
+}

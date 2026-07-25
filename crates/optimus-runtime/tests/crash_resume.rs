@@ -290,3 +290,73 @@ fn prepared_command_becomes_ambiguous_and_is_not_blindly_replayed() {
         .unwrap();
     assert_eq!(status, "ambiguous");
 }
+
+
+
+#[test]
+fn crash_during_writefile_then_resume_exactly_one_terminal() {
+    let root = tempdir().expect("tempdir");
+    let db = root.path().join("optimus.db");
+    let workspace = root.path().join("workspace");
+    fs::create_dir_all(&workspace).expect("workspace");
+    let job_id = {
+        let rt = Runtime::open_with_config(
+            &db,
+            &workspace,
+            RuntimeConfig {
+                policy: PolicyMode::Unrestricted,
+                ..Default::default()
+            },
+        )
+        .expect("open");
+        let job_id = rt
+            .create_job(JobSpec {
+                label: "write-crash".into(),
+                budget: Default::default(),
+                nodes: vec![
+                    NodeSpec {
+                        label: "write".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "chaos-write.txt".into(),
+                            contents: "chaos".into(),
+                        },
+                    },
+                    NodeSpec {
+                        label: "marker".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "chaos-done.txt".into(),
+                            contents: "done".into(),
+                        },
+                    },
+                ],
+            })
+            .expect("create");
+        rt.begin_node_and_crash(job_id).expect("crash seam");
+        job_id
+    };
+    let rt = Runtime::open_with_config(
+        &db,
+        &workspace,
+        RuntimeConfig {
+            policy: PolicyMode::Unrestricted,
+            ..Default::default()
+        },
+    )
+    .expect("reopen");
+    let _recovered = rt.recover_crashed_running().expect("recover");
+    let status = rt.resume(job_id).expect("resume");
+    assert_eq!(status, JobStatus::Succeeded);
+    assert_eq!(
+        fs::read_to_string(workspace.join("chaos-done.txt")).unwrap(),
+        "done"
+    );
+    let connection = Connection::open(&db).unwrap();
+    let terminal: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM events WHERE job_id=?1 AND terminal_slot=1",
+            [job_id.0.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(terminal, 1);
+}

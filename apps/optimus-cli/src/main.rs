@@ -2,6 +2,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+mod doctor;
 mod gateway_http;
 
 use clap::{Parser, Subcommand};
@@ -10,7 +11,7 @@ use optimus_eval::{
     CandidateBinding, EvaluationReportV1, EvaluationResourceMeasurement, MetricThreshold,
     MAX_EVALUATION_DATASET_BYTES,
 };
-use optimus_graph::PolicyMode;
+use optimus_graph::{PolicyMode, Store};
 use optimus_kernel::{
     device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_recent_causal_turns,
     list_sessions, load_causal_turn, open_cron, open_seeded_agent_registry,
@@ -49,8 +50,14 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
-    /// Print version and phase status
-    Doctor,
+    /// Durability inventory: multi-DB schema/quarantine + backup set (P18)
+    Doctor {
+        #[command(subcommand)]
+        cmd: Option<DoctorCmd>,
+        /// Emit machine-readable JSON
+        #[arg(long, global = true)]
+        json: bool,
+    },
     /// Run the Phase 0 golden multi-node job in a workspace
     Demo {
         #[arg(long)]
@@ -162,6 +169,12 @@ enum Commands {
         #[command(subcommand)]
         cmd: TraceCmd,
     },
+}
+
+#[derive(Subcommand, Debug)]
+enum DoctorCmd {
+    /// List the process-local backup path set for this home
+    BackupList,
 }
 
 #[derive(Subcommand, Debug)]
@@ -594,50 +607,52 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     let skills_db = cli.home.join("skills.db");
     match cli.command {
         Commands::Version { .. } => unreachable!("version is handled before opening Optimus state"),
-        Commands::Doctor => {
-            println!(
-                "optimus {} — phase 16 gateway-http+campaign-ipc",
-                env!("CARGO_PKG_VERSION")
-            );
-            let version_status = embedded_version_status()?;
-            println!(
-                "hermes: target={} parity={} contracts={}",
-                version_status["hermes_target_version"]
-                    .as_str()
-                    .unwrap_or("unknown"),
-                version_status["hermes_parity_version"]
-                    .as_str()
-                    .unwrap_or("unverified"),
-                version_status["frozen_hermes_feature_contracts"]
-                    .as_u64()
-                    .unwrap_or(0),
-            );
-            println!("home: {}", cli.home.display());
-            println!("db: {}", db.display());
-            println!("skills_db: {}", skills_db.display());
-            let s = CapabilitySession::with_defaults();
-            println!(
-                "packs: core_schema_tokens={} max_budget=2500 max_on_demand=2",
-                s.schema_tokens()
-            );
-            let key_set = std::env::var("OPTIMUS_API_KEY").is_ok();
-            let base = std::env::var("OPTIMUS_API_BASE")
-                .unwrap_or_else(|_| "https://api.openai.com/v1".into());
-            let model = std::env::var("OPTIMUS_MODEL").unwrap_or_else(|_| "gpt-4.1-mini".into());
-            println!("provider: openai-compat base={base} model={model} api_key_set={key_set}");
-            let store = CodexAuthStore::open(&cli.home)?;
-            let cs = store.status()?;
-            println!(
-                "codex_oauth: present={} expiring={} has_refresh={} mode={} base={} account={}",
-                cs.present,
-                cs.access_expiring,
-                cs.has_refresh,
-                cs.source_note,
-                cs.base_url,
-                cs.account_id.as_deref().unwrap_or("-")
-            );
-            Ok(())
-        }
+        Commands::Doctor { cmd, json } => match cmd {
+            None => {
+                // Ensure core DBs exist so inventory reports live schema versions.
+                let _ = Store::open(&db);
+                let _ = CampaignStore::open(&cli.home);
+                let _ = SkillRegistry::open(&skills_db);
+                let report = doctor::inventory(&cli.home, env!("CARGO_PKG_VERSION"));
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                } else {
+                    doctor::print_inventory_text(&report);
+                    let version_status = embedded_version_status()?;
+                    println!(
+                        "hermes: target={} parity={} contracts={}",
+                        version_status["hermes_target_version"]
+                            .as_str()
+                            .unwrap_or("unknown"),
+                        version_status["hermes_parity_version"]
+                            .as_str()
+                            .unwrap_or("unverified"),
+                        version_status["frozen_hermes_feature_contracts"]
+                            .as_u64()
+                            .unwrap_or(0),
+                    );
+                    let s = CapabilitySession::with_defaults();
+                    println!(
+                        "packs: core_schema_tokens={} max_budget=2500 max_on_demand=2",
+                        s.schema_tokens()
+                    );
+                }
+                if report.issues.is_empty() {
+                    Ok(())
+                } else {
+                    Err("doctor found durability issues (see report)".into())
+                }
+            }
+            Some(DoctorCmd::BackupList) => {
+                let list = doctor::backup_list(&cli.home);
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&list)?);
+                } else {
+                    doctor::print_backup_list_text(&list);
+                }
+                Ok(())
+            }
+        },
         Commands::Demo { workspace } => {
             let workspace = workspace.unwrap_or_else(|| cli.home.join("workspace"));
             let rt = Runtime::open(&db, &workspace)?;
