@@ -1,7 +1,10 @@
 //! Versioned multi-agent orchestration envelopes (design P0).
 //!
 //! These contracts are pure data + validation. They do not execute models or
-//! tools. Schema versions are independent of `WORKFLOW_SCHEMA_VERSION`.
+//! tools, do not grant SmartDeny approvals, and free-form `tool_ids` /
+//! `specialist_ids` strings are **not** capability grants (hosts must resolve
+//! against registries when wiring workers). Schema versions are independent of
+//! `WORKFLOW_SCHEMA_VERSION`.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

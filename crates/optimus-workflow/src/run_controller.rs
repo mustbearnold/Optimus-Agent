@@ -1,14 +1,17 @@
 //! Multi-agent RunController state machine (design P0).
 //!
-//! In-memory controller with:
+//! In-memory orchestration waist with:
 //! - deterministic phase transitions
-//! - exactly one terminal outcome per run_id
-//! - cancel token integration
-//! - token/wall budgets
-//! - bounded patch / replan counters (anti-loop)
+//! - exactly one terminal outcome per `run_id` (sole writer: `force_terminal`)
+//! - cancel token integration (controller only — not ADR-0033 child cancel tree)
+//! - token/wall budgets (API returns `Err` after fail-closed terminalization)
+//! - bounded patch / replan / plan counters (anti-loop)
 //! - deterministic QualityGate (code, not LLM)
 //!
-//! Does not spawn models. Worker/review integration is P1+.
+//! **Non-claims (P0):** does not spawn models; does not execute tools; does not
+//! bypass SmartDeny; does not write `WorkflowRunStore`. `run_id` here is an
+//! orchestration id, **not** a durable Work Graph / workflow-run id. Host
+//! effects remain Work Graph + SmartDeny. Worker/review specialist wiring is P1+.
 
 use std::time::{Duration, Instant};
 
@@ -27,7 +30,7 @@ fn invalid(msg: impl Into<String>) -> WorkflowError {
     WorkflowError::Msg(msg.into())
 }
 
-/// Production defaults from the optimized workflow design.
+/// Default attempt/budget caps from the optimized workflow design note.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RunPolicy {
     pub max_patch_attempts: u32,
@@ -174,6 +177,7 @@ impl RunController {
                 "cancelled",
                 None,
                 vec!["run cancelled".into()],
+                vec![],
             );
         }
     }
@@ -192,10 +196,23 @@ impl RunController {
         usable.saturating_sub(self.tokens_spent)
     }
 
+    /// Fail-closed budget/cancel check. On terminalization returns `Err` so
+    /// hosts using `?` cannot continue as if the phase advanced.
     fn check_budgets(&mut self) -> Result<()> {
+        if self.state.is_terminal() {
+            return Err(invalid("run already terminal"));
+        }
         if self.cancel.is_cancelled() {
-            self.cancel();
-            return Ok(());
+            if !self.state.is_terminal() {
+                let _ = self.force_terminal(
+                    DeliveryTerminal::Cancelled,
+                    "cancelled",
+                    None,
+                    vec!["run cancelled".into()],
+                    vec![],
+                );
+            }
+            return Err(invalid("run cancelled"));
         }
         if self.started.elapsed() > Duration::from_millis(self.policy.max_wall_ms) {
             let _ = self.force_terminal(
@@ -203,8 +220,9 @@ impl RunController {
                 "deadline",
                 None,
                 vec!["hard wall-clock exceeded".into()],
+                vec![],
             );
-            return Ok(());
+            return Err(invalid("deadline"));
         }
         if self.budget_remaining() == 0 {
             let _ = self.force_terminal(
@@ -212,7 +230,9 @@ impl RunController {
                 "budget_exhausted",
                 None,
                 vec!["token budget exhausted".into()],
+                vec![],
             );
+            return Err(invalid("budget_exhausted"));
         }
         Ok(())
     }
@@ -237,9 +257,8 @@ impl RunController {
     fn transition(&mut self, to: RunState, reason: &str) -> Result<()> {
         self.ensure_not_terminal()?;
         self.check_budgets()?;
-        if self.state.is_terminal() {
-            return Ok(());
-        }
+        // check_budgets never returns Ok while terminal; belt-and-suspenders.
+        self.ensure_not_terminal()?;
         if !self.is_allowed_transition(self.state, to) {
             return Err(invalid(format!(
                 "illegal transition {} -> {}",
@@ -249,6 +268,23 @@ impl RunController {
         }
         self.state = to;
         self.push_event(to, reason);
+        Ok(())
+    }
+
+    /// Charge one plan attempt; exhaust → Failed + Err.
+    fn charge_plan_attempt(&mut self) -> Result<()> {
+        self.ensure_not_terminal()?;
+        self.counters.plan_attempts = self.counters.plan_attempts.saturating_add(1);
+        if self.counters.plan_attempts > self.policy.max_plan_attempts {
+            let _ = self.force_terminal(
+                DeliveryTerminal::Failed,
+                "plan_attempts_exhausted",
+                None,
+                vec!["plan attempt budget exhausted".into()],
+                vec![],
+            );
+            return Err(invalid("plan_attempts_exhausted"));
+        }
         Ok(())
     }
 
@@ -282,15 +318,7 @@ impl RunController {
     }
 
     pub fn begin_planning(&mut self) -> Result<()> {
-        self.counters.plan_attempts = self.counters.plan_attempts.saturating_add(1);
-        if self.counters.plan_attempts > self.policy.max_plan_attempts {
-            return self.force_terminal(
-                DeliveryTerminal::Failed,
-                "plan_attempts_exhausted",
-                None,
-                vec!["plan attempt budget exhausted".into()],
-            );
-        }
+        self.charge_plan_attempt()?;
         self.transition(RunState::Planning, "begin_planning")
     }
 
@@ -303,6 +331,7 @@ impl RunController {
     }
 
     pub fn plan_revise(&mut self) -> Result<()> {
+        self.charge_plan_attempt()?;
         self.transition(RunState::Planning, "plan_revise")
     }
 
@@ -327,17 +356,20 @@ impl RunController {
     }
 
     /// Deterministic quality gate (design §6.2). Not an LLM.
+    ///
+    /// Side effects run first; the returned `GateDecision` always matches the
+    /// controller state after those effects (including budget/cancel preemption).
     pub fn apply_quality_gate(&mut self, report: &SynthesisReport) -> Result<GateDecision> {
         if self.state != RunState::QualityGate {
             return Err(invalid("apply_quality_gate requires quality_gate state"));
         }
         report.validate()?;
-        self.check_budgets()?;
-        if self.state.is_terminal() {
-            return self.gate_decision_from_terminal();
+        if let Err(_) = self.check_budgets() {
+            if self.state.is_terminal() {
+                return self.gate_decision_from_terminal();
+            }
         }
-        if self.cancel.is_cancelled() {
-            self.cancel();
+        if self.state.is_terminal() {
             return self.gate_decision_from_terminal();
         }
 
@@ -348,140 +380,130 @@ impl RunController {
             || report.merged_findings.iter().any(|f| f.blocking)
             || blocking_lens_fail;
 
+        let has_patch_brief = report
+            .patch_brief
+            .as_ref()
+            .is_some_and(|b| !b.trim().is_empty());
+        let has_replan_brief = report
+            .replan_brief
+            .as_ref()
+            .is_some_and(|b| !b.trim().is_empty());
+        let can_patch = self.counters.patch_attempts < self.policy.max_patch_attempts;
+        let can_replan = self.counters.replan_attempts < self.policy.max_replan_attempts
+            && self.counters.plan_attempts < self.policy.max_plan_attempts;
+
         // Synth FailClosed with no blocking evidence still fails closed (cannot
         // "review away" a hard fail recommendation into accept).
-        let (action, reason, next) = if report.recommended_action == GateAction::FailClosed && !blocking
-        {
-            (GateAction::FailClosed, "synth_fail", RunState::Failed)
+        let (action, reason) = if report.recommended_action == GateAction::FailClosed && !blocking {
+            (GateAction::FailClosed, "synth_fail")
         } else if !blocking && report.recommended_action == GateAction::Accept {
-            (GateAction::Accept, "accept", RunState::Delivering)
+            (GateAction::Accept, "accept")
         } else if !blocking
             && matches!(
                 report.recommended_action,
                 GateAction::PatchWorker | GateAction::Replan
             )
         {
-            // Non-blocking but synth asked for work: treat as accept with warnings path
-            // only if answer_draft present; else fail closed (no free loops).
+            // Non-blocking but synth asked for work: accept only if answer present
+            // (no free loops).
             if !report.answer_draft.trim().is_empty() {
-                (GateAction::Accept, "accept_nonblocking_synth_noise", RunState::Delivering)
+                (GateAction::Accept, "accept_nonblocking_synth_noise")
             } else {
-                (
-                    GateAction::FailClosed,
-                    "nonblocking_without_answer",
-                    RunState::Failed,
-                )
+                (GateAction::FailClosed, "nonblocking_without_answer")
             }
         } else if blocking
             && report.recommended_action == GateAction::PatchWorker
-            && self.counters.patch_attempts < self.policy.max_patch_attempts
-            && report.patch_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
+            && can_patch
+            && has_patch_brief
         {
-            self.counters.patch_attempts += 1;
-            (GateAction::PatchWorker, "patch_worker", RunState::Executing)
+            (GateAction::PatchWorker, "patch_worker")
         } else if blocking
             && report.recommended_action == GateAction::Replan
-            && self.counters.replan_attempts < self.policy.max_replan_attempts
-            && report.replan_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
+            && can_replan
+            && has_replan_brief
         {
-            self.counters.replan_attempts += 1;
-            (GateAction::Replan, "replan", RunState::Planning)
+            (GateAction::Replan, "replan")
         } else if blocking
             && report.recommended_action == GateAction::PatchWorker
-            && self.counters.patch_attempts < self.policy.max_patch_attempts
+            && can_patch
+            && !has_patch_brief
         {
-            // Patch recommended but brief missing → fail closed (no free-text loop).
-            (
-                GateAction::FailClosed,
-                "patch_missing_brief",
-                RunState::Failed,
-            )
+            // Defense in depth: validate() already requires brief for PatchWorker.
+            (GateAction::FailClosed, "patch_missing_brief")
         } else if blocking
             && report.recommended_action == GateAction::Replan
-            && self.counters.replan_attempts < self.policy.max_replan_attempts
+            && can_replan
+            && !has_replan_brief
         {
-            (
-                GateAction::FailClosed,
-                "replan_missing_brief",
-                RunState::Failed,
-            )
+            (GateAction::FailClosed, "replan_missing_brief")
         } else if blocking && report.recommended_action == GateAction::Accept {
-            // Blocking findings always win over synth accept — cannot review away security/correctness.
-            if self.counters.patch_attempts < self.policy.max_patch_attempts
-                && report.patch_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
-            {
-                self.counters.patch_attempts += 1;
-                (
-                    GateAction::PatchWorker,
-                    "blocking_overrides_accept_patch",
-                    RunState::Executing,
-                )
-            } else if self.counters.replan_attempts < self.policy.max_replan_attempts
-                && report.replan_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
-            {
-                self.counters.replan_attempts += 1;
-                (
-                    GateAction::Replan,
-                    "blocking_overrides_accept_replan",
-                    RunState::Planning,
-                )
+            // Blocking findings always win over synth accept.
+            if can_patch && has_patch_brief {
+                (GateAction::PatchWorker, "blocking_overrides_accept_patch")
+            } else if can_replan && has_replan_brief {
+                (GateAction::Replan, "blocking_overrides_accept_replan")
             } else {
-                (
-                    GateAction::FailClosed,
-                    "blocking_overrides_accept",
-                    RunState::Failed,
-                )
+                (GateAction::FailClosed, "blocking_overrides_accept")
             }
+        } else if blocking && report.recommended_action == GateAction::FailClosed {
+            (GateAction::FailClosed, "synth_fail_with_blocking")
         } else {
-            (
-                GateAction::FailClosed,
-                "attempts_exhausted_or_blocking",
-                RunState::Failed,
-            )
+            (GateAction::FailClosed, "attempts_exhausted_or_blocking")
         };
-
-        let decision = GateDecision {
-            schema_version: GATE_DECISION_SCHEMA_VERSION,
-            action,
-            reason_code: reason.into(),
-            attempt_counters: self.counters.clone(),
-            next_state: next.as_str().into(),
-            user_visible_summary: None,
-        };
-        decision.validate()?;
 
         match action {
             GateAction::Accept => {
-                self.transition(RunState::Delivering, reason)?;
-                let payload = DeliveryPayload {
-                    schema_version: DELIVERY_PAYLOAD_SCHEMA_VERSION,
-                    run_id: self.run_id,
-                    terminal: DeliveryTerminal::Succeeded,
-                    answer: Some(report.answer_draft.clone()),
-                    warnings: report
-                        .merged_findings
-                        .iter()
-                        .filter(|f| !f.blocking)
-                        .map(|f| f.claim.clone())
-                        .collect(),
-                    evidence_refs: report.evidence_index.clone(),
-                    trace_id: None,
-                    cost_summary: serde_json::json!({
-                        "tokens_spent": self.tokens_spent,
-                        "patch_attempts": self.counters.patch_attempts,
-                        "replan_attempts": self.counters.replan_attempts,
-                    }),
-                };
-                payload.validate()?;
-                self.terminal = Some(payload);
-                self.state = RunState::Succeeded;
-                self.push_event(RunState::Succeeded, "delivered");
+                if let Err(_) = self.transition(RunState::Delivering, reason) {
+                    if self.state.is_terminal() {
+                        return self.gate_decision_from_terminal();
+                    }
+                    return Err(invalid("accept transition failed"));
+                }
+                let warnings: Vec<String> = report
+                    .merged_findings
+                    .iter()
+                    .filter(|f| !f.blocking)
+                    .map(|f| f.claim.clone())
+                    .collect();
+                if let Err(_) = self.force_terminal(
+                    DeliveryTerminal::Succeeded,
+                    "delivered",
+                    Some(report.answer_draft.clone()),
+                    warnings,
+                    report.evidence_index.clone(),
+                ) {
+                    if self.state.is_terminal() {
+                        return self.gate_decision_from_terminal();
+                    }
+                    return Err(invalid("accept terminal commit failed"));
+                }
             }
             GateAction::PatchWorker => {
-                self.transition(RunState::Executing, reason)?;
+                if let Err(_) = self.transition(RunState::Executing, reason) {
+                    if self.state.is_terminal() {
+                        return self.gate_decision_from_terminal();
+                    }
+                    return Err(invalid("patch transition failed"));
+                }
+                self.counters.patch_attempts =
+                    self.counters.patch_attempts.saturating_add(1);
             }
             GateAction::Replan => {
-                self.transition(RunState::Planning, reason)?;
+                // Charge plan attempt before leaving gate so Rmax ∩ plan budget holds.
+                if let Err(_) = self.charge_plan_attempt() {
+                    if self.state.is_terminal() {
+                        return self.gate_decision_from_terminal();
+                    }
+                    return Err(invalid("replan plan-attempt charge failed"));
+                }
+                if let Err(_) = self.transition(RunState::Planning, reason) {
+                    if self.state.is_terminal() {
+                        return self.gate_decision_from_terminal();
+                    }
+                    return Err(invalid("replan transition failed"));
+                }
+                self.counters.replan_attempts =
+                    self.counters.replan_attempts.saturating_add(1);
             }
             GateAction::FailClosed => {
                 let _ = self.force_terminal(
@@ -489,12 +511,50 @@ impl RunController {
                     reason,
                     None,
                     vec![reason.into()],
+                    vec![],
                 );
             }
             GateAction::Cancelled => {
                 self.cancel();
             }
         }
+
+        // Decision reflects actual post-effect state (honest after preemption).
+        if self.state.is_terminal() && !matches!(action, GateAction::Accept) {
+            // Fail/cancel path: surface actual terminal action.
+            if matches!(
+                self.state,
+                RunState::Failed | RunState::Cancelled
+            ) && action != GateAction::FailClosed
+                && action != GateAction::Cancelled
+            {
+                return self.gate_decision_from_terminal();
+            }
+        }
+
+        let decided_action = match self.state {
+            RunState::Succeeded => GateAction::Accept,
+            RunState::Failed => GateAction::FailClosed,
+            RunState::Cancelled => GateAction::Cancelled,
+            RunState::Executing => GateAction::PatchWorker,
+            RunState::Planning => GateAction::Replan,
+            RunState::Delivering => GateAction::Accept,
+            other => {
+                return Err(invalid(format!(
+                    "unexpected post-gate state {}",
+                    other.as_str()
+                )));
+            }
+        };
+        let decision = GateDecision {
+            schema_version: GATE_DECISION_SCHEMA_VERSION,
+            action: decided_action,
+            reason_code: reason.into(),
+            attempt_counters: self.counters.clone(),
+            next_state: self.state.as_str().into(),
+            user_visible_summary: None,
+        };
+        decision.validate()?;
         Ok(decision)
     }
 
@@ -540,12 +600,14 @@ impl RunController {
         Ok(d)
     }
 
+    /// Sole writer of `terminal` + terminal `state`. Exactly one terminal per run.
     fn force_terminal(
         &mut self,
         terminal: DeliveryTerminal,
         reason: &str,
         answer: Option<String>,
         warnings: Vec<String>,
+        evidence_refs: Vec<String>,
     ) -> Result<()> {
         if self.state.is_terminal() {
             return Err(invalid("run already terminal"));
@@ -561,9 +623,14 @@ impl RunController {
             terminal,
             answer,
             warnings,
-            evidence_refs: vec![],
+            evidence_refs,
             trace_id: None,
-            cost_summary: serde_json::json!({ "tokens_spent": self.tokens_spent }),
+            cost_summary: serde_json::json!({
+                "tokens_spent": self.tokens_spent,
+                "patch_attempts": self.counters.patch_attempts,
+                "replan_attempts": self.counters.replan_attempts,
+                "plan_attempts": self.counters.plan_attempts,
+            }),
         };
         if terminal == DeliveryTerminal::Succeeded {
             payload.validate()?;
@@ -711,8 +778,11 @@ mod tests {
         task.max_budget_tokens = 100;
         let mut c = RunController::accept(task, policy).unwrap();
         c.begin_planning().unwrap();
-        c.record_tokens(90).unwrap();
+        let err = c.record_tokens(90).unwrap_err();
+        assert!(err.to_string().contains("budget_exhausted"));
         assert_eq!(c.state, RunState::Failed);
+        // Further phase advances must not look successful.
+        assert!(c.enter_plan_review().is_err());
     }
 
     #[test]
@@ -856,6 +926,122 @@ mod tests {
         let d = c.apply_quality_gate(&report).unwrap();
         assert_eq!(d.action, GateAction::FailClosed);
         assert_eq!(d.reason_code, "nonblocking_without_answer");
+        assert_eq!(c.state, RunState::Failed);
+    }
+
+    #[test]
+    fn accept_cannot_overwrite_cancel_terminal() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        // Shared token cancelled (simulates host/peer cancel during gate).
+        c.cancel.cancel();
+        let d = c.apply_quality_gate(&accept_report("should not win")).unwrap();
+        assert_eq!(d.action, GateAction::Cancelled);
+        assert_eq!(c.state, RunState::Cancelled);
+        assert_eq!(
+            c.terminal_payload().unwrap().terminal,
+            DeliveryTerminal::Cancelled
+        );
+        // Exactly one terminal event; never Succeeded.
+        assert_eq!(
+            c.events
+                .iter()
+                .filter(|e| e.state.is_terminal())
+                .count(),
+            1
+        );
+        assert!(!c.events.iter().any(|e| e.state == RunState::Succeeded));
+    }
+
+    #[test]
+    fn plan_revise_respects_max_plan_attempts() {
+        let mut policy = RunPolicy::minimal();
+        policy.max_plan_attempts = 2;
+        let mut c = RunController::accept(task(), policy).unwrap();
+        c.begin_planning().unwrap(); // attempt 1
+        c.enter_plan_review().unwrap();
+        c.plan_revise().unwrap(); // attempt 2
+        assert_eq!(c.counters.plan_attempts, 2);
+        assert_eq!(c.state, RunState::Planning);
+        c.enter_plan_review().unwrap();
+        let err = c.plan_revise().unwrap_err();
+        assert!(err.to_string().contains("plan_attempts_exhausted"));
+        assert_eq!(c.state, RunState::Failed);
+        assert_eq!(c.counters.plan_attempts, 3);
+    }
+
+    #[test]
+    fn replan_then_accept_respects_rmax() {
+        let mut policy = RunPolicy::minimal();
+        policy.max_replan_attempts = 1;
+        policy.max_plan_attempts = 5;
+        let mut c = RunController::accept(task(), policy).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let replan = SynthesisReport {
+            schema_version: SYNTHESIS_REPORT_SCHEMA_VERSION,
+            work_attempt_id: Uuid::new_v4(),
+            plan_id: Uuid::new_v4(),
+            merged_findings: vec![crate::orchestrator_envelopes::Finding {
+                severity: "error".into(),
+                claim: "wrong approach".into(),
+                evidence_ref: None,
+                blocking: true,
+            }],
+            blocking_count: 1,
+            pass_lenses: vec![],
+            fail_lenses: vec![ReviewLens::Feasibility],
+            recommended_action: GateAction::Replan,
+            patch_brief: None,
+            replan_brief: Some("change architecture".into()),
+            answer_draft: String::new(),
+            evidence_index: vec![],
+        };
+        let d1 = c.apply_quality_gate(&replan).unwrap();
+        assert_eq!(d1.action, GateAction::Replan);
+        assert_eq!(c.state, RunState::Planning);
+        assert_eq!(c.counters.replan_attempts, 1);
+        // New plan cycle → execute → gate again
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let d2 = c.apply_quality_gate(&replan).unwrap();
+        assert_eq!(d2.action, GateAction::FailClosed);
+        assert_eq!(c.state, RunState::Failed);
+    }
+
+    #[test]
+    fn blocking_overrides_accept_without_briefs_fails() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = accept_report("looks fine");
+        report.blocking_count = 1;
+        report.merged_findings = vec![crate::orchestrator_envelopes::Finding {
+            severity: "error".into(),
+            claim: "security hole".into(),
+            evidence_ref: None,
+            blocking: true,
+        }];
+        // no patch_brief / replan_brief → fail closed
+        let d = c.apply_quality_gate(&report).unwrap();
+        assert_eq!(d.action, GateAction::FailClosed);
+        assert_eq!(d.reason_code, "blocking_overrides_accept");
         assert_eq!(c.state, RunState::Failed);
     }
 }

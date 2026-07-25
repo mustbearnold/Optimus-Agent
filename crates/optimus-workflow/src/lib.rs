@@ -1,7 +1,9 @@
 //! Versioned workflow contracts, durable run ledger, and built-in specialist DAG verticals.
 //!
-//! Multi-agent orchestration envelopes and RunController (design P0) live in
-//! `orchestrator_envelopes` / `run_controller`.
+//! Design-P0 orchestration envelopes + in-memory `RunController` live in
+//! `orchestrator_envelopes` / `run_controller`. That controller is **not** the
+//! durable ADR-0033 `WorkflowRunStore` path and does not execute tools or
+//! spawn models.
 
 mod orchestrator_envelopes;
 mod run_controller;
