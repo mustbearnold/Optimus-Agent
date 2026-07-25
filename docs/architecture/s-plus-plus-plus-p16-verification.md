@@ -1,7 +1,7 @@
 # S+++ P16 verification — doc / claim hygiene
 
 Date: 2026-07-25  
-Planes: program **P16** · decision (process; no new ADR required) · delivery (open PR)
+Planes: program **P16** · decision (process; ADR-0016-A/B aliases) · delivery **PR #26**
 
 ## Exit evidence
 
