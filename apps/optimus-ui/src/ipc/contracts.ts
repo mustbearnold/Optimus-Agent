@@ -11,6 +11,9 @@ export type DesktopMethod =
   | 'get_session'
   | 'rename_session'
   | 'delete_session'
+  | 'session_search'
+  | 'archive_session'
+  | 'pin_session'
   | 'chat_approval_resolve'
   | 'cron_list'
   | 'cron_add'
@@ -52,6 +55,8 @@ export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** Reasoning/thinking block — never mixed into `content` (program P24). */
+  thinking?: string;
   status?: RunStatus;
   durationMs?: number;
   createdAt?: string;
@@ -65,6 +70,8 @@ export type SessionMeta = {
   packs?: string[];
   updated_at?: string;
   created_at?: string;
+  pinned?: boolean;
+  archived?: boolean;
 };
 
 export type SessionDetail = SessionMeta & {
@@ -268,6 +275,7 @@ export type TimingEvent = {
 
 export type StreamEvent =
   | { type: 'delta'; text: string }
+  | { type: 'thinking'; text: string }
   | ToolLifecycleEvent
   | { type: 'status'; text: string }
   | TimingEvent

@@ -9,18 +9,21 @@ type Props = {
   sessions: SessionMeta[];
   projects: Project[];
   assignments: Record<string, string>;
-  pins: string[];
   expanded: Record<string, boolean>;
   selectedSessionId: string | null;
   sessionIndicators: Record<string, SessionIndicatorState>;
   route: AppRoute;
+  showArchived: boolean;
+  onShowArchived: (show: boolean) => void;
+  onSearch: (query: string) => void;
   onSelectSession: (id: string) => void;
   onNewSession: (projectId?: string) => void;
   onRoute: (route: AppRoute) => void;
   onAddProject: () => void;
   onManageProject: (project: Project) => void;
   onToggleProject: (id: string) => void;
-  onTogglePin: (sessionId: string) => void;
+  onTogglePin: (session: SessionMeta) => void;
+  onToggleArchive: (session: SessionMeta) => void;
   onAssign: (sessionId: string, projectId: string | null) => void;
   onRename: (session: SessionMeta) => void;
   onDelete: (session: SessionMeta) => void;
@@ -30,15 +33,13 @@ type Props = {
 export function ProjectsRail(props: Props) {
   const [query, setQuery] = useState('');
   const [menuSession, setMenuSession] = useState<string | null>(null);
-  const needle = query.trim().toLowerCase();
-  const visibleSessions = useMemo(
-    () =>
-      props.sessions.filter((session) =>
-        needle ? (session.title || session.id).toLowerCase().includes(needle) : true
-      ),
-    [needle, props.sessions]
-  );
-  const pinnedSessions = visibleSessions.filter((session) => props.pins.includes(session.id));
+  const visibleSessions = useMemo(() => {
+    return props.sessions.filter((session) => {
+      if (!props.showArchived && session.archived) return false;
+      return true;
+    });
+  }, [props.sessions, props.showArchived]);
+  const pinnedSessions = visibleSessions.filter((session) => Boolean(session.pinned));
 
   const renderSession = (session: SessionMeta, projectId?: string) => {
     const active = session.id === props.selectedSessionId;
@@ -89,9 +90,12 @@ export function ProjectsRail(props: Props) {
         </button>
         {menuOpen ? (
           <div className="row-menu" role="menu">
-            <button type="button" role="menuitem" onClick={() => props.onTogglePin(session.id)}>
+            <button type="button" role="menuitem" onClick={() => props.onTogglePin(session)}>
               <Icon name="pin" />
-              {props.pins.includes(session.id) ? 'Unpin session' : 'Pin session'}
+              {session.pinned ? 'Unpin session' : 'Pin session'}
+            </button>
+            <button type="button" role="menuitem" onClick={() => props.onToggleArchive(session)}>
+              {session.archived ? 'Unarchive session' : 'Archive session'}
             </button>
             <button type="button" role="menuitem" onClick={() => props.onRename(session)}>
               Rename
@@ -140,8 +144,12 @@ export function ProjectsRail(props: Props) {
             <input
               type="search"
               value={query}
-              placeholder="Search"
-              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search sessions"
+              onChange={(event) => {
+                const next = event.target.value;
+                setQuery(next);
+                props.onSearch(next);
+              }}
             />
             <kbd>⌘K</kbd>
           </label>
@@ -213,7 +221,7 @@ export function ProjectsRail(props: Props) {
           {props.projects.map((project) => {
             const projectSessions = visibleSessions.filter(
               (session) =>
-                props.assignments[session.id] === project.id && !props.pins.includes(session.id)
+                props.assignments[session.id] === project.id && !session.pinned
             );
             const open = props.expanded[project.id] !== false;
             return (
@@ -273,6 +281,13 @@ export function ProjectsRail(props: Props) {
       </div>
 
       <div className="rail-footer">
+        <button
+          type="button"
+          aria-pressed={props.showArchived}
+          onClick={() => props.onShowArchived(!props.showArchived)}
+        >
+          <span>{props.showArchived ? 'Hide archived' : 'Show archived'}</span>
+        </button>
         <button type="button" onClick={props.onSettings}>
           <Icon name="settings" />
           <span>Settings</span>

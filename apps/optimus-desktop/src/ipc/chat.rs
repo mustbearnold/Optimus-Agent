@@ -348,6 +348,7 @@ pub(crate) fn chat_turn_cancellable(
 pub(crate) fn stream_event_to_json(ev: &StreamEvent) -> serde_json::Value {
     match ev {
         StreamEvent::TextDelta(t) => json!({"type": "delta", "text": t}),
+        StreamEvent::ThinkingDelta(t) => json!({"type": "thinking", "text": t}),
         StreamEvent::Tool(tool) => {
             let mut value = serde_json::to_value(tool).unwrap_or_default();
             if let Some(object) = value.as_object_mut() {

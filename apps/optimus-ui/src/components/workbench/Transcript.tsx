@@ -32,6 +32,12 @@ const MessageRow = memo(function MessageRow({
           Worked for {formatDuration(message.durationMs)} <span aria-hidden="true">›</span>
         </div>
       ) : null}
+      {message.role === 'assistant' && message.thinking ? (
+        <details className="thinking-block">
+          <summary>Thinking</summary>
+          <pre className="thinking-body">{message.thinking}</pre>
+        </details>
+      ) : null}
       <div className="message-body">
         {visibleContent || (message.status === 'working' ? <span className="stream-caret">Working</span> : null)}
       </div>

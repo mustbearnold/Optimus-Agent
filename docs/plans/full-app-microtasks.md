@@ -192,11 +192,11 @@ than new substrates and is what users touch every minute.
 
 | ID | Status | Micro-task | Ledger | Proof |
 |---|---|---|---|---|
-| S2.1 | `todo` | Thinking blocks separate from assistant text | `chat.thinking-tools` | transcript fixture component test |
-| S2.2 | `todo` | Tool cards: start / stream / success / fail / cancel + duration | `chat.thinking-tools` | stream fixture test |
-| S2.3 | `todo` | Session FTS over title + messages | `session.search-hygiene` | kernel FTS + UI |
-| S2.4 | `todo` | Archive / unarchive sessions | `session.search-hygiene` | IPC + e2e |
-| S2.5 | `todo` | Durable pins + sort (updated / pinned / archived) | `session.search-hygiene` | session reopen test |
+| S2.1 | `done` | Thinking blocks separate from assistant text | `chat.thinking-tools` | ThinkingDelta stream + Transcript thinking block; program P24 |
+| S2.2 | `done` | Tool cards: start / stream / success / fail / cancel + duration | `chat.thinking-tools` | ActivityTimeline + persisted lifecycle reload; program P24 |
+| S2.3 | `done` | Session FTS over title + messages | `session.search-hygiene` | sessions_fts + session_search IPC; program P24 |
+| S2.4 | `done` | Archive / unarchive sessions | `session.search-hygiene` | archive_session IPC + rail; program P24 |
+| S2.5 | `done` | Durable pins + sort (updated / pinned / archived) | `session.search-hygiene` | pin_session + sort; program P24 |
 | S2.6 // | `todo` | Artifacts image gallery thumbnails | `artifacts.store-ui` | React + e2e |
 | S2.7 // | `todo` | Artifacts type/label filter chips | `artifacts.store-ui` | unit filter |
 | S2.8 // | `todo` | Single-artifact export (host save/copy path) | `artifacts.store-ui` | IPC + e2e |

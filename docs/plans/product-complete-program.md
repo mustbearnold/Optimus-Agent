@@ -654,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P23 done** (tool contract, files.mutate, coordinated browser).
-2. Open **program P24** (daily chat + session hygiene) or parallel P25–P28; residual S2.14 concurrent mutate lease remains optional.
+1. **program P20–P24 done** (tools, mutate, browser, chat/session hygiene).
+2. Open **program P25** (artifacts + cron) or parallel P26–P28; residual S2.14 concurrent mutate lease remains optional.
 
 ## Success definition
 

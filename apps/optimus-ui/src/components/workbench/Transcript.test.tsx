@@ -19,6 +19,28 @@ describe('Transcript', () => {
     expect(screen.queryByText('Optimus')).not.toBeInTheDocument();
   });
 
+  it('renders thinking blocks separate from assistant answer text', () => {
+    render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-think',
+            role: 'assistant',
+            content: 'The answer is 42.',
+            thinking: 'Consider the hitchhiker path.',
+            status: 'completed',
+          },
+        ]}
+        status="completed"
+        statusText="Completed"
+        onStarter={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Thinking')).toBeInTheDocument();
+    expect(screen.getByText('Consider the hitchhiker path.')).toBeInTheDocument();
+    expect(screen.getByText('The answer is 42.')).toBeInTheDocument();
+  });
+
   it('keeps an active assistant status visible without a sender label', () => {
     render(
       <Transcript

@@ -1036,6 +1036,31 @@ code {
   background: var(--surface);
 }
 
+.thinking-block {
+  margin: 0 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--hover);
+  font-size: 12px;
+}
+
+.thinking-block summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.thinking-body {
+  margin: 0;
+  padding: 0 10px 8px;
+  white-space: pre-wrap;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .browser-role-note {
   margin: 0;
   padding: 6px 10px;
