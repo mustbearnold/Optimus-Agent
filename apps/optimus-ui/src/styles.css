@@ -1118,6 +1118,137 @@ code {
   color: var(--muted);
 }
 
+.consoles-page .console-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.consoles-page .console-tabs button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.consoles-page .console-tabs button.is-active {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.console-panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.console-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.console-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.console-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.console-row-actions {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.console-recall-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.console-recall-form input {
+  border: 1px solid var(--border);
+  background: var(--hover);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.console-json,
+.console-logs {
+  margin-top: 10px;
+  max-height: 280px;
+  overflow: auto;
+  font-size: 12px;
+  background: var(--hover);
+  border-radius: 8px;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
+.command-palette {
+  width: min(520px, 92vw);
+  margin: 12vh auto 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.command-palette input {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--hover);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.command-palette ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.command-palette li button {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.command-palette li button:hover {
+  background: var(--hover);
+}
+
 .cron-workbench {
   display: flex;
   flex-direction: column;

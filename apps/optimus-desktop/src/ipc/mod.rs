@@ -1,6 +1,7 @@
 //! Shared IPC facade for WebView and HTTP modes.
 
 mod chat;
+mod consoles;
 mod contract;
 mod files;
 mod os;

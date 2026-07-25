@@ -11,6 +11,7 @@ enum Domain {
     Files,
     Chat,
     Os,
+    Consoles,
 }
 
 const METHOD_DOMAINS: &[(&str, Domain)] = &[
@@ -71,6 +72,18 @@ const METHOD_DOMAINS: &[(&str, Domain)] = &[
     ("chat", Domain::Chat),
     ("chat_offline", Domain::Chat),
     ("chat_approval_resolve", Domain::Chat),
+    ("skills_list", Domain::Consoles),
+    ("skills_pin", Domain::Consoles),
+    ("skills_deprecate", Domain::Consoles),
+    ("memory_list", Domain::Consoles),
+    ("memory_recall", Domain::Consoles),
+    ("memory_correct", Domain::Consoles),
+    ("memory_forget", Domain::Consoles),
+    ("packs_state", Domain::Consoles),
+    ("packs_activate", Domain::Consoles),
+    ("packs_deactivate", Domain::Consoles),
+    ("logs_tail", Domain::Consoles),
+    ("commands_list", Domain::Consoles),
 ];
 
 fn classify(method: &str) -> Option<Domain> {
@@ -89,6 +102,7 @@ fn domain_recognizes(domain: Domain, method: &str) -> bool {
         Domain::Files => super::files::owns(method),
         Domain::Chat => super::chat::owns(method),
         Domain::Os => super::os::owns(method),
+        Domain::Consoles => super::consoles::owns(method),
     }
 }
 
@@ -105,6 +119,7 @@ pub(crate) fn handle_ipc(
         Some(Domain::Files) => super::files::handle(home, method, params),
         Some(Domain::Chat) => super::chat::handle(home, method, params),
         Some(Domain::Os) => super::os::handle(home, method, params),
+        Some(Domain::Consoles) => super::consoles::handle(home, method, params),
         None => Err(format!("unknown method: {method}")),
     }
 }
@@ -173,6 +188,18 @@ mod tests {
         ("chat", Domain::Chat),
         ("chat_offline", Domain::Chat),
         ("chat_approval_resolve", Domain::Chat),
+        ("skills_list", Domain::Consoles),
+        ("skills_pin", Domain::Consoles),
+        ("skills_deprecate", Domain::Consoles),
+        ("memory_list", Domain::Consoles),
+        ("memory_recall", Domain::Consoles),
+        ("memory_correct", Domain::Consoles),
+        ("memory_forget", Domain::Consoles),
+        ("packs_state", Domain::Consoles),
+        ("packs_activate", Domain::Consoles),
+        ("packs_deactivate", Domain::Consoles),
+        ("logs_tail", Domain::Consoles),
+        ("commands_list", Domain::Consoles),
     ];
 
     #[test]

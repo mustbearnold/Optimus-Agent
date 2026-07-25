@@ -560,6 +560,34 @@ impl Memory {
             })
     }
 
+    /// Console listing (program P26): recent claims in scope. Data only — never
+    /// ActionAuthorize.
+    pub fn list_recent(&self, ctx: &WriteContext, limit: u32) -> Result<Vec<ClaimView>> {
+        let limit = limit.clamp(1, 200) as i64;
+        let scope = ctx.scope();
+        let mut stmt = self.conn.prepare(
+            "SELECT id, tenant, user_id, agent, project, subject, predicate, object,
+                    valid_from, valid_to, tx_from, tx_to, confidence, origin, trust,
+                    allowed_uses_json, supersedes, in_conflict, sensitivity,
+                    retention_until, tombstoned_at, erased
+             FROM claims
+             WHERE tenant=?1 AND user_id=?2 AND project=?3 AND erased=0
+             ORDER BY tx_from DESC
+             LIMIT ?4",
+        )?;
+        let rows = stmt.query_map(
+            params![scope.tenant, scope.user, scope.project, limit],
+            row_to_claim,
+        )?;
+        let mut out = Vec::new();
+        for row in rows {
+            let claim = row.map_err(MemoryError::Sqlite)?;
+            self.ensure_sensitivity(ctx, claim.sensitivity)?;
+            out.push(claim);
+        }
+        Ok(out)
+    }
+
     pub fn tombstone(&self, ctx: &WriteContext, id: Uuid) -> Result<bool> {
         let prior = self.get_claim(id)?;
         self.ensure_scope(ctx, &prior.scope)?;

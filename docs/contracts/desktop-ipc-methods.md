@@ -40,6 +40,11 @@ Artifacts: `artifacts_list`, `artifacts_put_text`, `artifacts_get`,
 `artifacts_delete`, `artifacts_delete_many`, `artifacts_export`,
 `artifacts_export_zip`
 
+Consoles (program P26): `skills_list`, `skills_pin`, `skills_deprecate`,
+`memory_list`, `memory_recall`, `memory_correct`, `memory_forget`,
+`packs_state`, `packs_activate`, `packs_deactivate`, `logs_tail`,
+`commands_list`
+
 `get_session` returns presentation-safe user/assistant messages. Provider
 tool-call arrays and tool-result protocol messages are omitted; ordered durable
 `tool_events` are attached to their owning assistant turn. `run_status` reports

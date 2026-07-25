@@ -43,7 +43,19 @@ export type DesktopMethod =
   | 'artifacts_delete'
   | 'artifacts_delete_many'
   | 'artifacts_export'
-  | 'artifacts_export_zip';
+  | 'artifacts_export_zip'
+  | 'skills_list'
+  | 'skills_pin'
+  | 'skills_deprecate'
+  | 'memory_list'
+  | 'memory_recall'
+  | 'memory_correct'
+  | 'memory_forget'
+  | 'packs_state'
+  | 'packs_activate'
+  | 'packs_deactivate'
+  | 'logs_tail'
+  | 'commands_list';
 
 export type RunStatus =
   | 'idle'

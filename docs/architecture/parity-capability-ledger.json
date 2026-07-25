@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21\u2013P25 tool/mutate/browser/chat/artifacts-cron parity; projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; program P21\u2013P26 product-complete consoles parity; projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -68,7 +68,7 @@
         "docs/plans/product-complete-program.md",
         "docs/evidence/product-complete-p21-hold-2026-07-25.md"
       ],
-      "trajectory": "program P21: hard SchemaBudget/PackLimit fail-closed at CapabilitySession; progressive activate_pack reports schema_tokens/max/on_demand headroom; over-budget and on-demand-limit activate_pack yield typed ToolOutcome (pack_schema_budget_exceeded / pack_on_demand_limit_exceeded) without loading pack (kernel_turn). Packs console product surface residual owned by program P26.",
+      "trajectory": "program P21: hard SchemaBudget/PackLimit fail-closed at CapabilitySession; progressive activate_pack reports schema_tokens/max/on_demand headroom; over-budget and on-demand-limit activate_pack yield typed ToolOutcome (pack_schema_budget_exceeded / pack_on_demand_limit_exceeded) without loading pack (kernel_turn). Packs console product surface residual owned by program P26.; program P26 packs console activate/deactivate via CapabilitySession + pack_prefs",
       "owner_ticket": "D-01,D-02"
     },
     {
@@ -212,11 +212,13 @@
       "id": "desktop.logs",
       "capability": "Bounded redacted logs drawer",
       "hermes_reference": "Logs surface",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/ui/index.html"
+        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+        "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P26: bounded redacted logs_tail (home redacted, no credentials)",
       "owner_ticket": "A-09"
     },
     {
@@ -413,11 +415,14 @@
       "id": "skills.ui",
       "capability": "Skills lifecycle desktop console",
       "hermes_reference": "Skills management UX",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "crates/optimus-skills/src/lib.rs"
+        "crates/optimus-skills/src/lib.rs",
+        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+        "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P26: skills_list/pin/deprecate IPC + React console; permissions closed",
       "owner_ticket": "D-03"
     },
     {
@@ -438,11 +443,14 @@
       "id": "memory.ui",
       "capability": "Evidence explorer, feedback, correction and forget",
       "hermes_reference": "Memory management",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "crates/optimus-memory/src/lib.rs"
+        "crates/optimus-memory/src/lib.rs",
+        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+        "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P26: list/recall/correct/forget; ActionAuthorize refused; fence on packets",
       "owner_ticket": "D-05"
     },
     {
@@ -562,12 +570,14 @@
       "id": "surface.commands",
       "capability": "Canonical slash commands and command palette",
       "hermes_reference": "Slash commands",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-cli/src/main.rs",
-        "apps/optimus-desktop/ui/index.html"
+        "crates/optimus-ops/src/surface_commands.rs",
+        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "apps/optimus-ui/src/components/chrome/CommandPalette.tsx",
+        "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P26: unified slash/palette registry CLI+desktop; not a second tool list",
       "owner_ticket": "E-06"
     },
     {

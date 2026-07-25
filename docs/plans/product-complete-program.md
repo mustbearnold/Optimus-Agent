@@ -163,7 +163,7 @@ After **program P21** green:
 | Browser / search | `browser.*`, `web.search` | **parity** | **P23 done** (ADR-0040 coordinated dual-domain; not shared CDP) |
 | Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | **parity** | **P24 done** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | **parity** | **P25 done** |
-| Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | Missing UI | **P26** |
+| Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | **parity** | **P26 done** |
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
 | MCP + signed packs | `mcp.client`, `plugins.signed` | Missing | **P27** |
 | Gateway / Telegram / messaging UI | `gateway.queue`, `telegram`, `ui` | Partial / Missing | **P28** |
@@ -654,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P25 done** (tools, mutate, browser, chat, artifacts/cron).
-2. Open **program P26** (consoles) or parallel P27–P28; residual S2.14 concurrent mutate lease remains optional.
+1. **program P20–P26 done** (through consoles).
+2. Open **program P27** (extensibility) or **P28** (messaging); residual S2.14 concurrent mutate lease remains optional.
 
 ## Success definition
 

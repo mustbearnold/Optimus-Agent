@@ -222,11 +222,11 @@ latent capability into product without inventing runtime.
 
 | ID | Status | Micro-task | Ledger | Proof |
 |---|---|---|---|---|
-| S3.1 | `todo` | Skills console: list, pin, deprecate, outcome counts | `skills.ui` | IPC + React + skills tests |
-| S3.2 | `todo` | Memory explorer: claims, evidence, correct, forget | `memory.ui` | memory crate + React; recall stays data |
-| S3.3 | `todo` | Bounded redacted logs drawer | `desktop.logs` | redaction unit + e2e |
-| S3.4 | `todo` | Capabilities console: pack activate/deactivate (not inspect-only) | `core.pack-budget` | e2e vs CLI parity |
-| S3.5 | `todo` | Unified slash-command registry + command palette | `surface.commands` | registry test CLI↔desktop |
+| S3.1 | `done` | Skills console: list, pin, deprecate, outcome counts | `skills.ui` | skills_* IPC + ConsolesPage; program P26 |
+| S3.2 | `done` | Memory explorer: claims, evidence, correct, forget | `memory.ui` | memory_* IPC; ActionAuthorize refused; program P26 |
+| S3.3 | `done` | Bounded redacted logs drawer | `desktop.logs` | logs_tail redaction tests; program P26 |
+| S3.4 | `done` | Capabilities console: pack activate/deactivate (not inspect-only) | `core.pack-budget` | packs_* CapabilitySession + pack_prefs; program P26 |
+| S3.5 | `done` | Unified slash-command registry + command palette | `surface.commands` | surface_commands + CommandPalette; program P26 |
 
 **Stage exit:** every major durable store has a truthful UI; logs support
 supportability.
