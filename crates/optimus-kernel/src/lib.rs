@@ -13,6 +13,7 @@ mod execution;
 mod fs_sandbox;
 mod openai_compat;
 mod product_settings;
+mod profile;
 mod project_authority;
 mod routing;
 mod causal;
@@ -116,6 +117,10 @@ pub use network_policy::{
     EgressError,
 };
 pub use product_settings::{ProductSettings, WorkIsolationMode};
+pub use profile::{
+    create_default_profiles, ProfileError, ProfileHome, ProfileId, ProfileRegistryView,
+    ProfileStore,
+};
 pub use project_authority::{
     ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
 };

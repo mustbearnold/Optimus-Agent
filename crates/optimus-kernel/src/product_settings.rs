@@ -59,7 +59,8 @@ impl WorkIsolationMode {
     /// P12 always enforces a command capability envelope. P22 honesty:
     /// - `shared` → no product-bound project FS enforcement (envelope only)
     /// - `project_bound` → project roots + workspace hash for mutating effects
-    /// - `isolated_profiles` → sealed homes still out of scope (After P29)
+    /// - `isolated_profiles` → sealed profile homes via `ProfileStore` (S7);
+    ///   product_fs_enforced still only true for `project_bound`
     pub fn product_fs_enforced(self) -> bool {
         matches!(self, Self::ProjectBound)
     }
@@ -219,7 +220,7 @@ impl ProductSettings {
                      allow_concurrent_projects is a settings flag only until a multi-project mutate lease store ships."
                 }
                 WorkIsolationMode::IsolatedProfiles => {
-                    "Isolated profiles (configured): command envelope ConfinedNoNetwork on Linux; sealed profile homes are not enforced yet (After P29). Status must not claim full isolation."
+                    "Isolated profiles (configured): command envelope ConfinedNoNetwork on Linux; ProfileStore sealed homes available (S7). Cross-profile deny-by-default. Status must not claim distributed multi-DB isolation."
                 }
             },
             "command_fs_envelope": self.work_isolation.command_fs_envelope().as_str(),

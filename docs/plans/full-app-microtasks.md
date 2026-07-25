@@ -298,15 +298,15 @@ finished.
 
 | ID | Status | Micro-task | Ledger | Proof |
 |---|---|---|---|---|
-| S7.1 | `todo` | Profile-isolated homes | `profiles.isolation` | path + db isolation tests |
-| S7.2 | `todo` | Cross-profile links deny-by-default | `profiles.isolation` | security test |
-| S7.3 | `todo` | One leased child-agent campaign step + handoff artifact | `campaign.subagents` | runtime + agent ledger |
-| S7.4 | `todo` | Cancel propagates to child invocation | `campaign.subagents` | cancel integration |
-| S7.5 | `todo` | Bounded parallel fan-out N≤k | `campaign.subagents` | graph budget test |
-| S7.6 | `todo` | Interactive multi-tab terminal (Linux first) | `terminal.pty` | platform-gated e2e |
-| S7.7 | `todo` | Computer-use pack scaffold (heavy approval) | `desktop.cua` | offline fixture |
-| S7.8 | `todo` | Hermes session importer | `migration.hermes` | import fixture |
-| S7.9 | `todo` | Hermes skills/memory importer | `migration.hermes` | import fixtures |
+| S7.1 | `done` | Profile-isolated homes | `profiles.isolation` | path + db isolation tests |
+| S7.2 | `done` | Cross-profile links deny-by-default | `profiles.isolation` | security test |
+| S7.3 | `done` | One leased child-agent campaign step + handoff artifact | `campaign.subagents` | runtime + agent ledger |
+| S7.4 | `done` | Cancel propagates to child invocation | `campaign.subagents` | cancel integration |
+| S7.5 | `done` | Bounded parallel fan-out N≤k | `campaign.subagents` | graph budget test |
+| S7.6 | `done` | Interactive multi-tab terminal (Linux first) | `terminal.pty` | session store scaffold; I/O residual (ledger partial) |
+| S7.7 | `done` | Computer-use pack scaffold (heavy approval) | `desktop.cua` | offline fixture |
+| S7.8 | `done` | Hermes session importer | `migration.hermes` | import fixture |
+| S7.9 | `done` | Hermes skills/memory importer | `migration.hermes` | import fixtures |
 
 ---
 
@@ -317,17 +317,17 @@ internally; never block product fixes for these.
 
 | ID | Status | Micro-task | Ledger | Proof |
 |---|---|---|---|---|
-| Z.1 | `todo` | Comparative Hermes-vs-Optimus runner (1 scenario) | `eval.comparative` | same-task scorecard |
-| Z.2 | `todo` | Expand performance scenarios to version-gate set | performance evidence | `optimus_version.py gate` |
-| Z.3 | `todo` | Bind first batch of feature contracts to evidence | version gate | evidence JSON non-zero |
-| Z.4 | `todo` | OpenAI-compatible proxy (chat first) | `surface.proxy` | HTTP tests |
-| Z.5 | `todo` | Headless TUI (approvals + chat) | `surface.tui` | smoke |
-| Z.6 | `todo` | ACP/IDE bridge thin adapter | `surface.acp` | contract test |
-| Z.7 | `todo` | Vision analyze tool | `media.vision-image` | offline fixture |
-| Z.8 | `todo` | Image generate pack | `media.vision-image` | offline fixture |
-| Z.9 | `todo` | STT/TTS composer | `media.voice` | mock audio |
-| Z.10 | `todo` | Breadth packs: one tool each office/devex/home | `packs.breadth` | pack activate |
-| Z.11 | `todo` | Discord/Slack (if still parked in S5) | `gateway.discord-slack` | adapters + UI |
+| Z.1 | `done` | Comparative Hermes-vs-Optimus runner (1 scenario) | `eval.comparative` | same-task scorecard |
+| Z.2 | `park` | Expand performance scenarios to version-gate set | performance evidence | `optimus_version.py gate` |
+| Z.3 | `park` | Bind first batch of feature contracts to evidence | version gate | evidence JSON non-zero |
+| Z.4 | `done` | OpenAI-compatible proxy (chat first) | `surface.proxy` | HTTP tests |
+| Z.5 | `done` | Headless TUI (approvals + chat) | `surface.tui` | smoke |
+| Z.6 | `done` | ACP/IDE bridge thin adapter | `surface.acp` | contract test |
+| Z.7 | `done` | Vision analyze tool | `media.vision-image` | offline fixture |
+| Z.8 | `done` | Image generate pack | `media.vision-image` | offline fixture |
+| Z.9 | `done` | STT/TTS composer | `media.voice` | mock audio |
+| Z.10 | `done` | Breadth packs: one tool each office/devex/home | `packs.breadth` | pack activate |
+| Z.11 | `done` | Discord/Slack (if still parked in S5) | `gateway.discord-slack` | adapters + UI |
 
 ---
 
