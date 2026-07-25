@@ -128,8 +128,8 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
     let packs_loaded = s.loaded_packs().len();
     let packs_on_demand = s.on_demand_count();
     let pack_tools: usize = pack_catalog.iter().map(|p| p.tools.len()).sum();
-    let shell = detect_shell_mode();
     let install = detect_install_metadata();
+    let shell = detect_shell_mode(&install);
     // Build map incrementally — large pack_catalog blows json! recursion limit.
     let mut out = serde_json::Map::new();
     out.insert("phase".into(), json!("product-complete"));
@@ -244,19 +244,41 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
 }
 
 struct ShellModeReport {
-    mode: &'static str,
+    mode: String,
     default_shell: bool,
-    label: &'static str,
+    label: String,
 }
 
-fn detect_shell_mode() -> ShellModeReport {
-    // Default product shell is Electron+React (ADR-0028/0029/0038). Host-only
-    // doctor cannot observe the renderer process; report the product default.
-    // Install metadata may refine via detect_install_metadata.
+/// Canonical product shell token (matches install-meta `desktop_shell`).
+const SHELL_REACT_ELECTRON: &str = "react-electron";
+
+fn detect_shell_mode(install: &InstallMetaReport) -> ShellModeReport {
+    // Prefer process env (Electron host sets OPTIMUS_DESKTOP_SHELL=electron|wry),
+    // then install-meta, then product default. Token is always product vocabulary.
+    let env_shell = std::env::var("OPTIMUS_DESKTOP_SHELL")
+        .ok()
+        .map(|s| s.trim().to_ascii_lowercase());
+    let mode = match env_shell.as_deref() {
+        Some("wry") | Some("legacy_wry") | Some("legacy-wry") => "legacy_wry".to_string(),
+        Some("electron") | Some("react-electron") | Some("electron_react") => {
+            SHELL_REACT_ELECTRON.into()
+        }
+        _ => install
+            .desktop_shell
+            .clone()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| SHELL_REACT_ELECTRON.into()),
+    };
+    let default_shell = mode == SHELL_REACT_ELECTRON;
+    let label = if default_shell {
+        "Electron + React (default)".into()
+    } else {
+        format!("Shell mode: {mode}")
+    };
     ShellModeReport {
-        mode: "electron_react",
-        default_shell: true,
-        label: "Electron + React (default)",
+        mode,
+        default_shell,
+        label,
     }
 }
 
@@ -275,7 +297,9 @@ fn detect_install_metadata() -> InstallMetaReport {
                 .map(|h| PathBuf::from(h).join(".local/share"))
                 .unwrap_or_else(|_| PathBuf::from("/tmp"))
         });
-    let root = data_home.join("optimus-agent");
+    let root = std::env::var("OPTIMUS_INSTALL_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| data_home.join("optimus-agent"));
     let meta_path = root.join("install-meta.json");
     if !meta_path.is_file() {
         return InstallMetaReport {
@@ -286,22 +310,24 @@ fn detect_install_metadata() -> InstallMetaReport {
     }
     let raw = std::fs::read_to_string(&meta_path).unwrap_or_default();
     let meta: serde_json::Value = serde_json::from_str(&raw).unwrap_or(json!({}));
+    let version = meta
+        .get("version")
+        .or_else(|| meta.get("product_version"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .or_else(|| {
+            std::fs::read_to_string(root.join("VERSION.txt"))
+                .ok()
+                .and_then(|s| s.lines().next().map(|line| line.trim().to_string()))
+                .filter(|s| !s.is_empty())
+        });
     InstallMetaReport {
         present: true,
         desktop_shell: meta
             .get("desktop_shell")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        version: meta
-            .get("version")
-            .or_else(|| meta.get("product_version"))
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string())
-            .or_else(|| {
-                std::fs::read_to_string(root.join("VERSION.txt"))
-                    .ok()
-                    .map(|s| s.trim().to_string())
-            }),
+        version,
     }
 }
 
@@ -384,13 +410,18 @@ mod tests {
         assert_eq!(doc["allow_concurrent_projects"], true);
         assert_eq!(doc["isolation_enforcement_active"], false);
         assert_eq!(doc["product_fs_enforced"], false);
-        assert_eq!(doc["shell_mode"], "electron_react");
+        assert_eq!(doc["shell_mode"], "react-electron");
         assert_eq!(doc["shell_default"], true);
         assert_eq!(doc["updater_channel"], "none");
         assert_eq!(doc["phase"], "product-complete");
+        assert_eq!(doc["program_phase"], "P29");
         assert!(doc["gateway"].as_bool().unwrap_or(false));
         assert!(doc.get("packs_loaded").is_some());
         assert!(doc.get("gateway_ambiguous_sends").is_some());
+        assert!(doc["updater_note"]
+            .as_str()
+            .unwrap_or("")
+            .contains("ADR-0043"));
 
         let bound = settings_set(
             &home,
@@ -404,5 +435,36 @@ mod tests {
         assert_eq!(bound["settings"]["enforced_mode"], "project_bound");
         assert_eq!(bound["settings"]["enforcement_active"], true);
         assert_eq!(bound["settings"]["product_fs_enforced"], true);
+    }
+
+    #[test]
+    fn doctor_install_metadata_respects_xdg_data_home() {
+        let dir = tempfile::tempdir().expect("temp xdg");
+        let data = dir.path().join("share");
+        let root = data.join("optimus-agent");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("install-meta.json"),
+            r#"{
+              "version": "0.1.0-test",
+              "desktop_shell": "react-electron",
+              "install_root": "ignored"
+            }"#,
+        )
+        .unwrap();
+        // SAFETY: test-local env for install probe; restored after.
+        let prev = std::env::var_os("XDG_DATA_HOME");
+        std::env::set_var("XDG_DATA_HOME", &data);
+        let home = dir.path().join("product-home");
+        std::fs::create_dir_all(&home).unwrap();
+        let doc = doctor_json(&home);
+        assert_eq!(doc["install_present"], true);
+        assert_eq!(doc["install_shell"], "react-electron");
+        assert_eq!(doc["install_version"], "0.1.0-test");
+        assert_eq!(doc["shell_mode"], "react-electron");
+        match prev {
+            Some(v) => std::env::set_var("XDG_DATA_HOME", v),
+            None => std::env::remove_var("XDG_DATA_HOME"),
+        }
     }
 }

@@ -37,8 +37,9 @@ background updates is not implemented. Shipping a partial updater would greenwas
    Legacy Wry desktop action for shell rollback only (not a full product updater).
 3. Doctor reports `updater_channel: "none"` and an operator-facing note pointing
    at the install script (Confirmed current behaviour after P29).
-4. Ledger row `release.updater` is **partial** with trajectory naming this ADR
-   and residual **signed auto-update after product-complete** — not parity.
+4. Ledger row `release.updater` is **partial** with `trajectory: null` (ledger
+   rule for non-parity rows). Residual is named via this ADR, scorecard Material
+   partials, and verification evidence — not parity.
 5. Hermes-style silent product updates are **out of P29** and Track Z / later.
 
 ## Consequences

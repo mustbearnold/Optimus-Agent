@@ -20,7 +20,7 @@ last_verified_commit: null
 
 # Product-complete program P29 verification
 
-Planes: **program P29** · delivery pending PR · architecture hold (all marks
+Planes: **program P29** · delivery **PR #39** · architecture hold (all marks
 S+++) · PRODUCT-COMPLETE board
 
 Date: 2026-07-25
@@ -37,7 +37,7 @@ gate PASS.
 | Microtask | Result | Evidence |
 |---|:---:|---|
 | S6.1 Electron packaging default React | **PASS** | install script stages Electron; XDG desktop entry; install-meta present on host |
-| S6.2 Native paint/a11y baseline | **HOLD** | existing `desktop.native-cua` parity + PF-00 baseline; re-run install CUA only when user authorizes full rebuild install |
+| S6.2 Native paint/a11y baseline | **HOLD residual** | `desktop.native-cua` parity held; live re-proof on fresh installed Electron is operator residual (native-ui skill) |
 | S6.3 Doctor shell/isolation/gateway/packs | **PASS** | doctor fields: shell_mode, isolation, gateway_*, packs_* |
 | S6.4 No auto-updater ADR | **PASS** | ADR-0043; doctor `updater_channel=none` |
 | S6.5 Ledger product-critical | **PASS** | product rows parity/win; `release.updater` **partial** residual; `projects.scope` **partial** residual |
@@ -64,6 +64,7 @@ gate PASS.
 
 ```bash
 cargo test -p optimus-desktop -- --test-threads=1 doctor
+python3 scripts/check-product-complete-install.py
 python3 scripts/check-architecture-marks.py
 python3 scripts/check-parity-ledger.py
 python3 scripts/optimus_version.py release-check
@@ -74,10 +75,15 @@ python3 scripts/check-desktop-ipc-matrix.py
 
 - Hermes gate PASS / parity version 0.19.0
 - In-app signed auto-updater
+- Live native CUA re-proof on every ship (held; operator residual)
 - S7 profiles / open subagents / multi-tab PTY / CUA pack breadth
 - Discord/Slack
 
+## Board
+
+See `docs/evidence/product-complete-p29-board-2026-07-25.md`.
+
 ## Verdict
 
-**program P29 exit: PASS** (pending three-expert board + PRODUCT-COMPLETE board).
-Next: program closed; optional S7 / Track Z.
+**program P29 exit: PASS** after review-board MUST-FIX (PR #39).
+**PRODUCT-COMPLETE** with named residuals. Optional next: S7 / Track Z.
