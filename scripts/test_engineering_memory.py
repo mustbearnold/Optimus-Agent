@@ -31,6 +31,8 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(
             names,
             {
+                "optimus-agent",
+                "optimus-artifacts",
                 "optimus-browser",
                 "optimus-cli",
                 "optimus-desktop",
@@ -43,6 +45,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "optimus-runtime",
                 "optimus-skills",
                 "optimus-store",
+                "optimus-workflow",
             },
         )
 
@@ -97,7 +100,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(registry["contract_substrate"]["status"], "implemented")
         self.assertEqual(
             registry["contract_substrate"]["source"],
-            "crates/optimus-kernel/src/agent.rs",
+            "crates/optimus-agent/src/lib.rs",
         )
 
     def test_implemented_workflows_have_terminal_declarations(self) -> None:

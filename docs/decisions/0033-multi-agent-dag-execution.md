@@ -2,10 +2,10 @@
 knowledge_type: decision
 status: current
 covers:
-  - crates/optimus-kernel/src/workflow_run.rs
-  - crates/optimus-kernel/src/specialist_vertical.rs
-  - crates/optimus-kernel/src/agent.rs
-  - crates/optimus-kernel/src/workflow.rs
+  - crates/optimus-workflow/src/workflow_run.rs
+  - crates/optimus-workflow/src/specialist_vertical.rs
+  - crates/optimus-agent/src/lib.rs
+  - crates/optimus-workflow/src/workflow.rs
   - crates/optimus-kernel/tests/specialist_vertical.rs
   - crates/optimus-kernel/tests/workflow_dag.rs
 depends_on:

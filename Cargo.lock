@@ -2736,6 +2736,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
+name = "optimus-agent"
+version = "0.1.0"
+dependencies = [
+ "optimus-graph",
+ "optimus-packs",
+ "optimus-runtime",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
+name = "optimus-artifacts"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "fs2",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
 name = "optimus-browser"
 version = "0.1.0"
 dependencies = [
@@ -2829,6 +2859,8 @@ dependencies = [
  "fs2",
  "keyring",
  "libc",
+ "optimus-agent",
+ "optimus-artifacts",
  "optimus-browser",
  "optimus-graph",
  "optimus-memory",
@@ -2836,6 +2868,7 @@ dependencies = [
  "optimus-packs",
  "optimus-runtime",
  "optimus-skills",
+ "optimus-workflow",
  "rusqlite",
  "serde",
  "serde_json",
@@ -2922,6 +2955,24 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
+name = "optimus-workflow"
+version = "0.1.0"
+dependencies = [
+ "optimus-agent",
+ "optimus-artifacts",
+ "optimus-graph",
+ "optimus-packs",
+ "optimus-runtime",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
  "tempfile",
  "thiserror 2.0.18",
  "uuid",

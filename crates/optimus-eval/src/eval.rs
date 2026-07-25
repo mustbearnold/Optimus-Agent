@@ -439,8 +439,9 @@ fn observe_agent_cancellation(
     };
     let stale = match invocations.settle(&integrity_result(invocation, AgentResultKind::Succeeded))
     {
-        Err(KernelError::Tool(reason))
-            if reason == "cancelled agent invocation rejects late non-cancel outcome" =>
+        Err(error)
+            if error.to_string()
+                == "cancelled agent invocation rejects late non-cancel outcome" =>
         {
             match invocations.settle(&integrity_result(invocation, AgentResultKind::Cancelled)) {
                 Ok(()) => Ok(()),

@@ -6,11 +6,29 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use optimus_graph::JobId;
 use optimus_packs::{DurableEffectProvenance, ToolId};
+use optimus_runtime::{CancellationToken, Runtime};
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{CancellationToken, KernelError, Result, Runtime};
+#[derive(Debug, Error)]
+pub enum AgentError {
+    #[error("io: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("json: {0}")]
+    Json(#[from] serde_json::Error),
+    #[error("sqlite: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+    #[error("uuid: {0}")]
+    Uuid(#[from] uuid::Error),
+    #[error("runtime: {0}")]
+    Runtime(#[from] optimus_runtime::RuntimeError),
+    #[error("{0}")]
+    Msg(String),
+}
+
+pub type Result<T> = std::result::Result<T, AgentError>;
 
 pub const AGENT_REQUEST_SCHEMA_VERSION: u16 = 1;
 pub const AGENT_RESULT_SCHEMA_VERSION: u16 = 1;
@@ -649,7 +667,7 @@ impl AgentInvocationStore {
                 )| {
                     let request: AgentRequest = serde_json::from_str(&request_json)?;
                     let retry_of = retry_of
-                        .map(|value| Uuid::parse_str(&value).map_err(KernelError::Uuid))
+                        .map(|value| Uuid::parse_str(&value).map_err(AgentError::Uuid))
                         .transpose()?;
                     let result = result_json
                         .map(|value| serde_json::from_str::<AgentResult>(&value))
@@ -880,6 +898,6 @@ fn validate_sha256(value: &str, label: &str) -> Result<()> {
     Ok(())
 }
 
-fn invalid(message: impl Into<String>) -> KernelError {
-    KernelError::Tool(message.into())
+fn invalid(message: impl Into<String>) -> AgentError {
+    AgentError::Msg(message.into())
 }

@@ -40,11 +40,11 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ## Audit basis
 
 **Confirmed current behaviour:** this is a Rust 2021 workspace with Rust 1.85 as
-the declared minimum. `cargo metadata --no-deps` reports eleven workspace
+the declared minimum. `cargo metadata --no-deps` reports fourteen workspace
 packages among default members plus desktop: libraries include store, graph,
-runtime, memory, skills, packs, ops, kernel, eval, browser; applications are
-cli and desktop. The desktop application is not a default workspace member, but
-it is a workspace member.
+runtime, memory, skills, packs, ops, artifacts, agent, workflow, kernel, eval,
+browser; applications are cli and desktop. The desktop application is not a
+default workspace member, but it is a workspace member.
 
 **Confirmed current behaviour:** the repository is a Git checkout on `main` with
 GitHub `origin`; Engineering Memory records both commit identity and deterministic
@@ -65,7 +65,10 @@ the root Cargo workspace.
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
 | `optimus-packs` | library | Canonical tool/pack descriptor, operational metadata, and capability budgets | none |
 | `optimus-ops` | library | Operator gateway delivery authority and cron schedule store | none |
-| `optimus-kernel` | library | Model/tool turn loop, agent/workflow contracts, execution/trace manifests, routing telemetry, credentials; re-exports ops | graph, runtime, memory, skills, packs, ops |
+| `optimus-artifacts` | library | Content-addressed artifact store | none (serde/sha2/fs2 only) |
+| `optimus-agent` | library | Specialist contracts, registry, invocation ledger | packs, runtime, graph |
+| `optimus-workflow` | library | Workflow contracts, run ledger, built-in DAG verticals | agent, artifacts, packs, runtime, graph |
+| `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
 | `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Rust host plus Wry/Tao rollback shell, native IPC, and HTTP test harness | kernel, graph, runtime, packs |
@@ -111,18 +114,22 @@ project state grants Rust filesystem access.
   `apps/optimus-desktop`; the default Electron transport boundary belongs to
   `apps/optimus-electron`; React presentation and local multi-folder grouping
   belong to `apps/optimus-ui`. Domain behavior remains in Rust libraries.
-- **Confirmed:** `optimus-kernel` owns typed agent/workflow contracts,
-  registries/adapters, invocation evidence, canonical routing and telemetry,
-  execution/replay/trace contracts, and versioned offline evaluation/baselines.
-- **Unknown/unresolved:** no package owns built-in specialist definitions,
-  specialist routing/general workflow execution, OpenTelemetry, or GPU adapters.
+- **Confirmed:** `optimus-agent` / `optimus-workflow` own typed agent/workflow
+  contracts, registries, invocation evidence, and DAG verticals; kernel owns
+  canonical routing and telemetry, sessions, execution/trace production paths,
+  and re-exports the peels. Offline evaluation/baselines live in `optimus-eval`.
+- **Confirmed:** built-in specialists and registered DAG verticals are owned by
+  `optimus-agent` + `optimus-workflow` (kernel re-exports).
+- **Unknown/unresolved:** model-chosen specialist routing, OpenTelemetry, or GPU
+  adapters.
 
 ## Missing top-level domains
 
 **Confirmed current behaviour:** there are no root `agents/`, `workflows/`,
 `tools/`, `prompts/`, `evals/`, `fixtures/`, or `packages/` directories. Their
 absence is not proof the concepts are absent: tools are in
-`optimus-packs`/kernel; general workflow and agent contracts are kernel modules;
+`optimus-packs`; general workflow and agent contracts live in `optimus-workflow`
+and `optimus-agent` (kernel re-exports);
 execution remains in jobs/campaigns/cron/gateway; prompts are inline.
 
 **Planned behaviour:** add a top-level domain only when it has an implemented,

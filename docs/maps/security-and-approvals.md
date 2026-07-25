@@ -199,7 +199,10 @@ audit, and local IPC process authorization remain absent.
   filesystem-root, network-host, effect, and canonical-tool sets. Registry and
   invocation validation require host and descriptor subset closure. These are
   declarations and admission gates; runtime SmartDeny remains effect authority.
-- **Unknown/unresolved:** no built-in specialist definitions or OS sandbox per
+- **Confirmed:** built-in specialists (`workspace_writer`, `workspace_reader`)
+  are registered under `optimus-agent` / `optimus-workflow` with closed
+  permission ceilings; host mutation still routes SmartDeny.
+- **Unknown/unresolved:** OS sandbox per
   agent exists, and no dedicated policy package spans publishing/desktop control.
 - **Unknown/unresolved:** publishing, Git, browser mutation, desktop control, and
   network-write tools are unavailable placeholders rather than implemented

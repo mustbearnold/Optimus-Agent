@@ -13,9 +13,10 @@ use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{
-    KernelError, Result, WorkflowDefinition, WorkflowId, WorkflowTerminalKind, WorkflowVersion,
+use crate::workflow::{
+    WorkflowDefinition, WorkflowId, WorkflowTerminalKind, WorkflowVersion,
 };
+use crate::{WorkflowError, Result};
 
 const MAX_INPUT_JSON_BYTES: usize = 256 * 1024;
 const DEFAULT_LEASE_TTL_SECS: u64 = 300;
@@ -1170,8 +1171,8 @@ fn now_unix() -> u64 {
         .unwrap_or(0)
 }
 
-fn invalid(message: impl Into<String>) -> KernelError {
-    KernelError::Tool(message.into())
+fn invalid(message: impl Into<String>) -> WorkflowError {
+    WorkflowError::Msg(message.into())
 }
 
 

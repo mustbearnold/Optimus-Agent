@@ -13,6 +13,9 @@ optimus-memory.workspace = true
 optimus-skills.workspace = true
 optimus-packs.workspace = true
 optimus-ops.workspace = true
+optimus-artifacts.workspace = true
+optimus-agent.workspace = true
+optimus-workflow.workspace = true
 optimus-browser = { path = "../../crates/optimus-browser", optional = true }
 serde.workspace = true
 serde_json.workspace = true

@@ -670,7 +670,7 @@ impl ModelProvider for CodexOAuthModel {
     ) -> Result<CompletionResponse> {
         use std::io::{BufReader, Read};
 
-        cancellation.check()?;
+        crate::check_cancellation(cancellation)?;
         let response_deadline = Instant::now() + Duration::from_secs(self.config.timeout_secs);
         let (access, tokens, base) = self.store.resolve_access_token()?;
         let url = self.responses_url_override.clone().unwrap_or_else(|| {
@@ -903,7 +903,7 @@ fn read_line_cancellable(
     deadline: Instant,
 ) -> Result<usize> {
     loop {
-        cancellation.check()?;
+        crate::check_cancellation(cancellation)?;
         match reader.read_line(line) {
             Ok(read) => return Ok(read),
             Err(error)

@@ -6,8 +6,10 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 #[cfg(target_os = "linux")]
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::AtomicU64;
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -42,6 +44,25 @@ pub use optimus_graph::{
 /// Construct a [`JobId`] from a raw UUID (stable API for CLI/desktop).
 pub fn job_id(id: Uuid) -> JobId {
     JobId(id)
+}
+
+/// Cooperative cancellation token shared by kernel turns, agent invocations,
+/// and specialist verticals.
+#[derive(Debug, Clone, Default)]
+pub struct CancellationToken(Arc<AtomicBool>);
+
+impl CancellationToken {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn cancel(&self) {
+        self.0.store(true, AtomicOrdering::SeqCst);
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.0.load(AtomicOrdering::SeqCst)
+    }
 }
 
 /// Soft cap per stream so tool results stay context-safe.
@@ -562,7 +583,7 @@ static NEXT_LINUX_UNIT_ID: AtomicU64 = AtomicU64::new(1);
 
 #[cfg(target_os = "linux")]
 fn linux_contained_command(program: &str, args: &[String], workspace: &Path) -> (Command, String) {
-    let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, Ordering::Relaxed);
+    let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, AtomicOrdering::Relaxed);
     let unit_base = format!("optimus-command-{}-{sequence}", std::process::id());
     let linux_unit = format!("{unit_base}.service");
     let runtime_dir = format!("/run/user/{}", unsafe { libc::geteuid() });

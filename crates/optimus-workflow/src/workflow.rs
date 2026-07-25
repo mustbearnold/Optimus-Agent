@@ -8,7 +8,8 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AgentId, AgentVersion, KernelError, Result};
+use optimus_agent::{AgentId, AgentVersion};
+use crate::{WorkflowError, Result};
 
 pub const WORKFLOW_SCHEMA_VERSION: u16 = 1;
 
@@ -640,6 +641,6 @@ fn valid_identifier(value: &str) -> bool {
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || b"_-".contains(&byte))
 }
 
-fn invalid(message: impl Into<String>) -> KernelError {
-    KernelError::Tool(message.into())
+fn invalid(message: impl Into<String>) -> WorkflowError {
+    WorkflowError::Msg(message.into())
 }
