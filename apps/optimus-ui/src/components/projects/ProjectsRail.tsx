@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import type { Project, SessionMeta } from '../../ipc/contracts';
 import type { SessionIndicatorState } from '../../state/conversationStore';
 import { Icon } from '../chrome/Icon';
@@ -36,13 +36,22 @@ export function ProjectsRail(props: Props) {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const projectMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const projectMenuRef = useRef<HTMLDivElement | null>(null);
+  const closeProjectMenu = useCallback((restoreFocus: boolean) => {
+    setProjectMenuOpen(false);
+    if (restoreFocus) requestAnimationFrame(() => projectMenuTriggerRef.current?.focus());
+  }, []);
   const visibleSessions = useMemo(() => props.sessions, [props.sessions]);
-  const pinnedSessions = visibleSessions.filter((session) => Boolean(session.pinned));
   const projectForSession = (session: SessionMeta, projectId?: string) => {
     return props.projects.find(
       (candidate) => candidate.id === (projectId || props.assignments[session.id])
     ) || null;
   };
+  const pinnedSessions = visibleSessions.filter((session) => {
+    if (!session.pinned) return false;
+    if (projectScope === 'archived') return Boolean(session.archived);
+    if (session.archived) return false;
+    return projectScope === 'all' || projectForSession(session)?.id === projectScope;
+  });
   const scopedSessions = visibleSessions.filter((session) => {
     if (session.pinned) return false;
     if (projectScope === 'archived') return Boolean(session.archived);
@@ -50,6 +59,7 @@ export function ProjectsRail(props: Props) {
     return projectScope === 'all' || projectForSession(session)?.id === projectScope;
   });
   const scopedProject = props.projects.find((project) => project.id === projectScope) || null;
+  const projectScopeLabel = projectScope === 'archived' ? 'Archived' : scopedProject?.name || 'All projects';
 
   useEffect(() => {
     const interval = window.setInterval(() => setClock(Date.now()), 60_000);
@@ -89,20 +99,16 @@ export function ProjectsRail(props: Props) {
       menu?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"], [role="menuitem"]') || []
     );
     focusable()[0]?.focus();
-    const close = () => {
-      setProjectMenuOpen(false);
-      requestAnimationFrame(() => projectMenuTriggerRef.current?.focus());
-    };
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (projectMenuRef.current?.contains(target) || projectMenuTriggerRef.current?.contains(target)) return;
-      close();
+      closeProjectMenu(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        close();
+        closeProjectMenu(true);
         return;
       }
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
@@ -118,7 +124,7 @@ export function ProjectsRail(props: Props) {
       document.removeEventListener('pointerdown', onPointerDown, true);
       document.removeEventListener('keydown', onKeyDown, true);
     };
-  }, [projectMenuOpen]);
+  }, [closeProjectMenu, projectMenuOpen]);
 
   const closeMenu = (sessionId: string, action: () => void) => {
     setMenuSession(null);
@@ -276,7 +282,7 @@ export function ProjectsRail(props: Props) {
           onClick={() => setProjectMenuOpen((open) => !open)}
         >
           <Icon name="folder" />
-          <span>{scopedProject?.name || 'All projects'}</span>
+          <span>{projectScopeLabel}</span>
           <Icon name="chevron" />
         </button>
         <button type="button" aria-label="Add project" title="Add project" onClick={props.onAddProject}>
@@ -288,7 +294,7 @@ export function ProjectsRail(props: Props) {
               type="button"
               role="menuitemradio"
               aria-checked={projectScope === 'all'}
-              onClick={() => { setProjectScope('all'); setProjectMenuOpen(false); }}
+              onClick={() => { setProjectScope('all'); closeProjectMenu(true); }}
             >
               <Icon name="folder" />
               <span>All projects</span>
@@ -300,7 +306,7 @@ export function ProjectsRail(props: Props) {
                   type="button"
                   role="menuitemradio"
                   aria-checked={projectScope === project.id}
-                  onClick={() => { setProjectScope(project.id); setProjectMenuOpen(false); }}
+                  onClick={() => { setProjectScope(project.id); closeProjectMenu(true); }}
                 >
                   <Icon name="folder" />
                   <span>{project.name}</span>
@@ -321,7 +327,7 @@ export function ProjectsRail(props: Props) {
               type="button"
               role="menuitemradio"
               aria-checked={projectScope === 'archived'}
-              onClick={() => { setProjectScope('archived'); setProjectMenuOpen(false); }}
+              onClick={() => { setProjectScope('archived'); closeProjectMenu(true); }}
             >
               <Icon name="archive" />
               <span>Archived</span>

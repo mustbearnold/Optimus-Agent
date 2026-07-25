@@ -237,6 +237,12 @@ describe('ProjectsRail session actions', () => {
     await user.click(trigger);
     await user.click(screen.getByRole('button', { name: 'Settings' }));
     expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toHaveFocus();
+
+    await user.click(trigger);
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
+    await waitForFocus(trigger);
   });
 
   it('shows project and worktree metadata only for an explicit assignment', () => {
@@ -279,6 +285,7 @@ describe('ProjectsRail session actions', () => {
         sessions={[
           { id: 'active', title: 'Active thread' },
           { id: 'archived', title: 'Archived thread', archived: true },
+          { id: 'archived-pinned', title: 'Archived pinned thread', archived: true, pinned: true },
         ]}
         projects={[]}
         assignments={{}}
@@ -302,10 +309,13 @@ describe('ProjectsRail session actions', () => {
 
     expect(screen.getByTitle('Active thread')).toBeInTheDocument();
     expect(screen.queryByTitle('Archived thread')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Archived pinned thread')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'All projects' }));
     await user.click(screen.getByRole('menuitemradio', { name: 'Archived' }));
+    expect(screen.getByRole('button', { name: 'Archived' })).toHaveAttribute('aria-expanded', 'false');
     const archivedThread = screen.getByTitle('Archived thread');
     expect(archivedThread).toBeInTheDocument();
+    expect(screen.getByTitle('Archived pinned thread')).toBeInTheDocument();
     fireEvent.contextMenu(archivedThread.closest('.session-row')!);
     expect(screen.getByRole('menuitem', { name: 'Unarchive session' })).toBeInTheDocument();
   });
