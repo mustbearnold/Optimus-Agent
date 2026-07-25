@@ -20,7 +20,7 @@ last_verified_commit: null
 
 # Product-complete program P27 verification
 
-Planes: **program P27** · delivery pending PR · architecture hold (Domain /
+Planes: **program P27** · delivery **PR #38** · architecture hold (Domain /
 Security / Control-plane) · ledger `provider.catalog`, `provider.failover`,
 `mcp.client`, `plugins.signed` → **parity**
 
@@ -66,11 +66,18 @@ python3 scripts/check-domain-modularity.py
 
 ## Non-claims
 
-- Live unrestricted MCP host execution
+- Live MCP stdio child spawn / real wire protocol (mock list_tools only)
+- MCP host effectors under SmartDeny (mapped tools stay `Unavailable`)
+- Production trust-root key ceremony/rotation (random local seed residual)
+- Runtime chat-path automatic failover (library + preview only)
 - Hermes gate PASS
 - External channel EO (P28 residual)
 
+## Board
+
+See `docs/evidence/product-complete-p27-hold-2026-07-25.md`.
+
 ## Verdict
 
-**program P27 exit: PASS** (pending three-expert board + merge).
+**program P27 exit: PASS** after review-board MUST-FIX (PR #38).
 Next: program P29 ship.

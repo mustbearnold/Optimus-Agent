@@ -51,6 +51,7 @@ impl ProviderId {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(transparent)]
 pub struct ModelId(String);
 
 impl ModelId {

@@ -162,6 +162,10 @@ pub fn mock_http_list_tools(url: &str) -> Result<Vec<McpToolOffer>> {
 }
 
 /// Strict public HTTP(S) URL gate for MCP (no private/metadata destinations).
+///
+/// Intentionally mirrors kernel `assert_public_http_url` strength for schemes
+/// and host classes (ops cannot depend on kernel). Live DNS sampling remains a
+/// residual when a real HTTP client is added.
 pub fn assert_public_mcp_url(url: &str) -> Result<()> {
     let url = url.trim();
     let lower = url.to_ascii_lowercase();
@@ -171,40 +175,88 @@ pub fn assert_public_mcp_url(url: &str) -> Result<()> {
     let rest = lower
         .trim_start_matches("https://")
         .trim_start_matches("http://");
-    let host = rest.split('/').next().unwrap_or("").split('@').last().unwrap_or("");
-    let host = host.split(':').next().unwrap_or(host);
+    // strip userinfo
+    let authority = rest.split('/').next().unwrap_or("").split('?').next().unwrap_or("");
+    let hostport = authority.split('@').last().unwrap_or("");
+    let host = if hostport.starts_with('[') {
+        // IPv6 literal [::1]:port
+        hostport
+            .trim_start_matches('[')
+            .split(']')
+            .next()
+            .unwrap_or("")
+            .to_string()
+    } else {
+        hostport.split(':').next().unwrap_or(hostport).to_string()
+    };
     if host.is_empty() {
         return Err(McpError::Url("missing host".into()));
     }
-    let blocked = [
-        "localhost",
-        "127.0.0.1",
-        "0.0.0.0",
-        "::1",
-        "metadata.google.internal",
-        "169.254.169.254",
-    ];
-    if blocked.iter().any(|b| host == *b) {
+    if host == "localhost"
+        || host.ends_with(".localhost")
+        || host.ends_with(".local")
+        || host == "metadata.google.internal"
+    {
         return Err(McpError::Url(format!("blocked host {host}")));
     }
-    if host.starts_with("10.")
-        || host.starts_with("192.168.")
-        || host.starts_with("169.254.")
-        || host.ends_with(".local")
+    // IPv6 loopback / ULA / link-local (string forms)
+    if host == "::1"
+        || host == "0:0:0:0:0:0:0:1"
+        || host.starts_with("fe80:")
+        || host.starts_with("fc")
+        || host.starts_with("fd")
+        || host.starts_with("::ffff:127.")
+        || host.starts_with("::ffff:10.")
+        || host.starts_with("::ffff:192.168.")
+        || host.starts_with("::ffff:169.254.")
     {
-        return Err(McpError::Url(format!("private or link-local host {host}")));
+        return Err(McpError::Url(format!("blocked ip literal {host}")));
     }
-    // 172.16.0.0/12
-    if let Some(rest) = host.strip_prefix("172.") {
-        if let Some(second) = rest.split('.').next() {
-            if let Ok(n) = second.parse::<u8>() {
-                if (16..=31).contains(&n) {
-                    return Err(McpError::Url(format!("private host {host}")));
-                }
-            }
+    // IPv4 dotted or decimal 32-bit
+    if let Ok(ip) = host.parse::<u32>() {
+        // decimal form of IPv4 e.g. 2130706433 == 127.0.0.1
+        let a = ((ip >> 24) & 0xff) as u8;
+        let b = ((ip >> 16) & 0xff) as u8;
+        if is_private_v4(a, b, 0, 0) {
+            return Err(McpError::Url(format!("blocked decimal ip {host}")));
+        }
+    }
+    if let Some((a, b, c, d)) = parse_dotted_v4(&host) {
+        if is_private_v4(a, b, c, d) {
+            return Err(McpError::Url(format!("blocked private/link-local {host}")));
+        }
+    }
+    // hex/octal-ish 0x7f.0.0.1
+    if host.contains("0x") || host.split('.').any(|p| p.starts_with('0') && p.len() > 1 && p.chars().all(|c| c.is_ascii_digit())) {
+        // conservative reject for non-decimal dotted forms
+        if host.starts_with("0x") || host.contains(".0x") {
+            return Err(McpError::Url(format!("blocked non-decimal ip form {host}")));
         }
     }
     Ok(())
+}
+
+fn parse_dotted_v4(host: &str) -> Option<(u8, u8, u8, u8)> {
+    let parts: Vec<_> = host.split('.').collect();
+    if parts.len() != 4 {
+        return None;
+    }
+    let a = parts[0].parse().ok()?;
+    let b = parts[1].parse().ok()?;
+    let c = parts[2].parse().ok()?;
+    let d = parts[3].parse().ok()?;
+    Some((a, b, c, d))
+}
+
+fn is_private_v4(a: u8, b: u8, c: u8, d: u8) -> bool {
+    let _ = (c, d);
+    a == 0
+        || a == 10
+        || a == 127
+        || (a == 169 && b == 254)
+        || (a == 172 && (16..=31).contains(&b))
+        || (a == 192 && b == 168)
+        || (a == 100 && (64..=127).contains(&b)) // CGNAT
 }
 
 /// Default mock session for tests / desktop status.
@@ -255,13 +307,23 @@ pub fn builtin_tool_id_set() -> BTreeSet<String> {
 }
 
 /// Persist optional MCP session config under `{home}/mcp/session.json`.
+///
+/// Host clamps `max_policies` to the third-party ceiling (cannot expand
+/// Process/NetworkWrite/Desktop via session JSON).
 pub fn load_mcp_session(home: impl AsRef<Path>) -> Result<McpSessionConfig> {
     let path = home.as_ref().join("mcp").join("session.json");
-    if !path.exists() {
-        return Ok(default_mock_session());
+    let mut session = if !path.exists() {
+        default_mock_session()
+    } else {
+        let raw = std::fs::read_to_string(path).map_err(|e| McpError::Msg(e.to_string()))?;
+        serde_json::from_str(&raw).map_err(|e| McpError::Msg(e.to_string()))?
+    };
+    let host_ceiling = optimus_packs::default_third_party_ceiling();
+    session.max_policies.retain(|p| host_ceiling.contains(p));
+    if session.max_policies.is_empty() {
+        session.max_policies = host_ceiling;
     }
-    let raw = std::fs::read_to_string(path).map_err(|e| McpError::Msg(e.to_string()))?;
-    serde_json::from_str(&raw).map_err(|e| McpError::Msg(e.to_string()))
+    Ok(session)
 }
 
 #[cfg(test)]
@@ -301,6 +363,9 @@ mod tests {
         assert!(assert_public_mcp_url("http://127.0.0.1/mcp").is_err());
         assert!(assert_public_mcp_url("http://192.168.1.1/mcp").is_err());
         assert!(assert_public_mcp_url("http://169.254.169.254/latest").is_err());
+        assert!(assert_public_mcp_url("http://[::1]/mcp").is_err());
+        assert!(assert_public_mcp_url("http://2130706433/").is_err());
+        assert!(assert_public_mcp_url("http://foo.localhost/mcp").is_err());
         assert!(assert_public_mcp_url("ftp://example.com").is_err());
         let mut config = default_mock_session();
         config.transport = McpTransportKind::Http;

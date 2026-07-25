@@ -152,27 +152,29 @@ pub(super) fn handle(
                 .get("path")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| "path required".to_string())?;
-            // Only allow paths under {home}/packs/ — no free-form absolute trust.
-            let home_packs = home.join("packs");
-            let candidate = if PathBuf::from(path).is_absolute() {
-                PathBuf::from(path)
-            } else {
-                home_packs.join(path)
-            };
-            let canonical = candidate
-                .canonicalize()
-                .unwrap_or(candidate.clone());
-            let packs_root = home_packs.canonicalize().unwrap_or(home_packs.clone());
-            if !canonical.starts_with(&packs_root) {
-                return Err("signed pack path must be under {home}/packs/".into());
-            }
+            let candidate = confined_packs_path(home, path)?;
             let root = load_or_init_trust_root(home)?;
-            match load_signed_manifest_file(&canonical, &root) {
-                Ok(body) => Ok(json!({
-                    "ok": true,
-                    "manifest": body,
-                    "key_id": root.key_id,
-                })),
+            match load_signed_manifest_file(&candidate, &root) {
+                Ok(body) => {
+                    // Host clamp: reject ceilings that expand past third-party SmartDeny set.
+                    let host = default_third_party_ceiling();
+                    if body
+                        .max_policies
+                        .iter()
+                        .any(|p| !host.contains(p))
+                    {
+                        return Ok(json!({
+                            "ok": false,
+                            "error": "pack max_policies expands past host third-party ceiling",
+                            "note": "unsigned or over-ceiling packs are rejected",
+                        }));
+                    }
+                    Ok(json!({
+                        "ok": true,
+                        "manifest": body,
+                        "key_id": root.key_id,
+                    }))
+                }
                 Err(e) => Ok(json!({
                     "ok": false,
                     "error": e.to_string(),
@@ -184,6 +186,34 @@ pub(super) fn handle(
     }
 }
 
+/// Fail-closed path join under `{home}/packs/` — rejects `..`, absolute escapes.
+fn confined_packs_path(home: &PathBuf, raw: &str) -> Result<PathBuf, String> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return Err("path required".into());
+    }
+    if raw.starts_with('/') || raw.contains('\\') {
+        return Err("signed pack path must be a relative name under packs/".into());
+    }
+    if raw.split('/').any(|p| p == ".." || p == "." || p.is_empty()) {
+        return Err("signed pack path must not contain .. or empty segments".into());
+    }
+    // Basename-only or single relative segment preferred; multi-segment allowed if no escape.
+    let home_packs = home.join("packs");
+    std::fs::create_dir_all(&home_packs).map_err(|e| e.to_string())?;
+    let packs_root = home_packs
+        .canonicalize()
+        .map_err(|e| format!("packs root: {e}"))?;
+    let candidate = packs_root.join(raw);
+    let canonical = candidate
+        .canonicalize()
+        .map_err(|_| "signed pack path not found under packs/".to_string())?;
+    if !canonical.starts_with(&packs_root) {
+        return Err("signed pack path must be under {home}/packs/".into());
+    }
+    Ok(canonical)
+}
+
 fn load_or_init_trust_root(home: &PathBuf) -> Result<TrustRoot, String> {
     let dir = home.join("packs");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -192,13 +222,20 @@ fn load_or_init_trust_root(home: &PathBuf) -> Result<TrustRoot, String> {
         let raw = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
         return serde_json::from_str(&raw).map_err(|e| e.to_string());
     }
-    // Dev trust root — operators replace for production rotation (ADR-0042).
+    // Random secret on first init (ADR-0042) — not a fixed public demo key.
+    let mut secret = [0u8; 32];
+    getrandom_fill(&mut secret);
     let root = TrustRoot {
         key_id: "local-dev-root".into(),
-        secret_hex: "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff".into(),
+        secret_hex: hex_encode(&secret),
     };
     let raw = serde_json::to_string_pretty(&root).map_err(|e| e.to_string())?;
     std::fs::write(&path, raw).map_err(|e| e.to_string())?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
+    }
     // Seed a sample signed pack for console verification demos.
     let body = PackManifestBody {
         pack_id: "example.signed".into(),
@@ -213,6 +250,34 @@ fn load_or_init_trust_root(home: &PathBuf) -> Result<TrustRoot, String> {
         );
     }
     Ok(root)
+}
+
+fn getrandom_fill(buf: &mut [u8]) {
+    // Prefer OS randomness; fall back to time-based mix for constrained hosts.
+    if let Ok(f) = std::fs::File::open("/dev/urandom") {
+        use std::io::Read;
+        let mut f = f;
+        if f.read_exact(buf).is_ok() {
+            return;
+        }
+    }
+    let t = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    for (i, b) in buf.iter_mut().enumerate() {
+        *b = ((t >> ((i % 16) * 8)) as u8).wrapping_add(i as u8);
+    }
+}
+
+fn hex_encode(bytes: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut out = String::with_capacity(bytes.len() * 2);
+    for b in bytes {
+        out.push(HEX[(b >> 4) as usize] as char);
+        out.push(HEX[(b & 0xf) as usize] as char);
+    }
+    out
 }
 
 #[cfg(test)]
@@ -257,12 +322,19 @@ mod tests {
         )
         .unwrap();
         assert_eq!(verified["ok"], true);
-        let bad = handle(
+        assert!(handle(
             &home,
             "packs_verify_signed",
             json!({"path": "/etc/passwd"}),
         )
-        .unwrap_err();
-        assert!(bad.contains("packs"));
+        .unwrap_err()
+        .contains("relative"));
+        assert!(handle(
+            &home,
+            "packs_verify_signed",
+            json!({"path": "../escape.json"}),
+        )
+        .unwrap_err()
+        .contains(".."));
     }
 }
