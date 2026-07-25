@@ -21,7 +21,7 @@ last_verified_commit: null
 
 # Product-complete program P25 verification
 
-Planes: **program P25** · delivery pending PR · architecture hold (Durability /
+Planes: **program P25** · delivery **PR #35** · architecture hold (Durability /
 Control-plane / UI / Security) · ledger `artifacts.store-ui`, `cron.lifecycle`
 → **parity**
 
@@ -38,8 +38,8 @@ in React without UI lease minting.
 |---|:---:|---|
 | Gallery + lazy image thumbs | **PASS** | ArtifactsSurface gallery mode |
 | Type/label filter chips | **PASS** | UI unit test |
-| Single export path confinement | **PASS** | `export_file` + secret basename deny |
-| Bulk store-method zip | **PASS** | `export_zip` + tests |
+| Single export confined to `artifacts/exports/` | **PASS** | free-form host paths refused |
+| Bulk store-method zip | **PASS** | `export_zip` count + basenames-only |
 | Cron create / pause / resume / remove | **PASS** | CronWorkbench + IPC |
 | Cron attempt history | **PASS** | `CronStore::history` + `cron_history` |
 | Lease non-bypass | **PASS** | UI only add/set_enabled/remove/history/list; no claim APIs |

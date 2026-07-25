@@ -1,6 +1,6 @@
 //! Sandboxed Files + Artifacts IPC.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use optimus_kernel::{ArtifactStore, FsRoots, ProjectAuthorityStore};
 use serde_json::json;
@@ -240,19 +240,20 @@ fn artifacts_export(home: &Path, params: serde_json::Value) -> Result<serde_json
         .get("sha256")
         .and_then(|v| v.as_str())
         .ok_or_else(|| "sha256 required".to_string())?;
+    // Optional basename only — absolute `path` is intentionally ignored for confinement.
+    let filename = params
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty());
     let store = ArtifactStore::open(home).map_err(|e| e.to_string())?;
-    let dest = if let Some(path) = params.get("path").and_then(|v| v.as_str()) {
-        PathBuf::from(path)
-    } else {
-        store.default_export_path(sha256).map_err(|e| e.to_string())?
-    };
     let path = store
-        .export_file(sha256, &dest)
+        .export_file(sha256, filename)
         .map_err(|e| e.to_string())?;
     Ok(json!({
         "ok": true,
         "path": path.to_string_lossy(),
         "sha256": sha256,
+        "confined_to": "artifacts/exports",
     }))
 }
 
@@ -270,19 +271,19 @@ fn artifacts_export_zip(
     if sha256s.is_empty() {
         return Err("sha256s array required".into());
     }
+    let filename = params
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty());
     let store = ArtifactStore::open(home).map_err(|e| e.to_string())?;
-    let dest = if let Some(path) = params.get("path").and_then(|v| v.as_str()) {
-        PathBuf::from(path)
-    } else {
-        store.default_zip_path().map_err(|e| e.to_string())?
-    };
-    let path = store
-        .export_zip(&sha256s, &dest)
+    let (path, count) = store
+        .export_zip(&sha256s, filename)
         .map_err(|e| e.to_string())?;
     Ok(json!({
         "ok": true,
         "path": path.to_string_lossy(),
-        "count": sha256s.len(),
+        "count": count,
+        "confined_to": "artifacts/exports",
     }))
 }
 

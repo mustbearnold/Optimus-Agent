@@ -82,9 +82,12 @@ pub(super) fn handle(
                 .ok_or_else(|| "enabled bool required".to_string())?;
             let store = open_cron(home).map_err(|e| e.to_string())?;
             // Pause clears lease fields in set_enabled — no UI lease mint.
-            store
+            let ok = store
                 .set_enabled(id, enabled)
                 .map_err(|e| e.to_string())?;
+            if !ok {
+                return Err("schedule not found".into());
+            }
             Ok(json!({ "id": id.to_string(), "enabled": enabled }))
         }
         "cron_remove" => {

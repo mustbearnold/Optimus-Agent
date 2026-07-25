@@ -452,8 +452,8 @@ impl CronStore {
         Ok(())
     }
 
-    pub fn set_enabled(&self, id: Uuid, enabled: bool) -> Result<()> {
-        self.conn.execute(
+    pub fn set_enabled(&self, id: Uuid, enabled: bool) -> Result<bool> {
+        let n = self.conn.execute(
             "UPDATE cron_jobs
              SET enabled=?1,
                  lease_generation=lease_generation+CASE WHEN ?1=0 THEN 1 ELSE 0 END,
@@ -465,7 +465,7 @@ impl CronStore {
              WHERE id=?2",
             params![if enabled { 1 } else { 0 }, id.to_string()],
         )?;
-        Ok(())
+        Ok(n > 0)
     }
 
     pub fn remove(&self, id: Uuid) -> Result<bool> {

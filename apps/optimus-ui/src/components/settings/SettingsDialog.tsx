@@ -325,9 +325,6 @@ export function SettingsDialog({
             {active === 'automations' ? (
               <SettingsGroup title="Schedules">
                 <CronWorkbench transport={transport} active={open && active === 'automations'} />
-                {cron.length ? (
-                  <p className="panel-muted">{cron.length} schedule(s) loaded via runtime store.</p>
-                ) : null}
               </SettingsGroup>
             ) : null}
 

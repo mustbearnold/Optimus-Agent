@@ -338,7 +338,7 @@
     },
     {
       "id": "cron.lifecycle",
-      "capability": "Schedules, pause/resume/remove, delivery and history",
+      "capability": "Schedules, pause/resume/remove, create and history",
       "hermes_reference": "Rich cron jobs",
       "state": "parity",
       "evidence": [

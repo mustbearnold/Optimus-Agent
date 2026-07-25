@@ -82,7 +82,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - **Legacy rollback:** tao + wry native shell (WebKitGTK / WebView2) via install “Legacy Wry” action.
 - Native Wry IPC: ADR-0014 custom-protocol path; host HTTP mode is a test / Electron transport path.
 - Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available) is separate from the Electron sandboxed preview `WebContentsView`.
-- Artifacts: content-addressed blobs under `{home}/artifacts` with list IPC; gallery incomplete
+- Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns today: durable sequential `WriteFile`/`RunCommand`; not general subagent parity
 - Gateway today: durable local inbox/outbox + loopback webhook; no Telegram adapter or delivery receipts
 - Capabilities today: packs/skills/eval backends exist; desktop console remains incomplete
