@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-25 · P17 release gates; program P20–P29 PRODUCT-COMPLETE (updater residual ADR-0043); projects.scope honesty partial
+Updated: 2026-07-25 · P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty partial
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -21,9 +21,9 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 32 | A bounded Hermes-equivalent capability has current executable evidence |
-| **partial** | 2 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
-| **missing** | 13 | No complete executable path exists yet |
+| **parity** | 44 | A bounded Hermes-equivalent capability has current executable evidence |
+| **partial** | 3 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
+| **missing** | 0 | No complete executable path exists yet |
 | **total** | 51 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
@@ -62,18 +62,21 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Gateway outbox receipts, ambiguous-send recovery, mock Telegram adapter, messaging UI (program P28; external EO residual)
 - Provider catalog + ordered failover, pack-gated MCP mock, signed packs (program P27)
 - Product ship path: Electron install default, doctor shell/isolation/gateway/packs, ADR-0043 no auto-updater (program P29)
+- S7: profile homes, leased child agents, CUA pack scaffold, Hermes importers
+- Track Z: offline comparative runner, surface/media/breadth scaffolds, Discord/Slack mock adapters
 
 ## Material partials
 
 - Project isolation honesty (configured vs enforced) with concurrent multi-project mutate lease residual
 - Release updater: no in-app signed auto-update channel (ADR-0043); reinstall script is the upgrade path
+- Terminal PTY: Linux multi-tab session store scaffold; full interactive I/O residual
 
 ## Leading product losses
 
-1. Interactive multi-tab ConPTY terminal
-2. General durable child-agent DAG execution with leases/handoff artifacts
-3. Comparative Hermes-vs-Optimus trajectory runner
-4. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, and ecosystem breadth
+1. Hermes strict parity gate (2063 contracts + performance scenarios) still unverified
+2. Live multi-tab ConPTY I/O product UI
+3. Live computer-use effectors under heavy approval
+4. Live Discord/Slack bot transports (mock enqueue only)
 
 ## Current architecture truth
 
@@ -82,9 +85,9 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Native Wry IPC: ADR-0014 custom-protocol path; host HTTP mode is a test / Electron transport path.
 - Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available) is separate from the Electron sandboxed preview `WebContentsView`.
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
-- Campaigns today: durable sequential `WriteFile`/`RunCommand`; not general subagent parity
-- Gateway today: SQLite authority with outbox receipts, ambiguous-send recovery, mock Telegram adapter, messaging UI (program P28); external EO residual honest
-- Capabilities today: product-complete path (program P20–P29) with honest residuals (no auto-updater ADR-0043; projects.scope concurrent lease; Hermes gate not claimed)
+- Campaigns: sequential WriteFile/RunCommand plus leased child-agent coordinator (S7)
+- Gateway: SQLite authority + Telegram mock + Discord/Slack mock enqueue (live bots residual)
+- Capabilities: PRODUCT-COMPLETE + S7/Track Z scaffolds; Hermes gate not claimed
 - Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 
 ## Baseline commands of record
@@ -103,4 +106,4 @@ PF-00 baseline evidence: `local/tmp/baselines/PF-00-report.md`.
 
 ## Honest statement
 
-Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 2 partial and 13 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.
+Optimus has evidence-backed architectural wins and broad product/ecosystem scaffolds. It is **not yet Hermes-strict-parity**: the ledger currently contains 3 partial and 0 missing capability rows, but Hermes feature-contract and performance gates remain unverified (optimus-native claims only for a small first batch). The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until the full inventory, comparative, security, cost, durability, packaging, and native-platform gates pass.

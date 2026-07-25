@@ -129,6 +129,10 @@ pub enum PackId {
     Media,
     Devex,
     Social,
+    /// Home-automation / IoT breadth (Track Z.10).
+    Home,
+    /// Office docs breadth (Track Z.10).
+    Office,
 }
 
 impl PackId {
@@ -140,6 +144,8 @@ impl PackId {
             PackId::Media => "media",
             PackId::Devex => "devex",
             PackId::Social => "social",
+            PackId::Home => "home",
+            PackId::Office => "office",
         }
     }
 
@@ -151,6 +157,8 @@ impl PackId {
             "media" => Some(Self::Media),
             "devex" => Some(Self::Devex),
             "social" => Some(Self::Social),
+            "home" => Some(Self::Home),
+            "office" => Some(Self::Office),
             _ => None,
         }
     }
@@ -998,6 +1006,30 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     ToolPolicy::NetworkWrite,
                 ),
             ],
+        },
+    );
+    m.insert(
+        PackId::Home,
+        PackDesc {
+            id: PackId::Home,
+            summary: "Home automation breadth (scaffold)".into(),
+            tools: vec![unavailable(
+                "home_device_status",
+                "Read home device status",
+                ToolPolicy::NetworkRead,
+            )],
+        },
+    );
+    m.insert(
+        PackId::Office,
+        PackDesc {
+            id: PackId::Office,
+            summary: "Office document breadth (scaffold)".into(),
+            tools: vec![unavailable(
+                "office_doc_summary",
+                "Summarize office document",
+                ToolPolicy::WorkspaceRead,
+            )],
         },
     );
     m

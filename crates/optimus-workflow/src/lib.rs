@@ -7,6 +7,7 @@
 
 mod orchestrator_envelopes;
 mod run_controller;
+mod child_lease;
 mod specialist_vertical;
 mod workflow;
 mod workflow_run;
@@ -44,6 +45,7 @@ pub use optimus_agent::{
 pub use optimus_artifacts::{ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult};
 pub use orchestrator_envelopes::*;
 pub use run_controller::*;
+pub use child_lease::*;
 pub use specialist_vertical::*;
 pub use workflow::*;
 pub use workflow_run::*;

@@ -653,8 +653,10 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P29 done** — PRODUCT-COMPLETE (with named residuals).
-2. Optional: S7 / Track Z (profiles, open subagents, PTY, Hermes gate) — not required for product-complete.
+1. **program P20–P29 done** — PRODUCT-COMPLETE.
+2. **S7 + Track Z scaffolds done** (see `docs/architecture/s7-track-z-verification.md`);
+   residuals: live PTY I/O, Hermes gate/performance inventory, signed updater.
+
 
 ## Success definition
 

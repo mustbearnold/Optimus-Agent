@@ -3,10 +3,15 @@
 //! These are intentionally outside the turn-loop waist. Surfaces and the kernel
 //! may depend on them; they must not depend on `optimus-kernel`.
 
+mod channel_adapters;
 mod cron;
 mod gateway;
+mod hermes_import;
+mod media_fixtures;
 mod mcp;
+mod pty_session;
 mod surface_commands;
+mod surfaces;
 mod telegram;
 
 pub use cron::{CronAttemptView, CronClaim, CronError, CronJob, CronStore};
@@ -24,6 +29,21 @@ pub use mcp::{
 };
 pub use surface_commands::{
     builtin_surface_commands, commands_for_surface, CommandSurface, SurfaceCommand,
+};
+pub use channel_adapters::{discord_enqueue, slack_enqueue, AdapterError, ChannelInbound};
+pub use hermes_import::{
+    import_memory, import_sessions, import_skills, write_test_fixtures, HermesMemoryFixture,
+    HermesSessionFixture, HermesSkillFixture, ImportError, ImportReport,
+};
+pub use media_fixtures::{
+    image_generate_offline, stt_offline, tts_offline, vision_analyze_offline, ImageGenerateRequest,
+    ImageGenerateResult, MediaError, SttRequest, SttResult, TtsRequest, TtsResult,
+    VisionAnalyzeRequest, VisionAnalyzeResult,
+};
+pub use pty_session::{PtyError, PtySessionStore, PtyTab, DEFAULT_MAX_TABS};
+pub use surfaces::{
+    acp_handle, proxy_chat_offline, tui_smoke_snapshot, AcpRequest, AcpResponse, ProxyChatRequest,
+    ProxyChatResponse, ProxyChoice, ProxyMessage, SurfaceError, TuiSnapshot,
 };
 pub use telegram::{
     load_telegram_config, poll_once as telegram_poll_once, process_inbound_reply_path,

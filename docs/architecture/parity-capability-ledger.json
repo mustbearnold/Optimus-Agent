@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P20\u2013P29 PRODUCT-COMPLETE (updater residual ADR-0043); projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -279,8 +279,11 @@
       "id": "terminal.pty",
       "capability": "Interactive multi-tab ConPTY terminal",
       "hermes_reference": "Interactive terminal pane",
-      "state": "missing",
-      "evidence": [],
+      "state": "partial",
+      "evidence": [
+        "crates/optimus-ops/src/pty_session.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
       "trajectory": null,
       "owner_ticket": "B-05"
     },
@@ -346,9 +349,12 @@
       "id": "desktop.cua",
       "capability": "Background computer-use pack",
       "hermes_reference": "computer_use",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-packs/src/lib.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "S7.7 desktop pack scaffold (screenshot/click/type Unavailable; heavy approval residual)",
       "owner_ticket": "B-06"
     },
     {
@@ -396,9 +402,12 @@
       "id": "gateway.discord-slack",
       "capability": "Discord and Slack adapters",
       "hermes_reference": "Discord/Slack gateway",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/channel_adapters.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.11 mock Discord/Slack enqueue into durable gateway; live APIs residual",
       "owner_ticket": "C-05"
     },
     {
@@ -502,9 +511,12 @@
       "id": "profiles.isolation",
       "capability": "Profile-isolated homes and cross-profile links",
       "hermes_reference": "Hermes profiles",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/src/profile.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "S7.1-S7.2 ProfileStore sealed homes + cross-profile deny-by-default",
       "owner_ticket": "D-06"
     },
     {
@@ -523,11 +535,13 @@
       "id": "campaign.subagents",
       "capability": "Durable child-agent DAGs, leases and handoffs",
       "hermes_reference": "delegate_task and Kanban agents",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "crates/optimus-runtime/src/campaign.rs"
+        "crates/optimus-workflow/src/child_lease.rs",
+        "crates/optimus-workflow/src/specialist_vertical.rs",
+        "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "S7.3-S7.5 leased child steps, cancel propagation, parallel N<=4 + existing specialist DAG",
       "owner_ticket": "D-07,E-08"
     },
     {
@@ -545,56 +559,73 @@
       "id": "eval.comparative",
       "capability": "Same-task Hermes-vs-Optimus runner",
       "hermes_reference": "Hermes baseline",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-eval/src/comparative.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.1 offline comparative runner; Hermes not_run; gate remains unverified",
       "owner_ticket": "P-01"
     },
     {
       "id": "media.vision-image",
       "capability": "Vision and image generation pack",
       "hermes_reference": "vision_analyze/image_generate",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/media_fixtures.rs",
+        "crates/optimus-packs/src/lib.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.7-Z.8 offline vision analyze + image generate fixtures + media pack",
       "owner_ticket": "E-01"
     },
     {
       "id": "media.voice",
       "capability": "STT/TTS and voice composer",
       "hermes_reference": "Voice/TTS",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/media_fixtures.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.9 offline STT/TTS fixtures",
       "owner_ticket": "E-02"
     },
     {
       "id": "surface.proxy",
       "capability": "OpenAI-compatible server/proxy",
       "hermes_reference": "OpenAI-compatible proxy",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/surfaces.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.4 offline OpenAI-compatible chat proxy scaffold",
       "owner_ticket": "E-03"
     },
     {
       "id": "surface.acp",
       "capability": "ACP/IDE bridge",
       "hermes_reference": "ACP integration",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/surfaces.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.6 thin ACP initialize/session adapters",
       "owner_ticket": "E-04"
     },
     {
       "id": "surface.tui",
       "capability": "Headless TUI operator surface",
       "hermes_reference": "Hermes TUI",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-cli/src/main.rs"
+        "crates/optimus-ops/src/surfaces.rs",
+        "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "Z.5 headless TUI smoke snapshot",
       "owner_ticket": "E-05"
     },
     {
@@ -615,9 +646,12 @@
       "id": "migration.hermes",
       "capability": "Hermes session/skill/memory importer",
       "hermes_reference": "Hermes state",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/hermes_import.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "S7.8-S7.9 Hermes session/skill/memory fixture importers (staged imports; not live merge)",
       "owner_ticket": "E-07"
     },
     {
@@ -638,9 +672,12 @@
       "id": "packs.breadth",
       "capability": "Office/devex/social/home capability breadth",
       "hermes_reference": "Hermes skill/tool ecosystem",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-packs/src/lib.rs",
+        "docs/architecture/s7-track-z-verification.md"
+      ],
+      "trajectory": "Z.10 home/office/devex packs with one scaffold tool each",
       "owner_ticket": "E-11"
     }
   ]
