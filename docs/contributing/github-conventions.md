@@ -6,6 +6,7 @@ owns:
   - .github/pull_request_template.md
   - .github/ISSUE_TEMPLATE/**
   - scripts/sync-github-labels.py
+  - scripts/github_pr_branch.py
   - docs/contributing/github-conventions.md
 watches:
   - AGENTS.md
@@ -15,6 +16,7 @@ depends_on:
   - docs/architecture/architecture-marks.md
 validated_by:
   - scripts/sync-github-labels.py
+  - scripts/github_pr_branch.py
 last_verified_commit: null
 ---
 
@@ -161,31 +163,82 @@ Prefer short crate/app names: `kernel`, `runtime`, `workflow`, `agent`,
 🏗️ architecture: S+++ P12 command capability envelope
 ```
 
-## Branch naming
+## Branch naming (matches PR number)
+
+**Canonical local and remote branch name once a PR exists:**
 
 ```text
-<type>/<short-kebab-description>
+pr/<number>-<short-kebab>
 ```
 
 Examples:
 
-- `feat/write-then-read-handoff`
-- `fix/smartdeny-grant-transfer`
-- `refactor/control-plane-peels`
-- `docs/github-conventions`
-- `chore/sync-labels`
+- `pr/8-p10-multi-agent-dag`
+- `pr/9-p11-control-plane-peels`
+- `pr/12-emoji-github-labels`
+- `pr/15-p12-command-fs-envelope`
 
-**Agent-driven work** may use:
+This keeps **local checkouts, worktrees, and `git branch` output aligned with
+the GitHub PR number** (`#15` ↔ `pr/15-…`).
 
-```text
-agent/<topic-kebab>
+### Lifecycle
+
+| Stage | Branch name | Notes |
+|---|---|---|
+| Before PR | `wip/<short-kebab>` | Temporary only; do not leave long-lived |
+| PR opened | **rename to** `pr/<N>-<short-kebab>` | Required before asking for review |
+| Merged | delete local + remote branch | GitHub may auto-delete remote |
+
+### Recommended workflow (scripted)
+
+```bash
+# 1) Start work
+git checkout main && git pull
+git checkout -b wip/p12-command-fs-envelope
+# … commits …
+
+# 2) Push + open draft PR, then rename branch to pr/<N>-…
+python3 scripts/github_pr_branch.py open \
+  --title "🏗️ architecture: S+++ P12 command capability envelope" \
+  --label "🏗️ type:architecture" \
+  --label "🛡️ area:security" \
+  --label "🏆 program:s+++" \
+  --label "⬛ size:L" \
+  --body-file /tmp/pr-body.md
+# → creates PR, renames branch to pr/<N>-p12-command-fs-envelope, updates remote
 ```
 
-Rules:
+Manual equivalent after `gh pr create` returns `…/pull/15`:
+
+```bash
+git branch -m pr/15-p12-command-fs-envelope
+git push -u origin HEAD
+git push origin --delete wip/p12-command-fs-envelope   # if that was the old remote name
+# GitHub retargets the open PR to the new branch name when the old head is removed
+```
+
+Or, if the PR already exists on the current branch:
+
+```bash
+python3 scripts/github_pr_branch.py adopt   # rename current branch to pr/<N>-<slug>
+```
+
+### Other allowed forms (pre-PR only)
+
+```text
+wip/<short-kebab>           # before a PR number exists
+```
+
+Do **not** use long-lived `feat/…`, `agent/…`, or unnumbered topic branches for
+work that will become a PR. Convert to `pr/<N>-…` as soon as the PR is open.
+
+### Rules
 
 - Lowercase, hyphens, no spaces
+- PR number is decimal digits only (`pr/15-…`, not `pr/#15-…`)
+- Slug is stable and descriptive (phase id, area, or outcome)
 - No personal names or machine hostnames
-- One primary type prefix; don’t stack `feat/fix/...`
+- One PR ↔ one `pr/<N>-…` branch
 
 ## Pull requests
 
@@ -193,6 +246,11 @@ Rules:
 
 Same as emoji-first Conventional Commit subject (often the squash merge
 message). This is what appears in the repository **Commits** and PR lists.
+
+### Head branch
+
+Must be `pr/<number>-…` matching this PR’s number before review/merge
+(except the brief `wip/` window while opening the PR).
 
 ### Description
 
@@ -218,8 +276,8 @@ Quote labels: the emoji and space are part of the name.
 
 For multi-phase work (e.g. S+++ P10 then P11):
 
-1. Open PR A → `main`
-2. Open PR B → base **A** (or merge A first, then B → `main`)
+1. Open PR A → `main` as `pr/<A>-…`
+2. Open PR B → base **A** (or merge A first, then B → `main`) as `pr/<B>-…`
 3. Prefer sequential merge after reviews over one mega-PR
 
 ### Review
