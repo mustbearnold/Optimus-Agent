@@ -74,8 +74,8 @@ plan microtask, and grade claim.
 | Plane | Token | Authority |
 |---|---|---|
 | Decision | `ADR-NNNN` | `docs/decisions/` |
-| Program | `P##` (S+++ phases) | `docs/plans/s-plus-plus-plus-program.md` |
-| Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` |
+| Program | `P##` (program phase) | **Active:** `docs/plans/product-complete-program.md` (program P20–P29). Historical S+++: `docs/plans/s-plus-plus-plus-program.md` (P10–P19 done). Always say **program P##** in prose. |
+| Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` (e.g. full-app `S*.*`) |
 | Delivery | `PR #N` · local `pr/N-slug` | GitHub + `scripts/github_pr_branch.py` |
 | Grade / mark | mark + grade (`S+++`, `A-`…) | `docs/architecture/architecture-marks.md` |
 | Runtime product | `id@version` / crate / pack | source contracts, SemVer, EM |
@@ -91,10 +91,11 @@ plan microtask, and grade claim.
    `docs/decisions/`.
 5. Commits and PR titles are **emoji-first Conventional Commits**; labels are
    emoji + `namespace:value` (see contributing docs).
-6. Program phase may appear in title **text** (`S+++ P12 …`); delivery number
-   appears only as `PR #N` / `pr/N-…`.
+6. Program phase may appear in title **text** (`program P21 …`, `S+++ P12 …`);
+   delivery number appears only as `PR #N` / `pr/N-…`. Historical product specs
+   named `phase-20*` are **not** program P20.
 7. Grades move only with source + tests + docs exit criteria — not because a
-   PR merged or a phase label was applied.
+   PR merged or a phase label was applied. Product ledger rows are not grades.
 8. Runtime product ids are not program phases or ADR numbers.
 
 **Canonical detail:** [`docs/contributing/artifact-naming.md`](docs/contributing/artifact-naming.md)  

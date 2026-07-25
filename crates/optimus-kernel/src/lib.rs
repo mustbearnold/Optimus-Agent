@@ -1574,6 +1574,10 @@ impl Kernel {
                                     ),
                                 )
                             }
+                            Err(KernelError::Packs(ref pack_error)) => (
+                                descriptor.id.clone(),
+                                pack_error_tool_outcome(&call, &descriptor, pack_error),
+                            ),
                             Err(
                                 error @ KernelError::Runtime(RuntimeError::NeedsApproval {
                                     job_id,
@@ -1867,12 +1871,7 @@ impl Kernel {
                         sys.content = system_prompt(&self.packs);
                     }
                 }
-                Ok(json!({
-                    "ok": true,
-                    "loaded": self.packs.loaded_packs().iter().map(|p| p.as_str()).collect::<Vec<_>>(),
-                    "schema_tokens": self.packs.schema_tokens(),
-                })
-                .to_string())
+                Ok(self.packs.activation_snapshot().to_string())
             }
             ToolInvocation::MemoryRecall => {
                 let subject = call
@@ -2282,10 +2281,45 @@ fn tool_lifecycle_event(
 }
 
 fn is_control_plane_tool_error(error: &KernelError) -> bool {
-    matches!(
-        error,
+    match error {
         KernelError::Tool(message)
-            if message.contains("path not allowed") || message.contains("secret path denied")
+            if message.contains("path not allowed") || message.contains("secret path denied") =>
+        {
+            true
+        }
+        // Pack budget / catalog failures must surface as typed ToolOutcomes, not turn aborts.
+        KernelError::Packs(
+            PackError::SchemaBudget { .. }
+            | PackError::PackLimit { .. }
+            | PackError::CorePinned
+            | PackError::UnknownPack(_)
+            | PackError::NotLoaded(_)
+            | PackError::ToolUnavailable(_)
+            | PackError::ToolNotLoaded { .. }
+            | PackError::UnknownTool(_)
+            | PackError::InvalidArguments { .. }
+            | PackError::SchemaTokenOverflow { .. },
+        ) => false,
+        KernelError::Packs(_) => true,
+        _ => false,
+    }
+}
+
+fn pack_error_tool_outcome(
+    call: &ToolCall,
+    descriptor: &optimus_packs::ToolDesc,
+    error: &PackError,
+) -> ToolOutcome {
+    ToolOutcome::failed(
+        call.id.clone(),
+        descriptor.id.clone(),
+        format!("{}: {error}", descriptor.id.as_str()),
+        ToolErrorDetail {
+            code: error.outcome_error_code().into(),
+            message: error.to_string(),
+            retryable: error.outcome_retryable(),
+        },
+        descriptor.replay,
     )
 }
 

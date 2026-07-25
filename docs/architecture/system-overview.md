@@ -617,7 +617,10 @@ availability mandatory.
     [architecture-marks.md](./architecture-marks.md). Foundation Phases 0–5:
     [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md) (done). S+++ climb
     **P10–P19 done** — all architecture marks **S+++** (board:
-    [s-plus-plus-plus-review-2026-07-25.md](../evidence/s-plus-plus-plus-review-2026-07-25.md)).
-    Program: [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
+    [s-plus-plus-plus-review-2026-07-25.md](../evidence/s-plus-plus-plus-review-2026-07-25.md);
+    history: [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md)).
+    **Active app program:** [product-complete-program.md](../plans/product-complete-program.md)
+    (program P20–P29 → PRODUCT-COMPLETE); task queue
+    [full-app-microtasks.md](../plans/full-app-microtasks.md).
     Operator gate matrix: [release-and-parity-gates.md](./release-and-parity-gates.md).
     Durability backup/doctor: [durability-and-backup.md](./durability-and-backup.md).

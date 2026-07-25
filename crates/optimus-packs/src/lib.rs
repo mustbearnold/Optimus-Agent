@@ -68,6 +68,44 @@ pub enum PackError {
     InvalidArguments { tool: String, reason: String },
     #[error("invalid canonical tool outcome for {tool}: {reason}")]
     InvalidOutcome { tool: String, reason: String },
+    #[error(
+        "dispatch registry mismatch: catalog available invocations must equal ToolInvocation::ALL_DISPATCHABLE"
+    )]
+    DispatchRegistryMismatch { detail: String },
+}
+
+impl PackError {
+    /// Stable tool-outcome error codes for fail-closed pack / budget failures.
+    pub fn outcome_error_code(&self) -> &'static str {
+        match self {
+            Self::SchemaBudget { .. } => "pack_schema_budget_exceeded",
+            Self::PackLimit { .. } => "pack_on_demand_limit_exceeded",
+            Self::CorePinned => "pack_core_pinned",
+            Self::UnknownPack(_) => "pack_unknown",
+            Self::NotLoaded(_) => "pack_not_loaded",
+            Self::ToolNotAdvertised(_) => "tool_not_advertised",
+            Self::ToolUnavailable(_) => "tool_unavailable",
+            Self::ToolNotLoaded { .. } => "tool_not_loaded",
+            Self::UnknownTool(_) => "tool_unknown",
+            Self::InvalidArguments { .. } => "tool_invalid_arguments",
+            Self::InvalidOutcome { .. } => "tool_invalid_outcome",
+            Self::DispatchRegistryMismatch { .. } => "tool_dispatch_registry_mismatch",
+            Self::SchemaTokenOverflow { .. } => "pack_schema_token_overflow",
+            Self::DuplicateTool { .. }
+            | Self::DescriptorInvocationMismatch { .. }
+            | Self::DescriptorPolicyMismatch { .. }
+            | Self::DescriptorSchemaTokensMismatch { .. }
+            | Self::DescriptorPackMismatch { .. }
+            | Self::InvalidInputSchema { .. }
+            | Self::InvalidOutputSchema { .. }
+            | Self::DescriptorReplayMismatch { .. }
+            | Self::DescriptorOperationsMismatch { .. } => "pack_descriptor_invalid",
+        }
+    }
+
+    pub fn outcome_retryable(&self) -> bool {
+        matches!(self, Self::SchemaBudget { .. } | Self::PackLimit { .. })
+    }
 }
 
 pub type Result<T> = std::result::Result<T, PackError>;
@@ -373,7 +411,7 @@ pub enum ToolPolicy {
     NetworkWrite,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolInvocation {
     ReadFile,
@@ -436,6 +474,27 @@ pub struct ToolOperations {
 }
 
 impl ToolInvocation {
+    /// Every invocation the kernel may dispatch (excludes placeholder `Unavailable`).
+    ///
+    /// Catalog construction and domain-modularity tests must stay closed over this
+    /// set: advertised available tools ≡ handlers, no orphan dispatch arms.
+    pub const ALL_DISPATCHABLE: &'static [ToolInvocation] = &[
+        Self::ReadFile,
+        Self::WriteFile,
+        Self::Terminal,
+        Self::WebSearch,
+        Self::MemoryRecall,
+        Self::SkillResolve,
+        Self::ActivatePack,
+        Self::BrowserNavigate,
+        Self::BrowserSnapshot,
+        Self::BrowserClick,
+    ];
+
+    pub fn canonical_id(self) -> Option<&'static str> {
+        self.id()
+    }
+
     fn id(self) -> Option<&'static str> {
         match self {
             Self::ReadFile => Some("read_file"),
@@ -658,6 +717,50 @@ impl Default for PackBudgetConfig {
             max_schema_tokens: 2500,
         }
     }
+}
+
+/// Fail closed unless every available catalog tool maps to
+/// [`ToolInvocation::ALL_DISPATCHABLE`] and every dispatchable appears once.
+pub fn assert_dispatch_registry_closed(
+    catalog: &BTreeMap<PackId, PackDesc>,
+) -> Result<()> {
+    let mut seen: BTreeSet<ToolInvocation> = BTreeSet::new();
+    for pack in catalog.values() {
+        for tool in &pack.tools {
+            if !tool.is_available() {
+                continue;
+            }
+            if !ToolInvocation::ALL_DISPATCHABLE.contains(&tool.invocation) {
+                return Err(PackError::DispatchRegistryMismatch {
+                    detail: format!(
+                        "available tool {} uses invocation {:?} outside ALL_DISPATCHABLE",
+                        tool.id.as_str(),
+                        tool.invocation
+                    ),
+                });
+            }
+            if !seen.insert(tool.invocation) {
+                return Err(PackError::DispatchRegistryMismatch {
+                    detail: format!(
+                        "duplicate available invocation {:?} (tool {})",
+                        tool.invocation,
+                        tool.id.as_str()
+                    ),
+                });
+            }
+        }
+    }
+    for inv in ToolInvocation::ALL_DISPATCHABLE {
+        if !seen.contains(inv) {
+            return Err(PackError::DispatchRegistryMismatch {
+                detail: format!(
+                    "dispatchable {:?} missing from available catalog tools",
+                    inv
+                ),
+            });
+        }
+    }
+    Ok(())
 }
 
 /// Catalog of built-in packs (Hermes waist lesson: core small, edges on demand).
@@ -1094,6 +1197,7 @@ impl CapabilitySession {
             }
             pack.checked_schema_tokens()?;
         }
+        assert_dispatch_registry_closed(&catalog)?;
         let core_tokens = catalog
             .get(&PackId::Core)
             .ok_or_else(|| PackError::UnknownPack("core".into()))?
@@ -1111,6 +1215,29 @@ impl CapabilitySession {
             loaded,
             config,
             activations: vec![PackId::Core],
+        })
+    }
+
+    /// Hard ceiling configured for this session (schema tokens).
+    pub fn max_schema_tokens(&self) -> u32 {
+        self.config.max_schema_tokens
+    }
+
+    /// Max simultaneous on-demand packs (excludes core).
+    pub fn max_on_demand_packs(&self) -> usize {
+        self.config.max_on_demand_packs
+    }
+
+    /// Progressive activation report for tool outcomes / UI.
+    pub fn activation_snapshot(&self) -> Value {
+        json!({
+            "ok": true,
+            "loaded": self.loaded_packs().iter().map(|p| p.as_str()).collect::<Vec<_>>(),
+            "schema_tokens": self.schema_tokens(),
+            "max_schema_tokens": self.config.max_schema_tokens,
+            "on_demand_loaded": self.on_demand_count(),
+            "max_on_demand_packs": self.config.max_on_demand_packs,
+            "activations": self.activations.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
         })
     }
 

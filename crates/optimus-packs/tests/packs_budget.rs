@@ -84,6 +84,58 @@ fn cannot_deactivate_core() {
 }
 
 #[test]
+fn dispatch_registry_is_closed_over_all_dispatchable_invocations() {
+    use optimus_packs::{assert_dispatch_registry_closed, ToolInvocation};
+    let catalog = builtin_catalog();
+    assert_dispatch_registry_closed(&catalog).unwrap();
+    for inv in ToolInvocation::ALL_DISPATCHABLE {
+        assert!(
+            inv.canonical_id().is_some(),
+            "dispatchable {:?} must have a canonical tool id",
+            inv
+        );
+    }
+    // Catalog construction rejects a missing dispatchable (remove browser tools).
+    let mut broken = catalog.clone();
+    broken.get_mut(&PackId::Browser).unwrap().tools.clear();
+    let err = assert_dispatch_registry_closed(&broken).unwrap_err();
+    assert!(matches!(err, PackError::DispatchRegistryMismatch { .. }));
+    assert_eq!(err.outcome_error_code(), "tool_dispatch_registry_mismatch");
+}
+
+#[test]
+fn progressive_activate_snapshot_reports_budget_headroom() {
+    let mut s = CapabilitySession::with_defaults();
+    let snap = s.activation_snapshot();
+    assert_eq!(snap["ok"], true);
+    assert_eq!(snap["max_schema_tokens"], PackBudgetConfig::default().max_schema_tokens);
+    assert_eq!(snap["max_on_demand_packs"], 2);
+    assert_eq!(snap["on_demand_loaded"], 0);
+    s.activate(PackId::Browser).unwrap();
+    let after = s.activation_snapshot();
+    assert!(after["schema_tokens"].as_u64().unwrap() > snap["schema_tokens"].as_u64().unwrap());
+    assert_eq!(after["on_demand_loaded"], 1);
+    assert!(after["loaded"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "browser"));
+}
+
+#[test]
+fn pack_error_outcome_codes_are_stable_for_budget_failures() {
+    let err = PackError::SchemaBudget {
+        would_be: 3000,
+        max: 2500,
+    };
+    assert_eq!(err.outcome_error_code(), "pack_schema_budget_exceeded");
+    assert!(err.outcome_retryable());
+    let limit = PackError::PackLimit { loaded: 2, max: 2 };
+    assert_eq!(limit.outcome_error_code(), "pack_on_demand_limit_exceeded");
+    assert!(limit.outcome_retryable());
+}
+
+#[test]
 fn deactivate_on_demand_frees_slot() {
     let mut s = CapabilitySession::with_defaults();
     s.activate(PackId::Browser).unwrap();
