@@ -754,30 +754,40 @@
   // Settings popover + durable work isolation (Phase 0)
   let __productSettings = {
     work_isolation: 'shared',
+    configured_mode: 'shared',
+    enforced_mode: 'shared',
     allow_concurrent_projects: false,
-    enforcement_active: true,
+    enforcement_active: false,
+    product_fs_enforced: false,
   };
 
   function isolationShortLabel(mode) {
     if (mode === 'project_bound') return 'bound';
-    if (mode === 'isolated_profiles') return 'isolated';
+    // Never label status "isolated" for configured isolated_profiles while product FS is shared.
+    if (mode === 'isolated_profiles') return 'profiles*';
     return 'shared';
   }
 
   function applyIsolationToUi(settings) {
     __productSettings = settings || __productSettings;
-    const mode = __productSettings.work_isolation || 'shared';
+    const configured = __productSettings.configured_mode
+      || __productSettings.work_isolation
+      || 'shared';
+    const enforced = __productSettings.enforced_mode || 'shared';
     document.querySelectorAll('input[name="workIsolation"]').forEach(function(r) {
-      r.checked = r.value === mode;
+      r.checked = r.value === configured;
     });
     const conc = $('allowConcurrentProjects');
     if (conc) conc.checked = !!__productSettings.allow_concurrent_projects;
     const note = $('isolationNote');
     if (note) {
-      if (__productSettings.enforcement_active === false || (mode !== 'shared' && !__productSettings.enforcement_active)) {
+      const productFs = __productSettings.product_fs_enforced === true
+        || __productSettings.enforcement_active === true;
+      if (!productFs || configured !== enforced) {
         note.hidden = false;
         note.textContent = __productSettings.enforcement_note
-          || 'Mode saved as intent. Project-bound / profile enforcement ships later; runtime still uses shared paths today.';
+          || ('Configured ' + configured + '; product FS enforced as ' + enforced
+            + '. Concurrent multi-project mutate lease is not implemented yet.');
       } else {
         note.hidden = true;
         note.textContent = '';
@@ -785,9 +795,11 @@
     }
     if ($('stIsolation')) {
       const em = $('stIsolation').querySelector('em');
-      if (em) em.textContent = isolationShortLabel(mode);
-      $('stIsolation').title = (__productSettings.work_isolation_label || mode)
-        + (__productSettings.allow_concurrent_projects ? ' · concurrent on' : ' · concurrent off');
+      // Status bar shows ENFORCED product mode, not configured intent alone.
+      if (em) em.textContent = isolationShortLabel(enforced);
+      $('stIsolation').title = 'configured=' + configured
+        + ' · enforced=' + enforced
+        + (__productSettings.allow_concurrent_projects ? ' · concurrent flag on' : ' · concurrent flag off (lease residual)');
     }
   }
 

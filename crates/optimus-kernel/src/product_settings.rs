@@ -215,7 +215,8 @@ impl ProductSettings {
                     "Shared mode: command FS envelope is confined; product FS isolation is not enforced."
                 }
                 WorkIsolationMode::ProjectBound => {
-                    "Project-bound: mutating effects bind workspace_sha256 and Rust project roots; concurrent multi-project mutate denied unless allow_concurrent_projects."
+                    "Project-bound: mutating effects bind workspace_sha256 and Rust project roots. \
+                     allow_concurrent_projects is a settings flag only until a multi-project mutate lease store ships."
                 }
                 WorkIsolationMode::IsolatedProfiles => {
                     "Isolated profiles (configured): command envelope ConfinedNoNetwork on Linux; sealed profile homes are not enforced yet (After P29). Status must not claim full isolation."

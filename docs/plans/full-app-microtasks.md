@@ -202,8 +202,8 @@ than new substrates and is what users touch every minute.
 | S2.9 // | `todo` | Bulk zip export | `artifacts.store-ui` | kernel + UI confirm |
 | S2.10 | `todo` | Cron list + pause/resume/remove in React | `cron.lifecycle` | cron tests + e2e |
 | S2.11 | `todo` | Cron create form + per-schedule history | `cron.lifecycle` | validation + store tests |
-| S2.12 | `done` | Project-bound FS enforcement from work-isolation settings | `projects.scope` | product_fs_enforced honesty; Project* workspace hash; residual concurrent lease |
-| S2.13 | `done` | Status bar shows **enforced** isolation mode (not intent-only) | `projects.scope` | settings `enforced_mode`/`configured_mode` public JSON; UI residual polish |
+| S2.12 | `done` | Project-bound FS honesty + Project* workspace hash | `projects.scope` | honesty fields; concurrent lease residual S2.14 |
+| S2.13 | `done` | Status bar shows **enforced** isolation mode (not intent-only) | `projects.scope` | doctor/settings `enforced_mode`; legacy UI uses enforced label |
 | S2.14 | `todo` | `allow_concurrent_projects=false` blocks second project open | `projects.scope` | IPC/e2e |
 
 **Stage exit:** workbench is the daily driver without CLI for sessions, cron,
@@ -362,7 +362,7 @@ S0 ship surface
 If only one agent is working, pull in this exact order (skip `done` items):
 
 1. S0.2 (cutover matrix residual) if still open
-2. **program P22** / S1.3 files.mutate + S2.12–S2.14 isolation
+2. S2.14 concurrent multi-project mutate lease residual (or skip)
 3. S1.5 shared browser (program P23), then S2.1–S2.5 chat/session (P24)
 4. S2.6–S2.11 artifacts/cron (P25) // S3 consoles (P26)
 5. S4 extensibility (P27) after P21 (already done)

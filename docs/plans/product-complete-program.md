@@ -159,7 +159,7 @@ After **program P21** green:
 |---|---|---|---|
 | Tool contract / pack budget | `core.tool-loop`, `core.pack-budget` | **parity** (kernel) | **P21 done**; packs **console** residual → **P26** |
 | `files.mutate` | `files.mutate` | **parity** (kernel) | **P22 done**; concurrent lease residual |
-| Project isolation enforce | `projects.scope` | **parity** (honesty) | **P22 done**; concurrent multi-project lease residual |
+| Project isolation enforce | `projects.scope` | **partial** (honesty fields) | concurrent multi-project lease residual **S2.14** |
 | Browser / search | `browser.*`, `web.search` | Partial | **P23** → **parity** |
 | Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | Partial | **P24** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | Partial | **P25** |
@@ -544,7 +544,9 @@ Transport + security:
 `artifacts.store-ui`, `surface.commands`.
 
 **HOLD (already parity from program P21–P22):** `core.tool-loop`, `core.pack-budget`,
-`files.mutate`, `projects.scope`.
+`files.mutate`.
+
+**Still partial:** `projects.scope` (honesty only; concurrent lease residual).
 
 **Missing → parity:** `provider.failover`, `desktop.logs`,
 `gateway.telegram`, `gateway.ui`, `mcp.client`, `plugins.signed`, `skills.ui`,
@@ -652,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P22 done** (authority, tool contract, files.mutate + isolation honesty).
-2. Open **program P23** (coordinated browser) or harden concurrent-project mutate lease.
+1. **program P20–P21 done**; **program P22 files.mutate done**; isolation honesty partial (`projects.scope`).
+2. Open **program P23** (coordinated browser) or finish S2.14 concurrent mutate lease.
 
 ## Success definition
 

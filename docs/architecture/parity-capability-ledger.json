@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21 tool-loop/pack-budget parity; program P22 files.mutate in progress; artifacts path post-P11 peel",
+  "scorecard_marker": "P17 release gates; program P21 tool parity; program P22 files.mutate parity; projects.scope honesty partial; artifacts post-P11",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -435,14 +435,14 @@
       "id": "projects.scope",
       "capability": "Durable project roots and policy scope",
       "hermes_reference": "Projects/workspaces",
-      "state": "parity",
+      "state": "partial",
       "evidence": [
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
         "crates/optimus-kernel/src/product_settings.rs",
         "docs/architecture/product-complete-p22-verification.md",
         "docs/decisions/0027-settings-driven-work-isolation.md"
       ],
-      "trajectory": "program P22: settings honesty \u2014 configured_mode vs enforced_mode; product_fs_enforced only for project_bound; isolated_profiles does not claim sealed homes; command_envelope_enforced always. Evidence: crates/optimus-kernel/src/product_settings.rs unit tests; docs/architecture/product-complete-p22-verification.md",
+      "trajectory": null,
       "owner_ticket": "D-06"
     },
     {

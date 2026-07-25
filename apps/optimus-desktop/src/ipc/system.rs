@@ -99,11 +99,16 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
     let product_settings = ProductSettings::load(home)
         .map(|s| s.to_public_json())
         .unwrap_or_else(|e| {
+            // Fail closed on product-FS isolation claims when settings cannot load.
             json!({
                 "work_isolation": "shared",
+                "configured_mode": "shared",
                 "work_isolation_label": "Shared workbench",
                 "allow_concurrent_projects": false,
-                "enforcement_active": true,
+                "enforcement_active": false,
+                "product_fs_enforced": false,
+                "command_envelope_enforced": true,
+                "enforced_mode": "shared",
                 "error": e.to_string(),
             })
         });
@@ -129,9 +134,14 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         "campaigns_active": campaigns_active,
         "approvals_pending": approvals_pending,
         "work_isolation": product_settings.get("work_isolation").cloned().unwrap_or(json!("shared")),
+        "configured_mode": product_settings.get("configured_mode").cloned().unwrap_or(json!("shared")),
+        "enforced_mode": product_settings.get("enforced_mode").cloned().unwrap_or(json!("shared")),
         "work_isolation_label": product_settings.get("work_isolation_label").cloned().unwrap_or(json!("Shared workbench")),
         "allow_concurrent_projects": product_settings.get("allow_concurrent_projects").cloned().unwrap_or(json!(false)),
-        "isolation_enforcement_active": product_settings.get("enforcement_active").cloned().unwrap_or(json!(true)),
+        // Product FS isolation only (false unless project_bound). Never default true.
+        "isolation_enforcement_active": product_settings.get("enforcement_active").cloned().unwrap_or(json!(false)),
+        "product_fs_enforced": product_settings.get("product_fs_enforced").cloned().unwrap_or(json!(false)),
+        "command_envelope_enforced": product_settings.get("command_envelope_enforced").cloned().unwrap_or(json!(true)),
         "settings": product_settings,
     })
 }
@@ -198,14 +208,35 @@ mod tests {
         )
         .unwrap();
         assert_eq!(set["settings"]["work_isolation"], "isolated_profiles");
+        assert_eq!(set["settings"]["configured_mode"], "isolated_profiles");
         assert_eq!(set["settings"]["allow_concurrent_projects"], true);
-        assert_eq!(set["settings"]["enforcement_active"], true);
+        // Sealed profile homes are not product-FS enforced yet (After P29).
+        assert_eq!(set["settings"]["enforcement_active"], false);
+        assert_eq!(set["settings"]["product_fs_enforced"], false);
+        assert_eq!(set["settings"]["enforced_mode"], "shared");
         assert_eq!(set["settings"]["command_fs_envelope"], "confined_no_network");
+        assert_eq!(set["settings"]["command_envelope_enforced"], true);
         let again = settings_get(&home).unwrap();
         assert_eq!(again["settings"]["work_isolation"], "isolated_profiles");
         let doc = doctor_json(&home);
         assert_eq!(doc["work_isolation"], "isolated_profiles");
+        assert_eq!(doc["configured_mode"], "isolated_profiles");
+        assert_eq!(doc["enforced_mode"], "shared");
         assert_eq!(doc["allow_concurrent_projects"], true);
-        assert_eq!(doc["isolation_enforcement_active"], true);
+        assert_eq!(doc["isolation_enforcement_active"], false);
+        assert_eq!(doc["product_fs_enforced"], false);
+
+        let bound = settings_set(
+            &home,
+            json!({
+                "work_isolation": "project_bound",
+                "allow_concurrent_projects": false
+            }),
+        )
+        .unwrap();
+        assert_eq!(bound["settings"]["configured_mode"], "project_bound");
+        assert_eq!(bound["settings"]["enforced_mode"], "project_bound");
+        assert_eq!(bound["settings"]["enforcement_active"], true);
+        assert_eq!(bound["settings"]["product_fs_enforced"], true);
     }
 }
