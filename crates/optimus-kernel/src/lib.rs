@@ -24,6 +24,7 @@ mod telemetry;
 mod trace;
 mod web_search;
 mod workflow;
+mod workflow_run;
 
 use std::cell::Cell;
 use std::collections::BTreeSet;
@@ -111,11 +112,17 @@ pub use security_denial::{
 };
 pub use session::{SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus};
 pub use specialist_vertical::{
-    builtin_agent_permission_ceiling, cancel_write_file_handoff, content_sha256,
-    open_seeded_agent_registry, open_seeded_workflow_registry, run_write_file_handoff,
-    vertical_workspace, workspace_writer_descriptor, write_file_handoff_workflow,
-    WriteFileHandoffReport, WriteFileHandoffRequest, WORKSPACE_WRITER_ID,
-    WORKSPACE_WRITER_VERSION, WRITE_FILE_HANDOFF_WORKFLOW_ID, WRITE_FILE_HANDOFF_WORKFLOW_VERSION,
+    builtin_agent_permission_ceiling, cancel_workflow_run, cancel_write_file_handoff,
+    content_sha256, get_workflow_run, open_seeded_agent_registry, open_seeded_workflow_registry,
+    open_workflow_run_store, read_file_handoff_workflow, run_read_file_handoff,
+    run_registered_workflow, run_write_file_handoff, run_write_then_read_handoff,
+    vertical_workspace, workspace_reader_descriptor, workspace_writer_descriptor,
+    write_file_handoff_workflow, write_then_read_handoff_workflow, ReadFileHandoffRequest,
+    WorkflowDagReport, WorkflowDagRequest, WriteFileHandoffReport, WriteFileHandoffRequest,
+    READ_FILE_HANDOFF_WORKFLOW_ID, READ_FILE_HANDOFF_WORKFLOW_VERSION, WORKSPACE_READER_ID,
+    WORKSPACE_READER_VERSION, WORKSPACE_WRITER_ID, WORKSPACE_WRITER_VERSION,
+    WRITE_FILE_HANDOFF_WORKFLOW_ID, WRITE_FILE_HANDOFF_WORKFLOW_VERSION,
+    WRITE_THEN_READ_HANDOFF_WORKFLOW_ID, WRITE_THEN_READ_HANDOFF_WORKFLOW_VERSION,
 };
 pub use telemetry::{
     record_route_telemetry, route_telemetry_aggregate, RouteTelemetryAggregate,
@@ -133,6 +140,10 @@ pub use workflow::{
     WorkflowAdapterKind, WorkflowAgentRef, WorkflowDefinition, WorkflowId, WorkflowNode,
     WorkflowObservability, WorkflowPort, WorkflowRegistry, WorkflowTerminalKind,
     WorkflowTerminalPolicy, WorkflowTrigger, WorkflowVersion, WORKFLOW_SCHEMA_VERSION,
+};
+pub use workflow_run::{
+    WorkflowNodeRun, WorkflowNodeRunStatus, WorkflowRun, WorkflowRunChild, WorkflowRunEvent,
+    WorkflowRunLease, WorkflowRunStatus, WorkflowRunStore,
 };
 
 #[derive(Debug, Error)]

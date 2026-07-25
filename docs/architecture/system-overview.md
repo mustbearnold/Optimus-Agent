@@ -210,17 +210,24 @@ cancellation, retry lineage, and exact runtime-effect provenance links are
 implemented. Descriptor and request validation use canonical available
 `ToolId`s and exact permission ceilings.
 
-**Confirmed current behaviour:** one built-in specialist vertical is implemented:
-`workspace_writer@1.0.0` registered via `open_seeded_agent_registry`, executed by
-`write_file_handoff@1.0.0` (`run_write_file_handoff`). The vertical begins a durable
-agent invocation, runs a Work Graph `WriteFile` under SmartDeny (optional
-auto-grant), links exact effect provenance, publishes a content-addressed handoff
-artifact, and settles exactly one agent terminal outcome. CLI:
-`optimus vertical list` and `optimus vertical write-file`.
+**Confirmed current behaviour:** two built-in specialists are registered via
+`open_seeded_agent_registry`:
+`workspace_writer@1.0.0` (`write_file`) and `workspace_reader@1.0.0` (`read_file`).
+Three immutable workflows are seeded: `write_file_handoff@1.0.0`,
+`read_file_handoff@1.0.0`, and the two-node DAG
+`write_then_read_handoff@1.0.0`. Execution goes through durable
+`WorkflowRunStore` (`workflow-runs.db`): run lease, per-node projections, child
+invocation links, and exactly one run terminal. Writers still use Work Graph
+`WriteFile` under SmartDeny (optional auto-grant), link effect provenance, and
+publish content-addressed handoff artifacts. Readers publish handoff artifacts
+without host mutation. Parent run cancel fans out to child invocations/jobs and
+blocks new children on terminal parents. CLI: `optimus vertical list`,
+`write-file`, `read-file`, `write-then-read`.
 
-**Unknown or unresolved behaviour:** there is no general specialist router,
-parallel child hierarchy, or universal multi-agent DAG executor. The agent
-contract still does not bypass runtime SmartDeny or filesystem confinement.
+**Unknown or unresolved behaviour:** there is no model-chosen specialist router,
+parallel multi-ready-node execution, command/shell specialist, or MCP agents.
+The agent contract still does not bypass runtime SmartDeny or filesystem
+confinement. Command FS envelope residual is owned by S+++ P12.
 
 ## Tool system
 
@@ -530,10 +537,11 @@ availability mandatory.
 
 ## Current architectural debt and open decisions
 
-1. **Partial product:** one built-in specialist vertical exists
-   (`workspace_writer` / `write_file_handoff`); no general router or multi-agent DAG.
-2. **Partial product:** one workflow executor path exists for that vertical; no
-   universal workflow executor for arbitrary definitions.
+1. **Partial product:** two built-in specialists and a registered-definition DAG
+   runner exist; no model-chosen specialist router or open MCP agents.
+2. **Partial product:** DAG executor runs registered built-in definitions with a
+   closed specialist dispatch table; not a universal executor for arbitrary
+   third-party definitions beyond registry validation.
 3. **Partially implemented:** cancellation remains owner-specific.
 4. **Confirmed contract, unresolved product:** metadata declarations do not create universal runtime cancellation/retry.
 5. **Partially implemented:** policy and telemetry routing exist; evaluation-driven routing does not.
@@ -551,6 +559,7 @@ availability mandatory.
 11. **Known debt:** duplicate ADR number `0016`.
 12. **Known debt:** existing blueprint and phase notes mix future targets with
     historical/current claims; they require gradual labeling, not deletion.
-13. **Program:** architecture quality marks and phase order live in
-    [architecture-marks.md](./architecture-marks.md) and
-    [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md).
+13. **Program:** architecture quality marks live in
+    [architecture-marks.md](./architecture-marks.md). Foundation Phases 0–5:
+    [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md) (done). Active
+    lowest-to-highest S+++ climb: [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).

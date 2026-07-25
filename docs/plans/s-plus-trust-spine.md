@@ -1,6 +1,6 @@
 ---
 knowledge_type: plan
-status: current
+status: historical
 owns:
   - docs/plans/s-plus-trust-spine.md
 watches:
@@ -20,7 +20,13 @@ validated_by:
 last_verified_commit: null
 ---
 
-# S+++ program — Phase 0–1 executable plan
+# S+++ program — Phase 0–5 foundation (done)
+
+**Status:** foundation complete. **Active continuation:**
+[s-plus-plus-plus-program.md](./s-plus-plus-plus-program.md) (P10–P19,
+lowest architecture grade → highest until all S+++).
+
+# Phase 0–1 executable plan (historical record)
 
 ## Phase 0 — Truth freeze (docs)
 
