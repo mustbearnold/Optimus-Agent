@@ -47,7 +47,7 @@ import {
   saveProjects,
 } from '../state/projectStore';
 import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
-import { ConsolesPage } from '../components/consoles/ConsolesPage';
+import { ConsolesPage, type ConsoleTab } from '../components/consoles/ConsolesPage';
 import { CommandPalette } from '../components/chrome/CommandPalette';
 import { TopBar } from '../components/chrome/TopBar';
 import { Icon } from '../components/chrome/Icon';
@@ -111,6 +111,7 @@ export function OptimusApp() {
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [consoleTab, setConsoleTab] = useState<ConsoleTab>('skills');
   const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(loadExpanded);
   const [input, setInput] = useState('');
@@ -554,7 +555,11 @@ export function OptimusApp() {
                 ) : state.layout.route === 'capabilities' ? (
                   <CapabilitiesPage doctor={doctor} approvals={approvals} campaigns={campaigns} onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })} />
                 ) : state.layout.route === 'consoles' ? (
-                  <ConsolesPage transport={transport} />
+                  <ConsolesPage
+                    key={consoleTab}
+                    transport={transport}
+                    initialTab={consoleTab}
+                  />
                 ) : state.layout.route === 'mail' ? (
                   <MailPage
                     projects={projects}
@@ -641,7 +646,13 @@ export function OptimusApp() {
           transport={transport}
           onClose={() => setPaletteOpen(false)}
           onRun={(commandId) => {
-            if (commandId === 'skills' || commandId === 'memory' || commandId === 'packs' || commandId === 'logs') {
+            if (
+              commandId === 'skills' ||
+              commandId === 'memory' ||
+              commandId === 'packs' ||
+              commandId === 'logs'
+            ) {
+              setConsoleTab(commandId);
               setRoute('consoles');
             } else if (commandId === 'artifacts') {
               setRoute('artifacts');

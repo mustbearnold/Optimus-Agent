@@ -66,9 +66,12 @@
         "crates/optimus-kernel/tests/kernel_turn.rs",
         "docs/architecture/product-complete-p21-verification.md",
         "docs/plans/product-complete-program.md",
-        "docs/evidence/product-complete-p21-hold-2026-07-25.md"
+        "docs/evidence/product-complete-p21-hold-2026-07-25.md",
+        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+        "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": "program P21: hard SchemaBudget/PackLimit fail-closed at CapabilitySession; progressive activate_pack reports schema_tokens/max/on_demand headroom; over-budget and on-demand-limit activate_pack yield typed ToolOutcome (pack_schema_budget_exceeded / pack_on_demand_limit_exceeded) without loading pack (kernel_turn). Packs console product surface residual owned by program P26.; program P26 packs console activate/deactivate via CapabilitySession + pack_prefs",
+      "trajectory": "program P21: hard SchemaBudget/PackLimit fail-closed at CapabilitySession; progressive activate_pack reports schema_tokens/max/on_demand headroom; over-budget and on-demand-limit activate_pack yield typed ToolOutcome (pack_schema_budget_exceeded / pack_on_demand_limit_exceeded) without loading pack (kernel_turn). program P26: packs console activate/deactivate via CapabilitySession + pack_prefs (prefs are not live mid-chat Kernel packs).",
       "owner_ticket": "D-01,D-02"
     },
     {

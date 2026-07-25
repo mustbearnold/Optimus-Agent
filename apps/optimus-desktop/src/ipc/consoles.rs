@@ -451,6 +451,22 @@ mod tests {
             .unwrap()
             .iter()
             .any(|v| v.as_str() == Some("browser")));
+        // Cross-handle persistence via pack_prefs.json
+        let reloaded = packs_state(dir.path()).unwrap();
+        assert!(reloaded["loaded"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v.as_str() == Some("browser")));
+        let raw = fs::read_to_string(dir.path().join("pack_prefs.json")).unwrap();
+        assert!(raw.contains("browser"));
+        packs_deactivate(dir.path(), json!({"name": "browser"})).unwrap();
+        let after = packs_state(dir.path()).unwrap();
+        assert!(!after["loaded"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v.as_str() == Some("browser")));
         assert!(packs_deactivate(dir.path(), json!({"name": "core"})).is_err());
     }
 
@@ -512,10 +528,53 @@ mod tests {
     #[test]
     fn console_ctx_matches_kernel_default_memory_scope() {
         let ctx = console_ctx();
-        assert_eq!(ctx.tenant, "local");
-        assert_eq!(ctx.user, "user");
-        assert_eq!(ctx.project, "default");
-        assert_eq!(ctx.agent, "optimus");
+        let kernel = optimus_kernel::KernelConfig::default().memory_ctx;
+        assert_eq!(ctx.tenant, kernel.tenant);
+        assert_eq!(ctx.user, kernel.user);
+        assert_eq!(ctx.project, kernel.project);
+        assert_eq!(ctx.agent, kernel.agent);
+        assert_eq!(ctx.principal, kernel.principal);
+    }
+
+    #[test]
+    fn memory_forget_removes_from_list() {
+        let dir = tempdir().unwrap();
+        let mem = Memory::open(dir.path().join("memory.db")).unwrap();
+        let ctx = console_ctx();
+        let now = chrono_like_now();
+        let id = mem
+            .remember(
+                &ctx,
+                ClaimDraft {
+                    subject: "user".into(),
+                    predicate: "likes".into(),
+                    object: "tea".into(),
+                    valid_from: now,
+                    valid_to: None,
+                    confidence: 0.9,
+                    origin: Origin::UserStatement,
+                    learned_at: None,
+                    sensitivity: Sensitivity::Personal,
+                    retention_until: None,
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            memory_list(dir.path(), json!({"limit": 10})).unwrap()["claims"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        let out = memory_forget(dir.path(), json!({"id": id.to_string()})).unwrap();
+        assert_eq!(out["forgotten"], true);
+        assert_eq!(
+            memory_list(dir.path(), json!({"limit": 10})).unwrap()["claims"]
+                .as_array()
+                .unwrap()
+                .len(),
+            0
+        );
     }
 
     #[test]

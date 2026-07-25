@@ -2,16 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import type { OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
-type Tab = 'skills' | 'memory' | 'packs' | 'logs';
+export type ConsoleTab = 'skills' | 'memory' | 'packs' | 'logs';
 
 export function ConsolesPage({
   transport,
   initialTab = 'skills',
 }: {
   transport: OptimusTransport;
-  initialTab?: Tab;
+  initialTab?: ConsoleTab;
 }) {
-  const [tab, setTab] = useState<Tab>(initialTab);
+  const [tab, setTab] = useState<ConsoleTab>(initialTab);
   return (
     <main className="route-page consoles-page" aria-label="Consoles">
       <header className="route-heading">
@@ -23,7 +23,7 @@ export function ConsolesPage({
         </p>
       </header>
       <div className="console-tabs" role="tablist" aria-label="Console sections">
-        {(['skills', 'memory', 'packs', 'logs'] as Tab[]).map((id) => (
+        {(['skills', 'memory', 'packs', 'logs'] as ConsoleTab[]).map((id) => (
           <button
             key={id}
             type="button"

@@ -560,8 +560,9 @@ impl Memory {
             })
     }
 
-    /// Console listing (program P26): recent claims in scope. Data only — never
-    /// ActionAuthorize.
+    /// Console listing (program P26): current open claims in scope.
+    /// Excludes tombstoned, erased, and knowledge-closed rows so Forget/Correct
+    /// match recall semantics. Data only — never ActionAuthorize.
     pub fn list_recent(&self, ctx: &WriteContext, limit: u32) -> Result<Vec<ClaimView>> {
         let limit = limit.clamp(1, 200) as i64;
         let scope = ctx.scope();
@@ -571,7 +572,10 @@ impl Memory {
                     allowed_uses_json, supersedes, in_conflict, sensitivity,
                     retention_until, tombstoned_at, erased
              FROM claims
-             WHERE tenant=?1 AND user_id=?2 AND project=?3 AND erased=0
+             WHERE tenant=?1 AND user_id=?2 AND project=?3
+               AND erased=0
+               AND tombstoned_at IS NULL
+               AND tx_to IS NULL
              ORDER BY tx_from DESC
              LIMIT ?4",
         )?;

@@ -19,7 +19,7 @@ last_verified_commit: null
 
 # Product-complete program P26 verification
 
-Planes: **program P26** · delivery pending PR · architecture hold (Domain /
+Planes: **program P26** · delivery **PR #36** · architecture hold (Domain /
 Security / Doc hygiene) · ledger `skills.ui`, `memory.ui`, `desktop.logs`,
 `surface.commands` → **parity** (packs console completes product story for
 `core.pack-budget`)
@@ -72,7 +72,11 @@ python3 scripts/check-parity-ledger.py
 - Hermes gate PASS
 - Live mid-chat pack mutation from consoles
 
+## Board
+
+See `docs/evidence/product-complete-p26-hold-2026-07-25.md`.
+
 ## Verdict
 
-**program P26 exit: PASS** (pending three-expert board + merge).
+**program P26 exit: PASS** after review-board MUST-FIX (PR #36).
 Next: program P27 extensibility or P28 messaging.

@@ -157,7 +157,7 @@ After **program P21** green:
 
 | Surface | Ledger | Status | Owner |
 |---|---|---|---|
-| Tool contract / pack budget | `core.tool-loop`, `core.pack-budget` | **parity** (kernel) | **P21 done**; packs **console** residual → **P26** |
+| Tool contract / pack budget | `core.tool-loop`, `core.pack-budget` | **parity** | **P21** kernel + **P26** packs console; mid-chat pack prefs residual named |
 | `files.mutate` | `files.mutate` | **parity** (kernel) | **P22 done**; concurrent lease residual |
 | Project isolation enforce | `projects.scope` | **partial** (honesty fields) | concurrent multi-project lease residual **S2.14** |
 | Browser / search | `browser.*`, `web.search` | **parity** | **P23 done** (ADR-0040 coordinated dual-domain; not shared CDP) |
@@ -182,7 +182,7 @@ After **program P21** green:
 - Artifacts: `optimus-artifacts`, `ArtifactsSurface.tsx`, ADR-0025
 - Cron: `optimus-ops` `cron.rs`, desktop `ipc/scheduling.rs`
 - Gateway: `optimus-ops` `gateway.rs`, CLI `gateway_http.rs`, UI `MailPage.tsx` shell
-- Skills/memory crates exist; React consoles do not yet
+- Skills/memory: crates + React consoles (`ConsolesPage`, `ipc/consoles.rs`, program P26)
 
 ---
 

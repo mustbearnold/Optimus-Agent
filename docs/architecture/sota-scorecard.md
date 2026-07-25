@@ -73,7 +73,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 3. Interactive multi-tab ConPTY terminal
 4. General durable child-agent DAG execution with leases/handoff artifacts
 5. Comparative Hermes-vs-Optimus trajectory runner
-6. Memory UI, Skills/Packs console, Messaging UI, Logs backend
+6. Messaging UI (gateway/Telegram receipts path — program P28)
 7. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, updater, and ecosystem breadth
 
 ## Current architecture truth
@@ -85,7 +85,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns today: durable sequential `WriteFile`/`RunCommand`; not general subagent parity
 - Gateway today: durable local inbox/outbox + loopback webhook; no Telegram adapter or delivery receipts
-- Capabilities today: packs/skills/eval backends exist; desktop console remains incomplete
+- Capabilities today: skills/memory/packs consoles + command palette landed (program P26); messaging/MCP/provider catalog remain incomplete
 - Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 
 ## Baseline commands of record
