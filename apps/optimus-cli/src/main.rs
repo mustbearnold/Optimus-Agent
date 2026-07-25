@@ -13,8 +13,9 @@ use optimus_eval::{
 };
 use optimus_graph::PolicyMode;
 use optimus_kernel::{
-    device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_recent_causal_turns,
-    list_sessions, load_causal_turn, open_cron, open_seeded_agent_registry,
+    acknowledge_delivery, device_code_login, drain_one, enqueue, gateway_status,
+    list_ambiguous_sends, list_inbox, list_outbox, list_outbox_receipts, list_recent_causal_turns,
+    list_sessions, load_causal_turn, load_telegram_config, open_cron, open_seeded_agent_registry,
     open_seeded_workflow_registry, parse_causal_query, resolve_route, run_read_file_handoff,
     write_causal_export,
     run_write_file_handoff, run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron,
@@ -331,6 +332,20 @@ enum GatewayCmd {
         #[arg(long, default_value_t = 0)]
         max_requests: u64,
     },
+    /// List succeeded outbox rows missing a local delivery receipt
+    Ambiguous {
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
+    },
+    /// Record a local delivery receipt after operator confirms external handoff
+    Ack {
+        message_id: String,
+        outbound_id: String,
+    },
+    /// Show gateway inbox/outbox/ambiguous counts (doctor-friendly)
+    Status,
+    /// Telegram adapter status (config-gated; no secrets printed)
+    Telegram,
 }
 
 #[derive(Subcommand, Debug)]
@@ -1186,6 +1201,99 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 let token = std::env::var("OPTIMUS_GATEWAY_TOKEN").unwrap_or_default();
                 let security = gateway_http::GatewaySecurity::new(port, token)?;
                 gateway_http::run_gateway_http(cli.home.clone(), port, max_requests, security)?;
+                Ok(())
+            }
+            GatewayCmd::Ambiguous { limit } => {
+                let rows = list_ambiguous_sends(&cli.home, limit)?;
+                if rows.is_empty() {
+                    println!("no ambiguous sends");
+                }
+                for row in rows {
+                    println!(
+                        "{}  outbound={}  channel={}  {}",
+                        row.message_id,
+                        row.outbound.id,
+                        row.outbound.channel,
+                        row.outbound.text.chars().take(80).collect::<String>()
+                    );
+                    println!(
+                        "  recover: optimus gateway ack {} {}",
+                        row.message_id, row.outbound.id
+                    );
+                }
+                println!(
+                    "note: local receipt only — external exactly-once is not claimed"
+                );
+                Ok(())
+            }
+            GatewayCmd::Ack {
+                message_id,
+                outbound_id,
+            } => {
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_secs())
+                    .unwrap_or(0);
+                let ok = acknowledge_delivery(&cli.home, &message_id, &outbound_id, now)?;
+                if ok {
+                    println!("acked message_id={message_id} outbound_id={outbound_id} at {now}");
+                } else {
+                    println!("ack refused (id mismatch or message not terminal)");
+                    return Ok(());
+                }
+                Ok(())
+            }
+            GatewayCmd::Status => {
+                let status = gateway_status(&cli.home)?;
+                println!(
+                    "inbox_pending={} inbox_claimed={} outbox_total={} ambiguous_sends={}",
+                    status.inbox_pending,
+                    status.inbox_claimed,
+                    status.outbox_total,
+                    status.ambiguous_sends
+                );
+                println!("{}", status.note);
+                // Also show recent outbox receipt flags for operator visibility.
+                for row in list_outbox_receipts(&cli.home, 5)? {
+                    let receipt = row
+                        .delivered_unix
+                        .map(|t| format!("delivered={t}"))
+                        .unwrap_or_else(|| {
+                            if row.ambiguous_send {
+                                "AMBIGUOUS".into()
+                            } else {
+                                "no-receipt".into()
+                            }
+                        });
+                    println!(
+                        "  {}  {}  {}",
+                        row.message_id,
+                        row.outbound.status,
+                        receipt
+                    );
+                }
+                Ok(())
+            }
+            GatewayCmd::Telegram => {
+                let cfg = load_telegram_config(&cli.home)?;
+                let token_present = std::env::var(&cfg.bot_token_env)
+                    .map(|v| !v.trim().is_empty())
+                    .unwrap_or(false);
+                println!(
+                    "telegram enabled={} token_env={} token_present={} mode={}",
+                    cfg.enabled,
+                    cfg.bot_token_env,
+                    token_present,
+                    if cfg.enabled {
+                        "config-gated-live"
+                    } else {
+                        "mock-or-disabled"
+                    }
+                );
+                println!(
+                    "allowed_chats={} note=no public listen port; local gateway is authority",
+                    cfg.allowed_chat_ids.len()
+                );
                 Ok(())
             }
         },

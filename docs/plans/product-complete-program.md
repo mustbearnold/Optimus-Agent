@@ -166,7 +166,7 @@ After **program P21** green:
 | Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | **parity** | **P26 done** |
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
 | MCP + signed packs | `mcp.client`, `plugins.signed` | Missing | **P27** |
-| Gateway / Telegram / messaging UI | `gateway.queue`, `telegram`, `ui` | Partial / Missing | **P28** |
+| Gateway / Telegram / messaging UI | `gateway.queue`, `gateway.telegram`, `gateway.ui` | **parity** | **P28 done** (external EO residual) |
 | Install + updater | `release.updater` | Missing / Partial packaging | **P29** |
 | Already parity/win product rows | streaming, durable session, shell, files.read, terminal.job, … | **HOLD** | re-evidence only if install claim changes |
 | S7 / Track Z | profiles, open subagents, PTY, CUA, Hermes gate, … | Deferred | **After P29** |
@@ -538,19 +538,18 @@ Transport + security:
 
 ### Must-move ledger set (product-critical)
 
-**Partial → parity:** `provider.catalog`,
-`chat.thinking-tools`, `session.search-hygiene`, `web.search`, `browser.http`,
-`browser.cdp`, `browser.annotations`, `cron.lifecycle`, `gateway.queue`,
-`artifacts.store-ui`, `surface.commands`.
+**Partial → parity:** `provider.catalog`, `projects.scope` honesty residual only.
 
-**HOLD (already parity from program P21–P22):** `core.tool-loop`, `core.pack-budget`,
-`files.mutate`.
+**HOLD (already parity from program P21–P28):** `core.tool-loop`, `core.pack-budget`,
+`files.mutate`, `chat.thinking-tools`, `session.search-hygiene`, `web.search`,
+`browser.http`, `browser.cdp`, `browser.annotations`, `cron.lifecycle`,
+`gateway.queue`, `gateway.telegram`, `gateway.ui`, `artifacts.store-ui`,
+`surface.commands`, `desktop.logs`, `skills.ui`, `memory.ui`.
 
 **Still partial:** `projects.scope` (honesty only; concurrent lease residual).
 
-**Missing → parity:** `provider.failover`, `desktop.logs`,
-`gateway.telegram`, `gateway.ui`, `mcp.client`, `plugins.signed`, `skills.ui`,
-`memory.ui`, `release.updater` (**or** explicit no-updater ADR + honest residual —
+**Missing → parity:** `provider.failover`, `mcp.client`, `plugins.signed`,
+`release.updater` (**or** explicit no-updater ADR + honest residual —
 prefer honest ADR unless signing chain is real).
 
 **HOLD (already parity/win):** `core.work-durability`, `core.memory-integrity`,
@@ -654,8 +653,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P26 done** (through consoles).
-2. Open **program P27** (extensibility) or **P28** (messaging); residual S2.14 concurrent mutate lease remains optional.
+1. **program P20–P26 + P28 done** (P27 extensibility still open if needed before P29).
+2. Open **program P27** (provider/MCP/signed packs) then **P29** ship, or P29 only if P27 residuals accepted as honest missing until later.
 
 ## Success definition
 

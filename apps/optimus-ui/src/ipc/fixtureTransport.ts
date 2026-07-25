@@ -510,6 +510,97 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       return { lines: ['doctor home=~'], count: 1, redacted: true };
     case 'commands_list':
       return { commands: [{ id: 'help', name: 'help', description: 'Show commands' }], surface: 'desktop' };
+    case 'gateway_status':
+      return {
+        status: {
+          inbox_pending: 1,
+          inbox_claimed: 0,
+          outbox_total: 1,
+          ambiguous_sends: 1,
+          note: 'Local SQLite is delivery authority. External exactly-once is not claimed.',
+        },
+      };
+    case 'gateway_inbox':
+      return {
+        messages: [
+          {
+            id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+            channel: 'local',
+            text: 'Fixture inbound for messaging UI',
+            provider: 'offline',
+            session_id: null,
+            received_unix: 1,
+          },
+        ],
+        count: 1,
+      };
+    case 'gateway_outbox':
+      return {
+        messages: [
+          {
+            message_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            outbound: {
+              id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+              in_reply_to: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+              channel: 'local',
+              text: 'Fixture outbound reply',
+              status: 'ok',
+              sent_unix: 2,
+            },
+            terminal_status: 'succeeded',
+            delivered_unix: null,
+            ambiguous_send: true,
+          },
+        ],
+        count: 1,
+        note: 'delivered_unix is a local adapter receipt, not external EO.',
+      };
+    case 'gateway_ambiguous':
+      return {
+        messages: [
+          {
+            message_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            outbound: {
+              id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+              in_reply_to: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+              channel: 'local',
+              text: 'Fixture outbound reply',
+              status: 'ok',
+              sent_unix: 2,
+            },
+            terminal_status: 'succeeded',
+            delivered_unix: null,
+            ambiguous_send: true,
+          },
+        ],
+        count: 1,
+      };
+    case 'gateway_enqueue':
+      return {
+        message: {
+          id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          channel: params.channel || 'local',
+          text: params.text || '',
+          provider: 'offline',
+          received_unix: 3,
+        },
+      };
+    case 'gateway_ack_delivery':
+      return {
+        acked: true,
+        message_id: params.message_id,
+        outbound_id: params.outbound_id,
+        delivered_unix: 4,
+      };
+    case 'gateway_telegram_status':
+      return {
+        enabled: false,
+        bot_token_env: 'OPTIMUS_TELEGRAM_BOT_TOKEN',
+        token_present: false,
+        allowed_chat_ids: [],
+        mode: 'mock-or-disabled',
+        note: 'Default path is mock/long-poll client. No public listen port. External EO not claimed.',
+      };
     case 'cron_list':
       return { jobs: cronJobs };
     case 'cron_add': {

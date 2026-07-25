@@ -12,6 +12,7 @@ enum Domain {
     Chat,
     Os,
     Consoles,
+    Messaging,
 }
 
 const METHOD_DOMAINS: &[(&str, Domain)] = &[
@@ -84,6 +85,13 @@ const METHOD_DOMAINS: &[(&str, Domain)] = &[
     ("packs_deactivate", Domain::Consoles),
     ("logs_tail", Domain::Consoles),
     ("commands_list", Domain::Consoles),
+    ("gateway_status", Domain::Messaging),
+    ("gateway_inbox", Domain::Messaging),
+    ("gateway_outbox", Domain::Messaging),
+    ("gateway_enqueue", Domain::Messaging),
+    ("gateway_ambiguous", Domain::Messaging),
+    ("gateway_ack_delivery", Domain::Messaging),
+    ("gateway_telegram_status", Domain::Messaging),
 ];
 
 fn classify(method: &str) -> Option<Domain> {
@@ -103,6 +111,7 @@ fn domain_recognizes(domain: Domain, method: &str) -> bool {
         Domain::Chat => super::chat::owns(method),
         Domain::Os => super::os::owns(method),
         Domain::Consoles => super::consoles::owns(method),
+        Domain::Messaging => super::messaging::owns(method),
     }
 }
 
@@ -120,6 +129,7 @@ pub(crate) fn handle_ipc(
         Some(Domain::Chat) => super::chat::handle(home, method, params),
         Some(Domain::Os) => super::os::handle(home, method, params),
         Some(Domain::Consoles) => super::consoles::handle(home, method, params),
+        Some(Domain::Messaging) => super::messaging::handle(home, method, params),
         None => Err(format!("unknown method: {method}")),
     }
 }
@@ -200,6 +210,13 @@ mod tests {
         ("packs_deactivate", Domain::Consoles),
         ("logs_tail", Domain::Consoles),
         ("commands_list", Domain::Consoles),
+        ("gateway_status", Domain::Messaging),
+        ("gateway_inbox", Domain::Messaging),
+        ("gateway_outbox", Domain::Messaging),
+        ("gateway_enqueue", Domain::Messaging),
+        ("gateway_ambiguous", Domain::Messaging),
+        ("gateway_ack_delivery", Domain::Messaging),
+        ("gateway_telegram_status", Domain::Messaging),
     ];
 
     #[test]

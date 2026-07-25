@@ -106,6 +106,13 @@ const DESKTOP_METHODS = new Set([
   'packs_deactivate',
   'logs_tail',
   'commands_list',
+  'gateway_status',
+  'gateway_inbox',
+  'gateway_outbox',
+  'gateway_enqueue',
+  'gateway_ambiguous',
+  'gateway_ack_delivery',
+  'gateway_telegram_status',
 ]);
 
 let hostProc = null;

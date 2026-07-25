@@ -45,6 +45,10 @@ Consoles (program P26): `skills_list`, `skills_pin`, `skills_deprecate`,
 `packs_state`, `packs_activate`, `packs_deactivate`, `logs_tail`,
 `commands_list`
 
+Messaging (program P28): `gateway_status`, `gateway_inbox`, `gateway_outbox`,
+`gateway_enqueue`, `gateway_ambiguous`, `gateway_ack_delivery`,
+`gateway_telegram_status`
+
 `get_session` returns presentation-safe user/assistant messages. Provider
 tool-call arrays and tool-result protocol messages are omitted; ordered durable
 `tool_events` are attached to their owning assistant turn. `run_status` reports

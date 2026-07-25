@@ -99,10 +99,13 @@ pub use optimus_graph::PolicyMode;
 /// Operator gateway + cron store (owned by `optimus-ops`).
 pub use optimus_ops::{
     acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
-    enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim, CronClaim,
-    builtin_surface_commands, commands_for_surface, CommandSurface, CronAttemptView, CronError,
-    CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, SurfaceCommand,
-    InboundMessage, OutboundMessage,
+    enqueue, fail_claim, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
+    list_outbox_receipts, load_telegram_config, mark_external_send_failed, reconcile, release_claim,
+    renew_claim, save_telegram_config, telegram_poll_once, builtin_surface_commands,
+    commands_for_surface, CommandSurface, CronAttemptView, CronClaim, CronError, CronJob,
+    CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus, InboundMessage,
+    MockTelegramTransport, OutboundMessage, OutboxReceipt, SurfaceCommand, TelegramConfig,
+    TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;
 pub use network_policy::{

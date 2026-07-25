@@ -2754,6 +2754,39 @@ code {
   flex: 0 0 auto;
 }
 
+.mail-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mail-honesty {
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mail-enqueue {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mail-enqueue input {
+  flex: 1;
+  min-width: 0;
+}
+
+.mail-telegram-status {
+  display: grid;
+  gap: 2px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .mail-layout {
   min-width: 0;
   min-height: 0;

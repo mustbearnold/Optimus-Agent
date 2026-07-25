@@ -35,6 +35,7 @@ pub fn builtin_surface_commands() -> Vec<SurfaceCommand> {
         cmd("memory", "memory", "Open memory explorer", CommandSurface::Desktop, None),
         cmd("packs", "packs", "Open packs console", CommandSurface::Desktop, None),
         cmd("logs", "logs", "Open redacted logs drawer", CommandSurface::Desktop, None),
+        cmd("mail", "mail", "Open messaging inbox/outbox", CommandSurface::Desktop, None),
         cmd("cron", "cron", "Open schedules workbench", CommandSurface::Desktop, None),
         cmd("artifacts", "artifacts", "Open artifacts gallery", CommandSurface::Desktop, None),
         cmd(

@@ -90,6 +90,19 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         .and_then(|rt| rt.list_pending_approvals().ok())
         .map(|rows| rows.len())
         .unwrap_or(0);
+    let gateway_status = optimus_kernel::gateway_status(home).ok();
+    let gateway_ambiguous = gateway_status
+        .as_ref()
+        .map(|s| s.ambiguous_sends)
+        .unwrap_or(0);
+    let gateway_inbox_pending = gateway_status
+        .as_ref()
+        .map(|s| s.inbox_pending)
+        .unwrap_or(0);
+    let gateway_outbox_total = gateway_status
+        .as_ref()
+        .map(|s| s.outbox_total)
+        .unwrap_or(0);
     let browser_kind = if optimus_kernel::chrome_binary_path().is_some() {
         "cdp"
     } else {
@@ -133,6 +146,10 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         "cron_jobs": cron_jobs,
         "campaigns_active": campaigns_active,
         "approvals_pending": approvals_pending,
+        "gateway_inbox_pending": gateway_inbox_pending,
+        "gateway_outbox_total": gateway_outbox_total,
+        "gateway_ambiguous_sends": gateway_ambiguous,
+        "gateway_note": "Local SQLite is delivery authority. External exactly-once is not claimed.",
         "work_isolation": product_settings.get("work_isolation").cloned().unwrap_or(json!("shared")),
         "configured_mode": product_settings.get("configured_mode").cloned().unwrap_or(json!("shared")),
         "enforced_mode": product_settings.get("enforced_mode").cloned().unwrap_or(json!("shared")),

@@ -561,12 +561,7 @@ export function OptimusApp() {
                     initialTab={consoleTab}
                   />
                 ) : state.layout.route === 'mail' ? (
-                  <MailPage
-                    projects={projects}
-                    sessions={sessions}
-                    assignments={assignments}
-                    activeRunSessionId={state.activeRunSessionId}
-                  />
+                  <MailPage transport={transport} />
                 ) : state.layout.route === 'artifacts' ? (
                   <ArtifactsSurface transport={transport} active standalone />
                 ) : null}
@@ -656,6 +651,8 @@ export function OptimusApp() {
               setRoute('consoles');
             } else if (commandId === 'artifacts') {
               setRoute('artifacts');
+            } else if (commandId === 'mail') {
+              setRoute('mail');
             } else if (commandId === 'cron') {
               dispatch({ type: 'settings', open: true });
             } else if (commandId === 'new') {

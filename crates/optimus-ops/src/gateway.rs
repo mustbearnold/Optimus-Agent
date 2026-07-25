@@ -305,19 +305,209 @@ pub fn list_inbox(home: impl AsRef<Path>) -> Result<Vec<InboundMessage>> {
 }
 
 pub fn list_outbox(home: impl AsRef<Path>, limit: usize) -> Result<Vec<OutboundMessage>> {
+    Ok(list_outbox_receipts(home, limit)?
+        .into_iter()
+        .map(|row| row.outbound)
+        .collect())
+}
+
+/// Outbox row with local delivery receipt fields (program P28).
+///
+/// `delivered_unix` is a **local** receipt that an adapter acknowledged handoff.
+/// It is not an external exactly-once proof.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OutboxReceipt {
+    pub message_id: String,
+    pub outbound: OutboundMessage,
+    pub terminal_status: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub terminal_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delivered_unix: Option<u64>,
+    /// True when terminal succeeded but no local delivery receipt yet.
+    pub ambiguous_send: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub completed_unix: Option<u64>,
+}
+
+pub fn list_outbox_receipts(home: impl AsRef<Path>, limit: usize) -> Result<Vec<OutboxReceipt>> {
     let paths = GatewayPaths::open(home)?;
     let connection = open_database(&paths)?;
     let mut statement = connection.prepare(
-        "SELECT outbound_json FROM gateway_messages
+        "SELECT id,status,outbound_json,terminal_reason,delivered_unix,completed_unix
+         FROM gateway_messages
          WHERE status IN ('succeeded','failed') AND outbound_json IS NOT NULL
          ORDER BY completed_unix DESC,id DESC LIMIT ?1",
     )?;
-    let rows = statement.query_map(params![limit as i64], |row| row.get::<_, String>(0))?;
-    let mut messages = Vec::new();
+    let rows = statement.query_map(params![limit as i64], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, String>(2)?,
+            row.get::<_, Option<String>>(3)?,
+            row.get::<_, Option<i64>>(4)?,
+            row.get::<_, Option<i64>>(5)?,
+        ))
+    })?;
+    let mut out = Vec::new();
     for row in rows {
-        messages.push(serde_json::from_str(&row?)?);
+        let (message_id, terminal_status, outbound_json, terminal_reason, delivered, completed) =
+            row?;
+        let outbound: OutboundMessage = serde_json::from_str(&outbound_json)?;
+        let delivered_unix = delivered.and_then(|value| u64::try_from(value).ok());
+        let completed_unix = completed.and_then(|value| u64::try_from(value).ok());
+        let ambiguous_send = is_ambiguous_receipt(&terminal_status, delivered_unix, &terminal_reason);
+        out.push(OutboxReceipt {
+            message_id,
+            outbound,
+            terminal_status,
+            terminal_reason,
+            delivered_unix,
+            ambiguous_send,
+            completed_unix,
+        });
     }
-    Ok(messages)
+    Ok(out)
+}
+
+fn is_ambiguous_receipt(
+    terminal_status: &str,
+    delivered_unix: Option<u64>,
+    terminal_reason: &Option<String>,
+) -> bool {
+    if terminal_status != "succeeded" || delivered_unix.is_some() {
+        return false;
+    }
+    match terminal_reason.as_deref() {
+        Some(reason)
+            if reason == "external_send_failed"
+                || reason.starts_with("external_send_failed:")
+                || reason == "cancelled"
+                || reason == "dead_lettered" =>
+        {
+            false
+        }
+        _ => true,
+    }
+}
+
+/// Succeeded terminal turns without a local delivery receipt (operator recovery).
+///
+/// SQL-filters first so a flood of receipted rows cannot hide older ambiguous ones.
+pub fn list_ambiguous_sends(home: impl AsRef<Path>, limit: usize) -> Result<Vec<OutboxReceipt>> {
+    let limit = limit.clamp(1, 500);
+    let paths = GatewayPaths::open(home)?;
+    let connection = open_database(&paths)?;
+    let mut statement = connection.prepare(
+        "SELECT id,status,outbound_json,terminal_reason,delivered_unix,completed_unix
+         FROM gateway_messages
+         WHERE status='succeeded'
+           AND outbound_json IS NOT NULL
+           AND delivered_unix IS NULL
+           AND (terminal_reason IS NULL
+                OR (terminal_reason NOT IN ('external_send_failed','cancelled','dead_lettered')
+                    AND terminal_reason NOT LIKE 'external_send_failed:%'))
+         ORDER BY completed_unix DESC,id DESC LIMIT ?1",
+    )?;
+    let rows = statement.query_map(params![limit as i64], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, String>(2)?,
+            row.get::<_, Option<String>>(3)?,
+            row.get::<_, Option<i64>>(4)?,
+            row.get::<_, Option<i64>>(5)?,
+        ))
+    })?;
+    let mut out = Vec::new();
+    for row in rows {
+        let (message_id, terminal_status, outbound_json, terminal_reason, delivered, completed) =
+            row?;
+        let outbound: OutboundMessage = serde_json::from_str(&outbound_json)?;
+        let delivered_unix = delivered.and_then(|value| u64::try_from(value).ok());
+        let completed_unix = completed.and_then(|value| u64::try_from(value).ok());
+        out.push(OutboxReceipt {
+            message_id,
+            outbound,
+            terminal_status,
+            terminal_reason,
+            delivered_unix,
+            ambiguous_send: true,
+            completed_unix,
+        });
+    }
+    Ok(out)
+}
+
+/// Mark a succeeded terminal as a definite external send failure (not ambiguous).
+pub fn mark_external_send_failed(
+    home: impl AsRef<Path>,
+    message_id: &str,
+    detail: &str,
+) -> Result<bool> {
+    let paths = GatewayPaths::open(home)?;
+    let connection = open_database(&paths)?;
+    let detail = if detail.is_empty() {
+        "external_send_failed".to_string()
+    } else {
+        format!("external_send_failed:{detail}")
+    };
+    let changed = connection.execute(
+        "UPDATE gateway_messages
+         SET terminal_reason=?1
+         WHERE id=?2 AND status='succeeded' AND delivered_unix IS NULL",
+        params![detail, message_id],
+    )?;
+    Ok(changed == 1)
+}
+
+/// Gateway summary for doctor / messaging UI.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct GatewayStatus {
+    pub inbox_pending: usize,
+    pub inbox_claimed: usize,
+    pub outbox_total: usize,
+    pub ambiguous_sends: usize,
+    pub note: String,
+}
+
+pub fn gateway_status(home: impl AsRef<Path>) -> Result<GatewayStatus> {
+    let paths = GatewayPaths::open(home)?;
+    let mut connection = open_database(&paths)?;
+    ingest_inbox(&paths, &mut connection)?;
+    let inbox_pending: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM gateway_messages WHERE status='pending'",
+        [],
+        |row| row.get(0),
+    )?;
+    let inbox_claimed: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM gateway_messages WHERE status='claimed'",
+        [],
+        |row| row.get(0),
+    )?;
+    let outbox_total: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM gateway_messages
+         WHERE status IN ('succeeded','failed') AND outbound_json IS NOT NULL",
+        [],
+        |row| row.get(0),
+    )?;
+    let ambiguous_sends: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM gateway_messages
+         WHERE status='succeeded' AND outbound_json IS NOT NULL AND delivered_unix IS NULL
+           AND (terminal_reason IS NULL OR terminal_reason NOT IN (
+                'external_send_failed','cancelled','dead_lettered'
+           ))
+           AND (terminal_reason IS NULL OR terminal_reason NOT LIKE 'external_send_failed:%')",
+        [],
+        |row| row.get(0),
+    )?;
+    Ok(GatewayStatus {
+        inbox_pending: inbox_pending.max(0) as usize,
+        inbox_claimed: inbox_claimed.max(0) as usize,
+        outbox_total: outbox_total.max(0) as usize,
+        ambiguous_sends: ambiguous_sends.max(0) as usize,
+        note: "Local SQLite is delivery authority. External exactly-once is not claimed.".into(),
+    })
 }
 
 pub fn claim_one(
@@ -998,5 +1188,83 @@ mod tests {
             reconcile(directory.path()),
             Err(GatewayError::Msg(message)) if message.contains("conflicting gateway materialization")
         ));
+    }
+
+    #[test]
+    fn ambiguous_sends_list_until_delivery_receipt() {
+        let directory = tempdir().unwrap();
+        let message = enqueue(directory.path(), "local", "hello", "offline", None).unwrap();
+        drain_one(directory.path(), |inbound| {
+            Ok((format!("echo: {}", inbound.text), None))
+        })
+        .unwrap()
+        .unwrap();
+
+        let status = gateway_status(directory.path()).unwrap();
+        assert_eq!(status.ambiguous_sends, 1);
+        assert_eq!(status.outbox_total, 1);
+        let ambiguous = list_ambiguous_sends(directory.path(), 10).unwrap();
+        assert_eq!(ambiguous.len(), 1);
+        assert!(ambiguous[0].ambiguous_send);
+        assert_eq!(ambiguous[0].message_id, message.id);
+        assert!(ambiguous[0].delivered_unix.is_none());
+
+        let outbound_id = ambiguous[0].outbound.id.clone();
+        assert!(acknowledge_delivery(directory.path(), &message.id, &outbound_id, 99).unwrap());
+        assert!(list_ambiguous_sends(directory.path(), 10).unwrap().is_empty());
+        assert_eq!(gateway_status(directory.path()).unwrap().ambiguous_sends, 0);
+        let receipts = list_outbox_receipts(directory.path(), 10).unwrap();
+        assert_eq!(receipts[0].delivered_unix, Some(99));
+        assert!(!receipts[0].ambiguous_send);
+    }
+
+    #[test]
+    fn ambiguous_list_is_not_blinded_by_newer_receipted_rows() {
+        let directory = tempdir().unwrap();
+        // Older message stays ambiguous.
+        let old = enqueue(directory.path(), "local", "old", "offline", None).unwrap();
+        drain_one(directory.path(), |inbound| Ok((format!("echo:{}", inbound.text), None)))
+            .unwrap()
+            .unwrap();
+        // Newer messages get receipts so they would occupy a naive "limit then filter" window.
+        for i in 0..5 {
+            let m = enqueue(
+                directory.path(),
+                "local",
+                &format!("new-{i}"),
+                "offline",
+                None,
+            )
+            .unwrap();
+            drain_one(directory.path(), |inbound| {
+                Ok((format!("echo:{}", inbound.text), None))
+            })
+            .unwrap()
+            .unwrap();
+            let receipts = list_outbox_receipts(directory.path(), 20).unwrap();
+            let row = receipts
+                .iter()
+                .find(|r| r.message_id == m.id)
+                .expect("receipt row");
+            acknowledge_delivery(directory.path(), &m.id, &row.outbound.id, 100 + i as u64)
+                .unwrap();
+        }
+        // limit=3 would hide `old` if we filtered after LIMIT on all terminals.
+        let ambiguous = list_ambiguous_sends(directory.path(), 3).unwrap();
+        assert_eq!(ambiguous.len(), 1);
+        assert_eq!(ambiguous[0].message_id, old.id);
+        assert_eq!(gateway_status(directory.path()).unwrap().ambiguous_sends, 1);
+    }
+
+    #[test]
+    fn external_send_failed_is_not_ambiguous() {
+        let directory = tempdir().unwrap();
+        let message = enqueue(directory.path(), "local", "x", "offline", None).unwrap();
+        drain_one(directory.path(), |_| Ok(("reply".into(), None)))
+            .unwrap()
+            .unwrap();
+        assert!(mark_external_send_failed(directory.path(), &message.id, "mock_failed").unwrap());
+        assert!(list_ambiguous_sends(directory.path(), 10).unwrap().is_empty());
+        assert_eq!(gateway_status(directory.path()).unwrap().ambiguous_sends, 0);
     }
 }
