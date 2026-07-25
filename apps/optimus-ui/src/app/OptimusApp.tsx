@@ -84,12 +84,6 @@ const initialComposer: ComposerSettings = {
   fast: false,
 };
 
-function projectMentionedInSessionTitle(session: SessionMeta, projects: Project[]) {
-  const title = session.title?.trim().toLocaleLowerCase();
-  if (!title) return null;
-  return projects.find((project) => title.includes(project.name.trim().toLocaleLowerCase())) || null;
-}
-
 function projectFromRuntimeScope(scope: ProjectRuntimeScope): Project {
   const normalizedRoot = scope.primary_root.replace(/[\\/]+$/, '');
   const name = normalizedRoot.split(/[\\/]/).pop() || scope.project_id;
@@ -118,7 +112,6 @@ export function OptimusApp() {
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
   const [projectScopes, setProjectScopes] = useState<ProjectRuntimeScope[]>([]);
-  const showArchived = false;
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState<ConsoleTab>('skills');
   const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
@@ -213,23 +206,6 @@ export function OptimusApp() {
   useEffect(() => {
     if (!draggingLayout.current) saveLayout(state.layout);
   }, [state.layout]);
-  useEffect(() => {
-    // Only bind sessions that already mention a project by name. Never default
-    // to projects[0] — that silently traps Send behind native folder auth (#44).
-    if (!sessions.length || !projects.length) return;
-    setAssignments((current) => {
-      let changed = false;
-      const next = { ...current };
-      for (const session of sessions) {
-        if (next[session.id]) continue;
-        const project = projectMentionedInSessionTitle(session, projects);
-        if (!project) continue;
-        next[session.id] = project.id;
-        changed = true;
-      }
-      return changed ? next : current;
-    });
-  }, [projects, sessions]);
   useEffect(() => saveProjects(projects), [projects]);
 
   useEffect(() => saveAssignments(assignments), [assignments]);
@@ -504,7 +480,6 @@ export function OptimusApp() {
             expanded={expanded}
             selectedSessionId={state.selectedSessionId}
             sessionIndicators={sessionIndicators}
-            showArchived={showArchived}
             onSearch={(q) => {
               void (async () => {
                 if (!q.trim()) {
@@ -514,7 +489,7 @@ export function OptimusApp() {
                 try {
                   const result = await transport.invoke<{ sessions?: SessionMeta[] }>(
                     'session_search',
-                    { q, include_archived: showArchived }
+                    { q, include_archived: true }
                   );
                   const list = Array.isArray(result.sessions) ? result.sessions : [];
                   setSessions(list);
@@ -732,6 +707,8 @@ export function OptimusApp() {
               setRoute('consoles');
             } else if (commandId === 'artifacts') {
               setRoute('artifacts');
+            } else if (commandId === 'capabilities') {
+              setRoute('capabilities');
             } else if (commandId === 'mail') {
               setRoute('mail');
             } else if (commandId === 'cron') {

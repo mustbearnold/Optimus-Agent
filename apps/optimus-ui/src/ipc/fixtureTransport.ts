@@ -22,7 +22,6 @@ const sessions: SessionMeta[] = [
   {
     id: 'fixture-assess',
     title: 'Assess Optimus Agent Project State',
-    worktree: 'workspace-redesign',
     message_count: 8,
     updated_at: new Date().toISOString(),
   },
@@ -510,7 +509,13 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
     case 'logs_tail':
       return { lines: ['doctor home=~'], count: 1, redacted: true };
     case 'commands_list':
-      return { commands: [{ id: 'help', name: 'help', description: 'Show commands' }], surface: 'desktop' };
+      return {
+        commands: [
+          { id: 'help', name: 'help', description: 'Show commands' },
+          { id: 'capabilities', name: 'capabilities', description: 'Open runtime capabilities' },
+        ],
+        surface: 'desktop',
+      };
     case 'gateway_status':
       return {
         status: {

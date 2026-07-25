@@ -16,6 +16,7 @@ describe('OptimusApp fixture contract', () => {
     expect(screen.queryByRole('button', { name: 'Capabilities' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resources' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Show archived' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All projects' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Inbox' })).not.toBeInTheDocument();
     expect(screen.getByRole('log', { name: 'Conversation' })).toBeInTheDocument();
     // Chat-first: evidence workspace starts closed until Browser/Files/Artifacts is opened.
@@ -75,6 +76,17 @@ describe('OptimusApp fixture contract', () => {
     expect(await within(topbar as HTMLElement).findByRole('button', { name: 'Restore workspace' })).toBeInTheDocument();
     await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Restore workspace' }));
     expect(container.querySelector('.surface-row')).not.toHaveClass('is-workspace-maximized');
+  });
+
+  it('keeps runtime capabilities reachable from the command palette', async () => {
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+    await screen.findByRole('complementary', { name: 'Projects and sessions' });
+
+    await user.keyboard('{Control>}k{/Control}');
+    await screen.findByRole('dialog', { name: 'Command palette' });
+    await user.click(await screen.findByRole('button', { name: /capabilities/i }));
+    expect(await screen.findByRole('main', { name: 'Capabilities' })).toBeInTheDocument();
   });
 
   it('blocks an assigned session instead of falling back to an unauthorized workspace', async () => {

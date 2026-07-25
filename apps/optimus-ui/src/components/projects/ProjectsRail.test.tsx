@@ -24,7 +24,6 @@ describe('ProjectsRail session actions', () => {
         expanded={{}}
         selectedSessionId={null}
         sessionIndicators={{}}
-        showArchived={false}
         onSearch={onSearch}
         onSelectSession={vi.fn()}
         onNewSession={onNewSession}
@@ -58,7 +57,6 @@ describe('ProjectsRail session actions', () => {
         expanded={{ 'project-1': true }}
         selectedSessionId="session-1"
         sessionIndicators={{}}
-        showArchived={false}
         onSearch={vi.fn()}
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
@@ -98,7 +96,6 @@ describe('ProjectsRail session actions', () => {
         expanded={{ 'project-1': true }}
         selectedSessionId="session-1"
         sessionIndicators={{}}
-        showArchived={false}
         onSearch={vi.fn()}
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
@@ -134,7 +131,6 @@ describe('ProjectsRail session actions', () => {
         expanded={{}}
         selectedSessionId="session-1"
         sessionIndicators={{}}
-        showArchived={false}
         onSearch={vi.fn()}
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
@@ -172,7 +168,6 @@ describe('ProjectsRail session actions', () => {
         expanded={{}}
         selectedSessionId="session-1"
         sessionIndicators={{ 'session-1': 'working' }}
-        showArchived={false}
         onSearch={vi.fn()}
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
@@ -203,17 +198,57 @@ describe('ProjectsRail session actions', () => {
     expect(screen.getByRole('button', { name: 'Optimus Agent' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('shows the owning project when the thread title identifies a known runtime project', () => {
+  it('dismisses the project scope menu and restores trigger focus', async () => {
+    const user = userEvent.setup();
     render(
       <ProjectsRail
         collapsed={false}
-        sessions={[{ id: 'session-1', title: 'Assess Optimus Agent Project State', worktree: 'workspace-redesign', message_count: 2 }]}
-        projects={[{ id: 'optimus-agent', name: 'Optimus Agent', rootPaths: ['/workspace'] }]}
+        sessions={[]}
+        projects={[{ id: 'project-1', name: 'Optimus Agent', rootPaths: ['/workspace'] }]}
         assignments={{}}
+        expanded={{}}
+        selectedSessionId={null}
+        sessionIndicators={{}}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={vi.fn()}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+
+    const trigger = screen.getByRole('button', { name: 'All projects' });
+    await user.click(trigger);
+    const firstItem = screen.getByRole('menuitemradio', { name: 'All projects' });
+    expect(firstItem).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitemradio', { name: 'Optimus Agent' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
+    await waitForFocus(trigger);
+
+    await user.click(trigger);
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
+  });
+
+  it('shows project and worktree metadata only for an explicit assignment', () => {
+    render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[{ id: 'session-1', title: 'Assess Optimus Agent Project State', message_count: 2 }]}
+        projects={[{ id: 'optimus-agent', name: 'Optimus Agent', rootPaths: ['/workspace-redesign'], primaryRoot: '/workspace-redesign' }]}
+        assignments={{ 'session-1': 'optimus-agent' }}
         expanded={{}}
         selectedSessionId="session-1"
         sessionIndicators={{ 'session-1': 'attention' }}
-        showArchived={false}
         onSearch={vi.fn()}
         onSelectSession={vi.fn()}
         onNewSession={vi.fn()}
@@ -234,6 +269,45 @@ describe('ProjectsRail session actions', () => {
     expect(card).toHaveTextContent('Attention');
     expect(card).toHaveTextContent('workspace-redesign');
     expect(card).not.toHaveTextContent('messages');
+  });
+
+  it('keeps archived threads reachable for recovery outside the footer', async () => {
+    const user = userEvent.setup();
+    render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[
+          { id: 'active', title: 'Active thread' },
+          { id: 'archived', title: 'Archived thread', archived: true },
+        ]}
+        projects={[]}
+        assignments={{}}
+        expanded={{}}
+        selectedSessionId="active"
+        sessionIndicators={{}}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={vi.fn()}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTitle('Active thread')).toBeInTheDocument();
+    expect(screen.queryByTitle('Archived thread')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Archived' }));
+    const archivedThread = screen.getByTitle('Archived thread');
+    expect(archivedThread).toBeInTheDocument();
+    fireEvent.contextMenu(archivedThread.closest('.session-row')!);
+    expect(screen.getByRole('menuitem', { name: 'Unarchive session' })).toBeInTheDocument();
   });
 });
 

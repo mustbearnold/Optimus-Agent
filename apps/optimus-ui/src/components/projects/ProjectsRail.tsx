@@ -11,7 +11,6 @@ type Props = {
   expanded: Record<string, boolean>;
   selectedSessionId: string | null;
   sessionIndicators: Record<string, SessionIndicatorState>;
-  showArchived: boolean;
   onSearch: (query: string) => void;
   onSelectSession: (id: string) => void;
   onNewSession: (projectId?: string) => void;
@@ -35,26 +34,19 @@ export function ProjectsRail(props: Props) {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const menuTriggers = useRef<Record<string, HTMLButtonElement | null>>({});
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const visibleSessions = useMemo(() => {
-    return props.sessions.filter((session) => {
-      if (!props.showArchived && session.archived) return false;
-      return true;
-    });
-  }, [props.sessions, props.showArchived]);
+  const projectMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const projectMenuRef = useRef<HTMLDivElement | null>(null);
+  const visibleSessions = useMemo(() => props.sessions, [props.sessions]);
   const pinnedSessions = visibleSessions.filter((session) => Boolean(session.pinned));
   const projectForSession = (session: SessionMeta, projectId?: string) => {
-    const assignedProject = props.projects.find(
-      (candidate) => candidate.id === (projectId || props.assignments[session.id])
-    );
-    if (assignedProject) return assignedProject;
-    const title = session.title?.trim().toLocaleLowerCase();
-    if (!title) return null;
     return props.projects.find(
-      (candidate) => title.includes(candidate.name.trim().toLocaleLowerCase())
+      (candidate) => candidate.id === (projectId || props.assignments[session.id])
     ) || null;
   };
   const scopedSessions = visibleSessions.filter((session) => {
     if (session.pinned) return false;
+    if (projectScope === 'archived') return Boolean(session.archived);
+    if (session.archived) return false;
     return projectScope === 'all' || projectForSession(session)?.id === projectScope;
   });
   const scopedProject = props.projects.find((project) => project.id === projectScope) || null;
@@ -89,6 +81,44 @@ export function ProjectsRail(props: Props) {
       document.removeEventListener('pointerdown', onPointerDown, true);
     };
   }, [menuSession]);
+
+  useEffect(() => {
+    if (!projectMenuOpen) return;
+    const menu = projectMenuRef.current;
+    const focusable = () => Array.from(
+      menu?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"], [role="menuitem"]') || []
+    );
+    focusable()[0]?.focus();
+    const close = () => {
+      setProjectMenuOpen(false);
+      requestAnimationFrame(() => projectMenuTriggerRef.current?.focus());
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (projectMenuRef.current?.contains(target) || projectMenuTriggerRef.current?.contains(target)) return;
+      close();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+      const items = focusable();
+      const index = items.indexOf(document.activeElement as HTMLButtonElement);
+      const offset = event.key === 'ArrowDown' ? 1 : -1;
+      event.preventDefault();
+      items[(index + offset + items.length) % items.length]?.focus();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [projectMenuOpen]);
 
   const closeMenu = (sessionId: string, action: () => void) => {
     setMenuSession(null);
@@ -161,7 +191,7 @@ export function ProjectsRail(props: Props) {
           ) : null}
           {indicatorLabel ? <span className="sr-only">{indicatorLabel}</span> : null}
           <strong className="session-title">{session.title || session.id.slice(0, 8)}</strong>
-          {project ? <span className="session-worktree">{worktreeName(session, project)}</span> : null}
+          {project ? <span className="session-worktree">{worktreeName(project)}</span> : null}
         </button>
         {menuOpen ? (
           <div
@@ -238,6 +268,7 @@ export function ProjectsRail(props: Props) {
 
       <div className="rail-project-scope">
         <button
+          ref={projectMenuTriggerRef}
           type="button"
           className="project-scope-trigger"
           aria-expanded={projectMenuOpen}
@@ -252,7 +283,7 @@ export function ProjectsRail(props: Props) {
           <Icon name="project" />
         </button>
         {projectMenuOpen ? (
-          <div className="project-scope-menu" role="menu" aria-label="Filter sessions by project">
+          <div ref={projectMenuRef} className="project-scope-menu" role="menu" aria-label="Filter sessions by project">
             <button
               type="button"
               role="menuitemradio"
@@ -264,7 +295,7 @@ export function ProjectsRail(props: Props) {
               {projectScope === 'all' ? <Icon name="check" /> : null}
             </button>
             {props.projects.map((project) => (
-              <div className="project-scope-option" key={project.id}>
+              <div className="project-scope-option" role="none" key={project.id}>
                 <button
                   type="button"
                   role="menuitemradio"
@@ -277,6 +308,7 @@ export function ProjectsRail(props: Props) {
                 </button>
                 <button
                   type="button"
+                  role="menuitem"
                   aria-label={`Manage sources for ${project.name}`}
                   title={`Manage sources for ${project.name}`}
                   onClick={() => props.onManageProject(project)}
@@ -285,6 +317,16 @@ export function ProjectsRail(props: Props) {
                 </button>
               </div>
             ))}
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={projectScope === 'archived'}
+              onClick={() => { setProjectScope('archived'); setProjectMenuOpen(false); }}
+            >
+              <Icon name="archive" />
+              <span>Archived</span>
+              {projectScope === 'archived' ? <Icon name="check" /> : null}
+            </button>
           </div>
         ) : null}
       </div>
@@ -330,8 +372,7 @@ export function formatSessionAge(value: string | undefined, now = Date.now()) {
   return `${Math.floor(minutes / 60)}h`;
 }
 
-function worktreeName(session: SessionMeta, project: Project) {
-  if (session.worktree?.trim()) return session.worktree.trim();
+function worktreeName(project: Project) {
   const root = project.primaryRoot || project.rootPaths[0] || project.name;
   const normalized = root.replace(/[\\/]+$/, '');
   return normalized.split(/[\\/]/).pop() || project.name;
