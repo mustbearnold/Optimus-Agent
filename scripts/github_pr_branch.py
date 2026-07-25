@@ -91,22 +91,6 @@ def default_slug_from_branch(branch: str) -> str:
     return slugify(branch)
 
 
-def remote_head_for_pr(number: int) -> str:
-    r = run(
-        [
-            "gh",
-            "pr",
-            "view",
-            str(number),
-            "--json",
-            "headRefName",
-            "-q",
-            ".headRefName",
-        ]
-    )
-    return r.stdout.strip()
-
-
 def _strip_ansi(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
@@ -183,9 +167,15 @@ def adopt_local(number: int, slug: str, remote_head: str) -> str:
     run(["git", "fetch", "origin", remote_head])
 
     if old_local != new_local:
-        # If target name exists, delete it only if same tip
         existing = git("branch", "--list", new_local)
         if existing:
+            old_tip = git("rev-parse", old_local)
+            target_tip = git("rev-parse", new_local)
+            if old_tip != target_tip:
+                raise SystemExit(
+                    f"refusing to replace local {new_local!r}: tip differs from "
+                    f"{old_local!r}. Rename or delete {new_local} manually, then retry."
+                )
             run(["git", "branch", "-D", new_local], check=False)
         run(["git", "branch", "-m", new_local])
 
@@ -247,6 +237,13 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(str(e), file=sys.stderr)
         return 1
     number = int(pr["number"])
+    state = str(pr.get("state") or "").upper()
+    if state and state != "OPEN":
+        print(
+            f"MISMATCH: PR #{number} state={state!r} (expected OPEN)",
+            file=sys.stderr,
+        )
+        return 1
     expected_prefix = f"pr/{number}-"
     if not branch.startswith(expected_prefix):
         print(
@@ -258,6 +255,23 @@ def cmd_check(args: argparse.Namespace) -> int:
         return 1
     upstream = git("rev-parse", "--abbrev-ref", "@{upstream}", check=False)
     remote_head = pr["headRefName"]
+    expected_upstream = f"origin/{remote_head}"
+    if not upstream or upstream == "@{upstream}":
+        print(
+            f"MISMATCH: local {branch!r} has no upstream; "
+            f"expected {expected_upstream}",
+            file=sys.stderr,
+        )
+        print("fix: python3 scripts/github_pr_branch.py adopt", file=sys.stderr)
+        return 1
+    if upstream != expected_upstream:
+        print(
+            f"MISMATCH: upstream={upstream!r} expected {expected_upstream!r} "
+            f"(remote PR head must stay {remote_head!r}; do not rename remote)",
+            file=sys.stderr,
+        )
+        print("fix: python3 scripts/github_pr_branch.py adopt", file=sys.stderr)
+        return 1
     print(f"OK local {branch} ↔ PR #{number} (remote head {remote_head}, upstream {upstream})")
     return 0
 

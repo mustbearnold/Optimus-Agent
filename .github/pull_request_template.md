@@ -62,9 +62,10 @@ Naming planes (mandatory — see docs/contributing/artifact-naming.md):
 ## Checklist
 
 - [ ] Emoji-first Conventional Commit title (and commits if stacked)
-- [ ] Head **local** branch is `pr/<this-PR-number>-<short-kebab>` (not the program phase number)
-- [ ] Remote head remains `wip/…` (run `python3 scripts/github_pr_branch.py adopt` if local name wrong)
-- [ ] Naming planes table filled; program ≠ delivery ≠ ADR number
+- [ ] Local branch is `pr/<this-PR-number>-<short-kebab>` (not the program phase number); run `python3 scripts/github_pr_branch.py adopt` if local name is wrong
+- [ ] Remote head remains `wip/…` (never rename remote to `pr/N-…` — that closes the PR)
+- [ ] `python3 scripts/github_pr_branch.py check` exits 0
+- [ ] Naming planes table has concrete values (`PR #N`, not only “this PR”); program ≠ delivery ≠ ADR number
 - [ ] No secrets or home paths in logs/diffs
 - [ ] Docs/ADR updated when contracts or architecture change
 - [ ] Labels applied (emoji + `type:` + `area:` + `size:` minimum)

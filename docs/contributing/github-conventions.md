@@ -19,6 +19,7 @@ depends_on:
 validated_by:
   - scripts/sync-github-labels.py
   - scripts/github_pr_branch.py
+  - scripts/test_github_pr_branch.py
 last_verified_commit: null
 ---
 
@@ -259,10 +260,17 @@ git branch --set-upstream-to=origin/wip/p12-command-fs-envelope
 Same as emoji-first Conventional Commit subject (often the squash merge
 message). This is what appears in the repository **Commits** and PR lists.
 
-### Head branch
+### Local branch vs GitHub head (after open)
 
-Must be `pr/<number>-…` matching this PR’s number before review/merge
-(except the brief `wip/` window while opening the PR).
+| Ref | Must be | Must not |
+|---|---|---|
+| **Local checkout** | `pr/<this-PR-number>-…` | `pr/<program-phase>-…` when that ≠ PR # |
+| **Remote PR head** (`headRefName`) | stable `wip/…` (or the original push name) | renamed to `pr/N-…` |
+
+Renaming or deleting the **remote** head **closes the open PR** on GitHub.
+Use `python3 scripts/github_pr_branch.py open|adopt|check` so only the **local**
+name becomes `pr/<N>-…` while the remote stays put. Before review/merge, `check`
+must exit 0.
 
 ### Description
 
@@ -271,6 +279,8 @@ Use the PR template. Always include:
 1. Summary (why / outcome)
 2. Test plan with commands actually run
 3. Risk notes (API, schema, install)
+4. Naming planes table (program / delivery / ADR / local branch / remote head)
+   when any plane applies — see [artifact-naming.md](./artifact-naming.md)
 
 ### Labeling on the CLI
 

@@ -173,6 +173,7 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
 - `AGENTS.md` is a developer control artifact. `OPTIMUS_AGENTS.md` is the product
   runtime constitution. The installed Optimus runtime must never mutate either.
 - Naming planes and GitHub process are mandatory for coding agents (see Naming
-  planes above). Prefer the contributing docs over improvising conventions.
+  planes above). Follow `docs/contributing/artifact-naming.md` and
+  `docs/contributing/github-conventions.md`; do not invent alternate schemes.
 - New reusable procedures belong in a focused repository skill. Keep this file
   concise.

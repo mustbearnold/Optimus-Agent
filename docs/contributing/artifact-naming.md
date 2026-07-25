@@ -10,13 +10,16 @@ watches:
   - docs/architecture/architecture-marks.md
   - docs/decisions/README.md
   - .github/pull_request_template.md
+  - .github/ISSUE_TEMPLATE/architecture.yml
 covers:
   - docs/contributing/artifact-naming.md
 depends_on:
   - docs/contributing/github-conventions.md
   - docs/plans/s-plus-plus-plus-program.md
   - docs/architecture/architecture-marks.md
-validated_by: []
+validated_by:
+  - scripts/github_pr_branch.py
+  - scripts/test_github_pr_branch.py
 last_verified_commit: null
 ---
 
@@ -123,13 +126,16 @@ Rules (coding-agent hard gates):
 
 ## Worked example (do this every time)
 
+Illustrative only: GitHub may assign **any** PR number. Program phase never
+dictates delivery. (A prior docs PR happened to be `#21`; that is coincidence.)
+
 | Layer | Correct value | Wrong value |
 |---|---|---|
 | Program | **P12** Security boundary → S+++ | calling it “phase 21” |
-| ADR (if needed) | **ADR-0035** (next free number) | ADR-0012 or ADR-P12 |
-| Delivery | **PR #21** (whatever GitHub assigns) | forcing branch `pr/12-…` because P12 |
-| Local branch | `pr/21-p12-command-fs-envelope` | `p12`, `pr/12-…`, `feature/security` |
-| Remote head | `wip/p12-command-fs-envelope` | renamed to `pr/21-…` (closes PR) |
+| ADR (if needed) | **ADR-0035** (next free number after scanning) | ADR-0012 or ADR-P12 |
+| Delivery | **PR #N** (whatever GitHub assigns, e.g. `#21`) | forcing branch `pr/12-…` because P12 |
+| Local branch | `pr/<N>-p12-command-fs-envelope` | `p12`, `pr/12-…`, `feature/security` |
+| Remote head | `wip/p12-command-fs-envelope` | renamed to `pr/<N>-…` (closes PR) |
 | Grade target | Security **S+++** after exit gate | “S+++ because PR merged” |
 | Runtime | capability envelope APIs / effect ids | `P12Envelope` as public product name |
 
