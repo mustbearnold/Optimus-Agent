@@ -1,0 +1,85 @@
+{
+  "program": "P19",
+  "date": "2026-07-25",
+  "branch": "wip/p19-all-marks-review-board",
+  "commit": "fc09070785c4edcedd09ee0cca650fffacacde2b",
+  "hold_suites": [
+    {
+      "suite": "architecture marks",
+      "result": "PASS"
+    },
+    {
+      "suite": "parity ledger",
+      "result": "PASS"
+    },
+    {
+      "suite": "release-check",
+      "result": "PASS"
+    },
+    {
+      "suite": "domain modularity",
+      "result": "PASS"
+    },
+    {
+      "suite": "crate layers",
+      "result": "PASS"
+    },
+    {
+      "suite": "desktop ipc matrix",
+      "result": "PASS"
+    },
+    {
+      "suite": "observability gate",
+      "result": "PASS"
+    },
+    {
+      "suite": "EM check",
+      "result": "PASS"
+    },
+    {
+      "suite": "EM report",
+      "result": "PASS"
+    },
+    {
+      "suite": "runtime crash_resume",
+      "result": "PASS"
+    },
+    {
+      "suite": "runtime cancellation",
+      "result": "PASS"
+    },
+    {
+      "suite": "kernel session_resume",
+      "result": "PASS"
+    },
+    {
+      "suite": "kernel domain_modularity",
+      "result": "PASS"
+    },
+    {
+      "suite": "cli doctor_durability",
+      "result": "PASS"
+    },
+    {
+      "suite": "architecture marks unit",
+      "result": "PASS"
+    },
+    {
+      "suite": "desktop ipc unit",
+      "result": "PASS"
+    }
+  ],
+  "all_pass": true,
+  "marks_all_splus": true,
+  "em_stale_documents": 0,
+  "em_agents": 2,
+  "em_tools": 22,
+  "owned_residuals": [
+    "registered-only multi-agent (no open-ended model spawn)",
+    "external messaging exactly-once out of Durability S+++ scope",
+    "Windows Confined FS residual product-visible (ADR-0035)",
+    "OTLP deferred (ADR-0037 local causal export)",
+    "credential encryption residual not runtime authorization hole",
+    "HTTP browser facade residual in kernel; CDP in optimus-browser"
+  ]
+}

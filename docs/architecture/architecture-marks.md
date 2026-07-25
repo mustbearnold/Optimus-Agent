@@ -44,6 +44,9 @@ tests. Planned work must not be graded as current behaviour.
 
 ## Current grades (2026-07-25)
 
+**Program status:** P10–P19 architecture S+++ climb **complete** (board:
+[s-plus-plus-plus-review-2026-07-25.md](../evidence/s-plus-plus-plus-review-2026-07-25.md)).
+
 | Mark | Grade | Notes |
 |---|:---:|---|
 | Durability / crash safety | **S+++** | Work Graph crash-resume + ambiguous command non-replay; process-tree ownership before settle; session multi-link repair-on-open; campaign crash recover; workflow cancel idempotent. Operator contract: `optimus doctor` multi-DB inventory/quarantine + `doctor backup-list`; scope = process-local SQLite (external messaging exactly-once out of scope). |
@@ -130,13 +133,13 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 
 **Foundation (done):** [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md).
 
-**Active S+++ climb (lowest grade → highest):** [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
+**S+++ climb (P10–P19 complete):** [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
 
 | Phase | Focus | Marks moved | Status |
 |---|---|---|---|
 | 0 | Truth freeze | Doc | done |
 | 1 | Trust spine (policy, session repair, cancel honesty) | Security, Durability | done |
-| 2 | Kernel waist extraction (`optimus-eval`, `optimus-ops`) | Control-plane | done (partial; agents/artifacts remain) |
+| 2 | Kernel waist extraction (`optimus-eval`, `optimus-ops`) | Control-plane | done (P11 completed peels) |
 | 3 | One multi-agent vertical (`workspace_writer` + `write_file_handoff`) | Multi-agent | done |
 | 4 | One shell matrix + IPC contract checker | UI | done |
 | 5 | Causal observability (`optimus trace`, denial codes, obs gate) | Observability | done |
@@ -149,4 +152,4 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 | P16 | Doc / claim hygiene pass | Doc A-→**S+++** | **done** |
 | P17 | Release / parity gate completeness | Release A→**S+++** | **done** |
 | P18 | Durability chaos + multi-DB doctor/backup contract | Durability A+→**S+++** | **done** |
-| P19 | All-marks adversarial review board | **All S+++** | pending |
+| P19 | All-marks adversarial review board | **All S+++** | **done** |
