@@ -52,7 +52,7 @@ tests. Planned work must not be graded as current behaviour.
 | Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
 | Multi-agent readiness | **S+++** | Two specialists (`workspace_writer`, `workspace_reader`); three registered workflows including `write_then_read_handoff` DAG; durable `WorkflowRunStore`; parent cancel tree. P12 closed the command-FS residual that blocked S+++ after P10. Still registered-only (no open-ended model spawn — out of P10 scope). |
 | Observability / eval | **S+++** | Offline integrity gate; store-backed causal reconstruction (`trace show` / `load_causal_turn`); versioned local export `optimus.causal.v1` (`trace export`) with home redaction; stable security-denial codes; cancel terminals reconstructible without logs. OTLP deferred (ADR-0037). |
-| UI architecture | **A-** | Electron + React default installed shell; Wry legacy only. IPC matrix enforces host registry ⊇ Electron allowlist = React types; critical paths gated. Preview browser product language separated from agent tools. |
+| UI architecture | **S+++** | Electron + React default install; Wry optional. IPC matrix: host ⊇ Electron = React; every host method classified invoke vs non-invoke; expanded critical set (approvals, scopes, term_run, jobs, sessions). Preview WebContentsView sandboxed (static tests). Renderer cannot mint `project_root_stage_native`. Cancel via host stream. |
 | Doc / claim hygiene | **A-** | Status legends strong; scorecard/shell drift closed by this program. |
 | Release / parity gating | **A** | Fail-closed Hermes/version gates; keep them. |
 
@@ -140,7 +140,7 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 | P12 | Command capability envelope (real FS confinement) | Security A-→**S+++**; Multi-agent S→**S+++** | **done** |
 | P13 | Domain modularity audit (single catalogs, plane separation) | Domain A-→**S+++** | **done** |
 | P14 | Observability export + gate strength | Observability A-→**S+++** | **done** |
-| P15 | UI/IPC completeness + shell truth | UI A-→S+++ | pending |
+| P15 | UI/IPC completeness + shell truth | UI A-→**S+++** | **done** |
 | P16 | Doc / claim hygiene pass | Doc A-→S+++ | pending |
 | P17 | Release / parity gate completeness | Release A→S+++ | pending |
 | P18 | Durability chaos + multi-DB doctor/backup contract | Durability A+→S+++ | pending |

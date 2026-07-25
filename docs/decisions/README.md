@@ -61,6 +61,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0035 | Command capability envelope + Unrestricted break-glass (P12) | Accepted | Linux confined bwrap (workspace-only RW); `CommandFsEnvelope` orthogonal to SmartDeny; Windows residual / fail-closed; shared egress helper; Security **S+++**. |
 | 0036 | Domain modularity — single catalog and memory planes (P13) | Accepted | ToolDesc-only catalog; plane-separated auth; domain gate script; Domain **S+++**. |
 | 0037 | Local causal export (not OTLP) — P14 | Accepted | `optimus.causal.v1` JSON export + redaction; obs gate; Observability **S+++**. |
+| 0038 | UI IPC architecture completeness (P15) | Accepted | Matrix 100% host classification; expanded critical invokes; preview sandbox tests; UI **S+++**. |
 
 ## Known documentary debt
 

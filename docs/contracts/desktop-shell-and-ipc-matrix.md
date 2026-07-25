@@ -48,10 +48,12 @@ primary entry and keeps Wry as a secondary action.
 
 ### Critical invoke paths (must stay on all three parse surfaces)
 
-`ping`, `doctor`, `sessions`, `new_session`, `get_session`,
-`chat_approval_resolve`, `project_scopes_list`, `project_scopes_authorize`,
-`approvals_list`, `approvals_grant`, `fs_roots`, `fs_list`, `fs_read`,
-`settings_get`, `settings_set`
+`ping`, `doctor`, `sessions`, `new_session`, `get_session`, `delete_session`,
+`rename_session`, `chat_approval_resolve`, `project_scopes_list`,
+`project_scopes_authorize`, `approvals_list`, `approvals_grant`, `fs_roots`,
+`fs_list`, `fs_read`, `settings_get`, `settings_set`, `term_run`, `jobs_list`
+
+(Authority list: `scripts/check-desktop-ipc-matrix.py` `CRITICAL_INVOKE_METHODS`.)
 
 Validator:
 
