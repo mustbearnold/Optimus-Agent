@@ -472,7 +472,9 @@ also retain subsystem-specific state.
 **Confirmed current behaviour (P14):** machine-readable local causal export
 `optimus.causal.v1` (`optimus trace export` / `write_causal_export`) is
 store-backed, versioned, and redacts the Optimus home path. It does not re-run
-live providers and is not OTLP. See ADR-0037.
+live providers and is not OTLP. Merge gate
+`scripts/check-observability-gate.py` covers integrity, causal/export tests,
+and export API surface. See ADR-0037.
 
 **Confirmed current behaviour:** versioned execution manifests and immutable,
 bounded, content-addressed fixture bundles support zero-effect offline replay.

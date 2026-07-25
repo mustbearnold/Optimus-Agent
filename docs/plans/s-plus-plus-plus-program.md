@@ -370,11 +370,12 @@ surfaces, packs policy bypassed by kernel special cases.
 **Owner packages:** `optimus-eval`, kernel trace/execution (or peeled), CLI
 trace/eval, gate scripts.
 
-### Why still A-
+### Why was A- (pre-P14)
 
-Offline integrity + causal reconstruction exist; no OTel export; multi-DB
-identity is reconciled not transactional; live-effect replay is intentionally
-out of scope.
+Offline integrity + causal reconstruction existed; no versioned machine-readable
+export; multi-DB identity is reconciled not transactional; live-effect replay
+is intentionally out of scope. **P14 closed the export gap via local-only S+++
+(`optimus.causal.v1`); OTLP deferred (ADR-0037).**
 
 ### Adversarial S+++ criteria
 
@@ -396,11 +397,11 @@ out of scope.
 
 | ID | Task | Exit evidence |
 |---|---|---|
-| O1 | ADR: export format (OTLP vs local causal export) | ADR |
-| O2 | Implement export CLI + redaction | CLI tests |
-| O3 | Strengthen observability gate for new export invariants | `check-observability-gate.py` |
-| O4 | Causal tests for denial codes + cancel terminals | causal_trace tests |
-| O5 | Marks → Observability **S+++** | docs |
+| O1 | ADR: export format (OTLP vs local causal export) | done — ADR-0037 local JSON |
+| O2 | Implement export CLI + redaction | done — `trace export` + tests |
+| O3 | Strengthen observability gate for new export invariants | done — gate surface checks |
+| O4 | Causal tests for denial codes + cancel terminals | done — `causal_trace.rs` |
+| O5 | Marks → Observability **S+++** | done — marks + map + system-overview |
 
 ### Hold suite
 

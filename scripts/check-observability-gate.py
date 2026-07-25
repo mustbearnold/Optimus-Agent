@@ -42,8 +42,10 @@ def check_export_surface() -> None:
     if not re.search(r"pub fn export_causal_document", text):
         raise SystemExit("OBS_GATE_FAILED: missing export_causal_document")
     cli_text = cli.read_text(encoding="utf-8")
-    if "TraceCmd::Export" not in cli_text and "Export {" not in cli_text:
-        raise SystemExit("OBS_GATE_FAILED: CLI missing trace export command")
+    if "Export {" not in cli_text:
+        raise SystemExit("OBS_GATE_FAILED: CLI missing TraceCmd::Export variant")
+    if "write_causal_export" not in cli_text:
+        raise SystemExit("OBS_GATE_FAILED: CLI missing write_causal_export wiring")
     print("OBS_GATE: export surface OK", flush=True)
 
 

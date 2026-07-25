@@ -52,8 +52,9 @@ pub struct CausalTurnReport {
     /// True when every tool call that claims durable provenance has a matching
     /// session effect link (or no durable tools ran).
     pub effect_transcript_consistent: bool,
-    /// Classified security/policy denials visible from durable tool outcomes
-    /// (best-effort; empty when no classifiable fence fired).
+    /// Best-effort security/policy codes inferred from **lifecycle phase names**
+    /// only (e.g. `approval_required`). Not a full denial ledger — tool error
+    /// text is not stored on lifecycle rows today; often empty for FS/SSRF denials.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub security_denials: Vec<String>,
 }
@@ -175,8 +176,9 @@ fn security_denials_from_lifecycle(
 ) -> Vec<String> {
     let mut codes = Vec::new();
     for row in lifecycle {
+        // Phase is an enum-like token (`started`, `failed`, `approval_required`, …),
+        // not free-form error text.
         let phase = row.phase.to_ascii_lowercase();
-        // Lifecycle phase strings may embed tool error text on failure paths.
         if let Some(code) = classify_message_for_export(&phase) {
             let s = code.to_string();
             if !codes.contains(&s) {

@@ -45,7 +45,8 @@ export would imply a distributed telemetry product Optimus does not ship.
 - Positive: operators/agents can archive deterministic causal graphs without OTel.
 - Positive: observability gate fails if export API or CLI disappears.
 - Residual: multi-DB identity remains reconciled not single-transaction;
-  security_denials on export are best-effort from lifecycle phase text.
+  `security_denials` on export is best-effort from lifecycle **phase names**
+  only (often empty for FS/SSRF fences until denials are durably coded).
 
 ## Alternatives
 
