@@ -179,6 +179,9 @@ python3 scripts/optimus_version.py release-check
 # Existing rollup plus version-system integrity
 python3 scripts/check-parity-ledger.py
 
+# Architecture S+++ claim hygiene (not Hermes product parity)
+python3 scripts/check-architecture-marks.py
+
 # Record parity only after all blockers are gone
 python3 scripts/optimus_version.py promote --reviewer "reviewer identity"
 

@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-25 · P16 claim hygiene; shell truth aligned with system-overview
+Updated: 2026-07-25 · P17 release gates; artifacts path post-P11 peel
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -91,6 +91,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 python scripts/check-parity-ledger.py
 python scripts/optimus_version.py validate
 python scripts/optimus_version.py release-check
+python scripts/check-architecture-marks.py
 cargo test --workspace -- --test-threads=1
 cargo build -p optimus-desktop
 cd apps/optimus-desktop && npx playwright test
