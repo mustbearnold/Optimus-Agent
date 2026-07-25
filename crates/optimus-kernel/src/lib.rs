@@ -99,7 +99,8 @@ pub use optimus_graph::PolicyMode;
 pub use optimus_ops::{
     acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
     enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim, CronClaim,
-    CronError, CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths,
+    CronAttemptView, CronError, CronJob, CronStore, DrainResult, GatewayClaim, GatewayError,
+    GatewayPaths,
     InboundMessage, OutboundMessage,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;

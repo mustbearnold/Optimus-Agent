@@ -474,6 +474,45 @@ impl CronStore {
             .execute("DELETE FROM cron_jobs WHERE id=?1", params![id.to_string()])?;
         Ok(n > 0)
     }
+
+    /// Per-schedule attempt history (newest first), program P25.
+    pub fn history(&self, job_id: Uuid, limit: usize) -> Result<Vec<CronAttemptView>> {
+        let limit = limit.clamp(1, 100) as i64;
+        let mut stmt = self.conn.prepare(
+            "SELECT attempt_id,job_id,status,started_unix,completed_unix,detail
+             FROM cron_attempts WHERE job_id=?1
+             ORDER BY started_unix DESC, attempt_id DESC
+             LIMIT ?2",
+        )?;
+        let rows = stmt.query_map(params![job_id.to_string(), limit], |row| {
+            Ok(CronAttemptView {
+                attempt_id: parse_uuid(row.get(0)?)?,
+                job_id: parse_uuid(row.get(1)?)?,
+                status: row.get(2)?,
+                started_unix: checked_u64(row.get(3)?)?,
+                completed_unix: row
+                    .get::<_, Option<i64>>(4)?
+                    .map(checked_u64)
+                    .transpose()?,
+                detail: row.get(5)?,
+            })
+        })?;
+        let mut out = Vec::new();
+        for row in rows {
+            out.push(row.map_err(CronError::Sqlite)?);
+        }
+        Ok(out)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CronAttemptView {
+    pub attempt_id: Uuid,
+    pub job_id: Uuid,
+    pub status: String,
+    pub started_unix: u64,
+    pub completed_unix: Option<u64>,
+    pub detail: Option<String>,
 }
 
 fn ensure_column(connection: &Connection, name: &str, definition: &str) -> Result<()> {
@@ -556,6 +595,22 @@ mod tests {
             Some("succeeded")
         );
         assert!(s.due(now_unix()).unwrap().is_empty());
+        let hist = s.history(j.id, 10).unwrap();
+        assert_eq!(hist.len(), 1);
+        assert_eq!(hist[0].status, "succeeded");
+    }
+
+    #[test]
+    fn pause_resume_and_remove() {
+        let d = tempdir().unwrap();
+        let s = CronStore::open(d.path().join("cron.db")).unwrap();
+        let j = s.add("job", 60, "p", "offline").unwrap();
+        s.set_enabled(j.id, false).unwrap();
+        assert!(!s.list().unwrap()[0].enabled);
+        s.set_enabled(j.id, true).unwrap();
+        assert!(s.list().unwrap()[0].enabled);
+        assert!(s.remove(j.id).unwrap());
+        assert!(s.list().unwrap().is_empty());
     }
 
     #[test]

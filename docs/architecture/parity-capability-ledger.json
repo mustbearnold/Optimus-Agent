@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21–P24 tool/mutate/browser/chat-session parity; projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; program P21\u2013P25 tool/mutate/browser/chat/artifacts-cron parity; projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -340,12 +340,14 @@
       "id": "cron.lifecycle",
       "capability": "Schedules, pause/resume/remove, delivery and history",
       "hermes_reference": "Rich cron jobs",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/cron.rs",
-        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"
+        "apps/optimus-desktop/src/ipc/scheduling.rs",
+        "apps/optimus-ui/src/components/cron/CronWorkbench.tsx",
+        "docs/architecture/product-complete-p25-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P25: list/pause/resume/remove/create/history via IPC; leases not UI-mintable",
       "owner_ticket": "C-01,C-04"
     },
     {
@@ -422,17 +424,14 @@
       "id": "artifacts.store-ui",
       "capability": "Provenance-aware artifact publication and gallery",
       "hermes_reference": "Artifacts",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
         "crates/optimus-artifacts/src/lib.rs",
         "apps/optimus-desktop/src/ipc/files.rs",
-        "apps/optimus-desktop/ui/app.js",
-        "docs/specifications/phase-21a-artifacts-store.md",
-        "docs/evidence/phase-21b-artifacts-gallery-2026-07-23.md",
-        "docs/evidence/phase-21c-artifacts-delete-2026-07-23.md",
-        "docs/evidence/phase-21d-artifacts-bulk-delete-2026-07-23.md"
+        "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
+        "docs/architecture/product-complete-p25-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P25: gallery thumbs, type/label chips, single export + bulk zip with basename/secret confinement",
       "owner_ticket": "D-04"
     },
     {

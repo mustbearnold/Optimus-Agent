@@ -197,12 +197,12 @@ than new substrates and is what users touch every minute.
 | S2.3 | `done` | Session FTS over title + messages | `session.search-hygiene` | sessions_fts + session_search IPC; program P24 |
 | S2.4 | `done` | Archive / unarchive sessions | `session.search-hygiene` | archive_session IPC + rail; program P24 |
 | S2.5 | `done` | Durable pins + sort (updated / pinned / archived) | `session.search-hygiene` | pin_session + sort; program P24 |
-| S2.6 // | `todo` | Artifacts image gallery thumbnails | `artifacts.store-ui` | React + e2e |
-| S2.7 // | `todo` | Artifacts type/label filter chips | `artifacts.store-ui` | unit filter |
-| S2.8 // | `todo` | Single-artifact export (host save/copy path) | `artifacts.store-ui` | IPC + e2e |
-| S2.9 // | `todo` | Bulk zip export | `artifacts.store-ui` | kernel + UI confirm |
-| S2.10 | `todo` | Cron list + pause/resume/remove in React | `cron.lifecycle` | cron tests + e2e |
-| S2.11 | `todo` | Cron create form + per-schedule history | `cron.lifecycle` | validation + store tests |
+| S2.6 | `done` | Artifacts image gallery thumbnails | `artifacts.store-ui` | gallery mode + lazy thumbs; program P25 |
+| S2.7 | `done` | Artifacts type/label filter chips | `artifacts.store-ui` | unit filter chips; program P25 |
+| S2.8 | `done` | Single-artifact export (host save/copy path) | `artifacts.store-ui` | artifacts_export + path confinement; program P25 |
+| S2.9 | `done` | Bulk zip export | `artifacts.store-ui` | artifacts_export_zip store-zip; program P25 |
+| S2.10 | `done` | Cron list + pause/resume/remove in React | `cron.lifecycle` | CronWorkbench + IPC; program P25 |
+| S2.11 | `done` | Cron create form + per-schedule history | `cron.lifecycle` | create form + cron_history; program P25 |
 | S2.12 | `done` | Project-bound FS honesty + Project* workspace hash | `projects.scope` | honesty fields; concurrent lease residual S2.14 |
 | S2.13 | `done` | Status bar shows **enforced** isolation mode (not intent-only) | `projects.scope` | doctor/settings `enforced_mode`; legacy UI uses enforced label |
 | S2.14 | `todo` | `allow_concurrent_projects=false` blocks second project open | `projects.scope` | IPC/e2e |

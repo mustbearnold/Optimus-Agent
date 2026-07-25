@@ -497,12 +497,41 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
         every_secs: Number(params.every_secs || 3600),
         enabled: true,
         provider: String(params.provider || 'offline'),
+        prompt: String(params.prompt || 'tick'),
       };
       cronJobs.unshift(cron);
       return cron;
     }
+    case 'cron_set_enabled': {
+      const job = cronJobs.find((item) => item.id === params.id);
+      if (job) job.enabled = Boolean(params.enabled);
+      return { id: params.id, enabled: Boolean(params.enabled) };
+    }
+    case 'cron_remove': {
+      const index = cronJobs.findIndex((item) => item.id === params.id);
+      if (index >= 0) cronJobs.splice(index, 1);
+      return { id: params.id, removed: index >= 0 };
+    }
+    case 'cron_history':
+      return {
+        job_id: params.id,
+        attempts: [
+          {
+            attempt_id: 'attempt-1',
+            job_id: params.id,
+            status: 'succeeded',
+            started_unix: 1,
+            completed_unix: 2,
+            detail: 'ok',
+          },
+        ],
+      };
     case 'cron_tick':
       return { ran: [] };
+    case 'artifacts_export':
+      return { ok: true, path: `/tmp/export-${params.sha256}.txt`, sha256: params.sha256 };
+    case 'artifacts_export_zip':
+      return { ok: true, path: '/tmp/artifacts-export.zip', count: Array.isArray(params.sha256s) ? params.sha256s.length : 0 };
     case 'fs_roots':
       return { roots: [{ id: 'home', path: '/home/dev/.local/share/optimus' }] };
     case 'fs_list':

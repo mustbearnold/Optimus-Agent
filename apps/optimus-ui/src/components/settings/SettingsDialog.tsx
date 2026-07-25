@@ -12,6 +12,7 @@ import type {
   Project,
 } from '../../ipc/contracts';
 import { Icon, type IconName } from '../chrome/Icon';
+import { CronWorkbench } from '../cron/CronWorkbench';
 
 const fallback: ProductSettings = {
   work_isolation: 'shared',
@@ -323,17 +324,10 @@ export function SettingsDialog({
 
             {active === 'automations' ? (
               <SettingsGroup title="Schedules">
-                {cron.length ? cron.map((job) => (
-                  <SettingRow
-                    key={job.id}
-                    title={job.name}
-                    description={`Every ${formatDuration(job.every_secs)} · ${job.last_status || 'Not run'}`}
-                  >
-                    <span className={`state-chip${job.enabled ? ' is-ready' : ''}`}>
-                      {job.enabled ? 'Enabled' : 'Disabled'}
-                    </span>
-                  </SettingRow>
-                )) : <p className="panel-muted">No cron schedules.</p>}
+                <CronWorkbench transport={transport} active={open && active === 'automations'} />
+                {cron.length ? (
+                  <p className="panel-muted">{cron.length} schedule(s) loaded via runtime store.</p>
+                ) : null}
               </SettingsGroup>
             ) : null}
 
