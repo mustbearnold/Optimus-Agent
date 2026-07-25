@@ -38,6 +38,7 @@ pub fn builtin_surface_commands() -> Vec<SurfaceCommand> {
         cmd("mail", "mail", "Open messaging inbox/outbox", CommandSurface::Desktop, None),
         cmd("cron", "cron", "Open schedules workbench", CommandSurface::Desktop, None),
         cmd("artifacts", "artifacts", "Open artifacts gallery", CommandSurface::Desktop, None),
+        cmd("capabilities", "capabilities", "Open runtime capabilities", CommandSurface::Desktop, None),
         cmd(
             "packs.list",
             "packs list",
@@ -101,6 +102,7 @@ mod tests {
         assert!(ids.contains(&"doctor"));
         let desktop = commands_for_surface(CommandSurface::Desktop);
         assert!(desktop.iter().any(|c| c.id == "skills"));
+        assert!(desktop.iter().any(|c| c.id == "capabilities"));
         let cli = commands_for_surface(CommandSurface::Cli);
         assert!(cli.iter().any(|c| c.id == "packs.list"));
         // No tool ids disguised as commands for inventing a second tool catalog.

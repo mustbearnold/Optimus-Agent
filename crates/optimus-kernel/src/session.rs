@@ -602,16 +602,16 @@ impl SessionStore {
 
     pub fn set_pinned(&self, id: Uuid, pinned: bool) -> Result<bool> {
         let n = self.conn.execute(
-            "UPDATE sessions SET pinned = ?1, updated_at = ?2 WHERE id = ?3",
-            params![if pinned { 1 } else { 0 }, chrono_stamp(), id.to_string()],
+            "UPDATE sessions SET pinned = ?1 WHERE id = ?2",
+            params![if pinned { 1 } else { 0 }, id.to_string()],
         )?;
         Ok(n > 0)
     }
 
     pub fn set_archived(&self, id: Uuid, archived: bool) -> Result<bool> {
         let n = self.conn.execute(
-            "UPDATE sessions SET archived = ?1, updated_at = ?2 WHERE id = ?3",
-            params![if archived { 1 } else { 0 }, chrono_stamp(), id.to_string()],
+            "UPDATE sessions SET archived = ?1 WHERE id = ?2",
+            params![if archived { 1 } else { 0 }, id.to_string()],
         )?;
         Ok(n > 0)
     }
@@ -686,11 +686,10 @@ impl SessionStore {
         if title.is_empty() {
             return Err(KernelError::Model("title required".into()));
         }
-        let now = chrono_stamp();
         let tx = self.conn.unchecked_transaction()?;
         let n = tx.execute(
-            "UPDATE sessions SET title = ?1, updated_at = ?2 WHERE id = ?3",
-            params![title, now, id.to_string()],
+            "UPDATE sessions SET title = ?1 WHERE id = ?2",
+            params![title, id.to_string()],
         )?;
         if n > 0 {
             let messages_json: String = tx.query_row(
@@ -819,6 +818,51 @@ mod hygiene_tests {
             .unwrap();
         assert_eq!(all.len(), 3);
         assert!(all.iter().any(|s| s.id == b && s.archived));
+    }
+
+    #[test]
+    fn metadata_changes_do_not_reset_last_message_time() {
+        let dir = tempdir().unwrap();
+        let store = SessionStore::open(dir.path().join("s.db")).unwrap();
+        let id = store.create("thread").unwrap();
+        store
+            .save(id, "thread", &[], &[msg(Role::User, "last message")])
+            .unwrap();
+        store
+            .conn
+            .execute(
+                "UPDATE sessions SET updated_at = 'ts:1' WHERE id = ?1",
+                params![id.to_string()],
+            )
+            .unwrap();
+        let before = store.list().unwrap()[0].updated_at.clone();
+
+        assert!(store.set_pinned(id, true).unwrap());
+        assert!(store.set_archived(id, true).unwrap());
+        assert!(store.rename(id, "renamed thread").unwrap());
+
+        let after = store
+            .list_filtered(ListFilter {
+                include_archived: true,
+            })
+            .unwrap()
+            .into_iter()
+            .find(|session| session.id == id)
+            .unwrap();
+        assert_eq!(after.updated_at, before);
+
+        store
+            .save(id, "renamed thread", &[], &[msg(Role::User, "new message")])
+            .unwrap();
+        let after_message = store
+            .list_filtered(ListFilter {
+                include_archived: true,
+            })
+            .unwrap()
+            .into_iter()
+            .find(|session| session.id == id)
+            .unwrap();
+        assert!(after_message.updated_at > after.updated_at);
     }
 
     #[test]

@@ -23,7 +23,6 @@
   --danger-contrast: #090b11;
   --danger-soft: rgba(255, 115, 127, 0.1);
   --topbar-h: 36px;
-  --truth-h: 22px;
   --radius-sm: 5px;
   --radius: 8px;
   --radius-lg: 13px;
@@ -623,17 +622,6 @@ code {
 .session-copy small {
   color: var(--faint);
   font-size: 9px;
-}
-
-.row-more {
-  visibility: hidden;
-  border-radius: 50%;
-  color: var(--muted);
-}
-
-.session-row:hover .row-more,
-.row-more[aria-expanded="true"] {
-  visibility: visible;
 }
 
 .row-menu {
@@ -3688,28 +3676,6 @@ code {
   margin-top: 18px;
 }
 
-.truth-strip {
-  height: var(--truth-h);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 8px;
-  border-top: 1px solid var(--border);
-  color: var(--faint);
-  background: var(--rail);
-  font-size: 11px;
-  user-select: none;
-}
-
-.truth-strip strong {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.truth-grow {
-  flex: 1;
-}
-
 .compact-switcher {
   display: none;
 }
@@ -4006,13 +3972,6 @@ code {
     width: 36%;
   }
 
-  .truth-strip {
-    gap: 8px;
-  }
-
-  .hide-compact {
-    display: none;
-  }
 }
 
 @media (max-width: 400px) {

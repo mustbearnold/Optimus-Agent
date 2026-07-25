@@ -11,14 +11,22 @@ describe('OptimusApp fixture contract', () => {
     expect(await screen.findByRole('complementary', { name: 'Projects and sessions' })).toBeInTheDocument();
     // First-run catalog is empty — no hard-coded project seed (#42).
     expect(screen.queryByRole('button', { name: 'Project Optimus Agent' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mail' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toHaveTextContent('Settings');
+    expect(screen.queryByRole('button', { name: 'Mail' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Capabilities' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Resources' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show archived' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All projects' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Inbox' })).not.toBeInTheDocument();
     expect(screen.getByRole('log', { name: 'Conversation' })).toBeInTheDocument();
     // Chat-first: evidence workspace starts closed until Browser/Files/Artifacts is opened.
     expect(screen.queryByRole('complementary', { name: 'Evidence workspace' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Browser' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument();
     expect(screen.getByLabelText('Message Optimus')).toBeInTheDocument();
-    expect(await screen.findByRole('contentinfo', { name: 'System status' })).toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo', { name: 'System status' })).not.toBeInTheDocument();
+    const sendIcon = screen.getByRole('button', { name: 'Send message' }).querySelector('svg path');
+    expect(sendIcon).toHaveAttribute('fill', 'none');
+    expect(sendIcon).toHaveAttribute('stroke', 'currentColor');
 
     const windowControls = container.querySelector('.window-controls');
     expect(windowControls).toBeInTheDocument();
@@ -43,37 +51,42 @@ describe('OptimusApp fixture contract', () => {
     ).toBeInTheDocument();
   });
 
-  it('moves backward and forward through visited areas with tailed arrow controls', async () => {
+  it('keeps the topbar focused on home, workspace expansion, terminal, and the right panel', async () => {
     const user = userEvent.setup();
     const { container } = render(<OptimusApp />);
 
     await screen.findByRole('complementary', { name: 'Projects and sessions' });
     const topbar = container.querySelector('.topbar');
     expect(topbar).toBeInTheDocument();
-    const primaryNavigation = screen.getByRole('navigation', { name: 'Primary' });
-    const back = within(topbar as HTMLElement).getByRole('button', { name: 'Back' });
-    const forward = within(topbar as HTMLElement).getByRole('button', { name: 'Forward' });
-    expect(back).toBeDisabled();
-    expect(forward).toBeDisabled();
-    expect(back.querySelector('svg.reicon')).toBeInTheDocument();
-    expect(forward.querySelector('svg.reicon')).toBeInTheDocument();
+    expect(within(topbar as HTMLElement).queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+    expect(within(topbar as HTMLElement).queryByRole('button', { name: 'Forward' })).not.toBeInTheDocument();
+    expect(within(topbar as HTMLElement).getByRole('button', { name: 'Optimus' })).toBeInTheDocument();
+    expect(within(topbar as HTMLElement).getByRole('button', { name: 'Maximize workspace' })).toBeInTheDocument();
+    expect(within(topbar as HTMLElement).getByRole('button', { name: 'Terminal' })).toBeInTheDocument();
+    expect(within(topbar as HTMLElement).getByRole('button', { name: 'Workspace' })).toBeInTheDocument();
+    for (const removed of ['Tasks', 'Browser', 'Files', 'Artifacts', 'Use light theme']) {
+      expect(within(topbar as HTMLElement).queryByRole('button', { name: removed })).not.toBeInTheDocument();
+    }
 
-    await user.click(within(primaryNavigation).getByRole('button', { name: 'Mail' }));
-    expect(await screen.findByRole('main', { name: 'Messaging' })).toBeInTheDocument();
-    await user.click(within(primaryNavigation).getByRole('button', { name: 'Capabilities' }));
-    expect(await screen.findByRole('main', { name: /Capabilit/i })).toBeInTheDocument();
-    await user.click(within(primaryNavigation).getByRole('button', { name: 'Artifacts' }));
-    expect(await screen.findByRole('region', { name: 'Artifacts' })).toBeInTheDocument();
-
-    await user.click(back);
-    expect(await screen.findByRole('main', { name: /Capabilit/i })).toBeInTheDocument();
-    await user.click(forward);
-    expect(await screen.findByRole('region', { name: 'Artifacts' })).toBeInTheDocument();
-
-    await user.click(back);
-    await user.click(screen.getByRole('button', { name: 'Optimus' }));
+    await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Optimus' }));
     expect(screen.getByRole('log', { name: 'Conversation' })).toBeInTheDocument();
-    expect(forward).toBeDisabled();
+
+    await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Maximize workspace' }));
+    expect(container.querySelector('.surface-row')).toHaveClass('is-workspace-maximized');
+    expect(await within(topbar as HTMLElement).findByRole('button', { name: 'Restore workspace' })).toBeInTheDocument();
+    await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Restore workspace' }));
+    expect(container.querySelector('.surface-row')).not.toHaveClass('is-workspace-maximized');
+  });
+
+  it('keeps runtime capabilities reachable from the command palette', async () => {
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+    await screen.findByRole('complementary', { name: 'Projects and sessions' });
+
+    await user.keyboard('{Control>}k{/Control}');
+    await screen.findByRole('dialog', { name: 'Command palette' });
+    await user.click(await screen.findByRole('button', { name: /capabilities/i }));
+    expect(await screen.findByRole('main', { name: 'Capabilities' })).toBeInTheDocument();
   });
 
   it('blocks an assigned session instead of falling back to an unauthorized workspace', async () => {
@@ -206,16 +219,16 @@ describe('OptimusApp fixture contract', () => {
     await user.keyboard('{ArrowRight}');
     expect(Number(rail.getAttribute('aria-valuenow'))).toBe(railStart + 10);
 
-    await user.click(screen.getByRole('button', { name: 'Browser' }));
+    await user.click(screen.getByRole('button', { name: 'Workspace' }));
     const workspace = screen.getByRole('separator', { name: 'Resize evidence workspace' });
     const workspaceStart = Number(workspace.getAttribute('aria-valuenow'));
     workspace.focus();
     await user.keyboard('{ArrowLeft}');
     expect(Number(workspace.getAttribute('aria-valuenow'))).toBe(workspaceStart + 10);
 
-    await user.click(screen.getByRole('button', { name: 'Browser' }));
+    await user.click(screen.getByRole('button', { name: 'Workspace' }));
     expect(screen.queryByRole('separator', { name: 'Resize evidence workspace' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Browser' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Workspace' })).toHaveAttribute('aria-pressed', 'false');
 
     await user.click(screen.getByRole('button', { name: 'Terminal' }));
     const execution = screen.getByRole('separator', { name: 'Resize execution dock' });

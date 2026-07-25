@@ -2,6 +2,7 @@ import {
   Component,
   useCallback,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -36,7 +37,6 @@ import {
   saveLayout,
   type AppRoute,
   type CompactSurface,
-  type WorkspaceTab,
 } from '../state/layoutStore';
 import {
   createProject,
@@ -51,7 +51,6 @@ import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
 import { ConsolesPage, type ConsoleTab } from '../components/consoles/ConsolesPage';
 import { CommandPalette } from '../components/chrome/CommandPalette';
 import { TopBar } from '../components/chrome/TopBar';
-import { TruthStrip } from '../components/chrome/TruthStrip';
 import { TextPromptDialog } from '../components/chrome/TextPromptDialog';
 import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
@@ -77,11 +76,6 @@ type ComposerSettings = {
   fast: boolean;
 };
 
-type AreaHistory = {
-  entries: AppRoute[];
-  index: number;
-};
-
 const initialComposer: ComposerSettings = {
   provider: 'offline',
   model: 'offline-echo',
@@ -90,10 +84,15 @@ const initialComposer: ComposerSettings = {
   fast: false,
 };
 
-function projectMentionedInSessionTitle(session: SessionMeta, projects: Project[]) {
-  const title = session.title?.trim().toLocaleLowerCase();
-  if (!title) return null;
-  return projects.find((project) => title.includes(project.name.trim().toLocaleLowerCase())) || null;
+function projectFromRuntimeScope(scope: ProjectRuntimeScope): Project {
+  const normalizedRoot = scope.primary_root.replace(/[\\/]+$/, '');
+  const name = normalizedRoot.split(/[\\/]/).pop() || scope.project_id;
+  return {
+    id: scope.project_id,
+    name,
+    rootPaths: scope.roots,
+    primaryRoot: scope.primary_root,
+  };
 }
 
 export function OptimusApp() {
@@ -113,7 +112,6 @@ export function OptimusApp() {
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
   const [projectScopes, setProjectScopes] = useState<ProjectRuntimeScope[]>([]);
-  const [showArchived, setShowArchived] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState<ConsoleTab>('skills');
   const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
@@ -122,12 +120,9 @@ export function OptimusApp() {
   const [annotation, setAnnotation] = useState('');
   const [sourceProjectId, setSourceProjectId] = useState<string | null>(null);
   const [renameSession, setRenameSession] = useState<SessionMeta | null>(null);
+  const [workspaceMaximized, setWorkspaceMaximized] = useState(false);
   const [composer, setComposer] = useState(initialComposer);
   const [bootError, setBootError] = useState('');
-  const [areaHistory, setAreaHistory] = useState<AreaHistory>(() => ({
-    entries: [state.layout.route],
-    index: 0,
-  }));
   const activeHandle = useRef<ChatHandle | null>(null);
   const draggingLayout = useRef(false);
   const latestLayout = useRef(state.layout);
@@ -137,6 +132,15 @@ export function OptimusApp() {
   const selectedProject = projects.find(
     (project) => selectedSession && assignments[selectedSession.id] === project.id
   ) || null;
+  const railProjects = useMemo(() => {
+    const derived = projectScopes
+      .filter((scope) => !projects.some((project) => (
+        project.id === scope.project_id ||
+        project.rootPaths.some((root) => scope.roots.includes(root))
+      )))
+      .map(projectFromRuntimeScope);
+    return derived.length ? [...projects, ...derived] : projects;
+  }, [projectScopes, projects]);
   const sourceProject = projects.find((project) => project.id === sourceProjectId) || null;
   const browserSuspended =
     state.settingsOpen || state.taskPanelOpen || Boolean(sourceProject);
@@ -202,23 +206,6 @@ export function OptimusApp() {
   useEffect(() => {
     if (!draggingLayout.current) saveLayout(state.layout);
   }, [state.layout]);
-  useEffect(() => {
-    // Only bind sessions that already mention a project by name. Never default
-    // to projects[0] — that silently traps Send behind native folder auth (#44).
-    if (!sessions.length || !projects.length) return;
-    setAssignments((current) => {
-      let changed = false;
-      const next = { ...current };
-      for (const session of sessions) {
-        if (next[session.id]) continue;
-        const project = projectMentionedInSessionTitle(session, projects);
-        if (!project) continue;
-        next[session.id] = project.id;
-        changed = true;
-      }
-      return changed ? next : current;
-    });
-  }, [projects, sessions]);
   useEffect(() => saveProjects(projects), [projects]);
 
   useEffect(() => saveAssignments(assignments), [assignments]);
@@ -246,19 +233,6 @@ export function OptimusApp() {
   };
 
   const setRoute = (route: AppRoute) => {
-    setAreaHistory((current) => {
-      if (current.entries[current.index] === route) return current;
-      const entries = [...current.entries.slice(0, current.index + 1), route];
-      return { entries, index: entries.length - 1 };
-    });
-    applyRoute(route);
-  };
-
-  const moveAreaHistory = (offset: -1 | 1) => {
-    const index = areaHistory.index + offset;
-    const route = areaHistory.entries[index];
-    if (!route) return;
-    setAreaHistory((current) => ({ ...current, index }));
     applyRoute(route);
   };
 
@@ -400,10 +374,6 @@ export function OptimusApp() {
     await refreshRuntime();
   };
 
-  const setWorkspaceTab = (tab: WorkspaceTab) => {
-    dispatch({ type: 'patch-layout', patch: { workspaceTab: tab, workspaceOpen: true, compactSurface: tab } });
-  };
-
   const beginResize = (
     event: ReactPointerEvent<HTMLDivElement>,
     lane: 'rail' | 'workspace' | 'execution'
@@ -476,21 +446,20 @@ export function OptimusApp() {
     <ErrorBoundary>
       <div className="optimus-app" style={style} data-compact-surface={state.layout.compactSurface}>
         <TopBar
-          activeTasks={(state.activeRunSessionId ? 1 : 0) + approvals.length}
-          canGoBack={areaHistory.index > 0}
-          canGoForward={areaHistory.index < areaHistory.entries.length - 1}
           workspaceOpen={workspaceVisible}
+          workspaceMaximized={workspaceMaximized}
           executionOpen={state.layout.executionOpen}
-          workspaceTab={state.layout.workspaceTab}
-          theme={state.theme}
-          onBack={() => moveAreaHistory(-1)}
-          onForward={() => moveAreaHistory(1)}
+          onHome={() => setRoute('work')}
           onToggleRail={() => dispatch({ type: 'patch-layout', patch: { leftCollapsed: !state.layout.leftCollapsed } })}
-          onToggleWorkspace={() => dispatch({ type: 'patch-layout', patch: { workspaceOpen: !workspaceVisible } })}
+          onToggleWorkspace={() => {
+            if (workspaceVisible) setWorkspaceMaximized(false);
+            dispatch({ type: 'patch-layout', patch: { workspaceOpen: !workspaceVisible } });
+          }}
+          onToggleWorkspaceMaximized={() => {
+            setWorkspaceMaximized((current) => !current);
+            if (!workspaceVisible) dispatch({ type: 'patch-layout', patch: { workspaceOpen: true } });
+          }}
           onToggleExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: !state.layout.executionOpen, compactSurface: 'execution' } })}
-          onWorkspaceTab={setWorkspaceTab}
-          onToggleTasks={() => dispatch({ type: 'tasks', open: !state.taskPanelOpen })}
-          onTheme={() => dispatch({ type: 'theme', theme: state.theme === 'dark' ? 'light' : 'dark' })}
           onWindow={(action) => void transport.windowAction(action)}
         />
 
@@ -506,14 +475,11 @@ export function OptimusApp() {
           <ProjectsRail
             collapsed={state.layout.leftCollapsed}
             sessions={sessions}
-            projects={projects}
+            projects={railProjects}
             assignments={assignments}
             expanded={expanded}
             selectedSessionId={state.selectedSessionId}
             sessionIndicators={sessionIndicators}
-            route={state.layout.route}
-            showArchived={showArchived}
-            onShowArchived={setShowArchived}
             onSearch={(q) => {
               void (async () => {
                 if (!q.trim()) {
@@ -523,7 +489,7 @@ export function OptimusApp() {
                 try {
                   const result = await transport.invoke<{ sessions?: SessionMeta[] }>(
                     'session_search',
-                    { q, include_archived: showArchived }
+                    { q, include_archived: true }
                   );
                   const list = Array.isArray(result.sessions) ? result.sessions : [];
                   setSessions(list);
@@ -534,7 +500,6 @@ export function OptimusApp() {
             }}
             onSelectSession={openSession}
             onNewSession={(projectId) => void newSession(projectId)}
-            onRoute={setRoute}
             onAddProject={async () => {
               const result = await transport.pickFolder();
               if (!result.ok || !result.path || !result.grantToken) return;
@@ -591,7 +556,7 @@ export function OptimusApp() {
 
           <section className="app-stage">
             {bootError ? <div className="boot-error" role="alert"><Icon name="warning" /><span>{bootError}</span><button type="button" onClick={() => void refreshRuntime()}>Retry</button></div> : null}
-            <div className="surface-row">
+            <div className={`surface-row${workspaceMaximized ? ' is-workspace-maximized' : ''}`}>
               <section className={`work-surface${workVisible ? ' is-compact-active' : ''}`} aria-label="Agent work surface">
                 {state.layout.route === 'work' ? (
                   <>
@@ -742,6 +707,8 @@ export function OptimusApp() {
               setRoute('consoles');
             } else if (commandId === 'artifacts') {
               setRoute('artifacts');
+            } else if (commandId === 'capabilities') {
+              setRoute('capabilities');
             } else if (commandId === 'mail') {
               setRoute('mail');
             } else if (commandId === 'cron') {
@@ -770,11 +737,6 @@ export function OptimusApp() {
             );
             setRenameSession(null);
           }}
-        />
-        <TruthStrip
-          doctor={doctor}
-          transport={transport.kind}
-          runLabel={state.activeRunSessionId ? busyStatus || 'active' : 'idle'}
         />
       </div>
     </ErrorBoundary>
