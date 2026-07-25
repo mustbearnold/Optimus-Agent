@@ -65,6 +65,43 @@ Do **not** edit, reorganize, install into, or “clean up”:
    (`local/tmp/**` preferred) rather than other project directories.
 5. Treat path containment as a hard gate equal to “do not commit unless asked”.
 
+## Naming planes (mandatory — humans and coding agents)
+
+Identifiers from **different planes are never interchangeable**. Coding agents
+must enforce this on every branch name, commit subject, PR title, ADR, issue,
+plan microtask, and grade claim.
+
+| Plane | Token | Authority |
+|---|---|---|
+| Decision | `ADR-NNNN` | `docs/decisions/` |
+| Program | `P##` (S+++ phases) | `docs/plans/s-plus-plus-plus-program.md` |
+| Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` |
+| Delivery | `PR #N` · local `pr/N-slug` | GitHub + `scripts/github_pr_branch.py` |
+| Grade / mark | mark + grade (`S+++`, `A-`…) | `docs/architecture/architecture-marks.md` |
+| Runtime product | `id@version` / crate / pack | source contracts, SemVer, EM |
+
+**Hard gates**
+
+1. `P12` ≠ `PR #12` ≠ `ADR-0012` ≠ grade `S+++`. Never “align” numbers across planes.
+2. GitHub assigns PR numbers. Do not choose a PR number or force local
+   `pr/12-…` because the program phase is P12.
+3. After a PR opens: local branch **must** be `pr/<N>-…`; remote head stays
+   `wip/…` (renaming remote head **closes** the PR).
+4. ADRs are monotonic and permanent; never renumber or invent without scanning
+   `docs/decisions/`.
+5. Commits and PR titles are **emoji-first Conventional Commits**; labels are
+   emoji + `namespace:value` (see contributing docs).
+6. Program phase may appear in title **text** (`S+++ P12 …`); delivery number
+   appears only as `PR #N` / `pr/N-…`.
+7. Grades move only with source + tests + docs exit criteria — not because a
+   PR merged or a phase label was applied.
+8. Runtime product ids are not program phases or ADR numbers.
+
+**Canonical detail:** [`docs/contributing/artifact-naming.md`](docs/contributing/artifact-naming.md)  
+**GitHub mechanics:** [`docs/contributing/github-conventions.md`](docs/contributing/github-conventions.md)
+
+If a proposed name collapses two planes, **stop and rename** before commit/PR.
+
 ## Architectural laws
 
 1. Optimus is a modular agent system, not a single giant agent prompt.
@@ -135,5 +172,7 @@ Do **not** edit, reorganize, install into, or “clean up”:
   `report`, `stat`) over loading whole generated maps into model context.
 - `AGENTS.md` is a developer control artifact. `OPTIMUS_AGENTS.md` is the product
   runtime constitution. The installed Optimus runtime must never mutate either.
+- Naming planes and GitHub process are mandatory for coding agents (see Naming
+  planes above). Prefer the contributing docs over improvising conventions.
 - New reusable procedures belong in a focused repository skill. Keep this file
   concise.

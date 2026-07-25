@@ -22,9 +22,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
+
+
+def _subprocess_env() -> dict[str, str]:
+    """Force plain gh/git output so JSON parsing works under agent TTY wrappers."""
+    env = os.environ.copy()
+    env.setdefault("NO_COLOR", "1")
+    env.setdefault("CLICOLOR", "0")
+    env["GH_FORCE_TTY"] = "0"
+    return env
 
 
 def run(
@@ -32,7 +42,13 @@ def run(
     *,
     check: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-    r = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    r = subprocess.run(
+        cmd,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_subprocess_env(),
+    )
     if check and r.returncode != 0:
         msg = (r.stderr or r.stdout or "").strip() or f"exit {r.returncode}"
         raise SystemExit(f"$ {' '.join(cmd)}\n{msg}")
@@ -91,12 +107,22 @@ def remote_head_for_pr(number: int) -> str:
     return r.stdout.strip()
 
 
+def _strip_ansi(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
 def pr_view(number: int | None = None) -> dict:
     cmd = ["gh", "pr", "view", "--json", "number,url,headRefName,title,state"]
     if number is not None:
         cmd.insert(3, str(number))
     r = run(cmd)
-    return json.loads(r.stdout)
+    raw = _strip_ansi(r.stdout).strip()
+    if not raw:
+        raise SystemExit(f"$ {' '.join(cmd)}\nempty gh output")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"$ {' '.join(cmd)}\ninvalid JSON: {e}\n{raw[:200]!r}") from e
 
 
 def pr_for_branch(branch: str) -> dict | None:
@@ -116,8 +142,9 @@ def pr_for_branch(branch: str) -> dict | None:
     )
     if r.returncode != 0 or not r.stdout.strip():
         return None
+    raw = _strip_ansi(r.stdout).strip()
     try:
-        items = json.loads(r.stdout)
+        items = json.loads(raw)
     except json.JSONDecodeError:
         return None
     return items[0] if items else None

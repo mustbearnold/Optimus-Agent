@@ -7,7 +7,13 @@ Examples:
   🔧 fix(runtime): fence SmartDeny grants to effect hash
   📝 docs(architecture): record ADR-0034 control-plane peels
   ♻️ refactor(kernel): peel agent contracts into optimus-agent
+  🏗️ architecture: S+++ P12 command capability envelope
   🧹 chore(em): refresh generated indexes
+
+Naming planes (mandatory — see docs/contributing/artifact-naming.md):
+  P## = program phase · PR #N = delivery · ADR-NNNN = decision · grade ≠ number
+  Local branch: pr/<this-PR-number>-slug  (NOT pr/<program-phase>-…)
+  Remote head: stays wip/… (do not rename remote head — closes the PR)
 -->
 
 ## Summary
@@ -15,6 +21,19 @@ Examples:
 <!-- 1–3 bullets: what changed and why (user-facing outcome, not file list). -->
 
 -
+
+## Naming planes
+
+<!-- Coding agents: fill every row that applies. Never set Delivery = Program. -->
+
+| Plane | Value |
+|---|---|
+| **Program** (`P##` or n/a) | |
+| **Delivery** (`PR #N` — GitHub assigns) | this PR |
+| **Decision** (`ADR-NNNN` or none) | |
+| **Mark / grade target** (if architecture) | |
+| **Local branch** | `pr/<N>-…` after open |
+| **Remote head** | `wip/…` (stable; do not rename) |
 
 ## Type / labels
 
@@ -43,7 +62,9 @@ Examples:
 ## Checklist
 
 - [ ] Emoji-first Conventional Commit title (and commits if stacked)
-- [ ] Head branch is `pr/<this-PR-number>-<short-kebab>` (run `python3 scripts/github_pr_branch.py adopt` if needed)
+- [ ] Head **local** branch is `pr/<this-PR-number>-<short-kebab>` (not the program phase number)
+- [ ] Remote head remains `wip/…` (run `python3 scripts/github_pr_branch.py adopt` if local name wrong)
+- [ ] Naming planes table filled; program ≠ delivery ≠ ADR number
 - [ ] No secrets or home paths in logs/diffs
 - [ ] Docs/ADR updated when contracts or architecture change
 - [ ] Labels applied (emoji + `type:` + `area:` + `size:` minimum)

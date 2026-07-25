@@ -158,10 +158,15 @@ Emoji matches the GitHub `area:*` label for that package (see Issues/PRs).
 
 Commits, branches, PRs, issues, and labels follow
 [docs/contributing/github-conventions.md](docs/contributing/github-conventions.md).
+**Naming planes** (mandatory for humans and coding agents — `P##` ≠ `PR #N` ≠
+`ADR-NNNN`) are defined in
+[docs/contributing/artifact-naming.md](docs/contributing/artifact-naming.md)
+and enforced in [`AGENTS.md`](AGENTS.md).
 
 - **Commits / PR titles (visible on Commits tab):** emoji-first Conventional Commits
   - `✨ feat(scope): …` · `🔧 fix: …` · `♻️ refactor: …` · `📝 docs: …` · `🧹 chore: …`
-- **Branches:** local `pr/<number>-<short-kebab>` once a PR exists (start as `wip/…`)
+- **Branches:** local `pr/<PR-number>-<short-kebab>` once a PR exists (start as `wip/…`)
+  - leading digits are the **GitHub PR number**, never the program phase (`P12` may land as PR `#21`)
   - helper: `python3 scripts/github_pr_branch.py open|adopt|check`
   - remote head stays `wip/…` (renaming remote head closes the PR on GitHub)
 - **Labels (Issues / PRs):** one leading emoji + namespace, e.g.

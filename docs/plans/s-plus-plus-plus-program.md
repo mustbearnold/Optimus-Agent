@@ -65,6 +65,10 @@ If a product task would lower an architecture mark, the architecture phase wins.
 8. **No Hermes-parity requirement for architecture S+++.** Release/parity
    gating stays fail-closed; architecture S+++ does not require full ledger
    green.
+9. **Naming planes.** Program phase `P##` is **not** a GitHub PR number and
+   **not** an ADR number. Delivery uses `PR #N` / local `pr/N-…` assigned by
+   GitHub. Coding agents must follow
+   [artifact-naming.md](../contributing/artifact-naming.md) and `AGENTS.md`.
 
 ## Current grades and work order
 
