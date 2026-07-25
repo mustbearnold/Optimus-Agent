@@ -78,6 +78,10 @@ pub(super) fn handle(
                 .get("provider")
                 .and_then(|v| v.as_str())
                 .unwrap_or("offline");
+            // Untrusted UI cannot pick live model routes via enqueue.
+            if provider != "offline" {
+                return Err("provider must be offline for desktop enqueue".into());
+            }
             let session = params.get("session_id").and_then(|v| v.as_str());
             let message =
                 enqueue(home, channel, text, provider, session).map_err(|e| e.to_string())?;

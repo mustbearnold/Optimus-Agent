@@ -538,19 +538,18 @@ Transport + security:
 
 ### Must-move ledger set (product-critical)
 
-**Partial → parity:** `provider.catalog`,
-`chat.thinking-tools`, `session.search-hygiene`, `web.search`, `browser.http`,
-`browser.cdp`, `browser.annotations`, `cron.lifecycle`, `gateway.queue`,
-`artifacts.store-ui`, `surface.commands`.
+**Partial → parity:** `provider.catalog`, `projects.scope` honesty residual only.
 
-**HOLD (already parity from program P21–P22):** `core.tool-loop`, `core.pack-budget`,
-`files.mutate`.
+**HOLD (already parity from program P21–P28):** `core.tool-loop`, `core.pack-budget`,
+`files.mutate`, `chat.thinking-tools`, `session.search-hygiene`, `web.search`,
+`browser.http`, `browser.cdp`, `browser.annotations`, `cron.lifecycle`,
+`gateway.queue`, `gateway.telegram`, `gateway.ui`, `artifacts.store-ui`,
+`surface.commands`, `desktop.logs`, `skills.ui`, `memory.ui`.
 
 **Still partial:** `projects.scope` (honesty only; concurrent lease residual).
 
-**Missing → parity:** `provider.failover`, `desktop.logs`,
-`gateway.telegram`, `gateway.ui`, `mcp.client`, `plugins.signed`, `skills.ui`,
-`memory.ui`, `release.updater` (**or** explicit no-updater ADR + honest residual —
+**Missing → parity:** `provider.failover`, `mcp.client`, `plugins.signed`,
+`release.updater` (**or** explicit no-updater ADR + honest residual —
 prefer honest ADR unless signing chain is real).
 
 **HOLD (already parity/win):** `core.work-durability`, `core.memory-integrity`,

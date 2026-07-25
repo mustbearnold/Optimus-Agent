@@ -14,8 +14,10 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::gateway::{
-    acknowledge_delivery, drain_one, enqueue, GatewayError, InboundMessage,
+    acknowledge_delivery, claim_one, complete_claim, delivery_state, enqueue, fail_claim,
+    mark_external_send_failed, GatewayError, InboundMessage,
 };
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum TelegramError {
@@ -187,8 +189,16 @@ where
         next_offset: offset,
     };
 
+    if config.enabled && config.allowed_chat_ids.is_empty() {
+        return Err(TelegramError::Msg(
+            "live telegram requires non-empty allowed_chat_ids (fail closed)".into(),
+        ));
+    }
+
     let updates = transport.get_updates(offset)?;
     for update in updates {
+        // Always advance offset so live long-poll does not redeliver forever.
+        result.next_offset = result.next_offset.max(update.update_id.saturating_add(1));
         if !config.allowed_chat_ids.is_empty()
             && !config.allowed_chat_ids.iter().any(|id| id == &update.chat_id)
         {
@@ -202,46 +212,110 @@ where
         };
         let inbound = enqueue(home, "telegram", &text, "offline", session.as_deref())?;
         result.enqueued.push(inbound.id);
-        result.next_offset = result.next_offset.max(update.update_id.saturating_add(1));
     }
 
-    // Drain only telegram-channel messages by looping drain_one and re-enqueuing non-telegram.
-    // Simpler approach: process all pending via drain_one while any remain that we just enqueued.
-    // For mock correctness we drain everything once per enqueued message.
-    for _ in 0..result.enqueued.len().max(1) {
-        let drained = drain_one(home, |inbound| turn(inbound))?;
-        let Some(drained) = drained else {
-            break;
-        };
-        result.drained.push(drained.id.clone());
-        // Attempt external send for telegram replies.
-        if let Some(session_id) = drained.session_id.as_deref() {
-            if let Some(chat_id) = session_id.strip_prefix("telegram:") {
-                let outcome = transport.send_message(chat_id, &drained.reply_preview)?;
-                match outcome {
-                    SendOutcome::Confirmed { .. } => {
-                        // Find outbound id via ambiguous/receipts list.
-                        if acknowledge_outbound_for_message(home, &drained.id)? {
-                            result.receipts.push(drained.id.clone());
-                        }
-                    }
-                    SendOutcome::Ambiguous { detail } => {
-                        result.ambiguous.push(format!("{}:{detail}", drained.id));
-                    }
-                    SendOutcome::Failed { detail } => {
-                        result.failed_sends.push(format!("{}:{detail}", drained.id));
-                    }
-                }
+    // Process only messages we just enqueued (channel=telegram), not FIFO global backlog.
+    for message_id in result.enqueued.clone() {
+        match process_enqueued_telegram(home, transport, &message_id, &mut turn)? {
+            Some(step) => {
+                result.drained.push(step.drained_id);
+                result.receipts.extend(step.receipts);
+                result.ambiguous.extend(step.ambiguous);
+                result.failed_sends.extend(step.failed_sends);
             }
+            None => break,
         }
     }
 
     Ok(result)
 }
 
+struct ProcessStep {
+    drained_id: String,
+    receipts: Vec<String>,
+    ambiguous: Vec<String>,
+    failed_sends: Vec<String>,
+}
+
+fn process_enqueued_telegram<T, F>(
+    home: &Path,
+    transport: &mut T,
+    message_id: &str,
+    turn: &mut F,
+) -> Result<Option<ProcessStep>>
+where
+    T: TelegramTransport,
+    F: FnMut(&InboundMessage) -> std::result::Result<(String, Option<String>), String>,
+{
+    // Skip non-telegram FIFO head by claiming only when the head matches our id.
+    // Release foreign claims by never claiming them: claim_one is FIFO, so if head
+    // is not our message we stop (operator must drain non-telegram separately).
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let Some(claim) = claim_one(home, Uuid::new_v4(), now, 900)? else {
+        return Ok(None);
+    };
+    if claim.message().id != message_id || claim.message().channel != "telegram" {
+        // Put foreign claim back for later workers.
+        crate::gateway::release_claim(home, &claim, now)?;
+        return Ok(None);
+    }
+    let outcome = turn(claim.message());
+    let drained = match outcome {
+        Ok(success) => complete_claim(home, &claim, Ok(success), now)?,
+        Err(error) => fail_claim(home, &claim, &error, now)?,
+    };
+    let mut step = ProcessStep {
+        drained_id: drained.id.clone(),
+        receipts: Vec::new(),
+        ambiguous: Vec::new(),
+        failed_sends: Vec::new(),
+    };
+    // Only external-send successful turns.
+    if drained.status != "ok" {
+        return Ok(Some(step));
+    }
+    let Some(session_id) = drained.session_id.as_deref() else {
+        return Ok(Some(step));
+    };
+    let Some(chat_id) = session_id.strip_prefix("telegram:") else {
+        return Ok(Some(step));
+    };
+    apply_send_outcome(home, transport, chat_id, &drained.id, &drained.reply_preview, &mut step)?;
+    Ok(Some(step))
+}
+
+fn apply_send_outcome<T: TelegramTransport>(
+    home: &Path,
+    transport: &mut T,
+    chat_id: &str,
+    message_id: &str,
+    text: &str,
+    step: &mut ProcessStep,
+) -> Result<()> {
+    match transport.send_message(chat_id, text)? {
+        SendOutcome::Confirmed { .. } => {
+            if acknowledge_outbound_for_message(home, message_id)? {
+                step.receipts.push(message_id.into());
+            }
+        }
+        SendOutcome::Ambiguous { detail } => {
+            step.ambiguous.push(format!("{message_id}:{detail}"));
+        }
+        SendOutcome::Failed { detail } => {
+            let _ = mark_external_send_failed(home, message_id, &detail)?;
+            step.failed_sends.push(format!("{message_id}:{detail}"));
+        }
+    }
+    Ok(())
+}
+
 fn acknowledge_outbound_for_message(home: &Path, message_id: &str) -> Result<bool> {
+    // Prefer delivery_state + outbound from exact message id.
     use crate::gateway::list_outbox_receipts;
-    let rows = list_outbox_receipts(home, 50)?;
+    let rows = list_outbox_receipts(home, 200)?;
     let Some(row) = rows.into_iter().find(|r| r.message_id == message_id) else {
         return Ok(false);
     };
@@ -263,7 +337,7 @@ pub fn process_inbound_reply_path<T, F>(
     transport: &mut T,
     chat_id: &str,
     text: &str,
-    turn: F,
+    mut turn: F,
 ) -> Result<TelegramPollResult>
 where
     T: TelegramTransport,
@@ -272,29 +346,21 @@ where
     let home = home.as_ref();
     let session = format!("telegram:{chat_id}");
     let inbound = enqueue(home, "telegram", text, "offline", Some(&session))?;
-    let drained = drain_one(home, turn)?
-        .ok_or_else(|| TelegramError::Msg("drain produced no result".into()))?;
     let mut result = TelegramPollResult {
-        enqueued: vec![inbound.id],
-        drained: vec![drained.id.clone()],
+        enqueued: vec![inbound.id.clone()],
+        drained: Vec::new(),
         receipts: Vec::new(),
         ambiguous: Vec::new(),
         failed_sends: Vec::new(),
-        next_offset: 2,
+        next_offset: 0,
     };
-    match transport.send_message(chat_id, &drained.reply_preview)? {
-        SendOutcome::Confirmed { .. } => {
-            if acknowledge_outbound_for_message(home, &drained.id)? {
-                result.receipts.push(drained.id);
-            }
-        }
-        SendOutcome::Ambiguous { detail } => {
-            result.ambiguous.push(format!("{}:{detail}", drained.id));
-        }
-        SendOutcome::Failed { detail } => {
-            result.failed_sends.push(format!("{}:{detail}", drained.id));
-        }
+    if let Some(step) = process_enqueued_telegram(home, transport, &inbound.id, &mut turn)? {
+        result.drained.push(step.drained_id);
+        result.receipts = step.receipts;
+        result.ambiguous = step.ambiguous;
+        result.failed_sends = step.failed_sends;
     }
+    let _ = delivery_state(home, &inbound.id);
     Ok(result)
 }
 
@@ -340,6 +406,36 @@ mod tests {
         assert_eq!(result.receipts.len(), 0);
         assert_eq!(result.ambiguous.len(), 1);
         assert_eq!(list_ambiguous_sends(dir.path(), 10).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn mock_failed_send_is_not_ambiguous() {
+        let dir = tempdir().unwrap();
+        let mut transport = MockTelegramTransport::default();
+        transport.next_send_failed = true;
+        let result = process_inbound_reply_path(
+            dir.path(),
+            &mut transport,
+            "7",
+            "ping",
+            |inbound| Ok(("pong".into(), inbound.session_id.clone())),
+        )
+        .unwrap();
+        assert_eq!(result.failed_sends.len(), 1);
+        assert!(list_ambiguous_sends(dir.path(), 10).unwrap().is_empty());
+        assert_eq!(gateway_status(dir.path()).unwrap().ambiguous_sends, 0);
+    }
+
+    #[test]
+    fn turn_error_does_not_external_send() {
+        let dir = tempdir().unwrap();
+        let mut transport = MockTelegramTransport::default();
+        let result = process_inbound_reply_path(dir.path(), &mut transport, "1", "x", |_| {
+            Err("provider_unavailable".into())
+        })
+        .unwrap();
+        assert!(result.receipts.is_empty());
+        assert!(transport.sent.is_empty());
     }
 
     #[test]

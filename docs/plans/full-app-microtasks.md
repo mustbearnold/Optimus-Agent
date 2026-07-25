@@ -267,7 +267,8 @@ before durable receipts creates double-send risk. Order is fixed.
 | S5.5 | `park` | Discord adapter | `gateway.discord-slack` | after S5.4; not product-critical |
 | S5.6 | `park` | Slack adapter | `gateway.discord-slack` | after S5.4; not product-critical |
 
-**Stage exit:** user can message Optimus on Telegram; UI shows gateway truth.
+**Stage exit:** mock Telegram claim→turn→receipt path works; UI shows gateway
+truth; live Bot API remains config-gated residual (not required for product exit).
 Product-complete does **not** require Discord/Slack.
 
 ---

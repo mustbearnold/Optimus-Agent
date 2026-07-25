@@ -19,7 +19,7 @@ last_verified_commit: null
 
 # Product-complete program P28 verification
 
-Planes: **program P28** · delivery pending PR · architecture hold (Durability
+Planes: **program P28** · delivery **PR #37** · architecture hold (Durability
 local leases/receipts · Security · Observability) · ledger `gateway.queue`,
 `gateway.telegram`, `gateway.ui` → **parity**
 
@@ -69,7 +69,11 @@ python3 scripts/check-parity-ledger.py
 - Hermes gate PASS
 - Auto SmartDeny grant or project root mint from adapter
 
+## Board
+
+See `docs/evidence/product-complete-p28-hold-2026-07-25.md`.
+
 ## Verdict
 
-**program P28 exit: PASS** (pending three-expert board + merge).
+**program P28 exit: PASS** after review-board MUST-FIX (PR #37).
 Next: program P27 extensibility and/or P29 ship.

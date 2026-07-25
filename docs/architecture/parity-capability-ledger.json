@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21\u2013P26 product-complete consoles parity; projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; program P21\u2013P26 consoles + program P28 gateway messaging parity; projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",

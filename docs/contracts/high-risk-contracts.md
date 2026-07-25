@@ -306,8 +306,15 @@ it does not replace executable enforcement.
   outcome and outbound JSON; files are deterministic reconciled materializations.
 - **Evidence:** bounded gateway retries dead-letter the third failed attempt;
   delivery acknowledgement states are persisted and queryable.
+- **Evidence (program P28):** outbox receipt rows expose `delivered_unix` and
+  `ambiguous_send`; operator recovery via `list_ambiguous_sends` /
+  `acknowledge_delivery` / CLI `gateway ambiguous|ack`. Definite external send
+  failures are marked `terminal_reason=external_send_failed…` and are **not**
+  treated as ambiguous. Doctor surfaces `gateway_ambiguous_sends` without
+  claiming external exactly-once.
 - **Boundary:** guarantees of an external channel broker remain unresolved.
-- **Owner:** kernel cron/gateway plus future scheduler/delivery runtime.
+  Local SQLite is delivery authority; external EO is never ledger-parity.
+- **Owner:** `optimus-ops` gateway/telegram plus desktop messaging IPC.
 
 ### C-18 Session causality around durable effects
 

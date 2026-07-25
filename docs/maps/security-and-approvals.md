@@ -213,6 +213,17 @@ non-browser adapters without `Origin`.
 per minute. Gateway list/drain aggregation is bounded. Health omits home paths,
 and public errors are stable/redacted while internal detail is logged locally.
 
+**Confirmed current behaviour (program P28):** desktop Messaging IPC
+(`gateway_status`, `gateway_inbox`, `gateway_outbox`, `gateway_enqueue`,
+`gateway_ambiguous`, `gateway_ack_delivery`, `gateway_telegram_status`) is
+read/operator recovery only. `gateway_enqueue` allowlists `channel∈{local,telegram}`
+and `provider=offline` so the renderer cannot pick live model routes. Ack
+records a **local** delivery receipt only; it does not grant SmartDeny or mint
+project roots. Telegram adapter is mock or config-gated long-poll client work
+with no public listen port; token is never stored in `telegram.json` (env name
+only). Live mode requires non-empty `allowed_chat_ids` (fail closed). External
+messaging exactly-once remains residual — doctor/UI/CLI state that explicitly.
+
 ## Credentials
 
 **Confirmed current behaviour:** Codex credentials are serialized through

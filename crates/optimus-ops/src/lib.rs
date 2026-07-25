@@ -12,8 +12,9 @@ pub use cron::{CronAttemptView, CronClaim, CronError, CronJob, CronStore};
 pub use gateway::{
     acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
     enqueue, fail_claim, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
-    list_outbox_receipts, reconcile, release_claim, renew_claim, DrainResult, GatewayClaim,
-    GatewayError, GatewayPaths, GatewayStatus, InboundMessage, OutboundMessage, OutboxReceipt,
+    list_outbox_receipts, mark_external_send_failed, reconcile, release_claim, renew_claim,
+    DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus, InboundMessage,
+    OutboundMessage, OutboxReceipt,
 };
 pub use surface_commands::{
     builtin_surface_commands, commands_for_surface, CommandSurface, SurfaceCommand,
