@@ -79,7 +79,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 1 | Multi-agent readiness | **S+++** | S+++ | P10 (done; S+++ after P12 residual) |
 | 2 | Control-plane modularity | **S+++** | S+++ | P11 (done) |
 | 3 | Security boundary design | **S+++** | S+++ | P12 (done) |
-| 4 | Domain modularity | **A-** | S+++ | P13 |
+| 4 | Domain modularity | **S+++** (post-P13) | S+++ | P13 (done) |
 | 5 | Observability / eval | **A-** | S+++ | P14 |
 | 6 | UI architecture | **A-** | S+++ | P15 |
 | 7 | Doc / claim hygiene | **A-** | S+++ | P16 |
@@ -91,11 +91,11 @@ Phase numbers continue from trust-spine 0–5; P6–P9 are reserved for any
 interim hold/fix if needed. Execution starts at **P10**.
 
 ```text
-P10 Multi-agent (done → S+++ after P12)
+P10 Multi-agent (done → S+++)
   → P11 Control-plane (done → S+++)
   → P12 Security (done → S+++)
-  → P13 Domain modularity (A-)   ← next
-  → P14 Observability (A-)
+  → P13 Domain modularity (done → S+++)
+  → P14 Observability (A-)   ← next
   → P15 UI (A-)
   → P16 Doc hygiene (A-)
   → P17 Release gates (A)
@@ -357,7 +357,7 @@ surfaces, packs policy bypassed by kernel special cases.
 | D2 | Pack budget + availability golden tests as merge-adjacent gate | packs tests / script |
 | D3 | Memory plane separation tests (session ≠ memory ≠ skills ≠ EM) | kernel/memory tests |
 | D4 | Skill permission ceiling fuzz/table tests | skills + runtime |
-| D5 | Ownership map + system-overview domain table → Domain **S+++** | docs |
+| D5 | Ownership map + system-overview domain table → Domain **S+++** | done — ownership map + system-overview Domain modularity (P13) + marks |
 
 ### Hold suite
 
@@ -641,6 +641,5 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P12 done** (multi-agent → **S+++** after P12 residual close; control-plane
-→ **S+++**; security → **S+++** via ADR-0035 / PR #22). Next: **P13** domain
-modularity (single catalogs, plane separation).
+**P10–P13 done** (multi-agent / control-plane / security / domain → **S+++**).
+Next: **P14** observability / eval (export path + gate strength).

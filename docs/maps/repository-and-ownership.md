@@ -63,15 +63,31 @@ the root Cargo workspace.
 | `optimus-runtime` | library | Job execution, SmartDeny, process bounds/capture, crash resume, campaigns | graph, store, skills |
 | `optimus-memory` | library | Evidence-native runtime memory and temporal recall | none |
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
-| `optimus-packs` | library | Canonical tool/pack descriptor, operational metadata, and capability budgets | none |
+| `optimus-packs` | library | **Sole** `ToolDesc` / pack catalog, operational metadata, capability budgets | none |
 | `optimus-ops` | library | Operator gateway delivery authority and cron schedule store | none |
 | `optimus-artifacts` | library | Content-addressed artifact store | none (serde/sha2/fs2 only) |
 | `optimus-agent` | library | Specialist contracts, registry, invocation ledger | packs, runtime, graph |
 | `optimus-workflow` | library | Workflow contracts, run ledger, built-in DAG verticals | agent, artifacts, packs, runtime, graph |
-| `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
+| `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops; **no second tool catalog** | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
 | `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Rust host plus Wry/Tao rollback shell, native IPC, and HTTP test harness | kernel, graph, runtime, packs |
+
+## Domain modularity (P13 / ADR-0036)
+
+**Confirmed current behaviour:**
+
+| Plane | Owner | Must not |
+|---|---|---|
+| Tool identity | `optimus-packs::ToolDesc` | Second catalog in kernel/surfaces |
+| Session transcript | `SessionStore` | Authorize host effects |
+| Semantic memory | `optimus-memory` | `ActionAuthorize` / live capability grants |
+| Procedural skills | `optimus-skills` | Expand closed permissions; grant wrong effect class |
+| Work Graph jobs | `optimus-store` / graph / runtime | Own chat UI schema |
+| Engineering Memory | repo docs / EM scripts | Load as runtime authorization |
+
+**Gate:** `python3 scripts/check-domain-modularity.py` and
+`cargo test -p optimus-kernel --test domain_modularity`.
 
 ## Application surfaces
 
