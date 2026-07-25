@@ -8,6 +8,10 @@ rollback (`LegacyWry`). The Rust host (`optimus-desktop --host-only`) remains
 authority for IPC and durable effects. See
 [desktop-shell-and-ipc-matrix.md](../contracts/desktop-shell-and-ipc-matrix.md).
 
+**Program P29:** there is **no in-app auto-updater** (ADR-0043). Upgrade path is
+re-run `scripts/rebuild-install-relaunch.sh`. Doctor reports
+`updater_channel: "none"`.
+
 ## Rule
 
 After rebuilding the host and Electron app, install and relaunch the stable user

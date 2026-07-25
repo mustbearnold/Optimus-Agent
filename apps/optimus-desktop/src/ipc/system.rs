@@ -125,42 +125,184 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
                 "error": e.to_string(),
             })
         });
-    json!({
-        "phase": "desktop-5-sidebars-preview",
-        "home": home.display().to_string(),
-        "core_schema_tokens": s.schema_tokens(),
-        "max_budget": 2500,
-        "max_on_demand": 2,
-        "pack_catalog": pack_catalog,
-        "version": env!("CARGO_PKG_VERSION"),
-        "codex_present": auth.get("present").and_then(|v| v.as_bool()).unwrap_or(false),
-        "streaming": true,
-        "browser": browser_kind,
-        "cron": true,
-        "approvals": true,
-        "campaigns": true,
-        "gateway": true,
-        "files": true,
-        "pty": false,
-        "preview_browser": preview_browser,
-        "cron_jobs": cron_jobs,
-        "campaigns_active": campaigns_active,
-        "approvals_pending": approvals_pending,
-        "gateway_inbox_pending": gateway_inbox_pending,
-        "gateway_outbox_total": gateway_outbox_total,
-        "gateway_ambiguous_sends": gateway_ambiguous,
-        "gateway_note": "Local SQLite is delivery authority. External exactly-once is not claimed.",
-        "work_isolation": product_settings.get("work_isolation").cloned().unwrap_or(json!("shared")),
-        "configured_mode": product_settings.get("configured_mode").cloned().unwrap_or(json!("shared")),
-        "enforced_mode": product_settings.get("enforced_mode").cloned().unwrap_or(json!("shared")),
-        "work_isolation_label": product_settings.get("work_isolation_label").cloned().unwrap_or(json!("Shared workbench")),
-        "allow_concurrent_projects": product_settings.get("allow_concurrent_projects").cloned().unwrap_or(json!(false)),
-        // Product FS isolation only (false unless project_bound). Never default true.
-        "isolation_enforcement_active": product_settings.get("enforcement_active").cloned().unwrap_or(json!(false)),
-        "product_fs_enforced": product_settings.get("product_fs_enforced").cloned().unwrap_or(json!(false)),
-        "command_envelope_enforced": product_settings.get("command_envelope_enforced").cloned().unwrap_or(json!(true)),
-        "settings": product_settings,
-    })
+    let packs_loaded = s.loaded_packs().len();
+    let packs_on_demand = s.on_demand_count();
+    let pack_tools: usize = pack_catalog.iter().map(|p| p.tools.len()).sum();
+    let shell = detect_shell_mode();
+    let install = detect_install_metadata();
+    // Build map incrementally — large pack_catalog blows json! recursion limit.
+    let mut out = serde_json::Map::new();
+    out.insert("phase".into(), json!("product-complete"));
+    out.insert("program_phase".into(), json!("P29"));
+    out.insert("home".into(), json!(home.display().to_string()));
+    out.insert("core_schema_tokens".into(), json!(s.schema_tokens()));
+    out.insert("max_budget".into(), json!(2500));
+    out.insert("max_on_demand".into(), json!(2));
+    out.insert(
+        "pack_catalog".into(),
+        serde_json::to_value(&pack_catalog).unwrap_or(json!([])),
+    );
+    out.insert("packs_loaded".into(), json!(packs_loaded));
+    out.insert("packs_on_demand".into(), json!(packs_on_demand));
+    out.insert("packs_tool_count".into(), json!(pack_tools));
+    out.insert("version".into(), json!(env!("CARGO_PKG_VERSION")));
+    out.insert(
+        "codex_present".into(),
+        json!(auth.get("present").and_then(|v| v.as_bool()).unwrap_or(false)),
+    );
+    out.insert("streaming".into(), json!(true));
+    out.insert("browser".into(), json!(browser_kind));
+    out.insert("cron".into(), json!(true));
+    out.insert("approvals".into(), json!(true));
+    out.insert("campaigns".into(), json!(true));
+    out.insert("gateway".into(), json!(true));
+    out.insert("files".into(), json!(true));
+    out.insert("pty".into(), json!(false));
+    out.insert("preview_browser".into(), json!(preview_browser));
+    out.insert("cron_jobs".into(), json!(cron_jobs));
+    out.insert("campaigns_active".into(), json!(campaigns_active));
+    out.insert("approvals_pending".into(), json!(approvals_pending));
+    out.insert("gateway_inbox_pending".into(), json!(gateway_inbox_pending));
+    out.insert("gateway_outbox_total".into(), json!(gateway_outbox_total));
+    out.insert("gateway_ambiguous_sends".into(), json!(gateway_ambiguous));
+    out.insert(
+        "gateway_note".into(),
+        json!("Local SQLite is delivery authority. External exactly-once is not claimed."),
+    );
+    out.insert("shell_mode".into(), json!(shell.mode));
+    out.insert("shell_default".into(), json!(shell.default_shell));
+    out.insert("shell_label".into(), json!(shell.label));
+    out.insert("updater_channel".into(), json!("none"));
+    out.insert(
+        "updater_note".into(),
+        json!("No auto-updater (ADR-0043). Reinstall via scripts/rebuild-install-relaunch.sh."),
+    );
+    out.insert("install_present".into(), json!(install.present));
+    out.insert(
+        "install_shell".into(),
+        json!(install.desktop_shell),
+    );
+    out.insert("install_version".into(), json!(install.version));
+    out.insert(
+        "work_isolation".into(),
+        product_settings
+            .get("work_isolation")
+            .cloned()
+            .unwrap_or(json!("shared")),
+    );
+    out.insert(
+        "configured_mode".into(),
+        product_settings
+            .get("configured_mode")
+            .cloned()
+            .unwrap_or(json!("shared")),
+    );
+    out.insert(
+        "enforced_mode".into(),
+        product_settings
+            .get("enforced_mode")
+            .cloned()
+            .unwrap_or(json!("shared")),
+    );
+    out.insert(
+        "work_isolation_label".into(),
+        product_settings
+            .get("work_isolation_label")
+            .cloned()
+            .unwrap_or(json!("Shared workbench")),
+    );
+    out.insert(
+        "allow_concurrent_projects".into(),
+        product_settings
+            .get("allow_concurrent_projects")
+            .cloned()
+            .unwrap_or(json!(false)),
+    );
+    out.insert(
+        "isolation_enforcement_active".into(),
+        product_settings
+            .get("enforcement_active")
+            .cloned()
+            .unwrap_or(json!(false)),
+    );
+    out.insert(
+        "product_fs_enforced".into(),
+        product_settings
+            .get("product_fs_enforced")
+            .cloned()
+            .unwrap_or(json!(false)),
+    );
+    out.insert(
+        "command_envelope_enforced".into(),
+        product_settings
+            .get("command_envelope_enforced")
+            .cloned()
+            .unwrap_or(json!(true)),
+    );
+    out.insert("settings".into(), product_settings);
+    serde_json::Value::Object(out)
+}
+
+struct ShellModeReport {
+    mode: &'static str,
+    default_shell: bool,
+    label: &'static str,
+}
+
+fn detect_shell_mode() -> ShellModeReport {
+    // Default product shell is Electron+React (ADR-0028/0029/0038). Host-only
+    // doctor cannot observe the renderer process; report the product default.
+    // Install metadata may refine via detect_install_metadata.
+    ShellModeReport {
+        mode: "electron_react",
+        default_shell: true,
+        label: "Electron + React (default)",
+    }
+}
+
+struct InstallMetaReport {
+    present: bool,
+    desktop_shell: Option<String>,
+    version: Option<String>,
+}
+
+fn detect_install_metadata() -> InstallMetaReport {
+    // Best-effort read of the stable user install (XDG). Missing install is not an error.
+    let data_home = std::env::var("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            std::env::var("HOME")
+                .map(|h| PathBuf::from(h).join(".local/share"))
+                .unwrap_or_else(|_| PathBuf::from("/tmp"))
+        });
+    let root = data_home.join("optimus-agent");
+    let meta_path = root.join("install-meta.json");
+    if !meta_path.is_file() {
+        return InstallMetaReport {
+            present: false,
+            desktop_shell: None,
+            version: None,
+        };
+    }
+    let raw = std::fs::read_to_string(&meta_path).unwrap_or_default();
+    let meta: serde_json::Value = serde_json::from_str(&raw).unwrap_or(json!({}));
+    InstallMetaReport {
+        present: true,
+        desktop_shell: meta
+            .get("desktop_shell")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        version: meta
+            .get("version")
+            .or_else(|| meta.get("product_version"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .or_else(|| {
+                std::fs::read_to_string(root.join("VERSION.txt"))
+                    .ok()
+                    .map(|s| s.trim().to_string())
+            }),
+    }
 }
 
 pub fn auth_status_json(home: &PathBuf) -> serde_json::Value {
@@ -242,6 +384,13 @@ mod tests {
         assert_eq!(doc["allow_concurrent_projects"], true);
         assert_eq!(doc["isolation_enforcement_active"], false);
         assert_eq!(doc["product_fs_enforced"], false);
+        assert_eq!(doc["shell_mode"], "electron_react");
+        assert_eq!(doc["shell_default"], true);
+        assert_eq!(doc["updater_channel"], "none");
+        assert_eq!(doc["phase"], "product-complete");
+        assert!(doc["gateway"].as_bool().unwrap_or(false));
+        assert!(doc.get("packs_loaded").is_some());
+        assert!(doc.get("gateway_ambiguous_sends").is_some());
 
         let bound = settings_set(
             &home,

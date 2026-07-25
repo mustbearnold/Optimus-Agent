@@ -149,6 +149,18 @@ export type Doctor = {
   gateway_outbox_total?: number;
   gateway_ambiguous_sends?: number;
   gateway_note?: string;
+  shell_mode?: string;
+  shell_default?: boolean;
+  shell_label?: string;
+  updater_channel?: string;
+  updater_note?: string;
+  install_present?: boolean;
+  install_shell?: string | null;
+  install_version?: string | null;
+  packs_loaded?: number;
+  packs_on_demand?: number;
+  packs_tool_count?: number;
+  program_phase?: string;
   cron_jobs?: number;
   campaigns_active?: number;
   approvals_pending?: number;

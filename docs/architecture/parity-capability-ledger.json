@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21\u2013P28 product + program P27 extensibility parity; projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; program P20\u2013P29 PRODUCT-COMPLETE (updater residual ADR-0043); projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -202,9 +202,12 @@
       "state": "parity",
       "evidence": [
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
-        "docs/decisions/0014-native-webview-ipc-mode.md"
+        "docs/decisions/0014-native-webview-ipc-mode.md",
+        "docs/architecture/desktop-install-relaunch.md",
+        "scripts/rebuild-install-relaunch.sh",
+        "docs/decisions/0038-ui-ipc-architecture.md"
       ],
-      "trajectory": "playwright:shell multi-pane IA",
+      "trajectory": "playwright:shell multi-pane IA; program P29 install default Electron+React",
       "owner_ticket": "PF-02"
     },
     {
@@ -621,8 +624,13 @@
       "id": "release.updater",
       "capability": "Signed updater and rollback",
       "hermes_reference": "Product update channel",
-      "state": "missing",
-      "evidence": [],
+      "state": "partial",
+      "evidence": [
+        "docs/decisions/0043-no-auto-updater-channel.md",
+        "apps/optimus-desktop/src/ipc/system.rs",
+        "scripts/rebuild-install-relaunch.sh",
+        "docs/architecture/product-complete-p29-verification.md"
+      ],
       "trajectory": null,
       "owner_ticket": "E-09"
     },

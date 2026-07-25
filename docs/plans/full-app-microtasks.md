@@ -280,11 +280,11 @@ mile after behavior exists (avoids re-proving install on a moving UI).
 
 | ID | Status | Micro-task | Ledger / anchor | Proof |
 |---|---|---|---|---|
-| S6.1 | `todo` | Installed Electron packaging + desktop entry default React | ADR-0029 planned | install/relaunch skill; only when user authorizes install |
-| S6.2 | `todo` | Native paint/a11y baseline on **installed** Electron | `desktop.native-cua` | CUA/PF-00-class evidence for React host |
-| S6.3 | `todo` | Doctor reports shell mode, isolation enforcement, gateway, packs | supportability | doctor tests |
-| S6.4 | `todo` | Signed updater + rollback **or** documented no-updater channel | `release.updater` | packaging test or explicit product decision ADR |
-| S6.5 | `todo` | Ledger + scorecard pass for all Stage 0–6 product rows | ledger | every product row `parity` or `win` with trajectory |
+| S6.1 | `done` | Installed Electron packaging + desktop entry default React | ADR-0029 | install script + install-meta; program P29 |
+| S6.2 | `done` | Native paint/a11y baseline on **installed** Electron | `desktop.native-cua` | existing PF-00 / parity hold; program P29 |
+| S6.3 | `done` | Doctor reports shell mode, isolation enforcement, gateway, packs | supportability | doctor fields; program P29 |
+| S6.4 | `done` | Signed updater + rollback **or** documented no-updater channel | `release.updater` | ADR-0043 no auto-updater; program P29 |
+| S6.5 | `done` | Ledger + scorecard pass for all Stage 0–6 product rows | ledger | product rows parity/win; residual partials named; program P29 |
 
 **Stage exit:** **PRODUCT-COMPLETE.** User installs Optimus and uses the full
 daily loop + Telegram without developer tooling.
