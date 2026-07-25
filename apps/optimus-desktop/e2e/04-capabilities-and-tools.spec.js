@@ -63,6 +63,15 @@ test('campaign create+run via capabilities UI', async ({ page }) => {
   const row = page.locator(`#campaignsList .cap-row[data-camp-id="${created.id}"]`);
   await expect(row).toBeVisible();
   await row.locator(`[data-run="${created.id}"]`).click();
+  await expect(page.locator('#campaignStatusLine')).toContainText('→ AwaitingApproval', {
+    timeout: 15000,
+  });
+  await page.locator('#approvalsRefresh').click();
+  const grant = page.locator('#approvalsList [data-grant]').first();
+  await expect(grant).toBeVisible();
+  await grant.click();
+  await expect(page.locator('#approvalsList')).toContainText(/No pending approvals/i);
+  await row.locator(`[data-run="${created.id}"]`).click();
   await expect(page.locator('#campaignStatusLine')).toContainText('→ Succeeded', {
     timeout: 15000,
   });

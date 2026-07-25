@@ -3551,9 +3551,13 @@
     try { await refreshStatusBar(); } catch {}
     startStatusPoll();
     document.documentElement.dataset.bootState = 'ready';
-    // Warm live browser (Google) in the background so Browser tab is instant.
+    // Warm the native live browser in the background so its tab is instant.
+    // Development HTTP mode uses the deterministic fallback and must not block
+    // unrelated UI work while attempting to launch a nested CDP browser.
     try {
-      if (typeof ensureBrowserPreloaded === 'function') ensureBrowserPreloaded();
+      if (window.__OPTIMUS_HTTP_MODE__ !== true && typeof ensureBrowserPreloaded === 'function') {
+        ensureBrowserPreloaded();
+      }
     } catch (_) {}
   }
 

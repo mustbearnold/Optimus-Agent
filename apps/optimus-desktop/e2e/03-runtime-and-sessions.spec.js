@@ -19,7 +19,8 @@ test('IPC doctor via fetch', async () => {
   });
   const j = await r.json();
   expect(j.ok).toBe(true);
-  expect(j.result.phase).toContain('desktop');
+  expect(j.result.phase).toBe('product-complete');
+  expect(j.result.program_phase).toBe('P29');
   expect(j.result.home).toBeTruthy();
   expect(j.result.streaming).toBe(true);
   expect(j.result.cron).toBe(true);
@@ -87,7 +88,43 @@ test('campaign create run via IPC', async () => {
     }),
   }).then((r) => r.json());
   expect(run.ok, JSON.stringify(run)).toBe(true);
-  expect(run.result.status).toMatch(/Succeeded/i);
+  expect(run.result.status).toBe('AwaitingApproval');
+
+  let status = run.result.status;
+  for (let attempt = 0; attempt < 4 && status === 'AwaitingApproval'; attempt += 1) {
+    const approvals = await fetch(`${url()}/api/ipc`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 32 + attempt, method: 'approvals_list', params: {} }),
+    }).then((response) => response.json());
+    expect(approvals.ok).toBe(true);
+    expect(approvals.result.pending.length).toBeGreaterThan(0);
+    for (const pending of approvals.result.pending) {
+      const granted = await fetch(`${url()}/api/ipc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 36 + attempt,
+          method: 'approvals_grant',
+          params: { job_id: pending.job_id },
+        }),
+      }).then((response) => response.json());
+      expect(granted.ok).toBe(true);
+      expect(granted.result.status).toBe('Succeeded');
+    }
+    const resumed = await fetch(`${url()}/api/ipc`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 40 + attempt,
+        method: 'campaign_run',
+        params: { id: create.result.id },
+      }),
+    }).then((response) => response.json());
+    expect(resumed.ok).toBe(true);
+    status = resumed.result.status;
+  }
+  expect(status).toBe('Succeeded');
 });
 
 test('cron add list tick via IPC', async ({ serverInfo }) => {
