@@ -161,7 +161,8 @@ Commits, branches, PRs, issues, and labels follow
 
 - **Commits / PR titles (visible on Commits tab):** emoji-first Conventional Commits
   - `✨ feat(scope): …` · `🔧 fix: …` · `♻️ refactor: …` · `📝 docs: …` · `🧹 chore: …`
-- **Branches:** `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
+- **Branches:** `pr/<number>-<short-kebab>` once a PR exists (start as `wip/…`, then adopt)
+  - helper: `python3 scripts/github_pr_branch.py adopt` / `… open`
 - **Labels (Issues / PRs):** one leading emoji + namespace, e.g.
   - ✨ `type:feat` · 🔧 `type:fix` · ♻️ `type:refactor` · 📝 `type:docs`
   - 🧠 `area:kernel` · 🔁 `area:runtime` · 🔀 `area:workflow` · 🖥️ `area:desktop`

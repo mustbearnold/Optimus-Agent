@@ -43,7 +43,7 @@ Examples:
 ## Checklist
 
 - [ ] Emoji-first Conventional Commit title (and commits if stacked)
-- [ ] Branch named `<type>/<short-kebab>` (or `agent/<topic>` for agent-driven work)
+- [ ] Head branch is `pr/<this-PR-number>-<short-kebab>` (run `python3 scripts/github_pr_branch.py adopt` if needed)
 - [ ] No secrets or home paths in logs/diffs
 - [ ] Docs/ADR updated when contracts or architecture change
 - [ ] Labels applied (emoji + `type:` + `area:` + `size:` minimum)
