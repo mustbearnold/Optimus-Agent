@@ -14,11 +14,11 @@ use optimus_graph::PolicyMode;
 use optimus_kernel::{
     device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_recent_causal_turns,
     list_sessions, load_causal_turn, open_cron, open_seeded_agent_registry,
-    open_seeded_workflow_registry, parse_causal_query, resolve_route, run_write_file_handoff,
-    sanitize_codex_oauth_model, tick_cron, BrowserSession, CodexAuthStore, CodexOAuthConfig,
-    CodexOAuthModel, CompletionResponse, Kernel, KernelConfig, OpenAiCompatConfig,
-    OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel, ToolCall,
-    WriteFileHandoffRequest,
+    open_seeded_workflow_registry, parse_causal_query, resolve_route, run_read_file_handoff,
+    run_write_file_handoff, run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron,
+    BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
+    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, ReadFileHandoffRequest,
+    RouteRequest, RouteSurface, ScriptedModel, ToolCall, WriteFileHandoffRequest,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{
@@ -151,7 +151,7 @@ enum Commands {
         #[command(subcommand)]
         cmd: CampaignCmd,
     },
-    /// Built-in specialist + workflow vertical (Phase 3)
+    /// Built-in multi-agent verticals (P10 DAG + specialists)
     Vertical {
         #[command(subcommand)]
         cmd: VerticalCmd,
@@ -415,6 +415,27 @@ enum VerticalCmd {
         #[arg(long)]
         json: bool,
     },
+    /// Run read_file_handoff → workspace_reader vertical
+    ReadFile {
+        /// Relative path under the Optimus workspace (must already exist)
+        #[arg(long)]
+        path: String,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Run write_then_read_handoff DAG (workspace_writer → workspace_reader)
+    WriteThenRead {
+        #[arg(long)]
+        path: String,
+        #[arg(long)]
+        contents: String,
+        #[arg(long, default_value_t = false)]
+        auto_grant: bool,
+        #[arg(long, default_value = "smart_deny")]
+        policy: String,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn main() -> ExitCode {
@@ -425,6 +446,14 @@ fn main() -> ExitCode {
             eprintln!("error: {e}");
             ExitCode::FAILURE
         }
+    }
+}
+
+fn parse_policy_mode(policy: &str) -> Result<PolicyMode, Box<dyn std::error::Error>> {
+    match policy.to_ascii_lowercase().as_str() {
+        "smart_deny" | "smartdeny" | "deny" => Ok(PolicyMode::SmartDeny),
+        "unrestricted" | "open" => Ok(PolicyMode::Unrestricted),
+        other => Err(format!("unknown policy {other}; use smart_deny or unrestricted").into()),
     }
 }
 
@@ -1423,16 +1452,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     policy,
                     json,
                 } => {
-                    let policy = match policy.to_ascii_lowercase().as_str() {
-                        "smart_deny" | "smartdeny" | "deny" => PolicyMode::SmartDeny,
-                        "unrestricted" | "open" => PolicyMode::Unrestricted,
-                        other => {
-                            return Err(format!(
-                                "unknown policy {other}; use smart_deny or unrestricted"
-                            )
-                            .into())
-                        }
-                    };
+                    let policy = parse_policy_mode(&policy)?;
                     let report = run_write_file_handoff(
                         &cli.home,
                         WriteFileHandoffRequest {
@@ -1454,6 +1474,9 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                             report.agent_version,
                             report.invocation_id
                         );
+                        if let Some(run_id) = report.run_id {
+                            println!("run={run_id}");
+                        }
                         if let Some(job) = report.job_id {
                             println!("job={job}");
                         }
@@ -1464,6 +1487,72 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                 artifact.sha256, artifact.size_bytes
                             );
                         }
+                    }
+                }
+                VerticalCmd::ReadFile { path, json } => {
+                    let report = run_read_file_handoff(
+                        &cli.home,
+                        ReadFileHandoffRequest {
+                            relative_path: path,
+                        },
+                    )?;
+                    if json {
+                        println!("{}", serde_json::to_string_pretty(&report)?);
+                    } else {
+                        println!(
+                            "workflow={}@{} status={:?} run={}",
+                            report.workflow_id,
+                            report.workflow_version,
+                            report.status,
+                            report.run_id
+                        );
+                        println!("summary={}", report.summary);
+                        for artifact in report.artifacts {
+                            println!(
+                                "artifact={} bytes={}",
+                                artifact.sha256, artifact.size_bytes
+                            );
+                        }
+                    }
+                }
+                VerticalCmd::WriteThenRead {
+                    path,
+                    contents,
+                    auto_grant,
+                    policy,
+                    json,
+                } => {
+                    let policy = parse_policy_mode(&policy)?;
+                    let report = run_write_then_read_handoff(
+                        &cli.home,
+                        WriteFileHandoffRequest {
+                            relative_path: path,
+                            contents,
+                            auto_grant,
+                            policy,
+                        },
+                    )?;
+                    if json {
+                        println!("{}", serde_json::to_string_pretty(&report)?);
+                    } else {
+                        println!(
+                            "workflow={}@{} status={:?} run={} nodes={} children={}",
+                            report.workflow_id,
+                            report.workflow_version,
+                            report.status,
+                            report.run_id,
+                            report.nodes.len(),
+                            report.children.len()
+                        );
+                        for node in &report.nodes {
+                            println!(
+                                "  node={} status={} artifact={:?}",
+                                node.node_id,
+                                node.status.as_str(),
+                                node.artifact_sha256
+                            );
+                        }
+                        println!("summary={}", report.summary);
                     }
                 }
             }
