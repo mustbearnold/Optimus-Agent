@@ -1,5 +1,10 @@
 //! Versioned workflow contracts, durable run ledger, and built-in specialist DAG verticals.
+//!
+//! Multi-agent orchestration envelopes and RunController (design P0) live in
+//! `orchestrator_envelopes` / `run_controller`.
 
+mod orchestrator_envelopes;
+mod run_controller;
 mod specialist_vertical;
 mod workflow;
 mod workflow_run;
@@ -35,6 +40,8 @@ pub use optimus_agent::{
     AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
 };
 pub use optimus_artifacts::{ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult};
+pub use orchestrator_envelopes::*;
+pub use run_controller::*;
 pub use specialist_vertical::*;
 pub use workflow::*;
 pub use workflow_run::*;
