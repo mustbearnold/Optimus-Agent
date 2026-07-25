@@ -34,7 +34,6 @@
   --muted: #686868;
   --faint: #8b8b8b;
   --rail-nav-text: #787878;
-  --rail-nav-drop-shadow-color: rgba(0, 0, 0, 0.32);
   --chrome-control-icon: #606060;
   --accent: #2f6feb;
   --accent-strong: #225fc9;
@@ -45,7 +44,6 @@
   --danger-contrast: #ffffff;
   --danger-soft: rgba(199, 53, 69, 0.08);
   --topbar-h: 36px;
-  --truth-h: 26px;
   --radius-sm: 5px;
   --radius: 8px;
   --radius-lg: 12px;
@@ -56,7 +54,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   line-height: 1.45;
-  text-rendering: geometricPrecision;
+  text-rendering: auto;
 }
 
 :root[data-theme="dark"] {
@@ -78,7 +76,6 @@
   --muted: #a2a2a2;
   --faint: #7e7e7e;
   --rail-nav-text: #b8b8b8;
-  --rail-nav-drop-shadow-color: rgba(0, 0, 0, 0.9);
   --chrome-control-icon: #b2b2b2;
   --accent: #7aa2f7;
   --accent-strong: #a8c1ff;
@@ -392,24 +389,13 @@ svg {
 
 .rail-nav button {
   color: var(--rail-nav-text);
-  transition: color 70ms linear, background-color 70ms linear, text-shadow 70ms linear;
-}
-
-.rail-nav button > svg {
-  transition: filter 70ms linear;
+  transition: color 70ms linear, background-color 70ms linear;
 }
 
 .rail-nav button:hover,
 .rail-nav button:active,
 .rail-nav button.is-active {
   color: var(--rail-nav-text);
-  text-shadow: 0 1px 0 var(--rail-nav-drop-shadow-color);
-}
-
-.rail-nav button:hover > svg,
-.rail-nav button:active > svg,
-.rail-nav button.is-active > svg {
-  filter: drop-shadow(0 1px 0 var(--rail-nav-drop-shadow-color));
 }
 
 .rail-nav button.is-active {
@@ -573,11 +559,6 @@ svg {
   height: 20.16px;
   grid-template-columns: minmax(0, 1fr);
   padding-inline: 27px 2px;
-}
-
-.session-row .row-more {
-  min-height: 24px;
-  height: 24px;
 }
 
 .rail-resizer:focus-visible,
@@ -908,15 +889,6 @@ svg {
   height: 28px;
   color: #ffffff;
   background: #2f6feb;
-}
-
-.truth-strip {
-  height: var(--truth-h);
-  gap: 14px;
-  padding-inline: 9px;
-  color: var(--muted);
-  background: var(--rail);
-  font-size: 11px;
 }
 
 .text-prompt-dialog {
@@ -1350,11 +1322,6 @@ svg {
 }
 
 :root[data-density="compact"] .session-select {
-  height: 23.04px;
-}
-
-:root[data-density="compact"] .session-row .row-more {
-  min-height: 23.04px;
   height: 23.04px;
 }
 

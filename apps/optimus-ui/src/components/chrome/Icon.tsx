@@ -1,13 +1,14 @@
 import type { SVGProps } from 'react';
 import {
   Accessibility,
+  Archive,
   ArrowLeft,
   ArrowRight,
   BrowserCode,
-  ChatRound,
-  Check,
+  ChatSquare,
+  CheckSquare,
   ChevronDown,
-  CloseCircle,
+  CloseSquare,
   CodeFile,
   Cpu,
   Envelope,
@@ -17,19 +18,20 @@ import {
   FolderAdd,
   Globe,
   IconComponent,
-  InfoCircle,
+  InfoSquare,
   MagicWand,
   Maximize,
   Minimize,
   Moon,
-  More,
+  MoreSquare,
   Palette,
+  PenSquare,
   Pin,
   Plus,
   Refresh,
   Scan,
   Search,
-  Send,
+  Pointer,
   Settings,
   Shield,
   SidebarLeft,
@@ -37,7 +39,7 @@ import {
   Sliders,
   Stop,
   Sun,
-  Task,
+  TaskSquare,
   TerminalSquare,
   ThreeDCube,
   Trash,
@@ -48,11 +50,13 @@ export type IconName =
   | 'sidebar'
   | 'search'
   | 'plus'
+  | 'compose'
   | 'folder'
   | 'chat'
   | 'capabilities'
   | 'mail'
   | 'artifact'
+  | 'archive'
   | 'browser'
   | 'files'
   | 'terminal'
@@ -96,15 +100,17 @@ const icons: Record<IconName, IconComponent> = {
   sidebar: SidebarLeft,
   search: Search,
   plus: Plus,
+  compose: PenSquare,
   folder: Folder,
-  chat: ChatRound,
+  chat: ChatSquare,
   capabilities: ThreeDCube,
   mail: Envelope,
   artifact: FileText,
+  archive: Archive,
   browser: BrowserCode,
   files: Files,
   terminal: TerminalSquare,
-  tasks: Task,
+  tasks: TaskSquare,
   settings: Settings,
   sun: Sun,
   moon: Moon,
@@ -112,16 +118,16 @@ const icons: Record<IconName, IconComponent> = {
   back: ArrowLeft,
   forward: ArrowRight,
   reload: Refresh,
-  send: Send,
+  send: Pointer,
   stop: Stop,
   chevron: ChevronDown,
   pin: Pin,
   trash: Trash,
   refresh: Refresh,
-  check: Check,
+  check: CheckSquare,
   warning: Warning,
-  close: CloseCircle,
-  more: More,
+  close: CloseSquare,
+  more: MoreSquare,
   annotation: Scan,
   minimize: Minimize,
   maximize: Maximize,
@@ -135,11 +141,12 @@ const icons: Record<IconName, IconComponent> = {
   advanced: Sliders,
   globe: Globe,
   source: CodeFile,
-  info: InfoCircle,
+  info: InfoSquare,
 };
 
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
   const ReiconIcon = icons[name];
+  const className = ['optimus-icon', props.className].filter(Boolean).join(' ');
 
-  return <ReiconIcon aria-hidden="true" weight={name === 'more' ? 'Filled' : 'Outline'} {...props} />;
+  return <ReiconIcon aria-hidden="true" weight="Outline" {...props} className={className} />;
 }

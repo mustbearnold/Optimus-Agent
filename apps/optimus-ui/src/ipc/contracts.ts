@@ -95,6 +95,7 @@ export type Message = {
 export type SessionMeta = {
   id: string;
   title?: string;
+  worktree?: string;
   message_count?: number;
   packs?: string[];
   updated_at?: string;

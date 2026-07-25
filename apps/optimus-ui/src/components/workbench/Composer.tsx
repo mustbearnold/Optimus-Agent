@@ -51,9 +51,9 @@ export function Composer({
   const [accessOpen, setAccessOpen] = useState(false);
   const busy = ['submitting', 'working', 'awaiting_approval', 'cancelling'].includes(runStatus);
   const thinkingLabel = {
-    low: 'Low effort',
-    medium: 'Medium effort',
-    high: 'High effort',
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
     xhigh: 'Extra high',
   }[settings.thinking] || settings.thinking;
   const modelLabel = visibleModelLabel(settings.provider, settings.model);
@@ -155,7 +155,7 @@ export function Composer({
               <button
                 ref={accessTrigger}
                 type="button"
-                className="composer-access-trigger"
+                className={`composer-access-trigger${settings.access === 'full' ? ' is-full-access' : ''}`}
                 aria-label={`Access: ${selectedAccess.label}`}
                 aria-haspopup="listbox"
                 aria-expanded={accessOpen}

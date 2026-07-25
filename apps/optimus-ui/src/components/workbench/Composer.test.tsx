@@ -122,7 +122,27 @@ describe('Composer', () => {
 
     const trigger = screen.getByRole('button', { name: 'Model and run settings' });
     expect(trigger).toHaveTextContent('5.6 Terra');
-    expect(trigger).toHaveTextContent('High effort');
+    expect(trigger).toHaveTextContent('High');
+    expect(trigger).not.toHaveTextContent('effort');
     expect(trigger).not.toHaveTextContent('gpt-5.6-terra');
+  });
+
+  it('marks only the selected Full access control for flame styling', () => {
+    render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={{ ...settings, access: 'full' }}
+        onChange={() => undefined}
+        onSettings={() => undefined}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Access: Full access' })).toHaveClass('is-full-access');
+    expect(screen.getByRole('button', { name: 'Model and run settings' })).not.toHaveClass('is-full-access');
   });
 });

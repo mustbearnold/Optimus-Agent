@@ -22,10 +22,11 @@ const sessions: SessionMeta[] = [
   {
     id: 'fixture-assess',
     title: 'Assess Optimus Agent Project State',
+    worktree: 'workspace-redesign',
     message_count: 8,
     updated_at: new Date().toISOString(),
   },
-  { id: 'fixture-ui', title: 'T3-style React workbench', message_count: 4 },
+  { id: 'fixture-ui', title: 'Workspace shell redesign', message_count: 4 },
   { id: 'fixture-runtime', title: 'Runtime approval audit', message_count: 6 },
   { id: 'fixture-browser', title: 'Preview browser integration', message_count: 5 },
 ];
