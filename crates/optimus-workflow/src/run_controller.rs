@@ -341,56 +341,97 @@ impl RunController {
             return self.gate_decision_from_terminal();
         }
 
+        // Blocking signal: explicit counts/findings. fail_lenses only count when the
+        // lens is blocking-by-default (style_optional never blocks accept).
+        let blocking_lens_fail = report.fail_lenses.iter().any(|l| l.is_blocking_by_default());
         let blocking = report.blocking_count > 0
             || report.merged_findings.iter().any(|f| f.blocking)
-            || !report.fail_lenses.is_empty();
+            || blocking_lens_fail;
 
-        let (action, reason, next) = if !blocking
-            && matches!(
-                report.recommended_action,
-                GateAction::Accept | GateAction::FailClosed
-            ) {
-            if report.recommended_action == GateAction::FailClosed {
-                (GateAction::FailClosed, "synth_fail", RunState::Failed)
-            } else {
-                (GateAction::Accept, "accept", RunState::Delivering)
-            }
+        // Synth FailClosed with no blocking evidence still fails closed (cannot
+        // "review away" a hard fail recommendation into accept).
+        let (action, reason, next) = if report.recommended_action == GateAction::FailClosed && !blocking
+        {
+            (GateAction::FailClosed, "synth_fail", RunState::Failed)
         } else if !blocking && report.recommended_action == GateAction::Accept {
             (GateAction::Accept, "accept", RunState::Delivering)
+        } else if !blocking
+            && matches!(
+                report.recommended_action,
+                GateAction::PatchWorker | GateAction::Replan
+            )
+        {
+            // Non-blocking but synth asked for work: treat as accept with warnings path
+            // only if answer_draft present; else fail closed (no free loops).
+            if !report.answer_draft.trim().is_empty() {
+                (GateAction::Accept, "accept_nonblocking_synth_noise", RunState::Delivering)
+            } else {
+                (
+                    GateAction::FailClosed,
+                    "nonblocking_without_answer",
+                    RunState::Failed,
+                )
+            }
         } else if blocking
             && report.recommended_action == GateAction::PatchWorker
             && self.counters.patch_attempts < self.policy.max_patch_attempts
+            && report.patch_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
         {
             self.counters.patch_attempts += 1;
             (GateAction::PatchWorker, "patch_worker", RunState::Executing)
         } else if blocking
             && report.recommended_action == GateAction::Replan
             && self.counters.replan_attempts < self.policy.max_replan_attempts
+            && report.replan_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
         {
             self.counters.replan_attempts += 1;
             (GateAction::Replan, "replan", RunState::Planning)
         } else if blocking
-            && matches!(
-                report.recommended_action,
-                GateAction::PatchWorker | GateAction::Accept | GateAction::FailClosed
-            )
+            && report.recommended_action == GateAction::PatchWorker
             && self.counters.patch_attempts < self.policy.max_patch_attempts
-            && report.patch_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
         {
-            // Patch fallback only when synth asked for patch (or generic fail) with a brief.
-            self.counters.patch_attempts += 1;
-            (GateAction::PatchWorker, "patch_worker_fallback", RunState::Executing)
-        } else if blocking
-            && matches!(
-                report.recommended_action,
-                GateAction::Replan | GateAction::FailClosed | GateAction::Accept
+            // Patch recommended but brief missing → fail closed (no free-text loop).
+            (
+                GateAction::FailClosed,
+                "patch_missing_brief",
+                RunState::Failed,
             )
+        } else if blocking
+            && report.recommended_action == GateAction::Replan
             && self.counters.replan_attempts < self.policy.max_replan_attempts
-            && report.replan_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
         {
-            // Replan fallback requires an explicit replan_brief (anti free-text loop).
-            self.counters.replan_attempts += 1;
-            (GateAction::Replan, "replan_fallback", RunState::Planning)
+            (
+                GateAction::FailClosed,
+                "replan_missing_brief",
+                RunState::Failed,
+            )
+        } else if blocking && report.recommended_action == GateAction::Accept {
+            // Blocking findings always win over synth accept — cannot review away security/correctness.
+            if self.counters.patch_attempts < self.policy.max_patch_attempts
+                && report.patch_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
+            {
+                self.counters.patch_attempts += 1;
+                (
+                    GateAction::PatchWorker,
+                    "blocking_overrides_accept_patch",
+                    RunState::Executing,
+                )
+            } else if self.counters.replan_attempts < self.policy.max_replan_attempts
+                && report.replan_brief.as_ref().is_some_and(|b| !b.trim().is_empty())
+            {
+                self.counters.replan_attempts += 1;
+                (
+                    GateAction::Replan,
+                    "blocking_overrides_accept_replan",
+                    RunState::Planning,
+                )
+            } else {
+                (
+                    GateAction::FailClosed,
+                    "blocking_overrides_accept",
+                    RunState::Failed,
+                )
+            }
         } else {
             (
                 GateAction::FailClosed,
@@ -688,5 +729,133 @@ mod tests {
                 .count(),
             1
         );
+    }
+
+    #[test]
+    fn blocking_findings_override_synth_accept() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = accept_report("looks fine");
+        report.blocking_count = 1;
+        report.fail_lenses = vec![ReviewLens::Security];
+        report.merged_findings = vec![crate::orchestrator_envelopes::Finding {
+            severity: "error".into(),
+            claim: "path escape".into(),
+            evidence_ref: Some("effect:1".into()),
+            blocking: true,
+        }];
+        report.patch_brief = Some("confine path".into());
+        let d = c.apply_quality_gate(&report).unwrap();
+        assert_eq!(d.action, GateAction::PatchWorker);
+        assert_eq!(c.state, RunState::Executing);
+    }
+
+    #[test]
+    fn style_optional_fail_does_not_block_accept() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = accept_report("solid answer");
+        report.fail_lenses = vec![ReviewLens::StyleOptional];
+        report.merged_findings = vec![crate::orchestrator_envelopes::Finding {
+            severity: "info".into(),
+            claim: "could be punchier".into(),
+            evidence_ref: None,
+            blocking: false,
+        }];
+        let d = c.apply_quality_gate(&report).unwrap();
+        assert_eq!(d.action, GateAction::Accept);
+        assert_eq!(c.state, RunState::Succeeded);
+    }
+
+    #[test]
+    fn patch_without_brief_fails_closed() {
+        let mut c = RunController::accept(task(), RunPolicy::minimal()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = patch_report();
+        report.patch_brief = None;
+        // validate() requires brief — host must not call gate with invalid report
+        assert!(report.validate().is_err());
+        // Construct via recommended_action only by temporarily satisfying validate:
+        // gate is only invoked after validate in apply_quality_gate.
+        // Simulate invalid path: empty brief fails validate before decision.
+        let err = c.apply_quality_gate(&report).unwrap_err();
+        assert!(err.to_string().contains("patch_brief") || err.to_string().contains("patch"));
+        assert!(!c.is_terminal());
+    }
+
+    #[test]
+    fn synth_fail_closed_without_blocking_still_fails() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = accept_report("should not deliver");
+        report.recommended_action = GateAction::FailClosed;
+        let d = c.apply_quality_gate(&report).unwrap();
+        assert_eq!(d.action, GateAction::FailClosed);
+        assert_eq!(d.reason_code, "synth_fail");
+        assert_eq!(c.state, RunState::Failed);
+        assert_eq!(
+            c.terminal_payload().unwrap().terminal,
+            DeliveryTerminal::Failed
+        );
+    }
+
+    #[test]
+    fn nonblocking_patch_noise_with_answer_accepts() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = accept_report("usable draft");
+        report.recommended_action = GateAction::PatchWorker;
+        report.patch_brief = Some("nice-to-have polish".into());
+        // no blocking signals
+        assert_eq!(report.blocking_count, 0);
+        let d = c.apply_quality_gate(&report).unwrap();
+        assert_eq!(d.action, GateAction::Accept);
+        assert_eq!(d.reason_code, "accept_nonblocking_synth_noise");
+        assert_eq!(c.state, RunState::Succeeded);
+        assert_eq!(c.counters.patch_attempts, 0);
+    }
+
+    #[test]
+    fn nonblocking_without_answer_fails_closed() {
+        let mut c = RunController::accept(task(), RunPolicy::default()).unwrap();
+        c.begin_planning().unwrap();
+        c.enter_plan_review().unwrap();
+        c.plan_accepted().unwrap();
+        c.work_finished().unwrap();
+        c.reviews_finished().unwrap();
+        c.synthesis_finished().unwrap();
+        let mut report = accept_report("x");
+        report.answer_draft = String::new();
+        report.recommended_action = GateAction::Replan;
+        report.replan_brief = Some("vague replan".into());
+        let d = c.apply_quality_gate(&report).unwrap();
+        assert_eq!(d.action, GateAction::FailClosed);
+        assert_eq!(d.reason_code, "nonblocking_without_answer");
+        assert_eq!(c.state, RunState::Failed);
     }
 }
