@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
+import { TextPromptDialog } from '../chrome/TextPromptDialog';
 
 export type ConsoleTab = 'skills' | 'memory' | 'packs' | 'logs';
 
@@ -13,16 +14,12 @@ export function ConsolesPage({
 }) {
   const [tab, setTab] = useState<ConsoleTab>(initialTab);
   return (
-    <main className="route-page consoles-page" aria-label="Consoles">
+    <main className="route-page consoles-page" aria-label="Resources">
       <header className="route-heading">
-        <span className="route-kicker">Program P26 · surface existing backends</span>
-        <h1>Consoles</h1>
-        <p>
-          Skills, memory, packs, and redacted diagnostics. Memory is evidence data only — never
-          ActionAuthorize. Pack activate uses the same CapabilitySession APIs as CLI.
-        </p>
+        <span className="route-kicker">Local operator tools</span>
+        <h1>Resources</h1>
       </header>
-      <div className="console-tabs" role="tablist" aria-label="Console sections">
+      <div className="console-tabs" role="tablist" aria-label="Resource sections">
         {(['skills', 'memory', 'packs', 'logs'] as ConsoleTab[]).map((id) => (
           <button
             key={id}
@@ -32,7 +29,7 @@ export function ConsolesPage({
             className={tab === id ? 'is-active' : ''}
             onClick={() => setTab(id)}
           >
-            {id}
+            {id[0]!.toUpperCase() + id.slice(1)}
           </button>
         ))}
       </div>
@@ -114,6 +111,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
   const [subject, setSubject] = useState('');
   const [predicate, setPredicate] = useState('');
   const [recall, setRecall] = useState<Record<string, unknown> | null>(null);
+  const [correcting, setCorrecting] = useState<{ id: string; object: string } | null>(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -158,23 +156,24 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
         </button>
       </header>
       <p className="panel-muted">
-        Recall is evidence data — never ActionAuthorize. Correct/forget stay scope-gated writes.
+        Memory stores reference claims. Correct or forget only changes stored data — it does not
+        approve tools or file writes.
       </p>
       <div className="console-recall-form">
         <input
-          placeholder="subject"
+          placeholder="Who or what (subject)"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           aria-label="Recall subject"
         />
         <input
-          placeholder="predicate"
+          placeholder="Relation (predicate)"
           value={predicate}
           onChange={(e) => setPredicate(e.target.value)}
           aria-label="Recall predicate"
         />
         <button type="button" onClick={() => void runRecall()}>
-          Recall (inform)
+          Search memory
         </button>
       </div>
       <ul className="console-list">
@@ -189,12 +188,9 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
             <div className="console-row-actions">
               <button
                 type="button"
-                onClick={async () => {
-                  const next = window.prompt('Correct object to', String(c.object || ''));
-                  if (!next?.trim()) return;
-                  await transport.invoke('memory_correct', { id: c.id, object: next.trim() });
-                  await load();
-                }}
+                onClick={() =>
+                  setCorrecting({ id: String(c.id), object: String(c.object || '') })
+                }
               >
                 Correct
               </button>
@@ -202,7 +198,9 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
                 type="button"
                 className="danger-text"
                 onClick={async () => {
-                  if (!window.confirm('Forget (tombstone) this claim?')) return;
+                  if (!window.confirm('Forget this claim? It will be tombstoned, not hard-deleted.')) {
+                    return;
+                  }
                   await transport.invoke('memory_forget', { id: c.id });
                   await load();
                 }}
@@ -213,7 +211,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
           </li>
         ))}
         {!claims.length ? (
-          <li className="surface-empty">No claims in default kernel memory scope.</li>
+          <li className="surface-empty">No claims stored yet.</li>
         ) : null}
       </ul>
       {recall ? (
@@ -222,6 +220,20 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
         </pre>
       ) : null}
       {error ? <div className="surface-error">{error}</div> : null}
+      <TextPromptDialog
+        open={Boolean(correcting)}
+        title="Correct claim"
+        label="New value"
+        initialValue={correcting?.object || ''}
+        confirmLabel="Save correction"
+        onCancel={() => setCorrecting(null)}
+        onConfirm={async (next) => {
+          if (!correcting) return;
+          await transport.invoke('memory_correct', { id: correcting.id, object: next });
+          setCorrecting(null);
+          await load();
+        }}
+      />
     </section>
   );
 }

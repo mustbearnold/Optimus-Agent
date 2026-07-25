@@ -172,10 +172,6 @@ export function BrowserSurface({
 
   return (
     <section className="browser-surface" aria-label="Preview browser">
-      <p className="browser-role-note">
-        Coordinated preview browser (ADR-0040) — sandboxed user navigation. Not the agent{' '}
-        <code>browser_*</code> tool session (no shared cookies, storage partition, or CDP target).
-      </p>
       <div className="browser-chrome" role="toolbar" aria-label="Preview browser navigation">
         <button
           type="button"
@@ -277,13 +273,8 @@ function AnnotationGallery({
   onAddToPrompt: (note: PreviewNote) => void;
   onDismiss: (id: string) => void;
 }) {
-  if (notes.length === 0) {
-    return (
-      <div className="annotation-gallery is-empty" aria-label="Preview annotation gallery">
-        <span>Annotation gallery empty — capture notes, then Add to prompt.</span>
-      </div>
-    );
-  }
+  // Stay silent when empty — no instructional empty-state copy.
+  if (notes.length === 0) return null;
   return (
     <div className="annotation-gallery" aria-label="Preview annotation gallery">
       <header>

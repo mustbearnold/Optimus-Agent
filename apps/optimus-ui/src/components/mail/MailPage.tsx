@@ -129,18 +129,11 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
           </div>
         </div>
         <div className="mail-toolbar-actions">
-          <span className="mail-preview-label">Gateway truth</span>
-          <button type="button" onClick={() => void load()} disabled={busy}>
+          <button type="button" onClick={() => void load()} disabled={busy} aria-label="Refresh messaging">
             <Icon name="refresh" />
           </button>
         </div>
       </header>
-
-      <p className="panel-muted mail-honesty">
-        Local SQLite is the delivery authority. <strong>delivered_unix</strong> is a local adapter
-        receipt — external exactly-once is not claimed. Telegram is mock/config-gated long-poll (no
-        public listen port).
-      </p>
 
       <div className="console-tabs" role="tablist" aria-label="Messaging sections">
         {(['inbox', 'outbox', 'ambiguous'] as Tab[]).map((id) => (
@@ -155,7 +148,7 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
               setSelectedId('');
             }}
           >
-            {id}
+            {id === 'ambiguous' ? 'Needs review' : id[0]!.toUpperCase() + id.slice(1)}
             {id === 'ambiguous' && (status?.ambiguous_sends || 0) > 0
               ? ` (${status?.ambiguous_sends})`
               : ''}
@@ -167,12 +160,12 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Enqueue local inbound message…"
+          placeholder="Add a local test message…"
           aria-label="Inbound message text"
           disabled={busy}
         />
         <button type="button" onClick={() => void enqueueLocal()} disabled={busy || !draft.trim()}>
-          Enqueue
+          Add to inbox
         </button>
       </div>
 
@@ -211,10 +204,10 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
                     <strong>{row.outbound.channel}</strong>
                     <span>
                       {row.ambiguous_send
-                        ? 'AMBIGUOUS'
+                        ? 'Needs review'
                         : row.delivered_unix
-                          ? 'receipted'
-                          : row.terminal_status}
+                          ? 'Delivered (local)'
+                          : row.terminal_status || 'Pending'}
                     </span>
                   </span>
                   <span className="mail-list-subject">
@@ -270,11 +263,11 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
                   out
                 </span>
                 <div>
-                  <strong>{selected.ambiguous_send ? 'Ambiguous send' : 'Outbound'}</strong>
+                  <strong>{selected.ambiguous_send ? 'Needs review' : 'Outbound'}</strong>
                   <span>
                     {selected.delivered_unix
-                      ? `local receipt @ ${selected.delivered_unix}`
-                      : 'no local delivery receipt'}
+                      ? 'Local delivery recorded'
+                      : 'No local delivery recorded yet'}
                   </span>
                 </div>
               </div>
@@ -300,7 +293,7 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
               </dl>
               {selected.ambiguous_send ? (
                 <button type="button" disabled={busy} onClick={() => void ack(selected)}>
-                  Record local delivery receipt
+                  Mark as delivered locally
                 </button>
               ) : null}
             </div>
@@ -308,19 +301,15 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
         ) : (
           <div className="mail-empty">
             <Icon name="mail" />
-            <p>Select a message to inspect gateway state.</p>
+            <p>Select a message to read it.</p>
           </div>
         )}
       </div>
 
-      {telegram ? (
-        <footer className="mail-telegram-status" aria-label="Telegram adapter status">
+      {telegram?.enabled ? (
+        <footer className="mail-telegram-status" aria-label="Telegram status">
           <strong>Telegram</strong>
-          <span>
-            mode={String(telegram.mode)} · enabled={String(telegram.enabled)} · token_present=
-            {String(telegram.token_present)}
-          </span>
-          <small>{String(telegram.note || '')}</small>
+          <span>{telegram.token_present ? 'Connected' : 'Token missing'}</span>
         </footer>
       ) : null}
       {error ? <div className="surface-error">{error}</div> : null}

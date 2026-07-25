@@ -8,6 +8,7 @@ import {
   type ErrorInfo,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
 import type {
@@ -50,6 +51,8 @@ import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
 import { ConsolesPage, type ConsoleTab } from '../components/consoles/ConsolesPage';
 import { CommandPalette } from '../components/chrome/CommandPalette';
 import { TopBar } from '../components/chrome/TopBar';
+import { TruthStrip } from '../components/chrome/TruthStrip';
+import { TextPromptDialog } from '../components/chrome/TextPromptDialog';
 import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
 import { TaskPanel } from '../components/execution/TaskPanel';
@@ -109,6 +112,7 @@ export function OptimusApp() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
+  const [projectScopes, setProjectScopes] = useState<ProjectRuntimeScope[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState<ConsoleTab>('skills');
@@ -117,6 +121,7 @@ export function OptimusApp() {
   const [input, setInput] = useState('');
   const [annotation, setAnnotation] = useState('');
   const [sourceProjectId, setSourceProjectId] = useState<string | null>(null);
+  const [renameSession, setRenameSession] = useState<SessionMeta | null>(null);
   const [composer, setComposer] = useState(initialComposer);
   const [bootError, setBootError] = useState('');
   const [areaHistory, setAreaHistory] = useState<AreaHistory>(() => ({
@@ -157,6 +162,7 @@ export function OptimusApp() {
       setApprovals(approvalResult.pending || []);
       setJobs(jobResult.jobs || []);
       setCampaigns(campaignResult.campaigns || []);
+      setProjectScopes(scopeResult.projects || []);
       setAuthorizedProjects(new Set((scopeResult.projects || []).map((project) => project.project_id)));
       dispatch({
         type: 'select-session',
@@ -197,13 +203,15 @@ export function OptimusApp() {
     if (!draggingLayout.current) saveLayout(state.layout);
   }, [state.layout]);
   useEffect(() => {
+    // Only bind sessions that already mention a project by name. Never default
+    // to projects[0] — that silently traps Send behind native folder auth (#44).
     if (!sessions.length || !projects.length) return;
     setAssignments((current) => {
       let changed = false;
       const next = { ...current };
       for (const session of sessions) {
         if (next[session.id]) continue;
-        const project = projectMentionedInSessionTitle(session, projects) || projects[0];
+        const project = projectMentionedInSessionTitle(session, projects);
         if (!project) continue;
         next[session.id] = project.id;
         changed = true;
@@ -263,7 +271,13 @@ export function OptimusApp() {
     try {
       const created = await transport.invoke<SessionMeta>('new_session');
       setSessions((current) => [created, ...current.filter((session) => session.id !== created.id)]);
-      const targetProjectId = projectId || selectedProject?.id || projects[0]?.id;
+      // Explicit project (rail "+ in project") always wins. Otherwise keep the
+      // current authorized project only — never fall back to projects[0] (#42/#44).
+      const targetProjectId =
+        projectId ||
+        (selectedProject && authorizedProjects.has(selectedProject.id)
+          ? selectedProject.id
+          : undefined);
       if (targetProjectId) {
         setAssignments((current) => ({ ...current, [created.id]: targetProjectId }));
       }
@@ -271,6 +285,31 @@ export function OptimusApp() {
     } catch (error) {
       setBootError(error instanceof Error ? error.message : String(error));
     }
+  };
+
+  const closeProjectSources = (options?: { clearAuthorizeBanner?: boolean }) => {
+    const projectId = sourceProjectId;
+    setSourceProjectId(null);
+    if (options?.clearAuthorizeBanner !== false) {
+      setBootError((current) =>
+        current === 'Authorize this project folder before running its session.' ? '' : current
+      );
+    }
+    window.setTimeout(() => {
+      if (projectId) document.getElementById(`project-manage-${projectId}`)?.focus();
+    }, 0);
+  };
+
+  const continueWithoutProject = () => {
+    const sessionId = state.selectedSessionId;
+    if (sessionId && assignments[sessionId]) {
+      setAssignments((current) => {
+        const next = { ...current };
+        delete next[sessionId];
+        return next;
+      });
+    }
+    closeProjectSources();
   };
 
   const send = async () => {
@@ -394,6 +433,35 @@ export function OptimusApp() {
     window.addEventListener('pointerup', up, { once: true });
   };
 
+  const resizeWithKeyboard = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+    lane: 'rail' | 'workspace' | 'execution'
+  ) => {
+    const step = event.shiftKey ? 40 : 10;
+    const current = latestLayout.current;
+    let value: number | null = null;
+    if (lane === 'rail') {
+      if (event.key === 'ArrowLeft') value = current.leftWidth - step;
+      if (event.key === 'ArrowRight') value = current.leftWidth + step;
+      if (event.key === 'Home') value = 200;
+      if (event.key === 'End') value = 400;
+      if (value !== null) dispatch({ type: 'patch-layout', patch: { leftWidth: clamp(value, 200, 400) } });
+    } else if (lane === 'workspace') {
+      if (event.key === 'ArrowLeft') value = current.workspaceWidth + step;
+      if (event.key === 'ArrowRight') value = current.workspaceWidth - step;
+      if (event.key === 'Home') value = 360;
+      if (event.key === 'End') value = 1200;
+      if (value !== null) dispatch({ type: 'patch-layout', patch: { workspaceWidth: clamp(value, 360, 1200) } });
+    } else {
+      if (event.key === 'ArrowUp') value = current.executionHeight + step;
+      if (event.key === 'ArrowDown') value = current.executionHeight - step;
+      if (event.key === 'Home') value = 120;
+      if (event.key === 'End') value = 520;
+      if (value !== null) dispatch({ type: 'patch-layout', patch: { executionHeight: clamp(value, 120, 520) } });
+    }
+    if (value !== null) event.preventDefault();
+  };
+
   const title = selectedSession?.title || 'New session';
   const busyStatus = activeConversation.status;
   const workVisible = state.layout.compactSurface === 'work';
@@ -509,12 +577,7 @@ export function OptimusApp() {
               else delete next[id];
               return next;
             })}
-            onRename={async (session) => {
-              const titleValue = window.prompt('Rename session', session.title || '');
-              if (!titleValue?.trim()) return;
-              await transport.invoke('rename_session', { id: session.id, title: titleValue.trim() });
-              setSessions((current) => current.map((item) => item.id === session.id ? { ...item, title: titleValue.trim() } : item));
-            }}
+            onRename={(session) => setRenameSession(session)}
             onDelete={async (session) => {
               if (!window.confirm(`Delete “${session.title || session.id}”? This cannot be undone.`)) return;
               await transport.invoke('delete_session', { id: session.id });
@@ -524,7 +587,7 @@ export function OptimusApp() {
             }}
             onSettings={() => dispatch({ type: 'settings', open: true })}
           />
-          <div className="rail-resizer" role="separator" aria-label="Resize project rail" aria-orientation="vertical" onPointerDown={(event) => beginResize(event, 'rail')} />
+          <div className="rail-resizer" role="separator" tabIndex={0} aria-label="Resize project rail" aria-orientation="vertical" aria-valuemin={200} aria-valuemax={400} aria-valuenow={state.layout.leftWidth} aria-valuetext={`${state.layout.leftWidth} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'rail')} onPointerDown={(event) => beginResize(event, 'rail')} />
 
           <section className="app-stage">
             {bootError ? <div className="boot-error" role="alert"><Icon name="warning" /><span>{bootError}</span><button type="button" onClick={() => void refreshRuntime()}>Retry</button></div> : null}
@@ -575,7 +638,7 @@ export function OptimusApp() {
 
               {workspaceVisible ? (
                 <>
-                  <div className="workspace-resizer" role="separator" aria-label="Resize evidence workspace" aria-orientation="vertical" onPointerDown={(event) => beginResize(event, 'workspace')} />
+                  <div className="workspace-resizer" role="separator" tabIndex={0} aria-label="Resize evidence workspace" aria-orientation="vertical" aria-valuemin={360} aria-valuemax={1200} aria-valuenow={state.layout.workspaceWidth} aria-valuetext={`${state.layout.workspaceWidth} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'workspace')} onPointerDown={(event) => beginResize(event, 'workspace')} />
                   <div className={`workspace-shell surface-${state.layout.compactSurface}`}>
                     <WorkspacePane
                       tab={state.layout.workspaceTab}
@@ -590,7 +653,7 @@ export function OptimusApp() {
                 </>
               ) : null}
             </div>
-            {state.layout.executionOpen ? <div className="execution-resizer" role="separator" aria-label="Resize execution dock" onPointerDown={(event) => beginResize(event, 'execution')} /> : null}
+            {state.layout.executionOpen ? <div className="execution-resizer" role="separator" tabIndex={0} aria-label="Resize execution dock" aria-orientation="horizontal" aria-valuemin={120} aria-valuemax={520} aria-valuenow={state.layout.executionHeight} aria-valuetext={`${state.layout.executionHeight} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'execution')} onPointerDown={(event) => beginResize(event, 'execution')} /> : null}
             <ExecutionDock
               transport={transport}
               open={state.layout.executionOpen}
@@ -612,6 +675,15 @@ export function OptimusApp() {
         />
         <ProjectSourcesDialog
           project={sourceProject}
+          authorizedRootPaths={
+            projectScopes.find((scope) => scope.project_id === sourceProject?.id)?.roots || []
+          }
+          allowContinueWithoutProject={Boolean(
+            sourceProject &&
+              state.selectedSessionId &&
+              assignments[state.selectedSessionId] === sourceProject.id &&
+              !authorizedProjects.has(sourceProject.id)
+          )}
           onPickSource={async () => {
             const result = await transport.pickFolder();
             return result;
@@ -626,21 +698,34 @@ export function OptimusApp() {
                 grant_tokens: grantTokens,
               }
             );
-            setAuthorizedProjects((current) => {
-              const next = new Set(current);
-              if (result.project) next.add(project.id);
-              else next.delete(project.id);
-              return next;
+            if (result.project) {
+              setProjectScopes((current) => {
+                const without = current.filter((scope) => scope.project_id !== project.id);
+                return [...without, result.project as ProjectRuntimeScope];
+              });
+              setAuthorizedProjects((current) => new Set(current).add(project.id));
+              setBootError((current) =>
+                current === 'Authorize this project folder before running its session.'
+                  ? ''
+                  : current
+              );
+            } else {
+              setProjectScopes((current) => current.filter((scope) => scope.project_id !== project.id));
+              setAuthorizedProjects((current) => {
+                const next = new Set(current);
+                next.delete(project.id);
+                return next;
+              });
+            }
+            setProjects((current) => {
+              if (current.some((item) => item.id === project.id)) {
+                return current.map((item) => (item.id === project.id ? project : item));
+              }
+              return [...current, project];
             });
-            setProjects((current) => current.map((item) => item.id === project.id ? project : item));
           }}
-          onClose={() => {
-            const projectId = sourceProjectId;
-            setSourceProjectId(null);
-            window.setTimeout(() => {
-              if (projectId) document.getElementById(`project-manage-${projectId}`)?.focus();
-            }, 0);
-          }}
+          onContinueWithoutProject={continueWithoutProject}
+          onClose={() => closeProjectSources()}
         />
         <CommandPalette
           open={paletteOpen}
@@ -667,6 +752,29 @@ export function OptimusApp() {
               void refreshRuntime();
             }
           }}
+        />
+        <TextPromptDialog
+          open={Boolean(renameSession)}
+          title="Rename session"
+          label="Session title"
+          initialValue={renameSession?.title || ''}
+          confirmLabel="Rename"
+          onCancel={() => setRenameSession(null)}
+          onConfirm={async (title) => {
+            if (!renameSession) return;
+            await transport.invoke('rename_session', { id: renameSession.id, title });
+            setSessions((current) =>
+              current.map((item) =>
+                item.id === renameSession.id ? { ...item, title } : item
+              )
+            );
+            setRenameSession(null);
+          }}
+        />
+        <TruthStrip
+          doctor={doctor}
+          transport={transport.kind}
+          runLabel={state.activeRunSessionId ? busyStatus || 'active' : 'idle'}
         />
       </div>
     </ErrorBoundary>

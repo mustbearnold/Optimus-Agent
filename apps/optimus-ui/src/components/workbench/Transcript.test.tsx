@@ -89,9 +89,7 @@ describe('Transcript', () => {
         onStarter={onStarter}
       />
     );
-    expect(screen.queryByLabelText('Worked for 0m 01s')).not.toBeInTheDocument();
-
-    act(() => frameCoordinator.flushNow());
+    // Completed turns snap to full text immediately (no fake post-stream typewriter).
     expect(screen.getByText('ABC')).toBeInTheDocument();
     expect(screen.getByLabelText('Worked for 0m 01s')).toBeInTheDocument();
   });
@@ -214,7 +212,6 @@ describe('Transcript', () => {
       />
     );
 
-    fireEvent.click(container.querySelector('.activity-heading')!);
     expect(container.querySelector('details.activity-timeline')).toHaveAttribute('open');
     expect(screen.getAllByText('Write src/app.ts (12 bytes)')).toHaveLength(2);
 
@@ -282,7 +279,7 @@ describe('Transcript', () => {
       />
     );
 
-    fireEvent.click(container.querySelector('.activity-heading')!);
+    expect(container.querySelector('details.activity-timeline')).toHaveAttribute('open');
     fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
 
     expect(screen.getByRole('button', { name: 'Denying…' })).toBeDisabled();

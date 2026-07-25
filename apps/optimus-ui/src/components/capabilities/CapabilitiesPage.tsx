@@ -93,11 +93,11 @@ export function CapabilitiesPage({
   return (
     <main className="route-page capabilities-page" aria-label="Capabilities">
       <header className="route-heading">
-        <span className="route-kicker">Program P27 · extensibility</span>
+        <span className="route-kicker">Models, tools, and packs</span>
         <h1>Runtime capabilities</h1>
         <p>
-          Providers, pack-gated MCP tools, and signed pack verification. MCP never installs a second
-          tool catalog.
+          See which model providers are connected, which tools packs expose, and whether optional
+          MCP tools are available. One tool catalog only — nothing is silently duplicated.
         </p>
       </header>
       <section className="capability-overview" aria-label="Runtime summary">
@@ -129,10 +129,10 @@ export function CapabilitiesPage({
       <section className="capability-registry" aria-labelledby="providers-title">
         <header className="capability-section-heading">
           <div>
-            <h2 id="providers-title">Provider catalog</h2>
-            <p>Connect state + capability flags (tools / vision / stream) from Rust authority.</p>
+            <h2 id="providers-title">Model providers</h2>
+            <p>Connection status and what each provider supports.</p>
           </div>
-          <button type="button" onClick={() => void loadExt()}>
+          <button type="button" onClick={() => void loadExt()} aria-label="Refresh providers">
             <Icon name="refresh" />
           </button>
         </header>
@@ -146,16 +146,18 @@ export function CapabilitiesPage({
               <div>
                 <strong>{String(p.id)}</strong>
                 <span>
-                  {p.connect || 'unknown'} · model {modelLabel(p)} · tools=
-                  {String(!!p.supports_tools)} vision={String(!!p.supports_vision)} stream=
-                  {String(!!p.supports_streaming)}
+                  {p.connect === 'connected' ? 'Connected' : p.connect || 'Unknown'} ·{' '}
+                  {modelLabel(p)}
+                  {p.supports_tools ? ' · tools' : ''}
+                  {p.supports_vision ? ' · vision' : ''}
+                  {p.supports_streaming ? ' · streaming' : ''}
                 </span>
               </div>
               <code>{p.remote ? 'remote' : 'local'}</code>
             </div>
           ))}
           {!providers.length ? (
-            <p className="panel-muted">Load providers via host IPC (not available in bare fixture doctor).</p>
+            <p className="panel-muted">No providers reported yet. Open this page after the host is running.</p>
           ) : null}
         </div>
         <div className="console-recall-form" style={{ marginTop: 12 }}>
@@ -169,8 +171,8 @@ export function CapabilitiesPage({
       <section className="capability-registry" aria-labelledby="mcp-title">
         <header className="capability-section-heading">
           <div>
-            <h2 id="mcp-title">MCP tools (pack-gated mock)</h2>
-            <p>Mapped ToolDesc rows only — not a parallel tool registry.</p>
+            <h2 id="mcp-title">Optional MCP tools</h2>
+            <p>External tools exposed through configured packs (when available).</p>
           </div>
         </header>
         <div className="tool-list">
@@ -184,20 +186,20 @@ export function CapabilitiesPage({
               <code>{String(t.available ? 'available' : 'unavailable')}</code>
             </div>
           ))}
-          {!mcpTools.length ? <p className="panel-muted">No MCP tools mapped.</p> : null}
+          {!mcpTools.length ? <p className="panel-muted">No optional MCP tools available.</p> : null}
         </div>
       </section>
 
       <section className="capability-registry" aria-labelledby="runtime-tools-title">
         <header className="capability-section-heading">
           <div>
-            <h2 id="runtime-tools-title">Available through Rust authority</h2>
+            <h2 id="runtime-tools-title">Built-in tools</h2>
             <p>
-              {toolCount} canonical {toolCount === 1 ? 'tool' : 'tools'} across {packs.length} enabled{' '}
+              {toolCount} {toolCount === 1 ? 'tool' : 'tools'} across {packs.length} enabled{' '}
               {packs.length === 1 ? 'pack' : 'packs'}.
             </p>
           </div>
-          <span className="state-chip is-ready">Runtime owned</span>
+          <span className="state-chip is-ready">Built-in</span>
         </header>
         {packs.map((pack) => (
           <section className="capability-pack" key={pack.id}>
@@ -216,7 +218,7 @@ export function CapabilitiesPage({
                   <span className="status-dot is-ready" />
                   <div>
                     <strong>{tool.id}</strong>
-                    <span>{tool.description || tool.policy || 'Available through Rust authority'}</span>
+                    <span>{tool.description || tool.policy || 'Built-in tool'}</span>
                   </div>
                   <code>{tool.policy || 'runtime'}</code>
                 </div>

@@ -117,6 +117,11 @@ export type ProductSettings = {
   work_isolation_label?: string;
   allow_concurrent_projects: boolean;
   enforcement_active?: boolean;
+  product_fs_enforced?: boolean;
+  configured_mode?: string;
+  enforced_mode?: string;
+  command_envelope_enforced?: boolean;
+  command_fs_envelope?: string;
   note?: string;
 };
 
@@ -170,6 +175,10 @@ export type Doctor = {
   work_isolation_label?: string;
   allow_concurrent_projects?: boolean;
   isolation_enforcement_active?: boolean;
+  product_fs_enforced?: boolean;
+  configured_mode?: string;
+  enforced_mode?: string;
+  command_envelope_enforced?: boolean;
   pack_catalog?: PackDescriptor[];
   settings?: ProductSettings;
 };

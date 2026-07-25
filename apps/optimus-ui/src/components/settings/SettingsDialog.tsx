@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -74,9 +75,11 @@ export function SettingsDialog({
 }) {
   const dialog = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const [active, setActive] = useState<SettingsSection>('general');
   const [settings, setSettings] = useState(fallback);
-  const [cron, setCron] = useState<CronJob[]>([]);
+  const [, setCron] = useState<CronJob[]>([]);
   const [auth, setAuth] = useState<Record<string, unknown>>({});
   const [saved, setSaved] = useState('');
   const [density, setDensity] = useState<'comfortable' | 'compact'>(() =>
@@ -90,7 +93,6 @@ export function SettingsDialog({
 
   useEffect(() => {
     if (!open) return;
-    previousFocus.current = document.activeElement as HTMLElement | null;
     Promise.all([
       transport.invoke<{ settings?: ProductSettings }>('settings_get'),
       transport.invoke<{ jobs?: CronJob[] }>('cron_list'),
@@ -100,12 +102,38 @@ export function SettingsDialog({
       setCron(cronResult.jobs || []);
       setAuth(authResult);
     }).catch(() => undefined);
-    requestAnimationFrame(() => dialog.current?.focus());
+  }, [open, transport]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    previousFocus.current = document.activeElement as HTMLElement | null;
+    const application = document.querySelector<HTMLElement>('.optimus-app');
+    const background = application
+      ? Array.from(application.children).filter(
+          (child): child is HTMLElement =>
+            child instanceof HTMLElement && !child.contains(dialog.current)
+        )
+      : [];
+    const previousInert = background.map((element) => element.inert);
+    background.forEach((element) => { element.inert = true; });
+    const frame = requestAnimationFrame(() => {
+      dialog.current?.querySelector<HTMLElement>('[aria-label="Close settings"]')?.focus();
+    });
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      onCloseRef.current();
+    };
+    window.addEventListener('keydown', onKeyDown, true);
     return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('keydown', onKeyDown, true);
+      background.forEach((element, index) => { element.inert = previousInert[index] || false; });
       previousFocus.current?.focus();
       previousFocus.current = null;
     };
-  }, [open, transport]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -124,10 +152,6 @@ export function SettingsDialog({
         if (event.target === event.currentTarget) onClose();
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          onClose();
-          return;
-        }
         trapFocus(event, dialog.current);
       }}
     >
@@ -291,7 +315,7 @@ export function SettingsDialog({
 
             {active === 'execution' ? (
               <SettingsGroup title="Terminal">
-                <SettingRow title="Durable commands" description="Commands travel through the Rust-owned term_run path.">
+                <SettingRow title="Durable commands" description="Shell commands run through the protected host path and can require approval.">
                   <span className="state-chip is-ready">Protected</span>
                 </SettingRow>
                 <SettingRow title="Panel location" description="Resizable bottom panel; compact windows promote it to a dedicated surface.">
@@ -430,12 +454,6 @@ function sectionDescription(section: SettingsSection) {
     advanced: 'Runtime diagnostics and intentionally unavailable controls.',
   };
   return descriptions[section];
-}
-
-function formatDuration(seconds: number) {
-  if (seconds % 86400 === 0) return `${seconds / 86400}d`;
-  if (seconds % 3600 === 0) return `${seconds / 3600}h`;
-  return `${seconds}s`;
 }
 
 function trapFocus(event: KeyboardEvent, container: HTMLElement | null) {

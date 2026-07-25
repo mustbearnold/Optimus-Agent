@@ -27,6 +27,7 @@ export function ActivityTimeline({
   return (
     <details
       className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}
+      open={attention || undefined}
     >
       <summary className="activity-heading">
         <Icon name={failed || attention ? 'warning' : 'source'} />

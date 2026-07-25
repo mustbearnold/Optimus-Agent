@@ -94,7 +94,13 @@ export function TopBar({
       <div className="topbar-left">
         <ToolbarButton icon="sidebar" label="Toggle project rail" iconOnly onClick={onToggleRail} />
         <ToolbarButton icon="back" label="Back" iconOnly disabled={!canGoBack} onClick={onBack} />
-        <ToolbarButton icon="forward" label="Forward" iconOnly disabled={!canGoForward} onClick={onForward} />
+        <ToolbarButton
+          icon="forward"
+          label="Forward"
+          iconOnly
+          disabled={!canGoForward}
+          onClick={onForward}
+        />
       </div>
       <nav className="topbar-actions" aria-label="Workbench controls">
         <ToolbarButton icon="tasks" label="Tasks" count={activeTasks} iconOnly onClick={onToggleTasks} />
@@ -111,26 +117,26 @@ export function TopBar({
           pressed={executionOpen}
           onClick={onToggleExecution}
         />
-      <ToolbarButton
-        icon="browser"
+        <ToolbarButton
+          icon="browser"
           label="Browser"
           iconOnly
-          pressed={workspaceTab === 'browser'}
-          onClick={() => onWorkspaceTab('browser')}
+          pressed={workspaceOpen && workspaceTab === 'browser'}
+          onClick={() => workspaceOpen && workspaceTab === 'browser' ? onToggleWorkspace() : onWorkspaceTab('browser')}
         />
         <ToolbarButton
           icon="files"
           label="Files"
           iconOnly
-          pressed={workspaceTab === 'files'}
-          onClick={() => onWorkspaceTab('files')}
+          pressed={workspaceOpen && workspaceTab === 'files'}
+          onClick={() => workspaceOpen && workspaceTab === 'files' ? onToggleWorkspace() : onWorkspaceTab('files')}
         />
         <ToolbarButton
           icon="artifact"
           label="Artifacts"
           iconOnly
-          pressed={workspaceTab === 'artifacts'}
-          onClick={() => onWorkspaceTab('artifacts')}
+          pressed={workspaceOpen && workspaceTab === 'artifacts'}
+          onClick={() => workspaceOpen && workspaceTab === 'artifacts' ? onToggleWorkspace() : onWorkspaceTab('artifacts')}
         />
       </nav>
       <div className="window-controls" aria-label="Window controls">
@@ -144,16 +150,17 @@ export function TopBar({
         >
           <Icon name="sidebar" />
         </button>
-        <button type="button" aria-label="Minimize" onClick={() => onWindow('minimize')}>
+        <button type="button" aria-label="Minimize" title="Minimize" onClick={() => onWindow('minimize')}>
           <WindowControlIcon action="minimize" />
         </button>
-        <button type="button" aria-label="Maximize" onClick={() => onWindow('maximize')}>
+        <button type="button" aria-label="Maximize" title="Maximize" onClick={() => onWindow('maximize')}>
           <WindowControlIcon action="maximize" />
         </button>
         <button
           type="button"
           className="window-close"
           aria-label="Close"
+          title="Close"
           onClick={() => onWindow('close')}
         >
           <WindowControlIcon action="close" />

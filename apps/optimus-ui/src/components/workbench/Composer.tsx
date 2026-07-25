@@ -136,7 +136,7 @@ export function Composer({
           ref={textarea}
           value={value}
           aria-label="Message Optimus"
-          placeholder="Ask anything, @ files/folders, or describe an outcome…"
+          placeholder="Describe the task, @ files or folders, or paste a failing command…"
           disabled={disabled && !isRunOwner}
           onChange={(event) => onChange(event.target.value)}
           onCompositionStart={() => setComposing(true)}

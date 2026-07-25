@@ -108,7 +108,7 @@ export function ExecutionDock({
                   ) : null}
                 </>
               ) : (
-                <div className="terminal-placeholder">Submit a command through the Rust-owned <code>term_run</code> path.</div>
+                <div className="terminal-placeholder">Type a command below and press Run. High-risk commands still need approval.</div>
               )}
             </div>
             <form

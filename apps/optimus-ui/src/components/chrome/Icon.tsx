@@ -141,5 +141,5 @@ const icons: Record<IconName, IconComponent> = {
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
   const ReiconIcon = icons[name];
 
-  return <ReiconIcon aria-hidden="true" weight="Outline" {...props} />;
+  return <ReiconIcon aria-hidden="true" weight={name === 'more' ? 'Filled' : 'Outline'} {...props} />;
 }
