@@ -71,19 +71,19 @@ function fixtureTransport(): OptimusTransport {
 }
 
 describe('MailPage', () => {
-  it('binds to gateway inbox/outbox and honesty copy', async () => {
+  it('binds to gateway inbox/outbox without instructional filler copy', async () => {
     const user = userEvent.setup();
     const transport = fixtureTransport();
     render(<MailPage transport={transport} />);
     expect(await screen.findByRole('heading', { name: /Messaging/i })).toBeInTheDocument();
     expect(screen.getAllByText(/hello inbox/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Gateway truth/i)).toBeInTheDocument();
-    expect(screen.getByText(/exactly-once is not claimed/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Messages are stored|Local gateway|exactly-once|mock\/long-poll/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Telegram/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: /outbox/i }));
     expect(screen.getAllByText(/hello outbox/i).length).toBeGreaterThan(0);
-    await user.click(screen.getByRole('tab', { name: /ambiguous/i }));
+    await user.click(screen.getByRole('tab', { name: /Needs review|ambiguous/i }));
     expect(
-      await screen.findByRole('button', { name: /Record local delivery receipt/i })
+      await screen.findByRole('button', { name: /Mark as delivered locally/i })
     ).toBeInTheDocument();
   });
 });

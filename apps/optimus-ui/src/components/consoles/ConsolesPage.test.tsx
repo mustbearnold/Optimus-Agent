@@ -66,7 +66,7 @@ describe('ConsolesPage', () => {
     const user = userEvent.setup();
     const t = transport();
     render(<ConsolesPage transport={t} />);
-    await user.click(screen.getByRole('tab', { name: 'memory' }));
+    await user.click(screen.getByRole('tab', { name: 'Memory' }));
     expect(await screen.findByText(/EVIDENCE_DATA/)).toBeInTheDocument();
     expect(screen.getByText(/user · likes/)).toBeInTheDocument();
   });

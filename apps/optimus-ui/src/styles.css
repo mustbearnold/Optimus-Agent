@@ -3697,7 +3697,7 @@ code {
   border-top: 1px solid var(--border);
   color: var(--faint);
   background: var(--rail);
-  font-size: 9px;
+  font-size: 11px;
   user-select: none;
 }
 

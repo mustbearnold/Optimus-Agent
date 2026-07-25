@@ -1,4 +1,4 @@
-import { useMemo, useState, type DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import type { Project, SessionMeta } from '../../ipc/contracts';
 import type { AppRoute } from '../../state/layoutStore';
 import type { SessionIndicatorState } from '../../state/conversationStore';
@@ -33,6 +33,8 @@ type Props = {
 export function ProjectsRail(props: Props) {
   const [query, setQuery] = useState('');
   const [menuSession, setMenuSession] = useState<string | null>(null);
+  const [menuPoint, setMenuPoint] = useState<{ x: number; y: number } | null>(null);
+  const menuTriggers = useRef<Record<string, HTMLButtonElement | null>>({});
   const visibleSessions = useMemo(() => {
     return props.sessions.filter((session) => {
       if (!props.showArchived && session.archived) return false;
@@ -40,6 +42,27 @@ export function ProjectsRail(props: Props) {
     });
   }, [props.sessions, props.showArchived]);
   const pinnedSessions = visibleSessions.filter((session) => Boolean(session.pinned));
+
+  useEffect(() => {
+    if (!menuSession) return;
+    const sessionId = menuSession;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setMenuSession(null);
+      setMenuPoint(null);
+      requestAnimationFrame(() => menuTriggers.current[sessionId]?.focus());
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [menuSession]);
+
+  const closeMenu = (sessionId: string, action: () => void) => {
+    setMenuSession(null);
+    setMenuPoint(null);
+    action();
+    requestAnimationFrame(() => menuTriggers.current[sessionId]?.focus());
+  };
 
   const renderSession = (session: SessionMeta, projectId?: string) => {
     const active = session.id === props.selectedSessionId;
@@ -58,6 +81,12 @@ export function ProjectsRail(props: Props) {
         className={`session-row${active ? ' is-active' : ''}`}
         key={`${projectId || 'root'}:${session.id}`}
         draggable
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setMenuSession(session.id);
+          setMenuPoint({ x: event.clientX, y: event.clientY });
+          requestAnimationFrame(() => menuTriggers.current[session.id]?.focus());
+        }}
         onDragStart={(event) => {
           event.dataTransfer.setData('text/optimus-session', session.id);
           event.dataTransfer.effectAllowed = 'move';
@@ -80,31 +109,41 @@ export function ProjectsRail(props: Props) {
           </span>
         </button>
         <button
+          ref={(node) => { menuTriggers.current[session.id] = node; }}
           type="button"
           className="row-more"
           aria-label={`Actions for ${session.title || session.id}`}
           aria-expanded={menuOpen}
-          onClick={() => setMenuSession(menuOpen ? null : session.id)}
+          aria-haspopup="menu"
+          onClick={() => {
+            setMenuPoint(null);
+            setMenuSession(menuOpen ? null : session.id);
+          }}
         >
           <Icon name="more" />
         </button>
         {menuOpen ? (
-          <div className="row-menu" role="menu">
-            <button type="button" role="menuitem" onClick={() => props.onTogglePin(session)}>
+          <div
+            className="row-menu"
+            role="menu"
+            aria-label={`Actions for ${session.title || session.id}`}
+            style={menuPoint ? { position: 'fixed', left: menuPoint.x, top: menuPoint.y, right: 'auto', animation: 'none' } : undefined}
+          >
+            <button type="button" role="menuitem" onClick={() => closeMenu(session.id, () => props.onTogglePin(session))}>
               <Icon name="pin" />
               {session.pinned ? 'Unpin session' : 'Pin session'}
             </button>
-            <button type="button" role="menuitem" onClick={() => props.onToggleArchive(session)}>
+            <button type="button" role="menuitem" onClick={() => closeMenu(session.id, () => props.onToggleArchive(session))}>
               {session.archived ? 'Unarchive session' : 'Archive session'}
             </button>
-            <button type="button" role="menuitem" onClick={() => props.onRename(session)}>
+            <button type="button" role="menuitem" onClick={() => closeMenu(session.id, () => props.onRename(session))}>
               Rename
             </button>
             <button
               type="button"
               role="menuitem"
               className="danger-text"
-              onClick={() => props.onDelete(session)}
+              onClick={() => closeMenu(session.id, () => props.onDelete(session))}
             >
               <Icon name="trash" />
               Delete session
@@ -151,7 +190,7 @@ export function ProjectsRail(props: Props) {
                 props.onSearch(next);
               }}
             />
-            <kbd>⌘K</kbd>
+            <kbd>{typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform) ? '⌘K' : 'Ctrl+K'}</kbd>
           </label>
           <button
             type="button"
@@ -188,7 +227,7 @@ export function ProjectsRail(props: Props) {
           onClick={() => props.onRoute('consoles')}
         >
           <Icon name="settings" />
-          <span>Consoles</span>
+          <span>Resources</span>
         </button>
         <button
           type="button"

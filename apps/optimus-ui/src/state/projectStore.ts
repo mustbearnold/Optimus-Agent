@@ -34,23 +34,11 @@ function write(key: string, value: unknown) {
 export function loadProjects(): Project[] {
   const stored = read<StoredProject[] | StoredProjectCatalog>(PROJECTS_KEY, []);
   const projects = Array.isArray(stored) ? stored : stored.projects || [];
-  if (projects.length) {
-    return projects
-      .filter((project) => project.id && project.name)
-      .map(normalizeProject);
-  }
-  const now = new Date().toISOString();
-  return [
-    {
-      id: 'optimus-agent',
-      name: 'Optimus Agent',
-      rootPaths: ['/home/mustbearnold/Projects/Optimus Agent'],
-      primaryRoot: '/home/mustbearnold/Projects/Optimus Agent',
-      pinned: true,
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
+  // Empty catalog stays empty — never invent a machine-specific path that looks
+  // authorized but is absent from the Rust project-authority allowlist (#42).
+  return projects
+    .filter((project) => project.id && project.name)
+    .map(normalizeProject);
 }
 
 export function saveProjects(projects: Project[]) {

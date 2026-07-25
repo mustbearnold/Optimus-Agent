@@ -4244,7 +4244,6 @@
   var __browserEmbedLast = '';
   var __browserEmbedInFlight = false;
   var __browserEmbedPending = false;
-  var __browserEmbedPendingForce = false;
   var BROWSER_RESIZE_IDLE_MS = 160;
   var __browserResizePulseFrame = null;
   var __browserResizeIdleTimer = null;
@@ -4322,14 +4321,11 @@
       dpr: window.devicePixelRatio || 1
     };
     var key = payload.visible + ':' + payload.x + ',' + payload.y + ',' + payload.w + 'x' + payload.h;
-    var forced = !!window.__browserEmbedForce;
-    window.__browserEmbedForce = false;
-    if (key === __browserEmbedLast && !forced) return;
+    if (key === __browserEmbedLast) return;
     if (__browserEmbedInFlight) {
       // Drop intermediate geometry while native GTK/WebView work is busy.
       // The completion path recomputes and sends only the newest DOM bounds.
       __browserEmbedPending = true;
-      __browserEmbedPendingForce = __browserEmbedPendingForce || forced;
       return;
     }
     __browserEmbedLast = key;
@@ -4337,7 +4333,7 @@
     postRaw('browser_embed', payload).then(function(res) {
       if (res && res.visible === false && active) {
         // Retry once next frame if native rejected usable bounds.
-        window.__browserEmbedForce = true;
+        __browserEmbedLast = '';
         scheduleBrowserEmbedSync();
       }
     }).catch(function() {
@@ -4347,15 +4343,11 @@
       __browserEmbedInFlight = false;
       if (!__browserEmbedPending) return;
       __browserEmbedPending = false;
-      if (__browserEmbedPendingForce) window.__browserEmbedForce = true;
-      __browserEmbedPendingForce = false;
       syncBrowserEmbedBounds();
     });
   }
 
   function forceBrowserEmbedSync() {
-    window.__browserEmbedForce = true;
-    __browserEmbedLast = '';
     scheduleBrowserEmbedSync();
   }
 

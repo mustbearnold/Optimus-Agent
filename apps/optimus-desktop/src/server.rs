@@ -65,8 +65,40 @@ fn read_body_bounded(reader: &mut dyn Read, max_bytes: usize) -> Result<String, 
     String::from_utf8(bytes).map_err(|_| 400)
 }
 
-fn public_error(_internal: &str) -> &'static str {
-    "request failed"
+/// Map host/kernel errors to renderer-safe strings.
+/// Never echo secrets or absolute auth/config paths from unexpected internals.
+/// Allow known user-actionable project-authority and validation tool messages.
+fn public_error(internal: &str) -> String {
+    let message = internal
+        .strip_prefix("tool: ")
+        .or_else(|| internal.strip_prefix("Tool(\""))
+        .unwrap_or(internal)
+        .trim()
+        .trim_matches('"');
+
+    const SAFE_PREFIXES: &[&str] = &[
+        "project root requires a current native folder selection",
+        "primary project root must be one of the authorized roots",
+        "project root cannot be empty",
+        "project root is not a directory",
+        "filesystem root cannot be a project root",
+        "runtime home or one of its ancestors cannot be a project root",
+        "secret-bearing path cannot be a project root",
+        "project root must use a Unicode-compatible path",
+        "invalid project identity",
+        "project_id required",
+        "root_paths array required",
+        "root_paths must contain strings",
+        "grant_tokens must",
+        "Unsupported desktop method",
+    ];
+    if SAFE_PREFIXES
+        .iter()
+        .any(|prefix| message.starts_with(prefix))
+    {
+        return message.to_string();
+    }
+    "request failed".into()
 }
 
 #[derive(Debug, Clone)]
@@ -221,7 +253,7 @@ pub fn run_http_server(
                                 id: env.id,
                                 ok: false,
                                 result: None,
-                                error: Some(public_error(&e).into()),
+                                error: Some(public_error(&e)),
                             }
                         }
                     },
@@ -601,6 +633,15 @@ mod tests {
         assert_eq!(public, "request failed");
         assert!(!public.contains("secret"));
         assert!(!public.contains("auth.json"));
+    }
+
+    #[test]
+    fn public_errors_surface_project_authority_guidance() {
+        let public = public_error(
+            "tool: project root requires a current native folder selection: /tmp/demo",
+        );
+        assert!(public.contains("native folder selection"));
+        assert!(public.contains("/tmp/demo"));
     }
 
     #[test]

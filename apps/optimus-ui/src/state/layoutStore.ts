@@ -22,7 +22,8 @@ export const defaultLayout: LayoutState = {
   leftWidth: 240,
   leftCollapsed: false,
   workspaceWidth: 720,
-  workspaceOpen: true,
+  // Chat-first: evidence workspace opens when the user chooses Browser/Files/Artifacts.
+  workspaceOpen: false,
   workspaceTab: 'browser',
   executionOpen: false,
   executionHeight: 190,
@@ -45,7 +46,10 @@ export function loadLayout(): LayoutState {
       leftWidth: clamp(value.leftWidth, 200, 400, defaultLayout.leftWidth),
       leftCollapsed: Boolean(value.leftCollapsed),
       workspaceWidth: clamp(value.workspaceWidth, 360, 1200, defaultLayout.workspaceWidth),
-      workspaceOpen: value.workspaceOpen !== false,
+      workspaceOpen:
+        typeof value.workspaceOpen === 'boolean'
+          ? value.workspaceOpen
+          : defaultLayout.workspaceOpen,
       workspaceTab: ['browser', 'files', 'artifacts'].includes(String(value.workspaceTab))
         ? (value.workspaceTab as WorkspaceTab)
         : defaultLayout.workspaceTab,

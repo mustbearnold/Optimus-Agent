@@ -704,8 +704,20 @@ case "\${OPTIMUS_DESKTOP_SHELL:-electron}" in
     export OPTIMUS_ELECTRON_UI="\${OPTIMUS_ELECTRON_UI:-react}"
     export OPTIMUS_HOME="\${OPTIMUS_HOME:-\$DEFAULT_OPTIMUS_HOME}"
     export OPTIMUS_ELECTRON_USER_DATA="\${OPTIMUS_ELECTRON_USER_DATA:-\$OPTIMUS_HOME/electron}"
+    # Coding agents and some shells export ELECTRON_RUN_AS_NODE=1, which turns the
+    # packaged binary into plain Node and breaks GUI launch (and rejects Chromium
+    # flags such as --class). Always clear it for the desktop shell.
+    unset ELECTRON_RUN_AS_NODE
+    # User-local installs cannot root-own chrome-sandbox (mode 4755). Without that,
+    # Chromium aborts; disable the SUID helper so namespace sandboxing can proceed.
+    electron_dir="\$(dirname -- "\$ELECTRON_BINARY")"
+    if [[ ! -u "\$electron_dir/chrome-sandbox" ]]; then
+      export ELECTRON_DISABLE_SANDBOX=1
+    fi
     exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
-    exec "\$ELECTRON_BINARY" --class=optimus-agent "\$@"
+    # Do not pass --class: with RUN_AS_NODE or Node-first argv parsing it is rejected.
+    # WM class comes from the binary name (optimus-agent) and StartupWMClass.
+    exec "\$ELECTRON_BINARY" "\$@"
     ;;
   wry)
     exec "\$HOST_BINARY" "\$@"

@@ -57,9 +57,9 @@ const liveStatuses = new Set<RunStatus>([
 ]);
 
 function useTypewriterContent(message: Message) {
+  // Animate only while the turn is live — never fake-stream completed text.
   const liveAssistant =
     message.role === 'assistant' && Boolean(message.status && liveStatuses.has(message.status));
-  const streamed = useRef(liveAssistant);
   const visibleRef = useRef(message.content);
   const visibleCharacterCount = useRef(Array.from(message.content).length);
   const targetCharacters = useRef(Array.from(message.content));
@@ -67,7 +67,6 @@ function useTypewriterContent(message: Message) {
   const frameKey = `typewriter:${message.id}`;
   const revealNext = useRef<() => void>(() => undefined);
 
-  if (liveAssistant) streamed.current = true;
   targetCharacters.current = Array.from(message.content);
 
   revealNext.current = () => {
@@ -96,8 +95,7 @@ function useTypewriterContent(message: Message) {
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const currentIsPrefix = message.content.startsWith(visibleRef.current);
     const animate =
-      message.role === 'assistant' &&
-      streamed.current &&
+      liveAssistant &&
       !reducedMotion &&
       !document.hidden &&
       currentIsPrefix;
@@ -113,7 +111,7 @@ function useTypewriterContent(message: Message) {
     if (visibleRef.current !== message.content) {
       frameCoordinator.scheduleKeyed('content', frameKey, () => revealNext.current());
     }
-  }, [frameKey, message.content, message.role, message.status]);
+  }, [frameKey, liveAssistant, message.content, message.role, message.status]);
 
   useEffect(
     () => () => frameCoordinator.cancelKeyed('content', frameKey),
@@ -237,16 +235,27 @@ function EmptyWorkbench({ onStarter }: { onStarter: (text: string) => void }) {
   ] as const;
   return (
     <section className="work-empty" aria-labelledby="empty-work-title">
-      <span className="empty-kicker">New local session</span>
-      <h1 id="empty-work-title">Start local work</h1>
-      <p>Describe the outcome and constraints. Commands, files, approvals, and artifacts stay attached to this session.</p>
+      <span className="empty-kicker">New session</span>
+      <h1 id="empty-work-title">What should Optimus do?</h1>
+      <p>
+        Write a concrete task below, or pick a starter. Tools, files, and approvals stay on this
+        session.
+      </p>
       <div className="starter-list" aria-label="Common local tasks">
         {starters.map(([label, prompt], index) => (
           <button type="button" onClick={() => onStarter(prompt)} key={label}>
-            <span className="starter-index">0{index + 1}</span>
+            <span className="starter-index" aria-hidden="true">
+              {index + 1}
+            </span>
             <span>
               <strong>{label}</strong>
-              <small>{index === 0 ? 'trace → patch → verify' : index === 1 ? 'diff → risks → proof' : 'scope → decide → build'}</small>
+              <small>
+                {index === 0
+                  ? 'Find the failure, patch, re-run'
+                  : index === 1
+                    ? 'Scan the diff for risks'
+                    : 'Scope first, then plan'}
+              </small>
             </span>
             <Icon name="forward" />
           </button>

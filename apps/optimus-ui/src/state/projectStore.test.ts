@@ -40,6 +40,12 @@ describe('multi-folder project catalog', () => {
     ]);
   });
 
+  it('returns an empty catalog instead of seeding a hard-coded machine path', () => {
+    expect(loadProjects()).toEqual([]);
+    localStorage.setItem('optimus.ui.projects', JSON.stringify({ version: 2, projects: [] }));
+    expect(loadProjects()).toEqual([]);
+  });
+
   it('deduplicates sources and moves primary ownership deterministically', () => {
     const project = fixtureProject();
     const withSecondRoot = addProjectRoot(project, '/workspace/docs');
