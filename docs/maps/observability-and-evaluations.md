@@ -77,6 +77,7 @@ last_verified_commit: null
 | Memory/skills | Confirmed current behaviour | Dedicated event/evidence tables and outcome records. |
 | Desktop logs | Confirmed current behaviour | Process stderr and browser console messages; not durable operational truth. |
 | Causal reconstruction | Confirmed current behaviour | `load_causal_turn` / `optimus trace show` rebuilds one turn from `execution.db` (+ session effect links) by trace, manifest, or turn id. Logs are not consulted. |
+| Causal export (P14) | Confirmed current behaviour | Versioned local JSON `optimus.causal.v1` via `export_causal_document` / `optimus trace export --out`. Home path redacted to `$OPTIMUS_HOME`. `store_backed: true`, `live_provider_replay: false`. Not OTLP (ADR-0037). |
 | Security denial codes | Confirmed current behaviour | Closed `SecurityDenialCode` vocabulary mapped from known kernel/runtime/browser fences (`fs_sandbox_deny`, `approval_required`, `network_ssrf_deny`, …). |
 
 **Partially implemented behaviour:** event order is strong inside a single Work

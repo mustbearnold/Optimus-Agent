@@ -15,6 +15,7 @@ use optimus_kernel::{
     device_code_login, drain_one, enqueue, list_inbox, list_outbox, list_recent_causal_turns,
     list_sessions, load_causal_turn, open_cron, open_seeded_agent_registry,
     open_seeded_workflow_registry, parse_causal_query, resolve_route, run_read_file_handoff,
+    write_causal_export,
     run_write_file_handoff, run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron,
     BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
     KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, ReadFileHandoffRequest,
@@ -391,6 +392,14 @@ enum TraceCmd {
         limit: usize,
         #[arg(long)]
         json: bool,
+    },
+    /// Export versioned local causal JSON (P14; store-backed, redacted home path)
+    Export {
+        /// Identity: bare UUID (trace), or prefixed trace:|manifest:|turn:
+        id: String,
+        /// Output path for optimus.causal.v1 JSON
+        #[arg(long, short = 'o')]
+        out: std::path::PathBuf,
     },
 }
 
@@ -1416,6 +1425,12 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                 }
+                Ok(())
+            }
+            TraceCmd::Export { id, out } => {
+                let query = parse_causal_query(&id)?;
+                let path = write_causal_export(&cli.home, query, &out)?;
+                println!("wrote {}", path.display());
                 Ok(())
             }
         },

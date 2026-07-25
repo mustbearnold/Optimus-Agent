@@ -4,8 +4,11 @@
 //! assemble one reconstructible report from `execution.db` (and optional
 //! session effect links). TraceStore remains optional offline evidence;
 //! production turns bind identity in `execution_trace_links`.
+//!
+//! P14: versioned **local causal export** (JSON) with path redaction — not OTLP.
+//! See ADR-0037.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -13,8 +16,11 @@ use uuid::Uuid;
 use crate::{
     ExecutionManifest, ExecutionModelCallSummary, ExecutionStore, ExecutionTimingSummary,
     ExecutionToolCallSummary, ExecutionToolLifecycleSummary, KernelError, ReplayReport, Result,
-    SessionEffectLink, SessionStore, TraceContext, TraceId,
+    SecurityDenialCode, SessionEffectLink, SessionStore, TraceContext, TraceId,
 };
+
+/// Version of the machine-readable causal export envelope (P14).
+pub const CAUSAL_EXPORT_VERSION: u32 = 1;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -46,6 +52,26 @@ pub struct CausalTurnReport {
     /// True when every tool call that claims durable provenance has a matching
     /// session effect link (or no durable tools ran).
     pub effect_transcript_consistent: bool,
+    /// Best-effort security/policy codes inferred from **lifecycle phase names**
+    /// only (e.g. `approval_required`). Not a full denial ledger — tool error
+    /// text is not stored on lifecycle rows today; often empty for FS/SSRF denials.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub security_denials: Vec<String>,
+}
+
+/// Versioned, redacted causal export for operators and offline analysis (P14).
+///
+/// **Local-only S+++:** deterministic JSON of the store-backed causal graph.
+/// Not OTLP/OpenTelemetry wire format; no network exporter.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CausalExportDocument {
+    pub export_version: u32,
+    pub format: String,
+    /// Always true for this format — reconstruction does not require stderr logs.
+    pub store_backed: bool,
+    /// Fixture/live-provider honesty: export never re-runs providers.
+    pub live_provider_replay: bool,
+    pub report: CausalTurnReport,
 }
 
 /// Load a causal turn report from durable execution (+ session) stores.
@@ -72,6 +98,7 @@ pub fn load_causal_turn(home: impl AsRef<Path>, query: CausalQuery) -> Result<Ca
 
     let effect_transcript_consistent =
         effect_links_cover_tool_calls(&tool_calls, &session_effect_links);
+    let security_denials = security_denials_from_lifecycle(&tool_lifecycle);
 
     Ok(CausalTurnReport {
         home: home.display().to_string(),
@@ -85,7 +112,107 @@ pub fn load_causal_turn(home: impl AsRef<Path>, query: CausalQuery) -> Result<Ca
         tool_lifecycle,
         session_effect_links,
         effect_transcript_consistent,
+        security_denials,
     })
+}
+
+/// Build a versioned export document with absolute home paths redacted.
+pub fn export_causal_document(home: impl AsRef<Path>, query: CausalQuery) -> Result<CausalExportDocument> {
+    let home = home.as_ref();
+    let mut report = load_causal_turn(home, query)?;
+    redact_causal_report(&mut report, home);
+    Ok(CausalExportDocument {
+        export_version: CAUSAL_EXPORT_VERSION,
+        format: "optimus.causal.v1".into(),
+        store_backed: true,
+        live_provider_replay: false,
+        report,
+    })
+}
+
+/// Serialize export to pretty JSON bytes (UTF-8).
+pub fn export_causal_json(home: impl AsRef<Path>, query: CausalQuery) -> Result<String> {
+    let doc = export_causal_document(home, query)?;
+    Ok(serde_json::to_string_pretty(&doc)?)
+}
+
+/// Write export JSON to `out_path` (parent dirs created).
+pub fn write_causal_export(
+    home: impl AsRef<Path>,
+    query: CausalQuery,
+    out_path: impl AsRef<Path>,
+) -> Result<PathBuf> {
+    let out_path = out_path.as_ref();
+    if let Some(parent) = out_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let json = export_causal_json(home, query)?;
+    std::fs::write(out_path, json.as_bytes())?;
+    Ok(out_path.to_path_buf())
+}
+
+fn redact_causal_report(report: &mut CausalTurnReport, home: &Path) {
+    let home_str = home.display().to_string();
+    if home_str.is_empty() {
+        report.home = "$OPTIMUS_HOME".into();
+        return;
+    }
+    if report.home == home_str
+        || report.home.starts_with(&home_str)
+        || Path::new(&report.home)
+            .canonicalize()
+            .ok()
+            .and_then(|p| home.canonicalize().ok().map(|h| p.starts_with(h)))
+            .unwrap_or(false)
+    {
+        report.home = "$OPTIMUS_HOME".into();
+    } else {
+        report.home = report.home.replace(&home_str, "$OPTIMUS_HOME");
+    }
+}
+
+fn security_denials_from_lifecycle(
+    lifecycle: &[ExecutionToolLifecycleSummary],
+) -> Vec<String> {
+    let mut codes = Vec::new();
+    for row in lifecycle {
+        // Phase is an enum-like token (`started`, `failed`, `approval_required`, …),
+        // not free-form error text.
+        let phase = row.phase.to_ascii_lowercase();
+        if let Some(code) = classify_message_for_export(&phase) {
+            let s = code.to_string();
+            if !codes.contains(&s) {
+                codes.push(s);
+            }
+        }
+    }
+    codes
+}
+
+fn classify_message_for_export(message: &str) -> Option<&'static str> {
+    let lower = message.to_ascii_lowercase();
+    if lower.contains("path not allowed") || lower.contains("outside root") {
+        return Some(SecurityDenialCode::FsSandboxDeny.as_str());
+    }
+    if lower.contains("secret") && lower.contains("denied") {
+        return Some(SecurityDenialCode::SecretBasenameDeny.as_str());
+    }
+    if lower.contains("path escape") {
+        return Some(SecurityDenialCode::PathEscape.as_str());
+    }
+    if lower.contains("approval") || lower.contains("smartdeny") {
+        return Some(SecurityDenialCode::ApprovalRequired.as_str());
+    }
+    if lower.contains("ssrf") {
+        return Some(SecurityDenialCode::NetworkSsrfDeny.as_str());
+    }
+    if lower.contains("permission") && lower.contains("skill") {
+        return Some(SecurityDenialCode::SkillPermissionDeny.as_str());
+    }
+    if lower.contains("unavailable") || lower.contains("not advertised") {
+        return Some(SecurityDenialCode::ToolUnavailable.as_str());
+    }
+    None
 }
 
 /// List recent execution manifests (newest first) for operator browsing.
