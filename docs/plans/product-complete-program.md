@@ -164,8 +164,8 @@ After **program P21** green:
 | Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | **parity** | **P24 done** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | **parity** | **P25 done** |
 | Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | **parity** | **P26 done** |
-| Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
-| MCP + signed packs | `mcp.client`, `plugins.signed` | Missing | **P27** |
+| Provider catalog / failover | `provider.catalog`, `provider.failover` | **parity** | **P27 done** |
+| MCP + signed packs | `mcp.client`, `plugins.signed` | **parity** | **P27 done** (mock MCP; live spawn residual) |
 | Gateway / Telegram / messaging UI | `gateway.queue`, `gateway.telegram`, `gateway.ui` | **parity** | **P28 done** (external EO residual) |
 | Install + updater | `release.updater` | Missing / Partial packaging | **P29** |
 | Already parity/win product rows | streaming, durable session, shell, files.read, terminal.job, … | **HOLD** | re-evidence only if install claim changes |
@@ -653,8 +653,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P26 + P28 done** (P27 extensibility still open if needed before P29).
-2. Open **program P27** (provider/MCP/signed packs) then **P29** ship, or P29 only if P27 residuals accepted as honest missing until later.
+1. **program P20–P28 done** (including P27 extensibility).
+2. Open **program P29** product ship + PRODUCT-COMPLETE board.
 
 ## Success definition
 

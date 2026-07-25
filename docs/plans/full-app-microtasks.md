@@ -240,13 +240,13 @@ capability without custom code per tool. Depends on S1 tool contract.
 
 | ID | Status | Micro-task | Ledger | Proof |
 |---|---|---|---|---|
-| S4.1 | `todo` | Rust-owned provider/model catalog + connect state | `provider.catalog` | kernel tests; UI consumes catalog |
-| S4.2 | `todo` | Per-model capability flags (tools, vision, stream) drive UI | `provider.catalog` | schema + UI disable tests |
-| S4.3 | `todo` | Capability-aware provider failover (ordered list) | `provider.failover` | scripted offline failover |
-| S4.4 | `todo` | Pack-gated stdio MCP client (one server, allowlisted tools) | `mcp.client` | mock MCP integration |
-| S4.5 | `todo` | Pack-gated HTTP MCP transport | `mcp.client` | transport test |
-| S4.6 | `todo` | Signed pack manifests; unsigned rejected by default | `plugins.signed` | load + crypto unit |
-| S4.7 | `todo` | Pack permission ceiling → SmartDeny (no privilege escalation) | `plugins.signed`, `core.pack-budget` | permission closure test |
+| S4.1 | `done` | Rust-owned provider/model catalog + connect state | `provider.catalog` | provider_catalog_status + IPC; program P27 |
+| S4.2 | `done` | Per-model capability flags (tools, vision, stream) drive UI | `provider.catalog` | CapabilitiesPage flags; program P27 |
+| S4.3 | `done` | Capability-aware provider failover (ordered list) | `provider.failover` | fallback_order tests; program P27 |
+| S4.4 | `done` | Pack-gated stdio MCP client (one server, allowlisted tools) | `mcp.client` | mcp mock stdio; program P27 |
+| S4.5 | `done` | Pack-gated HTTP MCP transport | `mcp.client` | public URL gate + mock; program P27 |
+| S4.6 | `done` | Signed pack manifests; unsigned rejected by default | `plugins.signed` | HMAC sign/verify; program P27 |
+| S4.7 | `done` | Pack permission ceiling → SmartDeny (no privilege escalation) | `plugins.signed`, `core.pack-budget` | ceiling tests; program P27 |
 
 **Stage exit:** third-party tools enter only through pack + MCP gates; providers
 are one source of truth.

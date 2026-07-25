@@ -213,6 +213,14 @@ non-browser adapters without `Origin`.
 per minute. Gateway list/drain aggregation is bounded. Health omits home paths,
 and public errors are stable/redacted while internal detail is logged locally.
 
+**Confirmed current behaviour (program P27):** MCP ingress is pack-gated under
+`optimus-ops` (ADR-0041). Server tools map to allowlisted ToolDesc only; built-in
+id collisions fail closed; HTTP MCP rejects private/metadata URLs; mapped tools
+remain `Unavailable` until SmartDeny-registered effectors exist. Signed packs
+(ADR-0042) reject unsigned manifests by default; permission ceilings exclude
+Process/NetworkWrite/Desktop for third-party packs; verify paths confined to
+`{home}/packs/`.
+
 **Confirmed current behaviour (program P28):** desktop Messaging IPC
 (`gateway_status`, `gateway_inbox`, `gateway_outbox`, `gateway_enqueue`,
 `gateway_ambiguous`, `gateway_ack_delivery`, `gateway_telegram_status`) is

@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-25 · P17 release gates; program P21–P26 consoles + program P28 gateway messaging parity; projects.scope honesty partial
+Updated: 2026-07-25 · P17 release gates; program P21–P28 product + program P27 extensibility parity; projects.scope honesty partial
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -21,9 +21,9 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 28 | A bounded Hermes-equivalent capability has current executable evidence |
-| **partial** | 2 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
-| **missing** | 17 | No complete executable path exists yet |
+| **parity** | 32 | A bounded Hermes-equivalent capability has current executable evidence |
+| **partial** | 1 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
+| **missing** | 14 | No complete executable path exists yet |
 | **total** | 51 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
@@ -60,19 +60,18 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Cron create/pause/resume/remove/history workbench (program P25)
 - Skills/memory/packs consoles + redacted logs + command palette (program P26)
 - Gateway outbox receipts, ambiguous-send recovery, mock Telegram adapter, messaging UI (program P28; external EO residual)
+- Provider catalog + ordered failover, pack-gated MCP mock, signed packs (program P27)
 
 ## Material partials
 
-- Provider catalog: connected/disconnected breadth and capability enforcement remain incomplete
 - Project isolation honesty (configured vs enforced) with concurrent multi-project mutate lease residual
 
 ## Leading product losses
 
-1. Pack-gated stdio/HTTP MCP client
-2. Interactive multi-tab ConPTY terminal
-3. General durable child-agent DAG execution with leases/handoff artifacts
-4. Comparative Hermes-vs-Optimus trajectory runner
-5. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, updater, and ecosystem breadth
+1. Interactive multi-tab ConPTY terminal
+2. General durable child-agent DAG execution with leases/handoff artifacts
+3. Comparative Hermes-vs-Optimus trajectory runner
+4. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, updater, and ecosystem breadth
 
 ## Current architecture truth
 
@@ -83,7 +82,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns today: durable sequential `WriteFile`/`RunCommand`; not general subagent parity
 - Gateway today: SQLite authority with outbox receipts, ambiguous-send recovery, mock Telegram adapter, messaging UI (program P28); external EO residual honest
-- Capabilities today: skills/memory/packs consoles (P26) + messaging gateway UI (P28); MCP/provider catalog remain incomplete (P27)
+- Capabilities today: skills/memory/packs consoles (P26), messaging (P28), provider/MCP/signed packs extensibility (P27); live MCP child spawn + production key ops residual
 - Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 
 ## Baseline commands of record
@@ -102,4 +101,4 @@ PF-00 baseline evidence: `local/tmp/baselines/PF-00-report.md`.
 
 ## Honest statement
 
-Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 2 partial and 17 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.
+Optimus has evidence-backed architectural wins and several parity slices. It is **not yet better than Hermes in every way**: the ledger currently contains 1 partial and 14 missing capabilities. Under the strict release-version schema, 0/2,063 Hermes feature contracts and 0/8 comparative performance scenarios are currently verified. The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until every row is `parity` or `win` and the final exact candidate passes the per-feature, comparative, security, cost, durability, packaging, and native-platform gates.

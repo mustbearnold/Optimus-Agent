@@ -113,6 +113,11 @@ const DESKTOP_METHODS = new Set([
   'gateway_ambiguous',
   'gateway_ack_delivery',
   'gateway_telegram_status',
+  'providers_catalog',
+  'providers_route_preview',
+  'mcp_status',
+  'mcp_tools',
+  'packs_verify_signed',
 ]);
 
 let hostProc = null;

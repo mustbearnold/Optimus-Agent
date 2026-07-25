@@ -13,6 +13,7 @@ enum Domain {
     Os,
     Consoles,
     Messaging,
+    Extensibility,
 }
 
 const METHOD_DOMAINS: &[(&str, Domain)] = &[
@@ -92,6 +93,11 @@ const METHOD_DOMAINS: &[(&str, Domain)] = &[
     ("gateway_ambiguous", Domain::Messaging),
     ("gateway_ack_delivery", Domain::Messaging),
     ("gateway_telegram_status", Domain::Messaging),
+    ("providers_catalog", Domain::Extensibility),
+    ("providers_route_preview", Domain::Extensibility),
+    ("mcp_status", Domain::Extensibility),
+    ("mcp_tools", Domain::Extensibility),
+    ("packs_verify_signed", Domain::Extensibility),
 ];
 
 fn classify(method: &str) -> Option<Domain> {
@@ -112,6 +118,7 @@ fn domain_recognizes(domain: Domain, method: &str) -> bool {
         Domain::Os => super::os::owns(method),
         Domain::Consoles => super::consoles::owns(method),
         Domain::Messaging => super::messaging::owns(method),
+        Domain::Extensibility => super::extensibility::owns(method),
     }
 }
 
@@ -130,6 +137,7 @@ pub(crate) fn handle_ipc(
         Some(Domain::Os) => super::os::handle(home, method, params),
         Some(Domain::Consoles) => super::consoles::handle(home, method, params),
         Some(Domain::Messaging) => super::messaging::handle(home, method, params),
+        Some(Domain::Extensibility) => super::extensibility::handle(home, method, params),
         None => Err(format!("unknown method: {method}")),
     }
 }
@@ -217,6 +225,11 @@ mod tests {
         ("gateway_ambiguous", Domain::Messaging),
         ("gateway_ack_delivery", Domain::Messaging),
         ("gateway_telegram_status", Domain::Messaging),
+        ("providers_catalog", Domain::Extensibility),
+        ("providers_route_preview", Domain::Extensibility),
+        ("mcp_status", Domain::Extensibility),
+        ("mcp_tools", Domain::Extensibility),
+        ("packs_verify_signed", Domain::Extensibility),
     ];
 
     #[test]

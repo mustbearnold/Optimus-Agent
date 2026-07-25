@@ -98,12 +98,15 @@ pub use openai_compat::{
 pub use optimus_graph::PolicyMode;
 /// Operator gateway + cron store (owned by `optimus-ops`).
 pub use optimus_ops::{
-    acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
-    enqueue, fail_claim, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
-    list_outbox_receipts, load_telegram_config, mark_external_send_failed, reconcile, release_claim,
-    renew_claim, save_telegram_config, telegram_poll_once, builtin_surface_commands,
-    commands_for_surface, CommandSurface, CronAttemptView, CronClaim, CronError, CronJob,
-    CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus, InboundMessage,
+    acknowledge_delivery, assert_public_mcp_url, builtin_surface_commands, builtin_tool_id_set,
+    cancel_claim, claim_one, commands_for_surface, complete_claim, default_mock_session,
+    delivery_state, drain_one, enqueue, fail_claim, gateway_status, http_mock_bind,
+    list_ambiguous_sends, list_inbox, list_outbox, list_outbox_receipts, load_mcp_session,
+    load_telegram_config, map_mcp_offers, mark_external_send_failed, mock_http_list_tools,
+    mock_stdio_list_tools, reconcile, release_claim, renew_claim, save_telegram_config,
+    stdio_mock_bind, telegram_poll_once, CommandSurface, CronAttemptView, CronClaim, CronError,
+    CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus,
+    InboundMessage, MappedMcpTool, McpError, McpSessionConfig, McpToolOffer, McpTransportKind,
     MockTelegramTransport, OutboundMessage, OutboxReceipt, SurfaceCommand, TelegramConfig,
     TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate,
 };
@@ -117,8 +120,9 @@ pub use project_authority::{
     ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
 };
 pub use routing::{
-    is_known_codex_model, provider_catalog, resolve_route, resolve_route_traced,
-    route_decision_count, sanitize_codex_oauth_model, ModelCapability, ModelId, PrivacyPolicy,
+    is_known_codex_model, provider_catalog, provider_catalog_status, resolve_route,
+    resolve_route_traced, route_decision_count, sanitize_codex_oauth_model, ModelCapability,
+    ModelId, PrivacyPolicy, ProviderCatalogStatus, ProviderConnectState,
     ProviderDescriptor, ProviderId, RouteDecision, RouteRequest, RouteSurface,
     RouteTelemetryPolicy, CODEX_MODEL_CATALOG, DEFAULT_CODEX_MODEL,
 };

@@ -1,32 +1,123 @@
-import type { Approval, Campaign, Doctor } from '../../ipc/contracts';
+import { useCallback, useEffect, useState } from 'react';
+import type { Approval, Campaign, Doctor, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
+
+type ProviderRow = {
+  id: string;
+  connect?: string;
+  connect_detail?: string;
+  supports_tools?: boolean;
+  supports_vision?: boolean;
+  supports_streaming?: boolean;
+  default_model?: { 0?: string } | string;
+  remote?: boolean;
+};
 
 export function CapabilitiesPage({
   doctor,
   approvals,
   campaigns,
   onOpenExecution,
+  transport,
 }: {
   doctor: Doctor | null;
   approvals: Approval[];
   campaigns: Campaign[];
   onOpenExecution: () => void;
+  transport?: OptimusTransport;
 }) {
   const packs = doctor?.pack_catalog || [];
   const toolCount = packs.reduce((count, pack) => count + (pack.tools?.length || 0), 0);
   const activeCampaigns = campaigns.filter((campaign) => /run/i.test(campaign.status || '')).length;
+  const [providers, setProviders] = useState<ProviderRow[]>([]);
+  const [mcpTools, setMcpTools] = useState<Array<Record<string, unknown>>>([]);
+  const [routePreview, setRoutePreview] = useState('');
+  const [error, setError] = useState('');
+
+  const loadExt = useCallback(async () => {
+    if (!transport) return;
+    setError('');
+    try {
+      const cat = await transport.invoke<{ providers?: ProviderRow[] }>('providers_catalog');
+      setProviders(cat.providers || []);
+      const mcp = await transport.invoke<{ tools?: Array<Record<string, unknown>> }>('mcp_tools', {
+        transport: 'stdio',
+      });
+      setMcpTools(mcp.tools || []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [transport]);
+
+  useEffect(() => {
+    void loadExt();
+  }, [loadExt]);
+
+  const previewFailover = async () => {
+    if (!transport) return;
+    setError('');
+    try {
+      const r = await transport.invoke<{
+        ok?: boolean;
+        decision?: { provider?: string; model?: string | { 0?: string }; fallback_from?: string };
+        error?: string;
+      }>('providers_route_preview', {
+        provider: 'codex',
+        model: 'not-a-codex-model',
+        allow_fallback: true,
+        fallback_order: ['offline'],
+      });
+      if (r.ok && r.decision) {
+        const model =
+          typeof r.decision.model === 'string'
+            ? r.decision.model
+            : r.decision.model?.[0] || JSON.stringify(r.decision.model);
+        setRoutePreview(
+          `${r.decision.provider} / ${model}` +
+            (r.decision.fallback_from ? ` (fallback from ${r.decision.fallback_from})` : '')
+        );
+      } else {
+        setRoutePreview(r.error || 'no route');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const modelLabel = (row: ProviderRow) => {
+    if (!row.default_model) return '—';
+    if (typeof row.default_model === 'string') return row.default_model;
+    return row.default_model[0] || '—';
+  };
+
   return (
     <main className="route-page capabilities-page" aria-label="Capabilities">
       <header className="route-heading">
-        <span className="route-kicker">Rust-owned runtime inventory</span>
+        <span className="route-kicker">Program P27 · extensibility</span>
         <h1>Runtime capabilities</h1>
-        <p>Inspect the tools Optimus can use, the effects waiting for approval, and the boundaries this build does not cross.</p>
+        <p>
+          Providers, pack-gated MCP tools, and signed pack verification. MCP never installs a second
+          tool catalog.
+        </p>
       </header>
       <section className="capability-overview" aria-label="Runtime summary">
         <dl>
-          <div><dt>Capability packs</dt><dd>{packs.length}</dd></div>
-          <div><dt>Canonical tools</dt><dd>{toolCount}</dd></div>
-          <div><dt>Active campaigns</dt><dd>{activeCampaigns}</dd></div>
+          <div>
+            <dt>Capability packs</dt>
+            <dd>{packs.length}</dd>
+          </div>
+          <div>
+            <dt>Canonical tools</dt>
+            <dd>{toolCount}</dd>
+          </div>
+          <div>
+            <dt>Active campaigns</dt>
+            <dd>{activeCampaigns}</dd>
+          </div>
+          <div>
+            <dt>Providers</dt>
+            <dd>{providers.length || '—'}</dd>
+          </div>
         </dl>
         <button type="button" className="approval-summary" onClick={onOpenExecution}>
           <span>Pending approvals</span>
@@ -34,11 +125,77 @@ export function CapabilitiesPage({
           <Icon name="forward" />
         </button>
       </section>
+
+      <section className="capability-registry" aria-labelledby="providers-title">
+        <header className="capability-section-heading">
+          <div>
+            <h2 id="providers-title">Provider catalog</h2>
+            <p>Connect state + capability flags (tools / vision / stream) from Rust authority.</p>
+          </div>
+          <button type="button" onClick={() => void loadExt()}>
+            <Icon name="refresh" />
+          </button>
+        </header>
+        <div className="tool-list">
+          {providers.map((p) => (
+            <div className="tool-row" key={String(p.id)}>
+              <span
+                className={`status-dot${p.connect === 'connected' ? ' is-ready' : ''}`}
+                title={p.connect_detail || p.connect}
+              />
+              <div>
+                <strong>{String(p.id)}</strong>
+                <span>
+                  {p.connect || 'unknown'} · model {modelLabel(p)} · tools=
+                  {String(!!p.supports_tools)} vision={String(!!p.supports_vision)} stream=
+                  {String(!!p.supports_streaming)}
+                </span>
+              </div>
+              <code>{p.remote ? 'remote' : 'local'}</code>
+            </div>
+          ))}
+          {!providers.length ? (
+            <p className="panel-muted">Load providers via host IPC (not available in bare fixture doctor).</p>
+          ) : null}
+        </div>
+        <div className="console-recall-form" style={{ marginTop: 12 }}>
+          <button type="button" onClick={() => void previewFailover()}>
+            Preview failover (codex → offline)
+          </button>
+          {routePreview ? <span className="state-chip">{routePreview}</span> : null}
+        </div>
+      </section>
+
+      <section className="capability-registry" aria-labelledby="mcp-title">
+        <header className="capability-section-heading">
+          <div>
+            <h2 id="mcp-title">MCP tools (pack-gated mock)</h2>
+            <p>Mapped ToolDesc rows only — not a parallel tool registry.</p>
+          </div>
+        </header>
+        <div className="tool-list">
+          {mcpTools.map((t) => (
+            <div className="tool-row" key={String(t.id)}>
+              <span className="status-dot" />
+              <div>
+                <strong>{String(t.id)}</strong>
+                <span>{String(t.description || '')}</span>
+              </div>
+              <code>{String(t.available ? 'available' : 'unavailable')}</code>
+            </div>
+          ))}
+          {!mcpTools.length ? <p className="panel-muted">No MCP tools mapped.</p> : null}
+        </div>
+      </section>
+
       <section className="capability-registry" aria-labelledby="runtime-tools-title">
         <header className="capability-section-heading">
           <div>
             <h2 id="runtime-tools-title">Available through Rust authority</h2>
-            <p>{toolCount} canonical {toolCount === 1 ? 'tool' : 'tools'} across {packs.length} enabled {packs.length === 1 ? 'pack' : 'packs'}.</p>
+            <p>
+              {toolCount} canonical {toolCount === 1 ? 'tool' : 'tools'} across {packs.length} enabled{' '}
+              {packs.length === 1 ? 'pack' : 'packs'}.
+            </p>
           </div>
           <span className="state-chip is-ready">Runtime owned</span>
         </header>
@@ -49,13 +206,18 @@ export function CapabilitiesPage({
                 <h3>{pack.id}</h3>
                 <p>{pack.description || 'Backend capability pack'}</p>
               </div>
-              <span>{pack.tools?.length || 0} {(pack.tools?.length || 0) === 1 ? 'tool' : 'tools'}</span>
+              <span>
+                {pack.tools?.length || 0} {(pack.tools?.length || 0) === 1 ? 'tool' : 'tools'}
+              </span>
             </header>
             <div className="tool-list">
               {(pack.tools || []).map((tool) => (
                 <div className="tool-row" key={tool.id}>
                   <span className="status-dot is-ready" />
-                  <div><strong>{tool.id}</strong><span>{tool.description || tool.policy || 'Available through Rust authority'}</span></div>
+                  <div>
+                    <strong>{tool.id}</strong>
+                    <span>{tool.description || tool.policy || 'Available through Rust authority'}</span>
+                  </div>
                   <code>{tool.policy || 'runtime'}</code>
                 </div>
               ))}
@@ -67,17 +229,30 @@ export function CapabilitiesPage({
         <header>
           <Icon name="warning" />
           <div>
-            <h2 id="capability-boundary-title">Unavailable in this build</h2>
-            <p>These visible boundaries prevent configured intent from being presented as working behavior.</p>
+            <h2 id="capability-boundary-title">Boundaries</h2>
+            <p>Configured intent is not presented as working behavior when evidence is missing.</p>
           </div>
         </header>
         <ul>
-          <li><strong>External messaging</strong><span>Unavailable</span></li>
-          <li><strong>Specialist agents</strong><span>Unavailable</span></li>
-          <li><strong>Parallel child orchestration</strong><span>Unavailable</span></li>
-          <li><strong>Project isolation enforcement</strong><span>Configured intent only</span></li>
+          <li>
+            <strong>Specialist agents</strong>
+            <span>Unavailable</span>
+          </li>
+          <li>
+            <strong>Parallel child orchestration</strong>
+            <span>Unavailable</span>
+          </li>
+          <li>
+            <strong>Project isolation enforcement</strong>
+            <span>Configured intent only</span>
+          </li>
+          <li>
+            <strong>Unsigned packs</strong>
+            <span>Rejected by default</span>
+          </li>
         </ul>
       </section>
+      {error ? <div className="surface-error">{error}</div> : null}
     </main>
   );
 }

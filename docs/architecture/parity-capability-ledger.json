@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21\u2013P26 consoles + program P28 gateway messaging parity; projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; program P21\u2013P28 product + program P27 extensibility parity; projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -120,20 +120,27 @@
       "id": "provider.catalog",
       "capability": "Canonical multi-provider/model catalog and connect state",
       "hermes_reference": "Broad provider catalog and OAuth",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/ui/index.html"
+        "crates/optimus-kernel/src/routing.rs",
+        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
+        "docs/architecture/product-complete-p27-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P27: provider_catalog_status connect + tools/vision/stream flags \u2192 UI; IPC providers_catalog",
       "owner_ticket": "A-01"
     },
     {
       "id": "provider.failover",
       "capability": "Capability-aware provider failover",
       "hermes_reference": "Provider fallback",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-kernel/src/routing.rs",
+        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "docs/architecture/product-complete-p27-verification.md"
+      ],
+      "trajectory": "program P27: ordered fallback_order + capability/privacy fail-closed; scripted offline failover tests",
       "owner_ticket": "A-08"
     },
     {
@@ -379,7 +386,7 @@
         "apps/optimus-desktop/src/ipc/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
-      "trajectory": "program P28: mock claim→turn→receipt; config-gated live token env; no public listen port; external EO residual honest",
+      "trajectory": "program P28: mock claim\u2192turn\u2192receipt; config-gated live token env; no public listen port; external EO residual honest",
       "owner_ticket": "C-03"
     },
     {
@@ -408,18 +415,28 @@
       "id": "mcp.client",
       "capability": "Pack-gated stdio/HTTP MCP client",
       "hermes_reference": "Native MCP client",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/mcp.rs",
+        "docs/decisions/0041-mcp-ingress-pack-gated.md",
+        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "docs/architecture/product-complete-p27-verification.md"
+      ],
+      "trajectory": "program P27: pack-gated stdio+HTTP mock MCP; ToolDesc map; no second catalog; private URL reject",
       "owner_ticket": "D-01"
     },
     {
       "id": "plugins.signed",
       "capability": "Signed permission-declared plugins/packs",
       "hermes_reference": "Plugin ecosystem",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-packs/src/signed.rs",
+        "docs/decisions/0042-signed-pack-manifests.md",
+        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "docs/architecture/product-complete-p27-verification.md"
+      ],
+      "trajectory": "program P27: HMAC signed manifests; unsigned rejected; permission ceiling vs SmartDeny classes",
       "owner_ticket": "D-02"
     },
     {
