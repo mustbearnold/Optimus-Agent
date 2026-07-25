@@ -49,6 +49,9 @@ Messaging (program P28): `gateway_status`, `gateway_inbox`, `gateway_outbox`,
 `gateway_enqueue`, `gateway_ambiguous`, `gateway_ack_delivery`,
 `gateway_telegram_status`
 
+Extensibility (program P27): `providers_catalog`, `providers_route_preview`,
+`mcp_status`, `mcp_tools`, `packs_verify_signed`
+
 `get_session` returns presentation-safe user/assistant messages. Provider
 tool-call arrays and tool-result protocol messages are omitted; ordered durable
 `tool_events` are attached to their owning assistant turn. `run_status` reports

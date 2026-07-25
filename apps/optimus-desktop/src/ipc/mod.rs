@@ -3,6 +3,7 @@
 mod chat;
 mod consoles;
 mod contract;
+mod extensibility;
 mod files;
 mod messaging;
 mod os;

@@ -51,6 +51,7 @@ impl ProviderId {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(transparent)]
 pub struct ModelId(String);
 
 impl ModelId {
@@ -102,6 +103,8 @@ pub enum ModelCapability {
     Streaming,
     Reasoning,
     Local,
+    /// Multimodal / image inputs (UI may disable when absent).
+    Vision,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -130,6 +133,10 @@ pub struct RouteRequest {
     pub privacy: PrivacyPolicy,
     pub max_cost_microunits: Option<u64>,
     pub allow_fallback: bool,
+    /// Ordered provider ids tried after the requested provider when `allow_fallback`.
+    /// Unknown ids are skipped. Statically denied candidates never authorize.
+    #[serde(default)]
+    pub fallback_order: Vec<String>,
     pub telemetry_policy: Option<RouteTelemetryPolicy>,
 }
 
@@ -176,9 +183,35 @@ impl RouteRequest {
             privacy: PrivacyPolicy::RemoteAllowed,
             max_cost_microunits: None,
             allow_fallback: false,
+            fallback_order: Vec::new(),
             telemetry_policy: None,
         }
     }
+}
+
+/// Connect / readiness state for UI and failover honesty (program P27).
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ProviderConnectState {
+    Connected,
+    Disconnected,
+    Unknown,
+}
+
+/// Catalog row with connect state and capability flags for UI (program P27.a).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProviderCatalogStatus {
+    pub id: ProviderId,
+    pub default_model: ModelId,
+    pub models: Vec<ModelId>,
+    pub capabilities: BTreeSet<ModelCapability>,
+    pub remote: bool,
+    pub estimated_cost_microunits: u64,
+    pub connect: ProviderConnectState,
+    pub connect_detail: String,
+    pub supports_tools: bool,
+    pub supports_vision: bool,
+    pub supports_streaming: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -222,6 +255,7 @@ pub fn provider_catalog() -> Vec<ProviderDescriptor> {
                 ModelCapability::Tools,
                 ModelCapability::Streaming,
                 ModelCapability::Reasoning,
+                ModelCapability::Vision,
             ]
             .into_iter()
             .collect(),
@@ -231,11 +265,12 @@ pub fn provider_catalog() -> Vec<ProviderDescriptor> {
         ProviderDescriptor {
             id: ProviderId::OpenAiCompat,
             default_model: ModelId("gpt-4.1".into()),
-            models: vec![],
+            models: vec![ModelId("gpt-4.1".into()), ModelId("gpt-4o".into())],
             capabilities: [
                 ModelCapability::Text,
                 ModelCapability::Tools,
                 ModelCapability::Streaming,
+                ModelCapability::Vision,
             ]
             .into_iter()
             .collect(),
@@ -243,6 +278,71 @@ pub fn provider_catalog() -> Vec<ProviderDescriptor> {
             estimated_cost_microunits: 10,
         },
     ]
+}
+
+/// Live catalog with connect state (Codex credentials, openai-compat env, offline always up).
+pub fn provider_catalog_status(home: impl AsRef<Path>) -> Vec<ProviderCatalogStatus> {
+    let home = home.as_ref();
+    let codex_present = crate::CodexAuthStore::open(home)
+        .ok()
+        .and_then(|store| store.status().ok())
+        .map(|s| s.present)
+        .unwrap_or(false);
+    let openai_base = std::env::var("OPTIMUS_OPENAI_BASE_URL")
+        .ok()
+        .filter(|v| !v.trim().is_empty());
+    provider_catalog()
+        .into_iter()
+        .map(|descriptor| {
+            let (connect, connect_detail) = match descriptor.id {
+                ProviderId::Offline => (
+                    ProviderConnectState::Connected,
+                    "local scripted provider".into(),
+                ),
+                ProviderId::Codex => {
+                    if codex_present {
+                        (
+                            ProviderConnectState::Connected,
+                            "codex credentials present".into(),
+                        )
+                    } else {
+                        (
+                            ProviderConnectState::Disconnected,
+                            "no codex credentials".into(),
+                        )
+                    }
+                }
+                ProviderId::OpenAiCompat => {
+                    if openai_base.is_some() {
+                        (
+                            ProviderConnectState::Connected,
+                            "OPTIMUS_OPENAI_BASE_URL set".into(),
+                        )
+                    } else {
+                        (
+                            ProviderConnectState::Disconnected,
+                            "OPTIMUS_OPENAI_BASE_URL unset".into(),
+                        )
+                    }
+                }
+            };
+            ProviderCatalogStatus {
+                supports_tools: descriptor.capabilities.contains(&ModelCapability::Tools),
+                supports_vision: descriptor.capabilities.contains(&ModelCapability::Vision),
+                supports_streaming: descriptor
+                    .capabilities
+                    .contains(&ModelCapability::Streaming),
+                id: descriptor.id,
+                default_model: descriptor.default_model,
+                models: descriptor.models,
+                capabilities: descriptor.capabilities,
+                remote: descriptor.remote,
+                estimated_cost_microunits: descriptor.estimated_cost_microunits,
+                connect,
+                connect_detail,
+            }
+        })
+        .collect()
 }
 
 pub fn is_known_codex_model(model: &str) -> bool {
@@ -292,11 +392,27 @@ fn resolve_route_internal(
         .expect("canonical provider is present in catalog");
     let mut candidates = vec![requested_descriptor];
     if request.allow_fallback {
-        candidates.extend(
-            catalog
-                .iter()
-                .filter(|descriptor| descriptor.id != requested),
-        );
+        if !request.fallback_order.is_empty() {
+            for raw in &request.fallback_order {
+                let Some(id) = ProviderId::parse(raw) else {
+                    continue;
+                };
+                if id == requested {
+                    continue;
+                }
+                if let Some(descriptor) = catalog.iter().find(|d| d.id == id) {
+                    if !candidates.iter().any(|c| c.id == descriptor.id) {
+                        candidates.push(descriptor);
+                    }
+                }
+            }
+        } else {
+            candidates.extend(
+                catalog
+                    .iter()
+                    .filter(|descriptor| descriptor.id != requested),
+            );
+        }
     }
     if let Some(policy) = &request.telemetry_policy {
         policy.validate()?;
@@ -305,7 +421,8 @@ fn resolve_route_internal(
     let mut rejected = Vec::new();
     let mut approved = Vec::new();
     for descriptor in candidates {
-        match evaluate_candidate(descriptor, request) {
+        let is_primary = descriptor.id == requested;
+        match evaluate_candidate(descriptor, request, is_primary) {
             Ok(model) => {
                 let aggregate = request
                     .telemetry_policy
@@ -402,6 +519,7 @@ fn telemetry_rank(
 fn evaluate_candidate(
     descriptor: &ProviderDescriptor,
     request: &RouteRequest,
+    is_primary: bool,
 ) -> std::result::Result<ModelId, String> {
     if request.privacy == PrivacyPolicy::LocalOnly && descriptor.remote {
         return Err("privacy_requires_local".into());
@@ -418,17 +536,24 @@ fn evaluate_candidate(
     {
         return Err("budget_exceeded".into());
     }
-    let model = request
+    let requested_model = request
         .requested_model
         .as_deref()
         .map(ModelId::parse)
         .transpose()
-        .map_err(|_| "invalid_model_identity".to_string())?
-        .unwrap_or_else(|| descriptor.default_model.clone());
-    if descriptor.id == ProviderId::Codex && !descriptor.models.contains(&model) {
-        return Err("model_not_owned_by_provider".into());
-    }
-    if descriptor.id == ProviderId::Offline && !descriptor.models.contains(&model) {
+        .map_err(|_| "invalid_model_identity".to_string())?;
+    let model = match requested_model {
+        Some(model) if descriptor.models.is_empty() || descriptor.models.contains(&model) => model,
+        Some(_) if is_primary => {
+            return Err("model_not_owned_by_provider".into());
+        }
+        Some(_) => {
+            // Failover candidate: remap to that provider's default model.
+            descriptor.default_model.clone()
+        }
+        None => descriptor.default_model.clone(),
+    };
+    if !descriptor.models.is_empty() && !descriptor.models.contains(&model) {
         return Err("model_not_owned_by_provider".into());
     }
     Ok(model)
@@ -555,5 +680,50 @@ mod tests {
         let directory = tempdir().unwrap();
         let request = RouteRequest::standard(RouteSurface::Cli, "codex", Some("grok-4.5".into()));
         assert!(resolve_route(directory.path(), &request).is_err());
+    }
+
+    #[test]
+    fn ordered_failover_prefers_fallback_order_over_catalog_scan() {
+        let directory = tempdir().unwrap();
+        // Invalid codex model → denied; ordered failover to openai then offline.
+        let mut request =
+            RouteRequest::standard(RouteSurface::Desktop, "codex", Some("not-a-codex-model".into()));
+        request.allow_fallback = true;
+        request.fallback_order = vec!["openai-compat".into(), "offline".into()];
+        let decision = resolve_route(directory.path(), &request).unwrap();
+        assert_eq!(decision.provider, ProviderId::OpenAiCompat);
+        assert_eq!(decision.fallback_from, Some(ProviderId::Codex));
+
+        let mut offline_first = request.clone();
+        offline_first.fallback_order = vec!["offline".into(), "openai-compat".into()];
+        let decision2 = resolve_route(directory.path(), &offline_first).unwrap();
+        assert_eq!(decision2.provider, ProviderId::Offline);
+    }
+
+    #[test]
+    fn failover_never_authorizes_statically_denied_candidates() {
+        let directory = tempdir().unwrap();
+        let mut request = RouteRequest::standard(RouteSurface::Cli, "codex", None);
+        request.privacy = PrivacyPolicy::LocalOnly;
+        request.allow_fallback = true;
+        // openai-compat is remote → denied under LocalOnly; only offline survives.
+        request.fallback_order = vec!["openai-compat".into(), "offline".into()];
+        let decision = resolve_route(directory.path(), &request).unwrap();
+        assert_eq!(decision.provider, ProviderId::Offline);
+    }
+
+    #[test]
+    fn catalog_status_exposes_capability_flags_and_connect() {
+        let directory = tempdir().unwrap();
+        let rows = provider_catalog_status(directory.path());
+        assert!(rows.len() >= 3);
+        let offline = rows.iter().find(|r| r.id == ProviderId::Offline).unwrap();
+        assert_eq!(offline.connect, ProviderConnectState::Connected);
+        assert!(offline.supports_tools);
+        assert!(!offline.supports_vision);
+        let codex = rows.iter().find(|r| r.id == ProviderId::Codex).unwrap();
+        assert!(codex.supports_streaming);
+        assert!(codex.supports_vision);
+        assert_eq!(codex.connect, ProviderConnectState::Disconnected);
     }
 }

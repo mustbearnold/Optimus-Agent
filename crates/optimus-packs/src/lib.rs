@@ -1,13 +1,22 @@
 //! Progressive capability packs with schema-token budgets.
 
+mod signed;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use thiserror::Error;
 
+pub use signed::{
+    assert_policy_within_ceiling, default_third_party_ceiling, load_signed_manifest_file,
+    sign_manifest, verify_manifest, PackManifestBody, SignedPackManifest, TrustRoot,
+};
+
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum PackError {
+    #[error("{0}")]
+    Msg(String),
     #[error("unknown pack: {0}")]
     UnknownPack(String),
     #[error("core pack cannot be deactivated")]
@@ -100,6 +109,7 @@ impl PackError {
             | Self::InvalidOutputSchema { .. }
             | Self::DescriptorReplayMismatch { .. }
             | Self::DescriptorOperationsMismatch { .. } => "pack_descriptor_invalid",
+            Self::Msg(_) => "pack_error",
         }
     }
 

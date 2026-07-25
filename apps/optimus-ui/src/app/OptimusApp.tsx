@@ -553,7 +553,13 @@ export function OptimusApp() {
                     />
                   </>
                 ) : state.layout.route === 'capabilities' ? (
-                  <CapabilitiesPage doctor={doctor} approvals={approvals} campaigns={campaigns} onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })} />
+                  <CapabilitiesPage
+                    doctor={doctor}
+                    approvals={approvals}
+                    campaigns={campaigns}
+                    transport={transport}
+                    onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })}
+                  />
                 ) : state.layout.route === 'consoles' ? (
                   <ConsolesPage
                     key={consoleTab}

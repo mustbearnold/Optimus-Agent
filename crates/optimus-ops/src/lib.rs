@@ -5,6 +5,7 @@
 
 mod cron;
 mod gateway;
+mod mcp;
 mod surface_commands;
 mod telegram;
 
@@ -15,6 +16,11 @@ pub use gateway::{
     list_outbox_receipts, mark_external_send_failed, reconcile, release_claim, renew_claim,
     DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus, InboundMessage,
     OutboundMessage, OutboxReceipt,
+};
+pub use mcp::{
+    assert_public_mcp_url, builtin_tool_id_set, default_mock_session, http_mock_bind,
+    load_mcp_session, map_mcp_offers, mock_http_list_tools, mock_stdio_list_tools, stdio_mock_bind,
+    MappedMcpTool, McpError, McpSessionConfig, McpToolOffer, McpTransportKind,
 };
 pub use surface_commands::{
     builtin_surface_commands, commands_for_surface, CommandSurface, SurfaceCommand,

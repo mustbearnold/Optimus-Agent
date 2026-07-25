@@ -601,6 +601,56 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
         mode: 'mock-or-disabled',
         note: 'Default path is mock/long-poll client. No public listen port. External EO not claimed.',
       };
+    case 'providers_catalog':
+      return {
+        providers: [
+          {
+            id: 'offline',
+            connect: 'connected',
+            connect_detail: 'local scripted',
+            supports_tools: true,
+            supports_vision: false,
+            supports_streaming: false,
+            default_model: 'offline-scripted',
+            remote: false,
+          },
+          {
+            id: 'codex',
+            connect: 'disconnected',
+            supports_tools: true,
+            supports_vision: true,
+            supports_streaming: true,
+            default_model: 'gpt-5.6-terra',
+            remote: true,
+          },
+        ],
+      };
+    case 'providers_route_preview':
+      return {
+        ok: true,
+        decision: {
+          provider: 'offline',
+          model: 'offline-scripted',
+          fallback_from: 'codex',
+        },
+      };
+    case 'mcp_status':
+      return { session: { pack_id: 'mcp.mock', transport: 'stdio' } };
+    case 'mcp_tools':
+      return {
+        tools: [
+          {
+            id: 'mcp_echo',
+            description: 'Echo via mock MCP',
+            available: false,
+            policy: 'NetworkRead',
+          },
+        ],
+        count: 1,
+        pack_id: 'mcp.mock',
+      };
+    case 'packs_verify_signed':
+      return { ok: true, manifest: { pack_id: 'example.signed', version: '1.0.0' } };
     case 'cron_list':
       return { jobs: cronJobs };
     case 'cron_add': {
