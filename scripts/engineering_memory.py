@@ -649,8 +649,11 @@ def parse_tool_catalog() -> dict[str, Any]:
     )
     for variant in ("BrowserNavigate", "BrowserSnapshot", "BrowserClick"):
         invocation_policy.setdefault(variant, "Browser")
-    if len(invocation_ids) != 10:
-        raise MemoryError(f"expected 10 available ToolInvocation IDs, found {len(invocation_ids)}")
+    # Core available tools grow with product programs (P21: 10, P22: 14 with mutate).
+    if len(invocation_ids) < 10:
+        raise MemoryError(
+            f"expected at least 10 available ToolInvocation IDs, found {len(invocation_ids)}"
+        )
 
     packs = []
     tools = []
@@ -692,7 +695,19 @@ def parse_tool_catalog() -> dict[str, Any]:
                 "id": tool_id,
                 "version": 1,
                 "owner": "optimus-packs",
-                "effector_owner": "optimus-kernel" if tool_id not in {"write_file", "terminal"} else "optimus-runtime",
+                "effector_owner": (
+                    "optimus-runtime"
+                    if tool_id
+                    in {
+                        "write_file",
+                        "mkdir",
+                        "delete_path",
+                        "rename_path",
+                        "patch_file",
+                        "terminal",
+                    }
+                    else "optimus-kernel"
+                ),
                 "pack": pack_id,
                 "available": True,
                 "description": desc_match.group(1),
@@ -749,7 +764,11 @@ def parse_tool_catalog() -> dict[str, Any]:
         )
     ids = [tool["id"] for tool in tools]
     if len(ids) != 22 or len(set(ids)) != 22:
-        raise MemoryError(f"expected 22 unique canonical tools, found {len(ids)}/{len(set(ids))}")
+        # Catalog grows with product programs (P21: 22, P22: 26 with mutate tools).
+        if len(ids) < 22 or len(ids) != len(set(ids)):
+            raise MemoryError(
+                f"expected ≥22 unique canonical tools, found {len(ids)}/{len(set(ids))}"
+            )
     return {
         **generated_header(),
         "canonical_source": "crates/optimus-packs/src/lib.rs",

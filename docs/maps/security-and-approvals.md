@@ -90,8 +90,9 @@ variant; malformed OpenAI/Codex containers and completed SSE forms fail closed.
 
 1. **Confirmed:** a high-risk effect is persisted as a job/node before execution.
 2. **Confirmed:** SmartDeny classifies host-mutating effects as high-risk:
-   `RunCommand`, `ProjectRunCommand`, `WriteFile`, and `ProjectWriteFile`.
-   `AssertFileEquals` remains non-high-risk (read/compare only).
+   `RunCommand`, `ProjectRunCommand`, `WriteFile`, `ProjectWriteFile`, and
+   program P22 file-mutate family (`Mkdir`/`DeletePath`/`RenamePath`/`PatchFile`
+   and Project* twins). `AssertFileEquals` remains non-high-risk (read/compare only).
 3. **Confirmed:** execution marks the high-risk node `awaiting_approval` and stops.
 4. **Confirmed:** desktop `term_run` cannot self-grant; a separate
    `approvals_grant(job_id)` call resolves the awaiting node, persists a grant

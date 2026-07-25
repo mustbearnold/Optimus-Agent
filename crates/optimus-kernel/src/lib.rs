@@ -1942,39 +1942,108 @@ impl Kernel {
                     .get("contents")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                let job = self.runtime.create_job(JobSpec {
-                    label: format!("write:{path}"),
-                    budget: Default::default(),
-                    nodes: vec![NodeSpec {
-                        label: "write".into(),
-                        effect: Effect::ProjectWriteFile {
+                {
+                    let result = self.run_project_file_job(
+                        format!("write:{path}"),
+                        "write",
+                        Effect::ProjectWriteFile {
                             workspace_sha256: self.runtime.workspace_sha256(),
                             relative_path: path.into(),
                             contents: contents.into(),
                         },
-                    }],
-                })?;
-                let status = self.runtime.run_all(job)?;
-                if status == optimus_runtime::JobStatus::AwaitingApproval {
-                    let node_index = self
-                        .runtime
-                        .list_pending_approvals()?
-                        .into_iter()
-                        .find(|pending| pending.job_id == job)
-                        .and_then(|pending| pending.node_index)
-                        .unwrap_or(0);
-                    return Err(optimus_runtime::RuntimeError::NeedsApproval {
-                        job_id: job,
-                        node_index,
-                    }
-                    .into());
+                    )?;
+                    Ok(result)
                 }
-                Ok(json!({
-                    "ok": status == optimus_runtime::JobStatus::Succeeded,
-                    "job": job.to_string(),
-                    "status": format!("{status:?}")
-                })
-                .to_string())
+            }
+            ToolInvocation::Mkdir => {
+                let path = call
+                    .arguments
+                    .get("path")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("mkdir requires path".into()))?;
+                {
+                    let result = self.run_project_file_job(
+                        format!("mkdir:{path}"),
+                        "mkdir",
+                        Effect::ProjectMkdir {
+                        workspace_sha256: self.runtime.workspace_sha256(),
+                        relative_path: path.into(),
+                    },
+                    )?;
+                    Ok(result)
+                }
+            }
+            ToolInvocation::DeletePath => {
+                let path = call
+                    .arguments
+                    .get("path")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("delete_path requires path".into()))?;
+                {
+                    let result = self.run_project_file_job(
+                        format!("delete:{path}"),
+                        "delete",
+                        Effect::ProjectDeletePath {
+                        workspace_sha256: self.runtime.workspace_sha256(),
+                        relative_path: path.into(),
+                    },
+                    )?;
+                    Ok(result)
+                }
+            }
+            ToolInvocation::RenamePath => {
+                let from = call
+                    .arguments
+                    .get("from")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("rename_path requires from".into()))?;
+                let to = call
+                    .arguments
+                    .get("to")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("rename_path requires to".into()))?;
+                {
+                    let result = self.run_project_file_job(
+                        format!("rename:{from}->{to}"),
+                        "rename",
+                        Effect::ProjectRenamePath {
+                        workspace_sha256: self.runtime.workspace_sha256(),
+                        from_relative_path: from.into(),
+                        to_relative_path: to.into(),
+                    },
+                    )?;
+                    Ok(result)
+                }
+            }
+            ToolInvocation::PatchFile => {
+                let path = call
+                    .arguments
+                    .get("path")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("patch_file requires path".into()))?;
+                let old_string = call
+                    .arguments
+                    .get("old_string")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("patch_file requires old_string".into()))?;
+                let new_string = call
+                    .arguments
+                    .get("new_string")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("patch_file requires new_string".into()))?;
+                {
+                    let result = self.run_project_file_job(
+                        format!("patch:{path}"),
+                        "patch",
+                        Effect::ProjectPatchFile {
+                        workspace_sha256: self.runtime.workspace_sha256(),
+                        relative_path: path.into(),
+                        old_string: old_string.into(),
+                        new_string: new_string.into(),
+                    },
+                    )?;
+                    Ok(result)
+                }
             }
             // Read-only helpers that may appear in core pack list
             ToolInvocation::ReadFile => {
@@ -2098,6 +2167,44 @@ impl Kernel {
         Ok((tool_id, result))
     }
 
+    /// Run a single-node project-bound file effect job (SmartDeny + workspace hash).
+    fn run_project_file_job(
+        &mut self,
+        label: String,
+        node_label: &str,
+        effect: Effect,
+    ) -> Result<String> {
+        let job = self.runtime.create_job(JobSpec {
+            label,
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: node_label.into(),
+                effect,
+            }],
+        })?;
+        let status = self.runtime.run_all(job)?;
+        if status == optimus_runtime::JobStatus::AwaitingApproval {
+            let node_index = self
+                .runtime
+                .list_pending_approvals()?
+                .into_iter()
+                .find(|pending| pending.job_id == job)
+                .and_then(|pending| pending.node_index)
+                .unwrap_or(0);
+            return Err(optimus_runtime::RuntimeError::NeedsApproval {
+                job_id: job,
+                node_index,
+            }
+            .into());
+        }
+        Ok(json!({
+            "ok": status == optimus_runtime::JobStatus::Succeeded,
+            "job": job.to_string(),
+            "status": format!("{status:?}")
+        })
+        .to_string())
+    }
+
     /// Seed a memory claim for demos/tests.
     pub fn remember_demo(&self, subject: &str, predicate: &str, object: &str) -> Result<Uuid> {
         use optimus_memory::ClaimDraft;
@@ -2181,17 +2288,39 @@ fn exact_action_summary(effect_json: &str) -> String {
             relative_path,
             contents,
             ..
+        })
+        | Ok(Effect::WriteFile {
+            relative_path,
+            contents,
         }) => format!("Write {relative_path} ({} bytes)", contents.len()),
+        Ok(Effect::ProjectMkdir { relative_path, .. }) | Ok(Effect::Mkdir { relative_path }) => {
+            format!("Create directory {relative_path}")
+        }
+        Ok(Effect::ProjectDeletePath { relative_path, .. })
+        | Ok(Effect::DeletePath { relative_path }) => {
+            format!("Delete {relative_path}")
+        }
+        Ok(Effect::ProjectRenamePath {
+            from_relative_path,
+            to_relative_path,
+            ..
+        })
+        | Ok(Effect::RenamePath {
+            from_relative_path,
+            to_relative_path,
+        }) => format!("Rename {from_relative_path} → {to_relative_path}"),
+        Ok(Effect::ProjectPatchFile {
+            relative_path, ..
+        })
+        | Ok(Effect::PatchFile {
+            relative_path, ..
+        }) => format!("Patch {relative_path}"),
         Ok(Effect::ProjectRunCommand { program, args, .. })
         | Ok(Effect::RunCommand { program, args }) => {
             let program = serde_json::to_string(&program).unwrap_or_else(|_| "<invalid>".into());
             let args = serde_json::to_string(&args).unwrap_or_else(|_| "<invalid>".into());
             format!("Run {program} with args {args}")
         }
-        Ok(Effect::WriteFile {
-            relative_path,
-            contents,
-        }) => format!("Write {relative_path} ({} bytes)", contents.len()),
         Ok(Effect::AssertFileEquals { relative_path, .. }) => {
             format!("Verify {relative_path}")
         }
