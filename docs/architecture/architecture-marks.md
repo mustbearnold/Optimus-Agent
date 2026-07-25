@@ -48,7 +48,7 @@ tests. Planned work must not be graded as current behaviour.
 |---|:---:|---|
 | Durability / crash safety | **A+** | Work Graph, ambiguous effects, process-tree ownership. Session open repairs missing tool messages from effect links. |
 | Security boundary design | **S+++** | SmartDeny high-risk effects; exact grants; path preflight; skill class grants. Linux commands: confined bwrap (workspace-only RW; no full-root bind) under default `CommandFsEnvelope::Confined`; `UnrestrictedHost` is explicit break-glass. Windows: Job Object residual for Confined; `ConfinedNoNetwork` fail-closed. Shared egress helper for browser/web_search. Credential encryption residual is not a runtime authorization hole (documented). |
-| Domain modularity (packs/memory/skills/store) | **A-** | Deep modules; keep second catalogs out of kernel. |
+| Domain modularity (packs/memory/skills/store) | **S+++** | Single `ToolDesc` authority in packs; kernel dispatches via `ToolInvocation` only. Memory/session/skills/EM planes separated with fail-closed ActionAuthorize + class-scoped skill grants. Store has no chat schema. Gate: `check-domain-modularity.py` + `domain_modularity` tests. |
 | Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
 | Multi-agent readiness | **S+++** | Two specialists (`workspace_writer`, `workspace_reader`); three registered workflows including `write_then_read_handoff` DAG; durable `WorkflowRunStore`; parent cancel tree. P12 closed the command-FS residual that blocked S+++ after P10. Still registered-only (no open-ended model spawn — out of P10 scope). |
 | Observability / eval | **A-** | Offline integrity gate + causal reconstruction CLI (`optimus trace show`); stable security-denial codes. No OTel export yet. |
@@ -138,7 +138,7 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 | P10 | Multi-agent platform (DAG, ≥2 specialists, cancel tree) | Multi-agent B→**S** (S+++ after P12) | **done** |
 | P11 | Control-plane peels (agent/workflow/artifacts crates) | Control-plane B+→**S+++** | **done** |
 | P12 | Command capability envelope (real FS confinement) | Security A-→**S+++**; Multi-agent S→**S+++** | **done** |
-| P13 | Domain modularity audit (single catalogs, plane separation) | Domain A-→S+++ | pending |
+| P13 | Domain modularity audit (single catalogs, plane separation) | Domain A-→**S+++** | **done** |
 | P14 | Observability export + gate strength | Observability A-→S+++ | pending |
 | P15 | UI/IPC completeness + shell truth | UI A-→S+++ | pending |
 | P16 | Doc / claim hygiene pass | Doc A-→S+++ | pending |

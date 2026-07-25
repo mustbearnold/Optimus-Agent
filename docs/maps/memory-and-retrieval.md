@@ -41,7 +41,7 @@ last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 | Procedural runtime skills | Confirmed current behaviour | `optimus-skills` in `skills.db` | Versioned reusable procedures with permissions and outcome evidence. |
 | Work/campaign state | Confirmed current behaviour | runtime/store campaign and Work Graph tables in `optimus.db` | Durable operational progress with job-derived campaign status; not semantic memory. |
 | Gateway state | Confirmed current behaviour | `gateway.db` plus JSON adapter directories | Authoritative leased message attempts and terminal outbox JSON with reconciled file materializations; not semantic memory. |
-| Engineering Memory | Confirmed current behaviour | repository `docs/`, `skills/`, `.engineering-memory/` | Development knowledge for building Optimus; never loaded as an authorization source. |
+| Engineering Memory | Confirmed current behaviour | repository `docs/`, `skills/`, `.engineering-memory/` | Development knowledge for building Optimus; never loaded as an authorization source (P13: no grant-from-EM API; domain gate forbids it). |
 | Project knowledge | Unknown or unresolved behaviour | no implemented owner | Source-backed Aipedia or other target-project knowledge is not implemented as a distinct subsystem. |
 | Retrieval indexes | Unknown or unresolved behaviour | no implemented owner | No vector, embedding, full-text, graph, reranking, or GPU index exists in the workspace. |
 
