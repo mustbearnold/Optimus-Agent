@@ -134,7 +134,7 @@ fn hit_to_json(h: &SearchHit) -> serde_json::Value {
     })
 }
 
-/// Stable provenance URL: https preferred, strip fragment, lowercase host.
+/// Stable provenance URL: HTTP(S) only, strip fragment, lowercase host.
 pub fn canonicalize_provenance_url(raw: &str) -> Option<String> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {

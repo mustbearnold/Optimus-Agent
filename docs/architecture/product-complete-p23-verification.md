@@ -19,7 +19,7 @@ last_verified_commit: null
 
 # Product-complete program P23 verification
 
-Planes: **program P23** · delivery pending PR · architecture hold (Security / UI) ·
+Planes: **program P23** · delivery **PR #33** · architecture hold (Security / UI) ·
 ledger `browser.cdp`, `browser.http`, `browser.annotations`, `web.search` → **parity**
 
 Date: 2026-07-25

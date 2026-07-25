@@ -448,9 +448,9 @@ pub fn fetch_page(
         .map_err(|e| BrowserError::Http(e.to_string()))?;
     let status = resp.status();
     let final_url = resp.get_url().to_string();
-    if let Ok(fu) = Url::parse(&final_url) {
-        assert_url_safe(&fu)?;
-    }
+    // Fail closed: unparsable redirect target is not a free pass (SSRF residual).
+    let fu = Url::parse(&final_url).map_err(|e| BrowserError::Url(format!("final_url: {e}")))?;
+    assert_url_safe(&fu)?;
     let mut body = Vec::new();
     resp.into_reader()
         .take(max_bytes as u64 + 1)
@@ -708,10 +708,8 @@ mod tests {
         ] {
             let err = effector.navigate(bad).unwrap_err();
             assert!(
-                matches!(err, BrowserError::Ssrf(_))
-                    || err.to_string().to_ascii_lowercase().contains("ssrf")
-                    || err.to_string().contains("scheme"),
-                "expected SSRF deny for {bad}, got {err}"
+                matches!(err, BrowserError::Ssrf(_)),
+                "expected BrowserError::Ssrf for {bad}, got {err:?}"
             );
         }
         // No page state after denied navigations.

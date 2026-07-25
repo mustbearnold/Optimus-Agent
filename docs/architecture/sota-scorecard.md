@@ -50,14 +50,16 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Store-backed causal reconstruction + local export (`optimus.causal.v1`)
 - Fail-closed tool ads↔handler registry + progressive pack schema budget (program P21)
 - Files mutate under SmartDeny (mkdir/rename/delete/patch + write) (program P22)
+- Coordinated preview + agent browser under ADR-0040 (not shared CDP session) (program P23)
+- Web search versioned extract + provenance URL (program P23)
+- Annotation gallery + explicit Add to prompt (program P23)
+- HTTP browser SSRF without CDP (program P23)
 
 ## Material partials
 
 - Provider catalog: connected/disconnected breadth and capability enforcement remain incomplete
 - Thinking/tool cards: lifecycle/timing separation remains incomplete
 - Session hygiene: FTS jump, archive, active sort, and durable pins remain incomplete
-- Web search/extract breadth
-- CDP preview browser + annotations (shared-session paint + gallery still incomplete)
 - Content-addressed artifacts store (list/publish/preview/delete/filter + bulk delete; export/zip still incomplete)
 - Cron lifecycle and desktop CRUD
 - Gateway queue without leases/delivery receipts

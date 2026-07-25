@@ -76,7 +76,8 @@ core paths:
 
 1. Chat with streaming, stop/cancel, thinking + tool cards, and durable sessions.
 2. Use the agent on real work: read/write files under policy, terminal jobs,
-   web search, shared-session browser, approvals (SmartDeny).
+   web search, coordinated preview + agent browser (ADR-0040), approvals
+   (SmartDeny).
 3. Manage work: projects with enforced isolation, session search/archive/pins,
    artifacts gallery + export, cron CRUD, skills + memory consoles.
 4. Extend safely: pack budget/tool contract, MCP client, provider catalog.
@@ -114,7 +115,7 @@ finish the ship surface
 
 Never start Track Z or optional depth while Stages 0–3 still have open tasks.
 Never invent specialist orchestration before tool contract + file mutate +
-browser shared session are green.
+coordinated browser (program P23) are green.
 
 ## Status legend
 
@@ -161,7 +162,7 @@ explicitly deferred with reason; EM current for this tree.
 ## Stage 1 — Agent can do real work (tools critical path)
 
 **Why second:** UI polish on a read-only / half-tool agent wastes cycles. File
-mutation, tool contract, and shared browser are the shortest path from “chat
+mutation, tool contract, and coordinated browser are the shortest path from “chat
 demo” to “usable operator”.
 
 | ID | Status | Micro-task | Ledger | Proof |
@@ -346,7 +347,7 @@ internally; never block product fixes for these.
 
 ```text
 S0 ship surface
- └─► S1 tools (mutate + tool contract + shared browser)
+ └─► S1 tools (mutate + tool contract + coordinated browser)
       ├─► S2 workbench (// chat | artifacts | cron | isolation)
       ├─► S3 consoles (skills, memory, logs, packs, palette)
       └─► S4 extensibility (catalog, failover, MCP, signed packs)
@@ -363,7 +364,7 @@ If only one agent is working, pull in this exact order (skip `done` items):
 
 1. S0.2 (cutover matrix residual) if still open
 2. S2.14 concurrent multi-project mutate lease residual (or skip)
-3. S1.5 shared browser (program P23), then S2.1–S2.5 chat/session (P24)
+3. S1.5 coordinated browser (program P23 done), then S2.1–S2.5 chat/session (P24)
 4. S2.6–S2.11 artifacts/cron (P25) // S3 consoles (P26)
 5. S4 extensibility (P27) after P21 (already done)
 6. S5 gateway → Telegram (P28)
