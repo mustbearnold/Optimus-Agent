@@ -1,7 +1,7 @@
 # Durability and backup (operator contract)
 
 Date: 2026-07-25  
-Planes: program **P18** · mark **Durability / crash safety** · delivery (PR after open)
+Planes: program **P18** · mark **Durability / crash safety** · delivery **PR #28**
 
 ## Scope of architecture Durability S+++
 

@@ -1,7 +1,7 @@
 # S+++ P18 verification — durability / crash safety
 
 Date: 2026-07-25  
-Planes: program **P18** · decision (process; local SQLite durability scope) · delivery **PR pending**
+Planes: program **P18** · decision (process; local SQLite durability scope) · delivery **PR #28**
 
 ## Exit evidence
 

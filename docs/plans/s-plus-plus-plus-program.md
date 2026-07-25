@@ -571,7 +571,7 @@ Core Work Graph durability was already strong. Residuals closed or scoped:
 | Y3 | Chaos tests: kill during WriteFile/RunCommand/campaign step | done — `crash_resume` write crash + ambiguous command; campaign crash recover (existing) |
 | Y4 | Workflow run + agent invocation crash matrix (post-P10) | done — workflow cancel idempotent unit test; cancel tree in vertical |
 | Y5 | Session repair coverage for all durable tool kinds | done — multi-link repair in `session_resume` |
-| Y6 | Marks → Durability **S+++** | done — PR after open |
+| Y6 | Marks → Durability **S+++** | done — PR #28 + `s-plus-plus-plus-p18-verification.md` |
 
 ### Hold suite
 
