@@ -21,9 +21,9 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 25 | A bounded Hermes-equivalent capability has current executable evidence |
-| **partial** | 3 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
-| **missing** | 19 | No complete executable path exists yet |
+| **parity** | 28 | A bounded Hermes-equivalent capability has current executable evidence |
+| **partial** | 2 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
+| **missing** | 17 | No complete executable path exists yet |
 | **total** | 51 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
@@ -73,8 +73,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 3. Interactive multi-tab ConPTY terminal
 4. General durable child-agent DAG execution with leases/handoff artifacts
 5. Comparative Hermes-vs-Optimus trajectory runner
-6. Messaging UI (gateway/Telegram receipts path — program P28)
-7. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, updater, and ecosystem breadth
+6. Profiles, CUA pack, media/voice, ACP/TUI/proxy, migration, updater, and ecosystem breadth
 
 ## Current architecture truth
 
@@ -84,8 +83,8 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available) is separate from the Electron sandboxed preview `WebContentsView`.
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns today: durable sequential `WriteFile`/`RunCommand`; not general subagent parity
-- Gateway today: durable local inbox/outbox + loopback webhook; no Telegram adapter or delivery receipts
-- Capabilities today: skills/memory/packs consoles + command palette landed (program P26); messaging/MCP/provider catalog remain incomplete
+- Gateway today: SQLite authority with outbox receipts, ambiguous-send recovery, mock Telegram adapter, messaging UI (program P28); external EO residual honest
+- Capabilities today: skills/memory/packs consoles (P26) + messaging gateway UI (P28); MCP/provider catalog remain incomplete (P27)
 - Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 
 ## Baseline commands of record

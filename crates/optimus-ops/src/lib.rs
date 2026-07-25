@@ -6,13 +6,20 @@
 mod cron;
 mod gateway;
 mod surface_commands;
+mod telegram;
 
 pub use cron::{CronAttemptView, CronClaim, CronError, CronJob, CronStore};
 pub use gateway::{
     acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
-    enqueue, fail_claim, list_inbox, list_outbox, reconcile, release_claim, renew_claim,
-    DrainResult, GatewayClaim, GatewayError, GatewayPaths, InboundMessage, OutboundMessage,
+    enqueue, fail_claim, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
+    list_outbox_receipts, reconcile, release_claim, renew_claim, DrainResult, GatewayClaim,
+    GatewayError, GatewayPaths, GatewayStatus, InboundMessage, OutboundMessage, OutboxReceipt,
 };
 pub use surface_commands::{
     builtin_surface_commands, commands_for_surface, CommandSurface, SurfaceCommand,
+};
+pub use telegram::{
+    load_telegram_config, poll_once as telegram_poll_once, process_inbound_reply_path,
+    save_telegram_config, MockTelegramTransport, SendOutcome, TelegramConfig, TelegramError,
+    TelegramPollResult, TelegramTransport, TelegramUpdate,
 };

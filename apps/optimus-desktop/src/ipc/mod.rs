@@ -4,6 +4,7 @@ mod chat;
 mod consoles;
 mod contract;
 mod files;
+mod messaging;
 mod os;
 mod router;
 mod runtime_ops;

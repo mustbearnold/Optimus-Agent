@@ -359,21 +359,27 @@
       "id": "gateway.queue",
       "capability": "Durable inbox/outbox and local webhook",
       "hermes_reference": "Gateway message bus",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/gateway.rs",
-        "apps/optimus-cli/tests/gateway_http.rs"
+        "apps/optimus-cli/tests/gateway_http.rs",
+        "apps/optimus-desktop/src/ipc/messaging.rs",
+        "docs/architecture/product-complete-p28-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P28: outbox receipts + attempt leases + ambiguous-send list/ack + doctor counts; local SQLite authority only",
       "owner_ticket": "C-02"
     },
     {
       "id": "gateway.telegram",
       "capability": "Telegram home-channel adapter",
       "hermes_reference": "Telegram gateway",
-      "state": "missing",
-      "evidence": [],
-      "trajectory": null,
+      "state": "parity",
+      "evidence": [
+        "crates/optimus-ops/src/telegram.rs",
+        "apps/optimus-desktop/src/ipc/messaging.rs",
+        "docs/architecture/product-complete-p28-verification.md"
+      ],
+      "trajectory": "program P28: mock claim→turn→receipt; config-gated live token env; no public listen port; external EO residual honest",
       "owner_ticket": "C-03"
     },
     {
@@ -389,11 +395,13 @@
       "id": "gateway.ui",
       "capability": "Messaging connection/inbox/outbox UI",
       "hermes_reference": "Messaging surface",
-      "state": "missing",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/ui/index.html"
+        "apps/optimus-ui/src/components/mail/MailPage.tsx",
+        "apps/optimus-desktop/src/ipc/messaging.rs",
+        "docs/architecture/product-complete-p28-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P28: MailPage bound to gateway_inbox/outbox/ambiguous/ack IPC; honesty copy for local receipts",
       "owner_ticket": "C-04"
     },
     {

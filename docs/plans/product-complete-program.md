@@ -166,7 +166,7 @@ After **program P21** green:
 | Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | **parity** | **P26 done** |
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
 | MCP + signed packs | `mcp.client`, `plugins.signed` | Missing | **P27** |
-| Gateway / Telegram / messaging UI | `gateway.queue`, `telegram`, `ui` | Partial / Missing | **P28** |
+| Gateway / Telegram / messaging UI | `gateway.queue`, `gateway.telegram`, `gateway.ui` | **parity** | **P28 done** (external EO residual) |
 | Install + updater | `release.updater` | Missing / Partial packaging | **P29** |
 | Already parity/win product rows | streaming, durable session, shell, files.read, terminal.job, … | **HOLD** | re-evidence only if install claim changes |
 | S7 / Track Z | profiles, open subagents, PTY, CUA, Hermes gate, … | Deferred | **After P29** |
@@ -654,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P26 done** (through consoles).
-2. Open **program P27** (extensibility) or **P28** (messaging); residual S2.14 concurrent mutate lease remains optional.
+1. **program P20–P26 + P28 done** (P27 extensibility still open if needed before P29).
+2. Open **program P27** (provider/MCP/signed packs) then **P29** ship, or P29 only if P27 residuals accepted as honest missing until later.
 
 ## Success definition
 

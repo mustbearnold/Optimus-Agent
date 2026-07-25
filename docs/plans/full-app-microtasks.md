@@ -260,10 +260,10 @@ before durable receipts creates double-send risk. Order is fixed.
 
 | ID | Status | Micro-task | Ledger | Proof |
 |---|---|---|---|---|
-| S5.1 | `todo` | Outbox delivery receipts + attempt leases | `gateway.queue` | gateway tests |
-| S5.2 | `todo` | Ambiguous-send recovery CLI + doctor | `gateway.queue` | CLI tests |
-| S5.3 | `todo` | Telegram adapter: claim → turn → receipt (mock first) | `gateway.telegram` | adapter mock suite |
-| S5.4 | `todo` | Messaging UI bound to real inbox/outbox | `gateway.ui` | fixture e2e |
+| S5.1 | `done` | Outbox delivery receipts + attempt leases | `gateway.queue` | list_outbox_receipts + leases; program P28 |
+| S5.2 | `done` | Ambiguous-send recovery CLI + doctor | `gateway.queue` | gateway ambiguous/ack/status + doctor counts; program P28 |
+| S5.3 | `done` | Telegram adapter: claim → turn → receipt (mock first) | `gateway.telegram` | telegram mock suite; program P28 |
+| S5.4 | `done` | Messaging UI bound to real inbox/outbox | `gateway.ui` | MailPage + IPC fixture e2e; program P28 |
 | S5.5 | `park` | Discord adapter | `gateway.discord-slack` | after S5.4; not product-critical |
 | S5.6 | `park` | Slack adapter | `gateway.discord-slack` | after S5.4; not product-critical |
 

@@ -55,7 +55,14 @@ export type DesktopMethod =
   | 'packs_activate'
   | 'packs_deactivate'
   | 'logs_tail'
-  | 'commands_list';
+  | 'commands_list'
+  | 'gateway_status'
+  | 'gateway_inbox'
+  | 'gateway_outbox'
+  | 'gateway_enqueue'
+  | 'gateway_ambiguous'
+  | 'gateway_ack_delivery'
+  | 'gateway_telegram_status';
 
 export type RunStatus =
   | 'idle'
@@ -133,6 +140,10 @@ export type Doctor = {
   campaigns?: boolean;
   cron?: boolean;
   gateway?: boolean;
+  gateway_inbox_pending?: number;
+  gateway_outbox_total?: number;
+  gateway_ambiguous_sends?: number;
+  gateway_note?: string;
   cron_jobs?: number;
   campaigns_active?: number;
   approvals_pending?: number;

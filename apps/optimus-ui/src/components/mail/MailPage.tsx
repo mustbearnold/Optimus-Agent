@@ -1,193 +1,329 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { Project, SessionMeta } from '../../ipc/contracts';
+import { useCallback, useEffect, useState } from 'react';
+import type { OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
-type MailFact = {
-  label: string;
-  value: string;
-};
-
-type MailMessage = {
+type InboxMessage = {
   id: string;
-  sender: string;
-  subject: string;
-  preview: string;
-  context: string;
-  unread: boolean;
-  paragraphs: string[];
-  facts?: MailFact[];
+  channel: string;
+  text: string;
+  provider?: string;
+  session_id?: string | null;
+  received_unix?: number;
 };
 
-type Props = {
-  projects: Project[];
-  sessions: SessionMeta[];
-  assignments: Record<string, string>;
-  activeRunSessionId: string | null;
+type OutboxReceipt = {
+  message_id: string;
+  outbound: {
+    id: string;
+    in_reply_to: string;
+    channel: string;
+    text: string;
+    status: string;
+    sent_unix?: number;
+  };
+  terminal_status: string;
+  terminal_reason?: string | null;
+  delivered_unix?: number | null;
+  ambiguous_send: boolean;
 };
 
-export function MailPage({
-  projects,
-  sessions,
-  assignments,
-  activeRunSessionId,
-}: Props) {
-  const messages = useMemo(
-    () => buildPreviewMessages(projects, sessions, assignments, activeRunSessionId),
-    [activeRunSessionId, assignments, projects, sessions]
-  );
-  const [selectedId, setSelectedId] = useState(() => messages[0]?.id || '');
-  const [readIds, setReadIds] = useState<Set<string>>(
-    () => new Set(messages.filter((message) => !message.unread).map((message) => message.id))
-  );
-  const selected = messages.find((message) => message.id === selectedId) || messages[0] || null;
+type GatewayStatus = {
+  inbox_pending?: number;
+  inbox_claimed?: number;
+  outbox_total?: number;
+  ambiguous_sends?: number;
+  note?: string;
+};
+
+type Tab = 'inbox' | 'outbox' | 'ambiguous';
+
+export function MailPage({ transport }: { transport: OptimusTransport }) {
+  const [tab, setTab] = useState<Tab>('inbox');
+  const [status, setStatus] = useState<GatewayStatus | null>(null);
+  const [inbox, setInbox] = useState<InboxMessage[]>([]);
+  const [outbox, setOutbox] = useState<OutboxReceipt[]>([]);
+  const [ambiguous, setAmbiguous] = useState<OutboxReceipt[]>([]);
+  const [telegram, setTelegram] = useState<Record<string, unknown> | null>(null);
+  const [selectedId, setSelectedId] = useState('');
+  const [draft, setDraft] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setError('');
+    try {
+      const [st, inb, out, amb, tg] = await Promise.all([
+        transport.invoke<{ status?: GatewayStatus }>('gateway_status'),
+        transport.invoke<{ messages?: InboxMessage[] }>('gateway_inbox'),
+        transport.invoke<{ messages?: OutboxReceipt[] }>('gateway_outbox', { limit: 50 }),
+        transport.invoke<{ messages?: OutboxReceipt[] }>('gateway_ambiguous'),
+        transport.invoke<Record<string, unknown>>('gateway_telegram_status'),
+      ]);
+      setStatus(st.status || null);
+      setInbox(inb.messages || []);
+      setOutbox(out.messages || []);
+      setAmbiguous(amb.messages || []);
+      setTelegram(tg);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [transport]);
 
   useEffect(() => {
-    if (!selected?.id) return;
-    setReadIds((current) => {
-      if (current.has(selected.id)) return current;
-      const next = new Set(current);
-      next.add(selected.id);
-      return next;
-    });
-  }, [selected?.id]);
+    void load();
+  }, [load]);
 
-  const unreadCount = messages.filter((message) => message.unread && !readIds.has(message.id)).length;
+  const list =
+    tab === 'inbox' ? inbox : tab === 'outbox' ? outbox : ambiguous;
+  const selected =
+    tab === 'inbox'
+      ? inbox.find((m) => m.id === selectedId) || inbox[0] || null
+      : (tab === 'outbox' ? outbox : ambiguous).find((m) => m.message_id === selectedId)
+        || (tab === 'outbox' ? outbox : ambiguous)[0]
+        || null;
+
+  const enqueueLocal = async () => {
+    const text = draft.trim();
+    if (!text) return;
+    setBusy(true);
+    setError('');
+    try {
+      await transport.invoke('gateway_enqueue', { text, channel: 'local' });
+      setDraft('');
+      await load();
+      setTab('inbox');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const ack = async (row: OutboxReceipt) => {
+    setBusy(true);
+    setError('');
+    try {
+      await transport.invoke('gateway_ack_delivery', {
+        message_id: row.message_id,
+        outbound_id: row.outbound.id,
+      });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <main className="mail-page" aria-label="Mail">
+    <main className="mail-page" aria-label="Messaging">
       <header className="mail-toolbar">
         <div className="mail-title">
           <Icon name="mail" />
           <div>
-            <h1>Mail</h1>
-            <span>{unreadCount ? `${unreadCount} unread` : 'All caught up'}</span>
+            <h1>Messaging</h1>
+            <span>
+              inbox {status?.inbox_pending ?? '—'} · outbox {status?.outbox_total ?? '—'} · ambiguous{' '}
+              {status?.ambiguous_sends ?? '—'}
+            </span>
           </div>
         </div>
-        <span className="mail-preview-label">Local preview</span>
+        <div className="mail-toolbar-actions">
+          <span className="mail-preview-label">Gateway truth</span>
+          <button type="button" onClick={() => void load()} disabled={busy}>
+            <Icon name="refresh" />
+          </button>
+        </div>
       </header>
 
+      <p className="panel-muted mail-honesty">
+        Local SQLite is the delivery authority. <strong>delivered_unix</strong> is a local adapter
+        receipt — external exactly-once is not claimed. Telegram is mock/config-gated long-poll (no
+        public listen port).
+      </p>
+
+      <div className="console-tabs" role="tablist" aria-label="Messaging sections">
+        {(['inbox', 'outbox', 'ambiguous'] as Tab[]).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            className={tab === id ? 'is-active' : ''}
+            onClick={() => {
+              setTab(id);
+              setSelectedId('');
+            }}
+          >
+            {id}
+            {id === 'ambiguous' && (status?.ambiguous_sends || 0) > 0
+              ? ` (${status?.ambiguous_sends})`
+              : ''}
+          </button>
+        ))}
+      </div>
+
+      <div className="mail-enqueue">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Enqueue local inbound message…"
+          aria-label="Inbound message text"
+          disabled={busy}
+        />
+        <button type="button" onClick={() => void enqueueLocal()} disabled={busy || !draft.trim()}>
+          Enqueue
+        </button>
+      </div>
+
       <div className="mail-layout">
-        <section className="mail-list" aria-label="Messages">
-          {messages.map((message) => {
-            const isSelected = selected?.id === message.id;
-            const isUnread = message.unread && !readIds.has(message.id);
-            return (
-              <button
-                type="button"
-                className={`mail-list-item${isSelected ? ' is-selected' : ''}${isUnread ? ' is-unread' : ''}`}
-                aria-current={isSelected ? 'true' : undefined}
-                key={message.id}
-                onClick={() => setSelectedId(message.id)}
-              >
-                <span className="mail-list-meta">
-                  <strong>{message.sender}</strong>
-                  <span>{message.context}</span>
-                </span>
-                <span className="mail-list-subject">
-                  {isUnread ? <span className="mail-unread-dot"><span className="sr-only">Unread: </span></span> : null}
-                  <strong>{message.subject}</strong>
-                </span>
-                <span className="mail-list-preview">{message.preview}</span>
-              </button>
-            );
-          })}
+        <section className="mail-list" aria-label={`${tab} messages`}>
+          {tab === 'inbox'
+            ? inbox.map((message) => (
+                <button
+                  type="button"
+                  key={message.id}
+                  className={`mail-list-item${selected && 'id' in selected && selected.id === message.id ? ' is-selected' : ''}`}
+                  onClick={() => setSelectedId(message.id)}
+                >
+                  <span className="mail-list-meta">
+                    <strong>{message.channel}</strong>
+                    <span>{message.provider || '—'}</span>
+                  </span>
+                  <span className="mail-list-subject">
+                    <strong>{message.id.slice(0, 8)}…</strong>
+                  </span>
+                  <span className="mail-list-preview">{message.text}</span>
+                </button>
+              ))
+            : (list as OutboxReceipt[]).map((row) => (
+                <button
+                  type="button"
+                  key={row.message_id}
+                  className={`mail-list-item${
+                    selected && 'message_id' in selected && selected.message_id === row.message_id
+                      ? ' is-selected'
+                      : ''
+                  }${row.ambiguous_send ? ' is-unread' : ''}`}
+                  onClick={() => setSelectedId(row.message_id)}
+                >
+                  <span className="mail-list-meta">
+                    <strong>{row.outbound.channel}</strong>
+                    <span>
+                      {row.ambiguous_send
+                        ? 'AMBIGUOUS'
+                        : row.delivered_unix
+                          ? 'receipted'
+                          : row.terminal_status}
+                    </span>
+                  </span>
+                  <span className="mail-list-subject">
+                    <strong>{row.message_id.slice(0, 8)}…</strong>
+                  </span>
+                  <span className="mail-list-preview">{row.outbound.text}</span>
+                </button>
+              ))}
+          {!list.length ? (
+            <div className="mail-empty surface-empty">
+              <Icon name="mail" />
+              <p>No {tab} messages.</p>
+            </div>
+          ) : null}
         </section>
 
-        {selected ? (
-          <article className="mail-reader" aria-labelledby={`mail-subject-${selected.id}`}>
+        {selected && tab === 'inbox' && 'text' in selected ? (
+          <article className="mail-reader" aria-label="Inbound detail">
             <header className="mail-reader-header">
-              <span className="mail-reader-context">{selected.context}</span>
-              <h2 id={`mail-subject-${selected.id}`}>{selected.subject}</h2>
+              <span className="mail-reader-context">{selected.channel}</span>
+              <h2>{selected.id}</h2>
               <div className="mail-sender">
-                <span className="mail-sender-mark" aria-hidden="true">O</span>
+                <span className="mail-sender-mark" aria-hidden="true">
+                  in
+                </span>
                 <div>
-                  <strong>{selected.sender}</strong>
-                  <span>Generated from local Optimus preview state</span>
+                  <strong>Inbound</strong>
+                  <span>{selected.provider || 'provider unknown'}</span>
                 </div>
               </div>
             </header>
             <div className="mail-body">
-              {selected.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              {selected.facts?.length ? (
-                <dl className="mail-facts">
-                  {selected.facts.map((fact) => (
-                    <div key={fact.label}>
-                      <dt>{fact.label}</dt>
-                      <dd>{fact.value}</dd>
-                    </div>
-                  ))}
-                </dl>
+              <p>{selected.text}</p>
+              <dl className="mail-facts">
+                <div>
+                  <dt>Session</dt>
+                  <dd>{selected.session_id || '—'}</dd>
+                </div>
+                <div>
+                  <dt>Received</dt>
+                  <dd>{selected.received_unix ?? '—'}</dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+        ) : selected && 'outbound' in selected ? (
+          <article className="mail-reader" aria-label="Outbox detail">
+            <header className="mail-reader-header">
+              <span className="mail-reader-context">{selected.outbound.channel}</span>
+              <h2>{selected.message_id}</h2>
+              <div className="mail-sender">
+                <span className="mail-sender-mark" aria-hidden="true">
+                  out
+                </span>
+                <div>
+                  <strong>{selected.ambiguous_send ? 'Ambiguous send' : 'Outbound'}</strong>
+                  <span>
+                    {selected.delivered_unix
+                      ? `local receipt @ ${selected.delivered_unix}`
+                      : 'no local delivery receipt'}
+                  </span>
+                </div>
+              </div>
+            </header>
+            <div className="mail-body">
+              <p>{selected.outbound.text}</p>
+              <dl className="mail-facts">
+                <div>
+                  <dt>Outbound id</dt>
+                  <dd>{selected.outbound.id}</dd>
+                </div>
+                <div>
+                  <dt>Terminal</dt>
+                  <dd>
+                    {selected.terminal_status}
+                    {selected.terminal_reason ? ` / ${selected.terminal_reason}` : ''}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Reply to</dt>
+                  <dd>{selected.outbound.in_reply_to}</dd>
+                </div>
+              </dl>
+              {selected.ambiguous_send ? (
+                <button type="button" disabled={busy} onClick={() => void ack(selected)}>
+                  Record local delivery receipt
+                </button>
               ) : null}
             </div>
           </article>
         ) : (
           <div className="mail-empty">
             <Icon name="mail" />
-            <p>No Optimus updates yet.</p>
+            <p>Select a message to inspect gateway state.</p>
           </div>
         )}
       </div>
+
+      {telegram ? (
+        <footer className="mail-telegram-status" aria-label="Telegram adapter status">
+          <strong>Telegram</strong>
+          <span>
+            mode={String(telegram.mode)} · enabled={String(telegram.enabled)} · token_present=
+            {String(telegram.token_present)}
+          </span>
+          <small>{String(telegram.note || '')}</small>
+        </footer>
+      ) : null}
+      {error ? <div className="surface-error">{error}</div> : null}
     </main>
   );
-}
-
-function buildPreviewMessages(
-  projects: Project[],
-  sessions: SessionMeta[],
-  assignments: Record<string, string>,
-  activeRunSessionId: string | null
-): MailMessage[] {
-  const project = projects[0];
-  const projectName = project?.name || 'Your workspace';
-  const projectSessions = project
-    ? sessions.filter((session) => assignments[session.id] === project.id)
-    : [];
-  const sourceCount = project?.rootPaths.length || 0;
-  const activeRun = activeRunSessionId
-    ? sessions.find((session) => session.id === activeRunSessionId)
-    : null;
-
-  return [
-    {
-      id: `project-summary-${project?.id || 'workspace'}`,
-      sender: 'Optimus',
-      subject: `${projectName} workspace summary`,
-      preview: `${projectSessions.length} sessions assigned · ${sourceCount} sources connected`,
-      context: projectName,
-      unread: true,
-      paragraphs: [
-        'Optimus prepared this summary from the project state currently loaded in the app.',
-        'This is preview mail inside Optimus. It has not been sent to an external inbox.',
-      ],
-      facts: [
-        { label: 'Assigned sessions', value: String(projectSessions.length) },
-        { label: 'Connected sources', value: String(sourceCount) },
-        { label: 'Current activity', value: activeRun?.title || (activeRun ? activeRun.id : 'No active run') },
-      ],
-    },
-    {
-      id: 'welcome-to-optimus-mail',
-      sender: 'Optimus',
-      subject: 'Welcome to Optimus Mail',
-      preview: 'A focused home for project updates and attention items',
-      context: 'Product update',
-      unread: true,
-      paragraphs: [
-        'Mail is where Optimus can present project updates without mixing them into your work sessions.',
-        'This implementation supports a local message list, unread state, and message reading. External email delivery and account sync are not implemented.',
-      ],
-    },
-    {
-      id: 'mail-preferences-planned',
-      sender: 'Optimus',
-      subject: 'Notification controls are planned',
-      preview: 'Project rules, schedules, and update types will become configurable',
-      context: 'Planned capability',
-      unread: false,
-      paragraphs: [
-        'Future versions can add per-project update rules, delivery schedules, and configurable message types.',
-        'Those controls are intentionally not shown as active in this preview because the runtime does not support them yet.',
-      ],
-    },
-  ];
 }

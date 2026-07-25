@@ -1,36 +1,89 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { DesktopMethod, OptimusTransport } from '../../ipc/contracts';
 import { MailPage } from './MailPage';
 
+function fixtureTransport(): OptimusTransport {
+  const invoke = vi.fn(async (method: DesktopMethod) => {
+    switch (method) {
+      case 'gateway_status':
+        return {
+          status: {
+            inbox_pending: 1,
+            outbox_total: 1,
+            ambiguous_sends: 1,
+            note: 'local authority',
+          },
+        };
+      case 'gateway_inbox':
+        return {
+          messages: [
+            {
+              id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+              channel: 'local',
+              text: 'hello inbox',
+              provider: 'offline',
+            },
+          ],
+        };
+      case 'gateway_outbox':
+      case 'gateway_ambiguous':
+        return {
+          messages: [
+            {
+              message_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+              outbound: {
+                id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+                in_reply_to: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+                channel: 'local',
+                text: 'hello outbox',
+                status: 'ok',
+              },
+              terminal_status: 'succeeded',
+              ambiguous_send: true,
+            },
+          ],
+        };
+      case 'gateway_telegram_status':
+        return {
+          enabled: false,
+          mode: 'mock-or-disabled',
+          token_present: false,
+          note: 'no public listen',
+        };
+      case 'gateway_enqueue':
+        return { message: { id: 'new', channel: 'local', text: 'x' } };
+      case 'gateway_ack_delivery':
+        return { acked: true };
+      default:
+        throw new Error(String(method));
+    }
+  });
+  return {
+    kind: 'fixture',
+    invoke,
+    chat: vi.fn(),
+    windowAction: vi.fn(),
+    pickFolder: vi.fn(),
+    openPath: vi.fn(),
+  } as unknown as OptimusTransport;
+}
+
 describe('MailPage', () => {
-  it('opens Optimus update mail and marks the selected message as read', async () => {
+  it('binds to gateway inbox/outbox and honesty copy', async () => {
     const user = userEvent.setup();
-    render(
-      <MailPage
-        projects={[{
-          id: 'optimus-agent',
-          name: 'Optimus Agent',
-          rootPaths: ['/workspace/optimus-agent'],
-        }]}
-        sessions={[{
-          id: 'session-1',
-          title: 'Review current changes',
-          message_count: 4,
-        }]}
-        assignments={{ 'session-1': 'optimus-agent' }}
-        activeRunSessionId={null}
-      />
-    );
-
-    expect(screen.getByRole('main', { name: 'Mail' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Optimus Agent workspace summary' })).toBeInTheDocument();
-    expect(await screen.findByText('1 unread')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /Welcome to Optimus Mail/ }));
-
-    expect(screen.getByRole('heading', { name: 'Welcome to Optimus Mail' })).toBeInTheDocument();
-    expect(screen.getByText('All caught up')).toBeInTheDocument();
-    expect(screen.getByText(/External email delivery and account sync are not implemented/)).toBeInTheDocument();
+    const transport = fixtureTransport();
+    render(<MailPage transport={transport} />);
+    expect(await screen.findByRole('heading', { name: /Messaging/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/hello inbox/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Gateway truth/i)).toBeInTheDocument();
+    expect(screen.getByText(/exactly-once is not claimed/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /outbox/i }));
+    expect(screen.getAllByText(/hello outbox/i).length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('tab', { name: /ambiguous/i }));
+    expect(
+      await screen.findByRole('button', { name: /Record local delivery receipt/i })
+    ).toBeInTheDocument();
   });
 });
