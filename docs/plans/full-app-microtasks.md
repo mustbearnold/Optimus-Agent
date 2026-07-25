@@ -57,7 +57,7 @@ agent; mark status in this file when a stage closes.
 
 | Stage / tasks | Program phase | Notes |
 |---|---|---|
-| S0 (S0.1 done) | **program P20** | Authority + ship-surface freeze |
+| S0 (S0.2 residual) | **program P20** | Authority + ship-surface freeze |
 | S1.1, S1.2, S1.4 | **program P21** | Tool contract + pack budget |
 | S1.3 + S2.12–S2.14 | **program P22** | Mutate + isolation pull-forward |
 | S1.5–S1.8 | **program P23** | Coordinated browser → ledger **parity** |
@@ -149,9 +149,9 @@ WIP and docs drift burn parallel agents.
 |---|---|---|---|---|
 | S0.1 | `done` | Land ArtifactsSurface polish + unit tests on cutover branch | `artifacts.store-ui` | `npm --prefix apps/optimus-ui test -- ArtifactsSurface` |
 | S0.2 | `todo` | Green the React cutover verification matrix (repo only; no install) | ADR-0029, cutover spec | unit + Vite build + Electron policy + compiled-shell e2e + `cargo test -p optimus-desktop` |
-| S0.3 | `todo` | Regenerate Engineering Memory after cutover tree is stable | EM | `python scripts/engineering_memory.py check && generate && validate` |
-| S0.4 | `todo` | Align scorecard “architecture truth” with Electron React default | scorecard | prose matches ADR-0029; `python scripts/check-parity-ledger.py` |
-| S0.5 | `todo` | Freeze cutover handoff: rollback = `OPTIMUS_ELECTRON_UI=legacy` | cutover spec | doc row complete; no data rewrite |
+| S0.3 | `done` | Regenerate Engineering Memory after cutover tree is stable | EM | `engineering_memory.py generate` + `validate --quick` → VALID/CURRENT on PR #30 |
+| S0.4 | `done` | Align scorecard “architecture truth” with Electron React default | scorecard | Electron+React default banner; parity ledger green |
+| S0.5 | `done` | Freeze cutover handoff: rollback = `OPTIMUS_ELECTRON_UI=legacy` | cutover spec | product-complete + ADR-0029 / electron README; no data rewrite |
 
 **Stage exit:** repository default shell is React; verification matrix green or
 explicitly deferred with reason; EM current for this tree.
@@ -359,16 +359,15 @@ S0 ship surface
 
 ## Fastest “next session” queue
 
-If only one agent is working, pull in this exact order:
+If only one agent is working, pull in this exact order (skip `done` items):
 
-1. S0.1 → S0.2 → S0.3 → S0.4
-2. S1.1 → S1.3 → S1.5 → S1.2 → S1.4
-3. S2.1 → S2.2 → S2.3 → S2.4 → S2.5
-4. S2.12 → S2.10 → S2.6
-5. S3.1 → S3.2 → S3.3
-6. S4.1 → S4.4 → S4.6
-7. S5.1 → S5.3 → S5.4
-8. S6.1 → S6.2 → S6.4 → S6.5
+1. S0.2 (cutover matrix residual) if still open
+2. **program P22** / S1.3 files.mutate + S2.12–S2.14 isolation
+3. S1.5 shared browser (program P23), then S2.1–S2.5 chat/session (P24)
+4. S2.6–S2.11 artifacts/cron (P25) // S3 consoles (P26)
+5. S4 extensibility (P27) after P21 (already done)
+6. S5 gateway → Telegram (P28)
+7. S6 install/updater (P29)
 
 Skip ahead only when a listed dependency is already `done`.
 

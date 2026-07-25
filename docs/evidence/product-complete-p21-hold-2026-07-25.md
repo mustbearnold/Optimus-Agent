@@ -1,6 +1,6 @@
 # Product-complete program P21 hold evidence — 2026-07-25
 
-Planes: **program P21** · delivery (local uncommitted) · architecture hold
+Planes: **program P21** · delivery **PR #30** · architecture hold
 
 ## Three-expert review board
 

@@ -17,13 +17,13 @@ validated_by:
   - scripts/check-domain-modularity.py
   - scripts/check-parity-ledger.py
   - scripts/check-architecture-marks.py
-last_verified_commit: 4701228a9a6e75c2e4a2866142f3ab4dddc92b0a
+last_verified_commit: e0df7cee268c8fa3bd72776b1153dae24df97ff7
 ---
 
 # Product-complete program P21 verification
 
-Planes: **program P21** · architecture hold (Domain / Security / Control-plane) ·
-ledger `core.tool-loop`, `core.pack-budget`
+Planes: **program P21** · delivery **PR #30** · architecture hold (Domain /
+Security / Control-plane) · ledger `core.tool-loop`, `core.pack-budget`
 
 Date: 2026-07-25
 
@@ -73,8 +73,8 @@ cargo test -p optimus-kernel --test kernel_turn --test domain_modularity -- --te
 
 Record: [product-complete-p21-hold-2026-07-25.md](../evidence/product-complete-p21-hold-2026-07-25.md).
 
-`last_verified_commit` is the pre-change main tip; worktree may still be dirty
-with this program's uncommitted docs/code.
+`last_verified_commit` is the program P21 feature tip on **PR #30**
+(`e0df7ce`); follow-up hygiene commits may land on the same PR.
 
 ## Verdict
 

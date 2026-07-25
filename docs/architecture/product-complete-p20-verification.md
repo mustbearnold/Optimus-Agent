@@ -17,8 +17,7 @@ last_verified_commit: null
 
 # Product-complete program P20 verification
 
-Planes: **program P20** · delivery (local docs; no PR required for this record) ·
-architecture hold (marks unchanged)
+Planes: **program P20** · delivery **PR #30** · architecture hold (marks unchanged)
 
 Date: 2026-07-25
 
@@ -43,7 +42,7 @@ residuals honestly.
 | 8 | Expert board MUST-FIX folded (arch / product / docs) | **PASS** | SharedBrowserContract gate, effect-taxonomy ADR, isolation honesty, MCP/Telegram freezes, P23 parity, dependency gates, evidence paths |
 | 9 | Hold scripts | **PASS** | `release-check` PASS (Hermes gate remains BLOCKED by design); `check-parity-ledger.py` ok; `check-architecture-marks.py` OK (2026-07-25) |
 | 10 | S0.2 React cutover verification matrix (repo) | **residual** | Owner: remain under program P20 until green; does **not** block authority install. Not installed cutover (P29). |
-| 11 | S0.3 EM regenerate | **PASS** | `engineering_memory.py generate` → `ENGINEERING_MEMORY_VALID` (agents=2 tools=22 available=10 workflows=9); `validate --quick` |
+| 11 | S0.3 EM regenerate | **PASS** | `engineering_memory.py generate` + `validate --quick` → `ENGINEERING_MEMORY_VALID` / `ENGINEERING_MEMORY_CURRENT` on PR #30 tip (agents=2 tools=22 available=10 workflows=9) |
 | 12 | S0.4 scorecard Electron-default truth | **PASS (verify)** | `sota-scorecard.md` already states Electron+React default (2026-07-25 banner) |
 | 13 | S0.5 rollback freeze `OPTIMUS_ELECTRON_UI=legacy` | **PASS (doc)** | product-complete + ADR-0029 / electron README paths; no data rewrite |
 
@@ -52,7 +51,6 @@ residuals honestly.
 | Residual | Owner | Notes |
 |---|---|---|
 | S0.2 cutover matrix fully green | program P20 follow-up / first code PR hygiene | Authority docs do not claim matrix green |
-| S0.3 EM maps refreshed | **closed** | `ENGINEERING_MEMORY_CURRENT` after generate |
 | Installed Electron cutover | **program P29** | Explicitly out of P20 |
 | Historical `phase-20*` specs | unchanged | Cite by path only; not renumbered |
 
@@ -82,5 +80,6 @@ before treating program P20 authority as installable.
 
 ## Verdict
 
-**program P20 authority install: PASS** with S0.2/S0.3 residuals owned above.
-Next: **program P21** (fail-closed tool contract + pack budget).
+**program P20 authority install: PASS** with **S0.2** residual owned above.
+**program P21** tool contract is closed in the same delivery (**PR #30**).
+Next: **program P22** (files.mutate + project isolation).
