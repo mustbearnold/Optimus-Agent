@@ -161,7 +161,7 @@ After **program P21** green:
 | `files.mutate` | `files.mutate` | **parity** (kernel) | **P22 done**; concurrent lease residual |
 | Project isolation enforce | `projects.scope` | **partial** (honesty fields) | concurrent multi-project lease residual **S2.14** |
 | Browser / search | `browser.*`, `web.search` | **parity** | **P23 done** (ADR-0040 coordinated dual-domain; not shared CDP) |
-| Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | Partial | **P24** |
+| Chat / session hygiene | `chat.thinking-tools`, `session.search-hygiene` | **parity** | **P24 done** |
 | Artifacts / cron UI | `artifacts.store-ui`, `cron.lifecycle` | Partial | **P25** |
 | Skills / Memory / logs / commands | `skills.ui`, `memory.ui`, `desktop.logs`, `surface.commands` | Missing UI | **P26** |
 | Provider catalog / failover | `provider.catalog`, `provider.failover` | Partial / Missing | **P27** |
@@ -654,8 +654,8 @@ row `partial`/`missing` with a named residual; do not flip state.
 
 ## Immediate next action
 
-1. **program P20–P23 done** (tool contract, files.mutate, coordinated browser).
-2. Open **program P24** (daily chat + session hygiene) or parallel P25–P28; residual S2.14 concurrent mutate lease remains optional.
+1. **program P20–P24 done** (tools, mutate, browser, chat/session hygiene).
+2. Open **program P25** (artifacts + cron) or parallel P26–P28; residual S2.14 concurrent mutate lease remains optional.
 
 ## Success definition
 

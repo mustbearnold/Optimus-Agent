@@ -67,6 +67,10 @@ mod tests {
             stream_event_to_json(&StreamEvent::TextDelta("x".into())),
             json!({"type":"delta","text":"x"})
         );
+        assert_eq!(
+            stream_event_to_json(&StreamEvent::ThinkingDelta("plan".into())),
+            json!({"type":"thinking","text":"plan"})
+        );
         let outcome = ToolOutcome::succeeded(
             "call-1",
             ToolId::new("web_search"),

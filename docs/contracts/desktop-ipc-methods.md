@@ -30,7 +30,8 @@ HTTP stream: `POST /api/chat/stream` SSE with the same event shapes.
 `ping`, `doctor`, `auth_status`, `auth_import_hermes`, `auth_import_cli`, `settings_get`, `settings_set`
 
 ### Sessions
-`sessions`, `new_session`, `get_session`, `delete_session`, `rename_session`
+`sessions`, `new_session`, `get_session`, `delete_session`, `rename_session`,
+`session_search`, `archive_session`, `pin_session`
 
 `get_session` returns presentation-safe user/assistant messages. Provider
 tool-call arrays and tool-result protocol messages are omitted; ordered durable

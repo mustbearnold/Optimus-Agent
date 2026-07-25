@@ -16,6 +16,12 @@ pub struct SessionMeta {
     pub updated_at: String,
     pub message_count: usize,
     pub packs: Vec<String>,
+    /// Durable pin (not presentation-only localStorage).
+    #[serde(default)]
+    pub pinned: bool,
+    /// Soft-hide from active list until unarchived.
+    #[serde(default)]
+    pub archived: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -140,7 +146,78 @@ impl SessionStore {
             );
             ",
         )?;
-        Ok(Self { conn })
+        // program P24 hygiene columns (idempotent migration).
+        let mut has_pinned = false;
+        let mut has_archived = false;
+        {
+            let mut stmt = conn.prepare("PRAGMA table_info(sessions)")?;
+            let rows = stmt.query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })?;
+            for name in rows.flatten() {
+                if name == "pinned" {
+                    has_pinned = true;
+                }
+                if name == "archived" {
+                    has_archived = true;
+                }
+            }
+        }
+        if !has_pinned {
+            conn.execute(
+                "ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0",
+                [],
+            )?;
+        }
+        if !has_archived {
+            conn.execute(
+                "ALTER TABLE sessions ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
+                [],
+            )?;
+        }
+        conn.execute_batch(
+            "
+            CREATE VIRTUAL TABLE IF NOT EXISTS sessions_fts USING fts5(
+                title,
+                body,
+                session_id UNINDEXED,
+                tokenize = 'porter unicode61'
+            );
+            ",
+        )?;
+        let store = Self { conn };
+        store.backfill_fts_if_empty()?;
+        Ok(store)
+    }
+
+    /// Rebuild FTS when empty (migration / first open after upgrade).
+    fn backfill_fts_if_empty(&self) -> Result<()> {
+        let n: i64 = self
+            .conn
+            .query_row("SELECT COUNT(*) FROM sessions_fts", [], |r| r.get(0))?;
+        if n > 0 {
+            return Ok(());
+        }
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, messages_json FROM sessions",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })?;
+        let tx = self.conn.unchecked_transaction()?;
+        for row in rows {
+            let (id_s, title, messages_json) = row.map_err(|e| KernelError::Model(e.to_string()))?;
+            let id = Uuid::parse_str(&id_s).map_err(|e| KernelError::Model(e.to_string()))?;
+            let messages: Vec<Message> = serde_json::from_str(&messages_json).unwrap_or_default();
+            Self::reindex_fts_tx(&tx, id, &title, &messages)?;
+        }
+        tx.commit()?;
+        Ok(())
     }
 
     pub fn create(&self, title: &str) -> Result<Uuid> {
@@ -183,11 +260,12 @@ impl SessionStore {
         )?;
         if n == 0 {
             transaction.execute(
-                "INSERT INTO sessions(id, title, created_at, updated_at, packs_json, messages_json)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                "INSERT INTO sessions(id, title, created_at, updated_at, packs_json, messages_json, pinned, archived)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, 0)",
                 params![id.to_string(), title, now, now, packs_json, messages_json],
             )?;
         }
+        Self::reindex_fts_tx(&transaction, id, title, messages)?;
         for link in links {
             if link.tool_call_id.trim().is_empty() {
                 return Err(KernelError::Model(
@@ -277,6 +355,7 @@ impl SessionStore {
             "INSERT INTO session_turn_events(turn_id,event_type,recorded_at) VALUES(?1,'accepted',?2)",
             params![id.to_string(), now],
         )?;
+        Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
         transaction.commit()?;
         Ok(id)
     }
@@ -341,6 +420,7 @@ impl SessionStore {
             "INSERT INTO session_turn_events(turn_id,event_type,recorded_at) VALUES(?1,?2,?3)",
             params![turn_id.to_string(), status.as_str(), now],
         )?;
+        Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
         transaction.commit()?;
         Ok(())
     }
@@ -460,36 +540,124 @@ impl SessionStore {
     }
 
     pub fn list(&self) -> Result<Vec<SessionMeta>> {
+        self.list_filtered(ListFilter::default())
+    }
+
+    /// List with durable sort: pinned first, active before archived, then updated_at.
+    pub fn list_filtered(&self, filter: ListFilter) -> Result<Vec<SessionMeta>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, title, created_at, updated_at, packs_json, messages_json
-             FROM sessions ORDER BY updated_at DESC",
+            "SELECT id, title, created_at, updated_at, packs_json, messages_json,
+                    COALESCE(pinned, 0), COALESCE(archived, 0)
+             FROM sessions
+             ORDER BY COALESCE(pinned, 0) DESC,
+                      COALESCE(archived, 0) ASC,
+                      updated_at DESC",
         )?;
-        let rows = stmt.query_map([], |row| {
-            let id = Uuid::parse_str(&row.get::<_, String>(0)?).map_err(|e| {
-                rusqlite::Error::FromSqlConversionFailure(
-                    0,
-                    rusqlite::types::Type::Text,
-                    Box::new(e),
-                )
-            })?;
-            let packs: Vec<String> =
-                serde_json::from_str(&row.get::<_, String>(4)?).unwrap_or_default();
-            let messages: Vec<Message> =
-                serde_json::from_str(&row.get::<_, String>(5)?).unwrap_or_default();
-            Ok(SessionMeta {
-                id,
-                title: row.get(1)?,
-                created_at: row.get(2)?,
-                updated_at: row.get(3)?,
-                message_count: messages.len(),
-                packs,
-            })
-        })?;
+        let rows = stmt.query_map([], |row| self.meta_from_row(row))?;
         let mut out = Vec::new();
         for r in rows {
-            out.push(r.map_err(|e| KernelError::Model(e.to_string()))?);
+            let meta = r.map_err(|e| KernelError::Model(e.to_string()))?;
+            if !filter.include_archived && meta.archived {
+                continue;
+            }
+            out.push(meta);
         }
         Ok(out)
+    }
+
+    /// FTS over title + message bodies (program P24 / S2.3).
+    pub fn search(&self, query: &str, include_archived: bool) -> Result<Vec<SessionMeta>> {
+        let q = query.trim();
+        if q.is_empty() {
+            return self.list_filtered(ListFilter { include_archived });
+        }
+        // Escape FTS5 special chars lightly: quote terms.
+        let match_q = fts_match_query(q);
+        if match_q.is_empty() {
+            // Punctuation-only / no usable tokens → empty hits, not SQLite error.
+            return Ok(vec![]);
+        }
+        let mut stmt = self.conn.prepare(
+            "SELECT s.id, s.title, s.created_at, s.updated_at, s.packs_json, s.messages_json,
+                    COALESCE(s.pinned, 0), COALESCE(s.archived, 0)
+             FROM sessions s
+             INNER JOIN sessions_fts f ON f.session_id = s.id
+             WHERE sessions_fts MATCH ?1
+             ORDER BY COALESCE(s.pinned, 0) DESC,
+                      COALESCE(s.archived, 0) ASC,
+                      s.updated_at DESC
+             LIMIT 100",
+        )?;
+        let rows = stmt.query_map(params![match_q], |row| self.meta_from_row(row))?;
+        let mut out = Vec::new();
+        for r in rows {
+            let meta = r.map_err(|e| KernelError::Model(e.to_string()))?;
+            if !include_archived && meta.archived {
+                continue;
+            }
+            out.push(meta);
+        }
+        Ok(out)
+    }
+
+    pub fn set_pinned(&self, id: Uuid, pinned: bool) -> Result<bool> {
+        let n = self.conn.execute(
+            "UPDATE sessions SET pinned = ?1, updated_at = ?2 WHERE id = ?3",
+            params![if pinned { 1 } else { 0 }, chrono_stamp(), id.to_string()],
+        )?;
+        Ok(n > 0)
+    }
+
+    pub fn set_archived(&self, id: Uuid, archived: bool) -> Result<bool> {
+        let n = self.conn.execute(
+            "UPDATE sessions SET archived = ?1, updated_at = ?2 WHERE id = ?3",
+            params![if archived { 1 } else { 0 }, chrono_stamp(), id.to_string()],
+        )?;
+        Ok(n > 0)
+    }
+
+    fn meta_from_row(&self, row: &rusqlite::Row<'_>) -> rusqlite::Result<SessionMeta> {
+        let id = Uuid::parse_str(&row.get::<_, String>(0)?).map_err(|e| {
+            rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+        })?;
+        let packs: Vec<String> = serde_json::from_str(&row.get::<_, String>(4)?).unwrap_or_default();
+        let messages: Vec<Message> =
+            serde_json::from_str(&row.get::<_, String>(5)?).unwrap_or_default();
+        let pinned: i64 = row.get(6)?;
+        let archived: i64 = row.get(7)?;
+        Ok(SessionMeta {
+            id,
+            title: row.get(1)?,
+            created_at: row.get(2)?,
+            updated_at: row.get(3)?,
+            message_count: messages.len(),
+            packs,
+            pinned: pinned != 0,
+            archived: archived != 0,
+        })
+    }
+
+    fn reindex_fts_tx(
+        tx: &rusqlite::Transaction<'_>,
+        id: Uuid,
+        title: &str,
+        messages: &[Message],
+    ) -> Result<()> {
+        let body = messages
+            .iter()
+            .filter(|m| matches!(m.role, Role::User | Role::Assistant))
+            .map(|m| m.content.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        tx.execute(
+            "DELETE FROM sessions_fts WHERE session_id = ?1",
+            params![id.to_string()],
+        )?;
+        tx.execute(
+            "INSERT INTO sessions_fts(title, body, session_id) VALUES (?1, ?2, ?3)",
+            params![title, body, id.to_string()],
+        )?;
+        Ok(())
     }
 
     pub fn exists(&self, id: Uuid) -> Result<bool> {
@@ -519,12 +687,48 @@ impl SessionStore {
             return Err(KernelError::Model("title required".into()));
         }
         let now = chrono_stamp();
-        let n = self.conn.execute(
+        let tx = self.conn.unchecked_transaction()?;
+        let n = tx.execute(
             "UPDATE sessions SET title = ?1, updated_at = ?2 WHERE id = ?3",
             params![title, now, id.to_string()],
         )?;
+        if n > 0 {
+            let messages_json: String = tx.query_row(
+                "SELECT messages_json FROM sessions WHERE id = ?1",
+                params![id.to_string()],
+                |row| row.get(0),
+            )?;
+            let messages: Vec<Message> =
+                serde_json::from_str(&messages_json).unwrap_or_default();
+            Self::reindex_fts_tx(&tx, id, title, &messages)?;
+        }
+        tx.commit()?;
         Ok(n > 0)
     }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ListFilter {
+    pub include_archived: bool,
+}
+
+/// Build a conservative FTS5 MATCH query from free text.
+fn fts_match_query(raw: &str) -> String {
+    raw.split_whitespace()
+        .filter(|t| !t.is_empty())
+        .map(|t| {
+            let cleaned: String = t
+                .chars()
+                .filter(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+                .collect();
+            if cleaned.is_empty() {
+                return String::new();
+            }
+            format!("\"{cleaned}\"*")
+        })
+        .filter(|t| !t.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn parse_uuid(value: String, column: usize) -> rusqlite::Result<Uuid> {
@@ -569,4 +773,102 @@ fn chrono_stamp() -> String {
         .map(|d| d.as_secs())
         .unwrap_or(0);
     format!("ts:{secs}")
+}
+
+#[cfg(test)]
+mod hygiene_tests {
+    use super::*;
+    use crate::{Message, Role};
+    use tempfile::tempdir;
+
+    fn msg(role: Role, content: &str) -> Message {
+        Message {
+            role,
+            content: content.into(),
+            tool_call_id: None,
+            name: None,
+        }
+    }
+
+    #[test]
+    fn pin_archive_and_sort_order() {
+        let dir = tempdir().unwrap();
+        let store = SessionStore::open(dir.path().join("s.db")).unwrap();
+        let a = store.create("alpha").unwrap();
+        let b = store.create("beta").unwrap();
+        let c = store.create("gamma").unwrap();
+        store
+            .save(a, "alpha", &[], &[msg(Role::User, "hello world")])
+            .unwrap();
+        store
+            .save(b, "beta", &[], &[msg(Role::User, "other")])
+            .unwrap();
+        store
+            .save(c, "gamma", &[], &[msg(Role::User, "zzz")])
+            .unwrap();
+        assert!(store.set_pinned(c, true).unwrap());
+        assert!(store.set_archived(b, true).unwrap());
+        let active = store.list().unwrap();
+        assert_eq!(active.len(), 2); // archived filtered
+        assert_eq!(active[0].id, c); // pinned first
+        assert!(active[0].pinned);
+        let all = store
+            .list_filtered(ListFilter {
+                include_archived: true,
+            })
+            .unwrap();
+        assert_eq!(all.len(), 3);
+        assert!(all.iter().any(|s| s.id == b && s.archived));
+    }
+
+    #[test]
+    fn fts_finds_message_body() {
+        let dir = tempdir().unwrap();
+        let store = SessionStore::open(dir.path().join("s.db")).unwrap();
+        let id = store.create("notes").unwrap();
+        store
+            .save(
+                id,
+                "notes",
+                &[],
+                &[
+                    msg(Role::User, "find the plutonium isotope"),
+                    msg(Role::Assistant, "done"),
+                ],
+            )
+            .unwrap();
+        let hits = store.search("plutonium", false).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].id, id);
+        assert!(store.search("missingtokenxyz", false).unwrap().is_empty());
+        assert!(store.search("!!!", false).unwrap().is_empty());
+    }
+
+    #[test]
+    fn fts_indexes_finish_turn_path() {
+        let dir = tempdir().unwrap();
+        let store = SessionStore::open(dir.path().join("s.db")).unwrap();
+        let id = store.create("live").unwrap();
+        let system = msg(Role::System, "sys");
+        store.save(id, "live", &[], &[system.clone()]).unwrap();
+        let mut messages = vec![system, msg(Role::User, "needleword unique")];
+        let turn = store
+            .begin_turn(id, "live", &[], &messages, 1)
+            .unwrap();
+        messages.push(msg(Role::Assistant, "ok"));
+        store
+            .finish_turn(
+                turn,
+                id,
+                "live",
+                &[],
+                &messages,
+                TurnStatus::Succeeded,
+                None,
+            )
+            .unwrap();
+        let hits = store.search("needleword", false).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].id, id);
+    }
 }

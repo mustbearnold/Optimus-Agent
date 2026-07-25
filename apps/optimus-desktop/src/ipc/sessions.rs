@@ -15,7 +15,14 @@ use super::stream_event_to_json;
 pub(super) fn owns(method: &str) -> bool {
     matches!(
         method,
-        "sessions" | "delete_session" | "rename_session" | "new_session" | "get_session"
+        "sessions"
+            | "delete_session"
+            | "rename_session"
+            | "new_session"
+            | "get_session"
+            | "session_search"
+            | "archive_session"
+            | "pin_session"
     )
 }
 
@@ -26,6 +33,9 @@ pub(super) fn handle(
 ) -> Result<serde_json::Value, String> {
     match method {
         "sessions" => Ok(json!({ "sessions": sessions_json(home) })),
+        "session_search" => session_search(home, params),
+        "archive_session" => archive_session(home, params),
+        "pin_session" => pin_session(home, params),
         "delete_session" => delete_session(home, params),
         "rename_session" => rename_session(home, params),
         "new_session" => {
@@ -43,18 +53,27 @@ pub(super) fn handle(
             let id = uuid::Uuid::parse_str(id).map_err(|e| e.to_string())?;
             let detail = get_session(home, id).map_err(|e| e.to_string())?;
             let messages = project_session_messages(home, &detail)?;
-            let run_status = SessionStore::open(home.join("sessions.db"))
-                .map_err(|e| e.to_string())?
+            let store = SessionStore::open(home.join("sessions.db")).map_err(|e| e.to_string())?;
+            let run_status = store
                 .turns(id)
                 .map_err(|e| e.to_string())?
                 .last()
                 .map(|turn| turn.status);
+            let meta = store
+                .list_filtered(optimus_kernel::ListFilter {
+                    include_archived: true,
+                })
+                .map_err(|e| e.to_string())?
+                .into_iter()
+                .find(|s| s.id == id);
             Ok(json!({
                 "id": detail.id.to_string(),
                 "title": detail.title,
                 "packs": detail.packs,
                 "messages": messages,
                 "run_status": run_status,
+                "pinned": meta.as_ref().map(|m| m.pinned).unwrap_or(false),
+                "archived": meta.as_ref().map(|m| m.archived).unwrap_or(false),
             }))
         }
         _ => Err(format!("unknown method: {method}")),
@@ -138,26 +157,94 @@ fn is_tool_protocol_message(content: &str) -> bool {
 }
 
 pub fn sessions_json(home: &PathBuf) -> serde_json::Value {
-    match list_sessions(home) {
+    match SessionStore::open(home.join("sessions.db"))
+        .and_then(|s| s.list_filtered(optimus_kernel::ListFilter {
+            include_archived: true,
+        }))
+    {
         Ok(list) => {
-            let rows: Vec<_> = list
-                .into_iter()
-                .map(|s| {
-                    json!({
-                        "id": s.id.to_string(),
-                        "title": s.title,
-                        "message_count": s.message_count,
-                        "packs": s.packs,
-                        "updated_at": s.updated_at,
-                        "created_at": s.created_at,
-                    })
-                })
-                .collect();
+            let rows: Vec<_> = list.into_iter().map(session_meta_json).collect();
             json!(rows)
         }
-        Err(_) => json!([]),
+        Err(_) => match list_sessions(home) {
+            Ok(list) => {
+                let rows: Vec<_> = list.into_iter().map(session_meta_json).collect();
+                json!(rows)
+            }
+            Err(_) => json!([]),
+        },
     }
 }
+
+fn session_meta_json(s: optimus_kernel::SessionMeta) -> serde_json::Value {
+    json!({
+        "id": s.id.to_string(),
+        "title": s.title,
+        "message_count": s.message_count,
+        "packs": s.packs,
+        "updated_at": s.updated_at,
+        "created_at": s.created_at,
+        "pinned": s.pinned,
+        "archived": s.archived,
+    })
+}
+
+fn session_search(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let q = params
+        .get("q")
+        .or_else(|| params.get("query"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let include_archived = params
+        .get("include_archived")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    let store = SessionStore::open(home.join("sessions.db")).map_err(|e| e.to_string())?;
+    let rows = store
+        .search(q, include_archived)
+        .map_err(|e| e.to_string())?
+        .into_iter()
+        .map(session_meta_json)
+        .collect::<Vec<_>>();
+    Ok(json!({ "sessions": rows, "q": q }))
+}
+
+fn archive_session(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let id = params
+        .get("id")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "id required".to_string())?;
+    let archived = params
+        .get("archived")
+        .and_then(|v| v.as_bool())
+        .ok_or_else(|| "archived bool required".to_string())?;
+    let id = uuid::Uuid::parse_str(id).map_err(|e| e.to_string())?;
+    let store = SessionStore::open(home.join("sessions.db")).map_err(|e| e.to_string())?;
+    let ok = store.set_archived(id, archived).map_err(|e| e.to_string())?;
+    if !ok {
+        return Err("session not found".into());
+    }
+    Ok(json!({ "id": id.to_string(), "archived": archived }))
+}
+
+fn pin_session(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let id = params
+        .get("id")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "id required".to_string())?;
+    let pinned = params
+        .get("pinned")
+        .and_then(|v| v.as_bool())
+        .ok_or_else(|| "pinned bool required".to_string())?;
+    let id = uuid::Uuid::parse_str(id).map_err(|e| e.to_string())?;
+    let store = SessionStore::open(home.join("sessions.db")).map_err(|e| e.to_string())?;
+    let ok = store.set_pinned(id, pinned).map_err(|e| e.to_string())?;
+    if !ok {
+        return Err("session not found".into());
+    }
+    Ok(json!({ "id": id.to_string(), "pinned": pinned }))
+}
+
 fn delete_session(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
     let id = params
         .get("id")

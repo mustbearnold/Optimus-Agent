@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; program P21–P22 tool/mutate parity; program P23 coordinated browser + search/annotations parity; projects.scope honesty partial",
+  "scorecard_marker": "P17 release gates; program P21–P24 tool/mutate/browser/chat-session parity; projects.scope honesty partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -148,11 +148,16 @@
       "id": "chat.thinking-tools",
       "capability": "Separate thinking and timed tool lifecycle cards",
       "hermes_reference": "Thinking blocks and tool cards",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/ui/index.html"
+        "crates/optimus-kernel/src/lib.rs",
+        "apps/optimus-ui/src/state/conversationStore.ts",
+        "apps/optimus-ui/src/components/workbench/Transcript.tsx",
+        "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
+        "apps/optimus-desktop/src/ipc/sessions.rs",
+        "docs/architecture/product-complete-p24-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P24: ThinkingDelta stream + UI thinking block; tool cards from persisted lifecycle with duration; fixture tests",
       "owner_ticket": "A-07"
     },
     {
@@ -168,14 +173,16 @@
     },
     {
       "id": "session.search-hygiene",
-      "capability": "FTS, jump, archive, active sort, durable pins",
+      "capability": "FTS, archive, active sort, durable pins",
       "hermes_reference": "Session search/archive/pins",
-      "state": "partial",
+      "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js",
-        "crates/optimus-kernel/src/session.rs"
+        "crates/optimus-kernel/src/session.rs",
+        "apps/optimus-desktop/src/ipc/sessions.rs",
+        "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
+        "docs/architecture/product-complete-p24-verification.md"
       ],
-      "trajectory": null,
+      "trajectory": "program P24: sessions_fts + archive/pin durable flags + IPC session_search/archive_session/pin_session; sort pinned/active/archived",
       "owner_ticket": "A-06,A-10"
     },
     {

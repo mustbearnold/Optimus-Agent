@@ -31,6 +31,7 @@ class ConversationStore {
   private readonly listeners = new Map<string, Set<() => void>>();
   private readonly allListeners = new Set<() => void>();
   private readonly streamText = new Map<string, string>();
+  private readonly streamThinking = new Map<string, string>();
   private readonly toolEventIds = new Map<string, Set<string>>();
   private readonly sessionVersions = new Map<string, number>();
   private allVersion = 0;
@@ -158,6 +159,7 @@ class ConversationStore {
       ],
     });
     this.streamText.set(sessionId, '');
+    this.streamThinking.set(sessionId, '');
     this.toolEventIds.set(sessionId, new Set());
     this.emit(sessionId);
   }
@@ -169,6 +171,16 @@ class ConversationStore {
       this.streamText.set(sessionId, (this.streamText.get(sessionId) || '') + event.text);
       frameCoordinator.scheduleKeyed('content', `stream:${sessionId}`, () =>
         this.flushText(sessionId)
+      );
+      return;
+    }
+    if (event.type === 'thinking') {
+      this.streamThinking.set(
+        sessionId,
+        (this.streamThinking.get(sessionId) || '') + event.text
+      );
+      frameCoordinator.scheduleKeyed('content', `thinking:${sessionId}`, () =>
+        this.flushThinking(sessionId)
       );
       return;
     }
@@ -214,14 +226,17 @@ class ConversationStore {
       });
     } else if (event.type === 'done') {
       this.flushText(sessionId);
+      this.flushThinking(sessionId);
       this.setTerminal(sessionId, 'completed', 'Completed');
       return;
     } else if (event.type === 'cancelled') {
       this.flushText(sessionId);
+      this.flushThinking(sessionId);
       this.setTerminal(sessionId, 'cancelled', 'Cancelled · partial response retained');
       return;
     } else if (event.type === 'error') {
       this.flushText(sessionId);
+      this.flushThinking(sessionId);
       const pending = this.sessions.get(sessionId);
       const hasExactApproval = pending?.messages.some((message) =>
         message.tools?.some((tool) => tool.status === 'awaiting_approval')
@@ -289,6 +304,24 @@ class ConversationStore {
     }
   }
 
+  private flushThinking(sessionId: string) {
+    if (!this.streamThinking.has(sessionId)) return;
+    const current = this.sessions.get(sessionId);
+    if (!current) return;
+    const thinking = this.streamThinking.get(sessionId) || '';
+    const messages = current.messages.slice();
+    const index = findLastAssistantIndex(messages);
+    if (index < 0) return;
+    if (messages[index]?.thinking === thinking) return;
+    messages[index] = { ...messages[index]!, thinking, status: current.status };
+    this.sessions.set(sessionId, {
+      ...current,
+      messages,
+      status: current.status === 'submitting' ? 'working' : current.status,
+    });
+    this.emit(sessionId);
+  }
+
   private setTerminal(sessionId: string, status: RunStatus, statusText: string) {
     const current = this.sessions.get(sessionId);
     if (
@@ -325,6 +358,7 @@ class ConversationStore {
       statusText,
     });
     this.streamText.delete(sessionId);
+    this.streamThinking.delete(sessionId);
     this.emit(sessionId);
   }
 

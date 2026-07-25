@@ -395,6 +395,26 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       if (index >= 0) sessions.splice(index, 1);
       return { deleted: index >= 0, id: params.id };
     }
+    case 'session_search': {
+      const q = String(params.q || params.query || '').toLowerCase();
+      const includeArchived = params.include_archived !== false;
+      const filtered = sessions.filter((session) => {
+        if (!includeArchived && session.archived) return false;
+        if (!q) return true;
+        return (session.title || session.id).toLowerCase().includes(q);
+      });
+      return { sessions: filtered, q };
+    }
+    case 'archive_session': {
+      const session = sessions.find((item) => item.id === params.id);
+      if (session) session.archived = Boolean(params.archived);
+      return { id: params.id, archived: Boolean(params.archived) };
+    }
+    case 'pin_session': {
+      const session = sessions.find((item) => item.id === params.id);
+      if (session) session.pinned = Boolean(params.pinned);
+      return { id: params.id, pinned: Boolean(params.pinned) };
+    }
     case 'chat_approval_resolve': {
       const sessionId = String(params.session_id || '');
       const detail = details.get(sessionId);

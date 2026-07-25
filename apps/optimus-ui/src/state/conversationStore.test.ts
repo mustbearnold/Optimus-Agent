@@ -301,6 +301,22 @@ describe('ConversationStore', () => {
     );
   });
 
+  it('keeps thinking deltas out of assistant answer text', () => {
+    conversationStore.begin('s-think', 'hi');
+    conversationStore.apply('s-think', {
+      type: 'thinking',
+      text: 'Consider options…\n',
+    });
+    conversationStore.apply('s-think', { type: 'delta', text: 'Final answer.' });
+    frameCoordinator.flushNow();
+    conversationStore.apply('s-think', { type: 'done' });
+    const projection = conversationStore.get('s-think');
+    const assistant = projection.messages.find((m) => m.role === 'assistant');
+    expect(assistant?.thinking).toContain('Consider options');
+    expect(assistant?.content).toBe('Final answer.');
+    expect(assistant?.content).not.toContain('Consider options');
+  });
+
   it('uses call identity and explicit phase for overlapping and duplicate tool events', () => {
     const id = `tool-identity-${Date.now()}`;
     conversationStore.load({ id, messages: [] });

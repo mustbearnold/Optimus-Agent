@@ -120,7 +120,9 @@ pub use routing::{
 pub use security_denial::{
     classify_security_denial, kernel_or_security_code, SecurityDenialCode,
 };
-pub use session::{SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus};
+pub use session::{
+    ListFilter, SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus,
+};
 pub use optimus_workflow::{
     adapt_campaign_status, adapt_cron_attempt_status, adapt_gateway_status, adapt_job_status,
     builtin_agent_permission_ceiling, builtin_workflow_adapters, cancel_workflow_run,
@@ -265,6 +267,8 @@ pub struct CompletionResponse {
 pub enum StreamEvent {
     /// UTF-8 text fragment of the assistant answer.
     TextDelta(String),
+    /// Reasoning/thinking fragment — never mixed into assistant answer text.
+    ThinkingDelta(String),
     /// Versioned, runtime-owned lifecycle state for one stable tool call.
     Tool(ToolLifecycleEvent),
     /// Soft status line for the UI (e.g. "thinking").
@@ -1360,6 +1364,12 @@ impl Kernel {
             };
             let recorded_request = req.clone();
             sink(StreamEvent::Status(format!("model step {steps}")));
+            // program P24: thinking stream is separate from assistant TextDelta.
+            if let Some(level) = self.config.thinking_level.as_deref() {
+                sink(StreamEvent::ThinkingDelta(format!(
+                    "Reasoning effort: {level} (step {steps})\n"
+                )));
+            }
             let model_started = Instant::now();
             let model_start_event = timing_event(
                 TimingEventKind::ModelStarted,

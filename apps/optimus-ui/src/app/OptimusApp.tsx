@@ -42,11 +42,9 @@ import {
   loadAssignments,
   loadExpanded,
   loadProjects,
-  loadSessionPins,
   saveAssignments,
   saveExpanded,
   saveProjects,
-  saveSessionPins,
 } from '../state/projectStore';
 import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
 import { TopBar } from '../components/chrome/TopBar';
@@ -109,7 +107,7 @@ export function OptimusApp() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
-  const [pins, setPins] = useState<string[]>(loadSessionPins);
+  const [showArchived, setShowArchived] = useState(false);
   const [assignments, setAssignments] = useState<Record<string, string>>(loadAssignments);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(loadExpanded);
   const [input, setInput] = useState('');
@@ -210,7 +208,7 @@ export function OptimusApp() {
     });
   }, [projects, sessions]);
   useEffect(() => saveProjects(projects), [projects]);
-  useEffect(() => saveSessionPins(pins), [pins]);
+
   useEffect(() => saveAssignments(assignments), [assignments]);
   useEffect(() => saveExpanded(expanded), [expanded]);
 
@@ -427,11 +425,30 @@ export function OptimusApp() {
             sessions={sessions}
             projects={projects}
             assignments={assignments}
-            pins={pins}
             expanded={expanded}
             selectedSessionId={state.selectedSessionId}
             sessionIndicators={sessionIndicators}
             route={state.layout.route}
+            showArchived={showArchived}
+            onShowArchived={setShowArchived}
+            onSearch={(q) => {
+              void (async () => {
+                if (!q.trim()) {
+                  await refreshRuntime();
+                  return;
+                }
+                try {
+                  const result = await transport.invoke<{ sessions?: SessionMeta[] }>(
+                    'session_search',
+                    { q, include_archived: showArchived }
+                  );
+                  const list = Array.isArray(result.sessions) ? result.sessions : [];
+                  setSessions(list);
+                } catch {
+                  // keep current list on search failure
+                }
+              })();
+            }}
             onSelectSession={openSession}
             onNewSession={(projectId) => void newSession(projectId)}
             onRoute={setRoute}
@@ -453,7 +470,24 @@ export function OptimusApp() {
             }}
             onManageProject={(project) => setSourceProjectId(project.id)}
             onToggleProject={(id) => setExpanded((current) => ({ ...current, [id]: current[id] === false }))}
-            onTogglePin={(id) => setPins((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])}
+            onTogglePin={async (session) => {
+              const pinned = !session.pinned;
+              await transport.invoke('pin_session', { id: session.id, pinned });
+              setSessions((current) =>
+                sortSessions(
+                  current.map((item) => (item.id === session.id ? { ...item, pinned } : item))
+                )
+              );
+            }}
+            onToggleArchive={async (session) => {
+              const archived = !session.archived;
+              await transport.invoke('archive_session', { id: session.id, archived });
+              setSessions((current) =>
+                sortSessions(
+                  current.map((item) => (item.id === session.id ? { ...item, archived } : item))
+                )
+              );
+            }}
             onAssign={(id, projectId) => setAssignments((current) => {
               const next = { ...current };
               if (projectId) next[id] = projectId;
@@ -589,6 +623,16 @@ export function OptimusApp() {
       </div>
     </ErrorBoundary>
   );
+}
+
+function sortSessions(list: SessionMeta[]): SessionMeta[] {
+  return [...list].sort((a, b) => {
+    const pin = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+    if (pin !== 0) return pin;
+    const arch = Number(Boolean(a.archived)) - Number(Boolean(b.archived));
+    if (arch !== 0) return arch;
+    return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+  });
 }
 
 function SurfaceButton({
