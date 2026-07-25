@@ -1,6 +1,6 @@
 # S7 + Track Z hold — 2026-07-25
 
-Planes: **S7 operator depth** · **Track Z scaffolds** · delivery pending PR ·
+Planes: **S7 operator depth** · **Track Z scaffolds** · delivery **PR #40** ·
 PRODUCT-COMPLETE held · Hermes gate **unverified**
 
 ## Board
