@@ -1,7 +1,7 @@
 # S+++ P17 verification — release / parity gating
 
 Date: 2026-07-25  
-Planes: program **P17** · decision (process; version/parity policy) · delivery **PR pending**
+Planes: program **P17** · decision (process; version/parity policy) · delivery **PR #27**
 
 ## Exit evidence
 

@@ -1,7 +1,7 @@
 # Release and parity gates (operator matrix)
 
 Date: 2026-07-25  
-Planes: program **P17** · grade mark **Release / parity gating** · delivery (PR after open)
+Planes: program **P17** · grade mark **Release / parity gating** · delivery **PR #27**
 
 **Status:** Confirmed operator contract for merge hygiene vs product release.  
 Architecture **S+++** for this mark does **not** require full Hermes parity
