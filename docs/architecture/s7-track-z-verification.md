@@ -22,7 +22,7 @@ last_verified_commit: null
 
 # S7 operator depth + Track Z scaffolds verification
 
-Planes: **program residual S7 + Track Z** · delivery pending PR · product-complete
+Planes: **program residual S7 + Track Z** · delivery **PR #40** · product-complete
 held · **Hermes gate NOT claimed**
 
 Date: 2026-07-25
