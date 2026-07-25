@@ -69,8 +69,49 @@ pub enum PolicyMode {
     /// Default: high-risk effects require an explicit approval grant.
     #[default]
     SmartDeny,
-    /// Break-glass / test mode: all effects auto-run.
+    /// Break-glass / test mode: all effects auto-run (approval auto-grant only;
+    /// filesystem envelope is separate — see [`CommandFsEnvelope`]).
     Unrestricted,
+}
+
+/// Filesystem/network envelope for approved `RunCommand` / `ProjectRunCommand`.
+///
+/// Orthogonal to [`PolicyMode`]: SmartDeny still gates host mutation; this
+/// controls how far an **approved** (or Unrestricted-auto) command can reach.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum CommandFsEnvelope {
+    /// Linux: workspace is the only writable tree (confined bwrap). Windows:
+    /// Job Object process-tree ownership only (product-visible residual).
+    #[default]
+    Confined,
+    /// Confined FS plus Linux network namespace unshare. Non-Linux refuses
+    /// command spawn fail-closed (no AppContainer yet).
+    ConfinedNoNetwork,
+    /// Operator break-glass: host FS visible to the child (Linux still uses
+    /// systemd-run + process-tree ownership; Windows Job Object). Must be
+    /// explicit — never the product default.
+    UnrestrictedHost,
+}
+
+impl CommandFsEnvelope {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Confined => "confined",
+            Self::ConfinedNoNetwork => "confined_no_network",
+            Self::UnrestrictedHost => "unrestricted_host",
+        }
+    }
+
+    /// Whether this mode claims workspace-only writable FS on Linux.
+    pub fn linux_workspace_only_writable(self) -> bool {
+        matches!(self, Self::Confined | Self::ConfinedNoNetwork)
+    }
+
+    /// Whether Linux should unshare the network namespace.
+    pub fn linux_unshare_net(self) -> bool {
+        matches!(self, Self::ConfinedNoNetwork)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -90,15 +131,19 @@ impl Default for JobBudget {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RuntimeConfig {
     pub policy: PolicyMode,
+    /// Command capability envelope (default: confined).
+    #[serde(default)]
+    pub command_fs_envelope: CommandFsEnvelope,
 }
 
 impl Default for RuntimeConfig {
     fn default() -> Self {
         Self {
             policy: PolicyMode::SmartDeny,
+            command_fs_envelope: CommandFsEnvelope::Confined,
         }
     }
 }

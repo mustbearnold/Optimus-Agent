@@ -284,6 +284,7 @@ fn observe_smartdeny_approval(home: &Path) -> std::result::Result<(), &'static s
         &workspace,
         RuntimeConfig {
             policy: PolicyMode::SmartDeny,
+            ..Default::default()
         },
     )
     .map_err(|_| "policy_runtime_open_failed")?;

@@ -528,6 +528,7 @@ pub fn run_registered_workflow(
         &workspace,
         RuntimeConfig {
             policy: request.policy,
+            ..Default::default()
         },
     )?;
     let artifacts = ArtifactStore::open(home)?;

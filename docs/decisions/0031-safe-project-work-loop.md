@@ -139,8 +139,9 @@ rebuilt without changing execution truth.
 
 ## Risks and unresolved boundaries
 
-- **Known boundary:** approved arbitrary child processes remain outside the
-  built-in file-effect capability and may perform their own filesystem access.
+- **Known boundary (refined by ADR-0035):** approved commands are not
+  `cap-std` file effects; they use `CommandFsEnvelope` (Linux confined
+  workspace-only RW; Windows Job Object residual; UnrestrictedHost break-glass).
 - **Known boundary:** project authority is local-machine state and has no
   cross-device synchronization or enterprise policy layer.
 - **Known boundary:** approval resolution deterministically settles the paused
@@ -195,3 +196,10 @@ Reconsider the native grant format if project authority moves to an OS-backed
 capability broker. Reconsider the event schema through an additive versioned
 migration if tools gain parallel child runs or nested approval scopes. Do not
 replace exact root/effect binding with a broader convenience permission.
+
+## Addendum (2026-07-25)
+
+Command FS residual refined by **ADR-0035** (P12):
+approved commands use `CommandFsEnvelope` (Linux confined workspace-only RW;
+Windows Job Object residual; UnrestrictedHost break-glass). Historical wording
+above remains for decision-time context.

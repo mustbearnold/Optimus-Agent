@@ -246,7 +246,7 @@ fn failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event() {
     let config = KernelConfig {
         max_steps: 0,
         ..KernelConfig::default()
-    };
+        };
     let mut kernel = Kernel::open(directory.path(), config).unwrap();
     let session_id = kernel.session_id();
     let mut model = ScriptedModel::new(vec![]);

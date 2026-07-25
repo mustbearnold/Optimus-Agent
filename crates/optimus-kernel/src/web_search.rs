@@ -107,6 +107,10 @@ pub fn web_search_json(query: &str, limit: usize) -> Result<String, SearchError>
 }
 
 fn get_text(url: &str) -> Result<(u16, String), SearchError> {
+    // Shared egress policy (P12): refuse non-public destinations before request.
+    crate::network_policy::assert_public_http_url_str(url).map_err(|e| {
+        SearchError::Http(e.to_string())
+    })?;
     let resp = ureq::get(url)
         .set("User-Agent", UA)
         .set(

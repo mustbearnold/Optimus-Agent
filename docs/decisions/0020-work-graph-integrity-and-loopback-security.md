@@ -121,8 +121,8 @@ abort remains unresolved.
   Job Object before first instruction.
 - Cancellation does not yet interrupt model-provider calls or a future child-agent
   hierarchy.
-- Approved arbitrary commands are not filesystem-sandboxed by the built-in
-  `cap-std` file-effect capability.
+- Approved commands are not `cap-std` file effects; filesystem reach is governed
+  by `CommandFsEnvelope` (ADR-0035 / P12), not ambient host FS by default.
 - The legacy `approvals` table remains for schema compatibility but is not an
   authorization source.
 
@@ -166,3 +166,9 @@ parallel child agents, or removal of the legacy approval table.
 - `crates/optimus-runtime/tests/crash_resume.rs`
 - `apps/optimus-cli/tests/gateway_http.rs`
 - `apps/optimus-desktop/e2e`
+
+## Addendum (2026-07-25)
+
+Filesystem reach of **approved** `RunCommand` is refined by **ADR-0035**
+(P12 command capability envelope). SmartDeny / exact-grant integrity in this
+ADR remains authoritative for approvals.

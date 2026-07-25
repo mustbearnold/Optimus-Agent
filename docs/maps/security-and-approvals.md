@@ -139,15 +139,28 @@ effects or `FsWorkspace` for write effects.
 `current_dir` and strips loader-injection environment variables (`LD_PRELOAD`,
 `LD_LIBRARY_PATH`, `DYLD_*`, and similar) before spawn.
 
-**Known boundary:** approved arbitrary child processes are not governed by the
-built-in file-effect directory capability and can use their own filesystem
-syscalls.
+**Confirmed current behaviour (P12):** approved commands run under
+`CommandFsEnvelope` (orthogonal to `PolicyMode` / SmartDeny):
 
-**Known boundary:** Windows command containment uses the NT native
-`NtResumeProcess` entry point because `std::process::Child` does not expose the
-primary thread handle. Focused Windows tests cover pre-assignment failure and Job
-membership. Unix containment depends on process-group ownership and signals; it
-does not provide a separate filesystem, network, namespace, or cgroup sandbox.
+- **Default `Confined` (Linux):** bwrap via systemd-run with workspace as the
+  **only** host path bound read-write; system trees ro-bind when present; **no**
+  full-root `--bind / /`. Outside-workspace writes fail (tested).
+- **`ConfinedNoNetwork`:** confined FS + Linux `--unshare-net`. Product setting
+  `isolated_profiles` maps here. **Windows fail-closes** this mode until
+  AppContainer (or equivalent) exists.
+- **`UnrestrictedHost`:** explicit operator break-glass; Linux may full-root
+  bind. Distinct from `PolicyMode::Unrestricted` (approval auto-grant only).
+
+**Confirmed current behaviour:** Windows command containment uses Job Objects
+(process tree). Under `Confined`, filesystem residual is product-visible and
+accepted; under `ConfinedNoNetwork`, spawn refuses rather than claiming a false
+sandbox.
+
+**Confirmed current behaviour:** browser HTTP and `web_search` share
+`network_policy::assert_public_http_url` for SSRF/private destination refusal.
+Literal private IPs and blocked hostnames fail closed. **Known residual:** if
+DNS resolution fails open (resolver error), the pre-connect IP check may not
+run; provider TLS/OAuth adapters may keep adapter-local checks.
 
 ## Browser/network boundary
 
@@ -159,9 +172,12 @@ limits redirects/body/history, and does not execute page JavaScript.
 **Confirmed current behaviour:** `web_search` uses a public HTML endpoint with a
 bounded request timeout. It is network read, not browser automation.
 
-**Unknown or unresolved behaviour:** no shared egress policy, domain allowlist,
-proxy policy, TLS pinning, privacy classification, or per-project network policy
-covers all provider/search/browser/OAuth calls.
+**Confirmed current behaviour:** shared egress hooks cover browser HTTP +
+`web_search` destinations (public HTTP(S) only; private/metadata blocked).
+
+**Unknown or unresolved behaviour:** domain allowlist, proxy policy, TLS
+pinning, privacy classification, and per-project network policy still do not
+cover all provider/OAuth adapter calls.
 
 ## Desktop and gateway boundary
 

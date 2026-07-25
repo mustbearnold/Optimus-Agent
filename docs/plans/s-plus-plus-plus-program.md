@@ -74,11 +74,11 @@ If a product task would lower an architecture mark, the architecture phase wins.
 
 Baseline: `architecture-marks.md` as of 2026-07-25.
 
-| Order | Dimension | Current | Target | Program phase |
+| Order | Dimension | Current (post-P12) | Target | Program phase |
 |:---:|---|:---:|:---:|---|
-| 1 | Multi-agent readiness | **B** | S+++ | P10 |
-| 2 | Control-plane modularity | **B+** | S+++ | P11 |
-| 3 | Security boundary design | **A-** | S+++ | P12 |
+| 1 | Multi-agent readiness | **S+++** | S+++ | P10 (done; S+++ after P12 residual) |
+| 2 | Control-plane modularity | **S+++** | S+++ | P11 (done) |
+| 3 | Security boundary design | **S+++** | S+++ | P12 (done) |
 | 4 | Domain modularity | **A-** | S+++ | P13 |
 | 5 | Observability / eval | **A-** | S+++ | P14 |
 | 6 | UI architecture | **A-** | S+++ | P15 |
@@ -91,10 +91,10 @@ Phase numbers continue from trust-spine 0–5; P6–P9 are reserved for any
 interim hold/fix if needed. Execution starts at **P10**.
 
 ```text
-P10 Multi-agent (B)
-  → P11 Control-plane (B+)
-  → P12 Security (A-)
-  → P13 Domain modularity (A-)
+P10 Multi-agent (done → S+++ after P12)
+  → P11 Control-plane (done → S+++)
+  → P12 Security (done → S+++)
+  → P13 Domain modularity (A-)   ← next
   → P14 Observability (A-)
   → P15 UI (A-)
   → P16 Doc hygiene (A-)
@@ -641,6 +641,6 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10 done (multi-agent → S). P11 done (control-plane → S+++).** Next: **P12**
-security command capability envelope (real FS confinement; then multi-agent
-re-grade to S+++).
+**P10–P12 done** (multi-agent → **S+++** after P12 residual close; control-plane
+→ **S+++**; security → **S+++** via ADR-0035 / PR #22). Next: **P13** domain
+modularity (single catalogs, plane separation).

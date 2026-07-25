@@ -129,9 +129,10 @@ it does not replace executable enforcement.
 - **Confirmed current behaviour:** new project roots require a short-lived,
   single-use grant staged by a native folder picker. Canonical authorized roots
   persist under Rust ownership; absent scope does not fall back to shared work.
-- **Boundary:** approved arbitrary child processes are not `cap-std`-sandboxed;
-  they use workspace `cwd`, loader-env sanitisation, and (on Linux) bwrap via
-  systemd-run, but can still open absolute paths outside the workspace.
+- **Boundary:** file effects use `cap-std`; approved commands use
+  `CommandFsEnvelope` (default Linux confined bwrap: workspace-only RW). See
+  ADR-0035. Windows Confined retains Job Object residual; UnrestrictedHost is
+  explicit break-glass.
 - **Owner:** runtime; align with kernel `FsRoots`.
 
 ### C-05 Loopback API authorization
