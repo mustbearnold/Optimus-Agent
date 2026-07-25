@@ -183,11 +183,15 @@ the GitHub PR number** (`#15` ↔ `pr/15-…`).
 
 ### Lifecycle
 
-| Stage | Branch name | Notes |
+| Stage | Local branch | Remote PR head |
 |---|---|---|
-| Before PR | `wip/<short-kebab>` | Temporary only; do not leave long-lived |
-| PR opened | **rename to** `pr/<N>-<short-kebab>` | Required before asking for review |
-| Merged | delete local + remote branch | GitHub may auto-delete remote |
+| Before PR | `wip/<short-kebab>` | (none / same) |
+| PR opened | **`pr/<N>-<short-kebab>`** | stays `wip/<short-kebab>` (stable) |
+| Merged | delete local | GitHub may auto-delete remote |
+
+**Why local ≠ remote:** renaming or deleting the **remote** head branch closes the
+open PR on GitHub. Local rename is safe and still matches the PR number in
+`git branch` / worktrees.
 
 ### Recommended workflow (scripted)
 
@@ -197,48 +201,41 @@ git checkout main && git pull
 git checkout -b wip/p12-command-fs-envelope
 # … commits …
 
-# 2) Push + open draft PR, then rename branch to pr/<N>-…
+# 2) Push + open PR; rename **local** branch to pr/<N>-…
 python3 scripts/github_pr_branch.py open \
   --title "🏗️ architecture: S+++ P12 command capability envelope" \
+  --slug p12-command-fs-envelope \
   --label "🏗️ type:architecture" \
   --label "🛡️ area:security" \
   --label "🏆 program:s+++" \
   --label "⬛ size:L" \
   --body-file /tmp/pr-body.md
-# → creates PR, renames branch to pr/<N>-p12-command-fs-envelope, updates remote
+# → PR #N opened; local branch becomes pr/N-p12-command-fs-envelope
+# → remote head remains wip/p12-command-fs-envelope
 ```
 
-Manual equivalent after `gh pr create` returns `…/pull/15`:
+If the PR already exists:
 
 ```bash
-git branch -m pr/15-p12-command-fs-envelope
-git push -u origin HEAD
-git push origin --delete wip/p12-command-fs-envelope   # if that was the old remote name
-# GitHub retargets the open PR to the new branch name when the old head is removed
+python3 scripts/github_pr_branch.py adopt --slug p12-command-fs-envelope
+python3 scripts/github_pr_branch.py check
 ```
 
-Or, if the PR already exists on the current branch:
+Manual equivalent after `gh pr create` → `#19`:
 
 ```bash
-python3 scripts/github_pr_branch.py adopt   # rename current branch to pr/<N>-<slug>
+git fetch origin
+git branch -m pr/19-p12-command-fs-envelope
+git branch --set-upstream-to=origin/wip/p12-command-fs-envelope
 ```
-
-### Other allowed forms (pre-PR only)
-
-```text
-wip/<short-kebab>           # before a PR number exists
-```
-
-Do **not** use long-lived `feat/…`, `agent/…`, or unnumbered topic branches for
-work that will become a PR. Convert to `pr/<N>-…` as soon as the PR is open.
 
 ### Rules
 
 - Lowercase, hyphens, no spaces
-- PR number is decimal digits only (`pr/15-…`, not `pr/#15-…`)
+- Local name: `pr/<digits>-<slug>` (`pr/15-…`, not `pr/#15-…`)
 - Slug is stable and descriptive (phase id, area, or outcome)
 - No personal names or machine hostnames
-- One PR ↔ one `pr/<N>-…` branch
+- One open PR ↔ one local `pr/<N>-…` checkout
 
 ## Pull requests
 
