@@ -11,7 +11,7 @@ Planes: program **P16** · decision (process; ADR-0016-A/B aliases) · delivery 
 | H2 Ownership map | 15 Cargo packages + electron/ui; specialists owned by agent/workflow |
 | H3 sota-scorecard | Banner + Electron default shell; not architecture grade sheet |
 | H4 Blueprint banners | `optimus-exceeds-hermes.md` historical banner |
-| H5 EM + Doc **S+++** | `engineering_memory.py generate` + `validate --quick`; marks |
+| H5 EM + Doc **S+++** | `engineering_memory.py generate` + `validate --quick` + `report` (`stale_documents: 0`); marks |
 
 ## Commands
 

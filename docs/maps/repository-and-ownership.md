@@ -13,6 +13,11 @@ owns:
   - crates/optimus-runtime/Cargo.toml
   - crates/optimus-skills/Cargo.toml
   - crates/optimus-store/Cargo.toml
+  - crates/optimus-ops/Cargo.toml
+  - crates/optimus-artifacts/Cargo.toml
+  - crates/optimus-agent/Cargo.toml
+  - crates/optimus-workflow/Cargo.toml
+  - crates/optimus-eval/Cargo.toml
 watches:
   - apps/**/src/**
   - crates/**/src/**
@@ -28,6 +33,11 @@ covers:
   - crates/optimus-runtime/Cargo.toml
   - crates/optimus-skills/Cargo.toml
   - crates/optimus-store/Cargo.toml
+  - crates/optimus-ops/Cargo.toml
+  - crates/optimus-artifacts/Cargo.toml
+  - crates/optimus-agent/Cargo.toml
+  - crates/optimus-workflow/Cargo.toml
+  - crates/optimus-eval/Cargo.toml
 depends_on:
   - README.md
 validated_by:

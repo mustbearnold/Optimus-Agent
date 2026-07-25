@@ -105,6 +105,7 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 | `crates/optimus-artifacts` | Confirmed current behaviour | Content-addressed handoff/workbench artifact store under `{home}/artifacts`. |
 | `crates/optimus-ops` | Confirmed current behaviour | Operator services: durable local gateway delivery authority and cron schedule store. Kernel re-exports for surface convenience; does not own the turn loop. |
 | `crates/optimus-eval` | Confirmed current behaviour | Offline integrity/trajectory harnesses, versioned evaluation reports/baselines, and zero-effect fixture replay. Depends on kernel; kernel does not depend on eval. |
+| `crates/optimus-browser` | Confirmed current behaviour | Optional CDP browser backend for agent tools; not the Electron Preview `WebContentsView`. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
 | `crates/optimus-graph` | Confirmed current behaviour | Job/node/effect domain and state-transition helpers. |
@@ -610,5 +611,5 @@ availability mandatory.
 13. **Program:** architecture quality marks live in
     [architecture-marks.md](./architecture-marks.md). Foundation Phases 0–5:
     [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md) (done). S+++ climb
-    P10–P15 done; active next: P16+ in
+    **P10–P16 done** (Doc **S+++**); active next: **P17** release/parity in
     [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).

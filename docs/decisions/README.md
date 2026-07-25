@@ -65,9 +65,9 @@ S+++ program phase `P##` or delivery `PR #N`. See
 
 ## Known documentary debt
 
-- **Confirmed current behaviour (P16):** two historical files share number
-  `0016`; titles and index use **ADR-0016-A** / **ADR-0016-B** aliases without
-  renumbering files (history preserved).
+- **Resolved (P16):** two historical files share number `0016`; titles and index
+  use **ADR-0016-A** / **ADR-0016-B** aliases without renumbering files (history
+  preserved). Residual is dual pathnames only, not ambiguous identity.
 - **Confirmed current behaviour:** two files use ADR number `0022`. They remain
   unchanged to preserve history; use the A/B labels only in this index.
 - **Confirmed current behaviour:** ADRs 0000–0016 predate the full template and
