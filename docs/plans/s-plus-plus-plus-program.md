@@ -83,7 +83,7 @@ Baseline: `architecture-marks.md` as of 2026-07-25.
 | 5 | Observability / eval | **S+++** (post-P14) | S+++ | P14 (done) |
 | 6 | UI architecture | **S+++** (post-P15) | S+++ | P15 (done) |
 | 7 | Doc / claim hygiene | **S+++** (post-P16) | S+++ | P16 (done) |
-| 8 | Release / parity gating | **A** | S+++ | P17 |
+| 8 | Release / parity gating | **S+++** (post-P17) | S+++ | P17 (done) |
 | 9 | Durability / crash safety | **A+** | S+++ | P18 |
 | — | **All-marks adversarial review** | mixed | **all S+++** | P19 |
 
@@ -98,8 +98,8 @@ P10 Multi-agent (done → S+++)
   → P14 Observability (done → S+++)
   → P15 UI (done → S+++)
   → P16 Doc hygiene (done → S+++)
-  → P17 Release gates (A)   ← next
-  → P18 Durability (A+)
+  → P17 Release gates (done → S+++)
+  → P18 Durability (A+)   ← next
   → P19 Final S+++ review board
 ```
 
@@ -496,12 +496,13 @@ truth, banners blueprints, refreshes ownership map.**
 ## P17 — Release / parity gating (A → S+++)
 
 **Owner packages:** `scripts/optimus_version.py`, `check-parity-ledger.py`,
-version JSON, CI docs.
+version JSON, CI docs. **Done — mark Release S+++.**
 
-### Why still A
+### Why was A (pre-P17)
 
-Fail-closed gates exist; S+++ means the gate system is complete, documented,
-and cannot be “greenwashed” by partial evidence.
+Fail-closed gates existed without a single operator matrix and without a
+lightweight architecture-marks claim gate. S+++ means the gate system is
+complete, documented, and cannot be “greenwashed” by partial evidence.
 
 ### Adversarial S+++ criteria
 
@@ -519,10 +520,17 @@ and cannot be “greenwashed” by partial evidence.
 
 | ID | Task | Exit evidence |
 |---|---|---|
-| R1 | Document pre-merge vs pre-release gate matrix | docs/architecture or plans |
-| R2 | Optional `check-architecture-marks.py` for S+++ claim hygiene | script + tests |
-| R3 | Version/ledger tests remain green | existing scripts |
-| R4 | Marks → Release **S+++** | marks |
+| R1 | Document pre-merge vs pre-release gate matrix | done — `docs/architecture/release-and-parity-gates.md` |
+| R2 | Optional `check-architecture-marks.py` for S+++ claim hygiene | done — script + `test_architecture_marks.py` |
+| R3 | Version/ledger tests remain green | done — ledger path fix + `check-parity-ledger.py` / `release-check` |
+| R4 | Marks → Release **S+++** | done — PR #27 + `s-plus-plus-plus-p17-verification.md` |
+
+### Hold suite
+
+- `python3 scripts/check-parity-ledger.py`
+- `python3 scripts/optimus_version.py release-check`
+- `python3 scripts/check-architecture-marks.py`
+- `python3 scripts/test_architecture_marks.py`
 
 ---
 
@@ -605,7 +613,8 @@ If any mark fails adversarial review: **do not** keep S+++. Open a patch phase
 | Packs | `cargo test -p optimus-packs` |
 | Observability gate | `python3 scripts/check-observability-gate.py` |
 | IPC matrix | `python3 scripts/check-desktop-ipc-matrix.py` |
-| Parity/version (release hygiene) | `python3 scripts/check-parity-ledger.py` / `optimus_version.py gate` as applicable |
+| Parity/version (release hygiene) | `python3 scripts/check-parity-ledger.py` / `optimus_version.py release-check` (strict `gate` only for parity claims) |
+| Architecture marks claim hygiene | `python3 scripts/check-architecture-marks.py` |
 | EM | `python3 scripts/engineering_memory.py check` |
 
 Exact CI wiring may lag; local green is required before mark moves.
@@ -644,4 +653,4 @@ L = multi-PR; M = one or few PRs; S = short.
 
 ## Immediate next action
 
-**P10–P16 done** (… + Doc **S+++**). Next: **P17** release / parity gating.
+**P10–P17 done** (… + Release **S+++**). Next: **P18** durability / crash safety.

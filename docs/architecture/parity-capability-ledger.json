@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-07-23",
-  "scorecard_marker": "P21D artifacts bulk delete + Phase 20 browser partials",
+  "updated_at": "2026-07-25",
+  "scorecard_marker": "P17 release gates; artifacts path post-P11 peel",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": ["missing", "partial", "parity", "win"],
   "capabilities": [
@@ -39,7 +39,7 @@
     {"id":"mcp.client","capability":"Pack-gated stdio/HTTP MCP client","hermes_reference":"Native MCP client","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"D-01"},
     {"id":"plugins.signed","capability":"Signed permission-declared plugins/packs","hermes_reference":"Plugin ecosystem","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"D-02"},
     {"id":"skills.ui","capability":"Skills lifecycle desktop console","hermes_reference":"Skills management UX","state":"missing","evidence":["crates/optimus-skills/src/lib.rs"],"trajectory":null,"owner_ticket":"D-03"},
-    {"id":"artifacts.store-ui","capability":"Provenance-aware artifact publication and gallery","hermes_reference":"Artifacts","state":"partial","evidence":["crates/optimus-kernel/src/artifacts.rs","apps/optimus-desktop/src/ipc/files.rs","apps/optimus-desktop/ui/app.js","docs/specifications/phase-21a-artifacts-store.md","docs/evidence/phase-21b-artifacts-gallery-2026-07-23.md","docs/evidence/phase-21c-artifacts-delete-2026-07-23.md","docs/evidence/phase-21d-artifacts-bulk-delete-2026-07-23.md"],"trajectory":null,"owner_ticket":"D-04"},
+    {"id":"artifacts.store-ui","capability":"Provenance-aware artifact publication and gallery","hermes_reference":"Artifacts","state":"partial","evidence":["crates/optimus-artifacts/src/lib.rs","apps/optimus-desktop/src/ipc/files.rs","apps/optimus-desktop/ui/app.js","docs/specifications/phase-21a-artifacts-store.md","docs/evidence/phase-21b-artifacts-gallery-2026-07-23.md","docs/evidence/phase-21c-artifacts-delete-2026-07-23.md","docs/evidence/phase-21d-artifacts-bulk-delete-2026-07-23.md"],"trajectory":null,"owner_ticket":"D-04"},
     {"id":"memory.ui","capability":"Evidence explorer, feedback, correction and forget","hermes_reference":"Memory management","state":"missing","evidence":["crates/optimus-memory/src/lib.rs"],"trajectory":null,"owner_ticket":"D-05"},
     {"id":"projects.scope","capability":"Durable project roots and policy scope","hermes_reference":"Projects/workspaces","state":"partial","evidence":["apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js"],"trajectory":null,"owner_ticket":"D-06"},
     {"id":"profiles.isolation","capability":"Profile-isolated homes and cross-profile links","hermes_reference":"Hermes profiles","state":"missing","evidence":[],"trajectory":null,"owner_ticket":"D-06"},

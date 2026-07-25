@@ -611,5 +611,6 @@ availability mandatory.
 13. **Program:** architecture quality marks live in
     [architecture-marks.md](./architecture-marks.md). Foundation Phases 0–5:
     [s-plus-trust-spine.md](../plans/s-plus-trust-spine.md) (done). S+++ climb
-    **P10–P16 done** (Doc **S+++**); active next: **P17** release/parity in
-    [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md).
+    **P10–P17 done** (Release **S+++**); active next: **P18** durability in
+    [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md). Operator
+    gate matrix: [release-and-parity-gates.md](./release-and-parity-gates.md).
