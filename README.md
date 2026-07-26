@@ -114,19 +114,37 @@ See [desktop-install-relaunch.md](docs/architecture/desktop-install-relaunch.md)
 
 ## Test
 
-```bash
-cargo fmt --all -- --check
-python3 scripts/optimus_version.py validate
-python3 scripts/optimus_version.py release-check
-python3 scripts/test_optimus_version.py
-python3 scripts/check-desktop-ipc-matrix.py
-python3 scripts/test_desktop_ipc_matrix.py
-python3 scripts/check-observability-gate.py
-cargo test --workspace --all-targets -- --test-threads=1
+All gates run through one command:
 
-cd apps/optimus-electron && npm test
-cd ../optimus-desktop && npx playwright test
+```bash
+just verify
 ```
+
+Narrower tiers for the inner loop:
+
+```bash
+just gates    # static gates + fmt        (~1s)
+just check    # + compile and clippy      (~35s)
+just test     # + Rust tests              (~60s)
+just ui       # Vitest, Electron, Playwright
+```
+
+[`scripts/verify.sh`](scripts/verify.sh) is the single source of truth. The
+justfile, the `pre-push` hook, humans, and coding agents all call it, so there
+is no second command list to drift. It runs every gate to completion and reports
+the full picture rather than stopping at the first failure.
+
+Enable the local gate once per clone (push is gated, not commit):
+
+```bash
+just setup-hooks
+```
+
+The Hermes parity gate is fail-closed by design and is deliberately **not** part
+of `just verify`. Check it with `just parity`.
+
+Clippy is advisory until the existing warnings are cleared; `just lint` shows
+them, and `OPTIMUS_CLIPPY_STRICT=1` makes it a hard gate.
 
 The runtime cancellation suite includes a Linux descendant-process regression. It proves that cancellation removes the full owned Unix process group and prevents delayed child effects.
 

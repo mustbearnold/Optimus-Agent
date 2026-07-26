@@ -13,3 +13,6 @@ apps/optimus-ui/dist/
 .DS_Store
 *.pdb
 Cargo.lock.bak
+
+# Claude Code personal overrides (shared config lives in .claude/settings.json)
+.claude/settings.local.json
