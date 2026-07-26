@@ -22,6 +22,23 @@ cd "$ROOT" || exit 1
 
 TIER="${1:-all}"
 
+# Normalise the Rust toolchain for this script's lifetime.
+#
+# This host has two Rust installations: a distribution cargo/rustc in /usr/bin
+# and rustup's shims in ~/.cargo/bin, with /usr/bin first on PATH. Subcommands
+# are resolved independently, so `cargo` came from /usr/bin (1.93.1) while
+# `cargo-clippy` came from rustup (1.97.1) — the dependency graph was then built
+# by one rustc and read by another, which fails with E0514 "compiled by an
+# incompatible version of rustc" and takes the whole gate run with it.
+#
+# Putting rustup's shims first makes every cargo subcommand resolve to the
+# toolchain that rust-toolchain.toml pins. Scoped to this process: the user's
+# shell configuration is left alone.
+if [ -x "$HOME/.cargo/bin/cargo" ]; then
+  PATH="$HOME/.cargo/bin:$PATH"
+  export PATH
+fi
+
 PASSED=(); FAILED=(); SKIPPED=()
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -93,12 +110,6 @@ tier_check() {
 # --- tier: test --------------------------------------------------------------
 tier_test() {
   section "rust tests"
-  # nextest is ~3.5x faster here (6s vs 23s) because it only serialises
-  # optimus-runtime, per .config/nextest.toml. The workspace-wide
-  # --test-threads=1 in the fallback is load-bearing, not legacy: optimus-runtime
-  # runs commands inside systemd transient scopes, and concurrent transient-unit
-  # creation races unit settlement. Do not drop it from the fallback.
-  # Neither path runs doctests; the workspace has none.
   if cargo nextest --version >/dev/null 2>&1; then
     run "cargo nextest" cargo nextest run --workspace
   else
@@ -126,11 +137,17 @@ tier_ui() {
   in_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   in_dir "optimus-electron"  apps/optimus-electron "npm test"
 
+  # Playwright drives the real host binary (e2e/support.js spawns
+  # target/debug/optimus-desktop per worker), so it needs a *built* binary --
+  # `cargo check` from the compile tier does not produce one. Without this the
+  # tier passes only when a previous build happened to leave the binary behind,
+  # and fails on any clean tree.
   if [ ! -d apps/optimus-desktop/node_modules ]; then
     skip "playwright" "npm ci in apps/optimus-desktop"
   elif ! (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
     skip "playwright" "npx playwright install chromium"
   else
+    run "build desktop host" cargo build -p optimus-desktop
     in_dir "playwright" apps/optimus-desktop "npx playwright test"
   fi
 }
