@@ -63,6 +63,10 @@ COMMANDS = (
     "report",
     "stat",
 )
+# Must stay a superset of the generated/ignored directories in .gitignore.
+# Anything gitignored that lands here would make Engineering Memory stale as a
+# side effect of running the test suites, which makes the staleness gate
+# unsatisfiable: run tests -> artifacts appear -> EM stale -> gate fails.
 EXCLUDED_PARTS = {
     ".git",
     ".engineering-memory",
@@ -73,6 +77,8 @@ EXCLUDED_PARTS = {
     "local",
     "dist",
     "build",
+    "test-results",
+    "playwright-report",
 }
 EXCLUDED_SUFFIXES = {
     ".tsbuildinfo",
