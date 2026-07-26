@@ -93,6 +93,12 @@ tier_check() {
 # --- tier: test --------------------------------------------------------------
 tier_test() {
   section "rust tests"
+  # nextest is ~3.5x faster here (6s vs 23s) because it only serialises
+  # optimus-runtime, per .config/nextest.toml. The workspace-wide
+  # --test-threads=1 in the fallback is load-bearing, not legacy: optimus-runtime
+  # runs commands inside systemd transient scopes, and concurrent transient-unit
+  # creation races unit settlement. Do not drop it from the fallback.
+  # Neither path runs doctests; the workspace has none.
   if cargo nextest --version >/dev/null 2>&1; then
     run "cargo nextest" cargo nextest run --workspace
   else

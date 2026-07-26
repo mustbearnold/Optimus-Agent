@@ -108,6 +108,10 @@ setup-hooks:
     git config core.hooksPath .githooks
     @echo "core.hooksPath -> .githooks"
 
+# Optional but recommended: ~3.5x faster Rust tests (see .config/nextest.toml).
+setup-nextest:
+    cargo install cargo-nextest --locked
+
 # Install npm dependencies for all JS surfaces.
 setup-npm:
     npm --prefix apps/optimus-ui ci
@@ -116,4 +120,4 @@ setup-npm:
     npm --prefix apps/optimus-desktop exec -- playwright install chromium
 
 # One-time setup for a fresh clone.
-setup: setup-hooks setup-npm
+setup: setup-hooks setup-npm setup-nextest
