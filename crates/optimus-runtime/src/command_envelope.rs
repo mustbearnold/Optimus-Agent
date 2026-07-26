@@ -30,10 +30,7 @@ pub fn parent_dirs_for_bind(workspace: &Path) -> Vec<PathBuf> {
 /// Confined modes: workspace is the only host path bound read-write. System
 /// trees are ro-bind when present. No full-root `--bind / /`.
 pub fn linux_bwrap_args(workspace: &Path, envelope: CommandFsEnvelope) -> Vec<String> {
-    let mut args: Vec<String> = vec![
-        "--die-with-parent".into(),
-        "--unshare-pid".into(),
-    ];
+    let mut args: Vec<String> = vec!["--die-with-parent".into(), "--unshare-pid".into()];
     if envelope.linux_unshare_net() {
         args.push("--unshare-net".into());
     }
@@ -55,11 +52,7 @@ pub fn linux_bwrap_args(workspace: &Path, envelope: CommandFsEnvelope) -> Vec<St
             for path in LINUX_RO_CANDIDATES {
                 let p = Path::new(path);
                 if p.exists() {
-                    args.extend([
-                        "--ro-bind".into(),
-                        path.to_string(),
-                        path.to_string(),
-                    ]);
+                    args.extend(["--ro-bind".into(), path.to_string(), path.to_string()]);
                 }
             }
             args.extend([
@@ -160,7 +153,9 @@ mod tests {
     #[test]
     fn windows_no_network_fail_closed() {
         assert!(command_envelope_supported("windows", CommandFsEnvelope::Confined).is_ok());
-        assert!(command_envelope_supported("windows", CommandFsEnvelope::ConfinedNoNetwork).is_err());
+        assert!(
+            command_envelope_supported("windows", CommandFsEnvelope::ConfinedNoNetwork).is_err()
+        );
         assert!(command_envelope_supported("linux", CommandFsEnvelope::ConfinedNoNetwork).is_ok());
     }
 }

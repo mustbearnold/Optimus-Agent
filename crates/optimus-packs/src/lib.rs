@@ -773,9 +773,7 @@ impl Default for PackBudgetConfig {
 
 /// Fail closed unless every available catalog tool maps to
 /// [`ToolInvocation::ALL_DISPATCHABLE`] and every dispatchable appears once.
-pub fn assert_dispatch_registry_closed(
-    catalog: &BTreeMap<PackId, PackDesc>,
-) -> Result<()> {
+pub fn assert_dispatch_registry_closed(catalog: &BTreeMap<PackId, PackDesc>) -> Result<()> {
     let mut seen: BTreeSet<ToolInvocation> = BTreeSet::new();
     for pack in catalog.values() {
         for tool in &pack.tools {

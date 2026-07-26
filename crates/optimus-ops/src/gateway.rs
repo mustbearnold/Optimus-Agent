@@ -356,7 +356,8 @@ pub fn list_outbox_receipts(home: impl AsRef<Path>, limit: usize) -> Result<Vec<
         let outbound: OutboundMessage = serde_json::from_str(&outbound_json)?;
         let delivered_unix = delivered.and_then(|value| u64::try_from(value).ok());
         let completed_unix = completed.and_then(|value| u64::try_from(value).ok());
-        let ambiguous_send = is_ambiguous_receipt(&terminal_status, delivered_unix, &terminal_reason);
+        let ambiguous_send =
+            is_ambiguous_receipt(&terminal_status, delivered_unix, &terminal_reason);
         out.push(OutboxReceipt {
             message_id,
             outbound,
@@ -1211,7 +1212,9 @@ mod tests {
 
         let outbound_id = ambiguous[0].outbound.id.clone();
         assert!(acknowledge_delivery(directory.path(), &message.id, &outbound_id, 99).unwrap());
-        assert!(list_ambiguous_sends(directory.path(), 10).unwrap().is_empty());
+        assert!(list_ambiguous_sends(directory.path(), 10)
+            .unwrap()
+            .is_empty());
         assert_eq!(gateway_status(directory.path()).unwrap().ambiguous_sends, 0);
         let receipts = list_outbox_receipts(directory.path(), 10).unwrap();
         assert_eq!(receipts[0].delivered_unix, Some(99));
@@ -1223,9 +1226,11 @@ mod tests {
         let directory = tempdir().unwrap();
         // Older message stays ambiguous.
         let old = enqueue(directory.path(), "local", "old", "offline", None).unwrap();
-        drain_one(directory.path(), |inbound| Ok((format!("echo:{}", inbound.text), None)))
-            .unwrap()
-            .unwrap();
+        drain_one(directory.path(), |inbound| {
+            Ok((format!("echo:{}", inbound.text), None))
+        })
+        .unwrap()
+        .unwrap();
         // Newer messages get receipts so they would occupy a naive "limit then filter" window.
         for i in 0..5 {
             let m = enqueue(
@@ -1264,7 +1269,9 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(mark_external_send_failed(directory.path(), &message.id, "mock_failed").unwrap());
-        assert!(list_ambiguous_sends(directory.path(), 10).unwrap().is_empty());
+        assert!(list_ambiguous_sends(directory.path(), 10)
+            .unwrap()
+            .is_empty());
         assert_eq!(gateway_status(directory.path()).unwrap().ambiguous_sends, 0);
     }
 }

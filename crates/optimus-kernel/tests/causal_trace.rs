@@ -132,9 +132,9 @@ fn security_denial_codes_are_stable_for_known_fences() {
         Some(SecurityDenialCode::ApprovalRequired)
     );
     assert_eq!(
-        classify_security_denial(&KernelError::Browser(
-            optimus_kernel::BrowserError::Ssrf("loopback".into())
-        )),
+        classify_security_denial(&KernelError::Browser(optimus_kernel::BrowserError::Ssrf(
+            "loopback".into()
+        ))),
         Some(SecurityDenialCode::NetworkSsrfDeny)
     );
 }
@@ -176,7 +176,10 @@ fn causal_export_is_versioned_store_backed_and_redacts_home() {
     assert!(doc.store_backed);
     assert!(!doc.live_provider_replay);
     assert_eq!(doc.report.home, "$OPTIMUS_HOME");
-    assert!(!doc.report.home.contains(home.display().to_string().as_str()));
+    assert!(!doc
+        .report
+        .home
+        .contains(home.display().to_string().as_str()));
     assert_eq!(doc.report.manifest.status, ExecutionStatus::Succeeded);
 
     let out = home.join("export").join("turn.json");

@@ -183,7 +183,10 @@ impl ProfileStore {
         }
         let candidate = home.workspace.join(relative);
         // Before create: lexical check under workspace
-        let ws = home.workspace.canonicalize().unwrap_or(home.workspace.clone());
+        let ws = home
+            .workspace
+            .canonicalize()
+            .unwrap_or(home.workspace.clone());
         let joined = if candidate.exists() {
             candidate.canonicalize().map_err(ProfileError::Io)?
         } else {

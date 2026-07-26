@@ -21,8 +21,8 @@ use uuid::Uuid;
 
 use crate::orchestrator_envelopes::{
     AttemptCounters, DeliveryPayload, DeliveryTerminal, GateAction, GateDecision, ReviewBallot,
-    ReviewLens, ReviewVerdict, SynthesisReport, TaskSpec, GATE_DECISION_SCHEMA_VERSION,
-    DELIVERY_PAYLOAD_SCHEMA_VERSION,
+    ReviewLens, ReviewVerdict, SynthesisReport, TaskSpec, DELIVERY_PAYLOAD_SCHEMA_VERSION,
+    GATE_DECISION_SCHEMA_VERSION,
 };
 use crate::{Result, WorkflowError};
 
@@ -375,7 +375,10 @@ impl RunController {
 
         // Blocking signal: explicit counts/findings. fail_lenses only count when the
         // lens is blocking-by-default (style_optional never blocks accept).
-        let blocking_lens_fail = report.fail_lenses.iter().any(|l| l.is_blocking_by_default());
+        let blocking_lens_fail = report
+            .fail_lenses
+            .iter()
+            .any(|l| l.is_blocking_by_default());
         let blocking = report.blocking_count > 0
             || report.merged_findings.iter().any(|f| f.blocking)
             || blocking_lens_fail;
@@ -485,8 +488,7 @@ impl RunController {
                     }
                     return Err(invalid("patch transition failed"));
                 }
-                self.counters.patch_attempts =
-                    self.counters.patch_attempts.saturating_add(1);
+                self.counters.patch_attempts = self.counters.patch_attempts.saturating_add(1);
             }
             GateAction::Replan => {
                 // Charge plan attempt before leaving gate so Rmax ∩ plan budget holds.
@@ -502,8 +504,7 @@ impl RunController {
                     }
                     return Err(invalid("replan transition failed"));
                 }
-                self.counters.replan_attempts =
-                    self.counters.replan_attempts.saturating_add(1);
+                self.counters.replan_attempts = self.counters.replan_attempts.saturating_add(1);
             }
             GateAction::FailClosed => {
                 let _ = self.force_terminal(
@@ -522,10 +523,8 @@ impl RunController {
         // Decision reflects actual post-effect state (honest after preemption).
         if self.state.is_terminal() && !matches!(action, GateAction::Accept) {
             // Fail/cancel path: surface actual terminal action.
-            if matches!(
-                self.state,
-                RunState::Failed | RunState::Cancelled
-            ) && action != GateAction::FailClosed
+            if matches!(self.state, RunState::Failed | RunState::Cancelled)
+                && action != GateAction::FailClosed
                 && action != GateAction::Cancelled
             {
                 return self.gate_decision_from_terminal();
@@ -568,9 +567,7 @@ impl RunController {
             if b.has_blocking_failure() || matches!(b.verdict, ReviewVerdict::Fail) {
                 blocking_fail = true;
             }
-            if matches!(b.verdict, ReviewVerdict::Inconclusive)
-                && b.lens.is_blocking_by_default()
-            {
+            if matches!(b.verdict, ReviewVerdict::Inconclusive) && b.lens.is_blocking_by_default() {
                 blocking_fail = true;
             }
         }
@@ -792,13 +789,7 @@ mod tests {
         let first = c.terminal_payload().unwrap().terminal;
         c.cancel(); // idempotent-ish: already terminal
         assert_eq!(c.terminal_payload().unwrap().terminal, first);
-        assert_eq!(
-            c.events
-                .iter()
-                .filter(|e| e.state.is_terminal())
-                .count(),
-            1
-        );
+        assert_eq!(c.events.iter().filter(|e| e.state.is_terminal()).count(), 1);
     }
 
     #[test]
@@ -940,7 +931,9 @@ mod tests {
         c.synthesis_finished().unwrap();
         // Shared token cancelled (simulates host/peer cancel during gate).
         c.cancel.cancel();
-        let d = c.apply_quality_gate(&accept_report("should not win")).unwrap();
+        let d = c
+            .apply_quality_gate(&accept_report("should not win"))
+            .unwrap();
         assert_eq!(d.action, GateAction::Cancelled);
         assert_eq!(c.state, RunState::Cancelled);
         assert_eq!(
@@ -948,13 +941,7 @@ mod tests {
             DeliveryTerminal::Cancelled
         );
         // Exactly one terminal event; never Succeeded.
-        assert_eq!(
-            c.events
-                .iter()
-                .filter(|e| e.state.is_terminal())
-                .count(),
-            1
-        );
+        assert_eq!(c.events.iter().filter(|e| e.state.is_terminal()).count(), 1);
         assert!(!c.events.iter().any(|e| e.state == RunState::Succeeded));
     }
 

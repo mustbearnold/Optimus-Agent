@@ -123,9 +123,8 @@ impl ProductSettings {
             return Ok(settings);
         }
         let raw = fs::read_to_string(&path)?;
-        let mut value: serde_json::Value = serde_json::from_str(&raw).map_err(|e| {
-            KernelError::Tool(format!("settings.json parse error: {e}"))
-        })?;
+        let mut value: serde_json::Value = serde_json::from_str(&raw)
+            .map_err(|e| KernelError::Tool(format!("settings.json parse error: {e}")))?;
         let mut note = None;
         if let Some(mode_val) = value.get("work_isolation").cloned() {
             let ok = match mode_val.as_str() {
@@ -144,9 +143,8 @@ impl ProductSettings {
                 }
             }
         }
-        let mut settings: ProductSettings = serde_json::from_value(value).map_err(|e| {
-            KernelError::Tool(format!("settings.json schema error: {e}"))
-        })?;
+        let mut settings: ProductSettings = serde_json::from_value(value)
+            .map_err(|e| KernelError::Tool(format!("settings.json schema error: {e}")))?;
         settings.version = SETTINGS_VERSION;
         if note.is_some() {
             settings.load_note = note;
@@ -171,14 +169,9 @@ impl ProductSettings {
     pub fn apply_patch(&mut self, patch: &serde_json::Value) -> Result<()> {
         if let Some(mode) = patch.get("work_isolation") {
             let parsed = match mode.as_str() {
-                Some(s) => WorkIsolationMode::parse(s).ok_or_else(|| {
-                    KernelError::Tool(format!("invalid work_isolation: {s}"))
-                })?,
-                _ => {
-                    return Err(KernelError::Tool(
-                        "work_isolation must be a string".into(),
-                    ))
-                }
+                Some(s) => WorkIsolationMode::parse(s)
+                    .ok_or_else(|| KernelError::Tool(format!("invalid work_isolation: {s}")))?,
+                _ => return Err(KernelError::Tool("work_isolation must be a string".into())),
             };
             self.work_isolation = parsed;
         }

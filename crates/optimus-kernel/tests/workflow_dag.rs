@@ -49,11 +49,7 @@ fn write_then_read_dag_succeeds_and_publishes_both_artifacts() {
         WRITE_THEN_READ_HANDOFF_WORKFLOW_VERSION
     );
     assert_eq!(report.nodes.len(), 2);
-    let write = report
-        .nodes
-        .iter()
-        .find(|n| n.node_id == "write")
-        .unwrap();
+    let write = report.nodes.iter().find(|n| n.node_id == "write").unwrap();
     let read = report.nodes.iter().find(|n| n.node_id == "read").unwrap();
     assert_eq!(write.status.as_str(), "succeeded");
     assert_eq!(read.status.as_str(), "succeeded");
@@ -144,10 +140,7 @@ fn cancel_after_begin_terminals_run_without_children() {
     assert!(!vertical_workspace(home).join("c.txt").exists());
     let stored = get_workflow_run(home, report.run_id).unwrap();
     assert_eq!(stored.status, WorkflowRunStatus::Cancelled);
-    assert_eq!(
-        stored.cancellation_reason.as_deref(),
-        Some("test cancel")
-    );
+    assert_eq!(stored.cancellation_reason.as_deref(), Some("test cancel"));
 }
 
 #[test]
@@ -312,10 +305,7 @@ fn reader_denies_secret_via_in_workspace_symlink() {
         )
         .unwrap();
         assert_eq!(report.status, WorkflowRunStatus::Failed);
-        assert_eq!(
-            report.nodes[0].error_code.as_deref(),
-            Some("secret_denied")
-        );
+        assert_eq!(report.nodes[0].error_code.as_deref(), Some("secret_denied"));
     }
 }
 
@@ -362,10 +352,7 @@ fn reader_denies_secret_basename() {
     )
     .unwrap();
     assert_eq!(report.status, WorkflowRunStatus::Failed);
-    assert_eq!(
-        report.nodes[0].error_code.as_deref(),
-        Some("secret_denied")
-    );
+    assert_eq!(report.nodes[0].error_code.as_deref(), Some("secret_denied"));
 }
 
 #[test]

@@ -882,7 +882,7 @@ fn max_steps_trips() {
     let cfg = KernelConfig {
         max_steps: 2,
         ..KernelConfig::default()
-        };
+    };
     let mut k = Kernel::open(dir.path(), cfg).unwrap();
     let mut model = ScriptedModel::new(vec![
         CompletionResponse {

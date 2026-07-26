@@ -1,0 +1,12 @@
+# Pinned so `cargo fmt --all -- --check` is reproducible across machines and
+# clones. rustfmt output changes between releases; without a pin the fmt gate
+# fails on toolchain drift rather than on real formatting mistakes.
+#
+# This is the *development* toolchain. The supported minimum for consumers is
+# `rust-version` in Cargo.toml, which is intentionally lower.
+#
+# Raise deliberately: bump, run `just fix`, and commit the reformat separately.
+[toolchain]
+channel = "1.97.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

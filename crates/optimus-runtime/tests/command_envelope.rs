@@ -93,7 +93,8 @@ fn confined_command_cannot_overwrite_system_path() {
                     program: "sh".into(),
                     args: vec![
                         "-c".into(),
-                        "touch /etc/optimus-p12-should-fail 2>/tmp/err; echo done > status.txt".into(),
+                        "touch /etc/optimus-p12-should-fail 2>/tmp/err; echo done > status.txt"
+                            .into(),
                     ],
                 },
             }],

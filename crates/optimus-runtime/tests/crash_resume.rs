@@ -41,8 +41,8 @@ fn crash_mid_job_then_resume_finishes() {
     // Unrestricted: this golden tests crash/resume durability, not SmartDeny.
     let unrestricted = RuntimeConfig {
         policy: PolicyMode::Unrestricted,
-            ..Default::default()
-        };
+        ..Default::default()
+    };
     let job_id = {
         let rt = Runtime::open_with_config(&db, &workspace, unrestricted.clone()).expect("open A");
         let job_id = rt
@@ -248,8 +248,8 @@ fn prepared_command_becomes_ambiguous_and_is_not_blindly_replayed() {
             &workspace,
             RuntimeConfig {
                 policy: PolicyMode::Unrestricted,
-            ..Default::default()
-        },
+                ..Default::default()
+            },
         )
         .expect("open");
         let job_id = rt
@@ -290,8 +290,6 @@ fn prepared_command_becomes_ambiguous_and_is_not_blindly_replayed() {
         .unwrap();
     assert_eq!(status, "ambiguous");
 }
-
-
 
 #[test]
 fn crash_during_writefile_then_resume_exactly_one_terminal() {
@@ -383,5 +381,8 @@ fn crash_during_writefile_then_resume_exactly_one_terminal() {
             |row| row.get(0),
         )
         .unwrap();
-    assert_eq!(succeeded_attempts, 2, "exactly one success per completed node");
+    assert_eq!(
+        succeeded_attempts, 2,
+        "exactly one success per completed node"
+    );
 }

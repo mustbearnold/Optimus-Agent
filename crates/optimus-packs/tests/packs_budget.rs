@@ -108,7 +108,10 @@ fn progressive_activate_snapshot_reports_budget_headroom() {
     let mut s = CapabilitySession::with_defaults();
     let snap = s.activation_snapshot();
     assert_eq!(snap["ok"], true);
-    assert_eq!(snap["max_schema_tokens"], PackBudgetConfig::default().max_schema_tokens);
+    assert_eq!(
+        snap["max_schema_tokens"],
+        PackBudgetConfig::default().max_schema_tokens
+    );
     assert_eq!(snap["max_on_demand_packs"], 2);
     assert_eq!(snap["on_demand_loaded"], 0);
     s.activate(PackId::Browser).unwrap();

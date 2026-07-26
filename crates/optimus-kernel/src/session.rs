@@ -199,9 +199,9 @@ impl SessionStore {
         if n > 0 {
             return Ok(());
         }
-        let mut stmt = self.conn.prepare(
-            "SELECT id, title, messages_json FROM sessions",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, title, messages_json FROM sessions")?;
         let rows = stmt.query_map([], |row| {
             Ok((
                 row.get::<_, String>(0)?,
@@ -211,7 +211,8 @@ impl SessionStore {
         })?;
         let tx = self.conn.unchecked_transaction()?;
         for row in rows {
-            let (id_s, title, messages_json) = row.map_err(|e| KernelError::Model(e.to_string()))?;
+            let (id_s, title, messages_json) =
+                row.map_err(|e| KernelError::Model(e.to_string()))?;
             let id = Uuid::parse_str(&id_s).map_err(|e| KernelError::Model(e.to_string()))?;
             let messages: Vec<Message> = serde_json::from_str(&messages_json).unwrap_or_default();
             Self::reindex_fts_tx(&tx, id, &title, &messages)?;
@@ -620,7 +621,8 @@ impl SessionStore {
         let id = Uuid::parse_str(&row.get::<_, String>(0)?).map_err(|e| {
             rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
         })?;
-        let packs: Vec<String> = serde_json::from_str(&row.get::<_, String>(4)?).unwrap_or_default();
+        let packs: Vec<String> =
+            serde_json::from_str(&row.get::<_, String>(4)?).unwrap_or_default();
         let messages: Vec<Message> =
             serde_json::from_str(&row.get::<_, String>(5)?).unwrap_or_default();
         let pinned: i64 = row.get(6)?;
@@ -697,8 +699,7 @@ impl SessionStore {
                 params![id.to_string()],
                 |row| row.get(0),
             )?;
-            let messages: Vec<Message> =
-                serde_json::from_str(&messages_json).unwrap_or_default();
+            let messages: Vec<Message> = serde_json::from_str(&messages_json).unwrap_or_default();
             Self::reindex_fts_tx(&tx, id, title, &messages)?;
         }
         tx.commit()?;
@@ -896,9 +897,7 @@ mod hygiene_tests {
         let system = msg(Role::System, "sys");
         store.save(id, "live", &[], &[system.clone()]).unwrap();
         let mut messages = vec![system, msg(Role::User, "needleword unique")];
-        let turn = store
-            .begin_turn(id, "live", &[], &messages, 1)
-            .unwrap();
+        let turn = store.begin_turn(id, "live", &[], &messages, 1).unwrap();
         messages.push(msg(Role::Assistant, "ok"));
         store
             .finish_turn(

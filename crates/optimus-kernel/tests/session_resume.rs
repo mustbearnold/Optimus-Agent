@@ -159,7 +159,9 @@ fn missing_tool_message_is_repaired_from_effect_link_on_reopen() {
             tool_calls: vec![],
         },
     ]);
-    kernel.turn(&mut model, "write then lose tool card").unwrap();
+    kernel
+        .turn(&mut model, "write then lose tool card")
+        .unwrap();
 
     let store = SessionStore::open(directory.path().join("sessions.db")).unwrap();
     let links = store.effect_links(session_id).unwrap();
@@ -169,12 +171,13 @@ fn missing_tool_message_is_repaired_from_effect_link_on_reopen() {
         !(message.role == optimus_kernel::Role::Tool
             && message.tool_call_id.as_deref() == Some("write-call-repair"))
     });
-    store
-        .save(session_id, &title, &packs, &messages)
-        .unwrap();
-    assert!(!store.load(session_id).unwrap().1.iter().any(|message| {
-        message.tool_call_id.as_deref() == Some("write-call-repair")
-    }));
+    store.save(session_id, &title, &packs, &messages).unwrap();
+    assert!(!store
+        .load(session_id)
+        .unwrap()
+        .1
+        .iter()
+        .any(|message| { message.tool_call_id.as_deref() == Some("write-call-repair") }));
 
     let reopened =
         Kernel::open_session(directory.path(), KernelConfig::default(), Some(session_id)).unwrap();
@@ -182,7 +185,9 @@ fn missing_tool_message_is_repaired_from_effect_link_on_reopen() {
         message.role == optimus_kernel::Role::Tool
             && message.tool_call_id.as_deref() == Some("write-call-repair")
             && message.content.contains("repaired")
-            && message.content.contains(links[0].job_id.to_string().as_str())
+            && message
+                .content
+                .contains(links[0].job_id.to_string().as_str())
     }));
     // Repair is durable for the next open.
     let (_, messages_after, _) = store.load(session_id).unwrap();
@@ -246,7 +251,7 @@ fn failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event() {
     let config = KernelConfig {
         max_steps: 0,
         ..KernelConfig::default()
-        };
+    };
     let mut kernel = Kernel::open(directory.path(), config).unwrap();
     let session_id = kernel.session_id();
     let mut model = ScriptedModel::new(vec![]);
@@ -511,7 +516,6 @@ fn kernel_turn_persists_versioned_manifest_and_replay_report() {
     assert_eq!(report.model_call_count, 1);
     assert_eq!(report.tool_call_count, 0);
 }
-
 
 #[test]
 fn missing_tool_messages_for_two_effect_links_are_both_repaired() {

@@ -32,13 +32,7 @@ pub fn discord_enqueue(
         return Err(AdapterError::Msg("text required".into()));
     }
     let session = format!("discord:{external_id}");
-    Ok(enqueue(
-        home,
-        "discord",
-        text,
-        "offline",
-        Some(&session),
-    )?)
+    Ok(enqueue(home, "discord", text, "offline", Some(&session))?)
 }
 
 /// Enqueue a Slack-shaped message into the durable gateway (mock path).

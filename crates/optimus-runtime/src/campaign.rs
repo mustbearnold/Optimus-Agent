@@ -2416,14 +2416,8 @@ mod tests {
         runtime
             .create_job_with_id(jid, write_step_job(&view))
             .unwrap();
-        assert_eq!(
-            runtime.run_all(jid).unwrap(),
-            JobStatus::AwaitingApproval
-        );
-        assert_eq!(
-            runtime.grant_and_resume(jid).unwrap(),
-            JobStatus::Succeeded
-        );
+        assert_eq!(runtime.run_all(jid).unwrap(), JobStatus::AwaitingApproval);
+        assert_eq!(runtime.grant_and_resume(jid).unwrap(), JobStatus::Succeeded);
 
         let derived = store.get(view.campaign.id).unwrap().unwrap();
         assert_eq!(derived.steps[0].status, StepStatus::Succeeded);

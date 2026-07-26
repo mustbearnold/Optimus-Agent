@@ -686,8 +686,11 @@ mod tests {
     fn ordered_failover_prefers_fallback_order_over_catalog_scan() {
         let directory = tempdir().unwrap();
         // Invalid codex model → denied; ordered failover to openai then offline.
-        let mut request =
-            RouteRequest::standard(RouteSurface::Desktop, "codex", Some("not-a-codex-model".into()));
+        let mut request = RouteRequest::standard(
+            RouteSurface::Desktop,
+            "codex",
+            Some("not-a-codex-model".into()),
+        );
         request.allow_fallback = true;
         request.fallback_order = vec!["openai-compat".into(), "offline".into()];
         let decision = resolve_route(directory.path(), &request).unwrap();

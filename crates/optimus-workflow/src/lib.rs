@@ -5,9 +5,9 @@
 //! durable ADR-0033 `WorkflowRunStore` path and does not execute tools or
 //! spawn models.
 
+mod child_lease;
 mod orchestrator_envelopes;
 mod run_controller;
-mod child_lease;
 mod specialist_vertical;
 mod workflow;
 mod workflow_run;
@@ -36,6 +36,7 @@ pub enum WorkflowError {
 
 pub type Result<T> = std::result::Result<T, WorkflowError>;
 
+pub use child_lease::*;
 pub use optimus_agent::{
     AgentArtifactRef, AgentBudget, AgentDescriptor, AgentFailure, AgentId, AgentInvocation,
     AgentInvocationEvent, AgentInvocationStatus, AgentInvocationStore, AgentPermissions,
@@ -45,7 +46,6 @@ pub use optimus_agent::{
 pub use optimus_artifacts::{ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult};
 pub use orchestrator_envelopes::*;
 pub use run_controller::*;
-pub use child_lease::*;
 pub use specialist_vertical::*;
 pub use workflow::*;
 pub use workflow_run::*;

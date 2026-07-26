@@ -97,8 +97,7 @@ pub fn classify_security_denial(error: &KernelError) -> Option<SecurityDenialCod
 fn classify_message(message: &str) -> Option<SecurityDenialCode> {
     if message.contains("secret path denied")
         || message.contains("secret basename")
-        || (message.contains(".env")
-            && (message.contains("denied") || message.contains("refuse")))
+        || (message.contains(".env") && (message.contains("denied") || message.contains("refuse")))
     {
         return Some(SecurityDenialCode::SecretBasenameDeny);
     }
@@ -132,8 +131,7 @@ fn classify_message(message: &str) -> Option<SecurityDenialCode> {
     if message.contains("unavailable") || message.contains("not advertised") {
         return Some(SecurityDenialCode::ToolUnavailable);
     }
-    if message.contains("denied") || message.contains("policy") || message.contains("not allowed")
-    {
+    if message.contains("denied") || message.contains("policy") || message.contains("not allowed") {
         return Some(SecurityDenialCode::ToolPolicyDeny);
     }
     None

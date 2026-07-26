@@ -6,22 +6,22 @@
 
 mod browser;
 mod browser_coord;
+mod causal;
 mod codex_oauth;
 mod compress;
 mod credential;
 mod execution;
 mod fs_sandbox;
+mod network_policy;
 mod openai_compat;
 mod product_settings;
 mod profile;
 mod project_authority;
 mod routing;
-mod causal;
 mod security_denial;
 mod session;
 mod telemetry;
 mod trace;
-mod network_policy;
 mod web_search;
 
 use std::cell::Cell;
@@ -50,15 +50,6 @@ use uuid::Uuid;
 /// Cooperative cancellation (owned by optimus-runtime).
 pub use optimus_runtime::CancellationToken;
 
-pub use optimus_agent::{
-    AgentArtifactRef, AgentBudget, AgentContextRef, AgentDescriptor, AgentError, AgentFailure,
-    AgentId, AgentInvocation, AgentInvocationEvent, AgentInvocationStatus, AgentInvocationStore,
-    AgentPermissions, AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion,
-    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
-};
-pub use optimus_artifacts::{
-    ArtifactError, ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult,
-};
 pub use browser::{
     best_effector, chrome_binary_path, http_effector, page_to_tool_json, try_cdp_effector,
     BrowserEffector, BrowserError, BrowserLink, BrowserPage, BrowserState,
@@ -67,6 +58,11 @@ pub use browser::{
 pub use browser_coord::{
     BrowserCoordBus, BrowserTrustDomain, CoordError, CoordEvent, CoordEventKind, CoordSnapshot,
     BROWSER_COORD_SCHEMA_VERSION,
+};
+pub use causal::{
+    export_causal_document, export_causal_json, list_recent_causal_turns, load_causal_turn,
+    parse_causal_query, write_causal_export, CausalExportDocument, CausalQuery, CausalQueryKind,
+    CausalTurnReport, CAUSAL_EXPORT_VERSION,
 };
 pub use codex_oauth::{
     chatgpt_account_id_from_jwt, device_code_login, extract_codex_tokens_from_codex_cli,
@@ -79,11 +75,6 @@ pub use credential::{
     atomic_write_user_only, harden_user_only, verify_user_only, CredentialProtector,
     SystemCredentialProtector,
 };
-pub use causal::{
-    export_causal_document, export_causal_json, list_recent_causal_turns, load_causal_turn,
-    parse_causal_query, write_causal_export, CausalExportDocument, CausalQuery, CausalQueryKind,
-    CausalTurnReport, CAUSAL_EXPORT_VERSION,
-};
 pub use execution::{
     ExecutionManifest, ExecutionModelCallSummary, ExecutionStatus, ExecutionStore,
     ExecutionTimingSummary, ExecutionToolCallSummary, ExecutionToolLifecycleSummary,
@@ -93,8 +84,21 @@ pub use execution::{
 pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
 };
+pub use network_policy::{
+    assert_public_http_url, assert_public_http_url_str, host_blocked, ip_blocked, socket_blocked,
+    EgressError,
+};
 pub use openai_compat::{
     from_openai_response, to_openai_request, OpenAiCompatConfig, OpenAiCompatModel,
+};
+pub use optimus_agent::{
+    AgentArtifactRef, AgentBudget, AgentContextRef, AgentDescriptor, AgentError, AgentFailure,
+    AgentId, AgentInvocation, AgentInvocationEvent, AgentInvocationStatus, AgentInvocationStore,
+    AgentPermissions, AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion,
+    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
+};
+pub use optimus_artifacts::{
+    ArtifactError, ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult,
 };
 pub use optimus_graph::PolicyMode;
 /// Operator gateway + cron store (owned by `optimus-ops`).
@@ -112,31 +116,6 @@ pub use optimus_ops::{
     TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;
-pub use network_policy::{
-    assert_public_http_url, assert_public_http_url_str, host_blocked, ip_blocked, socket_blocked,
-    EgressError,
-};
-pub use product_settings::{ProductSettings, WorkIsolationMode};
-pub use profile::{
-    create_default_profiles, ProfileError, ProfileHome, ProfileId, ProfileRegistryView,
-    ProfileStore,
-};
-pub use project_authority::{
-    ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
-};
-pub use routing::{
-    is_known_codex_model, provider_catalog, provider_catalog_status, resolve_route,
-    resolve_route_traced, route_decision_count, sanitize_codex_oauth_model, ModelCapability,
-    ModelId, PrivacyPolicy, ProviderCatalogStatus, ProviderConnectState,
-    ProviderDescriptor, ProviderId, RouteDecision, RouteRequest, RouteSurface,
-    RouteTelemetryPolicy, CODEX_MODEL_CATALOG, DEFAULT_CODEX_MODEL,
-};
-pub use security_denial::{
-    classify_security_denial, kernel_or_security_code, SecurityDenialCode,
-};
-pub use session::{
-    ListFilter, SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus,
-};
 pub use optimus_workflow::{
     adapt_campaign_status, adapt_cron_attempt_status, adapt_gateway_status, adapt_job_status,
     builtin_agent_permission_ceiling, builtin_workflow_adapters, cancel_workflow_run,
@@ -152,11 +131,30 @@ pub use optimus_workflow::{
     WorkflowNodeRun, WorkflowNodeRunStatus, WorkflowObservability, WorkflowPort, WorkflowRegistry,
     WorkflowRun, WorkflowRunChild, WorkflowRunEvent, WorkflowRunLease, WorkflowRunStatus,
     WorkflowRunStore, WorkflowTerminalKind, WorkflowTerminalPolicy, WorkflowTrigger,
-    WorkflowVersion, WriteFileHandoffReport, WriteFileHandoffRequest, READ_FILE_HANDOFF_WORKFLOW_ID,
-    READ_FILE_HANDOFF_WORKFLOW_VERSION, WORKFLOW_SCHEMA_VERSION, WORKSPACE_READER_ID,
-    WORKSPACE_READER_VERSION, WORKSPACE_WRITER_ID, WORKSPACE_WRITER_VERSION,
+    WorkflowVersion, WriteFileHandoffReport, WriteFileHandoffRequest,
+    READ_FILE_HANDOFF_WORKFLOW_ID, READ_FILE_HANDOFF_WORKFLOW_VERSION, WORKFLOW_SCHEMA_VERSION,
+    WORKSPACE_READER_ID, WORKSPACE_READER_VERSION, WORKSPACE_WRITER_ID, WORKSPACE_WRITER_VERSION,
     WRITE_FILE_HANDOFF_WORKFLOW_ID, WRITE_FILE_HANDOFF_WORKFLOW_VERSION,
     WRITE_THEN_READ_HANDOFF_WORKFLOW_ID, WRITE_THEN_READ_HANDOFF_WORKFLOW_VERSION,
+};
+pub use product_settings::{ProductSettings, WorkIsolationMode};
+pub use profile::{
+    create_default_profiles, ProfileError, ProfileHome, ProfileId, ProfileRegistryView,
+    ProfileStore,
+};
+pub use project_authority::{
+    ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
+};
+pub use routing::{
+    is_known_codex_model, provider_catalog, provider_catalog_status, resolve_route,
+    resolve_route_traced, route_decision_count, sanitize_codex_oauth_model, ModelCapability,
+    ModelId, PrivacyPolicy, ProviderCatalogStatus, ProviderConnectState, ProviderDescriptor,
+    ProviderId, RouteDecision, RouteRequest, RouteSurface, RouteTelemetryPolicy,
+    CODEX_MODEL_CATALOG, DEFAULT_CODEX_MODEL,
+};
+pub use security_denial::{classify_security_denial, kernel_or_security_code, SecurityDenialCode};
+pub use session::{
+    ListFilter, SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus,
 };
 
 pub use telemetry::{
@@ -171,8 +169,6 @@ pub use web_search::{
     canonicalize_provenance_url, web_search, web_search_json, SearchError, SearchHit,
     WEB_SEARCH_EXTRACT_SCHEMA_VERSION,
 };
-
-
 
 #[derive(Debug, Error)]
 pub enum KernelError {
@@ -625,7 +621,9 @@ impl Kernel {
         std::fs::create_dir_all(&workspace)?;
         let command_fs_envelope = match config.command_fs_envelope {
             Some(envelope) => envelope,
-            None => ProductSettings::load(&home)?.work_isolation.command_fs_envelope(),
+            None => ProductSettings::load(&home)?
+                .work_isolation
+                .command_fs_envelope(),
         };
         let runtime = Runtime::open_with_config(
             &home.join("optimus.db"),
@@ -1998,9 +1996,9 @@ impl Kernel {
                         format!("mkdir:{path}"),
                         "mkdir",
                         Effect::ProjectMkdir {
-                        workspace_sha256: self.runtime.workspace_sha256(),
-                        relative_path: path.into(),
-                    },
+                            workspace_sha256: self.runtime.workspace_sha256(),
+                            relative_path: path.into(),
+                        },
                     )?;
                     Ok(result)
                 }
@@ -2016,9 +2014,9 @@ impl Kernel {
                         format!("delete:{path}"),
                         "delete",
                         Effect::ProjectDeletePath {
-                        workspace_sha256: self.runtime.workspace_sha256(),
-                        relative_path: path.into(),
-                    },
+                            workspace_sha256: self.runtime.workspace_sha256(),
+                            relative_path: path.into(),
+                        },
                     )?;
                     Ok(result)
                 }
@@ -2039,10 +2037,10 @@ impl Kernel {
                         format!("rename:{from}->{to}"),
                         "rename",
                         Effect::ProjectRenamePath {
-                        workspace_sha256: self.runtime.workspace_sha256(),
-                        from_relative_path: from.into(),
-                        to_relative_path: to.into(),
-                    },
+                            workspace_sha256: self.runtime.workspace_sha256(),
+                            from_relative_path: from.into(),
+                            to_relative_path: to.into(),
+                        },
                     )?;
                     Ok(result)
                 }
@@ -2068,11 +2066,11 @@ impl Kernel {
                         format!("patch:{path}"),
                         "patch",
                         Effect::ProjectPatchFile {
-                        workspace_sha256: self.runtime.workspace_sha256(),
-                        relative_path: path.into(),
-                        old_string: old_string.into(),
-                        new_string: new_string.into(),
-                    },
+                            workspace_sha256: self.runtime.workspace_sha256(),
+                            relative_path: path.into(),
+                            old_string: old_string.into(),
+                            new_string: new_string.into(),
+                        },
                     )?;
                     Ok(result)
                 }
@@ -2372,12 +2370,8 @@ fn exact_action_summary(effect_json: &str) -> String {
             from_relative_path,
             to_relative_path,
         }) => format!("Rename {from_relative_path} → {to_relative_path}"),
-        Ok(Effect::ProjectPatchFile {
-            relative_path, ..
-        })
-        | Ok(Effect::PatchFile {
-            relative_path, ..
-        }) => format!("Patch {relative_path}"),
+        Ok(Effect::ProjectPatchFile { relative_path, .. })
+        | Ok(Effect::PatchFile { relative_path, .. }) => format!("Patch {relative_path}"),
         Ok(Effect::ProjectRunCommand { program, args, .. })
         | Ok(Effect::RunCommand { program, args }) => {
             let program = serde_json::to_string(&program).unwrap_or_else(|_| "<invalid>".into());

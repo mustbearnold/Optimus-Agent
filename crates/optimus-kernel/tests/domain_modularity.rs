@@ -45,7 +45,8 @@ fn write_ctx() -> WriteContext {
 fn packs_catalog_covers_all_dispatchable_invocations() {
     use optimus_packs::assert_dispatch_registry_closed;
     let catalog = builtin_catalog();
-    assert_dispatch_registry_closed(&catalog).expect("builtin catalog closed over ALL_DISPATCHABLE");
+    assert_dispatch_registry_closed(&catalog)
+        .expect("builtin catalog closed over ALL_DISPATCHABLE");
     let mut seen = Vec::new();
     for pack in catalog.values() {
         for tool in &pack.tools {
@@ -67,7 +68,9 @@ fn packs_catalog_covers_all_dispatchable_invocations() {
 fn tool_resolution_is_packs_only_not_ad_hoc_names() {
     let session = CapabilitySession::with_defaults();
     assert!(session.resolve_loaded_tool("read_file").is_ok());
-    assert!(session.resolve_loaded_tool("fabricated_super_tool").is_err());
+    assert!(session
+        .resolve_loaded_tool("fabricated_super_tool")
+        .is_err());
     // Core defaults never invent unloaded pack tools.
     assert!(session.resolve_loaded_tool("browser_navigate").is_err());
     let names: Vec<_> = session

@@ -13,10 +13,8 @@ use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::workflow::{
-    WorkflowDefinition, WorkflowId, WorkflowTerminalKind, WorkflowVersion,
-};
-use crate::{WorkflowError, Result};
+use crate::workflow::{WorkflowDefinition, WorkflowId, WorkflowTerminalKind, WorkflowVersion};
+use crate::{Result, WorkflowError};
 
 const MAX_INPUT_JSON_BYTES: usize = 256 * 1024;
 const DEFAULT_LEASE_TTL_SECS: u64 = 300;
@@ -57,10 +55,7 @@ impl WorkflowRunStatus {
     }
 
     pub fn is_terminal(self) -> bool {
-        matches!(
-            self,
-            Self::Succeeded | Self::Failed | Self::Cancelled
-        )
+        matches!(self, Self::Succeeded | Self::Failed | Self::Cancelled)
     }
 
     pub fn to_terminal_kind(self) -> Option<WorkflowTerminalKind> {
@@ -545,7 +540,12 @@ impl WorkflowRunStore {
         })
     }
 
-    fn require_live_lease(&self, tx: &Transaction<'_>, run_id: Uuid, lease: &WorkflowRunLease) -> Result<WorkflowRunStatus> {
+    fn require_live_lease(
+        &self,
+        tx: &Transaction<'_>,
+        run_id: Uuid,
+        lease: &WorkflowRunLease,
+    ) -> Result<WorkflowRunStatus> {
         let now = now_unix();
         let (status, owner, token, generation, deadline) = tx.query_row(
             "SELECT status,lease_owner,lease_token,lease_generation,lease_deadline_unix
@@ -581,13 +581,11 @@ impl WorkflowRunStore {
         }
         let now = now_unix();
         let tx = self.conn.unchecked_transaction()?;
-        let status = WorkflowRunStatus::parse(
-            &tx.query_row(
-                "SELECT status FROM workflow_runs WHERE id=?1",
-                params![run_id.to_string()],
-                |row| row.get::<_, String>(0),
-            )?,
-        )?;
+        let status = WorkflowRunStatus::parse(&tx.query_row(
+            "SELECT status FROM workflow_runs WHERE id=?1",
+            params![run_id.to_string()],
+            |row| row.get::<_, String>(0),
+        )?)?;
         if status.is_terminal() {
             return Ok(false);
         }
@@ -762,12 +760,7 @@ impl WorkflowRunStore {
                error_code=NULL,
                error_message=NULL
              WHERE run_id=?1 AND node_id=?2 AND status='running'",
-            params![
-                run_id.to_string(),
-                node_id,
-                artifact_sha256,
-                now as i64
-            ],
+            params![run_id.to_string(), node_id, artifact_sha256, now as i64],
         )?;
         if changed != 1 {
             return Err(invalid("workflow node success rejected"));
@@ -801,13 +794,7 @@ impl WorkflowRunStore {
                error_message=?4,
                completed_unix=?5
              WHERE run_id=?1 AND node_id=?2 AND status IN ('pending','ready','running')",
-            params![
-                run_id.to_string(),
-                node_id,
-                code,
-                message,
-                now as i64
-            ],
+            params![run_id.to_string(), node_id, code, message, now as i64],
         )?;
         if changed != 1 {
             return Err(invalid("workflow node failure rejected"));
@@ -881,7 +868,9 @@ impl WorkflowRunStore {
             if reason.is_some() {
                 Ok(WorkflowRunStatus::Running)
             } else {
-                Err(invalid("cannot cancel nodes without live lease or cancel request"))
+                Err(invalid(
+                    "cannot cancel nodes without live lease or cancel request",
+                ))
             }
         })?;
         tx.execute(
@@ -902,9 +891,7 @@ impl WorkflowRunStore {
     ) -> Result<()> {
         if !matches!(
             status,
-            WorkflowRunStatus::Succeeded
-                | WorkflowRunStatus::Failed
-                | WorkflowRunStatus::Cancelled
+            WorkflowRunStatus::Succeeded | WorkflowRunStatus::Failed | WorkflowRunStatus::Cancelled
         ) {
             return Err(invalid("settle_terminal requires a terminal status"));
         }
@@ -917,7 +904,9 @@ impl WorkflowRunStore {
             |row| row.get(0),
         )?;
         if status == WorkflowRunStatus::Succeeded && cancel_reason.is_some() {
-            return Err(invalid("cannot settle succeeded while cancellation requested"));
+            return Err(invalid(
+                "cannot settle succeeded while cancellation requested",
+            ));
         }
         let lease_ok = self.require_live_lease(&tx, run_id, lease);
         if lease_ok.is_err() {
@@ -930,13 +919,11 @@ impl WorkflowRunStore {
             if !allow_soft {
                 return lease_ok.map(|_| ());
             }
-            let existing = WorkflowRunStatus::parse(
-                &tx.query_row(
-                    "SELECT status FROM workflow_runs WHERE id=?1",
-                    params![run_id.to_string()],
-                    |row| row.get::<_, String>(0),
-                )?,
-            )?;
+            let existing = WorkflowRunStatus::parse(&tx.query_row(
+                "SELECT status FROM workflow_runs WHERE id=?1",
+                params![run_id.to_string()],
+                |row| row.get::<_, String>(0),
+            )?)?;
             if existing.is_terminal() {
                 if existing == status {
                     return Ok(());
@@ -954,22 +941,15 @@ impl WorkflowRunStore {
                lease_token=NULL,
                lease_deadline_unix=NULL
              WHERE id=?1 AND status NOT IN ('succeeded','failed','cancelled')",
-            params![
-                run_id.to_string(),
-                kind,
-                reason,
-                now as i64
-            ],
+            params![run_id.to_string(), kind, reason, now as i64],
         )?;
         if changed != 1 {
             // already terminal — idempotent success for matching terminal
-            let existing = WorkflowRunStatus::parse(
-                &tx.query_row(
-                    "SELECT status FROM workflow_runs WHERE id=?1",
-                    params![run_id.to_string()],
-                    |row| row.get::<_, String>(0),
-                )?,
-            )?;
+            let existing = WorkflowRunStatus::parse(&tx.query_row(
+                "SELECT status FROM workflow_runs WHERE id=?1",
+                params![run_id.to_string()],
+                |row| row.get::<_, String>(0),
+            )?)?;
             if existing == status {
                 return Ok(());
             }
@@ -1175,9 +1155,6 @@ fn invalid(message: impl Into<String>) -> WorkflowError {
     WorkflowError::Msg(message.into())
 }
 
-
-
-
 #[cfg(test)]
 mod durability_tests {
     use super::*;
@@ -1190,7 +1167,10 @@ mod durability_tests {
         let store = WorkflowRunStore::open(dir.path().join("workflow-runs.db")).unwrap();
         let definition = write_file_handoff_workflow().unwrap();
         let run_id = store
-            .begin(&definition, serde_json::json!({"relative_path":"x.txt","contents":"x"}))
+            .begin(
+                &definition,
+                serde_json::json!({"relative_path":"x.txt","contents":"x"}),
+            )
             .unwrap();
         assert!(store.request_cancellation(run_id, "first").unwrap());
         // Second request returns false (already requested) without error.
@@ -1198,5 +1178,4 @@ mod durability_tests {
         let reason = store.cancellation_requested(run_id).unwrap();
         assert_eq!(reason.as_deref(), Some("first"));
     }
-
 }

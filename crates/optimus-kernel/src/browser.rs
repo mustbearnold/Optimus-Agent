@@ -713,7 +713,10 @@ mod tests {
             );
         }
         // No page state after denied navigations.
-        assert!(matches!(effector.snapshot().unwrap_err(), BrowserError::NoPage));
+        assert!(matches!(
+            effector.snapshot().unwrap_err(),
+            BrowserError::NoPage
+        ));
     }
 
     #[test]

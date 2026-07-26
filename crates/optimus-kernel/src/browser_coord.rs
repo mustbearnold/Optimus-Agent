@@ -160,7 +160,11 @@ impl BrowserCoordBus {
         Ok(event)
     }
 
-    pub fn record_agent_navigate(&mut self, url: &str, title: Option<String>) -> Result<CoordEvent> {
+    pub fn record_agent_navigate(
+        &mut self,
+        url: &str,
+        title: Option<String>,
+    ) -> Result<CoordEvent> {
         self.record(
             BrowserTrustDomain::AgentEffector,
             CoordEventKind::Navigated,

@@ -8,8 +8,8 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::{Result, WorkflowError};
 use optimus_agent::{AgentId, AgentVersion};
-use crate::{WorkflowError, Result};
 
 pub const WORKFLOW_SCHEMA_VERSION: u16 = 1;
 

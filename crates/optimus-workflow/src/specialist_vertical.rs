@@ -11,12 +11,6 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use optimus_agent::{
-    AgentArtifactRef, AgentBudget, AgentDescriptor, AgentFailure, AgentId, AgentInvocationStore,
-    AgentPermissions, AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion,
-    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
-};
-use optimus_artifacts::{ArtifactRecord, ArtifactStore};
 use crate::workflow::{
     adapt_job_status, ApprovalPolicy, CancellationPolicy, RetryPolicy, RollbackPolicy,
     WorkflowAdapterKind, WorkflowAgentRef, WorkflowDefinition, WorkflowId, WorkflowNode,
@@ -28,9 +22,22 @@ use crate::workflow_run::{
     WorkflowRunStore,
 };
 use crate::{Result, WorkflowError};
+use optimus_agent::{
+    AgentArtifactRef, AgentBudget, AgentDescriptor, AgentFailure, AgentId, AgentInvocationStore,
+    AgentPermissions, AgentRegistry, AgentRequest, AgentResult, AgentResultKind, AgentVersion,
+    AGENT_REQUEST_SCHEMA_VERSION, AGENT_RESULT_SCHEMA_VERSION,
+};
+use optimus_artifacts::{ArtifactRecord, ArtifactStore};
 
-fn confined_workspace_read(workspace: &Path, relative_path: &str, max_bytes: usize) -> std::result::Result<Vec<u8>, (String, String)> {
-    if let Some(name) = Path::new(relative_path).file_name().and_then(|n| n.to_str()) {
+fn confined_workspace_read(
+    workspace: &Path,
+    relative_path: &str,
+    max_bytes: usize,
+) -> std::result::Result<Vec<u8>, (String, String)> {
+    if let Some(name) = Path::new(relative_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+    {
         if is_secret_basename(name) {
             return Err(("secret_denied".into(), name.into()));
         }
@@ -147,9 +154,7 @@ fn standard_node(
         approval: if effect_kinds.is_empty() {
             ApprovalPolicy::None
         } else {
-            ApprovalPolicy::Required {
-                effect_kinds,
-            }
+            ApprovalPolicy::Required { effect_kinds }
         },
         rollback: RollbackPolicy::Unsupported,
     })
@@ -158,11 +163,7 @@ fn standard_node(
 fn standard_observability() -> WorkflowObservability {
     WorkflowObservability {
         trace_required: true,
-        event_classes: BTreeSet::from([
-            "accepted".into(),
-            "running".into(),
-            "terminal".into(),
-        ]),
+        event_classes: BTreeSet::from(["accepted".into(), "running".into(), "terminal".into()]),
     }
 }
 
@@ -325,12 +326,16 @@ fn builtin_available_tools() -> BTreeSet<ToolId> {
 
 /// Open (or create) agent registry and ensure built-in specialists are registered.
 pub fn open_seeded_agent_registry(path: impl AsRef<Path>) -> Result<AgentRegistry> {
-    let registry = AgentRegistry::open(path, builtin_available_tools(), builtin_agent_permission_ceiling())?;
-    for descriptor in [workspace_writer_descriptor()?, workspace_reader_descriptor()?] {
-        if registry
-            .get(&descriptor.id, &descriptor.version)?
-            .is_none()
-        {
+    let registry = AgentRegistry::open(
+        path,
+        builtin_available_tools(),
+        builtin_agent_permission_ceiling(),
+    )?;
+    for descriptor in [
+        workspace_writer_descriptor()?,
+        workspace_reader_descriptor()?,
+    ] {
+        if registry.get(&descriptor.id, &descriptor.version)?.is_none() {
             registry.register(&descriptor)?;
         }
     }
@@ -642,13 +647,8 @@ pub fn run_registered_workflow(
                 break;
             }
             Ok(NodeOutcome::Failed) => {
-                let _ = fanout_cancel_children(
-                    &runs,
-                    &invocations,
-                    &runtime,
-                    run_id,
-                    "node failed",
-                )?;
+                let _ =
+                    fanout_cancel_children(&runs, &invocations, &runtime, run_id, "node failed")?;
                 let _ = runs.mark_remaining_cancelled(run_id, &lease);
                 runs.settle_terminal(
                     run_id,
@@ -678,13 +678,8 @@ pub fn run_registered_workflow(
                     "node_error",
                     &error.to_string(),
                 );
-                let _ = fanout_cancel_children(
-                    &runs,
-                    &invocations,
-                    &runtime,
-                    run_id,
-                    "node error",
-                )?;
+                let _ =
+                    fanout_cancel_children(&runs, &invocations, &runtime, run_id, "node error")?;
                 let _ = runs.mark_remaining_cancelled(run_id, &lease);
                 runs.settle_terminal(
                     run_id,
@@ -701,11 +696,7 @@ pub fn run_registered_workflow(
 }
 
 /// Request cancellation on a workflow run and fan out to child invocations/jobs.
-pub fn cancel_workflow_run(
-    home: impl AsRef<Path>,
-    run_id: Uuid,
-    reason: &str,
-) -> Result<bool> {
+pub fn cancel_workflow_run(home: impl AsRef<Path>, run_id: Uuid, reason: &str) -> Result<bool> {
     let home = home.as_ref();
     let runs = WorkflowRunStore::open(home.join("workflow-runs.db"))?;
     let requested = runs.request_cancellation(run_id, reason)?;
@@ -754,8 +745,13 @@ pub fn cancel_write_file_handoff(
 enum NodeOutcome {
     Succeeded,
     Failed,
-    AwaitingApproval { #[allow(dead_code)] job_id: Uuid },
-    Cancelled { reason: String },
+    AwaitingApproval {
+        #[allow(dead_code)]
+        job_id: Uuid,
+    },
+    Cancelled {
+        reason: String,
+    },
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -919,14 +915,11 @@ fn execute_node(
                     }
                 }
                 Err(RuntimeError::Cancelled { .. }) => {
-                    let _ = invocations.request_cancellation(invocation_id, "runtime cancelled job")?;
+                    let _ =
+                        invocations.request_cancellation(invocation_id, "runtime cancelled job")?;
                     settle_agent_cancelled(invocations, invocation_id, "runtime cancelled job")?;
-                    let _ = runs.mark_node_cancelled(
-                        run_id,
-                        lease,
-                        &node.id,
-                        "runtime cancelled job",
-                    );
+                    let _ =
+                        runs.mark_node_cancelled(run_id, lease, &node.id, "runtime cancelled job");
                     return Ok(NodeOutcome::Cancelled {
                         reason: "runtime cancelled job".into(),
                     });
@@ -1190,12 +1183,7 @@ fn finalize_cancelled_run(
 ) -> Result<WorkflowDagReport> {
     let _ = fanout_cancel_children(runs, invocations, runtime, run_id, reason)?;
     let _ = runs.mark_remaining_cancelled(run_id, lease);
-    runs.settle_terminal(
-        run_id,
-        lease,
-        WorkflowRunStatus::Cancelled,
-        Some(reason),
-    )?;
+    runs.settle_terminal(run_id, lease, WorkflowRunStatus::Cancelled, Some(reason))?;
     let artifacts = ArtifactStore::open(home)?;
     let mut report = build_dag_report(runs, &artifacts, run_id, inputs)?;
     report.summary = format!("cancelled: {reason}");
@@ -1246,16 +1234,8 @@ fn build_dag_report(
 }
 
 fn compact_write_report(dag: WorkflowDagReport) -> Result<WriteFileHandoffReport> {
-    let write_node = dag
-        .nodes
-        .iter()
-        .find(|n| n.node_id == "write")
-        .cloned();
-    let child = dag
-        .children
-        .iter()
-        .find(|c| c.node_id == "write")
-        .cloned();
+    let write_node = dag.nodes.iter().find(|n| n.node_id == "write").cloned();
+    let child = dag.children.iter().find(|c| c.node_id == "write").cloned();
     let invocation_id = child
         .as_ref()
         .map(|c| c.invocation_id)
@@ -1288,9 +1268,7 @@ fn compact_write_report(dag: WorkflowDagReport) -> Result<WriteFileHandoffReport
             Some(dag.summary.clone()),
         ),
         WorkflowRunStatus::Failed
-            if write_node
-                .as_ref()
-                .and_then(|n| n.error_code.as_deref())
+            if write_node.as_ref().and_then(|n| n.error_code.as_deref())
                 == Some("approval_required") =>
         {
             (
@@ -1388,9 +1366,7 @@ fn validate_relative_path(relative_path: &str) -> Result<()> {
     }
     let path = Path::new(relative_path);
     if path.is_absolute() {
-        return Err(WorkflowError::Msg(
-            "relative_path must be relative".into(),
-        ));
+        return Err(WorkflowError::Msg("relative_path must be relative".into()));
     }
     for component in path.components() {
         if !matches!(component, std::path::Component::Normal(_)) {

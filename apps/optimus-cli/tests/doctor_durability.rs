@@ -9,12 +9,7 @@ fn doctor_inventory_json_lists_core_databases() {
     let home = tempdir().unwrap();
     let exe = env!("CARGO_BIN_EXE_optimus");
     let output = Command::new(exe)
-        .args([
-            "--home",
-            home.path().to_str().unwrap(),
-            "doctor",
-            "--json",
-        ])
+        .args(["--home", home.path().to_str().unwrap(), "doctor", "--json"])
         .output()
         .expect("run doctor");
     assert!(
@@ -26,10 +21,7 @@ fn doctor_inventory_json_lists_core_databases() {
     let value: serde_json::Value = serde_json::from_str(&body).expect("json");
     assert!(value["databases"].as_array().unwrap().len() >= 6);
     assert!(value["backup_paths"].as_array().unwrap().len() >= 10);
-    assert!(value["scope"]
-        .as_str()
-        .unwrap()
-        .contains("process-local"));
+    assert!(value["scope"].as_str().unwrap().contains("process-local"));
     let ids: Vec<&str> = value["databases"]
         .as_array()
         .unwrap()
