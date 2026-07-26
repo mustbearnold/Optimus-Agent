@@ -443,7 +443,7 @@ impl CdpBrowserSession {
     // ------------------------------------------------------------------
 
     fn tab_ref(&self) -> Result<&Tab> {
-        self.tab.as_deref().ok_or_else(|| BrowserError::TabNotOpen)
+        self.tab.as_deref().ok_or(BrowserError::TabNotOpen)
     }
 
     fn capture_page_state(tab: &Tab) -> Result<PageState> {

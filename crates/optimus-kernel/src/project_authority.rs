@@ -250,7 +250,7 @@ impl ProjectAuthorityStore {
 
     fn load(&self) -> Result<AuthorityDocument> {
         verify_user_only(&self.path())?;
-        let raw = fs::read(&self.path())?;
+        let raw = fs::read(self.path())?;
         let document: AuthorityDocument = serde_json::from_slice(&raw).map_err(|error| {
             KernelError::Tool(format!("project authority parse error: {error}"))
         })?;
@@ -398,7 +398,7 @@ mod tests {
         assert!(store
             .authorize_project_at(
                 "project-a",
-                &[selection.path.clone()],
+                std::slice::from_ref(&selection.path),
                 Some(&selection.path),
                 &[selection.grant_token],
                 100 + ROOT_GRANT_TTL_SECONDS + 1,
@@ -450,7 +450,7 @@ mod tests {
         let error = store
             .authorize_project_at(
                 "project-a",
-                &[selection.path.clone()],
+                std::slice::from_ref(&selection.path),
                 Some(&second.path().display().to_string()),
                 &[selection.grant_token],
                 101,

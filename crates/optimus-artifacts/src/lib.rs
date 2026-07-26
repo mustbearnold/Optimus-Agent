@@ -37,7 +37,7 @@ const MAX_LABEL: usize = 256;
 const MAX_SOURCE: usize = 128;
 const MAX_MEDIA_TYPE: usize = 128;
 const MAX_BYTES: usize = 12 * 1024 * 1024; // 12 MiB
-const MAX_BASE64_INPUT: usize = ((MAX_BYTES + 2) / 3) * 4 + 8_192;
+const MAX_BASE64_INPUT: usize = MAX_BYTES.div_ceil(3) * 4 + 8_192;
 
 /// Per-item bulk-delete outcomes under one exclusive store lock.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -152,7 +152,7 @@ impl ArtifactStore {
             )));
         }
         let encoded_chars = b64.chars().filter(|c| !c.is_whitespace()).count();
-        if encoded_chars > ((MAX_BYTES + 2) / 3) * 4 {
+        if encoded_chars > MAX_BYTES.div_ceil(3) * 4 {
             return Err(tool_err(format!(
                 "base64 payload exceeds max decoded size {MAX_BYTES} bytes"
             )));

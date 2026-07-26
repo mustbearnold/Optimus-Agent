@@ -280,7 +280,7 @@ pub enum StreamEvent {
     /// Reasoning/thinking fragment — never mixed into assistant answer text.
     ThinkingDelta(String),
     /// Versioned, runtime-owned lifecycle state for one stable tool call.
-    Tool(ToolLifecycleEvent),
+    Tool(Box<ToolLifecycleEvent>),
     /// Soft status line for the UI (e.g. "thinking").
     Status(String),
     /// Typed monotonic timing evidence for the active turn.
@@ -1560,7 +1560,7 @@ impl Kernel {
                     );
                     self.executions
                         .record_tool_lifecycle_event(execution.manifest_id, &lifecycle)?;
-                    sink(StreamEvent::Tool(lifecycle));
+                    sink(StreamEvent::Tool(Box::new(lifecycle)));
                     let (tool_id, mut outcome) = if suppressed {
                         (
                             descriptor.id.clone(),
@@ -1678,7 +1678,7 @@ impl Kernel {
                                     &lifecycle,
                                     &binding,
                                 )?;
-                                sink(StreamEvent::Tool(lifecycle));
+                                sink(StreamEvent::Tool(Box::new(lifecycle)));
                                 sink(StreamEvent::Timing(finish_event));
                                 self.sessions.save(
                                     self.session_id,
@@ -1786,7 +1786,7 @@ impl Kernel {
                     );
                     self.executions
                         .record_tool_lifecycle_event(execution.manifest_id, &lifecycle)?;
-                    sink(StreamEvent::Tool(lifecycle));
+                    sink(StreamEvent::Tool(Box::new(lifecycle)));
                     sink(StreamEvent::Timing(finish_event));
                     self.messages.push(Message {
                         role: Role::Tool,

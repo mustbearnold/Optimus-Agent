@@ -379,17 +379,14 @@ fn is_ambiguous_receipt(
     if terminal_status != "succeeded" || delivered_unix.is_some() {
         return false;
     }
-    match terminal_reason.as_deref() {
+    !matches!(
+        terminal_reason.as_deref(),
         Some(reason)
             if reason == "external_send_failed"
                 || reason.starts_with("external_send_failed:")
                 || reason == "cancelled"
-                || reason == "dead_lettered" =>
-        {
-            false
-        }
-        _ => true,
-    }
+                || reason == "dead_lettered"
+    )
 }
 
 /// Succeeded terminal turns without a local delivery receipt (operator recovery).

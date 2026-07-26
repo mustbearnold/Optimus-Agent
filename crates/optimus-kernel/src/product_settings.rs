@@ -246,15 +246,19 @@ mod tests {
         assert_eq!(j["enforcement_active"], false);
         assert_eq!(j["command_envelope_enforced"], true);
 
-        let mut bound = ProductSettings::default();
-        bound.work_isolation = WorkIsolationMode::ProjectBound;
+        let bound = ProductSettings {
+            work_isolation: WorkIsolationMode::ProjectBound,
+            ..Default::default()
+        };
         let j2 = bound.to_public_json();
         assert_eq!(j2["configured_mode"], "project_bound");
         assert_eq!(j2["enforced_mode"], "project_bound");
         assert_eq!(j2["product_fs_enforced"], true);
 
-        let mut isolated = ProductSettings::default();
-        isolated.work_isolation = WorkIsolationMode::IsolatedProfiles;
+        let isolated = ProductSettings {
+            work_isolation: WorkIsolationMode::IsolatedProfiles,
+            ..Default::default()
+        };
         let j3 = isolated.to_public_json();
         assert_eq!(j3["configured_mode"], "isolated_profiles");
         // Sealed homes not enforced yet — must not claim isolated product FS.

@@ -895,7 +895,9 @@ mod hygiene_tests {
         let store = SessionStore::open(dir.path().join("s.db")).unwrap();
         let id = store.create("live").unwrap();
         let system = msg(Role::System, "sys");
-        store.save(id, "live", &[], &[system.clone()]).unwrap();
+        store
+            .save(id, "live", &[], std::slice::from_ref(&system))
+            .unwrap();
         let mut messages = vec![system, msg(Role::User, "needleword unique")];
         let turn = store.begin_turn(id, "live", &[], &messages, 1).unwrap();
         messages.push(msg(Role::Assistant, "ok"));

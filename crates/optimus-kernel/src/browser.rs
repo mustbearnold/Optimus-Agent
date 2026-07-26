@@ -259,7 +259,6 @@ impl CdpBrowserEffector {
             timeout_secs: 90,
             user_data_dir: Some(workspace.join(".optimus/cdp-profile")),
             window_size: (1440, 1200),
-            ..Default::default()
         };
         let session = optimus_browser::CdpBrowserSession::open(&workspace, opts)
             .map_err(|e| BrowserError::Cdp(e.to_string()))?;

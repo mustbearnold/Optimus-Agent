@@ -22,7 +22,7 @@ pub struct TrustRoot {
 
 impl TrustRoot {
     pub fn secret_bytes(&self) -> Result<Vec<u8>, PackError> {
-        hex_decode(&self.secret_hex).map_err(|e| PackError::Msg(e))
+        hex_decode(&self.secret_hex).map_err(PackError::Msg)
     }
 }
 

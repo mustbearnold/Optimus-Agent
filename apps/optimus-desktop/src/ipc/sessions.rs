@@ -143,7 +143,7 @@ fn project_turn(messages: &[Message], events: &[ToolLifecycleEvent]) -> Vec<serd
         let tool_events = events
             .iter()
             .cloned()
-            .map(|event| stream_event_to_json(&StreamEvent::Tool(event)))
+            .map(|event| stream_event_to_json(&StreamEvent::Tool(Box::new(event))))
             .collect::<Vec<_>>();
         projected[assistant_index]["tool_events"] = json!(tool_events);
     }

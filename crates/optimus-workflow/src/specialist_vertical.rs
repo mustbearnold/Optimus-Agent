@@ -1067,7 +1067,7 @@ fn execute_node(
                     };
                     invocations.settle(&result)?;
                     runs.mark_node_failed(run_id, lease, &node.id, &code, &message)?;
-                    return Ok(NodeOutcome::Failed);
+                    Ok(NodeOutcome::Failed)
                 }
                 Ok(bytes) => {
                     if invocations.sync_cancellation(invocation_id, &token)?

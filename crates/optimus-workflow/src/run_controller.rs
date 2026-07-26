@@ -364,10 +364,11 @@ impl RunController {
             return Err(invalid("apply_quality_gate requires quality_gate state"));
         }
         report.validate()?;
-        if let Err(_) = self.check_budgets() {
-            if self.state.is_terminal() {
-                return self.gate_decision_from_terminal();
-            }
+        // `check_budgets` is not a pure query: it can force a terminal
+        // transition on cancel or deadline, so the call must run for its
+        // effect. `&&` short-circuits left-to-right, which preserves that.
+        if self.check_budgets().is_err() && self.state.is_terminal() {
+            return self.gate_decision_from_terminal();
         }
         if self.state.is_terminal() {
             return self.gate_decision_from_terminal();
@@ -456,7 +457,7 @@ impl RunController {
 
         match action {
             GateAction::Accept => {
-                if let Err(_) = self.transition(RunState::Delivering, reason) {
+                if self.transition(RunState::Delivering, reason).is_err() {
                     if self.state.is_terminal() {
                         return self.gate_decision_from_terminal();
                     }
@@ -468,13 +469,16 @@ impl RunController {
                     .filter(|f| !f.blocking)
                     .map(|f| f.claim.clone())
                     .collect();
-                if let Err(_) = self.force_terminal(
-                    DeliveryTerminal::Succeeded,
-                    "delivered",
-                    Some(report.answer_draft.clone()),
-                    warnings,
-                    report.evidence_index.clone(),
-                ) {
+                if self
+                    .force_terminal(
+                        DeliveryTerminal::Succeeded,
+                        "delivered",
+                        Some(report.answer_draft.clone()),
+                        warnings,
+                        report.evidence_index.clone(),
+                    )
+                    .is_err()
+                {
                     if self.state.is_terminal() {
                         return self.gate_decision_from_terminal();
                     }
@@ -482,7 +486,7 @@ impl RunController {
                 }
             }
             GateAction::PatchWorker => {
-                if let Err(_) = self.transition(RunState::Executing, reason) {
+                if self.transition(RunState::Executing, reason).is_err() {
                     if self.state.is_terminal() {
                         return self.gate_decision_from_terminal();
                     }
@@ -492,13 +496,13 @@ impl RunController {
             }
             GateAction::Replan => {
                 // Charge plan attempt before leaving gate so Rmax ∩ plan budget holds.
-                if let Err(_) = self.charge_plan_attempt() {
+                if self.charge_plan_attempt().is_err() {
                     if self.state.is_terminal() {
                         return self.gate_decision_from_terminal();
                     }
                     return Err(invalid("replan plan-attempt charge failed"));
                 }
-                if let Err(_) = self.transition(RunState::Planning, reason) {
+                if self.transition(RunState::Planning, reason).is_err() {
                     if self.state.is_terminal() {
                         return self.gate_decision_from_terminal();
                     }
@@ -768,9 +772,11 @@ mod tests {
 
     #[test]
     fn token_budget_exhaustion_fails_closed() {
-        let mut policy = RunPolicy::default();
-        policy.max_budget_tokens = 100;
-        policy.delivery_reserve_pct = 10; // usable 90
+        let policy = RunPolicy {
+            max_budget_tokens: 100,
+            delivery_reserve_pct: 10, // usable 90
+            ..Default::default()
+        };
         let mut task = task();
         task.max_budget_tokens = 100;
         let mut c = RunController::accept(task, policy).unwrap();

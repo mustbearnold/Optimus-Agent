@@ -182,7 +182,7 @@ pub fn assert_public_mcp_url(url: &str) -> Result<()> {
         .split('?')
         .next()
         .unwrap_or("");
-    let hostport = authority.split('@').last().unwrap_or("");
+    let hostport = authority.split('@').next_back().unwrap_or("");
     let host = if hostport.starts_with('[') {
         // IPv6 literal [::1]:port
         hostport

@@ -1,6 +1,6 @@
 //! Program P27 extensibility IPC: provider catalog, failover preview, MCP, signed packs.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use optimus_kernel::{
     builtin_tool_id_set, default_mock_session, http_mock_bind, load_mcp_session,
@@ -26,7 +26,7 @@ pub(super) fn owns(method: &str) -> bool {
 }
 
 pub(super) fn handle(
-    home: &PathBuf,
+    home: &Path,
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -187,7 +187,7 @@ pub(super) fn handle(
 }
 
 /// Fail-closed path join under `{home}/packs/` — rejects `..`, absolute escapes.
-fn confined_packs_path(home: &PathBuf, raw: &str) -> Result<PathBuf, String> {
+fn confined_packs_path(home: &Path, raw: &str) -> Result<PathBuf, String> {
     let raw = raw.trim();
     if raw.is_empty() {
         return Err("path required".into());
@@ -217,7 +217,7 @@ fn confined_packs_path(home: &PathBuf, raw: &str) -> Result<PathBuf, String> {
     Ok(canonical)
 }
 
-fn load_or_init_trust_root(home: &PathBuf) -> Result<TrustRoot, String> {
+fn load_or_init_trust_root(home: &Path) -> Result<TrustRoot, String> {
     let dir = home.join("packs");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let path = dir.join("trust_root.json");

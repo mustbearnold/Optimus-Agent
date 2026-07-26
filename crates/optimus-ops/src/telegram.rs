@@ -406,8 +406,10 @@ mod tests {
     #[test]
     fn mock_ambiguous_send_leaves_operator_recovery() {
         let dir = tempdir().unwrap();
-        let mut transport = MockTelegramTransport::default();
-        transport.next_send_ambiguous = true;
+        let mut transport = MockTelegramTransport {
+            next_send_ambiguous: true,
+            ..Default::default()
+        };
         let result =
             process_inbound_reply_path(dir.path(), &mut transport, "99", "ping", |inbound| {
                 Ok(("pong".into(), inbound.session_id.clone()))
@@ -421,8 +423,10 @@ mod tests {
     #[test]
     fn mock_failed_send_is_not_ambiguous() {
         let dir = tempdir().unwrap();
-        let mut transport = MockTelegramTransport::default();
-        transport.next_send_failed = true;
+        let mut transport = MockTelegramTransport {
+            next_send_failed: true,
+            ..Default::default()
+        };
         let result =
             process_inbound_reply_path(dir.path(), &mut transport, "7", "ping", |inbound| {
                 Ok(("pong".into(), inbound.session_id.clone()))

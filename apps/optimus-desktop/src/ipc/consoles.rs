@@ -8,9 +8,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use optimus_kernel::{
-    commands_for_surface, ClaimDraft, CommandSurface, Correction, Memory, MemoryClock, Origin,
-    RecallPurpose, RecallQuery, Sensitivity, SkillDraft, SkillRegistry, SystemMemoryClock,
-    TrustDomain, WriteContext,
+    commands_for_surface, CommandSurface, Correction, Memory, MemoryClock, Origin, RecallPurpose,
+    RecallQuery, Sensitivity, SkillRegistry, SystemMemoryClock, TrustDomain, WriteContext,
 };
 use optimus_packs::{CapabilitySession, PackId};
 use serde::{Deserialize, Serialize};
@@ -37,7 +36,7 @@ pub(super) fn owns(method: &str) -> bool {
 }
 
 pub(super) fn handle(
-    home: &PathBuf,
+    home: &Path,
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -433,6 +432,9 @@ fn redact(input: &str, home: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // Test-only constructors: importing these at module scope makes them dead
+    // in the non-test build.
+    use optimus_kernel::{ClaimDraft, SkillDraft};
     use tempfile::tempdir;
 
     #[test]
