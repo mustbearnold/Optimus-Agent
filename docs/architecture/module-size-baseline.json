@@ -8,7 +8,7 @@
     "crates/optimus-eval/src/evaluation.rs": 806,
     "crates/optimus-kernel/src/codex_oauth.rs": 1376,
     "crates/optimus-kernel/src/execution.rs": 986,
-    "crates/optimus-kernel/src/lib.rs": 2317,
+    "crates/optimus-kernel/src/lib.rs": 994,
     "crates/optimus-memory/src/lib.rs": 1066,
     "crates/optimus-ops/src/gateway.rs": 1006,
     "crates/optimus-packs/src/lib.rs": 1495,

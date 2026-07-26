@@ -1982,7 +1982,12 @@ def current_architecture_semantic_errors(
                 errors.append(f"superseded ADR-0019 claim in {rel}: {claim}")
 
     required_source_fragments = {
-        "crates/optimus-kernel/src/lib.rs": (
+        # The tool-call budget constant is declared with the kernel types.
+        "crates/optimus-kernel/src/lib.rs": ("HARD_MAX_TOOL_CALLS_PER_STEP",),
+        # Loop-behaviour authority moved here when lib.rs was split under
+        # architectural law 21. The invariant is unchanged: these suppression
+        # and terminal-timing behaviours must exist and stay locatable.
+        "crates/optimus-kernel/src/turn_loop.rs": (
             "HARD_MAX_TOOL_CALLS_PER_STEP",
             "duplicate_tool_call_suppressed",
             "tool_call_budget_suppressed",
