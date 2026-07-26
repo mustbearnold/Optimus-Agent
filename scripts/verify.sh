@@ -45,23 +45,6 @@ run() {
   fi
 }
 
-# advise <name> <command...> — reports but never fails the run.
-# For lints the tree does not satisfy yet. Promote to run() once clean.
-advise() {
-  local name="$1"; shift
-  printf '%-46s' "  $name"
-  local out
-  if out=$("$@" 2>&1); then
-    printf '%s\n' "${G}ok${X}"
-    PASSED+=("$name")
-  else
-    local n
-    n=$(printf '%s\n' "$out" | grep -c '^warning' || true)
-    printf '%s\n' "${Y}advisory${X} ($n warnings — see: just lint)"
-    SKIPPED+=("$name")
-  fi
-}
-
 # skip <name> <reason>
 skip() {
   printf '%-46s%s\n' "  $1" "${Y}skip${X} ($2)"
@@ -79,6 +62,7 @@ tier_gates() {
   run "domain-modularity"          python3 scripts/check-domain-modularity.py
   run "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   run "observability"              python3 scripts/check-observability-gate.py
+  run "module-size"                python3 scripts/check-module-size.py
   run "product-complete-install"   python3 scripts/check-product-complete-install.py
   run "parity-ledger"              python3 scripts/check-parity-ledger.py
   run "version-validate"           python3 scripts/optimus_version.py validate
@@ -90,6 +74,7 @@ tier_gates() {
   run "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   run "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   run "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  run "test_module_size"           python3 scripts/test_module_size.py
   run "test_optimus_version"       python3 scripts/test_optimus_version.py
   run "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
 }
@@ -98,14 +83,10 @@ tier_gates() {
 tier_check() {
   section "compile"
   run "cargo check" cargo check --workspace --all-targets
-  if ! cargo clippy --version >/dev/null 2>&1; then
-    skip "clippy" "not installed: rustup component add clippy"
-  elif [ -n "${OPTIMUS_CLIPPY_STRICT:-}" ]; then
-    run "clippy (strict)" cargo clippy --workspace --all-targets -- -D warnings
+  if cargo clippy --version >/dev/null 2>&1; then
+    run "clippy" cargo clippy --workspace --all-targets -- -D warnings
   else
-    # Advisory until the existing warnings are cleared; then set
-    # OPTIMUS_CLIPPY_STRICT=1 here permanently and delete this branch.
-    advise "clippy" cargo clippy --workspace --all-targets -- -D warnings
+    skip "clippy" "not installed: rustup component add clippy"
   fi
 }
 

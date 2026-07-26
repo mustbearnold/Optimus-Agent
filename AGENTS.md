@@ -125,6 +125,10 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
 18. Bug fixes require regression tests.
 19. Important architectural decisions require an ADR.
 20. A feature is incomplete when its Engineering Memory is stale.
+21. No module exceeds 800 production lines. Enforced as a ratchet by
+    `scripts/check-module-size.py`: new files must comply, and the 14
+    grandfathered modules in `docs/architecture/module-size-baseline.json` may
+    only shrink. Never add a baseline entry by hand — split the file instead.
 
 ## Evidence and status
 

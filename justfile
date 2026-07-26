@@ -64,10 +64,17 @@ fix:
     cargo fmt --all
     cargo clippy --workspace --all-targets --fix --allow-dirty --allow-staged
 
-# Full clippy report. Advisory in `just verify` until the tree is clean; set
-# OPTIMUS_CLIPPY_STRICT=1 to make it a hard gate.
+# Full clippy report. Enforced as a hard gate in `just verify`.
 lint:
-    -cargo clippy --workspace --all-targets -- -D warnings
+    cargo clippy --workspace --all-targets -- -D warnings
+
+# Ranked module sizes against the 800-line law.
+modules:
+    python3 scripts/check-module-size.py --report
+
+# Ratchet the module-size baseline down after a split.
+modules-ratchet:
+    python3 scripts/check-module-size.py --update
 
 # --- project systems ---------------------------------------------------------
 
