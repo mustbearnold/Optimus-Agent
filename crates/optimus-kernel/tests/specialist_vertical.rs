@@ -82,10 +82,7 @@ fn write_file_handoff_succeeds_under_unrestricted_policy() {
     assert_eq!(report.agent_id, WORKSPACE_WRITER_ID);
     assert_eq!(report.agent_version, WORKSPACE_WRITER_VERSION);
     assert_eq!(report.workflow_id, WRITE_FILE_HANDOFF_WORKFLOW_ID);
-    assert_eq!(
-        report.workflow_version,
-        WRITE_FILE_HANDOFF_WORKFLOW_VERSION
-    );
+    assert_eq!(report.workflow_version, WRITE_FILE_HANDOFF_WORKFLOW_VERSION);
     assert!(report.job_id.is_some());
     assert!(report.run_id.is_some());
     assert_eq!(
@@ -148,9 +145,11 @@ fn write_file_handoff_runs_after_auto_grant_under_smart_deny() {
         fs::read_to_string(vertical_workspace(home).join("approved.txt")).unwrap(),
         "granted"
     );
-    assert!(report.agent_result.artifacts.iter().any(|artifact| {
-        artifact.uri.starts_with("artifact:") && artifact.sha256.len() == 64
-    }));
+    assert!(report
+        .agent_result
+        .artifacts
+        .iter()
+        .any(|artifact| { artifact.uri.starts_with("artifact:") && artifact.sha256.len() == 64 }));
 }
 
 #[test]
@@ -167,13 +166,8 @@ fn cancel_request_fences_running_invocation_from_late_success() {
         },
     )
     .unwrap();
-    let cancelled = cancel_write_file_handoff(
-        home,
-        report.invocation_id,
-        report.job_id,
-        "too late",
-    )
-    .unwrap();
+    let cancelled =
+        cancel_write_file_handoff(home, report.invocation_id, report.job_id, "too late").unwrap();
     assert!(
         !cancelled,
         "terminal invocations must not accept late cancellation requests"

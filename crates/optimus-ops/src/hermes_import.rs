@@ -58,7 +58,10 @@ pub struct ImportReport {
 }
 
 /// Import Hermes session fixtures from a directory of `*.session.json`.
-pub fn import_sessions(home: impl AsRef<Path>, source_dir: impl AsRef<Path>) -> Result<ImportReport> {
+pub fn import_sessions(
+    home: impl AsRef<Path>,
+    source_dir: impl AsRef<Path>,
+) -> Result<ImportReport> {
     let home = home.as_ref();
     let out_dir = home.join("imports").join("hermes").join("sessions");
     fs::create_dir_all(&out_dir)?;
@@ -239,12 +242,13 @@ mod tests {
         assert!(skills.skills >= 1);
         let mem = import_memory(home.path(), src.path()).unwrap();
         assert!(mem.memory_claims >= 1);
-        assert!(home
-            .path()
-            .join("imports/hermes/sessions")
-            .read_dir()
-            .unwrap()
-            .count()
-            >= 1);
+        assert!(
+            home.path()
+                .join("imports/hermes/sessions")
+                .read_dir()
+                .unwrap()
+                .count()
+                >= 1
+        );
     }
 }

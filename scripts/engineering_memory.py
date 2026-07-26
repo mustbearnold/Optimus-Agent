@@ -63,6 +63,10 @@ COMMANDS = (
     "report",
     "stat",
 )
+# Must stay a superset of the generated/ignored directories in .gitignore.
+# Anything gitignored that lands here would make Engineering Memory stale as a
+# side effect of running the test suites, which makes the staleness gate
+# unsatisfiable: run tests -> artifacts appear -> EM stale -> gate fails.
 EXCLUDED_PARTS = {
     ".git",
     ".engineering-memory",
@@ -73,6 +77,8 @@ EXCLUDED_PARTS = {
     "local",
     "dist",
     "build",
+    "test-results",
+    "playwright-report",
 }
 EXCLUDED_SUFFIXES = {
     ".tsbuildinfo",
@@ -1976,7 +1982,12 @@ def current_architecture_semantic_errors(
                 errors.append(f"superseded ADR-0019 claim in {rel}: {claim}")
 
     required_source_fragments = {
-        "crates/optimus-kernel/src/lib.rs": (
+        # The tool-call budget constant is declared with the kernel types.
+        "crates/optimus-kernel/src/lib.rs": ("HARD_MAX_TOOL_CALLS_PER_STEP",),
+        # Loop-behaviour authority moved here when lib.rs was split under
+        # architectural law 21. The invariant is unchanged: these suppression
+        # and terminal-timing behaviours must exist and stay locatable.
+        "crates/optimus-kernel/src/turn_loop.rs": (
             "HARD_MAX_TOOL_CALLS_PER_STEP",
             "duplicate_tool_call_suppressed",
             "tool_call_budget_suppressed",

@@ -81,7 +81,7 @@ mod tests {
             json!({"result_count": 3}),
             ReplayClass::ExternalNondeterministic,
         );
-        let tool = stream_event_to_json(&StreamEvent::Tool(ToolLifecycleEvent {
+        let tool = stream_event_to_json(&StreamEvent::Tool(Box::new(ToolLifecycleEvent {
             schema_version: 1,
             event_id: "run-1:call-1:succeeded".into(),
             run_id: "run-1".into(),
@@ -92,7 +92,7 @@ mod tests {
             duration_ms: Some(17),
             outcome: Some(outcome),
             approval: None,
-        }));
+        })));
         assert_eq!(tool["type"], "tool");
         assert_eq!(tool["schema_version"], 1);
         assert_eq!(tool["event_id"], "run-1:call-1:succeeded");

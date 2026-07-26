@@ -45,10 +45,15 @@ fn open_rt(mode: PolicyMode) -> (tempfile::TempDir, Runtime) {
     let db = root.path().join("optimus.db");
     let workspace = root.path().join("workspace");
     fs::create_dir_all(&workspace).unwrap();
-    let rt =
-        Runtime::open_with_config(&db, &workspace, RuntimeConfig { policy: mode,
+    let rt = Runtime::open_with_config(
+        &db,
+        &workspace,
+        RuntimeConfig {
+            policy: mode,
             ..Default::default()
-        }).expect("open");
+        },
+    )
+    .expect("open");
     (root, rt)
 }
 
@@ -186,8 +191,8 @@ fn resume_all_recovers_multiple_interrupted_jobs() {
 
     let unrestricted = RuntimeConfig {
         policy: PolicyMode::Unrestricted,
-            ..Default::default()
-        };
+        ..Default::default()
+    };
     let (j1, j2) = {
         let rt = Runtime::open_with_config(&db, &workspace, unrestricted.clone()).unwrap();
         let j1 = rt

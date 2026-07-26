@@ -22,7 +22,7 @@ pub struct TrustRoot {
 
 impl TrustRoot {
     pub fn secret_bytes(&self) -> Result<Vec<u8>, PackError> {
-        hex_decode(&self.secret_hex).map_err(|e| PackError::Msg(e))
+        hex_decode(&self.secret_hex).map_err(PackError::Msg)
     }
 }
 
@@ -51,7 +51,10 @@ impl PackManifestBody {
 }
 
 /// HMAC-SHA256(secret, body_json) as lowercase hex.
-pub fn sign_manifest(root: &TrustRoot, body: &PackManifestBody) -> Result<SignedPackManifest, PackError> {
+pub fn sign_manifest(
+    root: &TrustRoot,
+    body: &PackManifestBody,
+) -> Result<SignedPackManifest, PackError> {
     let secret = root.secret_bytes()?;
     let bytes = body.canonical_bytes()?;
     let signature_hex = hmac_sha256_hex(&secret, &bytes);
@@ -98,7 +101,9 @@ pub fn load_signed_manifest_file(
     let signed: SignedPackManifest =
         serde_json::from_str(&raw).map_err(|e| PackError::Msg(e.to_string()))?;
     if signed.signature_hex.trim().is_empty() {
-        return Err(PackError::Msg("unsigned pack rejected: empty signature".into()));
+        return Err(PackError::Msg(
+            "unsigned pack rejected: empty signature".into(),
+        ));
     }
     verify_manifest(root, &signed)
 }

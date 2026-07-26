@@ -143,7 +143,7 @@ fn project_turn(messages: &[Message], events: &[ToolLifecycleEvent]) -> Vec<serd
         let tool_events = events
             .iter()
             .cloned()
-            .map(|event| stream_event_to_json(&StreamEvent::Tool(event)))
+            .map(|event| stream_event_to_json(&StreamEvent::Tool(Box::new(event))))
             .collect::<Vec<_>>();
         projected[assistant_index]["tool_events"] = json!(tool_events);
     }
@@ -157,11 +157,11 @@ fn is_tool_protocol_message(content: &str) -> bool {
 }
 
 pub fn sessions_json(home: &PathBuf) -> serde_json::Value {
-    match SessionStore::open(home.join("sessions.db"))
-        .and_then(|s| s.list_filtered(optimus_kernel::ListFilter {
+    match SessionStore::open(home.join("sessions.db")).and_then(|s| {
+        s.list_filtered(optimus_kernel::ListFilter {
             include_archived: true,
-        }))
-    {
+        })
+    }) {
         Ok(list) => {
             let rows: Vec<_> = list.into_iter().map(session_meta_json).collect();
             json!(rows)
@@ -220,7 +220,9 @@ fn archive_session(home: &Path, params: serde_json::Value) -> Result<serde_json:
         .ok_or_else(|| "archived bool required".to_string())?;
     let id = uuid::Uuid::parse_str(id).map_err(|e| e.to_string())?;
     let store = SessionStore::open(home.join("sessions.db")).map_err(|e| e.to_string())?;
-    let ok = store.set_archived(id, archived).map_err(|e| e.to_string())?;
+    let ok = store
+        .set_archived(id, archived)
+        .map_err(|e| e.to_string())?;
     if !ok {
         return Err("session not found".into());
     }

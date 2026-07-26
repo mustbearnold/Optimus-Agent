@@ -30,7 +30,10 @@ pub fn vision_analyze_offline(req: &VisionAnalyzeRequest) -> Result<VisionAnalyz
         return Err(MediaError::Msg("image_ref required".into()));
     }
     Ok(VisionAnalyzeResult {
-        summary: format!("offline vision: {}", req.prompt.chars().take(120).collect::<String>()),
+        summary: format!(
+            "offline vision: {}",
+            req.prompt.chars().take(120).collect::<String>()
+        ),
         labels: vec!["fixture".into(), "offline".into()],
         offline: true,
     })

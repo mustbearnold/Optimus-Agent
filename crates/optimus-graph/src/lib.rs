@@ -35,17 +35,13 @@ pub enum Effect {
         contents: String,
     },
     /// Create a directory (and parents) under the workspace.
-    Mkdir {
-        relative_path: String,
-    },
+    Mkdir { relative_path: String },
     ProjectMkdir {
         workspace_sha256: String,
         relative_path: String,
     },
     /// Delete a file or empty directory under the workspace.
-    DeletePath {
-        relative_path: String,
-    },
+    DeletePath { relative_path: String },
     ProjectDeletePath {
         workspace_sha256: String,
         relative_path: String,

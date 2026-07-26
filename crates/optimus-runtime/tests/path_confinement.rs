@@ -9,7 +9,8 @@ use tempfile::tempdir;
 
 fn grant_if_needed(rt: &Runtime, job: optimus_graph::JobId) {
     if let Err(RuntimeError::NeedsApproval { .. }) = rt.run_next(job) {
-        rt.grant_approval(ApprovalGrant::for_job(job)).expect("grant");
+        rt.grant_approval(ApprovalGrant::for_job(job))
+            .expect("grant");
         rt.run_next(job).expect("run after grant");
     }
 }
@@ -72,7 +73,8 @@ fn write_rejects_missing_parent_below_linked_ancestor() {
         matches!(first, Err(RuntimeError::NeedsApproval { .. })),
         "write is high-risk under SmartDeny: {first:?}"
     );
-    rt.grant_approval(ApprovalGrant::for_job(job)).expect("grant");
+    rt.grant_approval(ApprovalGrant::for_job(job))
+        .expect("grant");
     let error = rt
         .run_next(job)
         .expect_err("linked ancestor must be denied");
@@ -400,10 +402,14 @@ fn patch_fails_closed_when_old_string_not_unique() {
             new_string: "bb".into(),
         },
     );
-    rt.grant_approval(ApprovalGrant::for_job(patch)).expect("grant");
+    rt.grant_approval(ApprovalGrant::for_job(patch))
+        .expect("grant");
     let err = rt.run_next(patch).expect_err("non-unique patch");
     assert!(matches!(err, RuntimeError::Effector(_)), "{err:?}");
-    assert_eq!(fs::read_to_string(workspace.join("dup.txt")).unwrap(), "aa aa");
+    assert_eq!(
+        fs::read_to_string(workspace.join("dup.txt")).unwrap(),
+        "aa aa"
+    );
 }
 
 #[test]

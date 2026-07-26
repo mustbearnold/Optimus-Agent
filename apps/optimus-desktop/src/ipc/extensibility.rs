@@ -1,10 +1,10 @@
 //! Program P27 extensibility IPC: provider catalog, failover preview, MCP, signed packs.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use optimus_kernel::{
     builtin_tool_id_set, default_mock_session, http_mock_bind, load_mcp_session,
-    provider_catalog_status, resolve_route, stdio_mock_bind, ModelCapability, McpTransportKind,
+    provider_catalog_status, resolve_route, stdio_mock_bind, McpTransportKind, ModelCapability,
     PrivacyPolicy, RouteRequest, RouteSurface,
 };
 use optimus_packs::{
@@ -26,7 +26,7 @@ pub(super) fn owns(method: &str) -> bool {
 }
 
 pub(super) fn handle(
-    home: &PathBuf,
+    home: &Path,
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -60,7 +60,11 @@ pub(super) fn handle(
                         .collect()
                 })
                 .unwrap_or_default();
-            let privacy = match params.get("privacy").and_then(|v| v.as_str()).unwrap_or("remote") {
+            let privacy = match params
+                .get("privacy")
+                .and_then(|v| v.as_str())
+                .unwrap_or("remote")
+            {
                 "local" | "local_only" => PrivacyPolicy::LocalOnly,
                 _ => PrivacyPolicy::RemoteAllowed,
             };
@@ -158,11 +162,7 @@ pub(super) fn handle(
                 Ok(body) => {
                     // Host clamp: reject ceilings that expand past third-party SmartDeny set.
                     let host = default_third_party_ceiling();
-                    if body
-                        .max_policies
-                        .iter()
-                        .any(|p| !host.contains(p))
-                    {
+                    if body.max_policies.iter().any(|p| !host.contains(p)) {
                         return Ok(json!({
                             "ok": false,
                             "error": "pack max_policies expands past host third-party ceiling",
@@ -187,7 +187,7 @@ pub(super) fn handle(
 }
 
 /// Fail-closed path join under `{home}/packs/` — rejects `..`, absolute escapes.
-fn confined_packs_path(home: &PathBuf, raw: &str) -> Result<PathBuf, String> {
+fn confined_packs_path(home: &Path, raw: &str) -> Result<PathBuf, String> {
     let raw = raw.trim();
     if raw.is_empty() {
         return Err("path required".into());
@@ -195,7 +195,10 @@ fn confined_packs_path(home: &PathBuf, raw: &str) -> Result<PathBuf, String> {
     if raw.starts_with('/') || raw.contains('\\') {
         return Err("signed pack path must be a relative name under packs/".into());
     }
-    if raw.split('/').any(|p| p == ".." || p == "." || p.is_empty()) {
+    if raw
+        .split('/')
+        .any(|p| p == ".." || p == "." || p.is_empty())
+    {
         return Err("signed pack path must not contain .. or empty segments".into());
     }
     // Basename-only or single relative segment preferred; multi-segment allowed if no escape.
@@ -214,7 +217,7 @@ fn confined_packs_path(home: &PathBuf, raw: &str) -> Result<PathBuf, String> {
     Ok(canonical)
 }
 
-fn load_or_init_trust_root(home: &PathBuf) -> Result<TrustRoot, String> {
+fn load_or_init_trust_root(home: &Path) -> Result<TrustRoot, String> {
     let dir = home.join("packs");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let path = dir.join("trust_root.json");
@@ -322,13 +325,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(verified["ok"], true);
-        assert!(handle(
-            &home,
-            "packs_verify_signed",
-            json!({"path": "/etc/passwd"}),
-        )
-        .unwrap_err()
-        .contains("relative"));
+        assert!(
+            handle(&home, "packs_verify_signed", json!({"path": "/etc/passwd"}),)
+                .unwrap_err()
+                .contains("relative")
+        );
         assert!(handle(
             &home,
             "packs_verify_signed",

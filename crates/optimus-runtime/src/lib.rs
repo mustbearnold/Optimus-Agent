@@ -7,9 +7,9 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 #[cfg(target_os = "linux")]
 use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -1431,7 +1431,9 @@ impl Runtime {
                 let relative = self.safe_relative_path(relative_path)?;
                 self.workspace_dir
                     .create_dir_all(&relative)
-                    .map_err(|error| RuntimeError::PathEscape(format!("{relative_path}: {error}")))?;
+                    .map_err(|error| {
+                        RuntimeError::PathEscape(format!("{relative_path}: {error}"))
+                    })?;
                 Ok((
                     None,
                     serde_json::json!({

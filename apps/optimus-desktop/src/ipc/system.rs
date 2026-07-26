@@ -99,10 +99,7 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         .as_ref()
         .map(|s| s.inbox_pending)
         .unwrap_or(0);
-    let gateway_outbox_total = gateway_status
-        .as_ref()
-        .map(|s| s.outbox_total)
-        .unwrap_or(0);
+    let gateway_outbox_total = gateway_status.as_ref().map(|s| s.outbox_total).unwrap_or(0);
     let browser_kind = if optimus_kernel::chrome_binary_path().is_some() {
         "cdp"
     } else {
@@ -148,7 +145,10 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
     out.insert("version".into(), json!(env!("CARGO_PKG_VERSION")));
     out.insert(
         "codex_present".into(),
-        json!(auth.get("present").and_then(|v| v.as_bool()).unwrap_or(false)),
+        json!(auth
+            .get("present")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)),
     );
     out.insert("streaming".into(), json!(true));
     out.insert("browser".into(), json!(browser_kind));
@@ -178,10 +178,7 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
         json!("No auto-updater (ADR-0043). Reinstall via scripts/rebuild-install-relaunch.sh."),
     );
     out.insert("install_present".into(), json!(install.present));
-    out.insert(
-        "install_shell".into(),
-        json!(install.desktop_shell),
-    );
+    out.insert("install_shell".into(), json!(install.desktop_shell));
     out.insert("install_version".into(), json!(install.version));
     out.insert(
         "work_isolation".into(),
@@ -399,7 +396,10 @@ mod tests {
         assert_eq!(set["settings"]["enforcement_active"], false);
         assert_eq!(set["settings"]["product_fs_enforced"], false);
         assert_eq!(set["settings"]["enforced_mode"], "shared");
-        assert_eq!(set["settings"]["command_fs_envelope"], "confined_no_network");
+        assert_eq!(
+            set["settings"]["command_fs_envelope"],
+            "confined_no_network"
+        );
         assert_eq!(set["settings"]["command_envelope_enforced"], true);
         let again = settings_get(&home).unwrap();
         assert_eq!(again["settings"]["work_isolation"], "isolated_profiles");

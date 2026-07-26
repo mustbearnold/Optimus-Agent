@@ -200,7 +200,10 @@ where
         // Always advance offset so live long-poll does not redeliver forever.
         result.next_offset = result.next_offset.max(update.update_id.saturating_add(1));
         if !config.allowed_chat_ids.is_empty()
-            && !config.allowed_chat_ids.iter().any(|id| id == &update.chat_id)
+            && !config
+                .allowed_chat_ids
+                .iter()
+                .any(|id| id == &update.chat_id)
         {
             continue;
         }
@@ -283,7 +286,14 @@ where
     let Some(chat_id) = session_id.strip_prefix("telegram:") else {
         return Ok(Some(step));
     };
-    apply_send_outcome(home, transport, chat_id, &drained.id, &drained.reply_preview, &mut step)?;
+    apply_send_outcome(
+        home,
+        transport,
+        chat_id,
+        &drained.id,
+        &drained.reply_preview,
+        &mut step,
+    )?;
     Ok(Some(step))
 }
 
@@ -378,7 +388,10 @@ mod tests {
 
         let result = poll_once(dir.path(), &mut transport, 0, |inbound| {
             assert_eq!(inbound.channel, "telegram");
-            Ok((format!("reply:{}", inbound.text), inbound.session_id.clone()))
+            Ok((
+                format!("reply:{}", inbound.text),
+                inbound.session_id.clone(),
+            ))
         })
         .unwrap();
 
@@ -393,16 +406,15 @@ mod tests {
     #[test]
     fn mock_ambiguous_send_leaves_operator_recovery() {
         let dir = tempdir().unwrap();
-        let mut transport = MockTelegramTransport::default();
-        transport.next_send_ambiguous = true;
-        let result = process_inbound_reply_path(
-            dir.path(),
-            &mut transport,
-            "99",
-            "ping",
-            |inbound| Ok(("pong".into(), inbound.session_id.clone())),
-        )
-        .unwrap();
+        let mut transport = MockTelegramTransport {
+            next_send_ambiguous: true,
+            ..Default::default()
+        };
+        let result =
+            process_inbound_reply_path(dir.path(), &mut transport, "99", "ping", |inbound| {
+                Ok(("pong".into(), inbound.session_id.clone()))
+            })
+            .unwrap();
         assert_eq!(result.receipts.len(), 0);
         assert_eq!(result.ambiguous.len(), 1);
         assert_eq!(list_ambiguous_sends(dir.path(), 10).unwrap().len(), 1);
@@ -411,16 +423,15 @@ mod tests {
     #[test]
     fn mock_failed_send_is_not_ambiguous() {
         let dir = tempdir().unwrap();
-        let mut transport = MockTelegramTransport::default();
-        transport.next_send_failed = true;
-        let result = process_inbound_reply_path(
-            dir.path(),
-            &mut transport,
-            "7",
-            "ping",
-            |inbound| Ok(("pong".into(), inbound.session_id.clone())),
-        )
-        .unwrap();
+        let mut transport = MockTelegramTransport {
+            next_send_failed: true,
+            ..Default::default()
+        };
+        let result =
+            process_inbound_reply_path(dir.path(), &mut transport, "7", "ping", |inbound| {
+                Ok(("pong".into(), inbound.session_id.clone()))
+            })
+            .unwrap();
         assert_eq!(result.failed_sends.len(), 1);
         assert!(list_ambiguous_sends(dir.path(), 10).unwrap().is_empty());
         assert_eq!(gateway_status(dir.path()).unwrap().ambiguous_sends, 0);

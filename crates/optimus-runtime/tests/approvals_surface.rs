@@ -456,7 +456,7 @@ fn command_job(rt: &Runtime, label: &str, nodes: usize) -> optimus_graph::JobId 
 
 #[test]
 fn mkdir_is_high_risk_and_grant_is_effect_bound() {
-    use optimus_graph::{Effect, JobSpec, NodeSpec, JobStatus};
+    use optimus_graph::{Effect, JobSpec, JobStatus, NodeSpec};
     use optimus_runtime::{ApprovalGrant, Runtime};
     use tempfile::tempdir;
 
@@ -476,7 +476,10 @@ fn mkdir_is_high_risk_and_grant_is_effect_bound() {
         })
         .unwrap();
     let err = rt.run_next(job).unwrap_err();
-    assert!(matches!(err, optimus_runtime::RuntimeError::NeedsApproval { .. }));
+    assert!(matches!(
+        err,
+        optimus_runtime::RuntimeError::NeedsApproval { .. }
+    ));
     rt.grant_approval(ApprovalGrant::for_job(job)).unwrap();
     assert_eq!(rt.run_all(job).unwrap(), JobStatus::Succeeded);
     assert!(workspace.join("a/b").is_dir());

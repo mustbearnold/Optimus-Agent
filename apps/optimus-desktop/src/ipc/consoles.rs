@@ -8,9 +8,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use optimus_kernel::{
-    commands_for_surface, ClaimDraft, CommandSurface, Correction, Memory, MemoryClock, Origin,
-    RecallPurpose, RecallQuery, Sensitivity, SkillDraft, SkillRegistry, SystemMemoryClock,
-    TrustDomain, WriteContext,
+    commands_for_surface, CommandSurface, Correction, Memory, MemoryClock, Origin, RecallPurpose,
+    RecallQuery, Sensitivity, SkillRegistry, SystemMemoryClock, TrustDomain, WriteContext,
 };
 use optimus_packs::{CapabilitySession, PackId};
 use serde::{Deserialize, Serialize};
@@ -37,7 +36,7 @@ pub(super) fn owns(method: &str) -> bool {
 }
 
 pub(super) fn handle(
-    home: &PathBuf,
+    home: &Path,
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -346,10 +345,7 @@ fn logs_tail(home: &Path, params: serde_json::Value) -> Result<serde_json::Value
     let mut lines: Vec<String> = Vec::new();
 
     // Doctor-ish summary (no secrets).
-    lines.push(redact(
-        &format!("doctor home={}", home.display()),
-        &home_s,
-    ));
+    lines.push(redact(&format!("doctor home={}", home.display()), &home_s));
     if let Ok(settings) = optimus_kernel::ProductSettings::load(home) {
         lines.push(format!(
             "settings work_isolation={:?} concurrent={}",
@@ -399,7 +395,11 @@ fn logs_tail(home: &Path, params: serde_json::Value) -> Result<serde_json::Value
 }
 
 fn commands_list(params: serde_json::Value) -> Result<serde_json::Value, String> {
-    let surface = match params.get("surface").and_then(|v| v.as_str()).unwrap_or("desktop") {
+    let surface = match params
+        .get("surface")
+        .and_then(|v| v.as_str())
+        .unwrap_or("desktop")
+    {
         "cli" => CommandSurface::Cli,
         "both" => CommandSurface::Both,
         _ => CommandSurface::Desktop,
@@ -432,13 +432,15 @@ fn redact(input: &str, home: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // Test-only constructors: importing these at module scope makes them dead
+    // in the non-test build.
+    use optimus_kernel::{ClaimDraft, SkillDraft};
     use tempfile::tempdir;
 
     #[test]
     fn memory_recall_rejects_action_authorize() {
         let dir = tempdir().unwrap();
-        let err = memory_recall(dir.path(), json!({"purpose": "action_authorize"}))
-            .unwrap_err();
+        let err = memory_recall(dir.path(), json!({"purpose": "action_authorize"})).unwrap_err();
         assert!(err.contains("ActionAuthorize"));
     }
 
@@ -518,10 +520,7 @@ mod tests {
         )
         .unwrap();
         let list = memory_list(dir.path(), json!({"limit": 10})).unwrap();
-        assert!(list["fence"]
-            .as_str()
-            .unwrap()
-            .contains("EVIDENCE_DATA"));
+        assert!(list["fence"].as_str().unwrap().contains("EVIDENCE_DATA"));
         assert_eq!(list["claims"].as_array().unwrap().len(), 1);
     }
 
@@ -599,6 +598,8 @@ mod tests {
         let out = commands_list(json!({"surface": "desktop"})).unwrap();
         let cmds = out["commands"].as_array().unwrap();
         assert!(!cmds.is_empty());
-        assert!(!cmds.iter().any(|c| c["id"].as_str() == Some("browser_navigate")));
+        assert!(!cmds
+            .iter()
+            .any(|c| c["id"].as_str() == Some("browser_navigate")));
     }
 }

@@ -490,10 +490,7 @@ impl CronStore {
                 job_id: parse_uuid(row.get(1)?)?,
                 status: row.get(2)?,
                 started_unix: checked_u64(row.get(3)?)?,
-                completed_unix: row
-                    .get::<_, Option<i64>>(4)?
-                    .map(checked_u64)
-                    .transpose()?,
+                completed_unix: row.get::<_, Option<i64>>(4)?.map(checked_u64).transpose()?,
                 detail: row.get(5)?,
             })
         })?;

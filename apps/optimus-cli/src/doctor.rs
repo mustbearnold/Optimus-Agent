@@ -144,7 +144,10 @@ trait OptionalMapErr<T> {
 }
 
 impl<T> OptionalMapErr<Option<T>> for rusqlite::Result<T> {
-    fn optional_map_err(self, f: impl FnOnce(rusqlite::Error) -> String) -> Result<Option<T>, String> {
+    fn optional_map_err(
+        self,
+        f: impl FnOnce(rusqlite::Error) -> String,
+    ) -> Result<Option<T>, String> {
         match self {
             Ok(v) => Ok(Some(v)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -416,10 +419,7 @@ pub fn print_backup_list_text(list: &BackupList) {
     println!("scope: {}", list.scope);
     for path in &list.paths {
         let mark = if path.present { "present" } else { "absent" };
-        println!(
-            "  [{mark}] {}  ({})",
-            path.relative_path, path.kind
-        );
+        println!("  [{mark}] {}  ({})", path.relative_path, path.kind);
     }
     for note in &list.notes {
         println!("note: {note}");

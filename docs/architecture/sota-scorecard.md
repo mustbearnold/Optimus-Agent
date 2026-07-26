@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-25 · P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty partial
+Updated: 2026-07-26 · P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty+native-cua partial
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -21,8 +21,8 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 44 | A bounded Hermes-equivalent capability has current executable evidence |
-| **partial** | 3 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
+| **parity** | 43 | A bounded Hermes-equivalent capability has current executable evidence |
+| **partial** | 4 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
 | **missing** | 0 | No complete executable path exists yet |
 | **total** | 51 | Capability rows tracked by the executable ledger |
 
@@ -42,7 +42,6 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Streaming desktop chat
 - Durable session reopen
 - Electron + React default desktop shell (Wry legacy optional)
-- Installed native paint/accessibility baseline
 - Sandboxed Files list/read
 - Bounded terminal job stream
 - Sequential durable write/command campaigns
@@ -67,6 +66,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 
 ## Material partials
 
+- Installed native paint/accessibility (`desktop.native-cua`): the PF-00 installed-app CUA baseline is not committed, so the row carries no evidence. Playwright covers paint/layout supplementally and does not substitute for installed-app proof (see `skills/optimus-native-ui-testing`). Regenerate PF-00 to a tracked path to restore the parity claim.
 - Project isolation honesty (configured vs enforced) with concurrent multi-project mutate lease residual
 - Release updater: no in-app signed auto-update channel (ADR-0043); reinstall script is the upgrade path
 - Terminal PTY: Linux multi-tab session store scaffold; full interactive I/O residual
@@ -93,17 +93,21 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 ## Baseline commands of record
 
 ```bash
-python scripts/check-parity-ledger.py
-python scripts/optimus_version.py validate
-python scripts/optimus_version.py release-check
-python scripts/check-architecture-marks.py
-cargo test --workspace -- --test-threads=1
-cargo build -p optimus-desktop
-cd apps/optimus-desktop && npx playwright test
+just verify
 ```
 
-PF-00 baseline evidence: `local/tmp/baselines/PF-00-report.md`.
+`just verify` runs every gate above through `scripts/verify.sh`, the single
+source of truth shared by the justfile, the `.githooks/pre-push` gate, humans,
+and coding agents. Narrower tiers: `just gates` · `just check` · `just test` ·
+`just ui`.
+
+The Hermes parity gate is deliberately excluded from `just verify` because it is
+fail-closed by design; run it with `just parity`.
+
+PF-00 baseline evidence: **absent**. The installed-app CUA baseline has never
+been committed, which is why `desktop.native-cua` is `partial`. Regenerate it to
+a tracked path (not gitignored `local/`) to restore the parity claim.
 
 ## Honest statement
 
-Optimus has evidence-backed architectural wins and broad product/ecosystem scaffolds. It is **not yet Hermes-strict-parity**: the ledger currently contains 3 partial and 0 missing capability rows, but Hermes feature-contract and performance gates remain unverified (optimus-native claims only for a small first batch). The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until the full inventory, comparative, security, cost, durability, packaging, and native-platform gates pass.
+Optimus has evidence-backed architectural wins and broad product/ecosystem scaffolds. It is **not yet Hermes-strict-parity**: the ledger currently contains 4 partial and 0 missing capability rows, but Hermes feature-contract and performance gates remain unverified (optimus-native claims only for a small first batch). The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until the full inventory, comparative, security, cost, durability, packaging, and native-platform gates pass.

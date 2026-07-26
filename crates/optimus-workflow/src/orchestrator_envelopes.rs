@@ -338,8 +338,10 @@ impl ReviewBallot {
     }
 
     pub fn has_blocking_failure(&self) -> bool {
-        matches!(self.verdict, ReviewVerdict::Fail | ReviewVerdict::Inconclusive)
-            && self.lens.is_blocking_by_default()
+        matches!(
+            self.verdict,
+            ReviewVerdict::Fail | ReviewVerdict::Inconclusive
+        ) && self.lens.is_blocking_by_default()
             || self.findings.iter().any(|f| f.blocking)
     }
 }

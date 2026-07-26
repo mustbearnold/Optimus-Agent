@@ -9,9 +9,8 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use optimus_packs::{
-    assert_policy_within_ceiling, ReplayClass, ToolCancellation, ToolDesc, ToolId,
-    ToolIdempotency, ToolInvocation, ToolObservability, ToolOperations, ToolPolicy, ToolRetry,
-    ToolTimeout,
+    assert_policy_within_ceiling, ReplayClass, ToolCancellation, ToolDesc, ToolId, ToolIdempotency,
+    ToolInvocation, ToolObservability, ToolOperations, ToolPolicy, ToolRetry, ToolTimeout,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -176,8 +175,14 @@ pub fn assert_public_mcp_url(url: &str) -> Result<()> {
         .trim_start_matches("https://")
         .trim_start_matches("http://");
     // strip userinfo
-    let authority = rest.split('/').next().unwrap_or("").split('?').next().unwrap_or("");
-    let hostport = authority.split('@').last().unwrap_or("");
+    let authority = rest
+        .split('/')
+        .next()
+        .unwrap_or("")
+        .split('?')
+        .next()
+        .unwrap_or("");
+    let hostport = authority.split('@').next_back().unwrap_or("");
     let host = if hostport.starts_with('[') {
         // IPv6 literal [::1]:port
         hostport
@@ -227,7 +232,11 @@ pub fn assert_public_mcp_url(url: &str) -> Result<()> {
         }
     }
     // hex/octal-ish 0x7f.0.0.1
-    if host.contains("0x") || host.split('.').any(|p| p.starts_with('0') && p.len() > 1 && p.chars().all(|c| c.is_ascii_digit())) {
+    if host.contains("0x")
+        || host
+            .split('.')
+            .any(|p| p.starts_with('0') && p.len() > 1 && p.chars().all(|c| c.is_ascii_digit()))
+    {
         // conservative reject for non-decimal dotted forms
         if host.starts_with("0x") || host.contains(".0x") {
             return Err(McpError::Url(format!("blocked non-decimal ip form {host}")));
@@ -276,7 +285,9 @@ pub fn stdio_mock_bind(
     builtin_tool_ids: &BTreeSet<String>,
 ) -> Result<Vec<MappedMcpTool>> {
     if config.transport != McpTransportKind::Stdio {
-        return Err(McpError::Msg("stdio_mock_bind requires stdio transport".into()));
+        return Err(McpError::Msg(
+            "stdio_mock_bind requires stdio transport".into(),
+        ));
     }
     map_mcp_offers(config, &mock_stdio_list_tools(), builtin_tool_ids)
 }
@@ -287,7 +298,9 @@ pub fn http_mock_bind(
     builtin_tool_ids: &BTreeSet<String>,
 ) -> Result<Vec<MappedMcpTool>> {
     if config.transport != McpTransportKind::Http {
-        return Err(McpError::Msg("http_mock_bind requires http transport".into()));
+        return Err(McpError::Msg(
+            "http_mock_bind requires http transport".into(),
+        ));
     }
     let url = config
         .http_url
@@ -340,7 +353,9 @@ mod tests {
         assert!(names.contains("mcp_echo"));
         assert!(names.contains("mcp_time"));
         assert!(!names.contains("mcp_dangerous"));
-        assert!(mapped.iter().all(|m| m.tool.invocation == ToolInvocation::Unavailable));
+        assert!(mapped
+            .iter()
+            .all(|m| m.tool.invocation == ToolInvocation::Unavailable));
     }
 
     #[test]
@@ -377,7 +392,9 @@ mod tests {
     #[test]
     fn ceiling_blocks_process_policy() {
         let mut config = default_mock_session();
-        config.max_policies.retain(|p| *p != ToolPolicy::NetworkRead);
+        config
+            .max_policies
+            .retain(|p| *p != ToolPolicy::NetworkRead);
         // NetworkRead not in ceiling → mapping fails for allowlisted tools.
         let err = stdio_mock_bind(&config, &builtin_tool_id_set()).unwrap_err();
         assert!(matches!(err, McpError::Ceiling(_)));

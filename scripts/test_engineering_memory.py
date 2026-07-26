@@ -52,8 +52,8 @@ class EngineeringMemoryTests(unittest.TestCase):
     def test_canonical_tool_catalog_is_reconciled(self) -> None:
         registry = EM.parse_tool_catalog()
         tools = registry["tools"]
-        self.assertEqual(len(tools), 22)
-        self.assertEqual(len({row["id"] for row in tools}), 22)
+        self.assertEqual(len(tools), 28)
+        self.assertEqual(len({row["id"] for row in tools}), 28)
         available = {row["id"] for row in tools if row["available"]}
         self.assertEqual(
             available,
@@ -62,8 +62,12 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "browser_click",
                 "browser_navigate",
                 "browser_snapshot",
+                "delete_path",
                 "memory_recall",
+                "mkdir",
+                "patch_file",
                 "read_file",
+                "rename_path",
                 "skill_resolve",
                 "terminal",
                 "web_search",
@@ -521,6 +525,35 @@ class EngineeringMemoryTests(unittest.TestCase):
                 )
             finally:
                 EM.repository_files.cache_clear()
+
+    def test_repository_files_excludes_gitignored_test_output(self) -> None:
+        """Running the UI suites must not make Engineering Memory stale.
+
+        Regression: test-results/ and playwright-report/ are gitignored but were
+        absent from EXCLUDED_PARTS, so `just verify` could never pass twice —
+        the Playwright tier wrote artifacts that the staleness gate then counted
+        as source changes.
+        """
+        fake_root = Path("/tmp/repo")
+        walked = [
+            (str(fake_root), ["test-results", "playwright-report", "crates"], []),
+            (str(fake_root / "crates"), [], ["lib.rs"]),
+        ]
+        with (
+            mock.patch.object(EM, "ROOT", fake_root),
+            mock.patch.object(EM.os, "walk", return_value=walked),
+        ):
+            EM.repository_files.cache_clear()
+            try:
+                self.assertEqual(
+                    [path.name for path in EM.repository_files()],
+                    ["lib.rs"],
+                )
+            finally:
+                EM.repository_files.cache_clear()
+
+        for ignored in ("test-results", "playwright-report"):
+            self.assertIn(ignored, EM.EXCLUDED_PARTS)
 
     def test_file_records_canonicalize_text_eol_and_preserve_binary_bytes(self) -> None:
         with tempfile.TemporaryDirectory(

@@ -1,10 +1,10 @@
 use std::collections::BTreeSet;
 
-use optimus_graph::JobId;
 use optimus_eval::{
-    evaluate_integrity_observations, run_offline_integrity_suite, EvalReport,
-    IntegrityObservation, REQUIRED_INTEGRITY_EVALS,
+    evaluate_integrity_observations, run_offline_integrity_suite, EvalReport, IntegrityObservation,
+    REQUIRED_INTEGRITY_EVALS,
 };
+use optimus_graph::JobId;
 use optimus_kernel::{
     AgentBudget, AgentDescriptor, AgentFailure, AgentId, AgentInvocationStatus,
     AgentInvocationStore, AgentPermissions, AgentRegistry, AgentRequest, AgentResult,
@@ -101,7 +101,7 @@ fn tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity() {
             KernelConfig {
                 effect_policy: PolicyMode::Unrestricted,
                 ..KernelConfig::default()
-        },
+            },
         )
         .unwrap();
         let session_id = kernel.session_id();

@@ -117,7 +117,10 @@ pub fn load_causal_turn(home: impl AsRef<Path>, query: CausalQuery) -> Result<Ca
 }
 
 /// Build a versioned export document with absolute home paths redacted.
-pub fn export_causal_document(home: impl AsRef<Path>, query: CausalQuery) -> Result<CausalExportDocument> {
+pub fn export_causal_document(
+    home: impl AsRef<Path>,
+    query: CausalQuery,
+) -> Result<CausalExportDocument> {
     let home = home.as_ref();
     let mut report = load_causal_turn(home, query)?;
     redact_causal_report(&mut report, home);
@@ -171,9 +174,7 @@ fn redact_causal_report(report: &mut CausalTurnReport, home: &Path) {
     }
 }
 
-fn security_denials_from_lifecycle(
-    lifecycle: &[ExecutionToolLifecycleSummary],
-) -> Vec<String> {
+fn security_denials_from_lifecycle(lifecycle: &[ExecutionToolLifecycleSummary]) -> Vec<String> {
     let mut codes = Vec::new();
     for row in lifecycle {
         // Phase is an enum-like token (`started`, `failed`, `approval_required`, …),
@@ -233,9 +234,9 @@ fn resolve_manifest_id(executions: &ExecutionStore, query: &CausalQuery) -> Resu
         }
         CausalQueryKind::TurnId => {
             let turn = Uuid::parse_str(query.id.trim()).map_err(KernelError::Uuid)?;
-            executions.find_by_turn(turn)?.ok_or_else(|| {
-                KernelError::Model(format!("no execution manifest for turn {turn}"))
-            })
+            executions
+                .find_by_turn(turn)?
+                .ok_or_else(|| KernelError::Model(format!("no execution manifest for turn {turn}")))
         }
         CausalQueryKind::TraceId => {
             let trace = TraceId::parse(query.id.trim())?;

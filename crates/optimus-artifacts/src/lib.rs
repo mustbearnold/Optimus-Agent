@@ -31,14 +31,13 @@ fn tool_err(msg: impl AsRef<str>) -> ArtifactError {
     ArtifactError::Msg(msg.as_ref().to_string())
 }
 
-
 const MAX_LIST: usize = 200;
 const MAX_BULK_DELETE: usize = 50;
 const MAX_LABEL: usize = 256;
 const MAX_SOURCE: usize = 128;
 const MAX_MEDIA_TYPE: usize = 128;
 const MAX_BYTES: usize = 12 * 1024 * 1024; // 12 MiB
-const MAX_BASE64_INPUT: usize = ((MAX_BYTES + 2) / 3) * 4 + 8_192;
+const MAX_BASE64_INPUT: usize = MAX_BYTES.div_ceil(3) * 4 + 8_192;
 
 /// Per-item bulk-delete outcomes under one exclusive store lock.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -153,7 +152,7 @@ impl ArtifactStore {
             )));
         }
         let encoded_chars = b64.chars().filter(|c| !c.is_whitespace()).count();
-        if encoded_chars > ((MAX_BYTES + 2) / 3) * 4 {
+        if encoded_chars > MAX_BYTES.div_ceil(3) * 4 {
             return Err(tool_err(format!(
                 "base64 payload exceeds max decoded size {MAX_BYTES} bytes"
             )));
@@ -207,9 +206,7 @@ impl ArtifactStore {
         }
         match found {
             Some(row) if !row.deleted => Ok(row),
-            _ => Err(tool_err(format!(
-                "artifact metadata not found: {sha256}"
-            ))),
+            _ => Err(tool_err(format!("artifact metadata not found: {sha256}"))),
         }
     }
 
@@ -400,9 +397,7 @@ impl ArtifactStore {
             return Err(tool_err("refusing symlinked artifact blob"));
         }
         if !metadata.is_file() || metadata.len() > MAX_BYTES as u64 {
-            return Err(tool_err(
-                "artifact blob is not a bounded regular file",
-            ));
+            return Err(tool_err("artifact blob is not a bounded regular file"));
         }
         let mut file = File::open(path)?;
         let mut bytes = Vec::with_capacity(metadata.len() as usize);
@@ -446,7 +441,11 @@ impl ArtifactStore {
 
     /// Bulk zip under `{root}/exports/` only. Entries use safe basenames
     /// (no directories) — prevents zip-slip on extract.
-    pub fn export_zip(&self, sha256s: &[String], filename: Option<&str>) -> Result<(PathBuf, usize)> {
+    pub fn export_zip(
+        &self,
+        sha256s: &[String],
+        filename: Option<&str>,
+    ) -> Result<(PathBuf, usize)> {
         if sha256s.is_empty() {
             return Err(tool_err("export_zip requires at least one sha256"));
         }
@@ -479,10 +478,7 @@ impl ArtifactStore {
         }
         let count = entries.len();
         let stamp = now_unix();
-        let dest = self.resolve_export_path(
-            filename,
-            &format!("artifacts-{stamp}.zip"),
-        )?;
+        let dest = self.resolve_export_path(filename, &format!("artifacts-{stamp}.zip"))?;
         let zip_bytes = write_store_zip(&entries)?;
         write_regular_file(&dest, &zip_bytes)?;
         Ok((dest, count))
@@ -705,9 +701,7 @@ fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
     match fs::symlink_metadata(path) {
         Ok(metadata) => {
             if metadata.file_type().is_symlink() || !metadata.is_dir() {
-                return Err(tool_err(format!(
-                    "{label} must be a non-symlink directory"
-                )));
+                return Err(tool_err(format!("{label} must be a non-symlink directory")));
             }
         }
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => match fs::create_dir(path) {
@@ -715,9 +709,7 @@ fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
                 let metadata = fs::symlink_metadata(path)?;
                 if metadata.file_type().is_symlink() || !metadata.is_dir() {
-                    return Err(tool_err(format!(
-                        "{label} must be a non-symlink directory"
-                    )));
+                    return Err(tool_err(format!("{label} must be a non-symlink directory")));
                 }
             }
             Err(error) => return Err(error.into()),
@@ -730,9 +722,7 @@ fn ensure_owned_directory(path: &Path, label: &str) -> Result<()> {
 fn reject_symlink(path: &Path, label: &str) -> Result<()> {
     let metadata = fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return Err(tool_err(format!(
-            "{label} must be a non-symlink file"
-        )));
+        return Err(tool_err(format!("{label} must be a non-symlink file")));
     }
     Ok(())
 }
@@ -742,9 +732,7 @@ fn open_owned_file(path: &Path, append: bool) -> Result<File> {
         match fs::symlink_metadata(path) {
             Ok(metadata) => {
                 if metadata.file_type().is_symlink() || !metadata.is_file() {
-                    return Err(tool_err(
-                        "artifact state file must not be a symlink",
-                    ));
+                    return Err(tool_err("artifact state file must not be a symlink"));
                 }
                 return Ok(OpenOptions::new()
                     .read(true)
@@ -777,9 +765,7 @@ fn hex_sha256(bytes: &[u8]) -> String {
 
 fn validate_sha256(value: &str) -> Result<()> {
     if value.len() != 64 || !value.bytes().all(|b| b.is_ascii_hexdigit()) {
-        return Err(tool_err(
-            "artifact sha256 must be 64 hex characters",
-        ));
+        return Err(tool_err("artifact sha256 must be 64 hex characters"));
     }
     Ok(())
 }
@@ -1050,7 +1036,10 @@ mod tests {
         assert_eq!(fs::read(&dest).unwrap(), b"one");
 
         let (zip_path, count) = store
-            .export_zip(&[a.sha256.clone(), b.sha256.clone(), a.sha256.clone()], None)
+            .export_zip(
+                &[a.sha256.clone(), b.sha256.clone(), a.sha256.clone()],
+                None,
+            )
             .unwrap();
         assert_eq!(count, 2);
         assert!(zip_path.starts_with(store.root().join("exports")));

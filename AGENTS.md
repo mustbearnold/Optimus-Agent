@@ -125,6 +125,10 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
 18. Bug fixes require regression tests.
 19. Important architectural decisions require an ADR.
 20. A feature is incomplete when its Engineering Memory is stale.
+21. No module exceeds 800 production lines. Enforced as a ratchet by
+    `scripts/check-module-size.py`: new files must comply, and the 14
+    grandfathered modules in `docs/architecture/module-size-baseline.json` may
+    only shrink. Never add a baseline entry by hand — split the file instead.
 
 ## Evidence and status
 
@@ -140,6 +144,10 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
 
 ## Development workflow
 
+0. Gates run through `just`, never as hand-typed command lists. `just check` is
+   the inner loop; `just verify` is the full gate and is what `pre-push` runs.
+   `scripts/verify.sh` is the single source of truth — add new gates there, not
+   to a doc. Run `just setup-hooks` once per clone.
 1. Identify the owning subsystem and read its Engineering Memory through lenses,
    not by dumping raw `.engineering-memory/*.json` into prompts.
 2. Inspect current source, related tests, contracts, and ADRs.
@@ -151,13 +159,12 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
 6. Test focused behaviour, then relevant integration/evaluation surfaces.
 7. Review security, approval, cancellation, terminal outcomes, observability,
    replay implications, and CPU fallback where applicable.
-8. Run `python scripts/engineering_memory.py check` before refreshing memory.
-9. If changed/stale, run
-   `python scripts/engineering_memory.py context --budget 3000` and update only
-   owned knowledge from that pack.
-10. Run `python scripts/engineering_memory.py generate`.
-11. Run `python scripts/engineering_memory.py validate --quick` during iteration
-    and full `validate` before merge/release; report known gaps via `report`.
+8. Run `just em-check` before refreshing memory.
+9. If changed/stale, run `just em-context` and update only owned knowledge from
+   that pack.
+10. Run `just em-generate` (generate + quick validate).
+11. Run full `python3 scripts/engineering_memory.py validate` before
+    merge/release; report known gaps via `report`.
 12. Do not commit, push, publish, install, or deploy unless explicitly asked.
 
 ## Repository conventions

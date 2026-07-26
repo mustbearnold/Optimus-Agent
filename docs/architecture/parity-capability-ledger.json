@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-07-25",
-  "scorecard_marker": "P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty partial",
+  "updated_at": "2026-07-26",
+  "scorecard_marker": "P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty+native-cua partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -214,11 +214,9 @@
       "id": "desktop.native-cua",
       "capability": "Installed native paint and accessibility",
       "hermes_reference": "Desktop application",
-      "state": "parity",
-      "evidence": [
-        "local/tmp/baselines/PF-00-report.md"
-      ],
-      "trajectory": "cua:pf00-native-paint",
+      "state": "partial",
+      "evidence": [],
+      "trajectory": null,
       "owner_ticket": "P-06"
     },
     {

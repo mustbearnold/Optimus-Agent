@@ -17,11 +17,11 @@ use optimus_kernel::{
     list_ambiguous_sends, list_inbox, list_outbox, list_outbox_receipts, list_recent_causal_turns,
     list_sessions, load_causal_turn, load_telegram_config, open_cron, open_seeded_agent_registry,
     open_seeded_workflow_registry, parse_causal_query, resolve_route, run_read_file_handoff,
-    write_causal_export,
     run_write_file_handoff, run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron,
-    BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
-    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, ReadFileHandoffRequest,
-    RouteRequest, RouteSurface, ScriptedModel, ToolCall, WriteFileHandoffRequest,
+    write_causal_export, BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel,
+    CompletionResponse, Kernel, KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId,
+    ReadFileHandoffRequest, RouteRequest, RouteSurface, ScriptedModel, ToolCall,
+    WriteFileHandoffRequest,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{
@@ -1221,9 +1221,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         row.message_id, row.outbound.id
                     );
                 }
-                println!(
-                    "note: local receipt only — external exactly-once is not claimed"
-                );
+                println!("note: local receipt only — external exactly-once is not claimed");
                 Ok(())
             }
             GatewayCmd::Ack {
@@ -1265,12 +1263,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                 "no-receipt".into()
                             }
                         });
-                    println!(
-                        "  {}  {}  {}",
-                        row.message_id,
-                        row.outbound.status,
-                        receipt
-                    );
+                    println!("  {}  {}  {}", row.message_id, row.outbound.status, receipt);
                 }
                 Ok(())
             }
@@ -1490,10 +1483,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         report.manifest.turn_id
                     );
                     if let Some(trace) = &report.trace_context {
-                        println!(
-                            "trace={} span={}",
-                            trace.trace_id, trace.span_id
-                        );
+                        println!("trace={} span={}", trace.trace_id, trace.span_id);
                     }
                     println!(
                         "provider={} model={} model_calls={} tool_calls={} replay={:?}",
@@ -1557,8 +1547,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Commands::Vertical { cmd } => {
             match cmd {
                 VerticalCmd::List => {
-                    let agents =
-                        open_seeded_agent_registry(cli.home.join("agent-registry.db"))?;
+                    let agents = open_seeded_agent_registry(cli.home.join("agent-registry.db"))?;
                     let workflows =
                         open_seeded_workflow_registry(cli.home.join("workflow-registry.db"))?;
                     println!("agents:");
@@ -1617,10 +1606,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         }
                         println!("summary={}", report.agent_result.summary);
                         if let Some(artifact) = report.artifact {
-                            println!(
-                                "artifact={} bytes={}",
-                                artifact.sha256, artifact.size_bytes
-                            );
+                            println!("artifact={} bytes={}", artifact.sha256, artifact.size_bytes);
                         }
                     }
                 }
@@ -1643,10 +1629,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         );
                         println!("summary={}", report.summary);
                         for artifact in report.artifacts {
-                            println!(
-                                "artifact={} bytes={}",
-                                artifact.sha256, artifact.size_bytes
-                            );
+                            println!("artifact={} bytes={}", artifact.sha256, artifact.size_bytes);
                         }
                     }
                 }

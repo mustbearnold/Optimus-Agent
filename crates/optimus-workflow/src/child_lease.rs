@@ -46,10 +46,7 @@ pub enum ChildStatus {
 
 impl ChildStatus {
     pub fn is_terminal(self) -> bool {
-        matches!(
-            self,
-            Self::Succeeded | Self::Failed | Self::Cancelled
-        )
+        matches!(self, Self::Succeeded | Self::Failed | Self::Cancelled)
     }
 }
 
@@ -104,7 +101,10 @@ impl ChildLeaseCoordinator {
         owner: &str,
         lease_secs: u64,
     ) -> Result<(ChildLease, CancellationToken)> {
-        let mut g = self.inner.lock().map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
+        let mut g = self
+            .inner
+            .lock()
+            .map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
         let active = g.active_by_campaign.get(campaign_id).copied().unwrap_or(0);
         if active >= self.max_parallel {
             return Err(ChildLeaseError::FanOutLimit {
@@ -132,7 +132,10 @@ impl ChildLeaseCoordinator {
     }
 
     pub fn mark_running(&self, lease_id: Uuid, owner: &str, token: Uuid) -> Result<()> {
-        let mut g = self.inner.lock().map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
+        let mut g = self
+            .inner
+            .lock()
+            .map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
         let lease = g
             .leases
             .get_mut(&lease_id)
@@ -152,7 +155,13 @@ impl ChildLeaseCoordinator {
         token: Uuid,
         handoff_artifact: Option<String>,
     ) -> Result<ChildLease> {
-        self.finish(lease_id, owner, token, ChildStatus::Succeeded, handoff_artifact)
+        self.finish(
+            lease_id,
+            owner,
+            token,
+            ChildStatus::Succeeded,
+            handoff_artifact,
+        )
     }
 
     pub fn fail(&self, lease_id: Uuid, owner: &str, token: Uuid) -> Result<ChildLease> {
@@ -176,7 +185,10 @@ impl ChildLeaseCoordinator {
         campaign_id: &str,
         tokens: &BTreeMap<Uuid, CancellationToken>,
     ) -> Result<usize> {
-        let mut g = self.inner.lock().map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
+        let mut g = self
+            .inner
+            .lock()
+            .map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
         let mut n = 0;
         for lease in g.leases.values_mut() {
             if lease.campaign_id != campaign_id || lease.status.is_terminal() {
@@ -193,7 +205,10 @@ impl ChildLeaseCoordinator {
     }
 
     pub fn get(&self, lease_id: Uuid) -> Result<ChildLease> {
-        let g = self.inner.lock().map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
+        let g = self
+            .inner
+            .lock()
+            .map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
         g.leases
             .get(&lease_id)
             .cloned()
@@ -213,7 +228,10 @@ impl ChildLeaseCoordinator {
         status: ChildStatus,
         handoff: Option<String>,
     ) -> Result<ChildLease> {
-        let mut g = self.inner.lock().map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
+        let mut g = self
+            .inner
+            .lock()
+            .map_err(|e| ChildLeaseError::Msg(e.to_string()))?;
         let lease = g
             .leases
             .get_mut(&lease_id)
@@ -271,12 +289,7 @@ mod tests {
             .is_err());
         coord.mark_running(a.lease_id, "owner", a.token).unwrap();
         let done = coord
-            .complete(
-                a.lease_id,
-                "owner",
-                a.token,
-                Some("sha256:abc".into()),
-            )
+            .complete(a.lease_id, "owner", a.token, Some("sha256:abc".into()))
             .unwrap();
         assert_eq!(done.status, ChildStatus::Succeeded);
         assert_eq!(done.handoff_artifact.as_deref(), Some("sha256:abc"));

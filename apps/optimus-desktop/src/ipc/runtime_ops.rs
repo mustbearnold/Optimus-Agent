@@ -34,7 +34,7 @@ pub(super) fn owns(method: &str) -> bool {
 }
 
 pub(super) fn handle(
-    home: &PathBuf,
+    home: &Path,
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -397,10 +397,7 @@ fn open_runtime_for_job(
 }
 
 /// IPC handler: navigate the browser to a URL and return page state.
-fn browser_navigate(
-    home: &PathBuf,
-    params: serde_json::Value,
-) -> Result<serde_json::Value, String> {
+fn browser_navigate(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
     let url = params
         .get("url")
         .and_then(|v| v.as_str())
@@ -411,7 +408,7 @@ fn browser_navigate(
 }
 
 /// IPC handler: click an element by SOM index.
-fn browser_click(home: &PathBuf, params: serde_json::Value) -> Result<serde_json::Value, String> {
+fn browser_click(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
     let index = params
         .get("index")
         .and_then(|v| v.as_u64())
@@ -422,7 +419,7 @@ fn browser_click(home: &PathBuf, params: serde_json::Value) -> Result<serde_json
 }
 
 /// IPC handler: refresh the current page snapshot.
-fn browser_reload(home: &PathBuf, _params: serde_json::Value) -> Result<serde_json::Value, String> {
+fn browser_reload(home: &Path, _params: serde_json::Value) -> Result<serde_json::Value, String> {
     with_preview_browser(home, |effector| {
         effector.snapshot().map_err(|e| e.to_string())
     })
@@ -576,7 +573,7 @@ mod tests {
         assert_eq!(runtime.run_all(job).unwrap(), JobStatus::AwaitingApproval);
 
         let response = handle(
-            &home.path().to_path_buf(),
+            home.path(),
             "approvals_grant",
             serde_json::json!({"job_id": job.to_string()}),
         )

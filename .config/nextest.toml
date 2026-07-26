@@ -1,0 +1,22 @@
+# nextest configuration.
+#
+# `optimus-runtime` executes commands inside systemd transient scopes
+# (`systemd-run`, see crates/optimus-runtime/src/lib.rs) so cancellation can
+# reap an entire owned process tree via its cgroup. That makes the host's
+# systemd user manager a shared, global resource: concurrent transient-unit
+# creation races unit settlement and trips CHILD_SETTLE_TIMEOUT (2s).
+#
+# Process-level isolation does not help — nextest already runs each test in its
+# own process, and these tests still fail in parallel because the contended
+# resource is outside the process. Only serialisation fixes it.
+#
+# So: serialise `optimus-runtime`, let the other ~45 binaries run parallel.
+# That is why `--test-threads=1` existed for the whole workspace; this narrows
+# the constraint to the package that actually needs it.
+
+[test-groups.systemd-scopes]
+max-threads = 1
+
+[[profile.default.overrides]]
+filter = 'package(optimus-runtime)'
+test-group = 'systemd-scopes'
