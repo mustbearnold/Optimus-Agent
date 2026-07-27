@@ -11,7 +11,7 @@ depends_on:
 validated_by:
   - crates/optimus-ops/src/gateway.rs
   - crates/optimus-ops/src/telegram.rs
-  - apps/optimus-desktop/src/ipc/messaging.rs
+  - crates/optimus-host/src/messaging.rs
   - apps/optimus-ui/src/components/mail/MailPage.tsx
   - scripts/check-desktop-ipc-matrix.py
 last_verified_commit: null

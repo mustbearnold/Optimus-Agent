@@ -4,7 +4,7 @@ status: current
 covers:
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/src/server.rs
-  - apps/optimus-desktop/src/ipc/**
+  - crates/optimus-host/src/**
   - apps/optimus-electron/**
   - apps/optimus-ui/**
 depends_on:

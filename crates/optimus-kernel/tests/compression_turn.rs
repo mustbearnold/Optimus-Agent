@@ -15,6 +15,7 @@ fn turn_compresses_bloated_history() {
             max_message_chars: 800,
             keep_tail_messages: 2,
             snippet_chars: 40,
+            max_tool_result_chars: 20_000,
         },
         ..KernelConfig::default()
     };

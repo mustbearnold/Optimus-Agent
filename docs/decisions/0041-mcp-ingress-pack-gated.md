@@ -3,7 +3,7 @@ knowledge_type: decision
 status: current
 covers:
   - crates/optimus-ops/src/mcp.rs
-  - apps/optimus-desktop/src/ipc/extensibility.rs
+  - crates/optimus-host/src/extensibility.rs
 depends_on:
   - docs/decisions/0036-domain-modularity-single-catalog.md
   - docs/decisions/0016-canonical-tool-contract.md

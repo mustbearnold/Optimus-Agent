@@ -9,6 +9,40 @@ const LINUX_RO_CANDIDATES: &[&str] = &[
     "/usr", "/bin", "/sbin", "/lib", "/lib64", "/etc", "/opt", "/nix",
 ];
 
+/// Trees the confined profile replaces with a fresh tmpfs.
+///
+/// Whatever the child still needs from one of these has to be re-bound *after*
+/// the tmpfs is mounted, because the tmpfs hides everything underneath it.
+const LINUX_TMPFS_TREES: &[&str] = &["/tmp", "/var", "/run"];
+
+/// Re-bind arguments for the resolver configuration, or empty if unnecessary.
+///
+/// `/etc` is ro-bound, so a `/etc/resolv.conf` that is a plain file arrives
+/// intact and this does nothing. The common Linux case is a symlink into
+/// `/run` (systemd-resolved's stub) — and the confined profile mounts a tmpfs
+/// over `/run`, which erases the target.
+///
+/// The failure that causes is quiet and expensive. `Confined` shares the
+/// network namespace, so the child *has* a network and every hostname fails to
+/// resolve: `curl` exits non-zero into a pipeline that ends in `head`, the
+/// pipeline exits 0, and the effect is recorded as succeeded with empty stdout.
+/// A model reading that receipt is told the command worked.
+fn linux_resolver_bind(target: Option<&Path>) -> Vec<String> {
+    let Some(target) = target else {
+        // A resolver path that will not canonicalise is already broken on the
+        // host; the sandbox is not the thing to fix in that case.
+        return Vec::new();
+    };
+    if !LINUX_TMPFS_TREES
+        .iter()
+        .any(|tree| target.starts_with(tree))
+    {
+        return Vec::new();
+    }
+    let path = target.to_string_lossy().into_owned();
+    vec!["--ro-bind".into(), path.clone(), path]
+}
+
 /// Build parent directories that must exist inside the sandbox for `workspace`
 /// to be reachable at the same absolute path.
 pub fn parent_dirs_for_bind(workspace: &Path) -> Vec<PathBuf> {
@@ -67,6 +101,13 @@ pub fn linux_bwrap_args(workspace: &Path, envelope: CommandFsEnvelope) -> Vec<St
                 "--tmpfs".into(),
                 "/run".into(),
             ]);
+            // After the tmpfs, never before: the mount would hide it. Skipped
+            // when the network is unshared, where there is nothing to resolve.
+            if !envelope.linux_unshare_net() {
+                args.extend(linux_resolver_bind(
+                    std::fs::canonicalize("/etc/resolv.conf").ok().as_deref(),
+                ));
+            }
             for dir in parent_dirs_for_bind(workspace) {
                 args.push("--dir".into());
                 args.push(dir.to_string_lossy().into_owned());
@@ -101,6 +142,19 @@ pub fn command_envelope_supported(os: &str, envelope: CommandFsEnvelope) -> Resu
              refuse spawn rather than claim a false envelope"
         )),
         (_, CommandFsEnvelope::UnrestrictedHost) => Ok(()),
+    }
+}
+
+impl crate::Runtime {
+    /// How far a spawned command can reach. Read by the kernel so the system
+    /// prompt can state it: an agent that does not know its commands have no
+    /// network spends a whole turn rediscovering it, one approval at a time.
+    ///
+    /// Lives here rather than beside the other `Runtime` accessors because
+    /// `lib.rs` is at its module-size baseline and may only shrink, and this is
+    /// the module that owns what the answer means.
+    pub fn command_fs_envelope(&self) -> CommandFsEnvelope {
+        self.config.command_fs_envelope
     }
 }
 
@@ -148,6 +202,65 @@ mod tests {
         let ws = PathBuf::from("/tmp/ws");
         let args = linux_bwrap_args(&ws, CommandFsEnvelope::UnrestrictedHost);
         assert!(args.windows(3).any(|w| w == ["--bind", "/", "/"]));
+    }
+
+    #[test]
+    fn a_resolver_under_a_tmpfs_tree_is_rebound() {
+        let args = linux_resolver_bind(Some(Path::new("/run/systemd/resolve/stub-resolv.conf")));
+        assert_eq!(
+            args,
+            vec![
+                "--ro-bind".to_string(),
+                "/run/systemd/resolve/stub-resolv.conf".to_string(),
+                "/run/systemd/resolve/stub-resolv.conf".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_resolver_that_survives_the_profile_is_left_alone() {
+        // A plain /etc/resolv.conf arrives via the /etc ro-bind; re-binding it
+        // would be noise, and noise in an argv is a thing to get wrong later.
+        assert!(linux_resolver_bind(Some(Path::new("/etc/resolv.conf"))).is_empty());
+        assert!(linux_resolver_bind(None).is_empty());
+    }
+
+    #[test]
+    fn a_tmpfs_prefix_match_is_by_component_not_by_text() {
+        assert!(linux_resolver_bind(Some(Path::new("/tmpfoo/resolv.conf"))).is_empty());
+    }
+
+    #[test]
+    fn the_resolver_rebind_lands_after_the_tmpfs_that_would_hide_it() {
+        // Order is the whole fix. bwrap applies operations in argv order, so a
+        // ro-bind of /run/... placed before `--tmpfs /run` is erased by it and
+        // the child silently loses DNS again.
+        let ws = PathBuf::from("/tmp/ws");
+        let args = linux_bwrap_args(&ws, CommandFsEnvelope::Confined);
+        let Some(resolver) = args.iter().position(|a| a.starts_with("/run/")) else {
+            // Hosts whose resolv.conf is a plain file have nothing to re-bind.
+            return;
+        };
+        let tmpfs_run = args
+            .windows(2)
+            .position(|w| w[0] == "--tmpfs" && w[1] == "/run")
+            .expect("the confined profile mounts a tmpfs over /run");
+        assert!(
+            resolver > tmpfs_run,
+            "the resolver bind must follow the tmpfs, got {args:?}"
+        );
+    }
+
+    #[test]
+    fn an_unshared_network_gets_no_resolver() {
+        // Nothing to resolve, so binding a resolver would only widen the
+        // profile past what the envelope promises.
+        let ws = PathBuf::from("/tmp/ws");
+        let args = linux_bwrap_args(&ws, CommandFsEnvelope::ConfinedNoNetwork);
+        assert!(
+            !args.iter().any(|a| a.contains("resolv.conf")),
+            "got {args:?}"
+        );
     }
 
     #[test]

@@ -70,7 +70,7 @@ class DesktopIpcMatrixTests(unittest.TestCase):
     def test_every_host_method_is_classified(self) -> None:
         rust = set(
             self.mod.parse_rust_registry(
-                ROOT / "apps/optimus-desktop/src/ipc/router.rs"
+                ROOT / "crates/optimus-host/src/router.rs"
             )
         )
         electron = set(
@@ -83,7 +83,7 @@ class DesktopIpcMatrixTests(unittest.TestCase):
 
     def test_parsers_return_sorted_unique_critical_subset(self) -> None:
         rust = self.mod.parse_rust_registry(
-            ROOT / "apps/optimus-desktop/src/ipc/router.rs"
+            ROOT / "crates/optimus-host/src/router.rs"
         )
         electron = self.mod.parse_electron_allowlist(
             ROOT / "apps/optimus-electron/main.cjs"

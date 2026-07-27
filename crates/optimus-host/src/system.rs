@@ -7,7 +7,7 @@ use optimus_packs::CapabilitySession;
 use optimus_runtime::{CampaignStatus, CampaignStore};
 use serde_json::json;
 
-use super::runtime_ops::open_runtime;
+use crate::runtime_ops::open_runtime;
 
 #[cfg(test)]
 pub(super) fn owns(method: &str) -> bool {

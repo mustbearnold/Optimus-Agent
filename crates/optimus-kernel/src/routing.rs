@@ -36,7 +36,10 @@ impl ProviderId {
         match value.trim().to_ascii_lowercase().as_str() {
             "offline" => Some(Self::Offline),
             "codex" | "codex-oauth" => Some(Self::Codex),
-            "openai" | "openai-compat" => Some(Self::OpenAiCompat),
+            // `open-ai-compat` is the serde kebab-case form that
+            // `providers_catalog` puts on the wire; a surface must be able to
+            // send back the id it was given.
+            "openai" | "openai-compat" | "open-ai-compat" => Some(Self::OpenAiCompat),
             _ => None,
         }
     }
@@ -636,6 +639,28 @@ fn now_unix() -> u64 {
 
 #[cfg(test)]
 mod tests {
+
+    /// Any id a surface reads from the catalog must parse back to the same
+    /// provider. The picker, the CLI, and the React capabilities page all do this
+    /// round-trip, and serde's kebab-case form is not the same string as
+    /// `as_str()`.
+    #[test]
+    fn every_catalog_id_round_trips_through_parse() {
+        for descriptor in super::provider_catalog() {
+            let wire = serde_json::to_value(descriptor.id).unwrap();
+            let wire = wire.as_str().expect("provider id serializes as a string");
+            assert_eq!(
+                super::ProviderId::parse(wire),
+                Some(descriptor.id),
+                "catalog id {wire:?} must parse back"
+            );
+            assert_eq!(
+                super::ProviderId::parse(descriptor.id.as_str()),
+                Some(descriptor.id),
+                "as_str form must parse back too"
+            );
+        }
+    }
     use super::*;
     use tempfile::tempdir;
 

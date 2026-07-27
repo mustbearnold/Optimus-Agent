@@ -2,7 +2,7 @@
 knowledge_type: contract
 status: current
 covers:
-  - apps/optimus-desktop/src/ipc/router.rs
+  - crates/optimus-host/src/router.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/native_workers.rs

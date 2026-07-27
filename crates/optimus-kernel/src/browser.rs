@@ -19,6 +19,8 @@ use serde_json::json;
 use thiserror::Error;
 use url::Url;
 
+use crate::page_extract::*;
+
 // ---------------------------------------------------------------------------
 // Error
 // ---------------------------------------------------------------------------
@@ -94,30 +96,80 @@ pub trait BrowserEffector: Send {
 // Effector factory
 // ---------------------------------------------------------------------------
 
+/// Whether CDP has already been ruled out in this process.
+///
+/// [`try_cdp_effector`] runs on *every* browser call, and a launch that fails
+/// pays the client's full connect timeout before it says so — about 30 seconds.
+/// Observed on a host where `chromium` resolves on PATH but is a confined snap
+/// that never publishes a DevTools WebSocket URL: a single turn made six browser
+/// calls, each took 31–35 seconds, and essentially all of that was spent
+/// re-proving the same failure. The turn answered, but it spent minutes of
+/// wall-clock and came close to its step budget doing nothing.
+///
+/// So: one verdict per process. A Chrome that appears later is not picked up
+/// until restart, which is the right way round — restarting is cheap, and a
+/// thirty-second tax on every page fetch is not.
+#[cfg(feature = "cdp")]
+static CDP_RULED_OUT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// Try to create a CDP effector. Returns `None` when CDP is unavailable
 /// (no Chrome binary, or feature not enabled, or any launch error).
+///
+/// The verdict is remembered — see [`CDP_RULED_OUT`].
 pub fn try_cdp_effector(workspace: impl AsRef<Path>) -> Option<Box<dyn BrowserEffector>> {
     // Only attempt when the `cdp` feature is enabled
     #[cfg(feature = "cdp")]
     {
-        if !has_chrome_binary() {
-            return None;
-        }
-        match CdpBrowserEffector::open(workspace) {
-            Ok(effector) => {
-                eprintln!("[browser] Using CDP browser effector");
-                return Some(Box::new(effector));
-            }
-            Err(e) => {
-                eprintln!("[browser] CDP effector failed, falling back to HTTP: {e}");
-            }
-        }
+        cdp_effector_once(&CDP_RULED_OUT, has_chrome_binary(), || {
+            CdpBrowserEffector::open(workspace)
+                .map(|effector| Box::new(effector) as Box<dyn BrowserEffector>)
+        })
     }
     #[cfg(not(feature = "cdp"))]
     {
         let _ = workspace;
+        None
     }
-    None
+}
+
+/// Attempt `launch` unless CDP has already been ruled out, and record a verdict.
+///
+/// Split from [`try_cdp_effector`] so the memo is assertable without a browser:
+/// what matters is that a second call does not reach `launch` at all, and that
+/// is the expensive thing a test must not have to actually perform.
+#[cfg(feature = "cdp")]
+fn cdp_effector_once<F>(
+    ruled_out: &std::sync::atomic::AtomicBool,
+    has_chrome: bool,
+    launch: F,
+) -> Option<Box<dyn BrowserEffector>>
+where
+    F: FnOnce() -> Result<Box<dyn BrowserEffector>>,
+{
+    use std::sync::atomic::Ordering;
+
+    if ruled_out.load(Ordering::Relaxed) {
+        return None;
+    }
+    if !has_chrome {
+        // Recorded too. Absence does not change while the process runs, and
+        // the probe walks PATH on every browser call otherwise.
+        ruled_out.store(true, Ordering::Relaxed);
+        return None;
+    }
+    match launch() {
+        Ok(effector) => {
+            eprintln!("[browser] Using CDP browser effector");
+            Some(effector)
+        }
+        Err(e) => {
+            eprintln!(
+                "[browser] CDP effector failed, using HTTP for the rest of this process: {e}"
+            );
+            ruled_out.store(true, Ordering::Relaxed);
+            None
+        }
+    }
 }
 
 /// Create an HTTP text effector (always succeeds).
@@ -491,179 +543,306 @@ fn assert_url_safe(url: &Url) -> Result<()> {
     })
 }
 
-fn extract_title(html: &str) -> String {
-    let lower = html.to_ascii_lowercase();
-    if let Some(s) = lower.find("<title") {
-        if let Some(gt) = html[s..].find('>') {
-            let start = s + gt + 1;
-            if let Some(end_rel) = lower[start..].find("</title>") {
-                return decode_entities(html[start..start + end_rel].trim());
-            }
-        }
-    }
-    String::new()
-}
+/// A page result's total size, and how it is divided.
+///
+/// One budget split at run time rather than two constants that have to be kept
+/// consistent by hand. The result must fit under the kernel's per-result context
+/// clamp; text is bounded first because it carries what the page said, and links
+/// get whatever the text did not use.
+///
+/// That split matters because the two vary inversely. Stripping site chrome cut
+/// `github.com/trending` from 16,136 chars of text to 3,855 — and the same page
+/// needs many links, because each repository row spends one on the repository
+/// and three more on its stargazers, forks and contributors. Fixed caps sized
+/// for the worst case would have starved exactly the page that had room.
+const MAX_RESULT_CHARS: usize = 22_000;
 
-fn extract_links(html: &str, base: &str) -> Vec<BrowserLink> {
-    let base = Url::parse(base).ok();
-    let mut out = Vec::new();
-    let bytes = html.as_bytes();
-    let lower = html.to_ascii_lowercase();
-    let mut i = 0;
-    while let Some(rel) = lower[i..].find("<a ") {
-        let start = i + rel;
-        let rest = &html[start..];
-        let rest_l = &lower[start..];
-        let end_tag = rest_l.find('>').unwrap_or(0);
-        let tag = &rest[..=end_tag.min(rest.len().saturating_sub(1))];
-        let href = attr_value(tag, "href");
-        let after = start + end_tag + 1;
-        let text_end = lower[after..]
-            .find("</a>")
-            .map(|p| after + p)
-            .unwrap_or(after);
-        let text = decode_entities(html_to_text(&html[after..text_end]).trim());
-        if let Some(h) = href {
-            if h.starts_with('#') || h.starts_with("javascript:") || h.starts_with("mailto:") {
-                i = text_end + 4;
-                continue;
-            }
-            let abs = if let Some(b) = &base {
-                b.join(&h)
-                    .map(|u| u.to_string())
-                    .unwrap_or_else(|_| h.clone())
-            } else {
-                h
-            };
-            let idx = out.len();
-            out.push(BrowserLink {
-                index: idx,
-                text: text.chars().take(120).collect(),
-                href: abs,
-            });
-            if out.len() >= 40 {
-                break;
-            }
-        }
-        i = text_end + 4;
-        if i >= bytes.len() {
-            break;
-        }
-    }
-    out
-}
+/// Chars of page text carried into a tool result.
+///
+/// Observed: `github.com/trending` was fetched successfully four times. Each
+/// time the link table took the head of the budget, the text was cut short of
+/// its end — exactly where the repository list begins, since the nav menu comes
+/// first — and the model reported that "only GitHub's surrounding navigation
+/// loaded" and declined to answer rather than invent star counts.
+const MAX_TEXT_CHARS: usize = 16_000;
 
-fn attr_value(tag: &str, name: &str) -> Option<String> {
-    let lower = tag.to_ascii_lowercase();
-    let key = format!("{name}=");
-    let pos = lower.find(&key)?;
-    let after = &tag[pos + key.len()..];
-    let after = after.trim_start();
-    let quote = after.chars().next()?;
-    if quote == '"' || quote == '\'' {
-        let rest = &after[1..];
-        let end = rest.find(quote)?;
-        Some(rest[..end].to_string())
-    } else {
-        let end = after
-            .find(|c: char| c.is_whitespace() || c == '>')
-            .unwrap_or(after.len());
-        Some(after[..end].to_string())
-    }
-}
-
-fn html_to_text(html: &str) -> String {
-    let mut out = String::with_capacity(html.len() / 2);
-    let mut in_tag = false;
-    let mut in_script = false;
-    let chars: Vec<char> = html.chars().collect();
-    let mut i = 0;
-    while i < chars.len() {
-        let c = chars[i];
-        if c == '<' {
-            let tail: String = chars[i..]
-                .iter()
-                .take(10)
-                .collect::<String>()
-                .to_ascii_lowercase();
-            if tail.starts_with("<script") || tail.starts_with("<style") {
-                in_script = true;
-            }
-            if tail.starts_with("</script") || tail.starts_with("</style") {
-                in_script = false;
-            }
-            if tail.starts_with("<br")
-                || tail.starts_with("<p")
-                || tail.starts_with("<div")
-                || tail.starts_with("<li")
-                || tail.starts_with("<tr")
-                || tail.starts_with("<h")
-            {
-                out.push('\n');
-            }
-            in_tag = true;
-            i += 1;
-            continue;
-        }
-        if c == '>' {
-            in_tag = false;
-            i += 1;
-            continue;
-        }
-        if !in_tag && !in_script {
-            out.push(c);
-        }
-        i += 1;
-    }
-    let decoded = decode_entities(&out);
-    let mut cleaned = String::new();
-    let mut prev_space = false;
-    for line in decoded.lines() {
-        let t = line.split_whitespace().collect::<Vec<_>>().join(" ");
-        if t.is_empty() {
-            if !prev_space {
-                cleaned.push('\n');
-                prev_space = true;
-            }
-        } else {
-            cleaned.push_str(&t);
-            cleaned.push('\n');
-            prev_space = false;
-        }
-    }
-    cleaned.trim().to_string()
-}
-
-fn decode_entities(s: &str) -> String {
-    s.replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&#39;", "'")
-        .replace("&nbsp;", " ")
-}
+/// Roughly what one link costs once serialised, beyond its own text and href:
+/// the `index`, the field names, the braces and the commas.
+const LINK_OVERHEAD_CHARS: usize = 40;
 
 pub fn page_to_tool_json(page: &BrowserPage) -> serde_json::Value {
-    json!({
+    let text_chars = page.text.chars().count();
+    let text: String = page.text.chars().take(MAX_TEXT_CHARS).collect();
+
+    let mut remaining = MAX_RESULT_CHARS.saturating_sub(text.chars().count());
+    let mut links: Vec<&BrowserLink> = Vec::new();
+    for link in &page.links {
+        let cost = link.href.chars().count() + link.text.chars().count() + LINK_OVERHEAD_CHARS;
+        if cost > remaining {
+            break;
+        }
+        remaining -= cost;
+        links.push(link);
+    }
+
+    let mut value = json!({
         "ok": true,
         "url": page.url,
         "final_url": page.final_url,
         "status": page.status,
         "title": page.title,
-        "text": page.text,
-        "links": page.links,
+        "text": text,
+        "links": links,
         "fetched_at": page.fetched_at,
         "effector": "http-browser",
-    })
+    });
+    // Stated, not implied. A page that stops early and a page that ended read
+    // identically otherwise, and the difference decides whether the right move
+    // is to answer or to fetch the rest.
+    if text_chars > MAX_TEXT_CHARS {
+        value["text_truncated"] = json!(format!("{MAX_TEXT_CHARS} of {text_chars} chars"));
+    }
+    if links.len() < page.links.len() {
+        value["links_truncated"] = json!(format!("{} of {} links", links.len(), page.links.len()));
+    }
+    value
 }
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
+#[cfg(all(test, feature = "cdp"))]
+mod cdp_memo_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+    /// Count launches without performing one. The failure is what the memo
+    /// exists for, so the closure fails the way a dead Chrome does.
+    fn failing_launch(
+        calls: &AtomicUsize,
+    ) -> impl FnOnce() -> Result<Box<dyn BrowserEffector>> + '_ {
+        move || {
+            calls.fetch_add(1, Ordering::Relaxed);
+            Err(BrowserError::Http("chrome launched but never spoke".into()))
+        }
+    }
+
+    #[test]
+    fn a_failed_launch_is_not_attempted_a_second_time() {
+        // The defect: `try_cdp_effector` runs per browser call and each failing
+        // attempt costs the client's full connect timeout. Six calls in one
+        // observed turn spent ~32s apiece re-proving one dead Chrome.
+        let ruled_out = AtomicBool::new(false);
+        let calls = AtomicUsize::new(0);
+
+        assert!(cdp_effector_once(&ruled_out, true, failing_launch(&calls)).is_none());
+        assert_eq!(calls.load(Ordering::Relaxed), 1, "the first call must try");
+
+        assert!(cdp_effector_once(&ruled_out, true, failing_launch(&calls)).is_none());
+        assert_eq!(
+            calls.load(Ordering::Relaxed),
+            1,
+            "the second call must not reach the launch at all"
+        );
+    }
+
+    #[test]
+    fn an_absent_chrome_is_recorded_so_path_is_not_walked_again() {
+        let ruled_out = AtomicBool::new(false);
+        let calls = AtomicUsize::new(0);
+
+        assert!(cdp_effector_once(&ruled_out, false, failing_launch(&calls)).is_none());
+        assert_eq!(calls.load(Ordering::Relaxed), 0, "nothing to launch");
+        assert!(
+            ruled_out.load(Ordering::Relaxed),
+            "absence is permanent for this process and must be remembered"
+        );
+    }
+
+    #[test]
+    fn a_launch_that_succeeds_leaves_cdp_available_for_the_next_call() {
+        // The memo must record failure only. A success that set the flag would
+        // silently downgrade every later call to HTTP.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let ruled_out = AtomicBool::new(false);
+
+        let effector = cdp_effector_once(&ruled_out, true, || {
+            HttpBrowserEffector::open(dir.path()).map(|e| Box::new(e) as Box<dyn BrowserEffector>)
+        });
+
+        assert!(effector.is_some());
+        assert!(!ruled_out.load(Ordering::Relaxed));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A chrome-heavy page: a long navigation menu, then the content, then a
+    /// link table dominated by the menu. Shaped like `github.com/trending`.
+    fn chrome_heavy_page(nav_chars: usize, content: &str, link_count: usize) -> BrowserPage {
+        BrowserPage {
+            url: "https://github.com/trending".into(),
+            final_url: "https://github.com/trending?since=daily".into(),
+            title: "Trending repositories".into(),
+            status: 200,
+            text: format!("{}{content}", "Navigation Menu ".repeat(nav_chars / 16)),
+            links: (0..link_count)
+                .map(|index| BrowserLink {
+                    index,
+                    text: "GitHub CopilotWrite better code with AI".into(),
+                    href: format!("https://github.com/features/{index}"),
+                })
+                .collect(),
+            fetched_at: "unix:0".into(),
+        }
+    }
+
+    #[test]
+    fn a_filter_menu_does_not_bury_the_list_it_filters() {
+        // The shape of github.com/trending: a menu naming every language GitHub
+        // knows, then the repositories. Extracted whole the menu was 13,241 of
+        // 16,136 chars and the model concluded the page had not loaded.
+        let languages: String = ["Wollok", "Wren", "Yacc", "YAML", "Zig", "Zimpl"]
+            .iter()
+            .map(|l| format!("<a role=\"menuitemradio\">{l}</a>"))
+            .collect();
+        let html = format!(
+            "<main><details-menu>{languages}</details-menu>\
+             <div class=\"Box-row\">permissionlesstech / bitchat</div></main>"
+        );
+        let text = html_to_text(&html);
+        assert!(
+            text.contains("permissionlesstech / bitchat"),
+            "the list the page exists for must survive"
+        );
+        assert!(
+            !text.contains("Wollok") && !text.contains("Zimpl"),
+            "the filter menu is furniture, not content: {text:?}"
+        );
+    }
+
+    #[test]
+    fn a_closing_tag_inside_chrome_does_not_let_the_rest_of_it_through() {
+        // These nest. Treated as a flag rather than a depth, the inner `</svg>`
+        // would re-open extraction and leak the remaining menu text.
+        let html = "<nav>MENU<svg>ICON</svg>MORE MENU</nav><p>REAL</p>";
+        let text = html_to_text(html);
+        assert!(text.contains("REAL"));
+        assert!(!text.contains("MORE MENU"), "leaked after the inner close");
+    }
+
+    #[test]
+    fn ordinary_markup_is_still_read_as_text() {
+        // The skip list must not cost the common case anything.
+        let html = "<header><h1>Headline</h1></header><p>Body text</p><footer>legal</footer>";
+        let text = html_to_text(html);
+        assert!(text.contains("Headline"), "an article header is content");
+        assert!(text.contains("Body text"));
+        assert!(!text.contains("legal"));
+    }
+
+    #[test]
+    fn a_page_result_fits_the_context_clamp_without_being_cut_by_it() {
+        // The clamp keeps the head of a result and serde sorts keys, so `links`
+        // is serialised before `text` whatever order the literal is written in.
+        // A result that overruns the clamp therefore always loses page text —
+        // the one field carrying what the page said. Staying under it is what
+        // keeps that decision in this module.
+        let page = chrome_heavy_page(MAX_TEXT_CHARS * 2, "CONTENT", 400);
+        let rendered = page_to_tool_json(&page).to_string();
+        assert!(
+            rendered.chars().count() < crate::CompressionConfig::default().max_tool_result_chars,
+            "a bounded page must fit the clamp, got {} chars",
+            rendered.chars().count()
+        );
+    }
+
+    #[test]
+    fn the_content_survives_the_navigation_menu_in_front_of_it() {
+        // Observed: `github.com/trending` fetched successfully four times and the
+        // repository list — which sits after ~14k chars of nav menu — was cut off
+        // every time. The model reported that only the navigation had loaded and
+        // declined to answer.
+        let page = chrome_heavy_page(14_000, "block / buzz 13,589 stars today", 200);
+        let rendered = page_to_tool_json(&page).to_string();
+        assert!(
+            rendered.contains("block / buzz 13,589 stars today"),
+            "the part of the page worth fetching must reach the model"
+        );
+    }
+
+    #[test]
+    fn the_link_cap_is_not_spent_on_the_navigation_menu() {
+        // Observed: all 40 links returned for github.com/trending were site
+        // chrome — the cap was reached long before the repository rows. Left to
+        // pair `owner /` and `name` back together out of the flattened text, the
+        // model answered with `jackdorsey/bitchat` and `egoist/ego-lite`, which
+        // belong to `permissionlesstech` and `citrolabs`. Those hrefs were on
+        // the page; the cap is why they never arrived.
+        let chrome: String = (0..60)
+            .map(|i| format!("<a href=\"/features/{i}\">Feature {i}</a>"))
+            .collect();
+        let html = format!(
+            "<nav>{chrome}</nav>\
+             <div class=\"Box-row\">\
+             <a href=\"/permissionlesstech/bitchat\">permissionlesstech / bitchat</a></div>"
+        );
+        let links = extract_links(&html, "https://github.com/trending");
+        assert!(
+            links
+                .iter()
+                .any(|l| l.href.ends_with("/permissionlesstech/bitchat")),
+            "the repository href must survive a menu that outnumbers it: {links:?}"
+        );
+        assert!(
+            !links.iter().any(|l| l.href.contains("/features/")),
+            "menu links are not content"
+        );
+    }
+
+    #[test]
+    fn a_link_table_never_outspends_the_page_it_came_from() {
+        // The two vary inversely, so the invariant is the split, not a count: a
+        // page whose text fills the budget must yield its links, and one with
+        // room to spare must keep them.
+        let links_kept = |text_chars, link_count| {
+            page_to_tool_json(&chrome_heavy_page(text_chars, "CONTENT", link_count))["links"]
+                .as_array()
+                .unwrap()
+                .len()
+        };
+        let with_a_short_page = links_kept(0, 200);
+        let with_a_long_page = links_kept(MAX_TEXT_CHARS, 200);
+        assert!(
+            with_a_long_page < with_a_short_page,
+            "text at its cap must squeeze the link table: {with_a_long_page} vs {with_a_short_page}"
+        );
+        assert!(
+            with_a_short_page > 100,
+            "a page that leaves room must keep its links; each trending row spends \
+             four of them, so a low cap loses the owner of every repository but the first"
+        );
+    }
+
+    #[test]
+    fn dropping_links_is_always_stated() {
+        // A missing click index otherwise looks like a page that never had it.
+        let value = page_to_tool_json(&chrome_heavy_page(MAX_TEXT_CHARS, "CONTENT", 200));
+        let kept = value["links"].as_array().unwrap().len();
+        assert_eq!(value["links_truncated"], format!("{kept} of 200 links"));
+    }
+
+    #[test]
+    fn a_page_that_fits_is_reported_whole_and_claims_no_truncation() {
+        let page = chrome_heavy_page(0, "CONTENT", 3);
+        let value = page_to_tool_json(&page);
+        assert!(value["text"].as_str().unwrap().contains("CONTENT"));
+        assert!(value.get("text_truncated").is_none());
+        assert!(value.get("links_truncated").is_none());
+    }
 
     #[test]
     fn strips_tags_and_finds_title() {

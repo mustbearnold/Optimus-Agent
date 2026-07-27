@@ -11,6 +11,7 @@ name = "optimus-desktop"
 path = "src/main.rs"
 
 [dependencies]
+optimus-host.workspace = true
 optimus-kernel.workspace = true
 optimus-packs.workspace = true
 optimus-runtime.workspace = true

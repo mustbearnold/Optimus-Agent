@@ -6,7 +6,7 @@ covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-desktop/ui/index.html
   - apps/optimus-desktop/ui/app.js
   - apps/optimus-desktop/ui/style.css

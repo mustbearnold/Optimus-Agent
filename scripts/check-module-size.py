@@ -17,9 +17,27 @@ would fail the tree and get switched off, so this gate is a **ratchet**:
 That stops the bleeding immediately and applies steady downward pressure
 without demanding a large refactor up front.
 
-Size is measured in **production** lines: everything before the first
-`#[cfg(test)]`. Counting a file's own inline tests against it would penalise
-good coverage, which is the opposite of what the rule is for.
+Size is measured in **production** lines. A file's own inline tests do not
+count against it — counting them would penalise good coverage, which is the
+opposite of what the rule is for. Two things follow, and both were learned the
+hard way:
+
+  * *Every* `#[cfg(test)]` item is skipped, wherever it sits, not just
+    everything after the first one. Truncating at the first attribute measures
+    "lines before the first test module", which is a different number that
+    happens to agree most of the time. When it disagrees it lies: `lib.rs` once
+    reported 912 while holding ~1200 lines of production code, because a test
+    module two-thirds of the way down hid 280 lines of real code behind it. A
+    gate on that number rewards moving a test module up rather than splitting
+    the file.
+  * Bare `mod x;` declarations do not count. They are a registry, not logic,
+    and counting them taxes the exact behaviour the law is trying to cause:
+    splitting a module adds one line to whichever file declares it, so a file
+    sitting at its baseline could be pushed over the ratchet *by complying with
+    the rule elsewhere*.
+
+Braces are counted off source with comments and literal contents blanked out,
+so a `{` inside a string or a doc comment cannot desynchronise the skip.
 
 Exit 0 when clean; exit 1 with findings.
 
@@ -32,6 +50,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -40,14 +59,159 @@ BASELINE = ROOT / "docs" / "architecture" / "module-size-baseline.json"
 LIMIT = 800
 SCAN_ROOTS = ("crates", "apps")
 
+MEASURE = (
+    "production lines: every #[cfg(test)] item and bare `mod x;` declaration "
+    "excluded"
+)
+
+_IDENT = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+
+# `#[cfg(test)]`, and the `#[cfg(all(test, unix))]` family. Matched against a
+# blanked line, so a `#[cfg(feature = "test")]` has already lost its `test` to
+# the string blanking and cannot match here.
+_CFG_TEST = re.compile(r"^#!?\[\s*cfg\s*\(.*\btest\b")
+_MOD_DECL = re.compile(r"^(?:pub\s*(?:\([^)]*\)\s*)?)?mod\s+[A-Za-z_][A-Za-z0-9_]*\s*;$")
+
+
+def _blank(text: str) -> str:
+    """`text` with every character but the newlines replaced by a space."""
+    return "".join("\n" if c == "\n" else " " for c in text)
+
+
+def code_only(src: str) -> list[str]:
+    """`src` as lines with comment and literal *contents* blanked out.
+
+    Brace depth is what decides where a `#[cfg(test)]` item ends, and a brace
+    inside a string or a comment is not a brace. Blanking rather than deleting
+    keeps every line and every column where it was, so the result still lines
+    up one-to-one with the file.
+    """
+    out: list[str] = []
+    i, n = 0, len(src)
+    block_depth = 0  # `/* */` nests in Rust.
+
+    while i < n:
+        c = src[i]
+
+        if block_depth:
+            if src.startswith("/*", i):
+                block_depth += 1
+                out.append("  ")
+                i += 2
+            elif src.startswith("*/", i):
+                block_depth -= 1
+                out.append("  ")
+                i += 2
+            else:
+                out.append("\n" if c == "\n" else " ")
+                i += 1
+            continue
+
+        if src.startswith("//", i):
+            end = src.find("\n", i)
+            end = n if end < 0 else end
+            out.append(" " * (end - i))
+            i = end
+            continue
+
+        if src.startswith("/*", i):
+            block_depth = 1
+            out.append("  ")
+            i += 2
+            continue
+
+        # Raw strings, including the `b` byte-string prefix: r"…", r#"…"#, br#"…"#.
+        # The preceding-character check keeps the `r` in `for` from starting one.
+        if c in "rb" and (i == 0 or src[i - 1] not in _IDENT):
+            j = i + 1 if c == "b" else i
+            if j < n and src[j] == "r":
+                j += 1
+                hashes = 0
+                while j < n and src[j] == "#":
+                    hashes += 1
+                    j += 1
+                if j < n and src[j] == '"':
+                    close = '"' + "#" * hashes
+                    end = src.find(close, j + 1)
+                    end = n if end < 0 else end + len(close)
+                    out.append(_blank(src[i:end]))
+                    i = end
+                    continue
+
+        if c == '"':
+            j = i + 1
+            while j < n:
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == '"':
+                    j += 1
+                    break
+                j += 1
+            out.append(_blank(src[i:j]))
+            i = j
+            continue
+
+        if c == "'":
+            # A char literal closes; a lifetime (`&'a str`, `Foo<'_>`) does not.
+            # Telling them apart matters: read as a literal, `'a` would swallow
+            # the rest of the file looking for a quote that never comes.
+            if i + 1 < n and src[i + 1] == "\\":
+                j = i + 2
+                while j < n and src[j] != "'":
+                    j += 1
+                out.append(_blank(src[i : min(j + 1, n)]))
+                i = min(j + 1, n)
+                continue
+            if i + 2 < n and src[i + 2] == "'":
+                out.append(_blank(src[i : i + 3]))
+                i += 3
+                continue
+            out.append(" ")
+            i += 1
+            continue
+
+        out.append(c)
+        i += 1
+
+    return "".join(out).splitlines()
+
 
 def production_lines(path: Path) -> int:
-    """Lines before the first inline `#[cfg(test)]` module, else all lines."""
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    for index, line in enumerate(lines):
-        if line.strip().startswith("#[cfg(test)]"):
-            return index
-    return len(lines)
+    """Lines of production code: no `#[cfg(test)]` item, no `mod x;` line."""
+    depth = 0
+    counted = 0
+    # Brace depth the skipped item started at, or None when not skipping.
+    skip_from: int | None = None
+    opened = False  # the skipped item has opened a block
+
+    for line in code_only(path.read_text(encoding="utf-8", errors="replace")):
+        stripped = line.strip()
+
+        if skip_from is None and _CFG_TEST.match(stripped):
+            skip_from, opened = depth, False
+
+        if skip_from is None and not _MOD_DECL.match(stripped):
+            counted += 1
+
+        opens = line.count("{")
+        depth += opens - line.count("}")
+
+        if skip_from is not None:
+            if depth > skip_from:
+                opened = True
+            elif opened or opens or stripped.endswith(";"):
+                # The item's block closed — on an earlier line (`opened`) or on
+                # this one (`opens`, for a `mod t {}` that never raised the
+                # depth a later line could see) — or it never had a block and
+                # this is the statement it applied to (`#[cfg(test)] use …;`).
+                #
+                # Without the `opens` case the skip never ends: depth never rose
+                # above where it started, so every following line reads as still
+                # inside the test item and the rest of the file goes uncounted.
+                skip_from = None
+
+    return counted
 
 
 def source_files() -> list[Path]:
@@ -88,7 +252,7 @@ def write_baseline(sizes: dict[str, int]) -> None:
                     "add entries by hand — new files must be <= 800."
                 ),
                 "limit": LIMIT,
-                "measure": "production lines, excluding the inline #[cfg(test)] module",
+                "measure": MEASURE,
                 "files": over,
             },
             indent=2,

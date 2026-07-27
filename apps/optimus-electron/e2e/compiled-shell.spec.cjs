@@ -82,6 +82,10 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     });
     await expect(page).toHaveURL(/^optimus-app:\/\/ui\//);
     await expect(page.getByRole('complementary', { name: 'Projects and sessions' })).toBeVisible();
+    // The evidence workspace is chat-first and starts closed (workspace-redesign
+    // Slice 1 removed the phantom column). Open it for the Files/Artifacts/Browser
+    // tab assertions below, which live inside that pane.
+    await page.getByRole('button', { name: 'Workspace', exact: true }).click();
     await expect(page.getByRole('complementary', { name: 'Evidence workspace' })).toBeVisible();
 
     const hostInfo = await page.evaluate(() => window.optimusElectron.hostInfo());
@@ -90,7 +94,7 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     const productionLocation = await page.evaluate(() => location.href);
     expect(productionLocation).not.toContain('token=');
 
-    await page.getByRole('button', { name: 'New session', exact: true }).click();
+    await page.getByRole('button', { name: 'New thread' }).click();
     await expect(page.locator('.session-row.is-active')).toHaveCount(1);
     await page.waitForTimeout(50);
     const composer = page.getByLabel('Message Optimus');
@@ -127,7 +131,7 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     await expect(page.getByRole('tree', { name: 'Directory contents' })).toBeVisible();
     await page.getByRole('tab', { name: 'Artifacts' }).click();
     await expect(page.getByText('No matching artifacts.')).toBeVisible();
-    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
     await page.getByRole('button', { name: 'Done' }).click();
 
@@ -135,7 +139,10 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     const address = page.getByLabel('Browser address');
     await address.fill(`http://127.0.0.1:${previewPort}/fixture`);
     await address.press('Enter');
-    await expect(page.getByText(`Live · 127.0.0.1:${previewPort}`)).toBeVisible();
+    // The redesign dropped the "Live · host" chrome badge. Liveness is proven
+    // below against the real native view (url, visibility, bounds), which is
+    // stronger evidence than the removed label ever was.
+    await expect(address).toHaveValue(`http://127.0.0.1:${previewPort}/fixture`);
 
     await page.waitForTimeout(200);
     const nativeBefore = await nativeViewState(application);
@@ -182,9 +189,15 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
       view.webContents.sendInputEvent({ type: 'mouseDown', x: bounds.width / 2, y: bounds.height / 2, button: 'left', clickCount: 1 });
       view.webContents.sendInputEvent({ type: 'mouseUp', x: bounds.width / 2, y: bounds.height / 2, button: 'left', clickCount: 1 });
     });
-    await expect(composer).toHaveValue(
-      `Preview context: button “Native preview target 1” on 127.0.0.1:${previewPort}, 240 × 90px.`
-    );
+    // A preview click lands in the annotation gallery only. Reaching the composer
+    // requires the explicit Add to prompt action (program P23 / ADR-0040), so the
+    // untrusted preview can never inject straight into the prompt.
+    const annotationText = `Preview context (untrusted): button “Native preview target 1” on 127.0.0.1:${previewPort}, 240 × 90px.`;
+    const gallery = page.getByLabel('Preview annotation gallery');
+    await expect(gallery.getByText(annotationText)).toBeVisible();
+    await expect(composer).toHaveValue('');
+    await gallery.getByRole('button', { name: 'Add to prompt' }).first().click();
+    await expect(composer).toHaveValue(annotationText);
     await expect.poll(() =>
       application.evaluate(async ({ BrowserWindow }) => {
         const window = BrowserWindow.getAllWindows()[0];
@@ -193,7 +206,7 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
       })
     ).toBe(1);
 
-    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
     await expect.poll(async () => (await nativeViewState(application)).visible).toBe(false);
     await page.screenshot({

@@ -23,6 +23,7 @@ export type DesktopMethod =
   | 'cron_history'
   | 'approvals_list'
   | 'approvals_grant'
+  | 'approvals_release_yolo'
   | 'jobs_list'
   | 'campaign_list'
   | 'campaign_create'

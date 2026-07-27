@@ -43,7 +43,9 @@
   --danger: #d87882;
   --danger-contrast: #050505;
   --danger-soft: rgba(216, 120, 130, 0.11);
-  --topbar-h: 52px;
+  /* ADR-0030 measured wide-shell anchor. Rebaseline only with a newer captured
+     baseline that supersedes that decision, not by editing this token. */
+  --topbar-h: 36px;
   --radius-sm: 0px;
   --radius: 0px;
   --radius-lg: 0px;
@@ -726,7 +728,9 @@ select:focus-visible,
 }
 
 .composer-shell {
-  width: min(calc(100% - 40px), 780px);
+  /* ADR-0030 caps the composer at 736px. Widening it needs a superseding
+     decision plus a new captured baseline, not a token edit. */
+  width: min(calc(100% - 40px), 736px);
   padding: 8px 0 18px;
   background: linear-gradient(180deg, transparent 0, var(--work-pane-bg) 25px);
 }
@@ -904,7 +908,7 @@ select:focus-visible,
 
 @media (max-width: 899px) {
   .optimus-app {
-    grid-template-rows: var(--topbar-h) 40px 1fr;
+    grid-template-rows: var(--topbar-h) 34px 1fr;
   }
 
   .app-body {
@@ -916,8 +920,10 @@ select:focus-visible,
   }
 
   .compact-switcher {
-    height: 40px;
-    padding: 4px 8px;
+    /* Matches the 34px narrow switcher row in the codex measured baseline that
+       ADR-0030 anchors; the grid row above declares the same height. */
+    height: 34px;
+    padding: 2px 8px;
     border-bottom: 0;
     background: var(--rail);
   }

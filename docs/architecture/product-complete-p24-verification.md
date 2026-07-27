@@ -10,7 +10,7 @@ depends_on:
   - docs/decisions/0031-safe-project-work-loop.md
 validated_by:
   - crates/optimus-kernel/src/session.rs
-  - apps/optimus-desktop/src/ipc/sessions.rs
+  - crates/optimus-host/src/sessions.rs
   - apps/optimus-ui/src/state/conversationStore.ts
   - apps/optimus-ui/src/components/workbench/Transcript.tsx
   - scripts/check-desktop-ipc-matrix.py

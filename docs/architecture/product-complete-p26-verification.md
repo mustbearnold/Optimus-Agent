@@ -8,7 +8,7 @@ covers:
 depends_on:
   - docs/plans/product-complete-program.md
 validated_by:
-  - apps/optimus-desktop/src/ipc/consoles.rs
+  - crates/optimus-host/src/consoles.rs
   - crates/optimus-ops/src/surface_commands.rs
   - crates/optimus-memory/src/lib.rs
   - apps/optimus-ui/src/components/consoles/ConsolesPage.tsx

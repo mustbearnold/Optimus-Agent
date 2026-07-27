@@ -42,6 +42,13 @@ pub fn builtin_surface_commands() -> Vec<SurfaceCommand> {
             None,
         ),
         cmd(
+            "yolo",
+            "yolo",
+            "Switch to unrestricted access and release the open approval",
+            CommandSurface::Both,
+            None,
+        ),
+        cmd(
             "sessions",
             "sessions",
             "List durable sessions",

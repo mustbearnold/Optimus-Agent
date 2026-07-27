@@ -613,6 +613,9 @@ export function OptimusApp() {
                         setAnnotation(text);
                         dispatch({ type: 'patch-layout', patch: { compactSurface: 'work' } });
                       }}
+                      onSelectTab={(workspaceTab) =>
+                        dispatch({ type: 'patch-layout', patch: { workspaceTab } })
+                      }
                     />
                   </div>
                 </>

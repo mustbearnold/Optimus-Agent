@@ -21,6 +21,7 @@ pub(super) fn owns(method: &str) -> bool {
         method,
         "approvals_list"
             | "approvals_grant"
+            | "approvals_release_yolo"
             | "jobs_list"
             | "campaign_list"
             | "campaign_create"
@@ -58,6 +59,16 @@ pub(super) fn handle(
                 })
                 .collect();
             Ok(json!({ "pending": rows }))
+        }
+        "approvals_release_yolo" => {
+            // ADR-0044: typing yolo at a pause releases the approval on screen.
+            // Each release still writes a receipt naming the yolo actor, so the
+            // exact-action trail survives even though the human gate does not.
+            let rt = open_runtime(home)?;
+            let released = rt
+                .release_open_approvals_under_yolo()
+                .map_err(|e| e.to_string())?;
+            Ok(json!({ "released": released }))
         }
         "approvals_grant" => {
             let id = params
@@ -354,6 +365,9 @@ fn open_runtime_at(
         optimus_graph::RuntimeConfig {
             policy: optimus_graph::PolicyMode::SmartDeny,
             command_fs_envelope,
+            // ADR-0044: still ReviewChanges here. The per-turn autonomy profile
+            // rides the chat request, not this job-runner opener.
+            ..Default::default()
         },
     )
     .map_err(|e| e.to_string())

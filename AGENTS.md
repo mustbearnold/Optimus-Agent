@@ -129,6 +129,9 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
     `scripts/check-module-size.py`: new files must comply, and the 14
     grandfathered modules in `docs/architecture/module-size-baseline.json` may
     only shrink. Never add a baseline entry by hand — split the file instead.
+    Production lines exclude every `#[cfg(test)]` item and bare `mod x;`
+    declaration, so inline coverage is never penalised and splitting a module
+    never pushes its declaring file over the ratchet (ADR-0049).
 
 ## Evidence and status
 

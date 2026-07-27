@@ -10,7 +10,7 @@ covers:
   - crates/optimus-ops/src/cron.rs
   - crates/optimus-ops/src/gateway.rs
   - crates/optimus-kernel/src/session.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/src/native_workers.rs

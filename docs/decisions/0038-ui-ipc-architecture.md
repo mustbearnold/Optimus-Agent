@@ -7,7 +7,7 @@ covers:
   - apps/optimus-electron/main.cjs
   - apps/optimus-electron/preload.cjs
   - apps/optimus-ui/src/ipc/contracts.ts
-  - apps/optimus-desktop/src/ipc/router.rs
+  - crates/optimus-host/src/router.rs
   - scripts/rebuild-install-relaunch.sh
 depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md

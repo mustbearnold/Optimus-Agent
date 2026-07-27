@@ -18,11 +18,11 @@ use uuid::Uuid;
 
 use optimus_kernel::CancellationToken;
 
-use crate::ipc::{
+use crate::UserEvent;
+use optimus_host::{
     auth_status_json, doctor_json, handle_ipc, sessions_json, stream_delivery_control,
     stream_event_to_json, IpcReply,
 };
-use crate::UserEvent;
 
 const IPC_QUEUE_CAPACITY: usize = 64;
 const CHAT_QUEUE_CAPACITY: usize = 8;
@@ -290,7 +290,7 @@ fn run_chat_worker(
                         proxy.send_event(UserEvent::Stream { id, payload }).is_ok(),
                     )
                 };
-                let result = crate::ipc::chat_turn_cancellable(
+                let result = optimus_host::chat_turn_cancellable(
                     &home,
                     params,
                     Some(&mut on_event),

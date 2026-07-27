@@ -7,6 +7,7 @@
 //! loop that drives it.
 
 use super::*;
+use std::time::Instant;
 
 impl Kernel {
     pub(crate) fn begin_execution_manifest(
@@ -127,7 +128,18 @@ impl Kernel {
         turn_started: Instant,
         timings: &mut TimingAccumulator,
     ) -> Result<TurnResult> {
-        let mut steps = 0u32;
+        // Zero for a fresh turn, so it starts at step 1 as it always has. A turn
+        // resuming after an approval reuses its manifest, and counting on from
+        // the steps already recorded keeps `execution_model_calls` — keyed on
+        // `(manifest_id, step)` — collision-free, and keeps `max_steps` spanning
+        // the whole turn rather than resetting across the pause (ADR-0046).
+        let mut steps = self
+            .executions
+            .list_model_calls(execution.manifest_id)?
+            .iter()
+            .map(|call| call.step)
+            .max()
+            .unwrap_or(0);
         let mut tool_trace = Vec::new();
         let mut invoked_tools = Vec::new();
         let mut compressed = false;
@@ -636,4 +648,8 @@ impl Kernel {
             });
         }
     }
+}
+
+pub(crate) fn elapsed_ms(started: Instant) -> u64 {
+    started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64
 }

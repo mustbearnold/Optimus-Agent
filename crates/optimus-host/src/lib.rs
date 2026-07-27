@@ -1,10 +1,16 @@
-//! Shared IPC facade for WebView and HTTP modes.
+//! Agent host: the exact IPC method registry and domain dispatch that every
+//! Optimus surface speaks (ADR-0045).
+//!
+//! Extracted from `crates/optimus-host/src/` so a TUI or CLI can reach the
+//! contract without depending on a desktop binary. `handle_ipc` is a pure
+//! function of home + method + params, so it is transport-agnostic.
 
 mod chat;
 mod consoles;
 mod contract;
 mod extensibility;
 mod files;
+mod home;
 mod messaging;
 mod os;
 mod router;
@@ -13,14 +19,16 @@ mod scheduling;
 mod sessions;
 mod system;
 
-pub(crate) use chat::{
-    chat_turn, chat_turn_cancellable, stream_delivery_control, stream_event_to_json,
+pub use chat::{
+    chat_approval_resolve, chat_approval_resolve_cancellable, chat_turn, chat_turn_cancellable,
+    stream_delivery_control, stream_event_to_json,
 };
-pub(crate) use contract::{IpcEnvelope, IpcReply};
-pub(crate) use os::pick_folder_dialog;
-pub(crate) use router::handle_ipc;
-pub(crate) use sessions::sessions_json;
-pub(crate) use system::{auth_status_json, doctor_json};
+pub use contract::{IpcEnvelope, IpcReply};
+pub use home::resolve_home;
+pub use os::pick_folder_dialog;
+pub use router::handle_ipc;
+pub use sessions::sessions_json;
+pub use system::{auth_status_json, doctor_json};
 
 #[cfg(test)]
 mod tests {

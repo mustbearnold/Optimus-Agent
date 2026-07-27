@@ -64,6 +64,12 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0038 | UI IPC architecture completeness (P15) | Accepted | Matrix 100% host classification; expanded critical invokes; preview sandbox tests; UI **S+++**. |
 | 0039 | Files-mutate effect taxonomy (program P22) | Accepted | Mkdir/Delete/Rename/Patch (+ Project*); SmartDeny high-risk; single Work Graph plane. |
 | 0040 | SharedBrowserContract (program P23) | Accepted | Dual trust domains (UserPreview vs AgentEffector); host coordination bus; supersedes ADR-0015 shared-session claim. |
+| 0044 | Bounded project trust + capability broker (program P30) | Accepted | `optimus-policy` broker; Standard auto-authorize with exact receipts; autonomy ≠ containment. |
+| 0045 | Agent host + surface transports (TUI hub) | Proposed | Registry moves to `optimus-host`; stdio for TUI, loopback HTTP for Electron; attach before spawn. |
+| 0046 | Approving an exact action resumes the turn | Proposed | Settlement stops being terminal; tool result carries the receipt body; the approved call is still never regenerated. |
+| 0047 | A turn's step budget is 32 model round trips | Proposed | Default `max_steps` 8 → 32; approval round trips consume the budget, so 8 starved ordinary turns. |
+| 0048 | Context and page-result budgets are sized for tools, not for chat | Proposed | History 48k → 200k chars, a bound on results the tail cannot exempt, and a page budget split between text and links at run time. |
+| 0049 | The module-size law is measured honestly, and does not tax splitting | Proposed | Every `#[cfg(test)]` item is skipped, not just everything after the first; bare `mod x;` declarations do not count. |
 
 ## Known documentary debt
 

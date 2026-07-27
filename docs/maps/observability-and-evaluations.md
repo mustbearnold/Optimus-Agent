@@ -16,7 +16,7 @@ owns:
   - scripts/check-observability-gate.py
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/src/native_workers.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/ui/app.js
@@ -42,7 +42,7 @@ covers:
   - scripts/check-observability-gate.py
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/src/native_workers.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/ui/app.js

@@ -13,15 +13,15 @@ owns:
   - crates/optimus-packs/src/lib.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/server.rs
-  - apps/optimus-desktop/src/ipc/router.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
-  - apps/optimus-desktop/src/ipc/runtime_ops.rs
+  - crates/optimus-host/src/router.rs
+  - crates/optimus-host/src/chat.rs
+  - crates/optimus-host/src/runtime_ops.rs
   - apps/optimus-cli/src/gateway_http.rs
 watches:
   - crates/optimus-graph/src/**
   - crates/optimus-runtime/src/**
   - crates/optimus-packs/src/**
-  - apps/optimus-desktop/src/ipc/**
+  - crates/optimus-host/src/**
 covers:
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
@@ -34,9 +34,9 @@ covers:
   - crates/optimus-packs/src/lib.rs
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/server.rs
-  - apps/optimus-desktop/src/ipc/router.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
-  - apps/optimus-desktop/src/ipc/runtime_ops.rs
+  - crates/optimus-host/src/router.rs
+  - crates/optimus-host/src/chat.rs
+  - crates/optimus-host/src/runtime_ops.rs
   - apps/optimus-cli/src/gateway_http.rs
 depends_on:
   - docs/decisions/0003-phase1-policy-budgets.md

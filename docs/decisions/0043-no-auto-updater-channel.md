@@ -3,13 +3,13 @@ knowledge_type: decision
 status: current
 covers:
   - scripts/rebuild-install-relaunch.sh
-  - apps/optimus-desktop/src/ipc/system.rs
+  - crates/optimus-host/src/system.rs
   - docs/architecture/desktop-install-relaunch.md
 depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md
   - docs/decisions/0038-ui-ipc-architecture.md
 validated_by:
-  - apps/optimus-desktop/src/ipc/system.rs
+  - crates/optimus-host/src/system.rs
   - docs/architecture/product-complete-p29-verification.md
 last_verified_commit: null
 ---
