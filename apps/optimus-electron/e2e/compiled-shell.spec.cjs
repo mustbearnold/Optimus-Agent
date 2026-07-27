@@ -3,6 +3,7 @@ const fs = require('fs');
 const http = require('http');
 const net = require('net');
 const path = require('path');
+const { electronLaunchArgs } = require('./support/workbench-flow.cjs');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const ELECTRON_DIR = path.join(ROOT, 'apps', 'optimus-electron');
@@ -59,7 +60,7 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
   try {
     const { ELECTRON_RUN_AS_NODE: _electronRunAsNode, ...launchEnvironment } = process.env;
     application = await electron.launch({
-      args: [ELECTRON_DIR],
+      args: electronLaunchArgs(ELECTRON_DIR),
       cwd: ELECTRON_DIR,
       env: {
         ...launchEnvironment,
