@@ -69,6 +69,7 @@ space**, or match the `namespace:value` suffix.
 | `risk:` | Blast radius | `🔐 risk:security`, `📀 risk:data` | as applicable |
 | `program:` | Initiative | `🏆 program:s+++`, `⚖️ program:parity` | when relevant |
 | `process:` | Meta process | `📋 process:adr`, `🔄 process:em-refresh` | as applicable |
+| `wayfinder:` | Wayfinder map/ticket kind | `🗺️ wayfinder:map`, `🔥 wayfinder:grilling` | issues; **one** per wayfinder issue |
 
 ### Emoji legend (quick)
 
@@ -77,6 +78,7 @@ space**, or match the `namespace:value` suffix.
 | **type** | 🐛 bug · ✨ feat · 🔧 fix · ♻️ refactor · 📝 docs · ✅ test · 🧹 chore · ⚙️ ci · ⚡ perf · 🔒 security · 🏗️ architecture |
 | **area** | 🧠 kernel · 🔁 runtime · 🤖 agent · 🔀 workflow · 📦 artifacts · 🧩 memory · 🎯 skills · 📚 packs · 💾 store · 🛰️ ops · 📊 eval · 💻 cli · 🖥️ desktop · 🎨 ui · 🌐 browser · 🛡️ security · 📖 docs · 🧬 em · 🏭 ci |
 | **priority** | 🚨 p0 · 🔥 p1 · ⚠️ p2 · ⬇️ p3 |
+| **wayfinder** | 🗺️ map · 🔍 research · 🧪 prototype · 🔥 grilling · 🔧 task |
 | **status** | 🔍 triage · 🟢 ready · 🚧 in-progress · ⛔ blocked · 👀 needs-review · ✏️ changes-requested · ✔️ approved · 🚫 do-not-merge |
 | **size** | ▫️ XS · ▪️ S · ◾ M · ⬛ L · 🟪 XL |
 | **risk** | 💥 breaking · 🔐 security · 📀 data · 🍃 low |

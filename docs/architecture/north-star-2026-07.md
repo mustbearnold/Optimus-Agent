@@ -6,7 +6,9 @@
 > [#59 wayfinder map](https://github.com/mustbearnold/Optimus-Agent/issues/59)
 > across issues #60–#66; each section links its deciding ticket. Measured
 > baseline: [capability-baseline-2026-07.md](./capability-baseline-2026-07.md)
-> at tree `14d8f39`.
+> at tree `14d8f39`. Claim status: statements about current behaviour are
+> **Confirmed** against that baseline; the success criteria and the ledger
+> transition are **Planned**.
 
 ## Thesis
 
@@ -43,12 +45,19 @@ Scoped to the interaction loop; the load-bearing moment is the **interrupt**.
   live process ([#66](https://github.com/mustbearnold/Optimus-Agent/issues/66)).
   This binds unscoped on every surface. General form: **latency is a surface
   property, capability is a contract property.**
-- Safety is bounded by project scope, not per-call prompts. Default posture is
-  **`Standard`**; `FullProject` rejected as default (allows by externality);
-  `/yolo` stays as break-glass.
+- **Going without asking on ordinary project work stays.** Safety is bounded by
+  project scope, not per-call prompts. Default posture is **`Standard`**;
+  `FullProject` rejected as default (allows by externality); `/yolo` stays as
+  break-glass. Known drift: the shipped `#[default] ReviewChanges` contradicts
+  ADR-0044 and is to be fixed, not documented around.
 - Dropped under default-deny: auto-skill-creation, per-turn schema resend (the
   latter already answered by progressive pack loading, which shipped —
   `PackBudgetConfig`, `activation_snapshot()`).
+
+"Feels like Hermes" is checkable, not vibes (#64's acceptance checks): an
+interrupted run leaves a durable partial turn; an ordinary session completes
+with zero approval cards; external, host, and credential effects still raise a
+card; no skill is ever created unasked.
 
 ## Surfaces
 
@@ -80,8 +89,8 @@ Decided in [#65](https://github.com/mustbearnold/Optimus-Agent/issues/65). An
 app in `apps/` may **name** core types but may not **construct or open** core
 state. The host is a library — `handle_ipc` already is embedded mode, so
 ADR-0045's "embedded mode" exception is withdrawn. `apps/optimus-cli`'s 6
-violations sit on a shrinking allowlist; a compile-time seal lands when it
-empties. A surface may serve the contract to another (desktop→Electron):
+violations sit on a shrinking allowlist; a compile-time seal is **revisited**
+once it empties (#65 adopted the ratchet now, not the seal). A surface may serve the contract to another (desktop→Electron):
 serving a transport is not owning the core.
 
 ## Success criteria
@@ -107,6 +116,10 @@ on observing Hermes. The guard against a self-authored bar is structural:
 C6 is the prerequisite: until it lands, C1–C5 are claims, and the platform rule
 claims no platforms at all. Sequence: C6 → C5 + C2 → ledger re-key → C1 + C3.
 
+C4 rider: the durable-partial-turn interrupt (#64) is a registry method and
+must appear in this matrix as reachable on **all four surfaces** — #66 binds it
+unscoped.
+
 **Not criteria** (and why): parity-plus surface (dies with the yardstick),
 learning loop (rejected by #61), memory (demoted — own ticket), economics (no
 baseline without Hermes; progressive loading already shipped), durability
@@ -130,6 +143,10 @@ able to shrink. `crates/optimus-eval/src/comparative.rs` and the
   embedded-mode exception, withdrawn by #65).
 - `CONTEXT.md` — still describes Phase 0; redrawn when the delivery-order
   ticket lands, not before.
+- `optimus-graph` — the widest contract in the workspace (8 consumers) at 537
+  lines. The baseline asked whether that is waist discipline or an under-built
+  centre; no ticket decided it, so the question is handed to the
+  delivery-order effort (#67) rather than answered here.
 
 ## Out of scope
 

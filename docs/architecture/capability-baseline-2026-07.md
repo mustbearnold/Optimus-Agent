@@ -10,10 +10,14 @@ which needs a real baseline before success criteria can be set.
 
 ## Headline
 
-**Three surfaces are declared; one is real.** The gap is not between crates that
-exist and crates that don't — every crate has a consumer. The gap is between
-`optimus-host`'s ~78 IPC handlers and the **8** of them the TUI actually calls.
-The capability is built; the face hasn't reached it.
+**The gap is the face, not the crates.** ([#62](https://github.com/mustbearnold/Optimus-Agent/issues/62)
+later ruled the product has **four surfaces** — terminal, desktop, gateway,
+cron; at measurement time only the terminal face was being built to
+near-perfection.) The gap is not between crates that exist and crates that
+don't — every crate has a consumer. The gap is between the **82 methods** in
+`optimus-host`'s IPC registry (match arms across `crates/optimus-host/src/*.rs`)
+and the **8** of them the TUI actually calls. The capability is built; the face
+hasn't reached it.
 
 ## The model-facing tool surface
 
@@ -56,8 +60,8 @@ search.
 
 **Cannot:** everything else `optimus-host` exposes. The TUI references only
 `approvals_release_yolo`, `providers_catalog`, `sessions`, `session`, `new`,
-`logs`, `providers`, `session_id` — against a host surface of roughly 78
-handlers including cron (6), gateway (7), artifacts (8), memory (4), campaigns
+`logs`, `providers`, `session_id` — against a host registry of 82 methods
+including cron (6), gateway (7), artifacts (8), memory (4), campaigns
 (4), packs (4), skills (3), MCP (2) and project scopes (2).
 
 Those subsystems are reachable, tested, and invisible from the surface being
