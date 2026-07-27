@@ -9,6 +9,16 @@ Rules:
   - optimus-artifacts must not depend on kernel/agent/workflow/eval
   - optimus-browser must not depend on optimus-kernel
   - no peeled crate may depend on apps/*
+
+Apps layer rule (#65, success criterion C5 in north-star-2026-07.md):
+  An app in apps/ may NAME core types but may not CONSTRUCT OR OPEN core
+  state — opening a session, a runtime, or a store is the host's job, reached
+  through `optimus_host::handle_ipc` or a pub host function. Enforced as a
+  grep for the core-state constructors over apps/**/*.rs, with a shrinking
+  allowlist seeded with the 6 sites measured in #65. Each conversion deletes
+  its entry; an entry the code no longer needs fails the gate until deleted
+  (the ratchet only tightens). Accepted limit per #65: this is a grep — it
+  defends against drift, not against an adversary.
 """
 
 from __future__ import annotations
@@ -19,6 +29,74 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CRATES = ROOT / "crates"
+APPS = ROOT / "apps"
+
+# Core-state constructors no app may call. Extend when a new way to open core
+# state appears; do NOT extend the allowlist below except by shrinking it.
+BANNED_CONSTRUCTORS = (
+    "Kernel::open_session",
+    "Runtime::open",
+    "Runtime::open_with_config",
+    "CampaignStore::open",
+)
+
+# (app-relative file, constructor) -> allowed occurrence count.
+# Seeded 2026-07-28 from #65's measured violation table; may only shrink.
+APPS_ALLOWLIST: dict[tuple[str, str], int] = {
+    # chat-offline (main.rs:700), chat (main.rs:757), gateway drain (main.rs:1585)
+    ("optimus-cli/src/main.rs", "Kernel::open_session"): 3,
+    # gateway HTTP server
+    ("optimus-cli/src/gateway_http.rs", "Kernel::open_session"): 1,
+    # jobs / resume / resume-all
+    ("optimus-cli/src/runtime_open.rs", "Runtime::open"): 1,
+    ("optimus-cli/src/runtime_open.rs", "Runtime::open_with_config"): 1,
+    # campaign
+    ("optimus-cli/src/main.rs", "CampaignStore::open"): 1,
+}
+
+SKIP_DIR_NAMES = {"node_modules", "target", "dist", "build", "e2e", "test-results"}
+
+
+def app_rust_files() -> list[Path]:
+    out: list[Path] = []
+    for path in sorted(APPS.rglob("*.rs")):
+        if any(part in SKIP_DIR_NAMES for part in path.parts):
+            continue
+        out.append(path)
+    return out
+
+
+def check_apps_layer(errors: list[str]) -> dict[tuple[str, str], int]:
+    counts: dict[tuple[str, str], int] = {}
+    for path in app_rust_files():
+        rel = path.relative_to(APPS).as_posix()
+        text = path.read_text(encoding="utf-8")
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("//"):
+                continue
+            for ctor in BANNED_CONSTRUCTORS:
+                # Require a call site; `Runtime::open` must not match
+                # `Runtime::open_with_config`.
+                if re.search(rf"\b{re.escape(ctor)}\s*\(", stripped):
+                    counts[(rel, ctor)] = counts.get((rel, ctor), 0) + 1
+    for key, found in sorted(counts.items()):
+        allowed = APPS_ALLOWLIST.get(key, 0)
+        if found > allowed:
+            rel, ctor = key
+            errors.append(
+                f"apps/{rel}: {found} call(s) to {ctor}, allowlist permits {allowed} — "
+                "apps may not open core state; go through optimus-host"
+            )
+    for key, allowed in sorted(APPS_ALLOWLIST.items()):
+        found = counts.get(key, 0)
+        if found < allowed:
+            rel, ctor = key
+            errors.append(
+                f"stale allowlist entry: apps/{rel} has {found} call(s) to {ctor} "
+                f"but the allowlist still permits {allowed} — shrink APPS_ALLOWLIST"
+            )
+    return counts
 
 
 def deps_of(crate: str) -> set[str]:
@@ -86,6 +164,8 @@ def main() -> int:
     )
     forbid("optimus-eval", {"optimus-ops"})  # eval may use kernel only among control peels
 
+    check_apps_layer(errors)
+
     # Required edges that define the peel graph
     agent_deps = deps_of("optimus-agent")
     if "optimus-runtime" not in agent_deps or "optimus-packs" not in agent_deps:
@@ -115,6 +195,11 @@ def main() -> int:
     print(f"  optimus-workflow -> {sorted(deps_of('optimus-workflow'))}")
     print(f"  optimus-artifacts -> {sorted(deps_of('optimus-artifacts'))}")
     print(f"  optimus-kernel -> {sorted(deps_of('optimus-kernel'))}")
+    remaining = sum(APPS_ALLOWLIST.values())
+    print(
+        f"  apps-layer: {remaining} allowlisted core-state call(s) remaining "
+        f"across {len(APPS_ALLOWLIST)} allowlist entries (C5 target: 0)"
+    )
     return 0
 
 
