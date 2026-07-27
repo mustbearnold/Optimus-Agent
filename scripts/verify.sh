@@ -166,6 +166,7 @@ tier_gates() {
   spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
+  spawn "project-bleed"              python3 scripts/check-project-bleed.py
   spawn "observability"              python3 scripts/check-observability-gate.py
   spawn "module-size"                python3 scripts/check-module-size.py
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
@@ -305,6 +306,7 @@ tier_all() {
   spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
+  spawn "project-bleed"              python3 scripts/check-project-bleed.py
   spawn "observability"              python3 scripts/check-observability-gate.py
   spawn "module-size"                python3 scripts/check-module-size.py
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
