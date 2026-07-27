@@ -1,6 +1,7 @@
 //! Optimus desktop shell — native Wry webview, HTTP host (Playwright / Electron).
 
 mod bridge;
+mod host_runtime;
 mod native_workers;
 mod preview_embed;
 mod server;
@@ -153,6 +154,16 @@ fn main() -> wry::Result<()> {
             }
         });
         if cli.host_only {
+            // One core per home (C3): a healthy host already serving this
+            // home means the caller should have attached, not spawned.
+            if let Some(served_port) = host_runtime::healthy_serving_port(&home) {
+                eprintln!(
+                    "[optimus-desktop] refusing second core: home {} is already served by a \
+                     healthy host on 127.0.0.1:{served_port} — probe and attach (C3)",
+                    home.display()
+                );
+                std::process::exit(3);
+            }
             eprintln!("[optimus-desktop] host-only mode on 127.0.0.1:{port}");
             // Electron parent reads this line to pair Authorization.
             eprintln!("[optimus-desktop] OPTIMUS_HTTP_TOKEN={token}");
@@ -165,7 +176,7 @@ fn main() -> wry::Result<()> {
             }
         };
         let html = inject_bridge(&ui::render_html());
-        if let Err(e) = run_http_server(home, port, html, security) {
+        if let Err(e) = run_http_server(home, port, html, security, cli.host_only) {
             eprintln!("[optimus-desktop] http server error: {e}");
             std::process::exit(1);
         }
