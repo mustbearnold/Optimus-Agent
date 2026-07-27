@@ -228,7 +228,9 @@ electron_e2e_command() {
   if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
     printf 'npx playwright test'
   elif command -v xvfb-run >/dev/null 2>&1; then
-    printf 'xvfb-run -a npx playwright test'
+    # xvfb-run's default server is 640x480x8 — too small for the workbench
+    # window, so layout assertions (execution dock height) fail headless.
+    printf 'xvfb-run -a -s "-screen 0 1920x1080x24" npx playwright test'
   else
     printf ''
   fi
@@ -378,6 +380,15 @@ printf '\n'
 
 if [ "${#FAILED[@]}" -gt 0 ]; then
   printf '\n  failed: %s\n\n' "${FAILED[*]}"
+  exit 1
+fi
+
+# Skip-is-failure mode (success criterion C6, north-star-2026-07.md). Locally a
+# skip is a nudge to install a dev dependency; on a bare CI runner it is a gate
+# silently not running — green with silent skips is exactly the self-serving
+# shape the criteria ban. CI sets OPTIMUS_VERIFY_FORBID_SKIPS=1.
+if [ -n "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ] && [ "${#SKIPPED[@]}" -gt 0 ]; then
+  printf '\n  skipped (forbidden by OPTIMUS_VERIFY_FORBID_SKIPS): %s\n\n' "${SKIPPED[*]}"
   exit 1
 fi
 printf '\n'
