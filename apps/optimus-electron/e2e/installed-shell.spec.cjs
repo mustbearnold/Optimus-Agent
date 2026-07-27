@@ -2,6 +2,7 @@ const { test, expect, _electron: electron } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 const {
+  electronLaunchArgs,
   launchEnvironment,
   offlineWorkbenchFlow,
   reservePort,
@@ -32,6 +33,7 @@ test('installed Electron shell completes and restores an offline session', async
   let application;
   try {
     application = await electron.launch({
+      args: electronLaunchArgs(),
       executablePath: INSTALLED_ELECTRON,
       cwd: INSTALL_ROOT,
       env: {

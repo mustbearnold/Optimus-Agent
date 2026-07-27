@@ -29,6 +29,15 @@ function launchEnvironment() {
   return rest;
 }
 
+// Chromium's ozone auto-selection connects to the Wayland compositor whenever
+// its socket is reachable — even under Xvfb with WAYLAND_DISPLAY unset — and a
+// locked or idle compositor then stalls browser-process init before `ready`,
+// timing the suite out with no output. Pinning X11 keeps the launch
+// deterministic on developer sessions and identical to the Xvfb-backed runner.
+function electronLaunchArgs(...args) {
+  return [...args, '--ozone-platform=x11'];
+}
+
 async function workbenchWindow(application) {
   await expect
     .poll(() => application.windows().map((candidate) => candidate.url()))
@@ -160,6 +169,7 @@ async function offlineWorkbenchFlow(page, options) {
 }
 
 module.exports = {
+  electronLaunchArgs,
   launchEnvironment,
   offlineWorkbenchFlow,
   reservePort,

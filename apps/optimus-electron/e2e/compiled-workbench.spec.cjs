@@ -2,6 +2,7 @@ const { test, _electron: electron } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 const {
+  electronLaunchArgs,
   launchEnvironment,
   offlineWorkbenchFlow,
   reservePort,
@@ -25,7 +26,7 @@ test('compiled Electron workbench completes and restores an offline session', as
   let application;
   try {
     application = await electron.launch({
-      args: [ELECTRON_DIR],
+      args: electronLaunchArgs(ELECTRON_DIR),
       cwd: ELECTRON_DIR,
       env: {
         ...launchEnvironment(),
