@@ -188,3 +188,35 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
   `docs/contributing/github-conventions.md`; do not invent alternate schemes.
 - New reusable procedures belong in a focused repository skill. Keep this file
   concise.
+
+## Agent skills
+
+The `mattpocock-skills` plugin supplies the engineering workflow skills. Its
+per-repo configuration lives in `docs/agents/` and is committed — these files are
+read by `to-tickets`, `triage`, `to-spec`, `wayfinder`, `domain-modeling` and
+`code-review`. Edit them directly rather than re-running
+`/setup-matt-pocock-skills`.
+
+The plugin itself installs per machine, not per clone:
+
+```
+claude plugin marketplace add mattpocock/skills
+claude plugin install mattpocock-skills@mattpocock
+```
+
+### Issue tracker
+
+GitHub issues on `mustbearnold/Optimus-Agent`, via the `gh` CLI. The two-plane
+branch rule and "never push unless asked" (rule 12) override any skill that ends
+in a push. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, each label string equal to its name. See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md`, with ADRs in **`docs/decisions/`** rather
+than the skills' default `docs/adr/`. ADR front matter is mandatory. See
+`docs/agents/domain.md`.
