@@ -1,6 +1,6 @@
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
-Updated: 2026-07-26 · P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty+native-cua partial
+Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
@@ -13,18 +13,18 @@ install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  
 **Validator:** `python scripts/check-parity-ledger.py`  
-**Rule:** executable current-repository evidence outranks architecture blueprints and historical phase prose. A `parity` or `win` row requires both an existing evidence path and a named trajectory.
-**Release-version gate:** `docs/architecture/optimus-version.json` plus `python scripts/optimus_version.py gate`. The 51 rows below are a planning rollup, not sufficient for a product-level Hermes parity claim. The strict v0.19.0 baseline contains 2,063 per-feature contracts.
+**Rule:** executable current-repository evidence outranks architecture blueprints and historical phase prose. A `parity` or `win` row requires an existing evidence path; every row's trajectory is either runnable (`cargo:`/`playwright:`, resolved to a real target by the validator) or pinned on the validator's shrink-only unclassified list.
+**Release-version gate:** `docs/architecture/optimus-version.json` plus `python scripts/optimus_version.py gate`. The 50 rows below are a planning rollup, not sufficient for a product-level Hermes parity claim. The strict v0.19.0 baseline contains 2,063 per-feature contracts.
 
 ## Current ledger summary
 
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 43 | A bounded Hermes-equivalent capability has current executable evidence |
+| **parity** | 42 | A bounded Hermes-equivalent capability has current executable evidence |
 | **partial** | 4 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
 | **missing** | 0 | No complete executable path exists yet |
-| **total** | 51 | Capability rows tracked by the executable ledger |
+| **total** | 50 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
 

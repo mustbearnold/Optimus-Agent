@@ -4,14 +4,10 @@
 //! evidence types. The kernel does **not** depend on this crate (no cycle).
 //! Operator CLI and evaluation tests should import from `optimus_eval`.
 
-mod comparative;
 mod eval;
 mod evaluation;
 mod replay;
 
-pub use comparative::{
-    run_comparative_offline_scenario, ComparativeReport, ComparativeScenarioResult,
-};
 pub use eval::{
     builtin_suite, evaluate_integrity_observations, run_case, run_offline_integrity_suite,
     run_offline_trajectory_suite, run_suite, EvalCase, EvalCaseResult, EvalReport,
