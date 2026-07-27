@@ -7,9 +7,11 @@
 # without a CI job that builds it") — this job is what makes Linux claimed.
 name: verify
 
+# push covers main (post-merge proof); pull_request covers every wip/** head —
+# both triggers on wip branches would run each SHA twice for nothing.
 on:
   push:
-    branches: [main, "wip/**"]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -26,6 +28,16 @@ jobs:
       OPTIMUS_VERIFY_FORBID_SKIPS: "1"
     steps:
       - uses: actions/checkout@v4
+
+      # Native build inputs verify.sh assumes on a dev box: gtk/webkit for the
+      # wry+tao desktop shell, dbus for libdbus-sys, bubblewrap (bwrap) for the
+      # installer sandbox self-test, xvfb for headless Electron e2e.
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libsoup-3.0-dev \
+            libdbus-1-dev bubblewrap xvfb
 
       # rustup reads rust-toolchain.toml (1.97.1 + rustfmt + clippy) on first
       # cargo invocation; `rustup show` forces the install up front so the

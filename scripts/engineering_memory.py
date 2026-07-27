@@ -69,6 +69,10 @@ COMMANDS = (
 # unsatisfiable: run tests -> artifacts appear -> EM stale -> gate fails.
 EXCLUDED_PARTS = {
     ".git",
+    # Runtime home: session/memory/skill DBs and logs, gitignored (/.optimus/).
+    # Hashing it made the staleness gate unsatisfiable on any clean clone — CI
+    # has no .optimus, so every baseline generated locally read as stale there.
+    ".optimus",
     # Agent tooling keeps full repo copies under .claude/worktrees. Hashing them
     # made 65.8% of the tree agent scratch: every worktree touch marked the whole
     # subsystem stale, and the walk cost ~2.9x what the real source costs.
@@ -137,7 +141,12 @@ class MemoryError(RuntimeError):
 
 
 def relative(path: Path) -> str:
-    return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    # Lexical normalisation only — resolve() follows symlinks, which files a
+    # committed symlink (CLAUDE.md -> AGENTS.md) under its target's path on
+    # symlink-capable checkouts and under its own path everywhere else, making
+    # the staleness baseline checkout-dependent.
+    absolute = path if path.is_absolute() else ROOT / path
+    return os.path.relpath(os.path.normpath(str(absolute)), str(ROOT)).replace(os.sep, "/")
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -145,6 +154,14 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def canonical_file_bytes(path: Path) -> bytes:
+    # Hash symlinks by their target string — git's own storage model. Following
+    # the link makes the hash depend on how the checkout materialised it: a
+    # clone with core.symlinks=false writes a regular file holding the target
+    # path, while a symlink-capable checkout resolves to the target's content.
+    # CLAUDE.md (-> AGENTS.md) made the staleness gate fail on every clean
+    # clone for exactly this reason.
+    if path.is_symlink():
+        return os.readlink(path).encode("utf-8")
     data = path.read_bytes()
     try:
         text = data.decode("utf-8")
