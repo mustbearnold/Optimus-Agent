@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "optimus-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/optimus-ui", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "optimus-desktop-http",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": [
+        "run",
+        "-p",
+        "optimus-desktop",
+        "--",
+        "--http",
+        "8787",
+        "--development-http",
+        "--home",
+        "local/tmp/preview-home"
+      ],
+      "port": 8787
+    }
+  ]
+}

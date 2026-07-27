@@ -4,7 +4,7 @@ status: historical
 covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-desktop/src/native_workers.rs
   - apps/optimus-desktop/src/server.rs
 depends_on:

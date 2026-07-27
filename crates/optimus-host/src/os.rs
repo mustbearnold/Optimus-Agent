@@ -49,7 +49,7 @@ pub(super) fn handle(
 }
 
 /// Native folder picker (main-thread). HTTP mode uses [`pick_folder`] stub.
-pub(crate) fn pick_folder_dialog(home: &PathBuf) -> Result<serde_json::Value, String> {
+pub fn pick_folder_dialog(home: &PathBuf) -> Result<serde_json::Value, String> {
     let picked = rfd::FileDialog::new()
         .set_title("Authorize project folder")
         .pick_folder();

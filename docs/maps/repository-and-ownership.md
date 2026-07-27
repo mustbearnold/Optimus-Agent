@@ -3,6 +3,9 @@ knowledge_type: repository-map
 status: current
 owns:
   - Cargo.toml
+  - apps/optimus-tui/Cargo.toml
+  - crates/optimus-host/Cargo.toml
+  - crates/optimus-policy/Cargo.toml
   - apps/optimus-cli/Cargo.toml
   - apps/optimus-desktop/Cargo.toml
   - crates/optimus-browser/Cargo.toml
@@ -23,6 +26,9 @@ watches:
   - crates/**/src/**
 covers:
   - Cargo.toml
+  - apps/optimus-tui/Cargo.toml
+  - crates/optimus-host/Cargo.toml
+  - crates/optimus-policy/Cargo.toml
   - apps/optimus-cli/Cargo.toml
   - apps/optimus-desktop/Cargo.toml
   - crates/optimus-browser/Cargo.toml
@@ -49,13 +55,14 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 
 ## Audit basis
 
-**Confirmed current behaviour (P16):** this is a Rust 2021 workspace with Rust
-1.85 as the declared minimum. `cargo metadata --no-deps` reports **fifteen**
+**Confirmed current behaviour:** this is a Rust 2021 workspace with Rust
+1.85 as the declared minimum. `cargo metadata --no-deps` reports **eighteen**
 workspace packages: libraries `optimus-store`, `optimus-graph`,
 `optimus-runtime`, `optimus-memory`, `optimus-skills`, `optimus-packs`,
 `optimus-ops`, `optimus-artifacts`, `optimus-agent`, `optimus-workflow`,
-`optimus-kernel`, `optimus-eval`, `optimus-browser`; applications `optimus-cli`
-and `optimus-desktop`. Electron (`apps/optimus-electron`) and React UI
+`optimus-kernel`, `optimus-eval`, `optimus-browser`, `optimus-policy`,
+`optimus-host`; applications `optimus-cli`, `optimus-desktop`, and
+`optimus-tui`. Electron (`apps/optimus-electron`) and React UI
 (`apps/optimus-ui`) are npm packages outside Cargo metadata but are the default
 desktop shell.
 
@@ -73,7 +80,7 @@ the root Cargo workspace.
 |---|---|---|---|
 | `optimus-store` | library | SQLite Work Graph projections, approvals, ordered events | none |
 | `optimus-graph` | library | Job/node/effect domain and transition helpers | store |
-| `optimus-runtime` | library | Job execution, SmartDeny, process bounds/capture, crash resume, campaigns | graph, store, skills |
+| `optimus-runtime` | library | Job execution, SmartDeny, process bounds/capture, crash resume, campaigns | graph, store, skills, policy |
 | `optimus-memory` | library | Evidence-native runtime memory and temporal recall | none |
 | `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
 | `optimus-packs` | library | **Sole** `ToolDesc` / pack catalog, operational metadata, capability budgets | none |
@@ -84,6 +91,9 @@ the root Cargo workspace.
 | `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops; **no second tool catalog** | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
 | `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
 | `optimus-browser` | library | CDP browser backend (optional agent tools; not the Electron preview view) | (see crate Cargo.toml) |
+| `optimus-policy` | library | ADR-0044 autonomy profiles, capabilities, and the capability broker | none |
+| `optimus-host` | library | Exact IPC method registry and domain dispatch every surface speaks (ADR-0045) | kernel, packs, runtime, graph |
+| `optimus-tui` | binary | Terminal face over the linked-in agent host: streamed turns, provider picker, exact approval resolution | host, kernel |
 | `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
 | `optimus-desktop` | binary | Rust host (`--host-only` for Electron) + Legacy Wry shell, native IPC, HTTP test harness | kernel, graph, runtime, packs |
 | `apps/optimus-electron` | npm app | Default Electron shell, preload, preview `WebContentsView` | host IPC |
@@ -107,6 +117,14 @@ the root Cargo workspace.
 
 ## Application surfaces
 
+### TUI
+
+**Confirmed current behaviour:** bare `optimus` (no subcommand) opens the
+`optimus-tui` terminal face against the chosen home. Turns run through
+`optimus_host::chat_turn_cancellable` on a worker thread with streamed text,
+footer tool status, cancellation, provider pick/connect, transcript scrolling,
+and in-transcript exact approval resolution via `chat_approval_resolve`.
+
 ### CLI
 
 **Confirmed current behaviour:** commands cover doctor, demo/resume, skills,
@@ -119,8 +137,9 @@ jobs, gateway, built-in eval, and campaigns.
 and WebView2 on Windows. It serves one inline UI document through Wry IPC at the
 platform custom-protocol URL (`optimus://localhost/` on Linux and
 `http://optimus.localhost/` on Windows). A separate loopback HTTP mode exists for
-Playwright and browser testing. IPC ownership is split into system, sessions,
-scheduling, runtime, files, chat, and OS modules. Linux user installation and
+Playwright and browser testing. The IPC method registry and its domain modules
+(system, sessions, scheduling, runtime, files, chat, OS) now live in
+`crates/optimus-host` (ADR-0045); the desktop binary is a transport over them. Linux user installation and
 desktop registration are owned by `scripts/rebuild-install-relaunch.sh` and the
 XDG data/bin/application/icon locations it manages.
 

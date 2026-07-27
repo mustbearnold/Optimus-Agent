@@ -4,8 +4,8 @@ status: draft
 covers:
   - apps/optimus-desktop/ui/index.html
   - apps/optimus-desktop/src/bridge.rs
-  - apps/optimus-desktop/src/ipc/router.rs
-  - apps/optimus-desktop/src/ipc/runtime_ops.rs
+  - crates/optimus-host/src/router.rs
+  - crates/optimus-host/src/runtime_ops.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-kernel/src/lib.rs
 depends_on:

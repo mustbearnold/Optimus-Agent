@@ -11,8 +11,8 @@ depends_on:
 validated_by:
   - crates/optimus-artifacts/src/lib.rs
   - crates/optimus-ops/src/cron.rs
-  - apps/optimus-desktop/src/ipc/files.rs
-  - apps/optimus-desktop/src/ipc/scheduling.rs
+  - crates/optimus-host/src/files.rs
+  - crates/optimus-host/src/scheduling.rs
   - apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx
   - apps/optimus-ui/src/components/cron/CronWorkbench.tsx
   - scripts/check-desktop-ipc-matrix.py

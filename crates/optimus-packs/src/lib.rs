@@ -412,6 +412,13 @@ fn validate_sha256(value: &str) -> std::result::Result<(), String> {
     Ok(())
 }
 
+mod invocation;
+
+pub use invocation::{
+    ToolCancellation, ToolIdempotency, ToolInvocation, ToolObservability, ToolOperations,
+    ToolRetry, ToolTimeout,
+};
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolPolicy {
@@ -427,196 +434,6 @@ pub enum ToolPolicy {
     Desktop,
     Media,
     NetworkWrite,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "snake_case")]
-pub enum ToolInvocation {
-    ReadFile,
-    WriteFile,
-    Mkdir,
-    DeletePath,
-    RenamePath,
-    PatchFile,
-    Terminal,
-    WebSearch,
-    MemoryRecall,
-    SkillResolve,
-    ActivatePack,
-    BrowserNavigate,
-    BrowserSnapshot,
-    BrowserClick,
-    Unavailable,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ToolRetry {
-    Never,
-    Bounded { max_attempts: u8 },
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ToolIdempotency {
-    None,
-    Keyed,
-    Convergent,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ToolTimeout {
-    CallerBounded,
-    FixedMillis(u64),
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ToolCancellation {
-    Unsupported,
-    Cooperative,
-    Terminal,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ToolObservability {
-    pub call_identity: bool,
-    pub trace_span: bool,
-    pub effect_provenance: bool,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ToolOperations {
-    pub retry: ToolRetry,
-    pub idempotency: ToolIdempotency,
-    pub timeout: ToolTimeout,
-    pub cancellation: ToolCancellation,
-    pub observability: ToolObservability,
-}
-
-impl ToolInvocation {
-    /// Every invocation the kernel may dispatch (excludes placeholder `Unavailable`).
-    ///
-    /// Catalog construction and domain-modularity tests must stay closed over this
-    /// set: advertised available tools ≡ handlers, no orphan dispatch arms.
-    pub const ALL_DISPATCHABLE: &'static [ToolInvocation] = &[
-        Self::ReadFile,
-        Self::WriteFile,
-        Self::Mkdir,
-        Self::DeletePath,
-        Self::RenamePath,
-        Self::PatchFile,
-        Self::Terminal,
-        Self::WebSearch,
-        Self::MemoryRecall,
-        Self::SkillResolve,
-        Self::ActivatePack,
-        Self::BrowserNavigate,
-        Self::BrowserSnapshot,
-        Self::BrowserClick,
-    ];
-
-    pub fn canonical_id(self) -> Option<&'static str> {
-        self.id()
-    }
-
-    fn id(self) -> Option<&'static str> {
-        match self {
-            Self::ReadFile => Some("read_file"),
-            Self::WriteFile => Some("write_file"),
-            Self::Mkdir => Some("mkdir"),
-            Self::DeletePath => Some("delete_path"),
-            Self::RenamePath => Some("rename_path"),
-            Self::PatchFile => Some("patch_file"),
-            Self::Terminal => Some("terminal"),
-            Self::WebSearch => Some("web_search"),
-            Self::MemoryRecall => Some("memory_recall"),
-            Self::SkillResolve => Some("skill_resolve"),
-            Self::ActivatePack => Some("activate_pack"),
-            Self::BrowserNavigate => Some("browser_navigate"),
-            Self::BrowserSnapshot => Some("browser_snapshot"),
-            Self::BrowserClick => Some("browser_click"),
-            Self::Unavailable => None,
-        }
-    }
-
-    fn policy(self) -> Option<ToolPolicy> {
-        match self {
-            Self::ReadFile => Some(ToolPolicy::WorkspaceRead),
-            // One arm per variant so Engineering Memory can parse ToolPolicy maps.
-            Self::WriteFile => Some(ToolPolicy::WorkspaceWrite),
-            Self::Mkdir => Some(ToolPolicy::WorkspaceWrite),
-            Self::DeletePath => Some(ToolPolicy::WorkspaceWrite),
-            Self::RenamePath => Some(ToolPolicy::WorkspaceWrite),
-            Self::PatchFile => Some(ToolPolicy::WorkspaceWrite),
-            Self::Terminal => Some(ToolPolicy::Process),
-            Self::WebSearch => Some(ToolPolicy::NetworkRead),
-            Self::MemoryRecall => Some(ToolPolicy::MemoryRead),
-            Self::SkillResolve => Some(ToolPolicy::SkillRead),
-            Self::ActivatePack => Some(ToolPolicy::Capability),
-            Self::BrowserNavigate => Some(ToolPolicy::Browser),
-            Self::BrowserSnapshot => Some(ToolPolicy::Browser),
-            Self::BrowserClick => Some(ToolPolicy::Browser),
-            Self::Unavailable => None,
-        }
-    }
-
-    fn replay(self) -> ReplayClass {
-        match self {
-            Self::ReadFile
-            | Self::MemoryRecall
-            | Self::SkillResolve
-            | Self::ActivatePack
-            | Self::BrowserSnapshot
-            | Self::Unavailable => ReplayClass::Deterministic,
-            Self::WriteFile
-            | Self::Mkdir
-            | Self::DeletePath
-            | Self::RenamePath
-            | Self::PatchFile => ReplayClass::Convergent,
-            Self::Terminal | Self::WebSearch | Self::BrowserNavigate | Self::BrowserClick => {
-                ReplayClass::ExternalNondeterministic
-            }
-        }
-    }
-
-    fn operations(self) -> ToolOperations {
-        let replay = self.replay();
-        ToolOperations {
-            retry: ToolRetry::Never,
-            idempotency: match replay {
-                ReplayClass::Deterministic | ReplayClass::FixtureReplayable => {
-                    ToolIdempotency::Keyed
-                }
-                ReplayClass::Convergent => ToolIdempotency::Convergent,
-                _ => ToolIdempotency::None,
-            },
-            timeout: ToolTimeout::CallerBounded,
-            cancellation: match self {
-                Self::WriteFile
-                | Self::Mkdir
-                | Self::DeletePath
-                | Self::RenamePath
-                | Self::PatchFile
-                | Self::Terminal => ToolCancellation::Terminal,
-                _ => ToolCancellation::Unsupported,
-            },
-            observability: ToolObservability {
-                call_identity: true,
-                trace_span: true,
-                effect_provenance: matches!(
-                    self,
-                    Self::WriteFile
-                        | Self::Mkdir
-                        | Self::DeletePath
-                        | Self::RenamePath
-                        | Self::PatchFile
-                        | Self::Terminal
-                ),
-            },
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -825,9 +642,53 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
             tools: vec![
                 tool(
                     ToolInvocation::ReadFile,
-                    "Read workspace file",
-                    120,
-                    object_schema(json!({"path":{"type":"string"}}), &["path"]),
+                    "Read a workspace file, optionally a line range",
+                    150,
+                    object_schema(
+                        json!({
+                            "path":{"type":"string"},
+                            "offset":{"type":"integer"},
+                            "limit":{"type":"integer"}
+                        }),
+                        &["path"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::SearchContent,
+                    "Search file contents by regular expression. Prefer this over \
+                     running grep or rg through the terminal",
+                    200,
+                    object_schema(
+                        json!({
+                            "pattern":{"type":"string"},
+                            "path":{"type":"string"},
+                            "glob":{"type":"string"},
+                            "case_sensitive":{"type":"boolean"},
+                            "max_results":{"type":"integer"}
+                        }),
+                        &["pattern"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::FindFiles,
+                    "Find files by glob pattern. Prefer this over running find or \
+                     fd through the terminal",
+                    140,
+                    object_schema(
+                        json!({
+                            "glob":{"type":"string"},
+                            "path":{"type":"string"},
+                            "max_results":{"type":"integer"}
+                        }),
+                        &["glob"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::ListDir,
+                    "List one workspace directory. Prefer this over running ls \
+                     through the terminal",
+                    100,
+                    object_schema(json!({"path":{"type":"string"}}), &[]),
                 ),
                 tool(
                     ToolInvocation::WriteFile,

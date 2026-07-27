@@ -3,8 +3,8 @@
 use optimus_kernel::{
     CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CompletionRequest,
     CompletionResponse, ExecutionStatus, ExecutionStore, Kernel, KernelConfig, KernelError,
-    ModelProvider, PolicyMode, ProjectAuthorityStore, ScriptedModel, SessionStore, StreamControl,
-    StreamEvent, TimingEventKind, ToolCall, ToolLifecyclePhase, TurnStatus,
+    ModelProvider, PolicyMode, ProjectAuthorityStore, Role, ScriptedModel, SessionStore,
+    StreamControl, StreamEvent, TimingEventKind, ToolCall, ToolLifecyclePhase, TurnStatus,
 };
 use optimus_packs::{PackError, ToolId, ToolOutcome, ToolOutcomeKind};
 use optimus_runtime::RuntimeError;
@@ -266,10 +266,18 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
         std::fs::read_to_string(project.path().join("src/proof.txt")).unwrap(),
         "safe"
     );
-    assert!(sessions.active_turn(kernel.session_id()).unwrap().is_none());
+    // Settling records the outcome and stops. The turn stays exactly as the
+    // loop parked it, so the request that provoked the approval can still be
+    // answered (ADR-0046).
+    let settled = sessions
+        .active_turn(kernel.session_id())
+        .unwrap()
+        .expect("settling an approval must not finish the turn");
+    assert_eq!(settled.status, TurnStatus::Running);
+    assert_eq!(settled.id, active.id);
     assert_eq!(
         executions.manifest(manifest_id).unwrap().status,
-        ExecutionStatus::Succeeded
+        ExecutionStatus::Running
     );
     let lifecycle = executions
         .tool_lifecycle_for_session(kernel.session_id())
@@ -292,13 +300,11 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
     let links = sessions.effect_links(kernel.session_id()).unwrap();
     assert_eq!(links.len(), 1);
     assert_eq!(links[0].effect_hash, binding.effect_sha256);
-    assert_eq!(
-        kernel
-            .messages
-            .last()
-            .map(|message| message.content.as_str()),
-        Some(resolution.assistant_receipt.as_str())
-    );
+    // The transcript ends on the tool result, with nothing written in the
+    // agent's voice about work the agent has not seen yet.
+    let settled_tail = kernel.messages.last().unwrap();
+    assert_eq!(settled_tail.role, Role::Tool);
+    assert_eq!(settled_tail.tool_call_id.as_deref(), Some("write-1"));
     assert!(kernel
         .resolve_chat_approval_exact(
             binding.run_id,
@@ -310,6 +316,112 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
             ChatApprovalDecision::Approve,
         )
         .is_err());
+
+    // Resuming answers the original request. The model is called again, sees
+    // the approved call's result, and it is the continuation — not settlement —
+    // that finishes the turn.
+    let mut answer = ScriptedModel::new(vec![CompletionResponse {
+        text: Some("Wrote src/proof.txt.".into()),
+        tool_calls: Vec::new(),
+    }]);
+    let resumed = kernel.resume_pending_turn(&mut answer).unwrap();
+    assert_eq!(resumed.assistant_text, "Wrote src/proof.txt.");
+    assert_eq!(answer.seen.len(), 1, "the paused turn must call the model");
+
+    let carried = answer.seen[0]
+        .messages
+        .iter()
+        .find(|message| message.tool_call_id.as_deref() == Some("write-1"))
+        .expect("the approved call's result must reach the model");
+    let data: serde_json::Value = serde_json::from_str(&carried.content).unwrap();
+    assert_eq!(data["data"]["ok"], json!(true));
+    assert!(
+        !data["data"]["receipt"].is_null(),
+        "the model must see what the effect produced, not just that it ran: {}",
+        carried.content
+    );
+
+    // The approved call is never re-derived: what the model was shown is the
+    // exact call the user authorised.
+    assert!(
+        answer.seen[0]
+            .messages
+            .iter()
+            .all(|message| message.role != Role::User || message.content == "write the proof"),
+        "resumption must not invent a user turn"
+    );
+
+    assert!(sessions.active_turn(kernel.session_id()).unwrap().is_none());
+    assert_eq!(
+        executions.manifest(manifest_id).unwrap().status,
+        ExecutionStatus::Succeeded
+    );
+}
+
+#[test]
+fn an_approved_action_is_timed_from_settlement_not_from_the_card_appearing() {
+    // How long the human took to read the card is not how long the action took.
+    // The pause below stands in for that deliberation; the reported duration has
+    // to exclude it, or every approved command is misreported as slow.
+    const DELIBERATION_MS: u64 = 250;
+
+    let home = tempdir().unwrap();
+    let project = tempdir().unwrap();
+    let authority = ProjectAuthorityStore::open(home.path()).unwrap();
+    let selection = authority.stage_native_selection(project.path()).unwrap();
+    authority
+        .authorize_project(
+            "project-timed",
+            std::slice::from_ref(&selection.path),
+            Some(&selection.path),
+            std::slice::from_ref(&selection.grant_token),
+        )
+        .unwrap();
+    let mut kernel =
+        Kernel::open_project_session(home.path(), KernelConfig::default(), None, "project-timed")
+            .unwrap();
+    let mut model = ScriptedModel::new(vec![CompletionResponse {
+        text: None,
+        tool_calls: vec![ToolCall {
+            id: "timed-write".into(),
+            name: "write_file".into(),
+            arguments: json!({"path":"timed.txt","contents":"ok"}),
+        }],
+    }]);
+    let mut events = Vec::new();
+    assert!(kernel
+        .turn_with_sink(&mut model, "write it", &mut |event| events.push(event))
+        .is_err());
+    let binding = events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Tool(tool) => tool.approval.clone(),
+            _ => None,
+        })
+        .next_back()
+        .expect("the held write must produce an exact binding");
+
+    std::thread::sleep(std::time::Duration::from_millis(DELIBERATION_MS));
+
+    let resolution = kernel
+        .resolve_chat_approval_exact(
+            binding.run_id,
+            &binding.call_id,
+            binding.job_id,
+            binding.node_id,
+            binding.node_index,
+            &binding.effect_sha256,
+            ChatApprovalDecision::Approve,
+        )
+        .unwrap();
+    let reported = resolution
+        .event
+        .duration_ms
+        .expect("a settled approval must report how long the action took");
+    assert!(
+        reported < DELIBERATION_MS,
+        "duration {reported}ms includes the {DELIBERATION_MS}ms the card sat pending"
+    );
 }
 
 #[test]
@@ -374,9 +486,13 @@ fn project_write_denial_never_executes_and_settles_cancelled_once() {
     );
     assert!(!project.path().join("denied.txt").exists());
     let sessions = SessionStore::open(home.path().join("sessions.db")).unwrap();
-    let turn = sessions.turns(kernel.session_id()).unwrap().pop().unwrap();
-    assert_eq!(turn.status, TurnStatus::Cancelled);
-    assert_eq!(turn.error_code.as_deref(), Some("approval_denied"));
+    // A denial is a tool result the agent has to answer for, not a turn the
+    // surface cancels on its behalf (ADR-0046).
+    let denied_turn = sessions
+        .active_turn(kernel.session_id())
+        .unwrap()
+        .expect("denial must not finish the turn either");
+    assert_eq!(denied_turn.status, TurnStatus::Running);
     let executions = ExecutionStore::open(home.path().join("execution.db")).unwrap();
     let lifecycle = executions
         .tool_lifecycle_for_session(kernel.session_id())
@@ -393,13 +509,12 @@ fn project_write_denial_never_executes_and_settles_cancelled_once() {
         .effect_links(kernel.session_id())
         .unwrap()
         .is_empty());
-    assert_eq!(
-        kernel
-            .messages
-            .last()
-            .map(|message| message.content.as_str()),
-        Some(resolution.assistant_receipt.as_str())
-    );
+    // The reason the user gave reaches the model, so the refusal is
+    // acknowledged by the agent rather than asserted by the surface.
+    let refusal = kernel.messages.last().unwrap();
+    assert_eq!(refusal.role, Role::Tool);
+    let data: serde_json::Value = serde_json::from_str(&refusal.content).unwrap();
+    assert_eq!(data["data"]["denied_reason"], "user_denied_in_transcript");
     assert!(kernel
         .resolve_chat_approval_exact(
             binding.run_id,
@@ -414,6 +529,20 @@ fn project_write_denial_never_executes_and_settles_cancelled_once() {
         )
         .is_err());
     assert!(!project.path().join("denied.txt").exists());
+
+    let mut answer = ScriptedModel::new(vec![CompletionResponse {
+        text: Some("Understood, I will not write that file.".into()),
+        tool_calls: Vec::new(),
+    }]);
+    let resumed = kernel.resume_pending_turn(&mut answer).unwrap();
+    assert_eq!(
+        resumed.assistant_text,
+        "Understood, I will not write that file."
+    );
+    assert!(
+        !project.path().join("denied.txt").exists(),
+        "resuming a denial must never run the refused effect"
+    );
 }
 
 #[test]
@@ -1346,4 +1475,162 @@ fn read_file_uses_workspace_sandbox_and_denies_secrets() {
             message.content.contains("outside-secret") || message.content.contains("TOKEN=secret")
         }));
     }
+}
+
+/// ADR-0044 threading proof: the identical scripted project write that pauses
+/// under the default profile completes without any human approval when the
+/// per-turn config carries `Standard` — and the file really lands on disk.
+#[test]
+fn standard_profile_threads_through_the_turn_and_writes_without_a_pause() {
+    let home = tempdir().unwrap();
+    let project = tempdir().unwrap();
+    let authority = ProjectAuthorityStore::open(home.path()).unwrap();
+    let selection = authority.stage_native_selection(project.path()).unwrap();
+    authority
+        .authorize_project(
+            "project-a",
+            std::slice::from_ref(&selection.path),
+            Some(&selection.path),
+            std::slice::from_ref(&selection.grant_token),
+        )
+        .unwrap();
+
+    let config = KernelConfig {
+        autonomy_profile: optimus_graph::AutonomyProfile::Standard,
+        ..KernelConfig::default()
+    };
+    let mut kernel = Kernel::open_project_session(home.path(), config, None, "project-a").unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "write-std".into(),
+                name: "write_file".into(),
+                arguments: json!({"path":"src/standard.txt","contents":"auto-approved"}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("written".into()),
+            tool_calls: vec![],
+        },
+    ]);
+
+    let result = kernel
+        .turn_with_sink(&mut model, "write it", &mut |_| {})
+        .expect("Standard must not pause an ordinary project write");
+
+    assert_eq!(result.assistant_text, "written");
+    assert_eq!(
+        std::fs::read_to_string(project.path().join("src/standard.txt")).unwrap(),
+        "auto-approved",
+        "the effect ran on disk without a human approval"
+    );
+}
+
+/// Searching must reach the model as a plain workspace read.
+///
+/// The engine has its own unit tests; what this covers is the wiring — that
+/// the tool is advertised in the core pack, that its schema validates, and
+/// that the dispatch arm answers. A search engine nobody can call from a turn
+/// is not a feature.
+#[test]
+fn the_core_pack_can_search_find_and_list_without_a_terminal() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let workspace = kernel.workspace().to_path_buf();
+    std::fs::create_dir_all(workspace.join("src")).unwrap();
+    std::fs::write(
+        workspace.join("src/main.rs"),
+        "fn main() {\n    needle();\n}\n",
+    )
+    .unwrap();
+
+    let call = |id: &str, name: &str, arguments| CompletionResponse {
+        text: None,
+        tool_calls: vec![ToolCall {
+            id: id.into(),
+            name: name.into(),
+            arguments,
+        }],
+    };
+    let mut model = ScriptedModel::new(vec![
+        call("s1", "search_content", json!({"pattern": "needle"})),
+        call("f1", "find_files", json!({"glob": "**/*.rs"})),
+        call("l1", "list_dir", json!({"path": "src"})),
+        CompletionResponse {
+            text: Some("found it".into()),
+            tool_calls: vec![],
+        },
+    ]);
+
+    let result = kernel.turn(&mut model, "find the needle").unwrap();
+    assert_eq!(result.assistant_text, "found it");
+    for tool in ["search_content", "find_files", "list_dir"] {
+        assert!(
+            result.invoked_tools.contains(&ToolId::from(tool)),
+            "{tool} never ran"
+        );
+    }
+
+    let answer = |id: &str| {
+        let message = kernel
+            .messages
+            .iter()
+            .find(|message| message.tool_call_id.as_deref() == Some(id))
+            .unwrap_or_else(|| panic!("no tool message for {id}"));
+        let outcome: ToolOutcome = serde_json::from_str(&message.content).unwrap();
+        assert_eq!(outcome.kind, ToolOutcomeKind::Succeeded, "{id} failed");
+        outcome.data
+    };
+
+    let hit = &answer("s1")["matches"][0];
+    assert_eq!(hit["path"], "src/main.rs");
+    assert_eq!(
+        hit["line"], 2,
+        "a hit the model cannot cite is not an answer"
+    );
+    assert_eq!(answer("f1")["paths"][0], "src/main.rs");
+    assert_eq!(answer("l1")["path"], "src");
+}
+
+/// A window on a read must say where the window sits.
+#[test]
+fn read_file_can_return_one_slice_instead_of_the_whole_file() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    std::fs::write(
+        kernel.workspace().join("long.txt"),
+        (1..=200).map(|n| format!("line {n}\n")).collect::<String>(),
+    )
+    .unwrap();
+
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "r1".into(),
+                name: "read_file".into(),
+                arguments: json!({"path": "long.txt", "offset": 100, "limit": 3}),
+            }],
+        },
+        CompletionResponse {
+            text: Some("read".into()),
+            tool_calls: vec![],
+        },
+    ]);
+    kernel.turn(&mut model, "read the middle").unwrap();
+
+    let message = kernel
+        .messages
+        .iter()
+        .find(|message| message.tool_call_id.as_deref() == Some("r1"))
+        .unwrap();
+    let outcome: ToolOutcome = serde_json::from_str(&message.content).unwrap();
+    let data = outcome.data;
+    assert_eq!(data["contents"], "line 100\nline 101\nline 102");
+    assert_eq!(data["start_line"], 100);
+    assert_eq!(
+        data["total_lines"], 200,
+        "a slice without the total hides how much was left unread"
+    );
 }

@@ -3,7 +3,7 @@ knowledge_type: specification
 status: active
 covers:
   - crates/optimus-kernel/src/artifacts.rs
-  - apps/optimus-desktop/src/ipc/files.rs
+  - crates/optimus-host/src/files.rs
   - apps/optimus-desktop/ui/app.js
   - apps/optimus-desktop/ui/index.html
 depends_on:

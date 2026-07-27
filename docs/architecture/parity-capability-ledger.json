@@ -67,7 +67,7 @@
         "docs/architecture/product-complete-p21-verification.md",
         "docs/plans/product-complete-program.md",
         "docs/evidence/product-complete-p21-hold-2026-07-25.md",
-        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "crates/optimus-host/src/consoles.rs",
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
@@ -123,7 +123,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/routing.rs",
-        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "crates/optimus-host/src/extensibility.rs",
         "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
         "docs/architecture/product-complete-p27-verification.md"
       ],
@@ -137,7 +137,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/routing.rs",
-        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "crates/optimus-host/src/extensibility.rs",
         "docs/architecture/product-complete-p27-verification.md"
       ],
       "trajectory": "program P27: ordered fallback_order + capability/privacy fail-closed; scripted offline failover tests",
@@ -164,7 +164,7 @@
         "apps/optimus-ui/src/state/conversationStore.ts",
         "apps/optimus-ui/src/components/workbench/Transcript.tsx",
         "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-        "apps/optimus-desktop/src/ipc/sessions.rs",
+        "crates/optimus-host/src/sessions.rs",
         "docs/architecture/product-complete-p24-verification.md"
       ],
       "trajectory": "program P24: ThinkingDelta stream + UI thinking block; tool cards from persisted lifecycle with duration; fixture tests",
@@ -188,7 +188,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/session.rs",
-        "apps/optimus-desktop/src/ipc/sessions.rs",
+        "crates/optimus-host/src/sessions.rs",
         "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
         "docs/architecture/product-complete-p24-verification.md"
       ],
@@ -225,7 +225,7 @@
       "hermes_reference": "Logs surface",
       "state": "parity",
       "evidence": [
-        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "crates/optimus-host/src/consoles.rs",
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
@@ -362,7 +362,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/cron.rs",
-        "apps/optimus-desktop/src/ipc/scheduling.rs",
+        "crates/optimus-host/src/scheduling.rs",
         "apps/optimus-ui/src/components/cron/CronWorkbench.tsx",
         "docs/architecture/product-complete-p25-verification.md"
       ],
@@ -377,7 +377,7 @@
       "evidence": [
         "crates/optimus-ops/src/gateway.rs",
         "apps/optimus-cli/tests/gateway_http.rs",
-        "apps/optimus-desktop/src/ipc/messaging.rs",
+        "crates/optimus-host/src/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
       "trajectory": "program P28: outbox receipts + attempt leases + ambiguous-send list/ack + doctor counts; local SQLite authority only",
@@ -390,7 +390,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/telegram.rs",
-        "apps/optimus-desktop/src/ipc/messaging.rs",
+        "crates/optimus-host/src/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
       "trajectory": "program P28: mock claim\u2192turn\u2192receipt; config-gated live token env; no public listen port; external EO residual honest",
@@ -415,7 +415,7 @@
       "state": "parity",
       "evidence": [
         "apps/optimus-ui/src/components/mail/MailPage.tsx",
-        "apps/optimus-desktop/src/ipc/messaging.rs",
+        "crates/optimus-host/src/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
       "trajectory": "program P28: MailPage bound to gateway_inbox/outbox/ambiguous/ack IPC; honesty copy for local receipts",
@@ -429,7 +429,7 @@
       "evidence": [
         "crates/optimus-ops/src/mcp.rs",
         "docs/decisions/0041-mcp-ingress-pack-gated.md",
-        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "crates/optimus-host/src/extensibility.rs",
         "docs/architecture/product-complete-p27-verification.md"
       ],
       "trajectory": "program P27: pack-gated stdio+HTTP mock MCP; ToolDesc map; no second catalog; private URL reject",
@@ -443,7 +443,7 @@
       "evidence": [
         "crates/optimus-packs/src/signed.rs",
         "docs/decisions/0042-signed-pack-manifests.md",
-        "apps/optimus-desktop/src/ipc/extensibility.rs",
+        "crates/optimus-host/src/extensibility.rs",
         "docs/architecture/product-complete-p27-verification.md"
       ],
       "trajectory": "program P27: HMAC signed manifests; unsigned rejected; permission ceiling vs SmartDeny classes",
@@ -456,7 +456,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-skills/src/lib.rs",
-        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "crates/optimus-host/src/consoles.rs",
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
@@ -470,7 +470,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-artifacts/src/lib.rs",
-        "apps/optimus-desktop/src/ipc/files.rs",
+        "crates/optimus-host/src/files.rs",
         "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
         "docs/architecture/product-complete-p25-verification.md"
       ],
@@ -484,7 +484,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-memory/src/lib.rs",
-        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "crates/optimus-host/src/consoles.rs",
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
@@ -633,7 +633,7 @@
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/surface_commands.rs",
-        "apps/optimus-desktop/src/ipc/consoles.rs",
+        "crates/optimus-host/src/consoles.rs",
         "apps/optimus-ui/src/components/chrome/CommandPalette.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
@@ -659,7 +659,7 @@
       "state": "partial",
       "evidence": [
         "docs/decisions/0043-no-auto-updater-channel.md",
-        "apps/optimus-desktop/src/ipc/system.rs",
+        "crates/optimus-host/src/system.rs",
         "scripts/rebuild-install-relaunch.sh",
         "docs/architecture/product-complete-p29-verification.md"
       ],

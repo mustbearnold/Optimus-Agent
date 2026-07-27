@@ -1,7 +1,6 @@
 //! Optimus desktop shell — native Wry webview, HTTP host (Playwright / Electron).
 
 mod bridge;
-mod ipc;
 mod native_workers;
 mod preview_embed;
 mod server;
@@ -25,10 +24,10 @@ use wry::{
 };
 
 use crate::bridge::{inject_bridge, BRIDGE_JS};
-use crate::ipc::{pick_folder_dialog, IpcEnvelope, IpcReply};
 use crate::native_workers::NativeWorkers;
 use crate::preview_embed::{navigation_allowed as preview_nav_allowed, EmbedBounds, PreviewEmbed};
 use crate::server::{run_http_server, HttpSecurity};
+use optimus_host::{pick_folder_dialog, IpcEnvelope, IpcReply};
 
 /// Default loopback port for `--host-only` (Electron / external shells).
 const DEFAULT_HOST_PORT: u16 = 17865;
@@ -130,7 +129,7 @@ fn requires_window_thread(method: &str) -> bool {
 
 fn main() -> wry::Result<()> {
     let cli = Cli::parse();
-    let home = resolve_home(&cli.home);
+    let home = optimus_host::resolve_home(Some(cli.home.as_str()));
     std::fs::create_dir_all(&home).ok();
     eprintln!("[optimus-desktop] home={}", home.display());
 
@@ -675,27 +674,6 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
             _ => {}
         }
     });
-}
-
-fn resolve_home(home: &str) -> PathBuf {
-    if !home.is_empty() {
-        let p = PathBuf::from(home);
-        if p.is_absolute() {
-            return p;
-        }
-        return std::env::current_dir()
-            .unwrap_or_else(|_| PathBuf::from("."))
-            .join(p);
-    }
-    if let Ok(env_home) = std::env::var("OPTIMUS_HOME") {
-        if !env_home.is_empty() {
-            return PathBuf::from(env_home);
-        }
-    }
-    if let Some(data) = dirs::data_local_dir() {
-        return data.join("optimus");
-    }
-    PathBuf::from(".optimus")
 }
 
 fn eval_reply(webview: &wry::WebView, reply: &IpcReply) -> Result<(), String> {

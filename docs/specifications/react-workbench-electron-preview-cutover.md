@@ -5,7 +5,7 @@ covers:
   - apps/optimus-ui/**
   - apps/optimus-electron/**
   - apps/optimus-desktop/src/server.rs
-  - apps/optimus-desktop/src/ipc/**
+  - crates/optimus-host/src/**
   - docs/contracts/desktop-ipc-methods.md
 depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md

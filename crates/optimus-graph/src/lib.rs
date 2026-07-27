@@ -125,12 +125,56 @@ impl Effect {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum PolicyMode {
-    /// Default: high-risk effects require an explicit approval grant.
+    /// Default: high-risk effects are gated. Whether they pause for a human or
+    /// are auto-authorized by a project trust profile is decided by
+    /// [`RuntimeConfig::autonomy_profile`] (ADR-0044 / optimus-policy).
     #[default]
     SmartDeny,
     /// Break-glass / test mode: all effects auto-run (approval auto-grant only;
     /// filesystem envelope is separate — see [`CommandFsEnvelope`]).
     Unrestricted,
+}
+
+/// Product autonomy profile (when Optimus asks). Re-exported shape kept in graph
+/// so `RuntimeConfig` stays self-describing without a hard graph→policy cycle
+/// at the type layer for older callers; runtime maps this to `optimus_policy`.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum AutonomyProfile {
+    /// Recommended product default: ordinary project work auto-authorized.
+    Standard,
+    /// Pause project writes and commands (legacy “Ask before effects”).
+    #[default]
+    ReviewChanges,
+    ReadOnly,
+    FullProject,
+    /// Expert break-glass marker; pair with [`PolicyMode::Unrestricted`] in product.
+    UnrestrictedHost,
+}
+
+impl AutonomyProfile {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Standard => "standard",
+            Self::ReviewChanges => "review_changes",
+            Self::ReadOnly => "read_only",
+            Self::FullProject => "full_project",
+            Self::UnrestrictedHost => "unrestricted_host",
+        }
+    }
+
+    pub fn parse(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "standard" | "std" => Some(Self::Standard),
+            "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
+            "read_only" | "readonly" | "read" => Some(Self::ReadOnly),
+            "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
+            "unrestricted_host" | "unrestricted" | "full" | "host" | "yolo" => {
+                Some(Self::UnrestrictedHost)
+            }
+            _ => None,
+        }
+    }
 }
 
 /// Filesystem/network envelope for approved `RunCommand` / `ProjectRunCommand`.
@@ -196,6 +240,10 @@ pub struct RuntimeConfig {
     /// Command capability envelope (default: confined).
     #[serde(default)]
     pub command_fs_envelope: CommandFsEnvelope,
+    /// When Optimus asks (default: review_changes preserves classic SmartDeny
+    /// pause semantics for tests; product UI sets `standard`).
+    #[serde(default)]
+    pub autonomy_profile: AutonomyProfile,
 }
 
 impl Default for RuntimeConfig {
@@ -203,6 +251,7 @@ impl Default for RuntimeConfig {
         Self {
             policy: PolicyMode::SmartDeny,
             command_fs_envelope: CommandFsEnvelope::Confined,
+            autonomy_profile: AutonomyProfile::ReviewChanges,
         }
     }
 }

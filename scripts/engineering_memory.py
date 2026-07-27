@@ -69,6 +69,10 @@ COMMANDS = (
 # unsatisfiable: run tests -> artifacts appear -> EM stale -> gate fails.
 EXCLUDED_PARTS = {
     ".git",
+    # Agent tooling keeps full repo copies under .claude/worktrees. Hashing them
+    # made 65.8% of the tree agent scratch: every worktree touch marked the whole
+    # subsystem stale, and the walk cost ~2.9x what the real source costs.
+    ".claude",
     ".engineering-memory",
     ".cache",
     "__pycache__",
@@ -649,9 +653,17 @@ def parse_tool_catalog() -> dict[str, Any]:
         raise MemoryError("cannot locate builtin_catalog boundaries")
     catalog = text[start:end]
 
-    invocation_ids = dict(re.findall(r"Self::(\w+)\s*=>\s*Some\(\"([^\"]+)\"\)", text))
+    # `ToolInvocation` and its id/policy maps live in a sibling module: the
+    # catalog outgrew the 800-line law and was split. The catalog block itself
+    # still comes from lib.rs, so only the variant maps look wider.
+    invocation_source = text + (
+        ROOT / "crates/optimus-packs/src/invocation.rs"
+    ).read_text(encoding="utf-8")
+    invocation_ids = dict(
+        re.findall(r"Self::(\w+)\s*=>\s*Some\(\"([^\"]+)\"\)", invocation_source)
+    )
     invocation_policy = dict(
-        re.findall(r"Self::(\w+)\s*=>\s*Some\(ToolPolicy::(\w+)\)", text)
+        re.findall(r"Self::(\w+)\s*=>\s*Some\(ToolPolicy::(\w+)\)", invocation_source)
     )
     for variant in ("BrowserNavigate", "BrowserSnapshot", "BrowserClick"):
         invocation_policy.setdefault(variant, "Browser")
@@ -1309,7 +1321,7 @@ def build_contract_coverage() -> dict[str, Any]:
         ("C-08", "canonical-tool-result", "implemented", ["crates/optimus-packs/src/lib.rs", "crates/optimus-kernel/src/lib.rs", "crates/optimus-kernel/src/execution.rs"], ["crates/optimus-packs/tests/packs_budget.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
         ("C-09", "agent-lifecycle", "implemented", ["crates/optimus-agent/src/lib.rs"], ["crates/optimus-kernel/tests/agent_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
         ("C-10", "workflow-lifecycle", "implemented", ["crates/optimus-workflow/src/workflow.rs", "crates/optimus-runtime/src/campaign.rs", "crates/optimus-ops/src/cron.rs", "crates/optimus-ops/src/gateway.rs"], ["crates/optimus-kernel/tests/workflow_contracts.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
-        ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "apps/optimus-desktop/src/ipc/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
+        ("C-11", "model-routing", "implemented", ["crates/optimus-kernel/src/routing.rs", "apps/optimus-cli/src/main.rs", "crates/optimus-host/src/chat.rs"], ["crates/optimus-kernel/src/routing.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
         ("C-12", "credential-and-local-transport-security", "implemented", ["crates/optimus-kernel/src/credential.rs", "crates/optimus-kernel/src/codex_oauth.rs", "apps/optimus-desktop/src/server.rs"], ["crates/optimus-kernel/tests/codex_oauth.rs", "apps/optimus-cli/tests/gateway_http.rs"]),
         ("C-13", "deterministic-replay-and-provenance", "implemented", ["crates/optimus-kernel/src/execution.rs", "crates/optimus-eval/src/replay.rs", "crates/optimus-kernel/src/trace.rs", "crates/optimus-kernel/src/lib.rs"], ["crates/optimus-eval/tests/replay_contracts.rs", "crates/optimus-kernel/tests/trace_contracts.rs", "crates/optimus-kernel/tests/kernel_turn.rs", "crates/optimus-kernel/tests/session_resume.rs"]),
         ("C-14", "memory-clock-retention-erasure", "implemented", ["crates/optimus-memory/src/lib.rs"], ["crates/optimus-memory/tests/metamemory_mvp.rs", "crates/optimus-eval/tests/integrity_integration.rs"]),
@@ -1429,8 +1441,13 @@ def build_evaluation_coverage() -> dict[str, Any]:
     ownership = run_body.index('join("evaluation-runs")')
     if any(symbol not in run_body[:ownership] for symbol in preflight_symbols):
         raise MemoryError("Priority-2 report inputs are not preflighted before run ownership")
-    cli_path = ROOT / "apps/optimus-cli/src/main.rs"
-    cli = cli_path.read_text(encoding="utf-8")
+    cli_dir = ROOT / "apps/optimus-cli/src"
+    cli_main = (cli_dir / "main.rs").read_text(encoding="utf-8")
+    # The CLI is several modules now (main/parsers/read_only), so scan the whole
+    # source directory for symbols and keep ordering checks against main.rs.
+    cli = "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted(cli_dir.glob("*.rs"))
+    )
     cli_test_path = ROOT / "apps/optimus-cli/tests/eval_report.rs"
     cli_test = cli_test_path.read_text(encoding="utf-8")
     compare_test_path = ROOT / "apps/optimus-cli/tests/eval_compare.rs"
@@ -1451,8 +1468,8 @@ def build_evaluation_coverage() -> dict[str, Any]:
     ]
     if (
         any(symbol not in cli for symbol in comparison_symbols)
-        or cli.index("if let Some(result) = run_read_only_eval(&cli)")
-        > cli.index("std::fs::create_dir_all(&cli.home)?")
+        or cli_main.index("if let Some(result) = read_only::run_read_only_eval(&cli)")
+        > cli_main.index("std::fs::create_dir_all(&cli.home)?")
         or "eval_compare_prints_exact_read_only_comparison_for_distinct_source_trees"
         not in compare_test
         or "eval_compare_rejects_bounded_invalid_or_incompatible_evidence_without_mutation"

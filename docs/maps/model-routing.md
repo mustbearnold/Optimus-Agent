@@ -8,7 +8,7 @@ covers:
   - crates/optimus-kernel/src/routing.rs
   - apps/optimus-cli/src/main.rs
   - apps/optimus-cli/src/gateway_http.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
 depends_on:
   - docs/decisions/0011-codex-oauth.md
   - docs/decisions/0013-provider-tool-protocol.md

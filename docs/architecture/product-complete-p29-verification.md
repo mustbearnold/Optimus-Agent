@@ -10,7 +10,7 @@ depends_on:
   - docs/decisions/0043-no-auto-updater-channel.md
   - docs/architecture/desktop-install-relaunch.md
 validated_by:
-  - apps/optimus-desktop/src/ipc/system.rs
+  - crates/optimus-host/src/system.rs
   - scripts/rebuild-install-relaunch.sh
   - scripts/check-architecture-marks.py
   - scripts/check-parity-ledger.py

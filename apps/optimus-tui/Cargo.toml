@@ -1,0 +1,22 @@
+[package]
+name = "optimus-tui"
+description = "Terminal face of the Optimus agent host (ADR-0045)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+optimus-host.workspace = true
+optimus-kernel.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ratatui = "0.29"
+crossterm = "0.28"
+
+# Redirecting stderr away from the frame needs dup/dup2; see `logging`.
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
-use crate::ipc::{
+use optimus_host::{
     chat_turn, handle_ipc, stream_delivery_control, stream_event_to_json, IpcEnvelope, IpcReply,
 };
 
@@ -564,7 +564,7 @@ mod tests {
         HTTP_STREAM_PRODUCER_QUEUE_CAPACITY, HTTP_STREAM_PRODUCER_WORKERS,
         HTTP_STREAM_RESPONSE_QUEUE_CAPACITY, HTTP_STREAM_RESPONSE_WORKERS,
     };
-    use crate::ipc::stream_delivery_control;
+    use optimus_host::stream_delivery_control;
     use optimus_kernel::StreamControl;
     use tiny_http::{Header, Method};
 

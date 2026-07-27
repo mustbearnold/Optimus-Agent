@@ -13,10 +13,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{
-    job_id, CommandFsEnvelope, Effect, JobSpec, JobStatus, NodeSpec, PolicyMode, Runtime,
-    RuntimeConfig, RuntimeError,
-};
+use crate::{job_id, Effect, JobSpec, JobStatus, NodeSpec, Runtime, RuntimeConfig, RuntimeError};
 
 #[derive(Debug, Error)]
 pub enum CampaignError {
@@ -1323,10 +1320,7 @@ impl CampaignStore {
         Ok(Runtime::open_with_config(
             &db,
             &ws,
-            RuntimeConfig {
-                policy: PolicyMode::SmartDeny,
-                command_fs_envelope: CommandFsEnvelope::Confined,
-            },
+            RuntimeConfig::default(),
         )?)
     }
 

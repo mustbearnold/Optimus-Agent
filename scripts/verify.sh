@@ -70,30 +70,119 @@ skip() {
 
 section() { printf '\n%s\n' "${B}$1${X}"; }
 
+# --- parallel gate execution -------------------------------------------------
+#
+# Gates are independent processes, so running them one at a time wasted most of
+# the wall clock: two self-tests alone (engineering-memory ~25s, rebuild-install
+# ~12s) serialised ahead of seventeen gates that finish in under a second
+# combined.
+#
+# `spawn` starts a gate in the background; `reap` waits, then reports every gate
+# in spawn order so output is deterministic no matter which finished first.
+# Section headers are recorded per gate and printed during reap, so the report
+# reads exactly as it did when this ran serially. Same commands, same pass/fail
+# rule, same summary — only the scheduling changes.
+#
+# OPTIMUS_VERIFY_SERIAL=1 forces one-at-a-time when bisecting a flaky gate.
+JOBS_DIR=""
+SPAWNED=()
+PENDING_SECTION=""
+
+cleanup_jobs() { [ -n "$JOBS_DIR" ] && rm -rf "$JOBS_DIR"; }
+trap cleanup_jobs EXIT
+
+# spawn_section <title> — header shown before the next spawned gate's result.
+spawn_section() {
+  if [ -n "${OPTIMUS_VERIFY_SERIAL:-}" ]; then
+    section "$1"
+    return
+  fi
+  PENDING_SECTION="$1"
+}
+
+# spawn <name> <command...>
+spawn() {
+  local name="$1"; shift
+  if [ -n "${OPTIMUS_VERIFY_SERIAL:-}" ]; then
+    run "$name" "$@"
+    return
+  fi
+  [ -n "$JOBS_DIR" ] || JOBS_DIR="$(mktemp -d)"
+  local slug="${#SPAWNED[@]}"
+  (
+    if out=$("$@" 2>&1); then
+      printf 'ok' > "$JOBS_DIR/$slug.status"
+    else
+      printf 'fail' > "$JOBS_DIR/$slug.status"
+    fi
+    printf '%s' "$out" > "$JOBS_DIR/$slug.out"
+  ) &
+  SPAWNED+=("$PENDING_SECTION|$name")
+  PENDING_SECTION=""
+}
+
+# spawn_dir <name> <dir> <shell-command>
+# Background twin of `in_dir`: these suites resolve config and test globs
+# relative to cwd, so `npm --prefix` is not enough.
+spawn_dir() {
+  local name="$1" dir="$2" cmd="$3"
+  if [ ! -d "$dir/node_modules" ]; then
+    skip "$name" "npm ci in $dir"
+    return
+  fi
+  spawn "$name" bash -c "cd '$dir' && $cmd"
+}
+
+# reap — wait for every spawned gate, then report in spawn order.
+reap() {
+  [ "${#SPAWNED[@]}" -eq 0 ] && return 0
+  wait
+  local slug=0 entry name title status
+  for entry in "${SPAWNED[@]}"; do
+    title="${entry%%|*}"
+    name="${entry#*|}"
+    [ -n "$title" ] && section "$title"
+    status="$(cat "$JOBS_DIR/$slug.status" 2>/dev/null || printf 'fail')"
+    printf '%-46s' "  $name"
+    if [ "$status" = "ok" ]; then
+      printf '%s\n' "${G}ok${X}"
+      PASSED+=("$name")
+    else
+      printf '%s\n' "${R}FAIL${X}"
+      FAILED+=("$name")
+      tail -15 "$JOBS_DIR/$slug.out" 2>/dev/null | sed 's/^/      /'
+    fi
+    slug=$((slug + 1))
+  done
+  SPAWNED=()
+}
+
 # --- tier: gates -------------------------------------------------------------
 tier_gates() {
-  section "gates"
-  run "fmt"                        cargo fmt --all -- --check
-  run "architecture-marks"         python3 scripts/check-architecture-marks.py
-  run "crate-layers"               python3 scripts/check-crate-layers.py
-  run "domain-modularity"          python3 scripts/check-domain-modularity.py
-  run "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
-  run "observability"              python3 scripts/check-observability-gate.py
-  run "module-size"                python3 scripts/check-module-size.py
-  run "product-complete-install"   python3 scripts/check-product-complete-install.py
-  run "parity-ledger"              python3 scripts/check-parity-ledger.py
-  run "version-validate"           python3 scripts/optimus_version.py validate
-  run "version-release-check"      python3 scripts/optimus_version.py release-check
-  run "engineering-memory"         python3 scripts/engineering_memory.py check
+  spawn_section "gates"
+  spawn "fmt"                        cargo fmt --all -- --check
+  spawn "architecture-marks"         python3 scripts/check-architecture-marks.py
+  spawn "crate-layers"               python3 scripts/check-crate-layers.py
+  spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
+  spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
+  spawn "observability"              python3 scripts/check-observability-gate.py
+  spawn "module-size"                python3 scripts/check-module-size.py
+  spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
+  spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
+  spawn "version-validate"           python3 scripts/optimus_version.py validate
+  spawn "version-release-check"      python3 scripts/optimus_version.py release-check
+  spawn "engineering-memory"         python3 scripts/engineering_memory.py check
+  spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
 
-  section "gate self-tests"
-  run "test_architecture_marks"    python3 scripts/test_architecture_marks.py
-  run "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
-  run "test_engineering_memory"    python3 scripts/test_engineering_memory.py
-  run "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
-  run "test_module_size"           python3 scripts/test_module_size.py
-  run "test_optimus_version"       python3 scripts/test_optimus_version.py
-  run "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
+  spawn_section "gate self-tests"
+  spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
+  spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
+  spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
+  spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_module_size"           python3 scripts/test_module_size.py
+  spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
+  spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
+  reap
 }
 
 # --- tier: check -------------------------------------------------------------
@@ -132,24 +221,140 @@ in_dir() {
   run "$name" bash -c "cd '$dir' && $cmd"
 }
 
+# Electron opens real windows, so the e2e tier needs a display. Wrap in xvfb-run
+# when there is none (headless agents, CI) and leave a real session alone so its
+# native paint stays authentic.
+electron_e2e_command() {
+  if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
+    printf 'npx playwright test'
+  elif command -v xvfb-run >/dev/null 2>&1; then
+    printf 'xvfb-run -a npx playwright test'
+  else
+    printf ''
+  fi
+}
+
 tier_ui() {
-  section "ui suites"
-  in_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
-  in_dir "optimus-electron"  apps/optimus-electron "npm test"
+  # The two node unit suites and the two Playwright suites are independent of
+  # each other; only the Playwright suites need the built host binary and UI
+  # bundle, so that build is the one serial step.
+  spawn_section "ui suites"
+  spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
+  spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
 
   # Playwright drives the real host binary (e2e/support.js spawns
   # target/debug/optimus-desktop per worker), so it needs a *built* binary --
-  # `cargo check` from the compile tier does not produce one. Without this the
-  # tier passes only when a previous build happened to leave the binary behind,
-  # and fails on any clean tree.
+  # `cargo check` from the compile tier does not produce one.
+  local playwright_ready=1
   if [ ! -d apps/optimus-desktop/node_modules ]; then
     skip "playwright" "npm ci in apps/optimus-desktop"
+    playwright_ready=0
   elif ! (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
     skip "playwright" "npx playwright install chromium"
-  else
-    run "build desktop host" cargo build -p optimus-desktop
-    in_dir "playwright" apps/optimus-desktop "npx playwright test"
+    playwright_ready=0
   fi
+
+  local electron_ready=1
+  if [ ! -d apps/optimus-electron/node_modules ]; then
+    skip "electron e2e" "npm ci in apps/optimus-electron"
+    electron_ready=0
+  elif ! (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
+    skip "electron e2e" "npx playwright install chromium"
+    electron_ready=0
+  elif [ ! -f apps/optimus-ui/dist/index.html ]; then
+    skip "electron e2e" "npm --prefix apps/optimus-ui run build"
+    electron_ready=0
+  elif [ -z "$(electron_e2e_command)" ]; then
+    skip "electron e2e" "no display and no xvfb-run"
+    electron_ready=0
+  fi
+
+  if [ "$playwright_ready" = 1 ] || [ "$electron_ready" = 1 ]; then
+    run "build desktop host" cargo build -p optimus-desktop
+  fi
+  [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
+  [ "$electron_ready" = 1 ] && spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
+  reap
+}
+
+# --- tier: all ---------------------------------------------------------------
+# Running the tiers back to back leaves most cores idle: the Python gates never
+# touch cargo, the node unit suites never touch cargo, and Playwright only needs
+# the host binary. So build that binary first, then run everything else at once
+# and reap in a stable order.
+#
+# Concurrent cargo invocations serialise on the target-dir lock by themselves, so
+# fmt/check/clippy/nextest queue rather than corrupt anything — they simply stop
+# blocking the suites that have no cargo dependency.
+tier_all() {
+  # The one true ordering constraint: Playwright spawns this binary per worker.
+  local host_built=0
+  if [ -d apps/optimus-desktop/node_modules ] || [ -d apps/optimus-electron/node_modules ]; then
+    section "build"
+    run "build desktop host" cargo build -p optimus-desktop
+    host_built=1
+  fi
+
+  spawn_section "gates"
+  spawn "fmt"                        cargo fmt --all -- --check
+  spawn "architecture-marks"         python3 scripts/check-architecture-marks.py
+  spawn "crate-layers"               python3 scripts/check-crate-layers.py
+  spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
+  spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
+  spawn "observability"              python3 scripts/check-observability-gate.py
+  spawn "module-size"                python3 scripts/check-module-size.py
+  spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
+  spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
+  spawn "version-validate"           python3 scripts/optimus_version.py validate
+  spawn "version-release-check"      python3 scripts/optimus_version.py release-check
+  spawn "engineering-memory"         python3 scripts/engineering_memory.py check
+  spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
+
+  spawn_section "gate self-tests"
+  spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
+  spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
+  spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
+  spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_module_size"           python3 scripts/test_module_size.py
+  spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
+  spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
+
+  spawn_section "compile"
+  spawn "cargo check" cargo check --workspace --all-targets
+  if cargo clippy --version >/dev/null 2>&1; then
+    spawn "clippy" cargo clippy --workspace --all-targets -- -D warnings
+  else
+    skip "clippy" "not installed: rustup component add clippy"
+  fi
+
+  spawn_section "rust tests"
+  if cargo nextest --version >/dev/null 2>&1; then
+    spawn "cargo nextest" cargo nextest run --workspace
+  else
+    spawn "cargo test" cargo test --workspace --all-targets -- --test-threads=1
+  fi
+
+  spawn_section "ui suites"
+  spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
+  spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
+
+  if [ "$host_built" = 1 ] && (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
+    spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
+  else
+    skip "playwright" "npm ci + npx playwright install chromium in apps/optimus-desktop"
+  fi
+
+  if [ "$host_built" != 1 ]; then
+    skip "electron e2e" "npm ci in apps/optimus-electron"
+  elif [ ! -f apps/optimus-ui/dist/index.html ]; then
+    skip "electron e2e" "npm --prefix apps/optimus-ui run build"
+  elif [ -z "$(electron_e2e_command)" ]; then
+    skip "electron e2e" "no display and no xvfb-run"
+  else
+    spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
+  fi
+
+  reap
 }
 
 case "$TIER" in
@@ -157,7 +362,7 @@ case "$TIER" in
   check) tier_gates; tier_check ;;
   test)  tier_gates; tier_check; tier_test ;;
   ui)    tier_ui ;;
-  all)   tier_gates; tier_check; tier_test; tier_ui ;;
+  all)   tier_all ;;
   *)
     printf 'unknown tier: %s\n' "$TIER" >&2
     printf 'expected one of: gates check test ui all\n' >&2

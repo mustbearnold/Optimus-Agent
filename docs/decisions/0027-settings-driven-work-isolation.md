@@ -3,7 +3,7 @@ knowledge_type: decision
 status: current
 covers:
   - crates/optimus-kernel/src/product_settings.rs
-  - apps/optimus-desktop/src/ipc/system.rs
+  - crates/optimus-host/src/system.rs
   - apps/optimus-desktop/ui/index.html
   - apps/optimus-desktop/ui/app.js
 depends_on:
@@ -11,7 +11,7 @@ depends_on:
   - docs/architecture/system-overview.md
 validated_by:
   - crates/optimus-kernel/src/product_settings.rs
-  - apps/optimus-desktop/src/ipc/system.rs
+  - crates/optimus-host/src/system.rs
 last_verified_commit: null
 ---
 

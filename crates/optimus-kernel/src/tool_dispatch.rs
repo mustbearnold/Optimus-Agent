@@ -68,7 +68,10 @@ impl Kernel {
                 // Update system prompt content for subsequent steps in-turn.
                 if let Some(sys) = self.messages.first_mut() {
                     if sys.role == Role::System {
-                        sys.content = system_prompt(&self.packs);
+                        sys.content = system_prompt(
+                            &self.packs,
+                            &self.skills.list(false).unwrap_or_default(),
+                        );
                     }
                 }
                 Ok(self.packs.activation_snapshot().to_string())
@@ -257,12 +260,77 @@ impl Kernel {
                 let body = roots
                     .read_text(path, 1024 * 1024, false)
                     .map_err(|error| KernelError::Tool(format!("read {path}: {error}")))?;
+                let window = read_window(&call.arguments, &body.content);
                 Ok(json!({
                     "path": path,
-                    "contents": body.content,
+                    "contents": window.text,
                     "truncated": body.truncated,
+                    "start_line": window.start_line,
+                    "total_lines": window.total_lines,
                 })
                 .to_string())
+            }
+            ToolInvocation::SearchContent => {
+                let pattern = call
+                    .arguments
+                    .get("pattern")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("search_content requires pattern".into()))?;
+                let roots = FsRoots::new(self.project_roots.clone())
+                    .map_err(|error| KernelError::Tool(error.to_string()))?;
+                let request = fs_search::SearchRequest {
+                    pattern,
+                    path: call.arguments.get("path").and_then(|v| v.as_str()),
+                    glob: call.arguments.get("glob").and_then(|v| v.as_str()),
+                    case_sensitive: call
+                        .arguments
+                        .get("case_sensitive")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false),
+                    max_results: call
+                        .arguments
+                        .get("max_results")
+                        .and_then(|v| v.as_u64())
+                        .map(|value| value as usize),
+                };
+                let hits = fs_search::search_content(&roots, &request)
+                    .map_err(|error| KernelError::Tool(format!("search: {error}")))?;
+                Ok(json!({ "matches": hits, "count": hits.len() }).to_string())
+            }
+            ToolInvocation::FindFiles => {
+                let glob = call
+                    .arguments
+                    .get("glob")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("find_files requires glob".into()))?;
+                let roots = FsRoots::new(self.project_roots.clone())
+                    .map_err(|error| KernelError::Tool(error.to_string()))?;
+                let found = fs_search::find_files(
+                    &roots,
+                    glob,
+                    call.arguments.get("path").and_then(|v| v.as_str()),
+                    call.arguments
+                        .get("max_results")
+                        .and_then(|v| v.as_u64())
+                        .map(|value| value as usize),
+                )
+                .map_err(|error| KernelError::Tool(format!("find: {error}")))?;
+                Ok(json!({ "paths": found, "count": found.len() }).to_string())
+            }
+            ToolInvocation::ListDir => {
+                // Absent path means the workspace root, which is what "list the
+                // directory" means before the agent knows any path at all.
+                let path = call
+                    .arguments
+                    .get("path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".");
+                let roots = FsRoots::new(self.project_roots.clone())
+                    .map_err(|error| KernelError::Tool(error.to_string()))?;
+                let entries = roots
+                    .list_dir(path)
+                    .map_err(|error| KernelError::Tool(format!("list {path}: {error}")))?;
+                Ok(json!({ "path": path, "entries": entries }).to_string())
             }
             ToolInvocation::Terminal => {
                 let program = call
@@ -280,6 +348,7 @@ impl Kernel {
                             .collect()
                     })
                     .unwrap_or_default();
+                let args = strip_argv0(program, args);
                 let job = self.runtime.create_job(JobSpec {
                     label: format!("terminal:{program}"),
                     budget: Default::default(),
@@ -371,5 +440,169 @@ impl Kernel {
             ))),
         }?;
         Ok((tool_id, result))
+    }
+}
+
+/// The slice of a file a caller asked for, and where it sits in the whole.
+struct ReadWindow {
+    text: String,
+    /// 1-based line the returned text begins at.
+    start_line: u64,
+    total_lines: u64,
+}
+
+/// Drop a leading argument that merely repeats the program name.
+///
+/// Two conventions collide here. `Command::new(program).args(args)` wants args
+/// *without* argv[0]; POSIX `exec` and every `subprocess.run(["bash", "-lc",
+/// …])` example a model has ever read put the program in argv[0]. Models emit
+/// both, sometimes in consecutive calls of the same turn.
+///
+/// Passed through unchanged, the argv[0] form becomes `bash bash -lc "…"`,
+/// which makes bash look for a *file* called `bash` and fail before the command
+/// runs at all — a failure that reads as "the approved action failed" rather
+/// than "the tool call was shaped wrong". Normalising here rather than at spawn
+/// time means the approval card shows the command that will actually run.
+///
+/// Only an exact repeat is dropped: `bash bash` is normalised, `bash ./bash`
+/// and `python python.py` are left alone.
+fn strip_argv0(program: &str, args: Vec<String>) -> Vec<String> {
+    match args.split_first() {
+        Some((first, rest)) if first == program => rest.to_vec(),
+        _ => args,
+    }
+}
+
+/// Apply `offset`/`limit` to already-read text.
+///
+/// Reading a whole 4000-line file to quote one function spends the context
+/// window on 3980 lines nobody asked about. The window is applied after the
+/// sandboxed read rather than during it so that confinement, the secret filter
+/// and the byte cap all stay in exactly one place.
+///
+/// `start_line` and `total_lines` ride along because a slice without its
+/// position is unciteable: an agent given lines it cannot number cannot report
+/// where anything is.
+fn read_window(arguments: &Value, content: &str) -> ReadWindow {
+    let number = |key: &str| arguments.get(key).and_then(Value::as_u64);
+    let (offset, limit) = (number("offset"), number("limit"));
+    let lines: Vec<&str> = content.lines().collect();
+    let total_lines = lines.len() as u64;
+    if offset.is_none() && limit.is_none() {
+        // Nothing asked for, nothing changed. `lines()` would swallow a
+        // trailing newline, and a read tool that quietly reshapes a file is one
+        // you cannot patch against.
+        return ReadWindow {
+            text: content.to_string(),
+            start_line: 1,
+            total_lines,
+        };
+    }
+    // 1-based for the caller, because that is what an editor and a stack trace
+    // both say; 0 is taken as the start rather than rejected.
+    let start = offset.unwrap_or(1).saturating_sub(1).min(total_lines) as usize;
+    let take = limit.map_or(usize::MAX, |limit| {
+        usize::try_from(limit).unwrap_or(usize::MAX)
+    });
+    ReadWindow {
+        text: lines
+            .iter()
+            .skip(start)
+            .take(take)
+            .copied()
+            .collect::<Vec<_>>()
+            .join("\n"),
+        start_line: start as u64 + 1,
+        total_lines,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{read_window, strip_argv0};
+    use serde_json::json;
+
+    const FILE: &str = "one\ntwo\nthree\nfour\nfive\n";
+
+    fn args(items: &[&str]) -> Vec<String> {
+        items.iter().map(|item| item.to_string()).collect()
+    }
+
+    #[test]
+    fn a_repeated_program_name_is_not_passed_on_as_a_script_to_run() {
+        // The exact shape that made every approved `bash -lc` fail: bash would
+        // look for a file called `bash` instead of reading the -c string.
+        assert_eq!(
+            strip_argv0("bash", args(&["bash", "-lc", "echo hi"])),
+            args(&["-lc", "echo hi"])
+        );
+    }
+
+    #[test]
+    fn args_that_already_omit_the_program_are_left_exactly_alone() {
+        assert_eq!(
+            strip_argv0("bash", args(&["-lc", "echo hi"])),
+            args(&["-lc", "echo hi"])
+        );
+        assert_eq!(strip_argv0("ls", Vec::new()), Vec::<String>::new());
+    }
+
+    #[test]
+    fn only_an_exact_repeat_is_dropped_not_a_lookalike_first_argument() {
+        // `python python.py` and `bash ./bash` are real commands with a real
+        // first argument. Guessing harder here would eat it.
+        assert_eq!(
+            strip_argv0("python", args(&["python.py"])),
+            args(&["python.py"])
+        );
+        assert_eq!(strip_argv0("bash", args(&["./bash"])), args(&["./bash"]));
+    }
+
+    #[test]
+    fn a_second_repeat_survives_because_only_argv0_is_the_convention() {
+        // `bash bash bash` means run the script `bash` with the argument
+        // `bash`. One layer of convention, not a de-duplication pass.
+        assert_eq!(
+            strip_argv0("bash", args(&["bash", "bash"])),
+            args(&["bash"])
+        );
+    }
+
+    #[test]
+    fn no_window_returns_the_file_exactly_as_it_is_on_disk() {
+        let whole = read_window(&json!({}), FILE);
+        assert_eq!(whole.text, FILE, "the trailing newline must survive");
+        assert_eq!(whole.start_line, 1);
+        assert_eq!(whole.total_lines, 5);
+    }
+
+    #[test]
+    fn an_offset_counts_from_one_the_way_a_stack_trace_does() {
+        let window = read_window(&json!({"offset": 3, "limit": 2}), FILE);
+        assert_eq!(window.text, "three\nfour");
+        assert_eq!(window.start_line, 3, "off by one here misquotes every hit");
+    }
+
+    #[test]
+    fn the_total_travels_with_the_slice_so_the_caller_knows_what_it_missed() {
+        let window = read_window(&json!({"limit": 2}), FILE);
+        assert_eq!(window.text, "one\ntwo");
+        assert_eq!(window.total_lines, 5);
+    }
+
+    #[test]
+    fn reading_past_the_end_is_empty_rather_than_a_panic() {
+        // Models guess offsets. A guess past the end must answer "nothing
+        // there", not take the process down.
+        let window = read_window(&json!({"offset": 900, "limit": 10}), FILE);
+        assert!(window.text.is_empty());
+        assert_eq!(window.start_line, 6);
+    }
+
+    #[test]
+    fn offset_zero_means_the_start_not_an_error() {
+        let window = read_window(&json!({"offset": 0, "limit": 1}), FILE);
+        assert_eq!(window.text, "one");
+        assert_eq!(window.start_line, 1);
     }
 }

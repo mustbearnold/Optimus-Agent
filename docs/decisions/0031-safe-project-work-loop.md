@@ -7,7 +7,7 @@ covers:
   - crates/optimus-kernel/src/project_authority.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/src/lib.rs
-  - apps/optimus-desktop/src/ipc/**
+  - crates/optimus-host/src/**
   - apps/optimus-electron/main.cjs
   - apps/optimus-ui/src/**
 depends_on:
@@ -18,9 +18,9 @@ validated_by:
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - crates/optimus-kernel/src/execution.rs
-  - apps/optimus-desktop/src/ipc/runtime_ops.rs
-  - apps/optimus-desktop/src/ipc/sessions.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/runtime_ops.rs
+  - crates/optimus-host/src/sessions.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-ui/src/components/workbench/Transcript.test.tsx
   - apps/optimus-ui/src/state/conversationStore.test.ts
 last_verified_commit: null
@@ -174,8 +174,8 @@ rebuilt without changing execution truth.
 - `crates/optimus-kernel/src/execution.rs`
 - `crates/optimus-kernel/src/lib.rs`
 - `crates/optimus-runtime/src/lib.rs`
-- `apps/optimus-desktop/src/ipc/sessions.rs`
-- `apps/optimus-desktop/src/ipc/chat.rs`
+- `crates/optimus-host/src/sessions.rs`
+- `crates/optimus-host/src/chat.rs`
 - `apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx`
 - `apps/optimus-ui/src/state/conversationStore.ts`
 
@@ -184,9 +184,9 @@ rebuilt without changing execution truth.
 - `crates/optimus-runtime/tests/approvals_surface.rs`
 - `crates/optimus-kernel/tests/kernel_turn.rs`
 - `crates/optimus-kernel/src/execution.rs`
-- `apps/optimus-desktop/src/ipc/runtime_ops.rs`
-- `apps/optimus-desktop/src/ipc/sessions.rs`
-- `apps/optimus-desktop/src/ipc/chat.rs`
+- `crates/optimus-host/src/runtime_ops.rs`
+- `crates/optimus-host/src/sessions.rs`
+- `crates/optimus-host/src/chat.rs`
 - `apps/optimus-ui/src/components/workbench/Transcript.test.tsx`
 - `apps/optimus-ui/src/state/conversationStore.test.ts`
 

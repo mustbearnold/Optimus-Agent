@@ -2,7 +2,7 @@
 knowledge_type: specification
 status: active
 covers:
-  - apps/optimus-desktop/src/ipc/system.rs
+  - crates/optimus-host/src/system.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-browser/src/lib.rs
   - apps/optimus-desktop/e2e/06-preview-browser.spec.js

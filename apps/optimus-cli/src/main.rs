@@ -4,33 +4,31 @@ use std::process::ExitCode;
 
 mod doctor;
 mod gateway_http;
+mod parsers;
+mod read_only;
+mod runtime_open;
 
 use clap::{Parser, Subcommand};
 use optimus_eval::{
-    compare_evaluation_reports, run_offline_trajectory_suite, run_priority2_offline_evaluation,
-    CandidateBinding, EvaluationReportV1, EvaluationResourceMeasurement, MetricThreshold,
-    MAX_EVALUATION_DATASET_BYTES,
+    run_offline_trajectory_suite, run_priority2_offline_evaluation, CandidateBinding,
+    EvaluationResourceMeasurement, MetricThreshold, MAX_EVALUATION_DATASET_BYTES,
 };
-use optimus_graph::PolicyMode;
 use optimus_kernel::{
-    acknowledge_delivery, device_code_login, drain_one, enqueue, gateway_status,
-    list_ambiguous_sends, list_inbox, list_outbox, list_outbox_receipts, list_recent_causal_turns,
-    list_sessions, load_causal_turn, load_telegram_config, open_cron, open_seeded_agent_registry,
-    open_seeded_workflow_registry, parse_causal_query, resolve_route, run_read_file_handoff,
-    run_write_file_handoff, run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron,
-    write_causal_export, BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel,
-    CompletionResponse, Kernel, KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId,
-    ReadFileHandoffRequest, RouteRequest, RouteSurface, ScriptedModel, ToolCall,
-    WriteFileHandoffRequest,
+    acknowledge_delivery, drain_one, enqueue, gateway_status, list_ambiguous_sends, list_inbox,
+    list_outbox, list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn,
+    load_telegram_config, open_cron, open_seeded_agent_registry, open_seeded_workflow_registry,
+    parse_causal_query, resolve_route, run_read_file_handoff, run_write_file_handoff,
+    run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron, write_causal_export,
+    BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
+    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, ReadFileHandoffRequest,
+    RouteRequest, RouteSurface, ScriptedModel, ToolCall, WriteFileHandoffRequest,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
-use optimus_runtime::{
-    CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, Runtime, StepKind,
-};
-use optimus_skills::{Permission, SkillDraft, SkillRegistry};
+use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
+use optimus_skills::{SkillDraft, SkillRegistry};
 use serde_json::json;
 
-const OPTIMUS_VERSION_MANIFEST: &str =
+pub(crate) const OPTIMUS_VERSION_MANIFEST: &str =
     include_str!("../../../docs/architecture/optimus-version.json");
 
 #[derive(Parser, Debug)]
@@ -40,8 +38,12 @@ struct Cli {
     #[arg(long, global = true, default_value = ".optimus")]
     home: PathBuf,
 
+    /// Unrestricted access, releasing any open approval (ADR-0044; receipts kept)
+    #[arg(long, global = true, default_value_t = false)]
+    yolo: bool,
+
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -486,30 +488,7 @@ fn main() -> ExitCode {
     }
 }
 
-fn parse_policy_mode(policy: &str) -> Result<PolicyMode, Box<dyn std::error::Error>> {
-    match policy.to_ascii_lowercase().as_str() {
-        "smart_deny" | "smartdeny" | "deny" => Ok(PolicyMode::SmartDeny),
-        "unrestricted" | "open" => Ok(PolicyMode::Unrestricted),
-        other => Err(format!("unknown policy {other}; use smart_deny or unrestricted").into()),
-    }
-}
-
-fn parse_perms(s: &str) -> Result<Vec<Permission>, String> {
-    let mut out = Vec::new();
-    for part in s.split(',').map(str::trim).filter(|p| !p.is_empty()) {
-        out.push(match part {
-            "fs" | "fs_workspace" => Permission::FsWorkspace,
-            "terminal" => Permission::Terminal,
-            "net" => Permission::Net,
-            "browser" => Permission::Browser,
-            "memory_write" => Permission::MemoryWrite,
-            other => return Err(format!("unknown permission: {other}")),
-        });
-    }
-    Ok(out)
-}
-
-fn read_bounded_json<T: serde::de::DeserializeOwned>(
+pub(crate) fn read_bounded_json<T: serde::de::DeserializeOwned>(
     path: &Path,
     label: &str,
 ) -> Result<T, Box<dyn std::error::Error>> {
@@ -523,104 +502,22 @@ fn read_bounded_json<T: serde::de::DeserializeOwned>(
     serde_json::from_slice(&bytes).map_err(Into::into)
 }
 
-fn run_read_only_eval(cli: &Cli) -> Option<Result<(), Box<dyn std::error::Error>>> {
-    let Commands::Eval {
-        cmd: EvalCmd::Compare {
-            baseline,
-            candidate,
-        },
-    } = &cli.command
-    else {
-        return None;
-    };
-    Some((|| {
-        let baseline: EvaluationReportV1 = read_bounded_json(baseline, "baseline report")?;
-        let candidate: EvaluationReportV1 = read_bounded_json(candidate, "candidate report")?;
-        let comparison = compare_evaluation_reports(&baseline, &candidate)?;
-        println!("{}", serde_json::to_string_pretty(&comparison)?);
-        Ok(())
-    })())
-}
-
-fn embedded_version_status() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let manifest: serde_json::Value = serde_json::from_str(OPTIMUS_VERSION_MANIFEST)?;
-    let target = manifest
-        .pointer("/hermes_target/version")
-        .and_then(serde_json::Value::as_str)
-        .ok_or("embedded version manifest is missing hermes_target.version")?;
-    let claim_status = manifest
-        .pointer("/parity_claim/status")
-        .and_then(serde_json::Value::as_str)
-        .ok_or("embedded version manifest is missing parity_claim.status")?;
-    let parity_version = if claim_status == "verified" {
-        manifest
-            .pointer("/parity_claim/hermes_version")
-            .cloned()
-            .unwrap_or(serde_json::Value::Null)
-    } else {
-        serde_json::Value::Null
-    };
-    let feature_contracts = manifest
-        .pointer("/baseline/feature_count")
-        .and_then(serde_json::Value::as_u64)
-        .ok_or("embedded version manifest is missing baseline.feature_count")?;
-    Ok(json!({
-        "product": "Optimus Agent",
-        "product_version": env!("CARGO_PKG_VERSION"),
-        "hermes_target_version": target,
-        "hermes_parity_version": parity_version,
-        "parity_claim_status": claim_status,
-        "frozen_hermes_feature_contracts": feature_contracts,
-    }))
-}
-
-fn run_read_only_version(cli: &Cli) -> Option<Result<(), Box<dyn std::error::Error>>> {
-    let Commands::Version { json: as_json } = &cli.command else {
-        return None;
-    };
-    Some((|| {
-        let status = embedded_version_status()?;
-        if *as_json {
-            println!("{}", serde_json::to_string_pretty(&status)?);
-        } else {
-            println!(
-                "Optimus Agent {}",
-                status["product_version"].as_str().unwrap_or("unknown")
-            );
-            println!(
-                "Hermes target: {}",
-                status["hermes_target_version"]
-                    .as_str()
-                    .unwrap_or("unknown")
-            );
-            println!(
-                "Hermes parity: {}",
-                status["hermes_parity_version"]
-                    .as_str()
-                    .unwrap_or("unverified")
-            );
-            println!(
-                "Frozen Hermes feature contracts: {}",
-                status["frozen_hermes_feature_contracts"]
-                    .as_u64()
-                    .unwrap_or(0)
-            );
-        }
-        Ok(())
-    })())
-}
-
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(result) = run_read_only_version(&cli) {
+    if let Some(result) = read_only::run_read_only_version(&cli) {
         return result;
     }
-    if let Some(result) = run_read_only_eval(&cli) {
+    if let Some(result) = read_only::run_read_only_eval(&cli) {
         return result;
     }
     std::fs::create_dir_all(&cli.home)?;
     let db = cli.home.join("optimus.db");
     let skills_db = cli.home.join("skills.db");
-    match cli.command {
+    // Bare `optimus` is the product: it opens the terminal face of the agent
+    // host (ADR-0045). Subcommands remain the escape hatch.
+    let Some(command) = cli.command else {
+        return optimus_tui::run(cli.home);
+    };
+    match command {
         Commands::Version { .. } => unreachable!("version is handled before opening Optimus state"),
         Commands::Doctor { cmd, json } => match cmd {
             None => {
@@ -630,7 +527,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     println!("{}", serde_json::to_string_pretty(&report)?);
                 } else {
                     doctor::print_inventory_text(&report);
-                    let version_status = embedded_version_status()?;
+                    let version_status = read_only::embedded_version_status()?;
                     println!(
                         "hermes: target={} parity={} contracts={}",
                         version_status["hermes_target_version"]
@@ -667,7 +564,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         },
         Commands::Demo { workspace } => {
             let workspace = workspace.unwrap_or_else(|| cli.home.join("workspace"));
-            let rt = Runtime::open(&db, &workspace)?;
+            let rt = runtime_open::open_runtime(&db, &workspace, cli.yolo)?;
             let job = rt.create_job(JobSpec {
                 label: "demo".into(),
                 budget: Default::default(),
@@ -702,7 +599,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Resume { job_id, workspace } => {
             let workspace = workspace.unwrap_or_else(|| cli.home.join("workspace"));
-            let rt = Runtime::open(&db, &workspace)?;
+            let rt = runtime_open::open_runtime(&db, &workspace, cli.yolo)?;
             let recovered = rt.recover_crashed_running()?;
             println!("recovered: {recovered:?}");
             let id = uuid::Uuid::parse_str(&job_id)?;
@@ -712,7 +609,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::ResumeAll { workspace } => {
             let workspace = workspace.unwrap_or_else(|| cli.home.join("workspace"));
-            let rt = Runtime::open(&db, &workspace)?;
+            let rt = runtime_open::open_runtime(&db, &workspace, cli.yolo)?;
             let results = rt.resume_all()?;
             for (id, status) in results {
                 println!("job {id} => {status:?}");
@@ -737,7 +634,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     perms,
                     pin,
                 } => {
-                    let permissions = parse_perms(&perms)?;
+                    let permissions = parsers::parse_perms(&perms)?;
                     let id = reg.create(SkillDraft {
                         name,
                         body,
@@ -936,7 +833,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         println!("{}", store.import_from_codex_cli()?);
                     }
                     CodexAuthCmd::Login => {
-                        device_code_login(&store)?;
+                        optimus_kernel::codex_device_login::device_code_login(&store)?;
                     }
                     CodexAuthCmd::Logout => {
                         store.clear()?;
@@ -1056,7 +953,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Approvals { cmd } => {
             let workspace = cli.home.join("workspace");
-            let rt = Runtime::open(&db, &workspace)?;
+            let rt = runtime_open::open_runtime(&db, &workspace, cli.yolo)?;
             match cmd {
                 ApprovalsCmd::List => {
                     let pending = rt.list_pending_approvals()?;
@@ -1085,7 +982,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Jobs { cmd } => {
             let workspace = cli.home.join("workspace");
-            let rt = Runtime::open(&db, &workspace)?;
+            let rt = runtime_open::open_runtime(&db, &workspace, cli.yolo)?;
             match cmd {
                 JobsCmd::List => {
                     for j in rt.list_jobs_summary()? {
@@ -1576,7 +1473,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     policy,
                     json,
                 } => {
-                    let policy = parse_policy_mode(&policy)?;
+                    let policy = parsers::parse_policy_mode(&policy)?;
                     let report = run_write_file_handoff(
                         &cli.home,
                         WriteFileHandoffRequest {
@@ -1640,7 +1537,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     policy,
                     json,
                 } => {
-                    let policy = parse_policy_mode(&policy)?;
+                    let policy = parsers::parse_policy_mode(&policy)?;
                     let report = run_write_then_read_handoff(
                         &cli.home,
                         WriteFileHandoffRequest {

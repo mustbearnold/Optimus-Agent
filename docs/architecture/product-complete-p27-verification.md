@@ -13,7 +13,7 @@ validated_by:
   - crates/optimus-kernel/src/routing.rs
   - crates/optimus-ops/src/mcp.rs
   - crates/optimus-packs/src/signed.rs
-  - apps/optimus-desktop/src/ipc/extensibility.rs
+  - crates/optimus-host/src/extensibility.rs
   - apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx
 last_verified_commit: null
 ---

@@ -2,7 +2,7 @@
 """Fail-closed desktop IPC contract matrix for Phase 4 shell authority.
 
 Compares:
-  1. Rust host registry methods — apps/optimus-desktop/src/ipc/router.rs
+  1. Rust host registry methods — crates/optimus-host/src/router.rs
   2. Electron main invoke allowlist — apps/optimus-electron/main.cjs DESKTOP_METHODS
   3. React DesktopMethod union — apps/optimus-ui/src/ipc/contracts.ts
 
@@ -127,7 +127,7 @@ def parse_react_desktop_methods(path: Path) -> list[str]:
 
 
 def main() -> int:
-    rust_path = ROOT / "apps/optimus-desktop/src/ipc/router.rs"
+    rust_path = ROOT / "crates/optimus-host/src/router.rs"
     electron_path = ROOT / "apps/optimus-electron/main.cjs"
     react_path = ROOT / "apps/optimus-ui/src/ipc/contracts.ts"
 

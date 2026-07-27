@@ -4,7 +4,7 @@ status: current
 owns:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py
-  - apps/optimus-desktop/src/ipc/router.rs
+  - crates/optimus-host/src/router.rs
   - apps/optimus-electron/main.cjs
   - apps/optimus-ui/src/ipc/contracts.ts
   - docs/contracts/desktop-ipc-methods.md
@@ -18,7 +18,7 @@ depends_on:
   - docs/architecture/architecture-marks.md
 validated_by:
   - scripts/test_desktop_ipc_matrix.py
-  - apps/optimus-desktop/src/ipc/router.rs
+  - crates/optimus-host/src/router.rs
   - apps/optimus-electron/test/ipc-allowlist.test.cjs
 ---
 

@@ -50,6 +50,7 @@ const METHOD_DOMAINS: &[(&str, Domain)] = &[
     ("cron_history", Domain::Scheduling),
     ("approvals_list", Domain::Runtime),
     ("approvals_grant", Domain::Runtime),
+    ("approvals_release_yolo", Domain::Runtime),
     ("jobs_list", Domain::Runtime),
     ("campaign_list", Domain::Runtime),
     ("campaign_create", Domain::Runtime),
@@ -109,35 +110,35 @@ fn classify(method: &str) -> Option<Domain> {
 #[cfg(test)]
 fn domain_recognizes(domain: Domain, method: &str) -> bool {
     match domain {
-        Domain::System => super::system::owns(method),
-        Domain::Sessions => super::sessions::owns(method),
-        Domain::Scheduling => super::scheduling::owns(method),
-        Domain::Runtime => super::runtime_ops::owns(method),
-        Domain::Files => super::files::owns(method),
-        Domain::Chat => super::chat::owns(method),
-        Domain::Os => super::os::owns(method),
-        Domain::Consoles => super::consoles::owns(method),
-        Domain::Messaging => super::messaging::owns(method),
-        Domain::Extensibility => super::extensibility::owns(method),
+        Domain::System => crate::system::owns(method),
+        Domain::Sessions => crate::sessions::owns(method),
+        Domain::Scheduling => crate::scheduling::owns(method),
+        Domain::Runtime => crate::runtime_ops::owns(method),
+        Domain::Files => crate::files::owns(method),
+        Domain::Chat => crate::chat::owns(method),
+        Domain::Os => crate::os::owns(method),
+        Domain::Consoles => crate::consoles::owns(method),
+        Domain::Messaging => crate::messaging::owns(method),
+        Domain::Extensibility => crate::extensibility::owns(method),
     }
 }
 
-pub(crate) fn handle_ipc(
+pub fn handle_ipc(
     home: &PathBuf,
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
     match classify(method) {
-        Some(Domain::System) => super::system::handle(home, method, params),
-        Some(Domain::Sessions) => super::sessions::handle(home, method, params),
-        Some(Domain::Scheduling) => super::scheduling::handle(home, method, params),
-        Some(Domain::Runtime) => super::runtime_ops::handle(home, method, params),
-        Some(Domain::Files) => super::files::handle(home, method, params),
-        Some(Domain::Chat) => super::chat::handle(home, method, params),
-        Some(Domain::Os) => super::os::handle(home, method, params),
-        Some(Domain::Consoles) => super::consoles::handle(home, method, params),
-        Some(Domain::Messaging) => super::messaging::handle(home, method, params),
-        Some(Domain::Extensibility) => super::extensibility::handle(home, method, params),
+        Some(Domain::System) => crate::system::handle(home, method, params),
+        Some(Domain::Sessions) => crate::sessions::handle(home, method, params),
+        Some(Domain::Scheduling) => crate::scheduling::handle(home, method, params),
+        Some(Domain::Runtime) => crate::runtime_ops::handle(home, method, params),
+        Some(Domain::Files) => crate::files::handle(home, method, params),
+        Some(Domain::Chat) => crate::chat::handle(home, method, params),
+        Some(Domain::Os) => crate::os::handle(home, method, params),
+        Some(Domain::Consoles) => crate::consoles::handle(home, method, params),
+        Some(Domain::Messaging) => crate::messaging::handle(home, method, params),
+        Some(Domain::Extensibility) => crate::extensibility::handle(home, method, params),
         None => Err(format!("unknown method: {method}")),
     }
 }
@@ -182,6 +183,7 @@ mod tests {
         ("cron_history", Domain::Scheduling),
         ("approvals_list", Domain::Runtime),
         ("approvals_grant", Domain::Runtime),
+        ("approvals_release_yolo", Domain::Runtime),
         ("jobs_list", Domain::Runtime),
         ("campaign_list", Domain::Runtime),
         ("campaign_create", Domain::Runtime),

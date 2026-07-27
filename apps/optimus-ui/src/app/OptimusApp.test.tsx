@@ -78,6 +78,34 @@ describe('OptimusApp fixture contract', () => {
     expect(container.querySelector('.surface-row')).not.toHaveClass('is-workspace-maximized');
   });
 
+  it('keeps every evidence surface reachable on a wide desktop layout', async () => {
+    // Regression: workspaceTab was only settable from the compact switcher, which
+    // is display:none above 899px, so a desktop window could reach Browser only.
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+    await screen.findByRole('complementary', { name: 'Projects and sessions' });
+    await user.click(screen.getByRole('button', { name: 'Workspace' }));
+
+    const tabs = screen.getByRole('tablist', { name: 'Evidence surface' });
+    expect(within(tabs).getByRole('tab', { name: 'Browser' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await user.click(within(tabs).getByRole('tab', { name: 'Files' }));
+    expect(within(tabs).getByRole('tab', { name: 'Files' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(document.getElementById('workspace-panel-files')).not.toHaveAttribute('hidden');
+
+    await user.click(within(tabs).getByRole('tab', { name: 'Artifacts' }));
+    expect(document.getElementById('workspace-panel-artifacts')).not.toHaveAttribute('hidden');
+    expect(document.getElementById('workspace-panel-files')).toHaveAttribute('hidden');
+    // Await the surface's own async load so it cannot resolve after teardown.
+    expect(await screen.findByRole('region', { name: 'Artifacts' })).toBeInTheDocument();
+  });
+
   it('keeps runtime capabilities reachable from the command palette', async () => {
     const user = userEvent.setup();
     render(<OptimusApp />);

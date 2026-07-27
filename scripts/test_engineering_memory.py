@@ -38,12 +38,15 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "optimus-desktop",
                 "optimus-eval",
                 "optimus-graph",
+                "optimus-host",
                 "optimus-kernel",
                 "optimus-memory",
                 "optimus-ops",
                 "optimus-packs",
+                "optimus-policy",
                 "optimus-runtime",
                 "optimus-skills",
+                "optimus-tui",
                 "optimus-store",
                 "optimus-workflow",
             },
@@ -52,8 +55,8 @@ class EngineeringMemoryTests(unittest.TestCase):
     def test_canonical_tool_catalog_is_reconciled(self) -> None:
         registry = EM.parse_tool_catalog()
         tools = registry["tools"]
-        self.assertEqual(len(tools), 28)
-        self.assertEqual(len({row["id"] for row in tools}), 28)
+        self.assertEqual(len(tools), 31)
+        self.assertEqual(len({row["id"] for row in tools}), 31)
         available = {row["id"] for row in tools if row["available"]}
         self.assertEqual(
             available,
@@ -63,17 +66,26 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "browser_navigate",
                 "browser_snapshot",
                 "delete_path",
+                "find_files",
+                "list_dir",
                 "memory_recall",
                 "mkdir",
                 "patch_file",
                 "read_file",
                 "rename_path",
+                "search_content",
                 "skill_resolve",
                 "terminal",
                 "web_search",
                 "write_file",
             },
         )
+        # Searching is a workspace read, not a process spawn. Shelling out to
+        # `rg` would classify it as `process` and put an approval prompt in
+        # front of every lookup; the engine is linked in precisely to avoid it.
+        for row in tools:
+            if row["id"] in {"search_content", "find_files", "list_dir"}:
+                self.assertEqual(row["policy"], "workspace_read", row["id"])
         terminal = next(row for row in tools if row["id"] == "terminal")
         self.assertEqual(terminal["approval"]["status"], "required")
         self.assertEqual(terminal["policy"], "process")

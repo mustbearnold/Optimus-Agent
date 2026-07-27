@@ -4,14 +4,14 @@ status: current
 covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/execution.rs
-  - apps/optimus-desktop/src/ipc/**
+  - crates/optimus-host/src/**
   - apps/optimus-electron/**
   - apps/optimus-ui/src/**
 depends_on:
   - docs/decisions/0031-safe-project-work-loop.md
 validated_by:
   - crates/optimus-kernel/tests/kernel_turn.rs
-  - apps/optimus-desktop/src/ipc/**
+  - crates/optimus-host/src/**
   - apps/optimus-ui/src/components/workbench/Transcript.test.tsx
   - apps/optimus-ui/src/state/conversationStore.test.ts
 last_verified_commit: null

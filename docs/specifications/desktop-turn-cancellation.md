@@ -3,7 +3,7 @@ knowledge_type: specification
 status: historical
 covers:
   - crates/optimus-kernel/src/lib.rs
-  - apps/optimus-desktop/src/ipc/chat.rs
+  - crates/optimus-host/src/chat.rs
   - apps/optimus-desktop/src/native_workers.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/src/bridge.rs

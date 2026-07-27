@@ -11,7 +11,7 @@ const contractsSource = fs.readFileSync(
   'utf8'
 );
 const routerSource = fs.readFileSync(
-  path.join(__dirname, '../../optimus-desktop/src/ipc/router.rs'),
+  path.join(__dirname, '../../../crates/optimus-host/src/router.rs'),
   'utf8'
 );
 

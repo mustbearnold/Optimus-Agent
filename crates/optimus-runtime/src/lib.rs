@@ -2,6 +2,7 @@
 
 mod campaign;
 mod command_envelope;
+mod effect_outcome;
 mod process_ownership;
 use process_ownership::*;
 
@@ -40,10 +41,13 @@ pub use campaign::{
     CampaignStatus, CampaignStep, CampaignStepSpec, CampaignStore, CampaignView, StepKind,
     StepStatus, CAMPAIGN_SCHEMA_VERSION,
 };
+mod policy_bridge;
+
 pub use command_envelope::{command_envelope_supported, linux_bwrap_args, parent_dirs_for_bind};
+pub use effect_outcome::EffectOutcome;
 pub use optimus_graph::{
-    CommandFsEnvelope, Effect, JobBudget, JobId, JobSpec, JobStatus, NodeSpec, NodeStatus,
-    PolicyMode, RuntimeConfig,
+    AutonomyProfile, CommandFsEnvelope, Effect, JobBudget, JobId, JobSpec, JobStatus, NodeSpec,
+    NodeStatus, PolicyMode, RuntimeConfig,
 };
 
 /// Construct a [`JobId`] from a raw UUID (stable API for CLI/desktop).
@@ -106,6 +110,8 @@ pub enum RuntimeError {
     NotRunnable(String),
     #[error("needs approval for job {job_id} node {node_index}")]
     NeedsApproval { job_id: JobId, node_index: u32 },
+    #[error("policy denied: {code}: {reason}")]
+    PolicyDenied { code: String, reason: String },
     #[error("budget exceeded for job {job_id}: {reason}")]
     BudgetExceeded { job_id: JobId, reason: String },
     #[error("job {job_id} cancelled")]
@@ -129,16 +135,6 @@ pub struct StepOutcome {
     pub node_index: u32,
     pub node_status: NodeStatus,
     pub capture: Option<CommandCapture>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EffectOutcome {
-    pub attempt_id: Uuid,
-    pub job_id: JobId,
-    pub node_id: Uuid,
-    pub effect_hash: String,
-    pub status: String,
-    pub receipt_hash: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -644,11 +640,7 @@ impl Runtime {
                 .action_has_valid_approval(job_id.0, node.id, &effect_hash, Self::now_unix()?)
                 .map_err(GraphError::from)?
         {
-            mark_node_awaiting_approval(&self.store, job_id, node.id)?;
-            return Err(RuntimeError::NeedsApproval {
-                job_id,
-                node_index: node.idx,
-            });
+            self.settle_high_risk_authority(job_id, node.id, node.idx, &effect, &effect_hash)?;
         }
 
         mark_job_running(&self.store, job_id)?;
@@ -1287,6 +1279,7 @@ impl Runtime {
             effect_hash: Self::effect_hash(&outcome.intent_json),
             status: outcome.status,
             receipt_hash: outcome.receipt_json.as_deref().map(Self::effect_hash),
+            receipt_json: outcome.receipt_json,
         }))
     }
 

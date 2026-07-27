@@ -9,7 +9,7 @@ use optimus_kernel::{
 };
 use serde_json::json;
 
-use super::stream_event_to_json;
+use crate::stream_event_to_json;
 
 #[cfg(test)]
 pub(super) fn owns(method: &str) -> bool {

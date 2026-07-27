@@ -3,17 +3,45 @@
 //! Split out of `lib.rs` under architectural law 21. Verbatim move — these stay
 //! inherent `Kernel` methods, so no call site or visibility changed.
 //!
-//! Invariant preserved from the original: resolution settles the accepted turn
-//! deterministically with a tool result and an assistant receipt. It never asks
-//! a provider to regenerate the paused call.
+//! Resolution records the decision and its tool result, then stops. It does not
+//! finish the turn: the turn loop parked without finishing it, and the caller
+//! resumes it from here so the request that provoked the approval gets answered
+//! (ADR-0046).
+//!
+//! The invariant that matters is unchanged and is why the tool result is written
+//! here rather than regenerated: **the approved call is never re-derived.** The
+//! effect the user authorised is the effect that ran, and no model round trip
+//! can substitute a different one. What the resumed turn decides is only what
+//! happens *after* that fixed result.
 
 use super::*;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case", tag = "decision")]
+pub enum ChatApprovalDecision {
+    Approve,
+    Deny { reason: String },
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ChatApprovalStatus {
+    Approved,
+    Denied,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ChatApprovalResolution {
+    pub binding: ToolApprovalBinding,
+    pub status: ChatApprovalStatus,
+    pub event: ToolLifecycleEvent,
+}
 
 impl Kernel {
     /// Resolve a transcript approval against the full persisted runtime identity.
     ///
-    /// This deterministically settles the accepted turn with a tool result and an
-    /// assistant receipt. It never asks a provider to regenerate the paused call.
+    /// Records the tool result for the exact bound call and clears the pending
+    /// approval. The accepted turn stays Running; resume it to get an answer.
     #[allow(clippy::too_many_arguments)]
     pub fn resolve_chat_approval_exact(
         &mut self,
@@ -112,7 +140,11 @@ impl Kernel {
             ));
         }
 
-        let (status, outcome, phase, assistant_receipt, turn_status, error_code) = match decision {
+        // The clock starts here, not when the tool was first called: the pause
+        // in between is the human reading the card, and charging their thinking
+        // time to the command would misreport every approved action.
+        let settling = std::time::Instant::now();
+        let (status, outcome, phase) = match decision {
             ChatApprovalDecision::Approve => {
                 self.runtime
                     .grant_approval(ApprovalGrant::for_job(job_id))?;
@@ -134,6 +166,13 @@ impl Kernel {
                     ));
                 }
                 let succeeded = job_status == JobStatus::Succeeded && effect.status == "succeeded";
+                // What the effect produced, not merely that it ran. The turn
+                // resumes from this result, and a model handed only a status
+                // would narrate an outcome it never observed (ADR-0046).
+                let receipt = effect
+                    .receipt_json
+                    .as_deref()
+                    .and_then(|body| serde_json::from_str::<serde_json::Value>(body).ok());
                 let mut outcome = if succeeded {
                     ToolOutcome::succeeded(
                         call.id.clone(),
@@ -142,12 +181,13 @@ impl Kernel {
                         json!({
                             "ok": true,
                             "job": job_id.to_string(),
-                            "status": "Succeeded"
+                            "status": "Succeeded",
+                            "receipt": receipt,
                         }),
                         descriptor.replay,
                     )
                 } else {
-                    ToolOutcome::failed(
+                    let mut failure = ToolOutcome::failed(
                         call.id.clone(),
                         descriptor.id.clone(),
                         format!("Approved action failed: {}", binding.summary),
@@ -158,7 +198,16 @@ impl Kernel {
                             retryable: false,
                         },
                         descriptor.replay,
-                    )
+                    );
+                    // The receipt says *why* it failed; that is the half worth
+                    // resuming on.
+                    failure.data = json!({
+                        "ok": false,
+                        "job": job_id.to_string(),
+                        "status": "Failed",
+                        "receipt": receipt,
+                    });
+                    failure
                 };
                 outcome.provenance = Some(DurableEffectProvenance {
                     job_id: effect.job_id.0,
@@ -172,18 +221,12 @@ impl Kernel {
                         ChatApprovalStatus::Approved,
                         outcome,
                         ToolLifecyclePhase::Succeeded,
-                        format!("Approved and completed: {}.", binding.summary),
-                        TurnStatus::Succeeded,
-                        None,
                     )
                 } else {
                     (
                         ChatApprovalStatus::Approved,
                         outcome,
                         ToolLifecyclePhase::Failed,
-                        format!("Approved action failed: {}.", binding.summary),
-                        TurnStatus::Failed,
-                        Some("approved_effect_failed"),
                     )
                 }
             }
@@ -211,22 +254,24 @@ impl Kernel {
                 outcome.data = json!({
                     "ok": false,
                     "approval_job": job_id.to_string(),
-                    "status": "Cancelled"
+                    "status": "Cancelled",
+                    // The turn resumes on this, so the model can acknowledge the
+                    // refusal or pick another route. Reporting the denial is the
+                    // agent's to do, not the surface's (ADR-0046).
+                    "denied_reason": reason,
                 });
                 (
                     ChatApprovalStatus::Denied,
                     outcome,
                     ToolLifecyclePhase::Cancelled,
-                    format!("Denied: {}.", binding.summary),
-                    TurnStatus::Cancelled,
-                    Some("approval_denied"),
                 )
             }
         };
 
         descriptor.validate_outcome(&outcome)?;
+        let duration_ms = turn_loop::elapsed_ms(settling);
         self.executions
-            .record_tool_call(manifest_id, &call, &outcome, 0, false)?;
+            .record_tool_call(manifest_id, &call, &outcome, duration_ms, false)?;
         let result_json = serde_json::to_string(&outcome)?;
         let effect_links = if status == ChatApprovalStatus::Approved && outcome.provenance.is_some()
         {
@@ -240,7 +285,7 @@ impl Kernel {
             descriptor.id,
             phase,
             outcome.summary.clone(),
-            Some(0),
+            Some(duration_ms),
             Some(outcome.clone()),
         );
         event.approval = Some(binding.clone());
@@ -252,12 +297,10 @@ impl Kernel {
             tool_call_id: Some(call.id.clone()),
             name: Some(call.name.clone()),
         });
-        self.messages.push(Message {
-            role: Role::Assistant,
-            content: assistant_receipt.clone(),
-            tool_call_id: None,
-            name: None,
-        });
+        // No assistant message is written here. Whatever is said about this
+        // outcome is the agent's to say, once it has seen the result — the
+        // product speaking in its voice about work it had not observed is the
+        // thing ADR-0046 removed.
         self.sessions.save_with_effect_links(
             self.session_id,
             &self.session_title,
@@ -265,55 +308,17 @@ impl Kernel {
             &self.messages,
             &effect_links,
         )?;
-        self.sessions.finish_turn(
-            turn.id,
-            self.session_id,
-            &self.session_title,
-            &pack_names(&self.packs),
-            &self.messages,
-            turn_status,
-            error_code,
-        )?;
-        let timing = self.executions.timing_summary(manifest_id)?;
-        let total_ms = timing.model_ms.saturating_add(timing.tool_ms);
-        self.executions.finish_timed(
-            manifest_id,
-            match turn_status {
-                TurnStatus::Succeeded => ExecutionStatus::Succeeded,
-                TurnStatus::Failed => ExecutionStatus::Failed,
-                TurnStatus::Cancelled => ExecutionStatus::Cancelled,
-                TurnStatus::Running => unreachable!("approval settlement is terminal"),
-            },
-            total_ms,
-        )?;
-        self.executions.record_timing_event(
-            manifest_id,
-            &TimingEvent {
-                kind: TimingEventKind::TurnFinished,
-                step: None,
-                call_id: Some(call.id.clone()),
-                name: Some(call.name.clone()),
-                duration_ms: Some(0),
-                elapsed_ms: total_ms,
-                status: Some(
-                    match turn_status {
-                        TurnStatus::Succeeded => "succeeded",
-                        TurnStatus::Failed => "failed",
-                        TurnStatus::Cancelled => "cancelled",
-                        TurnStatus::Running => unreachable!("approval settlement is terminal"),
-                    }
-                    .into(),
-                ),
-                suppressed: false,
-            },
-        )?;
+        // The turn and its manifest stay Running, exactly as `run_turn_loop`
+        // left them when it parked. Finishing them here is what stranded the
+        // request that provoked the approval; the caller now resumes the turn
+        // through `resume_pending_turn_with_sink`, and that path finishes it
+        // once, when the model actually stops.
         self.executions
             .finish_chat_approval(manifest_id, call_id, status)?;
         Ok(ChatApprovalResolution {
             binding,
             status,
             event,
-            assistant_receipt,
         })
     }
 
