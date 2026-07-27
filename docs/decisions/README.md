@@ -69,6 +69,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0046 | Approving an exact action resumes the turn | Proposed | Settlement stops being terminal; tool result carries the receipt body; the approved call is still never regenerated. |
 | 0047 | A turn's step budget is 32 model round trips | Proposed | Default `max_steps` 8 → 32; approval round trips consume the budget, so 8 starved ordinary turns. |
 | 0048 | Context and page-result budgets are sized for tools, not for chat | Proposed | History 48k → 200k chars, a bound on results the tail cannot exempt, and a page budget split between text and links at run time. |
+| 0049 | The module-size law is measured honestly, and does not tax splitting | Proposed | Every `#[cfg(test)]` item is skipped, not just everything after the first; bare `mod x;` declarations do not count. |
 
 ## Known documentary debt
 
