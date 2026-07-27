@@ -15,7 +15,6 @@ validated_by:
   - crates/optimus-ops/src/surfaces.rs
   - crates/optimus-ops/src/media_fixtures.rs
   - crates/optimus-ops/src/channel_adapters.rs
-  - crates/optimus-eval/src/comparative.rs
   - crates/optimus-packs/src/lib.rs
 last_verified_commit: null
 ---

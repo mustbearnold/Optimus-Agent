@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-07-26",
-  "scorecard_marker": "P17 release gates; PRODUCT-COMPLETE + S7 operator depth + Track Z scaffolds; Hermes gate unverified; projects.scope+updater+pty+native-cua partial",
+  "updated_at": "2026-07-28",
+  "scorecard_marker": "thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
   "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
   "states": [
     "missing",
@@ -13,7 +13,7 @@
     {
       "id": "core.work-durability",
       "capability": "Crash-resumable jobs and effects",
-      "hermes_reference": "Process-local tool execution",
+      "thesis_axis": "one-core-many-faces",
       "state": "win",
       "evidence": [
         "crates/optimus-runtime/tests/crash_resume.rs"
@@ -24,7 +24,7 @@
     {
       "id": "core.memory-integrity",
       "capability": "Evidence-fenced bitemporal memory",
-      "hermes_reference": "Pins plus plugin memory",
+      "thesis_axis": "project-integrity",
       "state": "win",
       "evidence": [
         "crates/optimus-memory/tests/metamemory_mvp.rs"
@@ -35,7 +35,7 @@
     {
       "id": "core.skills-lifecycle",
       "capability": "Versioned skills with outcome-gated promotion",
-      "hermes_reference": "Create/patch skills",
+      "thesis_axis": "one-core-many-faces",
       "state": "win",
       "evidence": [
         "crates/optimus-skills/tests/skills_lifecycle.rs"
@@ -46,7 +46,7 @@
     {
       "id": "core.smartdeny",
       "capability": "Durable approval-gated effects",
-      "hermes_reference": "Approval modes",
+      "thesis_axis": "project-integrity",
       "state": "win",
       "evidence": [
         "crates/optimus-runtime/tests/approvals_surface.rs",
@@ -58,7 +58,7 @@
     {
       "id": "core.pack-budget",
       "capability": "Progressive tool packs and schema budget",
-      "hermes_reference": "Toolsets",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-packs/tests/packs_budget.rs",
@@ -71,13 +71,13 @@
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": "program P21: hard SchemaBudget/PackLimit fail-closed at CapabilitySession; progressive activate_pack reports schema_tokens/max/on_demand headroom; over-budget and on-demand-limit activate_pack yield typed ToolOutcome (pack_schema_budget_exceeded / pack_on_demand_limit_exceeded) without loading pack (kernel_turn). program P26: packs console activate/deactivate via CapabilitySession + pack_prefs (prefs are not live mid-chat Kernel packs).",
+      "trajectory": null,
       "owner_ticket": "D-01,D-02"
     },
     {
       "id": "core.tool-loop",
       "capability": "Model-to-tool dispatch loop",
-      "hermes_reference": "Broad Hermes tool loop",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/tests/kernel_turn.rs",
@@ -90,13 +90,13 @@
         "docs/plans/product-complete-program.md",
         "docs/evidence/product-complete-p21-hold-2026-07-25.md"
       ],
-      "trajectory": "program P21: closed ToolInvocation::ALL_DISPATCHABLE registry (assert_dispatch_registry_closed + try_from_catalog); kernel maps PackError budget/limit to typed ToolOutcome codes (pack_schema_budget_exceeded); activate_pack activation_snapshot; tests packs_budget + kernel_turn + domain_modularity. Evidence: crates/optimus-packs/src/lib.rs, crates/optimus-packs/tests/packs_budget.rs, crates/optimus-kernel/src/lib.rs, crates/optimus-kernel/tests/kernel_turn.rs, docs/architecture/product-complete-p21-verification.md",
+      "trajectory": null,
       "owner_ticket": "A-02,A-03,A-04,D-01"
     },
     {
       "id": "provider.openai-compat",
       "capability": "OpenAI-compatible provider client",
-      "hermes_reference": "OpenAI-compatible providers",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/tests/openai_http.rs"
@@ -107,7 +107,7 @@
     {
       "id": "provider.codex-oauth",
       "capability": "Codex OAuth Responses provider",
-      "hermes_reference": "OpenAI Codex OAuth",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/tests/codex_oauth.rs",
@@ -119,7 +119,7 @@
     {
       "id": "provider.catalog",
       "capability": "Canonical multi-provider/model catalog and connect state",
-      "hermes_reference": "Broad provider catalog and OAuth",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/routing.rs",
@@ -127,26 +127,26 @@
         "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
         "docs/architecture/product-complete-p27-verification.md"
       ],
-      "trajectory": "program P27: provider_catalog_status connect + tools/vision/stream flags \u2192 UI; IPC providers_catalog",
+      "trajectory": null,
       "owner_ticket": "A-01"
     },
     {
       "id": "provider.failover",
       "capability": "Capability-aware provider failover",
-      "hermes_reference": "Provider fallback",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/routing.rs",
         "crates/optimus-host/src/extensibility.rs",
         "docs/architecture/product-complete-p27-verification.md"
       ],
-      "trajectory": "program P27: ordered fallback_order + capability/privacy fail-closed; scripted offline failover tests",
+      "trajectory": null,
       "owner_ticket": "A-08"
     },
     {
       "id": "chat.streaming",
       "capability": "Streaming desktop chat",
-      "hermes_reference": "Streaming chat",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"
@@ -157,7 +157,7 @@
     {
       "id": "chat.thinking-tools",
       "capability": "Separate thinking and timed tool lifecycle cards",
-      "hermes_reference": "Thinking blocks and tool cards",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/lib.rs",
@@ -167,13 +167,13 @@
         "crates/optimus-host/src/sessions.rs",
         "docs/architecture/product-complete-p24-verification.md"
       ],
-      "trajectory": "program P24: ThinkingDelta stream + UI thinking block; tool cards from persisted lifecycle with duration; fixture tests",
+      "trajectory": null,
       "owner_ticket": "A-07"
     },
     {
       "id": "session.durable",
       "capability": "Durable session reopen",
-      "hermes_reference": "Conversation persistence",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/tests/session_resume.rs"
@@ -184,7 +184,7 @@
     {
       "id": "session.search-hygiene",
       "capability": "FTS, archive, active sort, durable pins",
-      "hermes_reference": "Session search/archive/pins",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/session.rs",
@@ -192,13 +192,13 @@
         "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
         "docs/architecture/product-complete-p24-verification.md"
       ],
-      "trajectory": "program P24: sessions_fts + archive/pin durable flags + IPC session_search/archive_session/pin_session; sort pinned/active/archived",
+      "trajectory": null,
       "owner_ticket": "A-06,A-10"
     },
     {
       "id": "desktop.shell",
       "capability": "Conversation-first Windows desktop shell",
-      "hermes_reference": "Hermes Desktop",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
@@ -213,7 +213,7 @@
     {
       "id": "desktop.native-cua",
       "capability": "Installed native paint and accessibility",
-      "hermes_reference": "Desktop application",
+      "thesis_axis": "one-core-many-faces",
       "state": "partial",
       "evidence": [],
       "trajectory": null,
@@ -222,20 +222,20 @@
     {
       "id": "desktop.logs",
       "capability": "Bounded redacted logs drawer",
-      "hermes_reference": "Logs surface",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-host/src/consoles.rs",
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": "program P26: bounded redacted logs_tail (home redacted, no credentials)",
+      "trajectory": null,
       "owner_ticket": "A-09"
     },
     {
       "id": "files.read",
       "capability": "Sandboxed project file list/read",
-      "hermes_reference": "File tools and Files pane",
+      "thesis_axis": "project-integrity",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/fs_sandbox.rs",
@@ -247,7 +247,7 @@
     {
       "id": "files.mutate",
       "capability": "Write/patch/mkdir/rename/delete with SmartDeny",
-      "hermes_reference": "File mutation tools",
+      "thesis_axis": "project-integrity",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/fs_sandbox.rs",
@@ -258,25 +258,25 @@
         "docs/decisions/0039-files-mutate-effect-taxonomy.md",
         "docs/architecture/product-complete-p22-verification.md"
       ],
-      "trajectory": "program P22: Effect taxonomy ADR-0039 adds Mkdir/DeletePath/RenamePath/PatchFile (+ Project* twins); SmartDeny high-risk; cap-std Work Graph only; tools mkdir/delete_path/rename_path/patch_file; path_confinement + approvals_surface green. Evidence: crates/optimus-graph, optimus-runtime tests/path_confinement.rs, docs/decisions/0039-files-mutate-effect-taxonomy.md, docs/architecture/product-complete-p22-verification.md",
+      "trajectory": null,
       "owner_ticket": "A-02,B-04"
     },
     {
       "id": "terminal.job",
       "capability": "Bounded command stream",
-      "hermes_reference": "Terminal tool",
+      "thesis_axis": "project-integrity",
       "state": "parity",
       "evidence": [
         "crates/optimus-runtime/tests/command_capture.rs",
         "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
       ],
-      "trajectory": "playwright:term_run IPC job-stream echo",
+      "trajectory": "playwright:term_run IPC requires explicit approval before command effect",
       "owner_ticket": "A-03"
     },
     {
       "id": "terminal.pty",
       "capability": "Interactive multi-tab ConPTY terminal",
-      "hermes_reference": "Interactive terminal pane",
+      "thesis_axis": "project-integrity",
       "state": "partial",
       "evidence": [
         "crates/optimus-ops/src/pty_session.rs",
@@ -288,20 +288,20 @@
     {
       "id": "web.search",
       "capability": "Web search in model tool loop",
-      "hermes_reference": "web_search/web_extract",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/web_search.rs",
         "crates/optimus-kernel/tests/web_search_live.rs",
         "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": "program P23: versioned extract schema_version + provenance_url + source + retrieved_at; offline unit fixtures; live residual optional",
+      "trajectory": null,
       "owner_ticket": "A-04"
     },
     {
       "id": "browser.http",
       "capability": "SSRF-safe HTTP navigate/snapshot/click",
-      "hermes_reference": "Browser automation",
+      "thesis_axis": "project-integrity",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/browser.rs",
@@ -309,13 +309,13 @@
         "crates/optimus-kernel/tests/browser_live.rs",
         "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": "program P23: HTTP effector SSRF unit suite without CDP (private/metadata/file/ftp deny); post-redirect assert retained",
+      "trajectory": null,
       "owner_ticket": "B-01"
     },
     {
       "id": "browser.cdp",
       "capability": "Coordinated preview + agent browser (host protocol; not shared CDP session)",
-      "hermes_reference": "Browser Use/CDP",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "docs/decisions/0040-shared-browser-contract.md",
@@ -326,13 +326,13 @@
         "apps/optimus-electron/test/preview-security.test.cjs",
         "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": "program P23 ADR-0040: dual trust domains + BrowserCoordBus; optional CDP agent backend; Electron preview remains separate; no shared cookie jar",
+      "trajectory": null,
       "owner_ticket": "B-01,B-02"
     },
     {
       "id": "browser.annotations",
       "capability": "Page annotations as structured agent instructions",
-      "hermes_reference": "Codex preview annotations",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
@@ -340,25 +340,25 @@
         "docs/contracts/high-risk-contracts.md",
         "docs/architecture/product-complete-p23-verification.md"
       ],
-      "trajectory": "program P23: gallery + explicit Add to prompt only; untrusted context; Electron one-shot annotate retained",
+      "trajectory": null,
       "owner_ticket": "B-03"
     },
     {
       "id": "desktop.cua",
       "capability": "Background computer-use pack",
-      "hermes_reference": "computer_use",
+      "thesis_axis": "project-integrity",
       "state": "parity",
       "evidence": [
         "crates/optimus-packs/src/lib.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "S7.7 desktop pack scaffold (screenshot/click/type Unavailable; heavy approval residual)",
+      "trajectory": null,
       "owner_ticket": "B-06"
     },
     {
       "id": "cron.lifecycle",
       "capability": "Schedules, pause/resume/remove, create and history",
-      "hermes_reference": "Rich cron jobs",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/cron.rs",
@@ -366,13 +366,13 @@
         "apps/optimus-ui/src/components/cron/CronWorkbench.tsx",
         "docs/architecture/product-complete-p25-verification.md"
       ],
-      "trajectory": "program P25: list/pause/resume/remove/create/history via IPC; leases not UI-mintable",
+      "trajectory": null,
       "owner_ticket": "C-01,C-04"
     },
     {
       "id": "gateway.queue",
       "capability": "Durable inbox/outbox and local webhook",
-      "hermes_reference": "Gateway message bus",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/gateway.rs",
@@ -380,51 +380,51 @@
         "crates/optimus-host/src/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
-      "trajectory": "program P28: outbox receipts + attempt leases + ambiguous-send list/ack + doctor counts; local SQLite authority only",
+      "trajectory": null,
       "owner_ticket": "C-02"
     },
     {
       "id": "gateway.telegram",
       "capability": "Telegram home-channel adapter",
-      "hermes_reference": "Telegram gateway",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/telegram.rs",
         "crates/optimus-host/src/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
-      "trajectory": "program P28: mock claim\u2192turn\u2192receipt; config-gated live token env; no public listen port; external EO residual honest",
+      "trajectory": null,
       "owner_ticket": "C-03"
     },
     {
       "id": "gateway.discord-slack",
       "capability": "Discord and Slack adapters",
-      "hermes_reference": "Discord/Slack gateway",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/channel_adapters.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.11 mock Discord/Slack enqueue into durable gateway; live APIs residual",
+      "trajectory": null,
       "owner_ticket": "C-05"
     },
     {
       "id": "gateway.ui",
       "capability": "Messaging connection/inbox/outbox UI",
-      "hermes_reference": "Messaging surface",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "apps/optimus-ui/src/components/mail/MailPage.tsx",
         "crates/optimus-host/src/messaging.rs",
         "docs/architecture/product-complete-p28-verification.md"
       ],
-      "trajectory": "program P28: MailPage bound to gateway_inbox/outbox/ambiguous/ack IPC; honesty copy for local receipts",
+      "trajectory": null,
       "owner_ticket": "C-04"
     },
     {
       "id": "mcp.client",
       "capability": "Pack-gated stdio/HTTP MCP client",
-      "hermes_reference": "Native MCP client",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/mcp.rs",
@@ -432,13 +432,13 @@
         "crates/optimus-host/src/extensibility.rs",
         "docs/architecture/product-complete-p27-verification.md"
       ],
-      "trajectory": "program P27: pack-gated stdio+HTTP mock MCP; ToolDesc map; no second catalog; private URL reject",
+      "trajectory": null,
       "owner_ticket": "D-01"
     },
     {
       "id": "plugins.signed",
       "capability": "Signed permission-declared plugins/packs",
-      "hermes_reference": "Plugin ecosystem",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-packs/src/signed.rs",
@@ -446,13 +446,13 @@
         "crates/optimus-host/src/extensibility.rs",
         "docs/architecture/product-complete-p27-verification.md"
       ],
-      "trajectory": "program P27: HMAC signed manifests; unsigned rejected; permission ceiling vs SmartDeny classes",
+      "trajectory": null,
       "owner_ticket": "D-02"
     },
     {
       "id": "skills.ui",
       "capability": "Skills lifecycle desktop console",
-      "hermes_reference": "Skills management UX",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-skills/src/lib.rs",
@@ -460,13 +460,13 @@
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": "program P26: skills_list/pin/deprecate IPC + React console; permissions closed",
+      "trajectory": null,
       "owner_ticket": "D-03"
     },
     {
       "id": "artifacts.store-ui",
       "capability": "Provenance-aware artifact publication and gallery",
-      "hermes_reference": "Artifacts",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-artifacts/src/lib.rs",
@@ -474,13 +474,13 @@
         "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
         "docs/architecture/product-complete-p25-verification.md"
       ],
-      "trajectory": "program P25: gallery thumbs, type/label chips, single export + bulk zip with basename/secret confinement",
+      "trajectory": null,
       "owner_ticket": "D-04"
     },
     {
       "id": "memory.ui",
       "capability": "Evidence explorer, feedback, correction and forget",
-      "hermes_reference": "Memory management",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-memory/src/lib.rs",
@@ -488,13 +488,13 @@
         "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": "program P26: list/recall/correct/forget; ActionAuthorize refused; fence on packets",
+      "trajectory": null,
       "owner_ticket": "D-05"
     },
     {
       "id": "projects.scope",
       "capability": "Durable project roots and policy scope",
-      "hermes_reference": "Projects/workspaces",
+      "thesis_axis": "project-integrity",
       "state": "partial",
       "evidence": [
         "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
@@ -508,19 +508,19 @@
     {
       "id": "profiles.isolation",
       "capability": "Profile-isolated homes and cross-profile links",
-      "hermes_reference": "Hermes profiles",
+      "thesis_axis": "project-integrity",
       "state": "parity",
       "evidence": [
         "crates/optimus-kernel/src/profile.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "S7.1-S7.2 ProfileStore sealed homes + cross-profile deny-by-default",
+      "trajectory": null,
       "owner_ticket": "D-06"
     },
     {
       "id": "campaign.sequential",
       "capability": "Durable sequential write/command campaigns",
-      "hermes_reference": "Delegated work",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-runtime/src/campaign.rs",
@@ -532,104 +532,92 @@
     {
       "id": "campaign.subagents",
       "capability": "Durable child-agent DAGs, leases and handoffs",
-      "hermes_reference": "delegate_task and Kanban agents",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-workflow/src/child_lease.rs",
         "crates/optimus-workflow/src/specialist_vertical.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "S7.3-S7.5 leased child steps, cancel propagation, parallel N<=4 + existing specialist DAG",
+      "trajectory": null,
       "owner_ticket": "D-07,E-08"
     },
     {
       "id": "eval.offline",
       "capability": "Deterministic offline trajectory suite",
-      "hermes_reference": "Evaluation tooling",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-eval/src/eval.rs"
       ],
-      "trajectory": "cargo:optimus-kernel/eval",
+      "trajectory": "cargo:optimus-eval/evaluation_contracts",
       "owner_ticket": "P-02"
-    },
-    {
-      "id": "eval.comparative",
-      "capability": "Same-task Hermes-vs-Optimus runner",
-      "hermes_reference": "Hermes baseline",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-eval/src/comparative.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": "Z.1 offline comparative runner; Hermes not_run; gate remains unverified",
-      "owner_ticket": "P-01"
     },
     {
       "id": "media.vision-image",
       "capability": "Vision and image generation pack",
-      "hermes_reference": "vision_analyze/image_generate",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/media_fixtures.rs",
         "crates/optimus-packs/src/lib.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.7-Z.8 offline vision analyze + image generate fixtures + media pack",
+      "trajectory": null,
       "owner_ticket": "E-01"
     },
     {
       "id": "media.voice",
       "capability": "STT/TTS and voice composer",
-      "hermes_reference": "Voice/TTS",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/media_fixtures.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.9 offline STT/TTS fixtures",
+      "trajectory": null,
       "owner_ticket": "E-02"
     },
     {
       "id": "surface.proxy",
       "capability": "OpenAI-compatible server/proxy",
-      "hermes_reference": "OpenAI-compatible proxy",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/surfaces.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.4 offline OpenAI-compatible chat proxy scaffold",
+      "trajectory": null,
       "owner_ticket": "E-03"
     },
     {
       "id": "surface.acp",
       "capability": "ACP/IDE bridge",
-      "hermes_reference": "ACP integration",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/surfaces.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.6 thin ACP initialize/session adapters",
+      "trajectory": null,
       "owner_ticket": "E-04"
     },
     {
       "id": "surface.tui",
       "capability": "Headless TUI operator surface",
-      "hermes_reference": "Hermes TUI",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/surfaces.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.5 headless TUI smoke snapshot",
+      "trajectory": null,
       "owner_ticket": "E-05"
     },
     {
       "id": "surface.commands",
       "capability": "Canonical slash commands and command palette",
-      "hermes_reference": "Slash commands",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/surface_commands.rs",
@@ -637,25 +625,25 @@
         "apps/optimus-ui/src/components/chrome/CommandPalette.tsx",
         "docs/architecture/product-complete-p26-verification.md"
       ],
-      "trajectory": "program P26: unified slash/palette registry CLI+desktop; not a second tool list",
+      "trajectory": null,
       "owner_ticket": "E-06"
     },
     {
       "id": "migration.hermes",
       "capability": "Hermes session/skill/memory importer",
-      "hermes_reference": "Hermes state",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-ops/src/hermes_import.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "S7.8-S7.9 Hermes session/skill/memory fixture importers (staged imports; not live merge)",
+      "trajectory": null,
       "owner_ticket": "E-07"
     },
     {
       "id": "release.updater",
       "capability": "Signed updater and rollback",
-      "hermes_reference": "Product update channel",
+      "thesis_axis": "one-core-many-faces",
       "state": "partial",
       "evidence": [
         "docs/decisions/0043-no-auto-updater-channel.md",
@@ -669,13 +657,13 @@
     {
       "id": "packs.breadth",
       "capability": "Office/devex/social/home capability breadth",
-      "hermes_reference": "Hermes skill/tool ecosystem",
+      "thesis_axis": "one-core-many-faces",
       "state": "parity",
       "evidence": [
         "crates/optimus-packs/src/lib.rs",
         "docs/architecture/s7-track-z-verification.md"
       ],
-      "trajectory": "Z.10 home/office/devex packs with one scaffold tool each",
+      "trajectory": null,
       "owner_ticket": "E-11"
     }
   ]

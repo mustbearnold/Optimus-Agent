@@ -129,8 +129,9 @@ as the runnable-trajectory requirement).
 
 **Parity ledger transition:** `parity-capability-ledger.json` is re-keyed, not
 retired — `hermes_reference` → `thesis_axis`, trajectories must be runnable
-(13 of 51 are), landing green with the unclassified count pinned at 38 and only
-able to shrink. `crates/optimus-eval/src/comparative.rs` and the
+(13 of 51 were at decision time), landing green with the unclassified count
+pinned at 37 — #63 measured 38, one of which was the deleted `eval.comparative`
+row — and only able to shrink. `crates/optimus-eval/src/comparative.rs` and the
 `eval.comparative` row are deleted; `migration.hermes` stays.
 
 ## Disposition of prior documents
