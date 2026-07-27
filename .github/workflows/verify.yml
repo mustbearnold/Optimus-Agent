@@ -1,0 +1,70 @@
+# Success criterion C6 (docs/architecture/north-star-2026-07.md): CI green at
+# the SHA. One workflow, running the same `just verify` the pre-push hook runs,
+# with OPTIMUS_VERIFY_FORBID_SKIPS=1 so a gate that silently skips (missing npm
+# deps, missing Playwright browser) fails the build instead of greenwashing it.
+#
+# This is also the platform claim required by #62 ("no platform is claimed
+# without a CI job that builds it") — this job is what makes Linux claimed.
+name: verify
+
+on:
+  push:
+    branches: [main, "wip/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: just verify (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OPTIMUS_VERIFY_FORBID_SKIPS: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      # rustup reads rust-toolchain.toml (1.97.1 + rustfmt + clippy) on first
+      # cargo invocation; `rustup show` forces the install up front so the
+      # cache step below keys on a resolved toolchain.
+      - name: Install pinned Rust toolchain
+        run: rustup show
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install just and cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just,cargo-nextest
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/optimus-ui/package-lock.json
+            apps/optimus-electron/package-lock.json
+            apps/optimus-desktop/package-lock.json
+
+      # Everything verify.sh would otherwise `skip` on a bare runner must be
+      # installed here — skips are failures under OPTIMUS_VERIFY_FORBID_SKIPS.
+      - name: Install JS dependencies
+        run: |
+          npm ci --prefix apps/optimus-ui
+          npm ci --prefix apps/optimus-electron
+          npm ci --prefix apps/optimus-desktop
+
+      - name: Install Playwright chromium
+        run: |
+          cd apps/optimus-desktop && npx playwright install --with-deps chromium
+
+      - name: Build optimus-ui bundle (electron e2e prerequisite)
+        run: npm --prefix apps/optimus-ui run build
+
+      - name: just verify
+        run: just verify

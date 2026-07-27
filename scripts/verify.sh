@@ -380,4 +380,13 @@ if [ "${#FAILED[@]}" -gt 0 ]; then
   printf '\n  failed: %s\n\n' "${FAILED[*]}"
   exit 1
 fi
+
+# Skip-is-failure mode (success criterion C6, north-star-2026-07.md). Locally a
+# skip is a nudge to install a dev dependency; on a bare CI runner it is a gate
+# silently not running — green with silent skips is exactly the self-serving
+# shape the criteria ban. CI sets OPTIMUS_VERIFY_FORBID_SKIPS=1.
+if [ -n "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ] && [ "${#SKIPPED[@]}" -gt 0 ]; then
+  printf '\n  skipped (forbidden by OPTIMUS_VERIFY_FORBID_SKIPS): %s\n\n' "${SKIPPED[*]}"
+  exit 1
+fi
 printf '\n'
