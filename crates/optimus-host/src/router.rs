@@ -2,6 +2,8 @@
 
 use std::path::PathBuf;
 
+use crate::scope::ScopePolicy;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Domain {
     System,
@@ -16,95 +18,107 @@ enum Domain {
     Extensibility,
 }
 
-const METHOD_DOMAINS: &[(&str, Domain)] = &[
-    ("ping", Domain::System),
-    ("doctor", Domain::System),
-    ("window_minimize", Domain::Os),
-    ("window_maximize", Domain::Os),
-    ("window_close", Domain::Os),
-    ("window_drag", Domain::Os),
-    ("window_outer_position", Domain::Os),
-    ("window_set_outer_position", Domain::Os),
-    ("pick_folder", Domain::Os),
-    ("project_root_stage_native", Domain::Os),
-    ("auth_status", Domain::System),
-    ("auth_import_hermes", Domain::System),
-    ("auth_import_cli", Domain::System),
-    ("settings_get", Domain::System),
-    ("settings_set", Domain::System),
-    ("sessions", Domain::Sessions),
-    ("delete_session", Domain::Sessions),
-    ("rename_session", Domain::Sessions),
-    ("session_search", Domain::Sessions),
-    ("archive_session", Domain::Sessions),
-    ("pin_session", Domain::Sessions),
-    ("open_path", Domain::Os),
-    ("open_url", Domain::Os),
-    ("new_session", Domain::Sessions),
-    ("get_session", Domain::Sessions),
-    ("cron_list", Domain::Scheduling),
-    ("cron_add", Domain::Scheduling),
-    ("cron_tick", Domain::Scheduling),
-    ("cron_set_enabled", Domain::Scheduling),
-    ("cron_remove", Domain::Scheduling),
-    ("cron_history", Domain::Scheduling),
-    ("approvals_list", Domain::Runtime),
-    ("approvals_grant", Domain::Runtime),
-    ("approvals_release_yolo", Domain::Runtime),
-    ("jobs_list", Domain::Runtime),
-    ("campaign_list", Domain::Runtime),
-    ("campaign_create", Domain::Runtime),
-    ("campaign_run", Domain::Runtime),
-    ("campaign_status", Domain::Runtime),
-    ("fs_roots", Domain::Files),
-    ("fs_list", Domain::Files),
-    ("fs_read", Domain::Files),
-    ("project_scopes_list", Domain::Files),
-    ("project_scopes_authorize", Domain::Files),
-    ("artifacts_list", Domain::Files),
-    ("artifacts_put_text", Domain::Files),
-    ("artifacts_get", Domain::Files),
-    ("artifacts_delete", Domain::Files),
-    ("artifacts_delete_many", Domain::Files),
-    ("artifacts_export", Domain::Files),
-    ("artifacts_export_zip", Domain::Files),
-    ("term_run", Domain::Runtime),
-    ("browser_navigate", Domain::Runtime),
-    ("browser_click", Domain::Runtime),
-    ("browser_reload", Domain::Runtime),
-    ("chat", Domain::Chat),
-    ("chat_offline", Domain::Chat),
-    ("chat_approval_resolve", Domain::Chat),
-    ("skills_list", Domain::Consoles),
-    ("skills_pin", Domain::Consoles),
-    ("skills_deprecate", Domain::Consoles),
-    ("memory_list", Domain::Consoles),
-    ("memory_recall", Domain::Consoles),
-    ("memory_correct", Domain::Consoles),
-    ("memory_forget", Domain::Consoles),
-    ("packs_state", Domain::Consoles),
-    ("packs_activate", Domain::Consoles),
-    ("packs_deactivate", Domain::Consoles),
-    ("logs_tail", Domain::Consoles),
-    ("commands_list", Domain::Consoles),
-    ("gateway_status", Domain::Messaging),
-    ("gateway_inbox", Domain::Messaging),
-    ("gateway_outbox", Domain::Messaging),
-    ("gateway_enqueue", Domain::Messaging),
-    ("gateway_ambiguous", Domain::Messaging),
-    ("gateway_ack_delivery", Domain::Messaging),
-    ("gateway_telegram_status", Domain::Messaging),
-    ("providers_catalog", Domain::Extensibility),
-    ("providers_route_preview", Domain::Extensibility),
-    ("mcp_status", Domain::Extensibility),
-    ("mcp_tools", Domain::Extensibility),
-    ("packs_verify_signed", Domain::Extensibility),
+// Third column: the method's project-scope assertion (criterion C2).
+// `None` = unasserted (allowlisted, shrink-only, in
+// scripts/check-project-scope-assertions.py); `Some(_)` is enforced by
+// `crate::scope::enforce` before dispatch, so a declaration here is
+// load-bearing, never documentation. New methods must declare at birth.
+const METHOD_DOMAINS: &[(&str, Domain, Option<ScopePolicy>)] = &[
+    ("ping", Domain::System, None),
+    ("doctor", Domain::System, None),
+    ("window_minimize", Domain::Os, None),
+    ("window_maximize", Domain::Os, None),
+    ("window_close", Domain::Os, None),
+    ("window_drag", Domain::Os, None),
+    ("window_outer_position", Domain::Os, None),
+    ("window_set_outer_position", Domain::Os, None),
+    ("pick_folder", Domain::Os, None),
+    ("project_root_stage_native", Domain::Os, None),
+    ("auth_status", Domain::System, None),
+    ("auth_import_hermes", Domain::System, None),
+    ("auth_import_cli", Domain::System, None),
+    ("settings_get", Domain::System, None),
+    ("settings_set", Domain::System, None),
+    ("sessions", Domain::Sessions, None),
+    ("delete_session", Domain::Sessions, None),
+    ("rename_session", Domain::Sessions, None),
+    ("session_search", Domain::Sessions, None),
+    ("archive_session", Domain::Sessions, None),
+    ("pin_session", Domain::Sessions, None),
+    ("open_path", Domain::Os, None),
+    ("open_url", Domain::Os, None),
+    ("new_session", Domain::Sessions, None),
+    ("get_session", Domain::Sessions, None),
+    ("cron_list", Domain::Scheduling, None),
+    ("cron_add", Domain::Scheduling, None),
+    ("cron_tick", Domain::Scheduling, None),
+    ("cron_set_enabled", Domain::Scheduling, None),
+    ("cron_remove", Domain::Scheduling, None),
+    ("cron_history", Domain::Scheduling, None),
+    ("approvals_list", Domain::Runtime, None),
+    ("approvals_grant", Domain::Runtime, None),
+    ("approvals_release_yolo", Domain::Runtime, None),
+    ("jobs_list", Domain::Runtime, None),
+    ("campaign_list", Domain::Runtime, None),
+    ("campaign_create", Domain::Runtime, None),
+    ("campaign_run", Domain::Runtime, None),
+    ("campaign_status", Domain::Runtime, None),
+    ("fs_roots", Domain::Files, None),
+    ("fs_list", Domain::Files, None),
+    ("fs_read", Domain::Files, None),
+    ("project_scopes_list", Domain::Files, None),
+    ("project_scopes_authorize", Domain::Files, None),
+    ("artifacts_list", Domain::Files, None),
+    ("artifacts_put_text", Domain::Files, None),
+    ("artifacts_get", Domain::Files, None),
+    ("artifacts_delete", Domain::Files, None),
+    ("artifacts_delete_many", Domain::Files, None),
+    ("artifacts_export", Domain::Files, None),
+    ("artifacts_export_zip", Domain::Files, None),
+    ("term_run", Domain::Runtime, None),
+    ("browser_navigate", Domain::Runtime, None),
+    ("browser_click", Domain::Runtime, None),
+    ("browser_reload", Domain::Runtime, None),
+    ("chat", Domain::Chat, None),
+    ("chat_offline", Domain::Chat, None),
+    ("chat_approval_resolve", Domain::Chat, None),
+    ("skills_list", Domain::Consoles, None),
+    ("skills_pin", Domain::Consoles, None),
+    ("skills_deprecate", Domain::Consoles, None),
+    ("memory_list", Domain::Consoles, None),
+    ("memory_recall", Domain::Consoles, None),
+    ("memory_correct", Domain::Consoles, None),
+    ("memory_forget", Domain::Consoles, None),
+    ("packs_state", Domain::Consoles, None),
+    ("packs_activate", Domain::Consoles, None),
+    ("packs_deactivate", Domain::Consoles, None),
+    ("logs_tail", Domain::Consoles, None),
+    ("commands_list", Domain::Consoles, None),
+    ("gateway_status", Domain::Messaging, None),
+    ("gateway_inbox", Domain::Messaging, None),
+    ("gateway_outbox", Domain::Messaging, None),
+    ("gateway_enqueue", Domain::Messaging, None),
+    ("gateway_ambiguous", Domain::Messaging, None),
+    ("gateway_ack_delivery", Domain::Messaging, None),
+    ("gateway_telegram_status", Domain::Messaging, None),
+    ("providers_catalog", Domain::Extensibility, None),
+    ("providers_route_preview", Domain::Extensibility, None),
+    ("mcp_status", Domain::Extensibility, None),
+    ("mcp_tools", Domain::Extensibility, None),
+    ("packs_verify_signed", Domain::Extensibility, None),
 ];
 
 fn classify(method: &str) -> Option<Domain> {
     METHOD_DOMAINS
         .iter()
-        .find_map(|(name, domain)| (*name == method).then_some(*domain))
+        .find_map(|(name, domain, _)| (*name == method).then_some(*domain))
+}
+
+fn scope_policy(method: &str) -> Option<ScopePolicy> {
+    METHOD_DOMAINS
+        .iter()
+        .find_map(|(name, _, policy)| (*name == method).then_some(*policy))
+        .flatten()
 }
 
 #[cfg(test)]
@@ -128,18 +142,21 @@ pub fn handle_ipc(
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-    match classify(method) {
-        Some(Domain::System) => crate::system::handle(home, method, params),
-        Some(Domain::Sessions) => crate::sessions::handle(home, method, params),
-        Some(Domain::Scheduling) => crate::scheduling::handle(home, method, params),
-        Some(Domain::Runtime) => crate::runtime_ops::handle(home, method, params),
-        Some(Domain::Files) => crate::files::handle(home, method, params),
-        Some(Domain::Chat) => crate::chat::handle(home, method, params),
-        Some(Domain::Os) => crate::os::handle(home, method, params),
-        Some(Domain::Consoles) => crate::consoles::handle(home, method, params),
-        Some(Domain::Messaging) => crate::messaging::handle(home, method, params),
-        Some(Domain::Extensibility) => crate::extensibility::handle(home, method, params),
-        None => Err(format!("unknown method: {method}")),
+    let Some(domain) = classify(method) else {
+        return Err(format!("unknown method: {method}"));
+    };
+    crate::scope::enforce(scope_policy(method), home, method, &params)?;
+    match domain {
+        Domain::System => crate::system::handle(home, method, params),
+        Domain::Sessions => crate::sessions::handle(home, method, params),
+        Domain::Scheduling => crate::scheduling::handle(home, method, params),
+        Domain::Runtime => crate::runtime_ops::handle(home, method, params),
+        Domain::Files => crate::files::handle(home, method, params),
+        Domain::Chat => crate::chat::handle(home, method, params),
+        Domain::Os => crate::os::handle(home, method, params),
+        Domain::Consoles => crate::consoles::handle(home, method, params),
+        Domain::Messaging => crate::messaging::handle(home, method, params),
+        Domain::Extensibility => crate::extensibility::handle(home, method, params),
     }
 }
 
@@ -147,91 +164,93 @@ pub fn handle_ipc(
 mod tests {
     use std::collections::HashSet;
 
-    use super::{domain_recognizes, Domain, METHOD_DOMAINS};
+    use serde_json::json;
 
-    const EXPECTED: &[(&str, Domain)] = &[
-        ("ping", Domain::System),
-        ("doctor", Domain::System),
-        ("window_minimize", Domain::Os),
-        ("window_maximize", Domain::Os),
-        ("window_close", Domain::Os),
-        ("window_drag", Domain::Os),
-        ("window_outer_position", Domain::Os),
-        ("window_set_outer_position", Domain::Os),
-        ("pick_folder", Domain::Os),
-        ("project_root_stage_native", Domain::Os),
-        ("auth_status", Domain::System),
-        ("auth_import_hermes", Domain::System),
-        ("auth_import_cli", Domain::System),
-        ("settings_get", Domain::System),
-        ("settings_set", Domain::System),
-        ("sessions", Domain::Sessions),
-        ("delete_session", Domain::Sessions),
-        ("rename_session", Domain::Sessions),
-        ("session_search", Domain::Sessions),
-        ("archive_session", Domain::Sessions),
-        ("pin_session", Domain::Sessions),
-        ("open_path", Domain::Os),
-        ("open_url", Domain::Os),
-        ("new_session", Domain::Sessions),
-        ("get_session", Domain::Sessions),
-        ("cron_list", Domain::Scheduling),
-        ("cron_add", Domain::Scheduling),
-        ("cron_tick", Domain::Scheduling),
-        ("cron_set_enabled", Domain::Scheduling),
-        ("cron_remove", Domain::Scheduling),
-        ("cron_history", Domain::Scheduling),
-        ("approvals_list", Domain::Runtime),
-        ("approvals_grant", Domain::Runtime),
-        ("approvals_release_yolo", Domain::Runtime),
-        ("jobs_list", Domain::Runtime),
-        ("campaign_list", Domain::Runtime),
-        ("campaign_create", Domain::Runtime),
-        ("campaign_run", Domain::Runtime),
-        ("campaign_status", Domain::Runtime),
-        ("fs_roots", Domain::Files),
-        ("fs_list", Domain::Files),
-        ("fs_read", Domain::Files),
-        ("project_scopes_list", Domain::Files),
-        ("project_scopes_authorize", Domain::Files),
-        ("artifacts_list", Domain::Files),
-        ("artifacts_put_text", Domain::Files),
-        ("artifacts_get", Domain::Files),
-        ("artifacts_delete", Domain::Files),
-        ("artifacts_delete_many", Domain::Files),
-        ("artifacts_export", Domain::Files),
-        ("artifacts_export_zip", Domain::Files),
-        ("term_run", Domain::Runtime),
-        ("browser_navigate", Domain::Runtime),
-        ("browser_click", Domain::Runtime),
-        ("browser_reload", Domain::Runtime),
-        ("chat", Domain::Chat),
-        ("chat_offline", Domain::Chat),
-        ("chat_approval_resolve", Domain::Chat),
-        ("skills_list", Domain::Consoles),
-        ("skills_pin", Domain::Consoles),
-        ("skills_deprecate", Domain::Consoles),
-        ("memory_list", Domain::Consoles),
-        ("memory_recall", Domain::Consoles),
-        ("memory_correct", Domain::Consoles),
-        ("memory_forget", Domain::Consoles),
-        ("packs_state", Domain::Consoles),
-        ("packs_activate", Domain::Consoles),
-        ("packs_deactivate", Domain::Consoles),
-        ("logs_tail", Domain::Consoles),
-        ("commands_list", Domain::Consoles),
-        ("gateway_status", Domain::Messaging),
-        ("gateway_inbox", Domain::Messaging),
-        ("gateway_outbox", Domain::Messaging),
-        ("gateway_enqueue", Domain::Messaging),
-        ("gateway_ambiguous", Domain::Messaging),
-        ("gateway_ack_delivery", Domain::Messaging),
-        ("gateway_telegram_status", Domain::Messaging),
-        ("providers_catalog", Domain::Extensibility),
-        ("providers_route_preview", Domain::Extensibility),
-        ("mcp_status", Domain::Extensibility),
-        ("mcp_tools", Domain::Extensibility),
-        ("packs_verify_signed", Domain::Extensibility),
+    use super::{domain_recognizes, handle_ipc, Domain, ScopePolicy, METHOD_DOMAINS};
+
+    const EXPECTED: &[(&str, Domain, Option<ScopePolicy>)] = &[
+        ("ping", Domain::System, None),
+        ("doctor", Domain::System, None),
+        ("window_minimize", Domain::Os, None),
+        ("window_maximize", Domain::Os, None),
+        ("window_close", Domain::Os, None),
+        ("window_drag", Domain::Os, None),
+        ("window_outer_position", Domain::Os, None),
+        ("window_set_outer_position", Domain::Os, None),
+        ("pick_folder", Domain::Os, None),
+        ("project_root_stage_native", Domain::Os, None),
+        ("auth_status", Domain::System, None),
+        ("auth_import_hermes", Domain::System, None),
+        ("auth_import_cli", Domain::System, None),
+        ("settings_get", Domain::System, None),
+        ("settings_set", Domain::System, None),
+        ("sessions", Domain::Sessions, None),
+        ("delete_session", Domain::Sessions, None),
+        ("rename_session", Domain::Sessions, None),
+        ("session_search", Domain::Sessions, None),
+        ("archive_session", Domain::Sessions, None),
+        ("pin_session", Domain::Sessions, None),
+        ("open_path", Domain::Os, None),
+        ("open_url", Domain::Os, None),
+        ("new_session", Domain::Sessions, None),
+        ("get_session", Domain::Sessions, None),
+        ("cron_list", Domain::Scheduling, None),
+        ("cron_add", Domain::Scheduling, None),
+        ("cron_tick", Domain::Scheduling, None),
+        ("cron_set_enabled", Domain::Scheduling, None),
+        ("cron_remove", Domain::Scheduling, None),
+        ("cron_history", Domain::Scheduling, None),
+        ("approvals_list", Domain::Runtime, None),
+        ("approvals_grant", Domain::Runtime, None),
+        ("approvals_release_yolo", Domain::Runtime, None),
+        ("jobs_list", Domain::Runtime, None),
+        ("campaign_list", Domain::Runtime, None),
+        ("campaign_create", Domain::Runtime, None),
+        ("campaign_run", Domain::Runtime, None),
+        ("campaign_status", Domain::Runtime, None),
+        ("fs_roots", Domain::Files, None),
+        ("fs_list", Domain::Files, None),
+        ("fs_read", Domain::Files, None),
+        ("project_scopes_list", Domain::Files, None),
+        ("project_scopes_authorize", Domain::Files, None),
+        ("artifacts_list", Domain::Files, None),
+        ("artifacts_put_text", Domain::Files, None),
+        ("artifacts_get", Domain::Files, None),
+        ("artifacts_delete", Domain::Files, None),
+        ("artifacts_delete_many", Domain::Files, None),
+        ("artifacts_export", Domain::Files, None),
+        ("artifacts_export_zip", Domain::Files, None),
+        ("term_run", Domain::Runtime, None),
+        ("browser_navigate", Domain::Runtime, None),
+        ("browser_click", Domain::Runtime, None),
+        ("browser_reload", Domain::Runtime, None),
+        ("chat", Domain::Chat, None),
+        ("chat_offline", Domain::Chat, None),
+        ("chat_approval_resolve", Domain::Chat, None),
+        ("skills_list", Domain::Consoles, None),
+        ("skills_pin", Domain::Consoles, None),
+        ("skills_deprecate", Domain::Consoles, None),
+        ("memory_list", Domain::Consoles, None),
+        ("memory_recall", Domain::Consoles, None),
+        ("memory_correct", Domain::Consoles, None),
+        ("memory_forget", Domain::Consoles, None),
+        ("packs_state", Domain::Consoles, None),
+        ("packs_activate", Domain::Consoles, None),
+        ("packs_deactivate", Domain::Consoles, None),
+        ("logs_tail", Domain::Consoles, None),
+        ("commands_list", Domain::Consoles, None),
+        ("gateway_status", Domain::Messaging, None),
+        ("gateway_inbox", Domain::Messaging, None),
+        ("gateway_outbox", Domain::Messaging, None),
+        ("gateway_enqueue", Domain::Messaging, None),
+        ("gateway_ambiguous", Domain::Messaging, None),
+        ("gateway_ack_delivery", Domain::Messaging, None),
+        ("gateway_telegram_status", Domain::Messaging, None),
+        ("providers_catalog", Domain::Extensibility, None),
+        ("providers_route_preview", Domain::Extensibility, None),
+        ("mcp_status", Domain::Extensibility, None),
+        ("mcp_tools", Domain::Extensibility, None),
+        ("packs_verify_signed", Domain::Extensibility, None),
     ];
 
     #[test]
@@ -240,13 +259,42 @@ mod tests {
         assert_eq!(
             METHOD_DOMAINS
                 .iter()
-                .map(|(method, _)| *method)
+                .map(|(method, _, _)| *method)
                 .collect::<HashSet<_>>()
                 .len(),
             METHOD_DOMAINS.len()
         );
-        for (method, domain) in METHOD_DOMAINS {
+        for (method, domain, _) in METHOD_DOMAINS {
             assert!(domain_recognizes(*domain, method), "{method} -> {domain:?}");
+        }
+    }
+
+    // Behavioural teeth for the scope column: every declared policy must be
+    // observable at dispatch, without reaching the handler. Vacuous while all
+    // methods are unasserted; each conversion is covered here automatically.
+    #[test]
+    fn declared_scope_policies_are_enforced_at_dispatch() {
+        let home = tempfile::tempdir().unwrap();
+        let home_buf = home.path().to_path_buf();
+        for (method, _, policy) in METHOD_DOMAINS {
+            match policy {
+                None => {}
+                Some(ScopePolicy::Project) => {
+                    let err = handle_ipc(&home_buf, method, json!({})).unwrap_err();
+                    assert_eq!(
+                        err,
+                        format!("method {method} is project-scoped and requires project_id")
+                    );
+                }
+                Some(ScopePolicy::Host) => {
+                    let err =
+                        handle_ipc(&home_buf, method, json!({ "project_id": "p1" })).unwrap_err();
+                    assert_eq!(
+                        err,
+                        format!("method {method} is host-scoped and does not accept project_id")
+                    );
+                }
+            }
         }
     }
 }

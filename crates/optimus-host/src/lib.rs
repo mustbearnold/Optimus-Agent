@@ -16,6 +16,7 @@ mod os;
 mod router;
 mod runtime_ops;
 mod scheduling;
+mod scope;
 mod sessions;
 mod system;
 
