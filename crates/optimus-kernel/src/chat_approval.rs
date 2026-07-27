@@ -16,6 +16,34 @@
 
 use super::*;
 
+/// bwrap's own chatter, which says nothing about why the command failed.
+const SANDBOX_NOISE: &[&str] = &["Failed to create stream fd"];
+
+/// A one-line reason from a failed effect's receipt, for the summary a human
+/// reads on the tool row.
+///
+/// Observed: `Approved action failed: Run "bash" with args ["-lc","cu…` — the
+/// user authorised a command, watched it fail, and was told only that it was
+/// the command they had just seen. The reason (`curl: (6) Could not resolve
+/// host`) was in the receipt the whole time. The last real stderr line is
+/// where a shell puts its complaint; the exit code carries the rest.
+fn failure_reason(receipt: Option<&Value>) -> Option<String> {
+    let capture = receipt?.get("capture")?;
+    let stderr = capture.get("stderr").and_then(Value::as_str).unwrap_or("");
+    let last = stderr
+        .lines()
+        .map(str::trim)
+        .rfind(|line| !line.is_empty() && !SANDBOX_NOISE.iter().any(|noise| line.contains(noise)));
+    let exit = capture.get("exit_code").and_then(Value::as_i64);
+    match (last, exit) {
+        // Truncated so one runaway stderr line cannot push the summary off the
+        // row it has to fit on.
+        (Some(line), _) => Some(crate::compress::snippet_public(line, 160)),
+        (None, Some(code)) => Some(format!("exit {code}")),
+        (None, None) => None,
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case", tag = "decision")]
 pub enum ChatApprovalDecision {
@@ -190,7 +218,13 @@ impl Kernel {
                     let mut failure = ToolOutcome::failed(
                         call.id.clone(),
                         descriptor.id.clone(),
-                        format!("Approved action failed: {}", binding.summary),
+                        format!(
+                            "Approved action failed{}: {}",
+                            failure_reason(receipt.as_ref())
+                                .map(|reason| format!(" ({reason})"))
+                                .unwrap_or_default(),
+                            binding.summary
+                        ),
                         ToolErrorDetail {
                             code: "approved_effect_failed".into(),
                             message: "The approved effect reached a failed terminal outcome."
@@ -347,5 +381,58 @@ impl Kernel {
             &effect_sha256,
             decision,
         )
+    }
+}
+
+#[cfg(test)]
+mod failure_reason_tests {
+    use super::failure_reason;
+    use serde_json::json;
+
+    fn receipt(exit: i64, stderr: &str) -> serde_json::Value {
+        json!({ "capture": { "exit_code": exit, "stderr": stderr, "stdout": "" } })
+    }
+
+    #[test]
+    fn the_shells_own_complaint_is_what_the_user_needs_to_read() {
+        let r = receipt(
+            6,
+            "Failed to create stream fd: No such file or directory\n\
+             curl: (6) Could not resolve host: github.com\n",
+        );
+        assert_eq!(
+            failure_reason(Some(&r)).as_deref(),
+            Some("curl: (6) Could not resolve host: github.com")
+        );
+    }
+
+    #[test]
+    fn sandbox_chatter_is_not_a_reason_and_never_stands_in_for_one() {
+        // bwrap prints this on every confined spawn, successful or not.
+        // Reporting it as the cause would be worse than reporting nothing.
+        let r = receipt(6, "Failed to create stream fd: No such file or directory\n");
+        assert_eq!(failure_reason(Some(&r)).as_deref(), Some("exit 6"));
+    }
+
+    #[test]
+    fn a_silent_failure_still_names_its_exit_code() {
+        assert_eq!(
+            failure_reason(Some(&receipt(127, ""))).as_deref(),
+            Some("exit 127")
+        );
+    }
+
+    #[test]
+    fn no_receipt_means_no_invented_reason() {
+        assert_eq!(failure_reason(None), None);
+        assert_eq!(failure_reason(Some(&json!({}))), None);
+    }
+
+    #[test]
+    fn a_runaway_stderr_line_cannot_push_the_summary_off_the_row() {
+        let r = receipt(1, &"x".repeat(500));
+        let reason = failure_reason(Some(&r)).unwrap();
+        assert!(reason.chars().count() <= 160, "{}", reason.chars().count());
+        assert!(reason.ends_with('…'));
     }
 }

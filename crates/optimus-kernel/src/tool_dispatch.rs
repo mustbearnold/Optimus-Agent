@@ -68,9 +68,10 @@ impl Kernel {
                 // Update system prompt content for subsequent steps in-turn.
                 if let Some(sys) = self.messages.first_mut() {
                     if sys.role == Role::System {
-                        sys.content = system_prompt(
+                        sys.content = crate::system_prompt::system_prompt(
                             &self.packs,
                             &self.skills.list(false).unwrap_or_default(),
+                            self.runtime.command_fs_envelope(),
                         );
                     }
                 }

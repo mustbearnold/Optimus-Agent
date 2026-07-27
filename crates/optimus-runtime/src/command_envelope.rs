@@ -145,6 +145,19 @@ pub fn command_envelope_supported(os: &str, envelope: CommandFsEnvelope) -> Resu
     }
 }
 
+impl crate::Runtime {
+    /// How far a spawned command can reach. Read by the kernel so the system
+    /// prompt can state it: an agent that does not know its commands have no
+    /// network spends a whole turn rediscovering it, one approval at a time.
+    ///
+    /// Lives here rather than beside the other `Runtime` accessors because
+    /// `lib.rs` is at its module-size baseline and may only shrink, and this is
+    /// the module that owns what the answer means.
+    pub fn command_fs_envelope(&self) -> CommandFsEnvelope {
+        self.config.command_fs_envelope
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
