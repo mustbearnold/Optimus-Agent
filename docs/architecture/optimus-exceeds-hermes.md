@@ -1,11 +1,15 @@
 # Optimus Agent — Rebuild Blueprint (2026-07-18)
 
-> **Documentary status (P16):** Historical **blueprint / mission prose**. Mixes
-> aspirational targets with design intent. **Do not grade as Confirmed current
-> behaviour.** For live topology and grades use
-> [system-overview.md](./system-overview.md) and
-> [architecture-marks.md](./architecture-marks.md). For Hermes feature parity
-> evidence use [sota-scorecard.md](./sota-scorecard.md) + the parity ledger.
+> **Documentary status (P16, updated 2026-07-27): SUPERSEDED** by
+> [north-star-2026-07.md](./north-star-2026-07.md) via the
+> [#59 wayfinder map](https://github.com/mustbearnold/Optimus-Agent/issues/59).
+> Historical **blueprint / mission prose** — evidence of what was once
+> intended, not a statement of truth. The "strictly better than Hermes"
+> success criteria below were retired by
+> [#63](https://github.com/mustbearnold/Optimus-Agent/issues/63); Hermes is no
+> longer the yardstick. **Do not grade as Confirmed current behaviour.** For
+> live topology and grades use [system-overview.md](./system-overview.md) and
+> [architecture-marks.md](./architecture-marks.md).
 
 **Mission:** Rebuild the personal agent category so Optimus exceeds Hermes Agent on *every* axis that matters in production: reliability, learning quality, memory integrity, cost, latency, security, multi-agent durability, desktop UX, Ubuntu-first quality, cross-platform discipline, evalability, and long-horizon autonomy — without sacrificing Hermes’ genuine strengths (provider freedom, gateway breadth, skills loop, cache discipline).
 
