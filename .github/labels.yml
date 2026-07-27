@@ -213,3 +213,21 @@ labels:
   - name: "❓ process:question"
     color: "d876e3"
     description: "Question / discussion"
+
+  # Wayfinder — map + ticket types for the mattpocock-skills wayfinder skill.
+  # A map is one issue; its tickets are child issues, each carrying one type.
+  - name: "🗺️ wayfinder:map"
+    color: "0e8a16"
+    description: "A wayfinder map — the effort's canonical route"
+  - name: "🔍 wayfinder:research"
+    color: "1d76db"
+    description: "Wayfinder ticket: surface a fact a decision waits on (AFK)"
+  - name: "🧪 wayfinder:prototype"
+    color: "5319e7"
+    description: "Wayfinder ticket: build something cheap to react to (HITL)"
+  - name: "🔥 wayfinder:grilling"
+    color: "d93f0b"
+    description: "Wayfinder ticket: resolve by conversation, one question at a time (HITL)"
+  - name: "🔧 wayfinder:task"
+    color: "fbca04"
+    description: "Wayfinder ticket: manual work that unblocks a decision"
