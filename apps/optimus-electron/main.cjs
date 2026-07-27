@@ -18,6 +18,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { assertPreviewUrl } = require('./browser-policy.cjs');
+const { discoverHealthyHost, resolveHome } = require('./host-discovery.cjs');
 const {
   resolveApplicationRoot,
   resolveHostBinary,
@@ -184,12 +185,22 @@ function waitForHealth(base, token, timeoutMs = 45000) {
   });
 }
 
-function startHost() {
+async function startHost() {
   if (process.env.OPTIMUS_HOST_EXTERNAL === '1') {
     httpToken = process.env.OPTIMUS_HTTP_TOKEN || httpToken;
     nativeSelectionToken =
       process.env.OPTIMUS_NATIVE_SELECTION_TOKEN || nativeSelectionToken;
     hostBase = process.env.OPTIMUS_HOST_URL || hostBase;
+    return waitForHealth(hostBase, httpToken);
+  }
+
+  // One core per home (C3): a healthy host already serving this home is
+  // attached to, never duplicated. Only an unserved home gets a spawn.
+  const existing = await discoverHealthyHost(resolveHome(process.env));
+  if (existing) {
+    httpToken = existing.token;
+    hostBase = `http://127.0.0.1:${existing.port}`;
+    console.error(`[optimus-electron] attached to existing host at ${hostBase} (C3 probe)`);
     return waitForHealth(hostBase, httpToken);
   }
 

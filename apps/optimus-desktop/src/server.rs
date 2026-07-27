@@ -158,11 +158,20 @@ pub fn run_http_server(
     port: u16,
     html: String,
     security: HttpSecurity,
+    advertise_runtime: bool,
 ) -> Result<(), String> {
     let addr = format!("127.0.0.1:{port}");
     let server = Server::http(&addr).map_err(|e| e.to_string())?;
     eprintln!("[optimus-desktop] HTTP UI+API on http://{addr}/  (Playwright target)");
     eprintln!("[optimus-desktop] home={}", home.display());
+    if advertise_runtime {
+        // One core per home (C3): the bound host advertises itself so other
+        // surfaces probe and attach instead of spawning. Best effort — a home
+        // without a record just means the next surface falls back to a spawn.
+        if let Err(error) = crate::host_runtime::write_record(&home, port, &security.token) {
+            eprintln!("[optimus-desktop] could not advertise host runtime: {error}");
+        }
+    }
 
     // Force HTTP IPC mode even if bridge heuristics change.
     let token_json = serde_json::to_string(&security.token).map_err(|e| e.to_string())?;
