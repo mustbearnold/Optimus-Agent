@@ -26,6 +26,12 @@ jobs:
     timeout-minutes: 45
     env:
       OPTIMUS_VERIFY_FORBID_SKIPS: "1"
+      # Suites run in parallel on a dev box; on 4 shared vCPUs the Electron
+      # chat-stream assertions starve while the desktop Playwright suite runs
+      # beside them (observed: offline echo missing its 15s expect window,
+      # while the same tier passes locally on 4 pinned cores). Serial trades
+      # wall clock for a deterministic, attributable gate.
+      OPTIMUS_VERIFY_SERIAL: "1"
     steps:
       - uses: actions/checkout@v4
 
