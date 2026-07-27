@@ -9,6 +9,8 @@ use optimus_kernel::{
 };
 use serde_json::json;
 
+use crate::scope::optional_project_id;
+
 #[cfg(test)]
 pub(super) fn owns(method: &str) -> bool {
     matches!(method, "chat" | "chat_offline" | "chat_approval_resolve")
@@ -256,27 +258,6 @@ fn required_effect_sha256(params: &serde_json::Value) -> Result<String, String> 
         return Err("effect_sha256 must be a 64-character hexadecimal digest".into());
     }
     Ok(value.to_ascii_lowercase())
-}
-
-fn optional_project_id(params: &serde_json::Value) -> Result<Option<String>, String> {
-    let Some(value) = params.get("project_id") else {
-        return Ok(None);
-    };
-    if value.is_null() {
-        return Ok(None);
-    }
-    let value = value
-        .as_str()
-        .ok_or_else(|| "project_id must be a string".to_string())?;
-    if value.is_empty()
-        || value.len() > 128
-        || !value
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
-    {
-        return Err("project_id must be a 1-128 ASCII identifier".into());
-    }
-    Ok(Some(value.to_string()))
 }
 
 fn parse_approval_decision(params: &serde_json::Value) -> Result<ChatApprovalDecision, String> {
