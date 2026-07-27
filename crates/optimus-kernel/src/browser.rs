@@ -96,30 +96,80 @@ pub trait BrowserEffector: Send {
 // Effector factory
 // ---------------------------------------------------------------------------
 
+/// Whether CDP has already been ruled out in this process.
+///
+/// [`try_cdp_effector`] runs on *every* browser call, and a launch that fails
+/// pays the client's full connect timeout before it says so — about 30 seconds.
+/// Observed on a host where `chromium` resolves on PATH but is a confined snap
+/// that never publishes a DevTools WebSocket URL: a single turn made six browser
+/// calls, each took 31–35 seconds, and essentially all of that was spent
+/// re-proving the same failure. The turn answered, but it spent minutes of
+/// wall-clock and came close to its step budget doing nothing.
+///
+/// So: one verdict per process. A Chrome that appears later is not picked up
+/// until restart, which is the right way round — restarting is cheap, and a
+/// thirty-second tax on every page fetch is not.
+#[cfg(feature = "cdp")]
+static CDP_RULED_OUT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// Try to create a CDP effector. Returns `None` when CDP is unavailable
 /// (no Chrome binary, or feature not enabled, or any launch error).
+///
+/// The verdict is remembered — see [`CDP_RULED_OUT`].
 pub fn try_cdp_effector(workspace: impl AsRef<Path>) -> Option<Box<dyn BrowserEffector>> {
     // Only attempt when the `cdp` feature is enabled
     #[cfg(feature = "cdp")]
     {
-        if !has_chrome_binary() {
-            return None;
-        }
-        match CdpBrowserEffector::open(workspace) {
-            Ok(effector) => {
-                eprintln!("[browser] Using CDP browser effector");
-                return Some(Box::new(effector));
-            }
-            Err(e) => {
-                eprintln!("[browser] CDP effector failed, falling back to HTTP: {e}");
-            }
-        }
+        cdp_effector_once(&CDP_RULED_OUT, has_chrome_binary(), || {
+            CdpBrowserEffector::open(workspace)
+                .map(|effector| Box::new(effector) as Box<dyn BrowserEffector>)
+        })
     }
     #[cfg(not(feature = "cdp"))]
     {
         let _ = workspace;
+        None
     }
-    None
+}
+
+/// Attempt `launch` unless CDP has already been ruled out, and record a verdict.
+///
+/// Split from [`try_cdp_effector`] so the memo is assertable without a browser:
+/// what matters is that a second call does not reach `launch` at all, and that
+/// is the expensive thing a test must not have to actually perform.
+#[cfg(feature = "cdp")]
+fn cdp_effector_once<F>(
+    ruled_out: &std::sync::atomic::AtomicBool,
+    has_chrome: bool,
+    launch: F,
+) -> Option<Box<dyn BrowserEffector>>
+where
+    F: FnOnce() -> Result<Box<dyn BrowserEffector>>,
+{
+    use std::sync::atomic::Ordering;
+
+    if ruled_out.load(Ordering::Relaxed) {
+        return None;
+    }
+    if !has_chrome {
+        // Recorded too. Absence does not change while the process runs, and
+        // the probe walks PATH on every browser call otherwise.
+        ruled_out.store(true, Ordering::Relaxed);
+        return None;
+    }
+    match launch() {
+        Ok(effector) => {
+            eprintln!("[browser] Using CDP browser effector");
+            Some(effector)
+        }
+        Err(e) => {
+            eprintln!(
+                "[browser] CDP effector failed, using HTTP for the rest of this process: {e}"
+            );
+            ruled_out.store(true, Ordering::Relaxed);
+            None
+        }
+    }
 }
 
 /// Create an HTTP text effector (always succeeds).
@@ -561,6 +611,70 @@ pub fn page_to_tool_json(page: &BrowserPage) -> serde_json::Value {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+#[cfg(all(test, feature = "cdp"))]
+mod cdp_memo_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+    /// Count launches without performing one. The failure is what the memo
+    /// exists for, so the closure fails the way a dead Chrome does.
+    fn failing_launch(
+        calls: &AtomicUsize,
+    ) -> impl FnOnce() -> Result<Box<dyn BrowserEffector>> + '_ {
+        move || {
+            calls.fetch_add(1, Ordering::Relaxed);
+            Err(BrowserError::Http("chrome launched but never spoke".into()))
+        }
+    }
+
+    #[test]
+    fn a_failed_launch_is_not_attempted_a_second_time() {
+        // The defect: `try_cdp_effector` runs per browser call and each failing
+        // attempt costs the client's full connect timeout. Six calls in one
+        // observed turn spent ~32s apiece re-proving one dead Chrome.
+        let ruled_out = AtomicBool::new(false);
+        let calls = AtomicUsize::new(0);
+
+        assert!(cdp_effector_once(&ruled_out, true, failing_launch(&calls)).is_none());
+        assert_eq!(calls.load(Ordering::Relaxed), 1, "the first call must try");
+
+        assert!(cdp_effector_once(&ruled_out, true, failing_launch(&calls)).is_none());
+        assert_eq!(
+            calls.load(Ordering::Relaxed),
+            1,
+            "the second call must not reach the launch at all"
+        );
+    }
+
+    #[test]
+    fn an_absent_chrome_is_recorded_so_path_is_not_walked_again() {
+        let ruled_out = AtomicBool::new(false);
+        let calls = AtomicUsize::new(0);
+
+        assert!(cdp_effector_once(&ruled_out, false, failing_launch(&calls)).is_none());
+        assert_eq!(calls.load(Ordering::Relaxed), 0, "nothing to launch");
+        assert!(
+            ruled_out.load(Ordering::Relaxed),
+            "absence is permanent for this process and must be remembered"
+        );
+    }
+
+    #[test]
+    fn a_launch_that_succeeds_leaves_cdp_available_for_the_next_call() {
+        // The memo must record failure only. A success that set the flag would
+        // silently downgrade every later call to HTTP.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let ruled_out = AtomicBool::new(false);
+
+        let effector = cdp_effector_once(&ruled_out, true, || {
+            HttpBrowserEffector::open(dir.path()).map(|e| Box::new(e) as Box<dyn BrowserEffector>)
+        });
+
+        assert!(effector.is_some());
+        assert!(!ruled_out.load(Ordering::Relaxed));
+    }
+}
 
 #[cfg(test)]
 mod tests {
