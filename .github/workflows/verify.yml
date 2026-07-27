@@ -38,6 +38,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libsoup-3.0-dev \
             libdbus-1-dev bubblewrap xvfb
+          # Ubuntu 24.04 runners restrict unprivileged user namespaces via
+          # AppArmor, which breaks bubblewrap ("bwrap: setting up uid map:
+          # Permission denied") — and with it the sandbox self-tests and any
+          # term_run effect that executes through the sandbox.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # rustup reads rust-toolchain.toml (1.97.1 + rustfmt + clippy) on first
       # cargo invocation; `rustup show` forces the install up front so the

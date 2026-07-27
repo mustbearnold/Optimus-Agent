@@ -228,7 +228,9 @@ electron_e2e_command() {
   if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
     printf 'npx playwright test'
   elif command -v xvfb-run >/dev/null 2>&1; then
-    printf 'xvfb-run -a npx playwright test'
+    # xvfb-run's default server is 640x480x8 — too small for the workbench
+    # window, so layout assertions (execution dock height) fail headless.
+    printf 'xvfb-run -a -s "-screen 0 1920x1080x24" npx playwright test'
   else
     printf ''
   fi
