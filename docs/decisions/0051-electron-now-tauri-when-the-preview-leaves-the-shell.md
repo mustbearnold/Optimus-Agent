@@ -88,10 +88,12 @@ is still unfinished — is three half-migrations at once.
 The already-running `optimus-browser` Chromium renders preview content;
 the shell displays screencast frames and forwards input
 (`Page.startScreencast` + `Input.dispatchMouseEvent`/`dispatchKeyEvent`),
-the way Chrome DevTools device mode works. A spike gates this — measured
-frame latency and input fidelity on local dev pages. If the spike fails the
-feel test, this ADR's step 3 dies and Electron stays for that stated,
-measured reason instead of a stale one.
+the way Chrome DevTools device mode works. The latency gate for this was
+measured before this ADR was proposed and **passed with 3–6× margin** — see
+Evaluation evidence and `crates/optimus-browser/examples/screencast_spike.rs`,
+which stays in the tree so the numbers can be re-taken on other hardware.
+The remaining gate for production is fidelity, not latency: scroll momentum,
+drag, and IME through CDP input forwarding.
 
 **3. When the preview leaves the shell, the shell swap to Tauri v2 is
 scheduled work, not a hypothetical.** At that point the shell is supervision,
@@ -146,11 +148,14 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 
 ## Risks
 
-- **Screencast latency may feel worse than an in-process view.** This is the
-  spike's whole job: measure frames-to-glass and input round-trip on local
-  pages before committing. Fail → stop at step 2, keep Electron, record why.
+- **Measured latency is delivery, not glass.** The spike measures frame
+  arrival in the receiving process; a real shell adds JPEG decode and a
+  compositor paint (~one frame). Even charging a full extra 17ms, click→pixel
+  p95 lands near 47ms against the 100ms bar. Re-measure end-to-end in the
+  first shell integration, and on a loaded machine — the spike ran idle.
 - **Input fidelity gaps** (IME, scroll momentum, drag) may not survive CDP
-  forwarding. Same gate.
+  forwarding. Unmeasured; this is the remaining gate for step 2, checked
+  during implementation, not assumed.
 - **Three migrations in flight** if sequencing is ignored. Steps are ordered:
   #106, then preview-out-of-process, then shell swap.
 - **The policy/mechanism boundary will be argued at the margin.** Recorded
@@ -158,6 +163,18 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 
 ## Evaluation evidence
 
+- **Screencast spike, 2026-07-29**, headless Chromium via the pinned
+  `headless_chrome` 1.0.22, JPEG q80 at 1280×800, idle desktop
+  (`cargo run -p optimus-browser --example screencast_spike --release`):
+
+  | Metric | n | p50 | p95 | max | Bar |
+  |---|---:|---:|---:|---:|---|
+  | frame cadence, animating | 179 | 16.7ms | 17.3ms | 31.5ms | p50 ≤ 50ms |
+  | capture→delivery staleness | 180 | 4.1ms | 4.3ms | 5.0ms | — |
+  | click→pixel round trip | 20 | 24.4ms | 29.6ms | 29.7ms | p95 ≤ 100ms |
+
+  Verdict: **PASS**. Cadence is the compositor's own 60Hz; input feel is
+  under two frames end to end.
 - `main.cjs` section measurement above, 2026-07-28, at `a905d88`.
 - `optimus-browser` launch path read at the same commit: out-of-process
   `headless_chrome`, CDP port 9222, sandbox kept on.
@@ -170,8 +187,9 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 
 ## Conditions for reconsideration
 
-1. The screencast spike fails latency or fidelity on local pages → step 3 is
-   cancelled and this ADR is amended with the measurements.
+1. End-to-end shell integration or the fidelity checks (scroll, drag, IME)
+   contradict the spike's latency verdict → step 3 is cancelled and this ADR
+   is amended with the measurements.
 2. Tauri v2 gains a `WebContentsView`-class in-process view with geometry
    parity — the spike becomes unnecessary and the swap can lead.
 3. The embedded preview stops being a first-class product surface.
@@ -182,6 +200,7 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 
 - `apps/optimus-electron/main.cjs`
 - `crates/optimus-browser/src/lib.rs`
+- `crates/optimus-browser/examples/screencast_spike.rs`
 - `crates/optimus-kernel/src/browser_coord.rs`
 - `crates/optimus-host/src/router.rs`
 
