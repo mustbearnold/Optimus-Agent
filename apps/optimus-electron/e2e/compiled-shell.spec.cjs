@@ -81,6 +81,20 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     await application.evaluate(({ BrowserWindow }) => {
       BrowserWindow.getAllWindows()[0].setContentSize(1600, 1000);
     });
+    // `setContentSize` asks; the window manager answers on its own clock, and
+    // may clamp the request to the work area outright. Every geometry
+    // assertion below is a *pixel delta* against a baseline captured further
+    // down, so measuring mid-resize compares two different windows and the
+    // divider drag stops having to move anything (#109). Poll for the size the
+    // test asked for, so a refusal fails here with the real reason instead of
+    // surfacing as an unrelated width assertion 160 lines later.
+    await expect
+      .poll(() =>
+        application.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows()[0].getContentSize().join('x')
+        )
+      )
+      .toBe('1600x1000');
     await expect(page).toHaveURL(/^optimus-app:\/\/ui\//);
     await expect(page.getByRole('complementary', { name: 'Projects and sessions' })).toBeVisible();
     // The evidence workspace is chat-first and starts closed (workspace-redesign
