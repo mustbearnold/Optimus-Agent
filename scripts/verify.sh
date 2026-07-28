@@ -171,6 +171,7 @@ tier_gates() {
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/check-project-bleed.py
+  spawn "tool-coverage"              python3 scripts/check-tool-coverage.py
   spawn "observability"              python3 scripts/check-observability-gate.py
   spawn "module-size"                python3 scripts/check-module-size.py
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
@@ -186,6 +187,7 @@ tier_gates() {
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
+  spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
@@ -222,6 +224,10 @@ tier_live() {
     run "build optimus cli" cargo build -p optimus-cli
   fi
   run "live smoke (codex)" python3 scripts/live_smoke.py
+  # Browser success needs the public web (loopback is refused by the SSRF
+  # law), so its dispatch-path test is network-marked and runs here.
+  run "browser success (network)" \
+    cargo test -p optimus-kernel --test tool_coverage -- --ignored
 }
 
 # --- tier: ui ----------------------------------------------------------------
@@ -332,6 +338,7 @@ tier_all() {
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/check-project-bleed.py
+  spawn "tool-coverage"              python3 scripts/check-tool-coverage.py
   spawn "observability"              python3 scripts/check-observability-gate.py
   spawn "module-size"                python3 scripts/check-module-size.py
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
@@ -347,6 +354,7 @@ tier_all() {
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
+  spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
