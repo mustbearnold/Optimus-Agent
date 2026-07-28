@@ -10,8 +10,8 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use crossterm::event::{
-    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
-    MouseEvent,
+    self, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
+    Event, KeyEventKind, MouseEvent,
 };
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -21,6 +21,9 @@ use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
 mod commands;
+mod composer;
+mod history;
+mod keys;
 mod logging;
 mod mouse;
 mod picker;
@@ -50,6 +53,11 @@ fn enter() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn std::error:
     // Capture costs the terminal's own text selection, which is why `/mouse`
     // exists to hand it back.
     stdout.execute(EnableMouseCapture)?;
+    // Without this a pasted prompt arrives as key presses, and its first
+    // newline submits half of it as a live turn — real tokens spent on a
+    // fragment. With it, a paste is one `Event::Paste` the composer inserts
+    // as text.
+    stdout.execute(EnableBracketedPaste)?;
     Ok(Terminal::new(CrosstermBackend::new(stdout))?)
 }
 
@@ -57,6 +65,7 @@ fn leave(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     disable_raw_mode()?;
+    terminal.backend_mut().execute(DisableBracketedPaste)?;
     terminal.backend_mut().execute(DisableMouseCapture)?;
     terminal.backend_mut().execute(LeaveAlternateScreen)?;
     terminal.show_cursor()?;
@@ -93,55 +102,110 @@ fn event_loop(
                 on_mouse(terminal, &mut session, &mouse)?;
                 continue;
             }
+            // A paste is text, never a submit — the whole point of turning
+            // bracketed paste on.
+            Event::Paste(text) => {
+                session.history.release();
+                session.composer.insert_str(&text);
+                continue;
+            }
             _ => continue,
         };
         if key.kind != KeyEventKind::Press {
             continue;
         }
-        // A picker owns the keyboard while it is open.
-        if session.picker.is_some() {
-            match key.code {
-                KeyCode::Down | KeyCode::Tab => {
-                    if let Some(p) = session.picker.as_mut() {
-                        p.down();
-                    }
-                }
-                KeyCode::Up | KeyCode::BackTab => {
-                    if let Some(p) = session.picker.as_mut() {
-                        p.up();
-                    }
-                }
-                KeyCode::Enter => session.confirm_picker(),
-                KeyCode::Esc => session.picker = None,
-                KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => {
-                    session.picker = None;
-                }
-                _ => {}
-            }
-            continue;
-        }
-
-        match (key.modifiers, key.code) {
-            // Ctrl-C stops a run in flight; with nothing running it exits.
-            (KeyModifiers::CONTROL, KeyCode::Char('c')) => {
-                if session.busy() {
-                    session.cancel();
-                } else {
-                    return Ok(());
-                }
-            }
-            (_, KeyCode::Esc) if !session.busy() => return Ok(()),
-            (_, KeyCode::Enter) => session.submit(),
-            (_, KeyCode::Backspace) => {
-                session.composer.pop();
-            }
-            (_, KeyCode::PageUp) => scroll_page(terminal, &mut session, 1)?,
-            (_, KeyCode::PageDown) => scroll_page(terminal, &mut session, -1)?,
-            (_, KeyCode::End) => session.scroll_back = 0,
-            (_, KeyCode::Char(c)) => session.composer.push(c),
-            _ => {}
+        let mode = keys::Mode {
+            picker: session.picker.is_some(),
+            busy: session.busy(),
+            drafting: !session.composer.is_empty(),
+        };
+        if on_key(terminal, &mut session, keys::intent(&key, mode))? {
+            return Ok(());
         }
     }
+}
+
+/// Carry out one key intent. Returns true when the application should leave.
+///
+/// Every decision about *what* a key means lives in [`keys::intent`]; this is
+/// only the arm that moves state, so the whole key table stays assertable
+/// without a terminal.
+fn on_key(
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    session: &mut TuiSession,
+    intent: keys::Intent,
+) -> io::Result<bool> {
+    use keys::{Edit, HistoryStep, Intent, Motion, PickerStep, ScrollStep};
+    // Any edit to the draft ends history browsing, so a recalled prompt the
+    // human changed stays changed.
+    if matches!(
+        intent,
+        Intent::Insert(_) | Intent::Edit(_) | Intent::Newline | Intent::ClearDraft
+    ) {
+        session.history.release();
+    }
+    match intent {
+        Intent::Quit => return Ok(true),
+        Intent::Cancel => session.cancel(),
+        // `/quit` answers inside submit, so the flag is read straight after.
+        Intent::Submit => {
+            session.submit();
+            if session.quit {
+                return Ok(true);
+            }
+        }
+        Intent::Newline => session.composer.newline(),
+        Intent::Insert(c) => session.composer.insert_char(c),
+        Intent::ClearDraft => {
+            session.composer.take();
+        }
+        Intent::Edit(edit) => match edit {
+            Edit::Backspace => session.composer.backspace(),
+            Edit::Delete => session.composer.delete(),
+            Edit::KillToEnd => session.composer.kill_to_end(),
+            Edit::KillToStart => session.composer.kill_to_start(),
+            Edit::KillWord => session.composer.kill_word(),
+        },
+        Intent::Move(motion) => match motion {
+            Motion::Left => session.composer.left(),
+            Motion::Right => session.composer.right(),
+            Motion::WordLeft => session.composer.word_left(),
+            Motion::WordRight => session.composer.word_right(),
+            Motion::Home => session.composer.home(),
+            Motion::End => session.composer.end(),
+        },
+        Intent::History(step) => {
+            let recalled = match step {
+                HistoryStep::Older => session.history.older(session.composer.text()),
+                HistoryStep::Newer => session.history.newer(),
+            };
+            if let Some(text) = recalled {
+                session.composer.set(text);
+            }
+        }
+        Intent::Scroll(step) => match step {
+            ScrollStep::PageUp => scroll_page(terminal, session, 1)?,
+            ScrollStep::PageDown => scroll_page(terminal, session, -1)?,
+            ScrollStep::Tail => session.scroll_back = 0,
+        },
+        Intent::Picker(step) => match step {
+            PickerStep::Next => {
+                if let Some(picker) = session.picker.as_mut() {
+                    picker.down();
+                }
+            }
+            PickerStep::Previous => {
+                if let Some(picker) = session.picker.as_mut() {
+                    picker.up();
+                }
+            }
+            PickerStep::Confirm => session.confirm_picker(),
+            PickerStep::Close => session.picker = None,
+        },
+        Intent::Redraw => terminal.clear()?,
+        Intent::Ignore => {}
+    }
+    Ok(false)
 }
 
 /// Apply one mouse event.
@@ -160,7 +224,14 @@ fn on_mouse(
         height: terminal.size()?.height,
     };
     let max_back = scroll_span(terminal, session)?;
-    match mouse::intent(event, area, session.picker.as_ref(), session.dragging) {
+    let composer_height = view::composer_height(session, area.width);
+    match mouse::intent(
+        event,
+        area,
+        composer_height,
+        session.picker.as_ref(),
+        session.dragging,
+    ) {
         mouse::Intent::Scroll(rows) => session.scroll(rows, max_back),
         mouse::Intent::GrabTrack => session.dragging = true,
         mouse::Intent::Release => session.dragging = false,
@@ -183,8 +254,10 @@ fn scroll_span(
     session: &TuiSession,
 ) -> io::Result<usize> {
     let size = terminal.size()?;
-    // Transcript viewport: full frame minus composer (3), status (1), borders (2).
-    let height = usize::from(size.height.saturating_sub(6));
+    // Transcript viewport: full frame minus the composer (which grows with a
+    // multiline draft), status (1), and the transcript's own borders (2).
+    let chrome = view::composer_height(session, size.width) + 3;
+    let height = usize::from(size.height.saturating_sub(chrome));
     let rows = view::transcript_text(session, size.width.saturating_sub(2)).len();
     Ok(view::max_scroll_back(rows, height))
 }
@@ -196,7 +269,9 @@ fn scroll_page(
     session: &mut TuiSession,
     direction: isize,
 ) -> io::Result<()> {
-    let height = usize::from(terminal.size()?.height.saturating_sub(6));
+    let size = terminal.size()?;
+    let chrome = view::composer_height(session, size.width) + 3;
+    let height = usize::from(size.height.saturating_sub(chrome));
     let page = height.saturating_sub(1).max(1) as isize;
     let max_back = scroll_span(terminal, session)?;
     session.scroll(direction * page, max_back);

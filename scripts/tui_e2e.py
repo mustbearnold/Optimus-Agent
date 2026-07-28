@@ -11,8 +11,10 @@ offline provider: fresh temp home, no credentials, no network, no token spend
 
 Checks, in one session: launch reaches ready; a turn paints the user bubble,
 the offline echo, and settles back to ready; /help paints the command list;
-/new clears the transcript; Ctrl-C at idle exits the process; a relaunch on
-the same home reaches ready again (no lock or state corruption).
+/new clears the transcript; a multiline paste lands as text instead of
+submitting a fragment; Esc clears the draft without exiting; Up recalls the
+last submitted prompt; Ctrl-C at idle exits the process; a relaunch on the
+same home reaches ready again (no lock or state corruption).
 
 Exit 0 with TUI_E2E_OK; exit 1 naming the failed check with the last frame.
 """
@@ -100,6 +102,34 @@ def main() -> int:
                 10,
                 "/new did not clear the transcript",
             )
+
+            # A multiline paste is text, never a submit. Without bracketed
+            # paste the first newline fires half the prompt as a live turn —
+            # real tokens on a fragment — and only a pty can prove otherwise.
+            tmux("set-buffer", "paste line one\npaste line two")
+            tmux("paste-buffer", "-t", SESSION, "-p")
+            wait_for(
+                lambda t: "paste line one" in t and "paste line two" in t,
+                10,
+                "a multiline paste never landed in the composer",
+            )
+            if "offline echo: paste line one" in capture():
+                raise SystemExit(f"FAIL: a paste submitted a fragment as a turn\n{capture()}")
+
+            # Esc clears the draft. It used to quit, which lost typed prompts
+            # to a stray key press; the process must survive it.
+            send("Escape")
+            wait_for(lambda t: "paste line two" not in t, 10, "Escape did not clear the draft")
+            if not alive():
+                raise SystemExit("FAIL: Escape exited instead of clearing the draft")
+
+            # Up recalls the last submitted prompt. /new cleared the
+            # transcript, so the ring is the only place the text can come from.
+            if "/new" in capture():
+                raise SystemExit(f"FAIL: '/new' still painted, so recall proves nothing\n{capture()}")
+            send("Up")
+            wait_for(lambda t: "/new" in t, 10, "Up did not recall the last submitted prompt")
+            send("Escape")
 
             # Ctrl-C at idle exits the process, restoring the terminal.
             send("C-c")
