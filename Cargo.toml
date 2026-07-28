@@ -78,6 +78,13 @@ thiserror = "2"
 uuid = { version = "1", features = ["v4", "serde"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
+# Terminal-level test tooling. A pty plus a vt100 parser is what lets a test
+# read the screen a human would see — including the cursor, which no
+# `TestBackend` assertion can reach because the cursor lives in the terminal,
+# not in the buffer. Dev-only; nothing ships with these.
+portable-pty = "0.9"
+vt100 = "0.15"
+proptest = "1"
 clap = { version = "4", features = ["derive"] }
 tiny_http = "0.12"
 cap-std = "4.0.2"
