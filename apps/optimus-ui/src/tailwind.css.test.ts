@@ -4,7 +4,7 @@
 // under jsdom's `TextEncoder`, whose output fails `instanceof Uint8Array`.
 
 import { fileURLToPath } from 'node:url';
-import { build } from 'vite';
+import { build, type Rollup } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -26,10 +26,13 @@ beforeAll(async () => {
       rollupOptions: { input: fileURLToPath(new URL('./tailwind.css', import.meta.url)) },
     },
   });
-  const output = (Array.isArray(result) ? result[0] : result).output;
-  compiled = output
+  // `build()` is typed as output-or-outputs-or-watcher; only the first is
+  // reachable here, since `build.watch` is not set.
+  const bundles = (Array.isArray(result) ? result : [result]) as Rollup.RollupOutput[];
+  compiled = bundles
+    .flatMap((bundle) => bundle.output)
     .filter((chunk) => chunk.type === 'asset' && chunk.fileName.endsWith('.css'))
-    .map((chunk) => String(chunk.source))
+    .map((chunk) => String((chunk as Rollup.OutputAsset).source))
     .join('\n');
   expect(compiled.length).toBeGreaterThan(1000);
 }, 60_000);

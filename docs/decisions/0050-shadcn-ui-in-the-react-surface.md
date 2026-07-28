@@ -203,8 +203,19 @@ rather than derived from a render, because cmdk moves the selection by
 re-rendering the *item* and a plain effect in the palette would run once on
 mount and never again.
 
+The browser also caught a defect the conversion *created*. shadcn marks the
+active row with `data-[selected=true]:bg-accent`, which maps here to
+`--surface-3` and measures **1.06:1** against the dialog background — the app's
+surfaces sit within a few RGB levels of each other by design. That was
+survivable while the list had no selection at all; it is not survivable once the
+arrow keys move one. Replaced with a 2px `--accent` bar on the leading edge,
+measured at **14.19:1**, against the 3:1 that WCAG 2.2 asks of a non-text state
+indicator. The bar is always present and merely transparent when idle, so
+selecting a row does not shunt its text sideways.
+
 That is the shape of the next several conversions: the primitive is still worth
-taking, and taking it does not mean assuming it is complete.
+taking, taking it does not mean assuming it is complete, and a primitive tuned
+for a default palette will not automatically be legible on this one.
 
 Both conversions' verification is now automated rather than repeated by hand:
 `tailwind.css.test.ts` compiles the stylesheet through Vite and asserts the

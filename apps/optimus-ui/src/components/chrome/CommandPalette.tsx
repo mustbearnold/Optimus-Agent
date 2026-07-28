@@ -169,7 +169,23 @@ export function CommandPalette({
                   onRun(cmd.id);
                   onClose();
                 }}
-                className="flex-col items-start gap-0.5"
+                /*
+                 * The active row needs a marker that is actually visible. This
+                 * palette's surfaces sit within a few RGB levels of each other
+                 * by design, so shadcn's `data-[selected=true]:bg-accent` maps
+                 * to `--surface-3` and lands at 1.06:1 against the dialog —
+                 * measurably there, practically invisible. That was tolerable
+                 * when the list had no selection at all; it is not tolerable now
+                 * that the arrow keys move one.
+                 *
+                 * The bar is `--accent` against a near-black surface, which
+                 * clears the 3:1 that WCAG 2.2 asks of a state indicator by a
+                 * wide margin without brightening a whole row and breaking the
+                 * palette the rest of the app is built on. It is always present
+                 * and merely transparent when idle, so selection does not shunt
+                 * the text sideways by two pixels.
+                 */
+                className="flex-col items-start gap-0.5 border-l-2 border-l-transparent data-[selected=true]:border-l-[var(--accent)]"
               >
                 <strong>/{cmd.name}</strong>
                 <span className="text-muted-foreground">{cmd.description}</span>
