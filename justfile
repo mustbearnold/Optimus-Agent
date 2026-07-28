@@ -26,13 +26,18 @@ check:
 test:
     @bash scripts/verify.sh test
 
-# JS unit suites + Playwright (~2min).
+# JS unit suites + Playwright + TUI pty e2e (~2min).
 ui:
     @bash scripts/verify.sh ui
 
 # Every tier. This is what the pre-push hook runs.
 verify:
     @bash scripts/verify.sh all
+
+# Real-model smoke: real Codex through the host and the TUI pty. Spends
+# tokens; needs the installed home's credential. Release / live-surface gate.
+live:
+    @bash scripts/verify.sh live
 
 # --- build and run -----------------------------------------------------------
 

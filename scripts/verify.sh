@@ -11,6 +11,10 @@
 #   test    check + cargo test                        (~60s)
 #   ui      JS unit suites + Playwright               (~2min)
 #   all     every tier above (default; pre-push gate)
+#   live    real-model smoke: real Codex through the host and the TUI pty.
+#           Spends tokens and needs a real credential, so it is NOT in `all`;
+#           it is the gate for releases and for changes to live surfaces.
+#           Missing creds/tmux FAIL — a live tier must never quietly skip.
 #
 # Exits non-zero if any gate fails. All gates run to completion first so one
 # invocation reports the whole picture rather than only the first failure.
@@ -181,6 +185,7 @@ tier_gates() {
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
@@ -206,6 +211,17 @@ tier_test() {
   else
     run "cargo test" cargo test --workspace --all-targets -- --test-threads=1
   fi
+}
+
+# --- tier: live --------------------------------------------------------------
+# Real model, real credential, real cost — deliberately invoked, never implied
+# by `all` (CI holds no credential, and C6 bans gates that quietly skip).
+tier_live() {
+  section "live model"
+  if [ ! -x target/debug/optimus ]; then
+    run "build optimus cli" cargo build -p optimus-cli
+  fi
+  run "live smoke (codex)" python3 scripts/live_smoke.py
 }
 
 # --- tier: ui ----------------------------------------------------------------
@@ -245,6 +261,15 @@ tier_ui() {
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
+
+  # The terminal face gets the same treatment as the desktop: the real binary,
+  # driven end to end, deterministically (offline provider, temp home).
+  if command -v tmux >/dev/null 2>&1; then
+    run "build optimus cli" cargo build -p optimus-cli
+    spawn "tui e2e" python3 scripts/tui_e2e.py
+  else
+    skip "tui e2e" "tmux not installed"
+  fi
 
   # Playwright drives the real host binary (e2e/support.js spawns
   # target/debug/optimus-desktop per worker), so it needs a *built* binary --
@@ -321,6 +346,7 @@ tier_all() {
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
@@ -343,6 +369,14 @@ tier_all() {
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
+
+  # Terminal face, same standard as the desktop: real binary, deterministic pty.
+  if command -v tmux >/dev/null 2>&1; then
+    run "build optimus cli" cargo build -p optimus-cli
+    spawn "tui e2e" python3 scripts/tui_e2e.py
+  else
+    skip "tui e2e" "tmux not installed"
+  fi
 
   if [ "$host_built" = 1 ] && (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
     spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
@@ -368,10 +402,11 @@ case "$TIER" in
   check) tier_gates; tier_check ;;
   test)  tier_gates; tier_check; tier_test ;;
   ui)    tier_ui ;;
+  live)  tier_live ;;
   all)   tier_all ;;
   *)
     printf 'unknown tier: %s\n' "$TIER" >&2
-    printf 'expected one of: gates check test ui all\n' >&2
+    printf 'expected one of: gates check test ui live all\n' >&2
     exit 2
     ;;
 esac
