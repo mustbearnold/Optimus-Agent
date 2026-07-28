@@ -63,6 +63,10 @@ run() {
     printf '%s\n' "${R}FAIL${X}"
     FAILED+=("$name")
     printf '%s\n' "$out" | tail -15 | sed 's/^/      /'
+    # Reported *and* returned, so a caller can decline to run the gate that
+    # this step was preparing for. Nothing runs under `set -e`, so callers that
+    # ignore the status behave exactly as they did before.
+    return 1
   fi
 }
 
@@ -310,8 +314,8 @@ tier_ui() {
   elif ! (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
     skip "electron e2e" "npx playwright install chromium"
     electron_ready=0
-  elif [ ! -f apps/optimus-ui/dist/index.html ]; then
-    skip "electron e2e" "npm --prefix apps/optimus-ui run build"
+  elif [ ! -d apps/optimus-ui/node_modules ]; then
+    skip "electron e2e" "npm ci in apps/optimus-ui"
     electron_ready=0
   elif [ -z "$(electron_e2e_command)" ]; then
     skip "electron e2e" "no display and no xvfb-run"
@@ -320,6 +324,20 @@ tier_ui() {
 
   if [ "$playwright_ready" = 1 ] || [ "$electron_ready" = 1 ]; then
     run "build desktop host" cargo build -p optimus-desktop
+  fi
+  # The bundle is gitignored, so it is never checked out, never updated by a
+  # merge, and never invalidated by a rebase -- the gate would otherwise test
+  # whichever JavaScript happened to be sitting on disk (#107). That reads both
+  # ways: a stale bundle fails a branch that changed nothing near it, and an
+  # unbuilt edit passes while CI, which builds from scratch, does not. Built
+  # here for the same reason the host is built above.
+  if [ "$electron_ready" = 1 ]; then
+    if ! run "build react ui" npm --prefix apps/optimus-ui run build; then
+      # A failed build leaves the *previous* bundle in place, so running the
+      # gate now would assert against code nobody wrote. The build failure is
+      # already the report; a second, misleading one adds nothing.
+      electron_ready=0
+    fi
   fi
   [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
   [ "$electron_ready" = 1 ] && spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
@@ -409,12 +427,18 @@ tier_all() {
 
   if [ "$host_built" != 1 ]; then
     skip "electron e2e" "npm ci in apps/optimus-electron"
-  elif [ ! -f apps/optimus-ui/dist/index.html ]; then
-    skip "electron e2e" "npm --prefix apps/optimus-ui run build"
+  elif [ ! -d apps/optimus-ui/node_modules ]; then
+    skip "electron e2e" "npm ci in apps/optimus-ui"
   elif [ -z "$(electron_e2e_command)" ]; then
     skip "electron e2e" "no display and no xvfb-run"
   else
-    spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
+    # Same reason as the ui tier: the bundle is gitignored, so building it is
+    # the only way this gate is testing the source it was handed (#107). A
+    # failed build stands as its own report -- asserting against the bundle it
+    # did not replace would only add a second, misleading failure.
+    if run "build react ui" npm --prefix apps/optimus-ui run build; then
+      spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
+    fi
   fi
 
   reap
