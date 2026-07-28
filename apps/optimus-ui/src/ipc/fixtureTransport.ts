@@ -306,7 +306,7 @@ export function createFixtureTransport(): OptimusTransport {
     windowAction: async () => ({ ok: true }),
     pickFolder: async () => ({
       ok: true,
-      path: '/home/dev/Projects/New Project',
+      path: '/projects/new-project',
       grantToken: 'fixture-native-grant',
     }),
     openPath: async () => ({ ok: true }),
@@ -716,8 +716,8 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       return {
         projects: [{
           project_id: 'optimus-agent',
-          roots: ['/mnt/Projects/Optimus Agent'],
-          primary_root: '/mnt/Projects/Optimus Agent',
+          roots: ['/projects/optimus-agent'],
+          primary_root: '/projects/optimus-agent',
           updated_unix: 1,
         }],
       };
