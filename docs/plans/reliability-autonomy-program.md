@@ -83,19 +83,39 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 | R30.2 | **done** | `crates/optimus-policy` profiles, capabilities, broker |
 | R30.3 | **done** | Runtime SmartDeny gate uses broker; trust-profile exact grants |
 | R30.4 | **done** | Composer autonomy labels; Standard first; map IPC access |
-| R30.5 | pending | Durable project trust grant store (outside repo) |
-| R30.6 | pending | Structured package-manager capabilities |
+| R30.5 | **done** | Durable project trust grant store (outside repo); applied at `open_dev_run_session` only |
+| R30.6 | **done** | Structured package-manager capabilities (`optimus-policy::command_class`) |
 | R30.7 | pending | Owned-localhost network lease |
 | R30.8 | pending | Product release defaults (Auto provider/model) without breaking offline tests |
 
+R30.4 is marked done for the profile plumbing; [#118](https://github.com/mustbearnold/Optimus-Agent/issues/118)
+tracks the part of it that did not land — the access menu still offers full
+host authority first, which is the opposite of "Standard first".
+
+**What R30.5 deliberately does not do.** A grant is read in exactly one place:
+`Kernel::open_dev_run_session`. A chat session on a trusted project still asks,
+because "I authorized this project for engineering runs" and "stop showing me
+edits" are different statements and only the first one was made. Widening this
+to every session is a decision for a later ADR, not a convenience.
+
+**What R30.6 changes about a decision, not just a label.** `cargo test` and
+`cargo install ripgrep` were the same request — `ProcessProjectExecute`,
+`Externality::ProjectLocal` — so a project-scoped grant covered both. The
+classifier splits sync (reproduces a lockfile a human already committed) from
+add (chooses something new, reaches a registry) from host install (writes
+outside the project at all, and answers to `SystemModify`).
+
 ### Exit gate (P30)
 
-- `cargo test -p optimus-policy`
+- `cargo test -p optimus-policy` — 21 (14 unit + 7 `command_classification`)
+- `cargo test -p optimus-kernel --test dev_run_trust` — 6
 - `cargo test -p optimus-runtime --test project_trust_profile`
 - `cargo test -p optimus-runtime --test approvals_surface`
 - `python3 scripts/check-crate-layers.py`
 - Security map updated for trust-profile grants
 - Review changes still pauses high-risk effects (ADR-0031 behaviour preserved)
+
+Not exit-gated yet: R30.7 and R30.8 remain open, so P30 stays **in progress**.
 
 ### Explicit non-claims (P30)
 

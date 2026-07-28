@@ -122,9 +122,21 @@ This phase builds the spine.
 | E40.4 | **done** | Branch + worktree lifecycle: create, reuse on resume, remove on completion, retain-and-report on dirty abandon |
 | E40.5 | **done** | Worktree path becomes the run's ADR-0031 root binding (`Kernel::open_dev_run_session`) |
 | E40.6 | **done** | Durable persistence + `resume` from last checkpoint after process restart |
-| E40.7 | pending | R30.5–R30.8 landed (prerequisite above) |
+| E40.7 | partial | R30.5 + R30.6 landed; R30.7 (localhost lease) and R30.8 (release defaults) still open |
 | E40.8 | **done** | `RunDriver` drives a run through the table, recording evidence from real commands |
 | E40.9 | pending | Phase step catalogue: the actual `just` commands each phase runs (needs `test-changed`, P42) |
+
+**What E40.7 gives a run, and what it deliberately withholds.** A run inside a
+worktree the user already authorized no longer pauses on every ordinary write:
+`Kernel::open_dev_run_session` reads the project's durable trust grant and
+adopts its profile. That is the *only* place a grant is read — a chat session
+on the same project still asks, because authorizing engineering runs is not the
+same statement as "stop showing me edits". The grant also stopped covering
+things it never should have: `cargo install ripgrep` and `npm install -g` now
+classify as host changes rather than project execution, so a project-scoped
+grant does not quietly become a host-scoped one. Verified by
+`crates/optimus-kernel/tests/dev_run_trust.rs` (the same write pauses without a
+grant and lands with one) and `crates/optimus-policy/tests/command_classification.rs`.
 
 **A distinction E40.8 forced into the model.** Evidence now records whether an
 observation *corroborated*, separately from its exit status. The two are not
@@ -139,6 +151,7 @@ proves nothing.
 
 - `cargo test -p optimus-engineering`
 - `cargo test -p optimus-kernel --test dev_run_containment`
+- `cargo test -p optimus-kernel --test dev_run_trust`
 - `python3 scripts/check-crate-layers.py`
 - `python3 scripts/check-project-bleed.py`
 - `python3 scripts/check-module-size.py`

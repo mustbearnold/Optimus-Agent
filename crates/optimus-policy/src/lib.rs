@@ -4,6 +4,10 @@
 //! emit durable receipts. This crate only answers whether a trust profile may
 //! auto-authorize, must ask the user, deny, or report unavailability.
 
+mod command_class;
+
+pub use command_class::{capability_for_command, classify_command, CommandClass};
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -491,11 +495,54 @@ pub fn build_effect_request(
     summary: String,
     relative_path: Option<String>,
 ) -> Option<ActionRequest> {
-    let capability = capability_for_effect_kind(kind)?;
+    build_effect_request_for(
+        kind,
+        effect_hash,
+        project_root_hash,
+        summary,
+        relative_path,
+        None,
+    )
+}
+
+/// As [`build_effect_request`], but with the command behind a `RunCommand`
+/// effect so it can be classified.
+///
+/// Without `command`, every command collapses to `ProcessProjectExecute` and
+/// the broker cannot tell `cargo test` from `cargo add some-crate` or from
+/// `npm install -g`. With it, the request names what the command actually
+/// reaches, and the approval prompt can say so.
+pub fn build_effect_request_for(
+    kind: &str,
+    effect_hash: &str,
+    project_root_hash: Option<String>,
+    summary: String,
+    relative_path: Option<String>,
+    command: Option<(&str, &[String])>,
+) -> Option<ActionRequest> {
+    let mut capability = capability_for_effect_kind(kind)?;
+    let mut class = None;
+    if matches!(capability, CapabilityId::ProcessProjectExecute) {
+        if let Some((program, args)) = command {
+            let classified = classify_command(program, args);
+            capability = classified.capability();
+            class = Some(classified);
+        }
+    }
     let reversibility = match capability {
         CapabilityId::FsProjectDelete => Reversibility::Checkpointed,
-        CapabilityId::ProcessProjectExecute => Reversibility::Irreversible,
+        // A dependency change is recoverable from the lockfile in git; running
+        // arbitrary code and changing the host are not.
+        CapabilityId::PackageSync | CapabilityId::PackageAdd => Reversibility::Checkpointed,
+        CapabilityId::ProcessProjectExecute | CapabilityId::SystemModify => {
+            Reversibility::Irreversible
+        }
         _ => Reversibility::Reversible,
+    };
+    let externality = match class {
+        Some(CommandClass::HostInstall) => Externality::HostSystem,
+        Some(class) if class.reaches_registry() => Externality::PublicNetwork,
+        _ => Externality::ProjectLocal,
     };
     Some(ActionRequest {
         run_id: None,
@@ -513,7 +560,7 @@ pub fn build_effect_request(
         },
         reversibility,
         sensitivity: Sensitivity::Ordinary,
-        externality: Externality::ProjectLocal,
+        externality,
     })
 }
 

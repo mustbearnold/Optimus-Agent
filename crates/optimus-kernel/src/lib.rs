@@ -24,6 +24,7 @@ mod page_extract;
 mod product_settings;
 mod profile;
 mod project_authority;
+mod project_trust;
 mod routing;
 mod scripted;
 mod security_denial;
@@ -157,6 +158,7 @@ pub use profile::{
 pub use project_authority::{
     ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
 };
+pub use project_trust::{ProjectTrustGrant, ProjectTrustStore, PROJECT_TRUST_VERSION};
 pub use routing::{
     is_known_codex_model, provider_catalog, provider_catalog_status, resolve_route,
     resolve_route_traced, route_decision_count, sanitize_codex_oauth_model, ModelCapability,
@@ -882,31 +884,6 @@ const OPTIMUS_RUNTIME_AGENTS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../OPTIMUS_AGENTS.md"
 ));
-
-/// ADR-0040: publish agent-domain navigation onto the host coordination bus.
-/// Best-effort — coord I/O must never fail the tool turn.
-fn record_agent_browser_coord(home: &Path, tool_json: &str, fallback_url: &str) {
-    let Ok(mut bus) = BrowserCoordBus::open(home) else {
-        return;
-    };
-    let v: Value = serde_json::from_str(tool_json).unwrap_or(Value::Null);
-    let title = v
-        .get("title")
-        .or_else(|| v.get("page_title"))
-        .and_then(|t| t.as_str())
-        .map(|s| s.to_string());
-    let final_url = v
-        .get("final_url")
-        .or_else(|| v.get("url"))
-        .and_then(|u| u.as_str())
-        .map(|s| s.to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| fallback_url.to_string());
-    if final_url.is_empty() {
-        return;
-    }
-    let _ = bus.record_agent_navigate(&final_url, title);
-}
 
 #[cfg(test)]
 mod turn_guard_tests {

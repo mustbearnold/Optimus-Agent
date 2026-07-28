@@ -3,9 +3,13 @@ knowledge_type: decision
 status: current
 covers:
   - crates/optimus-policy/src/lib.rs
+  - crates/optimus-policy/src/command_class.rs
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
+  - crates/optimus-runtime/src/policy_bridge.rs
   - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-kernel/src/project_trust.rs
+  - crates/optimus-kernel/src/dev_run.rs
   - crates/optimus-host/src/chat.rs
   - apps/optimus-ui/src/components/workbench/Composer.tsx
 depends_on:
@@ -16,6 +20,8 @@ depends_on:
   - docs/plans/reliability-autonomy-program.md
 validated_by:
   - crates/optimus-policy/src/lib.rs
+  - crates/optimus-policy/tests/command_classification.rs
+  - crates/optimus-kernel/tests/dev_run_trust.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - crates/optimus-runtime/tests/approvals_surface.rs
 last_verified_commit: null
@@ -82,6 +88,22 @@ fresh human click when a durable project trust grant already covers it.
    must not grant credentials, outside-project access, or unrestricted execution.
    Durable grants live in Optimus-owned state outside the repository.
 
+   *Where a grant is read (R30.5).* One place: `Kernel::open_dev_run_session`.
+   A grant is a statement about engineering runs inside an authorized worktree,
+   not about every session that names the project, so a chat session on a
+   trusted project still asks. `unrestricted_host` cannot be made durable at
+   all — break-glass that survives a restart is not break-glass. An expired
+   grant reads as *no grant*, never as its own profile, and a store that cannot
+   be read is an error rather than a silent narrowing or widening.
+
+   *What a command is (R30.6).* Authorizing `cargo test` and
+   `cargo install ripgrep` against the same capability made a project-scoped
+   grant cover a host change. `optimus-policy::command_class` separates
+   **sync** (reproduces a committed lockfile), **add** (chooses a new
+   dependency, reaches a registry), and **host install** (writes outside the
+   project, and answers to `system.modify`). Unrecognized programs stay
+   `process.project.execute`: guessing wide is safe, guessing narrow is not.
+
 6. **SmartDeny remains the pause mechanism.** Under SmartDeny, the broker
    decides Allow / Ask / Deny / Unavailable. Allow under a trust profile inserts
    a durable exact-effect authority receipt (actor
@@ -106,9 +128,15 @@ fresh human click when a durable project trust grant already covers it.
 - Positive: Full project is no longer confused with unrestricted host FS.
 - Negative: broker vocabulary must stay closed and versioned; incomplete
   capability mapping falls closed to Ask or Deny.
-- Residual: package-manager structured capabilities, owned-localhost browser
-  leases, and durable project trust grant store beyond session profile are
-  program P30 follow-ons.
+- Positive: the approval prompt can now say *which* act it is approving —
+  "install a binary on your system" reads differently from "run a command in
+  this project", and before R30.6 both rendered the same.
+- Residual: owned-localhost browser leases (R30.7) and product release defaults
+  (R30.8) remain program P30 follow-ons. Package-manager structured
+  capabilities (R30.6) and the durable trust grant store (R30.5) have landed.
+- Residual: R30.4 is done for the profile plumbing, but the Composer access
+  menu still lists full host authority first — the opposite of this ADR's
+  Decision 7. Tracked as issue #118.
 
 ## Alternatives considered
 
@@ -137,3 +165,21 @@ Rejected. Would discard ADR-0031’s audit architecture.
 
 Revisit if Standard auto-allow produces user-visible unsafe host effects under
 Confined envelopes, or if broker latency blocks the turn loop.
+
+## Relevant code
+
+- `crates/optimus-policy/src/lib.rs` — profiles, capability ids, broker
+- `crates/optimus-policy/src/command_class.rs` — sync vs add vs host install
+- `crates/optimus-kernel/src/project_trust.rs` — the durable grant store
+- `crates/optimus-kernel/src/dev_run.rs` — the one place a grant is read
+- `crates/optimus-runtime/src/policy_bridge.rs` — effect → broker request
+
+## Relevant tests
+
+- `crates/optimus-policy/tests/command_classification.rs` — a host install no
+  longer rides on a project grant
+- `crates/optimus-kernel/tests/dev_run_trust.rs` — the same write pauses
+  without a grant and lands with one; chat does not inherit it
+- `crates/optimus-runtime/tests/project_trust_profile.rs` — Standard
+  auto-allows a project write; Review changes still pauses
+- `crates/optimus-runtime/tests/approvals_surface.rs` — what an approval shows

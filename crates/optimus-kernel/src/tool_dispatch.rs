@@ -7,6 +7,7 @@
 //! modules of the defining module.
 
 use super::*;
+use crate::browser_coord::record_agent_browser_coord;
 
 impl Kernel {
     pub(crate) fn tool_schemas(&self) -> Vec<ToolSchema> {

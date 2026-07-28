@@ -5,7 +5,8 @@
 //! law (AGENTS.md law 21) instead of growing its grandfathered baseline.
 
 use optimus_policy::{
-    build_effect_request, AuthorityDecision, AutonomyProfile as PolicyAutonomy, CapabilityBroker,
+    build_effect_request_for, AuthorityDecision, AutonomyProfile as PolicyAutonomy,
+    CapabilityBroker,
 };
 
 use optimus_graph::GraphError;
@@ -154,6 +155,20 @@ fn effect_policy_view(effect: &Effect) -> (&'static str, Option<String>, Option<
     }
 }
 
+/// The program and arguments behind a command effect, for the classifier.
+///
+/// `run <something>` is not a capability until you know what the something is:
+/// `cargo test`, `cargo add some-crate` and `npm install -g` are three
+/// different acts that were all `ProcessProjectExecute` before this.
+fn effect_command(effect: &Effect) -> Option<(&str, &[String])> {
+    match effect {
+        Effect::RunCommand { program, args } | Effect::ProjectRunCommand { program, args, .. } => {
+            Some((program.as_str(), args.as_slice()))
+        }
+        _ => None,
+    }
+}
+
 impl Runtime {
     /// Capability-broker decision for a high-risk effect under SmartDeny (ADR-0044).
     fn authorize_high_risk_effect(
@@ -163,10 +178,17 @@ impl Runtime {
     ) -> Result<AuthorityDecision> {
         let profile = policy_autonomy(self.config.autonomy_profile);
         let (kind, root_hash, relative_path, summary) = effect_policy_view(effect);
-        let request = build_effect_request(kind, effect_hash, root_hash, summary, relative_path)
-            .ok_or_else(|| {
-                RuntimeError::Effector(format!("no capability mapping for effect kind {kind}"))
-            })?;
+        let request = build_effect_request_for(
+            kind,
+            effect_hash,
+            root_hash,
+            summary,
+            relative_path,
+            effect_command(effect),
+        )
+        .ok_or_else(|| {
+            RuntimeError::Effector(format!("no capability mapping for effect kind {kind}"))
+        })?;
         Ok(CapabilityBroker.decide(profile, &request))
     }
 
