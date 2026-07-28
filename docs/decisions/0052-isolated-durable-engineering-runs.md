@@ -3,6 +3,8 @@ knowledge_type: decision
 status: current
 covers:
   - crates/optimus-engineering/src/lib.rs
+  - crates/optimus-engineering/src/command.rs
+  - crates/optimus-engineering/src/controller.rs
   - crates/optimus-engineering/src/phase.rs
   - crates/optimus-engineering/src/run.rs
   - crates/optimus-engineering/src/worktree.rs
@@ -20,6 +22,7 @@ validated_by:
   - crates/optimus-engineering/tests/phase_progression.rs
   - crates/optimus-engineering/tests/worktree_lifecycle.rs
   - crates/optimus-engineering/tests/resume_after_interrupt.rs
+  - crates/optimus-engineering/tests/driver_earns_evidence.rs
   - crates/optimus-kernel/tests/dev_run_containment.rs
   - scripts/check-crate-layers.py
 last_verified_commit: null
@@ -144,6 +147,15 @@ Consequently `FOCUSED_VERIFY` cannot be satisfied by a green unit test alone
 when the phase contract requires a differential result, and `FULL_VERIFY`
 cannot be satisfied by anything except a complete recorded `just verify`.
 
+Evidence records **corroboration separately from exit status**, because the two
+come apart. The differential proof runs the new regression test against the
+base commit, where it must *fail* — a test that passes without the fix is not
+testing the bug. So a step declares which outcome would prove its point, the
+record keeps the raw exit status either way, and the phase contract is
+satisfied by corroboration rather than by exit zero. This is the one place
+where "the command failed" is the evidence, and inverting it silently would let
+a test that catches nothing count as a proof.
+
 ### 6. The implementation model does not approve its own patch
 
 `REVIEW` runs in a separate context with read-only authority and receives the
@@ -263,6 +275,10 @@ Revisit if any of the following holds:
 - `crates/optimus-engineering/src/phase.rs` — phase table, transitions, contracts
 - `crates/optimus-engineering/src/run.rs` — `DevTaskRun`, evidence, budget
 - `crates/optimus-engineering/src/worktree.rs` — branch and worktree lifecycle
+- `crates/optimus-engineering/src/command.rs` — `CommandRunner`, the injected
+  execution surface, and `ProcessRunner`, its default child-process form
+- `crates/optimus-engineering/src/controller.rs` — `RunDriver`, which earns
+  evidence by running commands and never judges whether a phase is finished
 - `crates/optimus-kernel/src/project_authority.rs` — `dev_run_scope`, which
   narrows an authorized project scope to one run's worktree
 - `crates/optimus-kernel/src/lib.rs` — `Kernel::open_dev_run_session`
@@ -271,6 +287,7 @@ Revisit if any of the following holds:
 ## Relevant tests
 
 - `crates/optimus-engineering/tests/phase_progression.rs`
+- `crates/optimus-engineering/tests/driver_earns_evidence.rs`
 - `crates/optimus-engineering/tests/worktree_lifecycle.rs`
 - `crates/optimus-engineering/tests/resume_after_interrupt.rs`
 - `crates/optimus-kernel/tests/dev_run_containment.rs`

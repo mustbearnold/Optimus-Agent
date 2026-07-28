@@ -52,6 +52,15 @@ pub struct EvidenceItem {
     /// Digest of the captured output, so a large log can be referenced without
     /// being carried in the record.
     pub output_digest: Option<String>,
+    /// Whether the observation came out the way it needed to.
+    ///
+    /// Not the same as "exited zero". A differential proof runs the new
+    /// regression test against the *base* commit, where it must **fail** — a
+    /// test that passes without the fix is not testing the bug. So the record
+    /// keeps the raw exit status and, separately, whether that status was the
+    /// one that proved the point. Only corroborating evidence satisfies a
+    /// phase contract.
+    pub corroborates: bool,
     pub summary: String,
 }
 
@@ -66,12 +75,16 @@ impl EvidenceItem {
             command: None,
             exit_status: None,
             output_digest: None,
+            corroborates: true,
             summary: summary.into(),
         }
     }
 
-    /// A command that ran, with the commit it ran against and the output it
-    /// produced. This is the shape most phase contracts want.
+    /// A command that ran and had to pass, with the commit it ran against and
+    /// the output it produced. This is the shape most phase contracts want.
+    ///
+    /// A non-zero status is still recorded — the log does not hide failures —
+    /// but it corroborates nothing, so the phase stays where it is.
     #[must_use]
     pub fn observed(
         kind: EvidenceKind,
@@ -80,12 +93,41 @@ impl EvidenceItem {
         sha: impl Into<String>,
         output: &[u8],
     ) -> EvidenceDraft {
+        Self::draft(kind, command, exit_status, sha, output, exit_status == 0)
+    }
+
+    /// A command whose **failure** is the point.
+    ///
+    /// The differential proof: run the new regression test against the base
+    /// commit, where it must fail. If it passes there, the test does not
+    /// exercise the bug and the fix is unverified — so here a zero exit is
+    /// what corroborates nothing.
+    #[must_use]
+    pub fn observed_failing(
+        kind: EvidenceKind,
+        command: impl Into<String>,
+        exit_status: i32,
+        sha: impl Into<String>,
+        output: &[u8],
+    ) -> EvidenceDraft {
+        Self::draft(kind, command, exit_status, sha, output, exit_status != 0)
+    }
+
+    fn draft(
+        kind: EvidenceKind,
+        command: impl Into<String>,
+        exit_status: i32,
+        sha: impl Into<String>,
+        output: &[u8],
+        corroborates: bool,
+    ) -> EvidenceDraft {
         EvidenceDraft {
             kind,
             sha: Some(sha.into()),
             command: Some(command.into()),
             exit_status: Some(exit_status),
             output_digest: Some(digest(output)),
+            corroborates,
             summary: String::new(),
         }
     }
@@ -100,6 +142,7 @@ pub struct EvidenceDraft {
     command: Option<String>,
     exit_status: Option<i32>,
     output_digest: Option<String>,
+    corroborates: bool,
     summary: String,
 }
 
@@ -248,22 +291,29 @@ impl DevTaskRun {
             command: draft.command,
             exit_status: draft.exit_status,
             output_digest: draft.output_digest,
+            corroborates: draft.corroborates,
             summary: draft.summary,
         });
         Ok(self.evidence.last().expect("just pushed"))
     }
 
-    /// Evidence kinds recorded by the current phase in its current attempt.
+    /// Evidence kinds recorded by the current phase in its current attempt that
+    /// came out the way they had to.
     ///
-    /// Deliberately narrow: a diff produced during `Implement` does not let
-    /// `Repair` exit, and an earlier attempt's green test run does not let a
-    /// re-entered phase exit without running anything.
+    /// Deliberately narrow on three axes. A diff produced during `Implement`
+    /// does not let `Repair` exit. An earlier attempt's green test run does not
+    /// let a re-entered phase exit without running anything. And an observation
+    /// that did not corroborate — a test run that went red, or a differential
+    /// proof that passed at base when it should have failed — is kept in the
+    /// record but satisfies nothing. It is evidence the phase is *not*
+    /// finished.
     #[must_use]
     pub fn satisfied_evidence(&self) -> Vec<EvidenceKind> {
         let attempt = self.attempt();
         self.evidence
             .iter()
             .filter(|item| item.phase == self.phase && item.attempt == attempt)
+            .filter(|item| item.corroborates)
             .map(|item| item.kind)
             .collect()
     }

@@ -123,7 +123,17 @@ This phase builds the spine.
 | E40.5 | **done** | Worktree path becomes the run's ADR-0031 root binding (`Kernel::open_dev_run_session`) |
 | E40.6 | **done** | Durable persistence + `resume` from last checkpoint after process restart |
 | E40.7 | pending | R30.5–R30.8 landed (prerequisite above) |
-| E40.8 | pending | Controller that drives a run through the table, recording evidence from real commands |
+| E40.8 | **done** | `RunDriver` drives a run through the table, recording evidence from real commands |
+| E40.9 | pending | Phase step catalogue: the actual `just` commands each phase runs (needs `test-changed`, P42) |
+
+**A distinction E40.8 forced into the model.** Evidence now records whether an
+observation *corroborated*, separately from its exit status. The two are not
+the same: the differential proof runs the new regression test against the base
+commit, where it must **fail** — a test that passes without the fix is not
+testing the bug. So `EvidenceItem::observed` (must pass) and
+`observed_failing` (must fail) are distinct, and `satisfied_evidence` filters
+on corroboration rather than on exit zero. A green run at base is recorded and
+proves nothing.
 
 ### Exit gate (P40)
 

@@ -18,10 +18,19 @@
 //! deliberately knows nothing about GitHub — push, draft PRs and merge arrive
 //! in later program P40 phases and stay behind explicit approval.
 
+pub mod command;
+pub mod controller;
 pub mod phase;
 pub mod run;
 pub mod worktree;
 
+pub use command::{
+    CommandError, CommandOutcome, CommandRunner, ProcessRunner, MAX_CAPTURE_BYTES, SIGNAL_STATUS,
+    TIMEOUT_STATUS,
+};
+pub use controller::{
+    ControllerError, DriveOutcome, PhaseStep, RunDriver, StepOutcome, DEFAULT_STEP_TIMEOUT,
+};
 pub use phase::{DevPhase, EvidenceKind, PhaseAuthority, PhaseContract, TransitionError};
 pub use run::{
     digest, DevTaskRun, EvidenceDraft, EvidenceItem, RunBudget, RunError, StopKind, StopReason,

@@ -79,7 +79,10 @@ fn a_green_unit_test_alone_does_not_finish_focused_verify() {
         RunError::Transition(TransitionError::MissingEvidence { .. })
     ));
 
-    run.record(EvidenceItem::observed(
+    // The proof is the regression test failing at the *base* commit. A run
+    // that passed there would not be exercising the bug, so this is the one
+    // place a non-zero exit is what corroborates.
+    run.record(EvidenceItem::observed_failing(
         EvidenceKind::DifferentialProof,
         "just test-changed --at-base",
         1,
@@ -89,6 +92,44 @@ fn a_green_unit_test_alone_does_not_finish_focused_verify() {
     .unwrap();
     run.advance_to(DevPhase::Review).unwrap();
     assert_eq!(run.phase, DevPhase::Review);
+}
+
+#[test]
+fn a_regression_test_that_passes_at_base_is_not_a_differential_proof() {
+    let mut run = fresh();
+    drive_to(&mut run, DevPhase::FocusedVerify);
+    run.record(EvidenceItem::observed(
+        EvidenceKind::FocusedTestRun,
+        "just test-changed",
+        0,
+        "deadbeef",
+        b"ok",
+    ))
+    .unwrap();
+
+    // Green at base: the test does not catch the bug it was written for.
+    run.record(EvidenceItem::observed_failing(
+        EvidenceKind::DifferentialProof,
+        "just test-changed --at-base",
+        0,
+        "cafe1234",
+        b"passed at base, which proves nothing",
+    ))
+    .unwrap();
+
+    assert!(
+        !run.can_exit_phase(),
+        "a proof that did not fail at base proves nothing"
+    );
+    let err = run.advance_to(DevPhase::Review).unwrap_err();
+    assert!(matches!(
+        err,
+        RunError::Transition(TransitionError::MissingEvidence { .. })
+    ));
+    // Still recorded: the record shows the attempt and why it did not count.
+    let item = run.evidence.last().unwrap();
+    assert_eq!(item.exit_status, Some(0));
+    assert!(!item.corroborates);
 }
 
 #[test]
