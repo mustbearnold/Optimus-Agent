@@ -891,29 +891,6 @@ svg {
   background: #2f6feb;
 }
 
-.text-prompt-dialog {
-  width: min(420px, calc(100vw - 48px));
-  display: grid;
-  gap: 14px;
-  padding: 18px 18px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--elevated);
-  box-shadow: var(--shadow-dialog);
-}
-
-.text-prompt-dialog h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.text-prompt-dialog footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .floating-panel {
   top: 40px;
   right: 112px;

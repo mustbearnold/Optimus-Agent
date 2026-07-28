@@ -1,0 +1,113 @@
+/*
+ * Tailwind, layered so it can coexist with 6,762 lines of hand-written CSS.
+ *
+ * Two deliberate choices, both load-bearing (ADR-0050):
+ *
+ * 1. Preflight is not imported. Tailwind's `@import "tailwindcss"` would pull
+ *    in `theme`, `preflight`, and `utilities`; preflight is a global reset, and
+ *    this app already resets and styles those elements itself. Importing the
+ *    three sub-files individually and omitting preflight is the documented way
+ *    to add v4 to an app that already has CSS, and it is the only reason this
+ *    migration can happen one component at a time.
+ *
+ * 2. The existing stylesheets are pulled into a named layer rather than left
+ *    where they were. Unlayered CSS beats *every* layer, so with `styles.css`
+ *    loaded normally its bare `button`, `input`, `select` and `*` rules would
+ *    outrank every Tailwind utility — a shadcn component would silently inherit
+ *    the old styling with no way to override it short of `!important`. That is
+ *    exactly the failure `optimus-desktop` is living with, where two stylesheets
+ *    resolved by concatenation order alone needed 221 `!important`s to settle
+ *    the argument. Naming the layers settles it by declaration instead.
+ *
+ * The three app stylesheets share one layer and are imported in the order
+ * `main.tsx` used, so their precedence relative to each other is unchanged.
+ */
+
+@layer theme, optimus, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+
+@import './styles.css' layer(optimus);
+@import './codex-shell.css' layer(optimus);
+@import './workbench-shell.css' layer(optimus);
+
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@source '../src';
+
+/*
+ * shadcn's primitives read these names. Pointing them at the app's own tokens
+ * means a Radix component inherits the surface it lands on instead of importing
+ * a second palette — and because `@theme inline` emits `var()` references
+ * rather than copying values, the existing `:root[data-theme="light"]` switch
+ * keeps working with no extra wiring.
+ *
+ * Radii collide rather than map: Tailwind's namespace is `--radius-*` and the
+ * app already owns `--radius-sm` / `--radius` / `--radius-lg`. The app's
+ * definitions win — they are in a later layer — which is the right outcome:
+ * `rounded-lg` on a shadcn dialog returns `0px` inside the workbench shell
+ * (`workbench-shell.css:49`) because that surface is square by design, and the
+ * dialog should look like the surface it lands on.
+ *
+ * The two steps below are the ones Tailwind adds and the app has no opinion
+ * on. Left unset they would fall through to Tailwind's stock 6px and 12px, so
+ * `rounded-md` would quietly round a corner that `rounded-lg` leaves square —
+ * the scale would be incoherent in the one direction nobody would think to
+ * check. Aliasing them onto the app's own steps keeps the whole family
+ * app-owned. Not circular: these four names are distinct.
+ */
+@theme inline {
+  --radius-md: var(--radius);
+  --radius-xl: var(--radius-lg);
+
+  --color-background: var(--surface);
+  --color-foreground: var(--text);
+
+  --color-card: var(--elevated);
+  --color-card-foreground: var(--text);
+
+  --color-popover: var(--elevated);
+  --color-popover-foreground: var(--text);
+
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--canvas);
+
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text);
+
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--muted);
+
+  --color-accent: var(--surface-3);
+  --color-accent-foreground: var(--text);
+
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-contrast);
+
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--accent);
+}
+
+/*
+ * The one thing preflight was doing that these components rely on.
+ *
+ * Tailwind's `border` utility sets a width and a style but no colour, on the
+ * assumption that preflight already pointed `border-color` at a neutral. With
+ * preflight omitted the colour falls back to `currentColor`, so `border` on a
+ * shadcn surface paints a 1px line in the *text* colour — on this palette a
+ * stark `#f1f1f1` outline around a near-black dialog. It is the kind of defect
+ * that no test catches and every screenshot shows.
+ *
+ * shadcn's own starter solves this with `* { @apply border-border }`. That is
+ * scoped to `[data-slot]` here, which every shadcn primitive carries and
+ * nothing else in this app does, so the reset cannot reach the 6,762 lines of
+ * hand-written CSS it shares a document with. The `components` layer sits
+ * before `utilities`, so an explicit `border-*` utility still wins.
+ */
+@layer components {
+  [data-slot],
+  [data-slot] * {
+    border-color: var(--border);
+  }
+}
