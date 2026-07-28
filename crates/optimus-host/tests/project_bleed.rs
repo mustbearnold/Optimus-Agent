@@ -6,10 +6,11 @@
 //! against each other inside ONE home. scripts/check-project-bleed.py pins the
 //! value and lets it move only toward 5. Every cross-project assertion is
 //! phrased pairwise, so raising the ratchet strengthens the same invariants
-//! rather than redefining them — and the next step is blocked by real work,
-//! not by editing this file: at ratchet=2 the session-visibility assertion
-//! fails because `sessions` has no project-scoped view (sessions.rs carries no
-//! project column), which is exactly the bleed C1 exists to close.
+//! rather than redefining them. The counter sits at the target: the one
+//! conversion that blocked every N ≥ 2 was session visibility, closed by the
+//! lifetime session↔project binding (kernel session/project.rs) behind the
+//! project-scoped `sessions` view — remove either and assertion (D) fails the
+//! moment two projects exist, which is the regression this pin now guards.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -22,7 +23,7 @@ use optimus_kernel::{
 use serde_json::json;
 
 /// Enforced by scripts/check-project-bleed.py; may only grow (C1 target: 5).
-const BLEED_RATCHET: usize = 1;
+const BLEED_RATCHET: usize = 5;
 
 struct ProjectFixture {
     id: String,

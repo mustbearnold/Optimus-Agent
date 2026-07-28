@@ -575,7 +575,7 @@ impl Kernel {
 
         let (session_id, session_title, messages) = if let Some(id) = session_id {
             let (pack_names, messages, title, _repaired) =
-                sessions.load_repairing_effect_transcript(id)?;
+                sessions.load_bound_transcript(id, project_id)?;
             let pack_ids: Vec<PackId> = pack_names
                 .iter()
                 .map(|name| PackId::parse(name).ok_or_else(|| PackError::UnknownPack(name.clone())))
@@ -583,7 +583,7 @@ impl Kernel {
             packs.restore_loaded(&pack_ids)?;
             (id, title, messages)
         } else {
-            let id = sessions.create("session")?;
+            let id = sessions.create_scoped("session", project_id)?;
             let system = Message {
                 role: Role::System,
                 content: system_prompt::system_prompt(
