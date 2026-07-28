@@ -170,7 +170,9 @@ test('light theme and secondary routes settle without console errors', async ({ 
   // Capabilities left the topbar too; the command palette is its route.
   await page.keyboard.press('Control+k');
   await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible();
-  await page.getByRole('button', { name: /capabilities/i }).first().click();
+  // `option`, not `button`: the palette is a cmdk listbox now, so its rows carry
+  // real listbox semantics instead of being a stack of unrelated buttons (ADR-0050).
+  await page.getByRole('option', { name: /capabilities/i }).first().click();
   await expect(page.getByRole('main', { name: 'Capabilities' })).toBeVisible();
   const specialistBoundary = page.locator('.capability-boundary li').filter({ hasText: 'Specialist agents' });
   await expect(specialistBoundary.getByText('Unavailable', { exact: true })).toBeVisible();
