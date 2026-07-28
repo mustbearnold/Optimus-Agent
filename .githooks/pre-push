@@ -18,6 +18,14 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 TIER="${OPTIMUS_VERIFY_TIER:-all}"
 
+# Gates that could not run leave their names here. A local skip stays allowed —
+# a fresh worktree has no apps/optimus-electron/node_modules, and blocking on
+# that would only teach --no-verify — but the push stops being called `clean`
+# when it was not (#98).
+SKIP_REPORT="$(mktemp)"
+trap 'rm -f "$SKIP_REPORT"' EXIT
+export OPTIMUS_VERIFY_SKIP_REPORT="$SKIP_REPORT"
+
 printf '\n[pre-push] scripts/verify.sh %s\n' "$TIER"
 
 if ! bash "$ROOT/scripts/verify.sh" "$TIER"; then
@@ -33,4 +41,8 @@ EOF
   exit 1
 fi
 
-printf '[pre-push] clean\n\n'
+if [ -s "$SKIP_REPORT" ]; then
+  python3 "$ROOT/scripts/verify_skip_report.py" "$SKIP_REPORT"
+else
+  printf '[pre-push] clean\n\n'
+fi
