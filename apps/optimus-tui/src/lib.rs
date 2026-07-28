@@ -5,10 +5,11 @@
 //! directly, so there is no transport hop for the surface that owns the session.
 //! Other surfaces attach to this process over stdio or loopback HTTP instead.
 
-use std::io;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
+use crossterm::cursor::Show;
 use crossterm::event::{
     self, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
     Event, KeyEventKind, MouseEvent,
@@ -37,13 +38,73 @@ pub use session::{Message, Role, TuiSession};
 
 /// Run the terminal face against an Optimus home directory.
 pub fn run(home: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    let log = logging::log_path(&home);
     // Taken before the screen is, and dropped after it is handed back, so no
     // in-process library write can land in the middle of a frame.
-    let _stderr = logging::StderrLog::to_file(&logging::log_path(&home))?;
+    let _stderr = logging::StderrLog::to_file(&log)?;
+    // Before `enter`, not after: a panic between `enable_raw_mode` succeeding
+    // and `Terminal::new` returning leaves a raw terminal with no value to hand
+    // back, and that window is covered too.
+    install_panic_restore(log);
     let mut terminal = enter()?;
     let result = event_loop(&mut terminal, TuiSession::new(home));
     leave(terminal)?;
     result
+}
+
+/// Undo everything [`enter`] did, without a `Terminal` and without failing.
+///
+/// The panic path cannot borrow the terminal — it was moved into the event loop
+/// — so this drives stdout directly. Every step drops its error deliberately:
+/// panicking while restoring replaces the original panic reason with this one,
+/// and the original is the only one that explains anything.
+fn restore_screen() {
+    let mut stdout = io::stdout();
+    let _ = disable_raw_mode();
+    let _ = stdout.execute(DisableBracketedPaste);
+    let _ = stdout.execute(DisableMouseCapture);
+    let _ = stdout.execute(LeaveAlternateScreen);
+    let _ = stdout.execute(Show);
+}
+
+/// Hand the terminal back on the way out of a panic, the way [`leave`] does on
+/// the way out of the event loop (#92).
+///
+/// `leave` only runs when the loop *returns*; an unwind goes straight past it.
+/// What that leaves behind is not cosmetic. Mouse capture turns every later
+/// click in the user's shell into an escape sequence typed at the prompt, and
+/// raw mode means the Ctrl-C that would normally clear the line no longer
+/// reaches it — the session is over but the terminal is still not theirs.
+///
+/// `ratatui::init` installs a hook of its own and this face deliberately does
+/// not use it: as of 0.29 it restores raw mode and the alternate screen only,
+/// and knows nothing about the mouse capture and bracketed paste that `enter`
+/// also turns on. A partial restore is the worse failure of the two, because
+/// the screen looks handed back while the input side is still hijacked.
+///
+/// Only the thread that took the screen gives it back. `TuiSession` spawns
+/// workers for turns and approvals; one of those panicking kills its own thread
+/// and leaves the face running, so tearing the screen down from there would
+/// break a session that is still very much alive.
+fn install_panic_restore(log: PathBuf) {
+    let owner = std::thread::current().id();
+    let previous = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if std::thread::current().id() == owner {
+            restore_screen();
+            // stderr points at the log for the whole run, and a hook runs
+            // *before* the guard holding that redirect is dropped — so the
+            // payload `previous` is about to write lands in the log, not on the
+            // screen. Stdout is never redirected, so one line there is what
+            // stops the crash from looking like a silent exit.
+            let _ = writeln!(
+                io::stdout(),
+                "\noptimus-tui stopped unexpectedly. Details: {}",
+                log.display()
+            );
+        }
+        previous(info);
+    }));
 }
 
 fn enter() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn std::error::Error>> {
@@ -80,6 +141,14 @@ fn event_loop(
     // and accept Ctrl-C while the worker is still talking to the model.
     let frame = Duration::from_millis(40);
     let mut captured = true;
+    // Proving the panic hook works needs a panic that happens while the screen
+    // is taken, and the only honest way to get one is to ask. Read once, and
+    // only in debug builds, so no released binary can be made to panic by its
+    // environment. `tests/pty.rs` is the sole caller.
+    #[cfg(debug_assertions)]
+    let panic_key = std::env::var("OPTIMUS_TUI_PANIC_ON_KEY")
+        .ok()
+        .and_then(|value| value.chars().next());
     loop {
         session.pump();
         session.tick();
@@ -113,6 +182,10 @@ fn event_loop(
         };
         if key.kind != KeyEventKind::Press {
             continue;
+        }
+        #[cfg(debug_assertions)]
+        if panic_key.is_some_and(|wanted| key.code == crossterm::event::KeyCode::Char(wanted)) {
+            panic!("OPTIMUS_TUI_PANIC_ON_KEY");
         }
         let mode = keys::Mode {
             picker: session.picker.is_some(),

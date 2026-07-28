@@ -49,7 +49,7 @@ const TEXT_WIDTH: usize = COLS as usize - 5;
 const CURSOR_ROW: u16 = ROWS - 3;
 
 struct Term {
-    _home: tempfile::TempDir,
+    home: tempfile::TempDir,
     _master: Box<dyn MasterPty + Send>,
     child: Box<dyn portable_pty::Child + Send + Sync>,
     writer: Box<dyn Write + Send>,
@@ -58,7 +58,7 @@ struct Term {
 
 impl Term {
     fn launch() -> Self {
-        Self::launch_paced(0)
+        Self::launch_with(&[])
     }
 
     /// Launch with the offline model taking `pace_ms` before each chunk of its
@@ -66,6 +66,10 @@ impl Term {
     /// At zero — every test that does not need a running turn — the model
     /// behaves exactly as it always has.
     fn launch_paced(pace_ms: u64) -> Self {
+        Self::launch_with(&[("OPTIMUS_OFFLINE_LATENCY_MS", &pace_ms.to_string())])
+    }
+
+    fn launch_with(env: &[(&str, &str)]) -> Self {
         let home = tempfile::tempdir().expect("temp home");
         let pair = native_pty_system()
             .openpty(PtySize {
@@ -81,8 +85,8 @@ impl Term {
         // Without a terminal type crossterm cannot emit the sequences under
         // test, and the whole exercise is about those sequences.
         command.env("TERM", "xterm-256color");
-        if pace_ms > 0 {
-            command.env("OPTIMUS_OFFLINE_LATENCY_MS", pace_ms.to_string());
+        for (key, value) in env {
+            command.env(key, value);
         }
         let child = pair.slave.spawn_command(command).expect("spawn the tui");
         // The child owns the slave now; holding it here would keep the pty open
@@ -107,7 +111,7 @@ impl Term {
         });
 
         let term = Self {
-            _home: home,
+            home,
             _master: pair.master,
             child,
             writer,
@@ -163,6 +167,12 @@ impl Term {
             // The row arrives inside the transcript pane, so the first glyph on
             // the terminal line is the pane's own border, not the spinner.
             .and_then(|line| line.trim_start_matches(['│', ' ']).chars().next())
+    }
+
+    /// Where the run points fd 2 — everything the kernel, a pack, or a panic
+    /// writes to stderr while the face owns the screen.
+    fn log(&self) -> String {
+        std::fs::read_to_string(self.home.path().join("logs").join("tui.log")).unwrap_or_default()
     }
 
     fn exited_within(&mut self, timeout: Duration) -> bool {
@@ -350,6 +360,35 @@ fn the_answer_paints_as_it_arrives_rather_than_all_at_once() {
     );
 }
 
+/// Every mode `enter` turns on, read back from the parsed escape stream.
+///
+/// `alternate_screen` on its own is the tempting assertion and the weakest one.
+/// A face that left the screen but kept the mouse captured passes it and is
+/// still unusable: from then on every click in the person's shell arrives as an
+/// escape sequence typed at their prompt, and raw mode means the Ctrl-C that
+/// would clear the line never reaches it either.
+fn assert_terminal_handed_back(term: &Term, after: &str) {
+    let parser = term.parser.lock().expect("parser");
+    let screen = parser.screen();
+    assert!(
+        !screen.alternate_screen(),
+        "{after} left the alternate screen up, so the user's scrollback is gone"
+    );
+    assert_eq!(
+        screen.mouse_protocol_mode(),
+        vt100::MouseProtocolMode::None,
+        "{after} left mouse capture on, so every later click types an escape sequence"
+    );
+    assert!(
+        !screen.bracketed_paste(),
+        "{after} left bracketed paste on, so pasted text arrives wrapped in \\e[200~"
+    );
+    assert!(
+        !screen.hide_cursor(),
+        "{after} left the cursor hidden, so the shell prompt has no caret"
+    );
+}
+
 #[test]
 fn quitting_gives_the_terminal_back() {
     let mut term = Term::launch();
@@ -360,13 +399,47 @@ fn quitting_gives_the_terminal_back() {
         "/quit did not exit:\n{}",
         term.screen()
     );
+    assert_terminal_handed_back(&term, "/quit");
+}
+
+/// The key this build panics on when asked. Any printable character does; `!`
+/// is one the composer would otherwise just insert, so nothing else reacts.
+const PANIC_KEY: &str = "!";
+
+/// The crash path is the one that mattered and the one nothing covered (#92).
+///
+/// `leave` runs when the event loop *returns*. A panic unwinds straight past
+/// it, so what a person was left holding was a terminal in raw mode with the
+/// mouse still captured — and because stderr is pointed at `tui.log` for the
+/// whole run, no message either. It read as a silent exit into a broken shell.
+#[test]
+fn a_panic_gives_the_terminal_back_too() {
+    let mut term = Term::launch_with(&[("OPTIMUS_TUI_PANIC_ON_KEY", PANIC_KEY)]);
+    term.send(PANIC_KEY.as_bytes());
+
+    // Waited for first, and deliberately: the notice is written *after* the
+    // restore sequences, so seeing it proves the parser has already consumed
+    // them. Asserting the modes on a child that merely exited would race the
+    // reader thread.
+    term.wait_for(
+        |screen| screen.contains("stopped unexpectedly"),
+        "a crash exited without a word: stderr goes to the log, so a line on \
+         stdout is the only thing between this and a silent death",
+    );
     assert!(
-        !term
-            .parser
-            .lock()
-            .expect("parser")
-            .screen()
-            .alternate_screen(),
-        "the alternate screen was never left, so the user's scrollback is gone"
+        term.exited_within(Duration::from_secs(15)),
+        "the forced panic never brought the process down:\n{}",
+        term.screen()
+    );
+    assert_terminal_handed_back(&term, "a panic");
+
+    // The other half of the contract. A hook runs *before* the guard holding
+    // the stderr redirect is dropped, so the payload lands in the log — which
+    // makes the one-line pointer above the only way anyone finds it.
+    let log = term.log();
+    assert!(
+        log.contains("OPTIMUS_TUI_PANIC_ON_KEY"),
+        "the panic reason reached neither the screen nor the log, so the crash \
+         left nothing to debug:\n{log}"
     );
 }
