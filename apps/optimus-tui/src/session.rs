@@ -169,6 +169,16 @@ struct ActiveTurn {
     awaiting_approval: bool,
 }
 
+/// Why a drain ended the turn (#108). Every clean worker path sends
+/// `Done`/`Failed` before its sender drops; a channel that vanishes without
+/// one is a worker that panicked past its final send, and the difference is
+/// the difference between saying nothing and reporting a crash.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TurnEnd {
+    Settled,
+    WorkerGone,
+}
+
 pub struct TuiSession {
     pub home: PathBuf,
     pub messages: Vec<Message>,
@@ -310,6 +320,14 @@ impl TuiSession {
         let home = self.home.clone();
 
         thread::spawn(move || {
+            // Proving the crash arm needs a worker that really dies mid-turn
+            // (#108). Debug builds only, same contract as
+            // OPTIMUS_TUI_PANIC_ON_KEY: no released binary can be made to
+            // panic by its environment; `tests/pty.rs` is the sole caller.
+            #[cfg(debug_assertions)]
+            if std::env::var_os("OPTIMUS_TUI_PANIC_IN_WORKER").is_some() {
+                panic!("OPTIMUS_TUI_PANIC_IN_WORKER");
+            }
             let mut sink = stream_sink(tx.clone());
             let outcome = chat_turn_cancellable(&home, params, Some(&mut sink), &worker_cancel);
             let final_update = match outcome {
@@ -516,7 +534,13 @@ impl TuiSession {
         // Collect first: applying updates needs `&mut self`, which cannot overlap
         // the borrow on the receiver.
         let mut batch = Vec::new();
-        let mut finished = false;
+        // Not a bool, because *why* the turn ended decides what the user is
+        // told (#108). A worker that settles sends `Done`/`Failed` before its
+        // sender drops; a channel that disappears without one means a panic
+        // unwound past that final send. Queued updates are delivered before
+        // `Disconnected`, so a worker that settled and then died still reads
+        // as settled.
+        let mut finished: Option<TurnEnd> = None;
         loop {
             match active.updates.try_recv() {
                 Ok(update) => {
@@ -524,13 +548,13 @@ impl TuiSession {
                         matches!(update, TurnUpdate::Done { .. } | TurnUpdate::Failed(_));
                     batch.push(update);
                     if terminal {
-                        finished = true;
+                        finished = Some(TurnEnd::Settled);
                         break;
                     }
                 }
                 Err(TryRecvError::Empty) => break,
                 Err(TryRecvError::Disconnected) => {
-                    finished = true;
+                    finished = Some(TurnEnd::WorkerGone);
                     break;
                 }
             }
@@ -596,7 +620,24 @@ impl TuiSession {
             }
         }
 
-        if finished {
+        if let Some(end) = finished {
+            if matches!(end, TurnEnd::WorkerGone) {
+                // The same failure #104 fixed for the main thread — a crash
+                // that reads as silence — arriving through a worker. Its
+                // panic payload went to the log (stderr is redirected for
+                // the whole run), so this row is the only thing standing
+                // between the user and "the spinner stopped and nothing
+                // came back".
+                // The path on its own line: transcript rows wrap at the pane
+                // width, and a pointer nobody can read back is no pointer.
+                self.push(
+                    Role::Error,
+                    format!(
+                        "the turn stopped unexpectedly before finishing. details:\n{}",
+                        crate::logging::log_path(&self.home).display()
+                    ),
+                );
+            }
             self.active = None;
             self.status.clear();
             self.running_tool = None;
