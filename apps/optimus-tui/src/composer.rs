@@ -58,6 +58,7 @@ impl Composer {
         }
         self.text.insert(self.cursor, c);
         self.cursor += c.len_utf8();
+        self.snap();
     }
 
     /// Bulk insertion — the paste sink. Newlines are preserved as newlines
@@ -66,22 +67,26 @@ impl Composer {
         let normalized = s.replace("\r\n", "\n").replace('\r', "\n");
         self.text.insert_str(self.cursor, &normalized);
         self.cursor += normalized.len();
+        self.snap();
     }
 
     pub fn newline(&mut self) {
         self.text.insert(self.cursor, '\n');
         self.cursor += 1;
+        self.snap();
     }
 
     pub fn backspace(&mut self) {
         let start = self.prev_boundary();
         self.text.drain(start..self.cursor);
         self.cursor = start;
+        self.snap();
     }
 
     pub fn delete(&mut self) {
         let end = self.next_boundary();
         self.text.drain(self.cursor..end);
+        self.snap();
     }
 
     pub fn left(&mut self) {
@@ -136,6 +141,7 @@ impl Composer {
         } else {
             self.text.drain(self.cursor..end);
         }
+        self.snap();
     }
 
     /// Ctrl-U: kill from start of line to the cursor.
@@ -143,6 +149,7 @@ impl Composer {
         let start = self.line_start();
         self.text.drain(start..self.cursor);
         self.cursor = start;
+        self.snap();
     }
 
     /// Ctrl-W: kill back to the previous whitespace, punctuation included —
@@ -158,6 +165,29 @@ impl Composer {
             .unwrap_or(0);
         self.text.drain(start..end);
         self.cursor = start;
+        self.snap();
+    }
+
+    /// Pull the cursor back to a cluster start if an edit fused it inside one.
+    /// Inserting a base character immediately before a combining mark makes the
+    /// two a single glyph — `a` typed before U+0301 becomes `á` — and a cursor
+    /// left between them is inside a glyph the terminal paints as one column.
+    /// Every slice this type takes assumes a boundary, and the view counts
+    /// clusters to place the caret, so the two would disagree about where
+    /// typing lands. Backwards, never forwards: a caret must not travel in the
+    /// opposite direction to the edit that moved it.
+    fn snap(&mut self) {
+        self.cursor = self.cursor.min(self.text.len());
+        if self.cursor == 0 || self.cursor == self.text.len() {
+            return;
+        }
+        self.cursor = self
+            .text
+            .grapheme_indices(true)
+            .map(|(index, _)| index)
+            .take_while(|&index| index <= self.cursor)
+            .last()
+            .unwrap_or(0);
     }
 
     fn line_start_of(&self, at: usize) -> usize {
@@ -317,5 +347,139 @@ mod tests {
         assert_eq!(c.cursor(), 0);
         c.insert_char('x');
         assert_eq!(c.text(), "x");
+    }
+}
+
+/// Invariants, checked against generated edit sequences rather than the
+/// handful of strings a person thinks to write down.
+///
+/// Every method here is byte-offset arithmetic over UTF-8 that must land on
+/// extended grapheme cluster boundaries. The interesting inputs — a combining
+/// acute after a vowel, a ZWJ family, a wide CJK glyph next to an ASCII space —
+/// are exactly the ones absent from hand-written cases, and slicing a `String`
+/// off a boundary panics rather than degrading.
+#[cfg(test)]
+mod properties {
+    use super::Composer;
+    use proptest::prelude::*;
+    use unicode_segmentation::UnicodeSegmentation;
+
+    #[derive(Debug, Clone, Copy)]
+    enum Op {
+        Left,
+        Right,
+        WordLeft,
+        WordRight,
+        Home,
+        End,
+        Backspace,
+        Delete,
+        KillToEnd,
+        KillToStart,
+        KillWord,
+        Newline,
+        Insert(char),
+    }
+
+    /// A deliberately awkward alphabet: a combining mark that fuses with the
+    /// grapheme before it, a ZWJ emoji, a wide glyph, and the whitespace and
+    /// punctuation the word motions key off.
+    fn grapheme() -> impl Strategy<Value = char> {
+        prop_oneof![
+            Just('a'),
+            Just(' '),
+            Just('-'),
+            Just('é'),
+            Just('中'),
+            Just('👍'),
+            Just('\u{0301}'),
+        ]
+    }
+
+    fn op() -> impl Strategy<Value = Op> {
+        prop_oneof![
+            Just(Op::Left),
+            Just(Op::Right),
+            Just(Op::WordLeft),
+            Just(Op::WordRight),
+            Just(Op::Home),
+            Just(Op::End),
+            Just(Op::Backspace),
+            Just(Op::Delete),
+            Just(Op::KillToEnd),
+            Just(Op::KillToStart),
+            Just(Op::KillWord),
+            Just(Op::Newline),
+            grapheme().prop_map(Op::Insert),
+        ]
+    }
+
+    fn apply(composer: &mut Composer, op: Op) {
+        match op {
+            Op::Left => composer.left(),
+            Op::Right => composer.right(),
+            Op::WordLeft => composer.word_left(),
+            Op::WordRight => composer.word_right(),
+            Op::Home => composer.home(),
+            Op::End => composer.end(),
+            Op::Backspace => composer.backspace(),
+            Op::Delete => composer.delete(),
+            Op::KillToEnd => composer.kill_to_end(),
+            Op::KillToStart => composer.kill_to_start(),
+            Op::KillWord => composer.kill_word(),
+            Op::Newline => composer.newline(),
+            Op::Insert(c) => composer.insert_char(c),
+        }
+    }
+
+    fn on_a_boundary(text: &str, cursor: usize) -> bool {
+        text.grapheme_indices(true)
+            .map(|(index, _)| index)
+            .chain(std::iter::once(text.len()))
+            .any(|index| index == cursor)
+    }
+
+    proptest! {
+        /// The one that keeps the process alive: every slice this type takes is
+        /// `text[..cursor]` or `text[cursor..]`, and a cursor off a boundary
+        /// panics the whole TUI mid-keystroke.
+        #[test]
+        fn the_cursor_stays_on_a_grapheme_boundary(
+            seed in prop::collection::vec(grapheme(), 0..24),
+            ops in prop::collection::vec(op(), 0..40),
+        ) {
+            let mut composer = Composer::new();
+            composer.set(seed.into_iter().collect::<String>());
+            prop_assert!(on_a_boundary(composer.text(), composer.cursor()));
+            for op in ops {
+                apply(&mut composer, op);
+                prop_assert!(
+                    on_a_boundary(composer.text(), composer.cursor()),
+                    "{op:?} left the cursor at {} inside {:?}",
+                    composer.cursor(),
+                    composer.text(),
+                );
+                prop_assert!(composer.cursor() <= composer.text().len());
+            }
+        }
+
+        /// Submitting hands the whole draft over and leaves nothing behind —
+        /// a stale cursor into a drained buffer is an immediate panic.
+        #[test]
+        fn taking_the_draft_drains_it_completely(
+            seed in prop::collection::vec(grapheme(), 0..24),
+            ops in prop::collection::vec(op(), 0..20),
+        ) {
+            let mut composer = Composer::new();
+            composer.set(seed.into_iter().collect::<String>());
+            for op in ops {
+                apply(&mut composer, op);
+            }
+            let taken = composer.take();
+            prop_assert_eq!(composer.text(), "");
+            prop_assert_eq!(composer.cursor(), 0);
+            prop_assert!(composer.is_empty());
+            prop_assert!(taken.is_char_boundary(0));
+        }
     }
 }

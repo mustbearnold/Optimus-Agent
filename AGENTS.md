@@ -160,6 +160,15 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
    primary and deterministic tests are supplementary.
 5. Make the smallest coherent change; preserve unrelated work.
 6. Test focused behaviour, then relevant integration/evaluation surfaces.
+   When *building or extending a test layer* — not when adding a case to an
+   existing one — first verify what the current best practice and tooling are
+   **on the date the work is being done**, by search rather than from memory,
+   and state where the existing suite sits against that bar. A model's
+   knowledge has a cutoff; an inherited practice decays silently, and a suite
+   that is green because it is old is the self-serving green the north-star
+   criteria ban. Check the maturity of anything new before depending on it,
+   and record the finding with sources on the owning issue so the next pass
+   can see what was checked and when.
 7. Review security, approval, cancellation, terminal outcomes, observability,
    replay implications, and CPU fallback where applicable.
 8. Run `just em-check` before refreshing memory.
