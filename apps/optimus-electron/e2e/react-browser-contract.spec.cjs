@@ -269,7 +269,7 @@ test('project sources open from the rail menu and restore focus on close', async
   const dialog = page.getByRole('dialog', { name: 'Project sources' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('1 source in this local project')).toBeVisible();
-  await expect(dialog.getByText('/home/dev/Projects/New Project')).toBeVisible();
+  await expect(dialog.getByText('/projects/new-project')).toBeVisible();
   await page.screenshot({
     path: path.join(EVIDENCE_DIR, 'react-project-sources-1280x820.png'),
   });
@@ -282,7 +282,7 @@ test('project sources open from the rail menu and restore focus on close', async
   // The saved project is reachable from the scope menu, not a hover-only row.
   await page.getByRole('button', { name: 'All projects' }).click();
   const scopeMenu = page.getByRole('menu', { name: 'Filter sessions by project' });
-  const manage = scopeMenu.getByRole('menuitem', { name: 'Manage sources for New Project' });
+  const manage = scopeMenu.getByRole('menuitem', { name: 'Manage sources for new-project' });
   await expect(manage).toBeVisible();
   await manage.click();
   await expect(page.getByRole('dialog', { name: 'Project sources' })).toBeVisible();

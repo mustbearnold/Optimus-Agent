@@ -184,6 +184,7 @@ tier_gates() {
   spawn "module-size"                python3 scripts/check-module-size.py
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
   spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
+  spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
   spawn "version-validate"           python3 scripts/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
@@ -375,6 +376,7 @@ tier_all() {
   spawn "module-size"                python3 scripts/check-module-size.py
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
   spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
+  spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
   spawn "version-validate"           python3 scripts/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check

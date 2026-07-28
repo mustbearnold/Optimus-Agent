@@ -11,8 +11,8 @@ function fixtureProject(overrides: Partial<Project> = {}): Project {
   return {
     id: 'optimus-agent',
     name: 'Optimus Agent',
-    rootPaths: ['/mnt/Projects/Optimus Agent'],
-    primaryRoot: '/mnt/Projects/Optimus Agent',
+    rootPaths: ['/projects/optimus-agent'],
+    primaryRoot: '/projects/optimus-agent',
     pinned: true,
     ...overrides,
   };
@@ -23,7 +23,7 @@ describe('ProjectSourcesDialog authorization gates', () => {
     const onSave = vi.fn();
     const onPickSource = vi.fn().mockResolvedValue({
       ok: true,
-      path: '/mnt/Projects/Optimus Agent',
+      path: '/projects/optimus-agent',
       grantToken: 'grant-1',
     });
 
@@ -51,7 +51,7 @@ describe('ProjectSourcesDialog authorization gates', () => {
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'optimus-agent',
-          rootPaths: ['/mnt/Projects/Optimus Agent'],
+          rootPaths: ['/projects/optimus-agent'],
         }),
         ['grant-1']
       )
@@ -63,7 +63,7 @@ describe('ProjectSourcesDialog authorization gates', () => {
     render(
       <ProjectSourcesDialog
         project={fixtureProject({ name: 'Renamed' })}
-        authorizedRootPaths={['/mnt/Projects/Optimus Agent']}
+        authorizedRootPaths={['/projects/optimus-agent']}
         onPickSource={vi.fn()}
         onSave={onSave}
         onClose={() => {}}
