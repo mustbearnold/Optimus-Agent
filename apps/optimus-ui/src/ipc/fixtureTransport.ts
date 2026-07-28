@@ -716,8 +716,8 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       return {
         projects: [{
           project_id: 'optimus-agent',
-          roots: ['/home/mustbearnold/Projects/Optimus Agent'],
-          primary_root: '/home/mustbearnold/Projects/Optimus Agent',
+          roots: ['/mnt/Projects/Optimus Agent'],
+          primary_root: '/mnt/Projects/Optimus Agent',
           updated_unix: 1,
         }],
       };
