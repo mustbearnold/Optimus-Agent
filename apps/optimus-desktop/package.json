@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "scripts": {
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:live": "playwright test --config=playwright.live.config.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0"
