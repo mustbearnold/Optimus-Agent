@@ -228,6 +228,15 @@ tier_live() {
   # law), so its dispatch-path test is network-marked and runs here.
   run "browser success (network)" \
     cargo test -p optimus-kernel --test tool_coverage -- --ignored
+  # leg 3 — desktop face: playwright drives the real optimus-desktop binary
+  # over its HTTP shell against the credentialed home (the #82 contract:
+  # boots on codex, real model answers a nonce). cd, not npm --prefix:
+  # playwright resolves its config from cwd (see the ui-tier note).
+  if [ ! -x target/debug/optimus-desktop ]; then
+    run "build optimus desktop" cargo build -p optimus-desktop
+  fi
+  run "live desktop (codex)" bash -c \
+    'cd apps/optimus-desktop && OPTIMUS_E2E_HOME="${OPTIMUS_LIVE_HOME:-$HOME/.local/share/optimus}" npx playwright test --config=playwright.live.config.js'
 }
 
 # --- tier: ui ----------------------------------------------------------------

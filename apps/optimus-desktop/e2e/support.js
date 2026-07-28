@@ -7,6 +7,11 @@ const os = require('os');
 const net = require('net');
 
 const ROOT = path.resolve(__dirname, '../../..');
+// The live tier points the fixture at a real, credentialed home. That home
+// belongs to the human: the fixture must never create, modify-check, or —
+// above all — delete it. Deterministic runs leave this unset and get a
+// throwaway tmp home per worker as before.
+const HOME_OVERRIDE = process.env.OPTIMUS_E2E_HOME || '';
 const TARGET_DIR = process.env.CARGO_TARGET_DIR || path.join(ROOT, 'target');
 const EXE = path.join(
   TARGET_DIR,
@@ -140,11 +145,11 @@ const test = base.extend({
     }
     const port = await reservePort();
     const baseURL = `http://127.0.0.1:${port}`;
-    const home = path.join(
+    const home = HOME_OVERRIDE || path.join(
       os.tmpdir(),
       `optimus-e2e-${process.pid}-${workerInfo.workerIndex}-${Date.now()}`
     );
-    fs.mkdirSync(home, { recursive: true });
+    if (!HOME_OVERRIDE) fs.mkdirSync(home, { recursive: true });
     activeBaseUrl = baseURL;
     let server = null;
     const failures = [];
@@ -172,7 +177,7 @@ const test = base.extend({
         failures.push(error);
       }
       try {
-        fs.rmSync(home, { recursive: true, force: true });
+        if (!HOME_OVERRIDE) fs.rmSync(home, { recursive: true, force: true });
       } catch (error) {
         failures.push(error);
       } finally {
