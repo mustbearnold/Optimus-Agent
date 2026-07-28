@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type {
   CronJob,
   OptimusTransport,
@@ -85,6 +86,7 @@ export function SettingsDialog({
   const [density, setDensity] = useState<'comfortable' | 'compact'>(() =>
     localStorage.getItem('optimus.react.density') === 'compact' ? 'compact' : 'comfortable'
   );
+  const alive = useAlive();
 
   useEffect(() => {
     document.documentElement.dataset.density = density;
@@ -98,11 +100,12 @@ export function SettingsDialog({
       transport.invoke<{ jobs?: CronJob[] }>('cron_list'),
       transport.invoke<Record<string, unknown>>('auth_status'),
     ]).then(([settingsResult, cronResult, authResult]) => {
+      if (!alive()) return;
       setSettings(settingsResult.settings || fallback);
       setCron(cronResult.jobs || []);
       setAuth(authResult);
     }).catch(() => undefined);
-  }, [open, transport]);
+  }, [alive, open, transport]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -140,8 +143,11 @@ export function SettingsDialog({
   const persist = async (next: ProductSettings) => {
     setSettings(next);
     await transport.invoke('settings_set', next as unknown as Record<string, unknown>);
+    if (!alive()) return;
     setSaved('Saved');
-    window.setTimeout(() => setSaved(''), 1200);
+    window.setTimeout(() => {
+      if (alive()) setSaved('');
+    }, 1200);
   };
   const section = sections.find((item) => item.id === active) || sections[0];
 

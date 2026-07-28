@@ -25,6 +25,7 @@ import type {
   ToolApprovalBinding,
 } from '../ipc/contracts';
 import { getTransport } from '../ipc';
+import { useAlive } from '../hooks/useAlive';
 import { appReducer } from '../state/appReducer';
 import {
   conversationStore,
@@ -143,6 +144,8 @@ export function OptimusApp() {
     sessions.map((session) => session.id)
   );
 
+  const alive = useAlive();
+
   const refreshRuntime = useCallback(async () => {
     try {
       const [doctorResult, sessionsResult, approvalResult, jobResult, campaignResult, scopeResult] = await Promise.all([
@@ -153,6 +156,7 @@ export function OptimusApp() {
         transport.invoke<{ campaigns?: Campaign[] }>('campaign_list'),
         transport.invoke<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list'),
       ]);
+      if (!alive()) return;
       const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
       setDoctor(doctorResult);
       setSessions(nextSessions);
@@ -170,9 +174,10 @@ export function OptimusApp() {
       });
       setBootError('');
     } catch (error) {
+      if (!alive()) return;
       setBootError(error instanceof Error ? error.message : String(error));
     }
-  }, [state.selectedSessionId]);
+  }, [alive, state.selectedSessionId]);
 
   const updateExecutionState = useCallback((nextApprovals: Approval[], nextJobs: Job[]) => {
     setApprovals(nextApprovals);
@@ -253,6 +258,7 @@ export function OptimusApp() {
   const newSession = async (projectId?: string) => {
     try {
       const created = await transport.invoke<SessionMeta>('new_session');
+      if (!alive()) return;
       setSessions((current) => [created, ...current.filter((session) => session.id !== created.id)]);
       // Explicit project (rail "+ in project") always wins. Otherwise keep the
       // current authorized project only — never fall back to projects[0] (#42/#44).
@@ -266,6 +272,7 @@ export function OptimusApp() {
       }
       openSession(created.id);
     } catch (error) {
+      if (!alive()) return;
       setBootError(error instanceof Error ? error.message : String(error));
     }
   };
@@ -279,7 +286,7 @@ export function OptimusApp() {
       );
     }
     window.setTimeout(() => {
-      if (projectId) document.getElementById(`project-manage-${projectId}`)?.focus();
+      if (projectId && alive()) document.getElementById(`project-manage-${projectId}`)?.focus();
     }, 0);
   };
 
@@ -303,6 +310,7 @@ export function OptimusApp() {
     let sessionId = state.selectedSessionId;
     if (!sessionId) {
       const created = await transport.invoke<SessionMeta>('new_session');
+      if (!alive()) return;
       setSessions((current) => [created, ...current]);
       sessionId = created.id;
       dispatch({ type: 'select-session', id: created.id });
@@ -342,8 +350,10 @@ export function OptimusApp() {
     } finally {
       if (activeHandle.current === handle) {
         activeHandle.current = null;
-        dispatch({ type: 'set-active-run', id: null });
-        void refreshRuntime();
+        if (alive()) {
+          dispatch({ type: 'set-active-run', id: null });
+          void refreshRuntime();
+        }
       }
     }
   };
@@ -500,6 +510,7 @@ export function OptimusApp() {
                     'session_search',
                     { q, include_archived: true }
                   );
+                  if (!alive()) return;
                   const list = Array.isArray(result.sessions) ? result.sessions : [];
                   setSessions(list);
                 } catch {
@@ -520,6 +531,7 @@ export function OptimusApp() {
                 primary_root: project.primaryRoot,
                 grant_tokens: [result.grantToken],
               });
+              if (!alive()) return;
               setAuthorizedProjects((current) => new Set(current).add(project.id));
               setProjects((current) => [...current, project]);
               setExpanded((current) => ({ ...current, [project.id]: true }));
@@ -530,6 +542,7 @@ export function OptimusApp() {
             onTogglePin={async (session) => {
               const pinned = !session.pinned;
               await transport.invoke('pin_session', { id: session.id, pinned });
+              if (!alive()) return;
               setSessions((current) =>
                 sortSessions(
                   current.map((item) => (item.id === session.id ? { ...item, pinned } : item))
@@ -539,6 +552,7 @@ export function OptimusApp() {
             onToggleArchive={async (session) => {
               const archived = !session.archived;
               await transport.invoke('archive_session', { id: session.id, archived });
+              if (!alive()) return;
               setSessions((current) =>
                 sortSessions(
                   current.map((item) => (item.id === session.id ? { ...item, archived } : item))
@@ -555,6 +569,7 @@ export function OptimusApp() {
             onDelete={async (session) => {
               if (!window.confirm(`Delete “${session.title || session.id}”? This cannot be undone.`)) return;
               await transport.invoke('delete_session', { id: session.id });
+              if (!alive()) return;
               const next = sessions.filter((item) => item.id !== session.id);
               setSessions(next);
               if (state.selectedSessionId === session.id) dispatch({ type: 'select-session', id: next[0]?.id || null });
@@ -679,6 +694,7 @@ export function OptimusApp() {
                 grant_tokens: grantTokens,
               }
             );
+            if (!alive()) return;
             if (result.project) {
               setProjectScopes((current) => {
                 const without = current.filter((scope) => scope.project_id !== project.id);
@@ -746,6 +762,7 @@ export function OptimusApp() {
           onConfirm={async (title) => {
             if (!renameSession) return;
             await transport.invoke('rename_session', { id: renameSession.id, title });
+            if (!alive()) return;
             setSessions((current) =>
               current.map((item) =>
                 item.id === renameSession.id ? { ...item, title } : item

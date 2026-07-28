@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { Approval, Campaign, Doctor, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -33,21 +34,25 @@ export function CapabilitiesPage({
   const [mcpTools, setMcpTools] = useState<Array<Record<string, unknown>>>([]);
   const [routePreview, setRoutePreview] = useState('');
   const [error, setError] = useState('');
+  const alive = useAlive();
 
   const loadExt = useCallback(async () => {
     if (!transport) return;
     setError('');
     try {
       const cat = await transport.invoke<{ providers?: ProviderRow[] }>('providers_catalog');
+      if (!alive()) return;
       setProviders(cat.providers || []);
       const mcp = await transport.invoke<{ tools?: Array<Record<string, unknown>> }>('mcp_tools', {
         transport: 'stdio',
       });
+      if (!alive()) return;
       setMcpTools(mcp.tools || []);
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [transport]);
+  }, [alive, transport]);
 
   useEffect(() => {
     void loadExt();
@@ -67,6 +72,7 @@ export function CapabilitiesPage({
         allow_fallback: true,
         fallback_order: ['offline'],
       });
+      if (!alive()) return;
       if (r.ok && r.decision) {
         const model =
           typeof r.decision.model === 'string'
@@ -80,6 +86,7 @@ export function CapabilitiesPage({
         setRoutePreview(r.error || 'no route');
       }
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
   };
