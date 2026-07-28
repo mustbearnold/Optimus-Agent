@@ -70,6 +70,8 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0047 | A turn's step budget is 32 model round trips | Proposed | Default `max_steps` 8 → 32; approval round trips consume the budget, so 8 starved ordinary turns. |
 | 0048 | Context and page-result budgets are sized for tools, not for chat | Proposed | History 48k → 200k chars, a bound on results the tail cannot exempt, and a page budget split between text and links at run time. |
 | 0049 | The module-size law is measured honestly, and does not tax splitting | Proposed | Every `#[cfg(test)]` item is skipped, not just everything after the first; bare `mod x;` declarations do not count. |
+| 0050 | Overlays come from Radix via shadcn/ui, not from hand-written CSS | Proposed | Dialogs, popovers, and menus get focus traps, dismissal, and portals from Radix primitives instead of bespoke implementations. |
+| 0051 | Electron now, Tauri when the preview leaves the shell | Proposed | The agent's browser is already out-of-process CDP; only the in-process preview welds the shell to Electron. Restore ADR-0015's mirrored preview, then the Tauri swap is scheduled, not hypothetical. |
 
 ## Known documentary debt
 
