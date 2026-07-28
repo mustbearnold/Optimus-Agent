@@ -19,8 +19,12 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 
 ### Canonical root
 
-- Absolute root: `/home/mustbearnold/Projects/Optimus Agent`
-- Resolve with `readlink -f` / `pwd -P` before editing.
+- Absolute root: `/mnt/Projects/Optimus Agent`
+- Resolve with `readlink -f` / `pwd -P` before editing. Two symlinked aliases
+  resolve to that same root and are equally valid entry points —
+  `~/Projects/Optimus Agent` (kept so pre-move absolute paths still work) and
+  `~/2TB Projects/Optimus Agent`. Compare **resolved** paths, never literal ones:
+  a string match against `~/Projects/...` no longer proves anything either way.
 - If the active workspace is not this root (or a path inside it), **stop**.
   Switch to the Optimus project first. Do not “helpfully” edit elsewhere.
 
@@ -28,7 +32,7 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 
 Only create/modify/delete files under:
 
-1. `/home/mustbearnold/Projects/Optimus Agent/**` (source, docs, skills, scripts,
+1. `/mnt/Projects/Optimus Agent/**` (source, docs, skills, scripts,
    local build/evidence under this tree)
 2. Optimus install/runtime paths **only when the task explicitly requires
    install, relaunch, uninstall, or live desktop verification**:
@@ -43,9 +47,12 @@ Only create/modify/delete files under:
 
 Do **not** edit, reorganize, install into, or “clean up”:
 
-- Sibling projects under `~/Projects/` (for example `Hermes Next`,
-  `Heracles Agent`, `i-have-adhd`, or any future non-Optimus folder)
-- Other application source trees under `~/`, `~/Projects/`, or elsewhere
+- Sibling projects under `~/Projects/` **or `/mnt/Projects/`** (for example
+  `Hermes Next`, `Heracles Agent`, `i-have-adhd`, `spicybrowse`, or any future
+  non-Optimus folder). Optimus shares `/mnt/Projects/` with several unrelated
+  trees, so being on the same disk grants nothing.
+- Other application source trees under `~/`, `~/Projects/`, `/mnt/Projects/`, or
+  elsewhere
 - Hermes product/config trees used for Hermes itself (for example
   `~/.hermes/**`) except read-only inspection when needed for Optimus import
   compatibility
@@ -56,7 +63,7 @@ Do **not** edit, reorganize, install into, or “clean up”:
 
 ### Enforcement checklist (every Optimus development turn)
 
-1. Confirm workspace root is `/home/mustbearnold/Projects/Optimus Agent`.
+1. Confirm the workspace root resolves to `/mnt/Projects/Optimus Agent`.
 2. Before any write/patch/rm, assert the target path is inside that root or an
    explicitly allowed Optimus install path above.
 3. Refuse cross-project drive-by fixes. If another project is implicated, report
