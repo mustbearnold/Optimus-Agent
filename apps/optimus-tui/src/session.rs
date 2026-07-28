@@ -25,6 +25,8 @@ use optimus_kernel::{
 };
 use serde_json::json;
 
+use crate::composer::Composer;
+use crate::history::History;
 use crate::preferences::Preferences;
 use crate::tool_line::{readable, tool_step};
 use crate::transcript::Chrome;
@@ -170,7 +172,11 @@ struct ActiveTurn {
 pub struct TuiSession {
     pub home: PathBuf,
     pub messages: Vec<Message>,
-    pub composer: String,
+    pub composer: Composer,
+    /// Set by `/quit`; the event loop leaves on the next pass.
+    pub quit: bool,
+    /// Prompts already sent, for recall with Up/Down.
+    pub history: History,
     pub provider: String,
     /// Model id to override the provider's default, or None to accept it.
     pub model: Option<String>,
@@ -211,10 +217,13 @@ impl TuiSession {
         // about this run of the program. Re-asking every launch treats it as
         // the latter.
         let remembered = Preferences::load(&home);
+        let history = History::load(&home);
         Self {
             home,
             messages: Vec::new(),
-            composer: String::new(),
+            composer: Composer::new(),
+            quit: false,
+            history,
             provider: remembered.provider,
             model: remembered.model,
             thinking: remembered.thinking,
@@ -270,11 +279,16 @@ impl TuiSession {
 
     /// Send whatever is in the composer as one turn, on a worker thread.
     pub fn submit(&mut self) {
-        let prompt = self.composer.trim().to_string();
+        let prompt = self.composer.text().trim().to_string();
         if prompt.is_empty() || self.busy() {
             return;
         }
-        self.composer.clear();
+        self.composer.take();
+        // Remembered across launches: retyping a long prompt because the
+        // process restarted is exactly the friction a terminal face should
+        // not have.
+        self.history.record(&prompt);
+        self.history.save(&self.home);
         // Submitting anything is a commitment to watch the reply arrive, and
         // both command output and turns answer at the tail.
         self.scroll_back = 0;
@@ -789,7 +803,7 @@ mod tests {
     #[test]
     fn submit_returns_immediately_so_the_screen_never_blocks() {
         let (_dir, mut session) = session();
-        session.composer.push_str("hello from the tui");
+        session.composer.set("hello from the tui");
         let before = Instant::now();
         session.submit();
         assert!(
@@ -802,12 +816,12 @@ mod tests {
     #[test]
     fn a_turn_records_both_roles_and_settles() {
         let (_dir, mut session) = session();
-        session.composer.push_str("hello from the tui");
+        session.composer.set("hello from the tui");
         session.submit();
         settle(&mut session);
 
         assert!(!session.busy());
-        assert_eq!(session.composer, "");
+        assert_eq!(session.composer.text(), "");
         assert_eq!(session.messages.len(), 2);
         assert_eq!(session.messages[0].role, Role::User);
         assert_eq!(session.messages[0].text, "hello from the tui");
@@ -821,12 +835,12 @@ mod tests {
     #[test]
     fn the_session_id_is_captured_so_a_second_turn_continues_it() {
         let (_dir, mut session) = session();
-        session.composer.push_str("first");
+        session.composer.set("first");
         session.submit();
         settle(&mut session);
         let first = session.session_id.clone().expect("session id");
 
-        session.composer.push_str("second");
+        session.composer.set("second");
         session.submit();
         settle(&mut session);
         assert_eq!(session.session_id.as_deref(), Some(first.as_str()));
@@ -836,7 +850,7 @@ mod tests {
     #[test]
     fn blank_input_is_not_a_turn() {
         let (_dir, mut session) = session();
-        session.composer.push_str("   ");
+        session.composer.set("   ");
         session.submit();
         assert!(!session.busy());
         assert!(session.messages.is_empty());
@@ -845,12 +859,13 @@ mod tests {
     #[test]
     fn a_second_submit_is_refused_while_a_turn_is_running() {
         let (_dir, mut session) = session();
-        session.composer.push_str("first");
+        session.composer.set("first");
         session.submit();
-        session.composer.push_str("second");
+        session.composer.set("second");
         session.submit();
         assert_eq!(
-            session.composer, "second",
+            session.composer.text(),
+            "second",
             "the refused input stays in the composer"
         );
         settle(&mut session);
@@ -922,7 +937,7 @@ mod tests {
     #[test]
     fn cancelling_settles_the_turn_instead_of_hanging() {
         let (_dir, mut session) = session();
-        session.composer.push_str("cancel me");
+        session.composer.set("cancel me");
         session.submit();
         session.cancel();
         settle(&mut session);
@@ -1232,7 +1247,7 @@ mod tests {
     fn submitting_snaps_the_view_back_to_the_tail() {
         let (_dir, mut session) = session();
         session.scroll_back = 7;
-        session.composer.push_str("hello");
+        session.composer.set("hello");
         session.submit();
         assert_eq!(session.scroll_back, 0);
         settle(&mut session);

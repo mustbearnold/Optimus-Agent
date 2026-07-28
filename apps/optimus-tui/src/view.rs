@@ -8,15 +8,24 @@ use ratatui::widgets::{
     Clear, List, ListItem, ListState, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
 
+mod composer;
+
 use crate::mouse;
 use crate::session::{Role, TuiSession};
 use crate::transcript::{self, Row};
 use crate::{bordered, wrapped};
 
+/// Rows the composer block occupies for this draft, borders included. One
+/// arithmetic, shared by the layout below and by every caller that has to
+/// subtract the composer from the frame.
+pub fn composer_height(session: &TuiSession, width: u16) -> u16 {
+    composer::height(session.composer.text(), width)
+}
+
 pub fn draw(frame: &mut Frame, session: &TuiSession) {
     let areas = Layout::vertical([
         Constraint::Min(3),
-        Constraint::Length(3),
+        Constraint::Length(composer_height(session, frame.area().width)),
         Constraint::Length(1),
     ])
     .split(frame.area());
@@ -40,8 +49,7 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     );
     draw_scrollbar(frame, areas[0], rows.len(), height, offset as usize);
 
-    let composer = format!("› {}", session.composer);
-    frame.render_widget(wrapped(composer).block(bordered("Message")), areas[1]);
+    composer::render(frame, areas[1], &session.composer);
 
     frame.render_widget(
         wrapped(session.status_line()).style(Style::default().add_modifier(Modifier::DIM)),
@@ -372,7 +380,7 @@ mod tests {
         let lines: Vec<(Role, &str)> = (0..30).map(|_| (Role::Assistant, "row")).collect();
         let (_dir, session) = session_with(&lines);
         let screen = render(&session, 40, 14);
-        let track = crate::mouse::regions(Rect::new(0, 0, 40, 14)).track;
+        let track = crate::mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
         let painted: Vec<usize> = screen
             .iter()
             .enumerate()

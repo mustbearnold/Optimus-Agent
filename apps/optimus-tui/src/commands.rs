@@ -37,6 +37,7 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
         "frame" => frame(session),
         "mouse" => mouse(session),
         "new" => new_session(session),
+        "quit" | "exit" => session.quit = true,
         other => session.push(Role::Error, format!("unknown command /{other} — try /help")),
     }
     true
@@ -80,8 +81,11 @@ fn help(session: &mut TuiSession) {
             "/frame            containers around turns, or plain gutters",
             "/mouse            hand the mouse back to the terminal, or take it",
             "/new              start a fresh session",
+            "/quit             leave Optimus",
             "/help             this list",
-            "Ctrl-C stops a run, or exits when idle. Esc exits.",
+            "Ctrl-C stops a run, or exits when idle; Ctrl-D exits on an empty prompt.",
+            "Esc clears the prompt. Shift-Enter (or Ctrl-J) adds a line; Enter sends.",
+            "Up/Down recall past prompts; Ctrl-A/E, Alt-arrows, Ctrl-K/U/W edit the line.",
             "PageUp/PageDown scroll the transcript; End follows the tail.",
             "Wheel scrolls, the right border drags, right-click opens this menu.",
         ]

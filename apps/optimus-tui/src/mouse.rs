@@ -26,11 +26,15 @@ pub struct Regions {
 }
 
 /// Split the frame the same way [`crate::view::draw`] does.
-pub fn regions(area: Rect) -> Regions {
-    // Composer (3) and status (1) are pinned to the bottom; the transcript
+///
+/// `composer_height` is the composer block's total height for the current
+/// draft — it grows with a multiline prompt, so hit-testing cannot assume a
+/// fixed bottom strip. See [`crate::view::composer_height`].
+pub fn regions(area: Rect, composer_height: u16) -> Regions {
+    // The composer and status (1) are pinned to the bottom; the transcript
     // takes the rest.
     let block = Rect {
-        height: area.height.saturating_sub(4),
+        height: area.height.saturating_sub(composer_height + 1),
         ..area
     };
     let transcript = Rect {
@@ -91,8 +95,14 @@ pub enum Intent {
 /// `dragging` is held by the caller: once the thumb is grabbed, motion keeps
 /// scrolling even when the pointer wanders off the one-column track, which is
 /// what makes a drag usable at all.
-pub fn intent(event: &MouseEvent, area: Rect, picker: Option<&Picker>, dragging: bool) -> Intent {
-    let regions = regions(area);
+pub fn intent(
+    event: &MouseEvent,
+    area: Rect,
+    composer_height: u16,
+    picker: Option<&Picker>,
+    dragging: bool,
+) -> Intent {
+    let regions = regions(area, composer_height);
     let at = Position::new(event.column, event.row);
 
     match event.kind {
@@ -182,7 +192,7 @@ mod tests {
 
     #[test]
     fn the_track_sits_on_the_transcript_border_beside_the_viewport() {
-        let regions = regions(AREA);
+        let regions = regions(AREA, 3);
         assert_eq!(regions.track.x, 79, "right border column");
         assert_eq!(regions.track.y, regions.transcript.y);
         assert_eq!(regions.track.height, regions.transcript.height);
@@ -195,57 +205,63 @@ mod tests {
     #[test]
     fn the_wheel_scrolls_wherever_the_pointer_is() {
         for column in [0, 40, 79] {
-            let up = intent(&at(MouseEventKind::ScrollUp, column, 5), AREA, None, false);
+            let up = intent(
+                &at(MouseEventKind::ScrollUp, column, 5),
+                AREA,
+                3,
+                None,
+                false,
+            );
             assert_eq!(up, Intent::Scroll(WHEEL));
         }
-        let down = intent(&at(MouseEventKind::ScrollDown, 40, 5), AREA, None, false);
+        let down = intent(&at(MouseEventKind::ScrollDown, 40, 5), AREA, 3, None, false);
         assert_eq!(down, Intent::Scroll(-WHEEL));
     }
 
     #[test]
     fn pressing_on_the_track_grabs_the_thumb() {
         let event = at(MouseEventKind::Down(MouseButton::Left), 79, 5);
-        assert_eq!(intent(&event, AREA, None, false), Intent::GrabTrack);
+        assert_eq!(intent(&event, AREA, 3, None, false), Intent::GrabTrack);
     }
 
     #[test]
     fn pressing_inside_the_transcript_does_not_grab_the_thumb() {
         let event = at(MouseEventKind::Down(MouseButton::Left), 40, 5);
-        assert_eq!(intent(&event, AREA, None, false), Intent::Nothing);
+        assert_eq!(intent(&event, AREA, 3, None, false), Intent::Nothing);
     }
 
     #[test]
     fn dragging_maps_the_track_ends_to_the_top_and_the_tail() {
         let top = at(MouseEventKind::Drag(MouseButton::Left), 79, 1);
-        assert_eq!(intent(&top, AREA, None, true), Intent::ScrollTo(0.0));
+        assert_eq!(intent(&top, AREA, 3, None, true), Intent::ScrollTo(0.0));
         let bottom = at(MouseEventKind::Drag(MouseButton::Left), 79, 18);
-        assert_eq!(intent(&bottom, AREA, None, true), Intent::ScrollTo(1.0));
+        assert_eq!(intent(&bottom, AREA, 3, None, true), Intent::ScrollTo(1.0));
     }
 
     #[test]
     fn a_drag_that_leaves_the_pane_clamps_instead_of_running_away() {
         let above = at(MouseEventKind::Drag(MouseButton::Left), 5, 0);
-        assert_eq!(intent(&above, AREA, None, true), Intent::ScrollTo(0.0));
+        assert_eq!(intent(&above, AREA, 3, None, true), Intent::ScrollTo(0.0));
         let below = at(MouseEventKind::Drag(MouseButton::Left), 5, 200);
-        assert_eq!(intent(&below, AREA, None, true), Intent::ScrollTo(1.0));
+        assert_eq!(intent(&below, AREA, 3, None, true), Intent::ScrollTo(1.0));
     }
 
     #[test]
     fn dragging_without_a_grab_is_ignored() {
         let event = at(MouseEventKind::Drag(MouseButton::Left), 79, 9);
-        assert_eq!(intent(&event, AREA, None, false), Intent::Nothing);
+        assert_eq!(intent(&event, AREA, 3, None, false), Intent::Nothing);
     }
 
     #[test]
     fn releasing_ends_the_drag() {
         let event = at(MouseEventKind::Up(MouseButton::Left), 40, 9);
-        assert_eq!(intent(&event, AREA, None, true), Intent::Release);
+        assert_eq!(intent(&event, AREA, 3, None, true), Intent::Release);
     }
 
     #[test]
     fn the_right_button_opens_the_command_menu() {
         let event = at(MouseEventKind::Down(MouseButton::Right), 40, 9);
-        assert_eq!(intent(&event, AREA, None, false), Intent::OpenMenu);
+        assert_eq!(intent(&event, AREA, 3, None, false), Intent::OpenMenu);
     }
 
     #[test]
@@ -259,7 +275,7 @@ mod tests {
                 rect.y + 1 + index as u16,
             );
             assert_eq!(
-                intent(&event, AREA, Some(&picker), false),
+                intent(&event, AREA, 3, Some(&picker), false),
                 Intent::Choose(index)
             );
         }
@@ -270,14 +286,20 @@ mod tests {
         let picker = menu();
         let rect = picker_rect(AREA, &picker);
         let event = at(MouseEventKind::Down(MouseButton::Left), rect.x + 2, rect.y);
-        assert_eq!(intent(&event, AREA, Some(&picker), false), Intent::Nothing);
+        assert_eq!(
+            intent(&event, AREA, 3, Some(&picker), false),
+            Intent::Nothing
+        );
     }
 
     #[test]
     fn an_open_picker_swallows_clicks_meant_for_the_track_behind_it() {
         let picker = menu();
         let event = at(MouseEventKind::Down(MouseButton::Left), 79, 5);
-        assert_eq!(intent(&event, AREA, Some(&picker), false), Intent::Nothing);
+        assert_eq!(
+            intent(&event, AREA, 3, Some(&picker), false),
+            Intent::Nothing
+        );
     }
 
     #[test]
@@ -285,7 +307,7 @@ mod tests {
         let picker = menu();
         let event = at(MouseEventKind::ScrollUp, 40, 5);
         assert_eq!(
-            intent(&event, AREA, Some(&picker), false),
+            intent(&event, AREA, 3, Some(&picker), false),
             Intent::Scroll(WHEEL)
         );
     }
@@ -298,6 +320,6 @@ mod tests {
             ..AREA
         };
         let event = at(MouseEventKind::Drag(MouseButton::Left), 19, 1);
-        assert_eq!(intent(&event, tiny, None, true), Intent::ScrollTo(1.0));
+        assert_eq!(intent(&event, tiny, 3, None, true), Intent::ScrollTo(1.0));
     }
 }
