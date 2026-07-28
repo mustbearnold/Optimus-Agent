@@ -32,6 +32,13 @@ import {
   useConversationIndicators,
 } from '../state/conversationStore';
 import {
+  codexComposer,
+  loadComposer,
+  offlineComposer,
+  saveComposer,
+  shouldPreferCodex,
+} from '../state/composerStore';
+import {
   defaultLayout,
   loadLayout,
   saveLayout,
@@ -67,22 +74,6 @@ import { WorkspacePane } from '../components/workspace/WorkspacePane';
 import { composeSendMessage } from './composeSendMessage';
 
 const transport = getTransport();
-
-type ComposerSettings = {
-  provider: 'offline' | 'codex' | 'openai_compat';
-  model: string;
-  thinking: string;
-  access: string;
-  fast: boolean;
-};
-
-const initialComposer: ComposerSettings = {
-  provider: 'offline',
-  model: 'offline-echo',
-  thinking: 'high',
-  access: 'ask',
-  fast: false,
-};
 
 function projectFromRuntimeScope(scope: ProjectRuntimeScope): Project {
   const normalizedRoot = scope.primary_root.replace(/[\\/]+$/, '');
@@ -121,8 +112,10 @@ export function OptimusApp() {
   const [sourceProjectId, setSourceProjectId] = useState<string | null>(null);
   const [renameSession, setRenameSession] = useState<SessionMeta | null>(null);
   const [workspaceMaximized, setWorkspaceMaximized] = useState(false);
-  const [composer, setComposer] = useState(initialComposer);
+  const [storedComposer] = useState(loadComposer);
+  const [composer, setComposer] = useState(storedComposer?.settings ?? offlineComposer);
   const [bootError, setBootError] = useState('');
+  const providerChosen = useRef(storedComposer?.providerChosen ?? false);
   const activeHandle = useRef<ChatHandle | null>(null);
   const draggingLayout = useRef(false);
   const latestLayout = useRef(state.layout);
@@ -189,6 +182,22 @@ export function OptimusApp() {
   useEffect(() => {
     void refreshRuntime();
   }, [refreshRuntime]);
+
+  useEffect(() => {
+    // A stored human provider choice always wins. Absent one, prefer Codex
+    // the moment auth is present — pre-sign-in offline residue must not
+    // outlive the sign-in (#82). The fixture transport reports mode
+    // 'fixture' and keeps its offline default so tests and the browser
+    // demo stay deterministic.
+    if (!shouldPreferCodex()) return;
+    transport
+      .invoke<{ present?: boolean; mode?: string }>('auth_status')
+      .then((auth) => {
+        if (auth.present !== true || auth.mode === 'fixture') return;
+        if (shouldPreferCodex()) setComposer(codexComposer);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const id = state.selectedSessionId;
@@ -575,7 +584,11 @@ export function OptimusApp() {
                       isRunOwner={state.activeRunSessionId === state.selectedSessionId}
                       settings={composer}
                       onChange={(value) => { setAnnotation(''); setInput(value); }}
-                      onSettings={setComposer}
+                      onSettings={(next) => {
+                        if (next.provider !== composer.provider) providerChosen.current = true;
+                        saveComposer(next, providerChosen.current);
+                        setComposer(next);
+                      }}
                       onSend={() => void send()}
                       onStop={() => void stop()}
                     />

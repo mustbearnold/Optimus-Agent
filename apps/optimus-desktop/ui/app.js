@@ -2251,6 +2251,10 @@
       }
     }, true);
   }
+  // True only after the human picks a provider by hand. Any composer click
+  // persists the whole settings object, so a stored provider:'offline' does
+  // not by itself mean offline was chosen — it may be pre-sign-in residue.
+  let composerProviderChosen = false;
   function persistComposer() {
     try {
       localStorage.setItem('optimus.ui.composer', JSON.stringify({
@@ -2260,6 +2264,7 @@
         thinking: $('thinkingToggle').getAttribute('aria-pressed') === 'true',
         fast: $('fastToggle').getAttribute('aria-pressed') === 'true',
         access: $('access').value,
+        providerChosen: composerProviderChosen,
       }));
     } catch {}
   }
@@ -2361,6 +2366,7 @@
         const k = btn.getAttribute('data-kind');
         if (k === 'provider') {
           $('provider').value = btn.getAttribute('data-v');
+          composerProviderChosen = true;
           if ($('provider').value === 'offline') $('model').value = 'offline-echo';
           else if ($('model').value === 'offline-echo') $('model').value = 'gpt-5.6-terra';
           persistComposer(); syncComposerButtons(); closeAllCdd();
@@ -2474,6 +2480,7 @@
       const raw = localStorage.getItem('optimus.ui.composer');
       if (!raw) return;
       const c = JSON.parse(raw);
+      composerProviderChosen = c.providerChosen === true;
       if (c.provider) $('provider').value = c.provider;
       if (c.model) {
         const m = $('model');
@@ -3519,17 +3526,26 @@
     else {
       try { setAuthBanner(await api('authStatus')); } catch {}
     }
-    // Prefer offline when Codex is missing so first-run chat always works
+    // Prefer offline when Codex is missing so first-run chat always works —
+    // and symmetrically, prefer Codex when it IS connected. Without the second
+    // arm, provider:'offline' persisted before sign-in outlives the sign-in
+    // and the app answers with the echo model forever (#82). An explicit
+    // human provider choice always wins over both arms.
     try {
       const auth = d.auth || {};
+      const provider = $('provider');
       if (!auth.present) {
-        const provider = $('provider');
         if (provider) {
           provider.value = 'offline';
           const model = $('model');
           if (model) model.value = 'offline-echo';
         }
+      } else if (provider && provider.value === 'offline' && !composerProviderChosen) {
+        provider.value = 'codex';
+        const model = $('model');
+        if (model && model.value === 'offline-echo') model.value = 'gpt-5.6-terra';
       }
+      syncComposerButtons();
     } catch {}
     if (d.sessions) {
       state.sessions = Array.isArray(d.sessions) ? d.sessions : [];
