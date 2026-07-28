@@ -1191,52 +1191,6 @@ code {
   white-space: pre-wrap;
 }
 
-.command-palette {
-  width: min(520px, 92vw);
-  margin: 12vh auto 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-}
-
-.command-palette input {
-  width: 100%;
-  border: 1px solid var(--border);
-  background: var(--hover);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-
-.command-palette ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 320px;
-  overflow: auto;
-}
-
-.command-palette li button {
-  width: 100%;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-.command-palette li button:hover {
-  background: var(--hover);
-}
-
 .cron-workbench {
   display: flex;
   flex-direction: column;

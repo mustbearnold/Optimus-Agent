@@ -145,9 +145,16 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     // stronger evidence than the removed label ever was.
     await expect(address).toHaveValue(`http://127.0.0.1:${previewPort}/fixture`);
 
-    await page.waitForTimeout(200);
+    // The address bar settling says nothing about the native view, which
+    // navigates in its own process on its own clock. A fixed sleep is a guess at
+    // how long that takes, and on a slower machine the read lands on
+    // `about:blank`. Poll for the navigation the address bar just asked for,
+    // then read the settled state once for the assertions below — the same shape
+    // used for `visible` further down.
+    await expect
+      .poll(async () => (await nativeViewState(application)).url)
+      .toBe(`http://127.0.0.1:${previewPort}/fixture`);
     const nativeBefore = await nativeViewState(application);
-    expect(nativeBefore.url).toBe(`http://127.0.0.1:${previewPort}/fixture`);
     expect(nativeBefore.visible).toBe(true);
     const holeBefore = await page.getByTestId('browser-hole').boundingBox();
     expect(holeBefore).not.toBeNull();

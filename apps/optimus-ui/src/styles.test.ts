@@ -96,7 +96,11 @@ describe('motion contract', () => {
       '.approval-card',
       '.artifact-tile',
       '.console-panel',
-      '.command-palette',
+      // `.command-palette` was here until that surface moved to shadcn and the
+      // class stopped existing. It is not unguarded: the universal reset
+      // asserted below is what actually enforces this contract, and it reaches
+      // the shadcn primitives too — they are in a cascade layer, and `!important`
+      // beats every layer.
       '.settings-dialog',
       '.project-sources-dialog',
       '.floating-panel',
