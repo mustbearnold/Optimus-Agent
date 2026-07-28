@@ -154,11 +154,21 @@ and both would have shipped:
    `[data-slot]`, the attribute every shadcn primitive carries and nothing else
    in this app does.
 2. **A radius scale that disagreed with itself.** The app owns `--radius-sm`,
-   `--radius` and `--radius-lg`, and `workbench-shell.css:49` zeroes all three
-   because that shell is square by design — so `rounded-lg` correctly returned
-   `0px`. But Tailwind also defines `--radius-md` and `--radius-xl`, which the
-   app has no opinion on, so `rounded-md` silently returned Tailwind's stock
-   `6px`. Fixed by aliasing the two extra steps onto the app's own.
+   `--radius` and `--radius-lg`; Tailwind also defines `--radius-md` and
+   `--radius-xl`, which the app has no opinion on. So `rounded-lg` took the
+   app's scale and `rounded-md` took Tailwind's. Fixed by aliasing the two extra
+   steps onto the app's own.
+
+   Chasing that one turned up something more useful than the defect:
+   `workbench-shell.css:1039` carries a global
+   `*, *::before, *::after { border-radius: 0 !important }` geometry contract,
+   and `!important` beats every cascade layer. **Inside the workbench shell,
+   every shadcn `rounded-*` is `0px` regardless of any token.** That is why the
+   converted dialog measured square in the browser — not the token collision.
+   `codex-shell.css` has no such reset, and that is where the alias does work.
+   Any future conversion that expects a radius in the workbench shell will not
+   get one, and the fix is to change the contract deliberately rather than to
+   fight it locally.
 
 The general lesson, which applies to every remaining conversion: **omitting
 preflight is what makes this migration incremental, and it is also what makes
@@ -167,7 +177,36 @@ the first, and it will not be the last — need their missing half supplied
 explicitly and scoped to shadcn's own subtree. A conversion is not verified
 until the component has been rendered against the real stylesheet.
 
-That verification is now automated rather than repeated by hand:
+**Conversion 2 — `CommandPalette`.** 47 lines of CSS deleted, 7 tests added,
+117 passing. The palette could not be driven from the keyboard: arrow keys did
+nothing, so the only route down the list was Tab — one stop per command, and out
+of the dialog past the last one — or the mouse. A command palette is a keyboard
+affordance. It also had no listbox semantics, so a screen reader read a stack of
+unrelated buttons with no position and no active row.
+
+cmdk supplies the roving selection, the `listbox`/`option` pairing and the live
+region; Radix supplies the focus trap, scroll lock and aria-hiding. Filtering
+stays this component's own (`shouldFilter={false}`), because cmdk's fuzzy scorer
+would change which commands match — a separate decision from accessibility, and
+bundling the two would make the diff unreviewable.
+
+One upstream gap had to be closed locally. cmdk 1.1.1 marks the first row
+`aria-selected` as soon as the list renders but publishes
+`aria-activedescendant` only from inside its own `setState` handler for `value`,
+which nothing calls until a key is pressed. The palette therefore opened with a
+row highlighted on screen and nothing current to a screen reader, and the first
+ArrowDown announced the *second* command — the first was silently skipped.
+Passing a controlled `value` makes it worse, not better: that path assigns
+cmdk's internal state directly and bypasses the publishing `setState`. The id is
+mirrored onto the input by a `MutationObserver` on the list instead, watched
+rather than derived from a render, because cmdk moves the selection by
+re-rendering the *item* and a plain effect in the palette would run once on
+mount and never again.
+
+That is the shape of the next several conversions: the primitive is still worth
+taking, and taking it does not mean assuming it is complete.
+
+Both conversions' verification is now automated rather than repeated by hand:
 `tailwind.css.test.ts` compiles the stylesheet through Vite and asserts the
 cascade contract directly, because none of it is observable from a component
 test — jsdom parses stylesheets but never applies them to `getComputedStyle`,

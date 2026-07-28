@@ -44,17 +44,22 @@
  *
  * Radii collide rather than map: Tailwind's namespace is `--radius-*` and the
  * app already owns `--radius-sm` / `--radius` / `--radius-lg`. The app's
- * definitions win — they are in a later layer — which is the right outcome:
- * `rounded-lg` on a shadcn dialog returns `0px` inside the workbench shell
- * (`workbench-shell.css:49`) because that surface is square by design, and the
- * dialog should look like the surface it lands on.
+ * definitions win — they are in a later layer — which is the right outcome: a
+ * shadcn surface should look like the surface it lands on.
  *
- * The two steps below are the ones Tailwind adds and the app has no opinion
- * on. Left unset they would fall through to Tailwind's stock 6px and 12px, so
- * `rounded-md` would quietly round a corner that `rounded-lg` leaves square —
- * the scale would be incoherent in the one direction nobody would think to
- * check. Aliasing them onto the app's own steps keeps the whole family
- * app-owned. Not circular: these four names are distinct.
+ * The two steps below are the ones Tailwind adds and the app has no opinion on.
+ * Left unset they fall through to Tailwind's own 6px and 12px, so `rounded-md`
+ * would take Tailwind's scale while `rounded-lg` takes the app's — incoherent in
+ * the one direction nobody would think to check. Aliasing them onto the app's
+ * own steps keeps the whole family app-owned. Not circular: these four names are
+ * distinct.
+ *
+ * This is invisible in the workbench shell, and the reason is worth knowing
+ * before converting anything else: `workbench-shell.css:1039` carries a global
+ * `*, *::before, *::after { border-radius: 0 !important }` geometry contract,
+ * and `!important` beats every layer. Inside that shell, every shadcn
+ * `rounded-*` is `0px` no matter what these tokens say. `codex-shell.css` has no
+ * such reset and sets 5/8/12px, which is where the alias actually does work.
  */
 @theme inline {
   --radius-md: var(--radius);

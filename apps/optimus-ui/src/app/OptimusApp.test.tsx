@@ -113,7 +113,9 @@ describe('OptimusApp fixture contract', () => {
 
     await user.keyboard('{Control>}k{/Control}');
     await screen.findByRole('dialog', { name: 'Command palette' });
-    await user.click(await screen.findByRole('button', { name: /capabilities/i }));
+    // An option, not a button: the palette is a listbox now, which is what lets
+    // it be driven from the keyboard at all (ADR-0050).
+    await user.click(await screen.findByRole('option', { name: /capabilities/i }));
     expect(await screen.findByRole('main', { name: 'Capabilities' })).toBeInTheDocument();
   });
 
