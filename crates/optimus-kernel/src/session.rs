@@ -8,6 +8,8 @@ use uuid::Uuid;
 
 use crate::{KernelError, Message, Result, Role};
 
+mod project;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionMeta {
     pub id: Uuid,
@@ -22,6 +24,9 @@ pub struct SessionMeta {
     /// Soft-hide from active list until unarchived.
     #[serde(default)]
     pub archived: bool,
+    /// Lifetime project binding (session/project.rs); `None` is a host session.
+    #[serde(default)]
+    pub project: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -146,9 +151,10 @@ impl SessionStore {
             );
             ",
         )?;
-        // program P24 hygiene columns (idempotent migration).
+        // program P24 hygiene columns + C1 project binding (idempotent migration).
         let mut has_pinned = false;
         let mut has_archived = false;
+        let mut has_project = false;
         {
             let mut stmt = conn.prepare("PRAGMA table_info(sessions)")?;
             let rows = stmt.query_map([], |row| {
@@ -161,6 +167,9 @@ impl SessionStore {
                 }
                 if name == "archived" {
                     has_archived = true;
+                }
+                if name == "project" {
+                    has_project = true;
                 }
             }
         }
@@ -175,6 +184,9 @@ impl SessionStore {
                 "ALTER TABLE sessions ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
                 [],
             )?;
+        }
+        if !has_project {
+            conn.execute("ALTER TABLE sessions ADD COLUMN project TEXT", [])?;
         }
         conn.execute_batch(
             "
@@ -548,7 +560,7 @@ impl SessionStore {
     pub fn list_filtered(&self, filter: ListFilter) -> Result<Vec<SessionMeta>> {
         let mut stmt = self.conn.prepare(
             "SELECT id, title, created_at, updated_at, packs_json, messages_json,
-                    COALESCE(pinned, 0), COALESCE(archived, 0)
+                    COALESCE(pinned, 0), COALESCE(archived, 0), project
              FROM sessions
              ORDER BY COALESCE(pinned, 0) DESC,
                       COALESCE(archived, 0) ASC,
@@ -580,7 +592,7 @@ impl SessionStore {
         }
         let mut stmt = self.conn.prepare(
             "SELECT s.id, s.title, s.created_at, s.updated_at, s.packs_json, s.messages_json,
-                    COALESCE(s.pinned, 0), COALESCE(s.archived, 0)
+                    COALESCE(s.pinned, 0), COALESCE(s.archived, 0), s.project
              FROM sessions s
              INNER JOIN sessions_fts f ON f.session_id = s.id
              WHERE sessions_fts MATCH ?1
@@ -636,6 +648,7 @@ impl SessionStore {
             packs,
             pinned: pinned != 0,
             archived: archived != 0,
+            project: row.get(8)?,
         })
     }
 

@@ -6,8 +6,10 @@ IPC call. The proof is crates/optimus-host/tests/project_bleed.rs, whose
 BLEED_RATCHET constant fixes how many projects the test proves against each
 other. This gate pins that constant and lets it move only toward 5: the pin
 below must match the test exactly, so neither side can drift alone, and
-lowering either is loud in review. Raising the ratchet is real engineering —
-at pin time ratchet=2 fails because `sessions` has no project-scoped view.
+lowering either is loud in review. Raising the ratchet was real engineering:
+every N >= 2 was blocked on session visibility until sessions gained a
+lifetime project binding (kernel session/project.rs) and a project-scoped
+`sessions` view. The pin sits at the target and now guards against regression.
 """
 
 from __future__ import annotations
@@ -21,9 +23,9 @@ TEST = ROOT / "crates" / "optimus-host" / "tests" / "project_bleed.rs"
 TEST_NAME = "n_projects_in_one_core_zero_bleed"
 TARGET = 5
 
-# May only grow (C1 target: 5). Raise it in the same commit as the test's
-# BLEED_RATCHET, with the engineering that makes the new N pass.
-PINNED_RATCHET = 1
+# At the C1 target; may never fall. Move it only in the same commit as the
+# test's BLEED_RATCHET.
+PINNED_RATCHET = 5
 
 
 def main() -> int:

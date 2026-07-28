@@ -32,7 +32,10 @@ pub(super) fn handle(
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
     match method {
-        "sessions" => Ok(json!({ "sessions": sessions_json(home) })),
+        "sessions" => {
+            let project = crate::scope::optional_project_id(&params)?;
+            Ok(json!({ "sessions": sessions_json_scoped(home, project.as_deref()) }))
+        }
         "session_search" => session_search(home, params),
         "archive_session" => archive_session(home, params),
         "pin_session" => pin_session(home, params),
@@ -157,23 +160,27 @@ fn is_tool_protocol_message(content: &str) -> bool {
 }
 
 pub fn sessions_json(home: &PathBuf) -> serde_json::Value {
-    match SessionStore::open(home.join("sessions.db")).and_then(|s| {
-        s.list_filtered(optimus_kernel::ListFilter {
-            include_archived: true,
+    sessions_json_scoped(home, None)
+}
+
+/// `project = Some(id)` is the C1 project-scoped view: only sessions bound to
+/// that project (session/project.rs in the kernel). `None` is the unscoped
+/// host list, unchanged.
+pub fn sessions_json_scoped(home: &PathBuf, project: Option<&str>) -> serde_json::Value {
+    let list = SessionStore::open(home.join("sessions.db"))
+        .and_then(|s| {
+            s.list_filtered(optimus_kernel::ListFilter {
+                include_archived: true,
+            })
         })
-    }) {
-        Ok(list) => {
-            let rows: Vec<_> = list.into_iter().map(session_meta_json).collect();
-            json!(rows)
-        }
-        Err(_) => match list_sessions(home) {
-            Ok(list) => {
-                let rows: Vec<_> = list.into_iter().map(session_meta_json).collect();
-                json!(rows)
-            }
-            Err(_) => json!([]),
-        },
-    }
+        .or_else(|_| list_sessions(home))
+        .unwrap_or_default();
+    let rows: Vec<_> = list
+        .into_iter()
+        .filter(|meta| project.is_none_or(|p| meta.project.as_deref() == Some(p)))
+        .map(session_meta_json)
+        .collect();
+    json!(rows)
 }
 
 fn session_meta_json(s: optimus_kernel::SessionMeta) -> serde_json::Value {
@@ -186,6 +193,7 @@ fn session_meta_json(s: optimus_kernel::SessionMeta) -> serde_json::Value {
         "created_at": s.created_at,
         "pinned": s.pinned,
         "archived": s.archived,
+        "project": s.project,
     })
 }
 
@@ -199,11 +207,19 @@ fn session_search(home: &Path, params: serde_json::Value) -> Result<serde_json::
         .get("include_archived")
         .and_then(|v| v.as_bool())
         .unwrap_or(true);
+    // Same C1 scoping as the `sessions` view — search must not be the side
+    // door that shows another project's sessions.
+    let project = crate::scope::optional_project_id(&params)?;
     let store = SessionStore::open(home.join("sessions.db")).map_err(|e| e.to_string())?;
     let rows = store
         .search(q, include_archived)
         .map_err(|e| e.to_string())?
         .into_iter()
+        .filter(|meta| {
+            project
+                .as_deref()
+                .is_none_or(|p| meta.project.as_deref() == Some(p))
+        })
         .map(session_meta_json)
         .collect::<Vec<_>>();
     Ok(json!({ "sessions": rows, "q": q }))
