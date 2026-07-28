@@ -365,19 +365,21 @@ impl CdpBrowserSession {
 
     /// DOM snapshot — interactable elements with bounding boxes.
     pub fn dom_snapshot(&self) -> Result<Vec<DomElement>> {
-        let tab = self.tab_ref()?;
-        let js = include_str!("dom_snapshot.js");
+        Self::snapshot_elements(self.tab_ref()?)
+    }
 
+    /// CDP returns objects by reference (`value: None`); only primitives
+    /// survive, so the script stringifies and this side parses — loudly. A
+    /// silent empty here is what made every SOM capture report zero elements.
+    fn snapshot_elements(tab: &Tab) -> Result<Vec<DomElement>> {
         let remote_obj = tab
-            .evaluate(js, false)
+            .evaluate(include_str!("dom_snapshot.js"), false)
             .map_err(|e| BrowserError::DomSnapshot(e.to_string()))?;
-
-        let elements: Vec<DomElement> = remote_obj
-            .value
-            .and_then(|v| serde_json::from_value(v).ok())
-            .unwrap_or_default();
-
-        Ok(elements)
+        let payload = remote_obj.value.and_then(|v| v.as_str().map(str::to_owned));
+        let payload =
+            payload.ok_or_else(|| BrowserError::DomSnapshot("no snapshot payload".into()))?;
+        serde_json::from_str(&payload)
+            .map_err(|e| BrowserError::DomSnapshot(format!("snapshot parse: {e}")))
     }
 
     /// Full SOM capture: screenshot + DOM elements.
@@ -393,7 +395,7 @@ impl CdpBrowserSession {
         })
     }
 
-    /// Click element by SOM index (1-based).
+    /// Click element by SOM index (0-based, matching the advertised tool contract).
     pub fn click(&mut self, index: usize) -> Result<PageState> {
         let elements = self.dom_snapshot()?;
         let elem = elements
@@ -456,13 +458,7 @@ impl CdpBrowserSession {
 
         let screenshot_b64 = base64_encode_png(&png);
 
-        let js = include_str!("dom_snapshot.js");
-        let elements: Vec<DomElement> = tab
-            .evaluate(js, false)
-            .ok()
-            .and_then(|r| r.value)
-            .and_then(|v| serde_json::from_value(v).ok())
-            .unwrap_or_default();
+        let elements = Self::snapshot_elements(tab)?;
 
         Ok(PageState {
             url,

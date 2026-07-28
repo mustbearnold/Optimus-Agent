@@ -42,9 +42,8 @@ use optimus_packs::{
     ToolErrorDetail, ToolId, ToolInvocation, ToolOutcome, ToolOutcomeKind,
 };
 use optimus_runtime::{ApprovalGrant, JobId, JobStatus, Runtime, RuntimeError};
-use std::cell::Cell;
-use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::{cell::Cell, collections::BTreeSet};
 
 pub use optimus_memory::{
     ClaimDraft, ClaimView, Correction, EvidencePacket, Memory, MemoryClock, Origin, RecallPurpose,
@@ -57,7 +56,6 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
-/// Cooperative cancellation (owned by optimus-runtime).
 pub use optimus_runtime::CancellationToken;
 
 pub use browser::{
@@ -499,6 +497,7 @@ pub struct Kernel {
     pub skills: SkillRegistry,
     pub messages: Vec<Message>,
     workspace: PathBuf,
+    browser: Option<Box<dyn browser::BrowserEffector>>,
     home: PathBuf,
     session_id: Uuid,
     session_title: String,
@@ -607,6 +606,7 @@ impl Kernel {
             skills,
             messages,
             workspace,
+            browser: None,
             home,
             session_id,
             session_title,
