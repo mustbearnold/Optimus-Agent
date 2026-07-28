@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { CronJob, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -27,16 +28,19 @@ export function CronWorkbench({
   const [prompt, setPrompt] = useState('');
   const [provider, setProvider] = useState('offline');
   const [busy, setBusy] = useState(false);
+  const alive = useAlive();
 
   const load = useCallback(async () => {
     setError('');
     try {
       const result = await transport.invoke<{ jobs?: CronJob[] }>('cron_list');
+      if (!alive()) return;
       setJobs(result.jobs || []);
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [transport]);
+  }, [alive, transport]);
 
   const loadHistory = useCallback(
     async (id: string) => {
@@ -45,12 +49,14 @@ export function CronWorkbench({
           id,
           limit: 20,
         });
+        if (!alive()) return;
         setHistory(result.attempts || []);
       } catch (reason) {
+        if (!alive()) return;
         setError(reason instanceof Error ? reason.message : String(reason));
       }
     },
-    [transport]
+    [alive, transport]
   );
 
   useEffect(() => {
@@ -73,13 +79,15 @@ export function CronWorkbench({
         prompt: prompt.trim() || 'tick',
         provider,
       });
+      if (!alive()) return;
       setName('');
       setPrompt('');
       await load();
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
-      setBusy(false);
+      if (alive()) setBusy(false);
     }
   };
 
@@ -89,6 +97,7 @@ export function CronWorkbench({
       await transport.invoke('cron_set_enabled', { id: job.id, enabled: !job.enabled });
       await load();
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
   };
@@ -98,9 +107,11 @@ export function CronWorkbench({
     setError('');
     try {
       await transport.invoke('cron_remove', { id: job.id });
+      if (!alive()) return;
       if (selected === job.id) setSelected(null);
       await load();
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
   };

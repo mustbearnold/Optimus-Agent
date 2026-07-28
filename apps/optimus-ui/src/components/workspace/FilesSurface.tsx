@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { FsEntry, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -14,21 +15,24 @@ export function FilesSurface({
   const [preview, setPreview] = useState<{ path: string; content: string; truncated: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const alive = useAlive();
 
   const load = useCallback(async (nextPath: string) => {
     setLoading(true);
     setError('');
     try {
       const result = await transport.invoke<{ entries?: FsEntry[] }>('fs_list', { path: nextPath });
+      if (!alive()) return;
       setEntries(result.entries || []);
       setPath(nextPath);
       setPreview(null);
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
-      setLoading(false);
+      if (alive()) setLoading(false);
     }
-  }, [transport]);
+  }, [alive, transport]);
 
   useEffect(() => {
     if (active && !entries.length && !loading && !error) void load('');
@@ -47,11 +51,13 @@ export function FilesSurface({
         'fs_read',
         { path: entry.path, max_bytes: 512_000 }
       );
+      if (!alive()) return;
       setPreview(result);
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
-      setLoading(false);
+      if (alive()) setLoading(false);
     }
   };
 

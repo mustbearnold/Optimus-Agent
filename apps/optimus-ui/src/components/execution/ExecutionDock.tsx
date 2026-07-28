@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { Approval, Job, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -27,6 +28,7 @@ export function ExecutionDock({
   const [jobs, setJobs] = useState<Job[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const alive = useAlive();
 
   const refresh = useCallback(async () => {
     try {
@@ -34,15 +36,17 @@ export function ExecutionDock({
         transport.invoke<{ pending?: Approval[] }>('approvals_list'),
         transport.invoke<{ jobs?: Job[] }>('jobs_list'),
       ]);
+      if (!alive()) return;
       const nextApprovals = approvalResult.pending || [];
       const nextJobs = jobResult.jobs || [];
       setApprovals(nextApprovals);
       setJobs(nextJobs);
       onState(nextApprovals, nextJobs);
     } catch (nextError) {
+      if (!alive()) return;
       setError(nextError instanceof Error ? nextError.message : String(nextError));
     }
-  }, [onState, transport]);
+  }, [alive, onState, transport]);
 
   useEffect(() => {
     if (open) void refresh();
@@ -55,13 +59,15 @@ export function ExecutionDock({
     setError('');
     try {
       const result = await transport.invoke<TerminalResult>('term_run', { line: value });
+      if (!alive()) return;
       setTerminal(result);
       if (/approval/i.test(result.status || '')) setTab('approvals');
       await refresh();
     } catch (nextError) {
+      if (!alive()) return;
       setError(nextError instanceof Error ? nextError.message : String(nextError));
     } finally {
-      setBusy(false);
+      if (alive()) setBusy(false);
     }
   };
 
@@ -150,7 +156,7 @@ export function ExecutionDock({
                         });
                         await refresh();
                       } finally {
-                        setBusy(false);
+                        if (alive()) setBusy(false);
                       }
                     }}
                     disabled={busy}

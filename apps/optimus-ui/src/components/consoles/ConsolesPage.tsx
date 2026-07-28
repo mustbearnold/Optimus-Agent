@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 import { TextPromptDialog } from '../chrome/TextPromptDialog';
@@ -44,17 +45,20 @@ export function ConsolesPage({
 function SkillsConsole({ transport }: { transport: OptimusTransport }) {
   const [skills, setSkills] = useState<Array<Record<string, unknown>>>([]);
   const [error, setError] = useState('');
+  const alive = useAlive();
   const load = useCallback(async () => {
     setError('');
     try {
       const r = await transport.invoke<{ skills?: Array<Record<string, unknown>> }>('skills_list', {
         include_deprecated: true,
       });
+      if (!alive()) return;
       setSkills(r.skills || []);
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [transport]);
+  }, [alive, transport]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -112,6 +116,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
   const [predicate, setPredicate] = useState('');
   const [recall, setRecall] = useState<Record<string, unknown> | null>(null);
   const [correcting, setCorrecting] = useState<{ id: string; object: string } | null>(null);
+  const alive = useAlive();
 
   const load = useCallback(async () => {
     setError('');
@@ -120,12 +125,14 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
         claims?: Array<Record<string, unknown>>;
         fence?: string;
       }>('memory_list', { limit: 50 });
+      if (!alive()) return;
       setClaims(r.claims || []);
       setFence(String(r.fence || ''));
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [transport]);
+  }, [alive, transport]);
 
   useEffect(() => {
     void load();
@@ -140,8 +147,10 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
         predicate: predicate || undefined,
         limit: 20,
       });
+      if (!alive()) return;
       setRecall(r);
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
   };
@@ -230,6 +239,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
         onConfirm={async (next) => {
           if (!correcting) return;
           await transport.invoke('memory_correct', { id: correcting.id, object: next });
+          if (!alive()) return;
           setCorrecting(null);
           await load();
         }}
@@ -241,14 +251,18 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
 function PacksConsole({ transport }: { transport: OptimusTransport }) {
   const [state, setState] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState('');
+  const alive = useAlive();
   const load = useCallback(async () => {
     setError('');
     try {
-      setState(await transport.invoke('packs_state'));
+      const next = await transport.invoke<Record<string, unknown>>('packs_state');
+      if (!alive()) return;
+      setState(next);
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [transport]);
+  }, [alive, transport]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -318,15 +332,18 @@ function PacksConsole({ transport }: { transport: OptimusTransport }) {
 function LogsConsole({ transport }: { transport: OptimusTransport }) {
   const [lines, setLines] = useState<string[]>([]);
   const [error, setError] = useState('');
+  const alive = useAlive();
   const load = useCallback(async () => {
     setError('');
     try {
       const r = await transport.invoke<{ lines?: string[] }>('logs_tail', { limit: 100 });
+      if (!alive()) return;
       setLines(r.lines || []);
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [transport]);
+  }, [alive, transport]);
   useEffect(() => {
     void load();
   }, [load]);

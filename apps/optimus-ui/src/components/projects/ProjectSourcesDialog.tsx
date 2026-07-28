@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { Project, ProjectRootSelection } from '../../ipc/contracts';
 import {
   addProjectRoot,
@@ -31,6 +32,7 @@ export function ProjectSourcesDialog({
   const [grantTokens, setGrantTokens] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const alive = useAlive();
 
   const authorizedKeys = useMemo(
     () => new Set(authorizedRootPaths.map(normalizePathKey)),
@@ -71,6 +73,7 @@ export function ProjectSourcesDialog({
 
   async function authorizeFolder(pathHint?: string) {
     const selection = await onPickSource();
+    if (!alive()) return;
     if (!selection.ok || !selection.path || !selection.grantToken) {
       if (selection.cancelled) return;
       setError(
@@ -263,8 +266,10 @@ export function ProjectSourcesDialog({
                   primaryRoot: draft.primaryRoot || draft.rootPaths[0],
                   updatedAt: new Date().toISOString(),
                 }, Object.values(grantTokens));
+                if (!alive()) return;
                 onClose();
               } catch (saveError) {
+                if (!alive()) return;
                 setError(formatAuthorizeError(saveError));
                 setSaving(false);
               }

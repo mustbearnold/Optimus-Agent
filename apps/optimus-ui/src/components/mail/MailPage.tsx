@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -48,6 +49,7 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const alive = useAlive();
 
   const load = useCallback(async () => {
     setError('');
@@ -59,15 +61,17 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
         transport.invoke<{ messages?: OutboxReceipt[] }>('gateway_ambiguous'),
         transport.invoke<Record<string, unknown>>('gateway_telegram_status'),
       ]);
+      if (!alive()) return;
       setStatus(st.status || null);
       setInbox(inb.messages || []);
       setOutbox(out.messages || []);
       setAmbiguous(amb.messages || []);
       setTelegram(tg);
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [transport]);
+  }, [alive, transport]);
 
   useEffect(() => {
     void load();
@@ -89,13 +93,16 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
     setError('');
     try {
       await transport.invoke('gateway_enqueue', { text, channel: 'local' });
+      if (!alive()) return;
       setDraft('');
       await load();
+      if (!alive()) return;
       setTab('inbox');
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      if (alive()) setBusy(false);
     }
   };
 
@@ -109,9 +116,10 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
       });
       await load();
     } catch (e) {
+      if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      if (alive()) setBusy(false);
     }
   };
 

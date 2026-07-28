@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { BrowserAnnotation, BrowserState, OptimusTransport } from '../../ipc/contracts';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
@@ -115,6 +116,8 @@ export function BrowserSurface({
     if (active) syncGeometry.current?.();
   }, [active, state.loading, state.title, state.url]);
 
+  const alive = useAlive();
+
   const pushNote = (text: string, sourceUrl?: string) => {
     const note: PreviewNote = {
       id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -131,9 +134,12 @@ export function BrowserSurface({
     if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = `https://${url}`;
     try {
       if (transport.browser) {
-        setState(await transport.browser.navigate(url));
+        const next = await transport.browser.navigate(url);
+        if (!alive()) return;
+        setState(next);
       } else {
         const result = await transport.invoke<Record<string, unknown>>('browser_navigate', { url });
+        if (!alive()) return;
         setState({
           ...state,
           url: String(result.url || result.final_url || url),
@@ -143,6 +149,7 @@ export function BrowserSurface({
         });
       }
     } catch (error) {
+      if (!alive()) return;
       setState({
         ...state,
         loading: false,
@@ -161,12 +168,13 @@ export function BrowserSurface({
     if (!state.native || !transport.browser) return;
     try {
       const result = await transport.browser.annotate();
+      if (!alive()) return;
       if (!result.cancelled) {
         // Gallery only — composer requires explicit Add to prompt.
         pushNote(formatAnnotation(result), result.url);
       }
     } finally {
-      setAnnotationMode(false);
+      if (alive()) setAnnotationMode(false);
     }
   };
 
@@ -177,7 +185,7 @@ export function BrowserSurface({
           type="button"
           aria-label="Back"
           disabled={!state.canGoBack}
-          onClick={() => transport.browser?.back().then(setState)}
+          onClick={() => transport.browser?.back().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="back" />
         </button>
@@ -185,14 +193,14 @@ export function BrowserSurface({
           type="button"
           aria-label="Forward"
           disabled={!state.canGoForward}
-          onClick={() => transport.browser?.forward().then(setState)}
+          onClick={() => transport.browser?.forward().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="forward" />
         </button>
         <button
           type="button"
           aria-label="Reload"
-          onClick={() => transport.browser?.reload().then(setState)}
+          onClick={() => transport.browser?.reload().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="reload" />
         </button>

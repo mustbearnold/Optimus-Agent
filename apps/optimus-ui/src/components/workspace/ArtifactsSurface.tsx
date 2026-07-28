@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAlive } from '../../hooks/useAlive';
 import type { ArtifactDetail, ArtifactRecord, OptimusTransport } from '../../ipc/contracts';
 import { Icon } from '../chrome/Icon';
 
@@ -32,6 +33,7 @@ export function ArtifactsSurface({
   const [status, setStatus] = useState('');
   const [pendingDelete, setPendingDelete] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const alive = useAlive();
   const deleteTrigger = useRef<HTMLElement | null>(null);
   const cancelDeleteButton = useRef<HTMLButtonElement>(null);
   const confirmDeleteButton = useRef<HTMLButtonElement>(null);
@@ -40,11 +42,13 @@ export function ArtifactsSurface({
     setError('');
     try {
       const result = await transport.invoke<{ artifacts?: ArtifactRecord[] }>('artifacts_list');
+      if (!alive()) return;
       setArtifacts(result.artifacts || []);
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [transport]);
+  }, [alive, transport]);
 
   useEffect(() => {
     if (active) void load();
@@ -102,8 +106,11 @@ export function ArtifactsSurface({
 
   const open = async (artifact: ArtifactRecord) => {
     try {
-      setDetail(await transport.invoke<ArtifactDetail>('artifacts_get', { sha256: artifact.sha256 }));
+      const next = await transport.invoke<ArtifactDetail>('artifacts_get', { sha256: artifact.sha256 });
+      if (!alive()) return;
+      setDetail(next);
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
   };
@@ -111,6 +118,7 @@ export function ArtifactsSurface({
   const removeMany = async (sha256s: string[]) => {
     if (!sha256s.length) return;
     await transport.invoke('artifacts_delete_many', { sha256s });
+    if (!alive()) return;
     setSelected([]);
     if (detail && sha256s.includes(detail.artifact.sha256)) setDetail(null);
     await load();
@@ -136,12 +144,14 @@ export function ArtifactsSurface({
     setError('');
     try {
       await removeMany(sha256s);
+      if (!alive()) return;
       setPendingDelete([]);
       requestAnimationFrame(() => deleteTrigger.current?.focus());
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
-      setDeleting(false);
+      if (alive()) setDeleting(false);
     }
   };
 
@@ -150,11 +160,13 @@ export function ArtifactsSurface({
     setStatus('');
     try {
       const result = await transport.invoke<{ path?: string }>('artifacts_export', { sha256 });
+      if (!alive()) return;
       setStatus(`Exported to ${result.path || 'host path'}`);
       if (result.path && transport.openPath) {
         await transport.openPath(result.path);
       }
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
   };
@@ -167,11 +179,13 @@ export function ArtifactsSurface({
       const result = await transport.invoke<{ path?: string }>('artifacts_export_zip', {
         sha256s,
       });
+      if (!alive()) return;
       setStatus(`Zip exported to ${result.path || 'host path'}`);
       if (result.path && transport.openPath) {
         await transport.openPath(result.path);
       }
     } catch (reason) {
+      if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
   };
