@@ -72,6 +72,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0049 | The module-size law is measured honestly, and does not tax splitting | Proposed | Every `#[cfg(test)]` item is skipped, not just everything after the first; bare `mod x;` declarations do not count. |
 | 0050 | Overlays come from Radix via shadcn/ui, not from hand-written CSS | Proposed | Dialogs, popovers, and menus get focus traps, dismissal, and portals from Radix primitives instead of bespoke implementations. |
 | 0051 | Electron now, Tauri when the preview leaves the shell | Proposed | The agent's browser is already out-of-process CDP; only the in-process preview welds the shell to Electron. Restore ADR-0015's mirrored preview, then the Tauri swap is scheduled, not hypothetical. |
+| 0052 | Engineering runs are isolated, phased, and resumable (program P40) | Accepted | A development task is a durable object with a base SHA, a dedicated worktree, and a code-enforced phase; the main checkout is never written by a run, and evidence — not assertion — advances a phase. |
 
 ## Known documentary debt
 

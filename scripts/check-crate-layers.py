@@ -8,6 +8,7 @@ Rules:
   - optimus-workflow may depend on optimus-agent + optimus-artifacts
   - optimus-artifacts must not depend on kernel/agent/workflow/eval
   - optimus-browser must not depend on optimus-kernel
+  - optimus-engineering must not depend on kernel/eval/agent/workflow/ops/runtime/host
   - no peeled crate may depend on apps/*
 
 Apps layer rule (#65, success criterion C5 in north-star-2026-07.md):
@@ -163,6 +164,22 @@ def main() -> int:
         },
     )
     forbid("optimus-eval", {"optimus-ops"})  # eval may use kernel only among control peels
+    # optimus-engineering (ADR-0052) owns the development-task state machine and
+    # the per-run worktree. It sits above optimus-policy and below the kernel:
+    # it must never reach up into the control plane, or an engineering run could
+    # grant itself authority the broker never issued.
+    forbid(
+        "optimus-engineering",
+        {
+            "optimus-kernel",
+            "optimus-eval",
+            "optimus-agent",
+            "optimus-workflow",
+            "optimus-ops",
+            "optimus-runtime",
+            "optimus-host",
+        },
+    )
 
     check_apps_layer(errors)
 

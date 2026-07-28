@@ -94,6 +94,18 @@ space**, or match the `namespace:value` suffix.
 | **Feature issue** | `✨ type:feat` + `🔍 status:triage` |
 | **Architecture task** | `🏗️ type:architecture` + `🏆 program:s+++` when S+++ |
 
+This table was already the rule before anything enforced it, and 51 issues and
+PRs opened without labels anyway. Two checks now back it:
+
+```bash
+python3 scripts/github_pr_branch.py audit-labels
+```
+
+- `open` **refuses** to push a PR without a `type:` and an `area:` label, and
+  rejects any name not in `.github/labels.yml`.
+- `audit-labels` lists every existing issue and PR missing those namespaces, so
+  anything opened by hand — `gh issue create`, the web UI — still gets caught.
+
 ### Priority scale
 
 | Label | Use when |

@@ -55,12 +55,18 @@ every exact action when a Standard project trust profile already authorizes it.
 
 | Phase | Goal | Status |
 |---|---|---|
-| **program P30** | Capability broker + autonomy profiles + Standard project trust auto-authorize with exact receipts | **in progress** |
-| **program P31** | Same-run continuation after approval/restart | pending |
-| **program P32** | Structured failure taxonomy + recovery coordinator | pending |
-| **program P33** | Capability snapshot + layered readiness + first-run smoke | pending |
-| **program P34** | Checkpoint/rollback manifests before broader auto-permission | pending |
-| **program P35** | Activity/error UI polish + release packaging residuals | pending |
+| **program P30** | Capability broker + autonomy profiles + Standard project trust auto-authorize with exact receipts | **in progress — prerequisite of program P40** |
+| **program P31** | Same-run continuation after approval/restart | **parked** |
+| **program P32** | Structured failure taxonomy + recovery coordinator | **parked** |
+| **program P33** | Capability snapshot + layered readiness + first-run smoke | **parked** |
+| **program P34** | Checkpoint/rollback manifests before broader auto-permission | **parked** |
+| **program P35** | Activity/error UI polish + release packaging residuals | **parked** |
+
+**Parked (2026-07-29):** the primary roadmap authority is
+[github-engineer-program.md](./github-engineer-program.md) (program P40–P46)
+until GITHUB-ENGINEER-V1. Program P30's remaining microtasks (R30.5–R30.8) are
+carried as prerequisites of program P40 and still land in this wave; P31–P35
+resume afterwards. Parking is a sequencing decision, not a cancellation.
 
 Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 **after** the successful-task loop is strong.
@@ -108,5 +114,7 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 
 ## Immediate next action
 
-1. Land **program P30** broker + Standard trust (this wave).
-2. Then **program P31** same-run continuation.
+1. Land **program P30** broker + Standard trust (this wave), including
+   R30.5–R30.8 as prerequisites of
+   [program P40](./github-engineer-program.md).
+2. Then **program P40**, not P31. P31–P35 resume after GITHUB-ENGINEER-V1.

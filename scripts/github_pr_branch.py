@@ -26,6 +26,9 @@ import os
 import re
 import subprocess
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _subprocess_env() -> dict[str, str]:
@@ -195,10 +198,113 @@ def cmd_adopt(args: argparse.Namespace) -> int:
     return 0
 
 
+REQUIRED_LABEL_NAMESPACES = ("type", "area")
+
+
+def known_labels() -> list[str]:
+    """Canonical label names from .github/labels.yml.
+
+    Parsed with a line scan rather than a YAML dependency: this script runs on a
+    bare checkout, and the file's shape is fixed by sync-github-labels.py.
+    """
+    path = ROOT / ".github" / "labels.yml"
+    if not path.is_file():
+        return []
+    names: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = re.match(r'\s*-\s*name:\s*"(.+)"\s*$', line)
+        if m:
+            names.append(m.group(1))
+    return names
+
+
+def namespace_of(label: str) -> str | None:
+    """`✨ type:feat` → `type`. Labels are emoji + space + namespace:value."""
+    m = re.match(r"^\S+\s+([a-z]+):", label)
+    return m.group(1) if m else None
+
+
+def validate_labels(labels: list[str]) -> None:
+    """Fail closed when a PR would open without the labels metrics depend on.
+
+    Labelling used to be optional here, so it depended on whoever opened the PR
+    remembering. It stopped happening for 9 consecutive PRs on 2026-07-28 and
+    nothing noticed, because nothing was checking. Program P40–P46 keys routing
+    and per-PR metrics off `type:` and `area:`, so an unlabelled PR is missing
+    data, not a style lapse.
+    """
+    catalog = known_labels()
+    unknown = [label for label in labels if catalog and label not in catalog]
+    if unknown:
+        raise SystemExit(
+            "unknown label(s): "
+            + ", ".join(repr(label) for label in unknown)
+            + "\nvalid names live in .github/labels.yml"
+        )
+    present = {namespace_of(label) for label in labels}
+    missing = [ns for ns in REQUIRED_LABEL_NAMESPACES if ns not in present]
+    if missing:
+        options = {ns: [n for n in catalog if namespace_of(n) == ns] for ns in missing}
+        detail = "\n".join(
+            f"  {ns}: " + (", ".join(repr(n) for n in names) or "(none in labels.yml)")
+            for ns, names in options.items()
+        )
+        raise SystemExit(
+            "a PR must carry at least one label per namespace: "
+            + ", ".join(missing)
+            + f"\npass --label for each. Choices:\n{detail}"
+        )
+
+
+def missing_namespaces(labels: list[str]) -> list[str]:
+    """Required namespaces absent from an already-created issue or PR."""
+    present = {namespace_of(label) for label in labels}
+    return [ns for ns in REQUIRED_LABEL_NAMESPACES if ns not in present]
+
+
+def cmd_audit_labels(args: argparse.Namespace) -> int:
+    """Report issues and PRs missing required labels. Read-only.
+
+    `open` fails closed from now on, but that only protects what this script
+    creates. Anything opened by hand — every issue, and any PR created with
+    `gh pr create` directly — bypasses it. This makes the gap visible instead
+    of waiting for someone to notice months of unlabelled history.
+    """
+    gaps: list[str] = []
+    for kind in ("issue", "pr"):
+        listing = run(
+            [
+                "gh", kind, "list",
+                "--state", args.state,
+                "--limit", str(args.limit),
+                "--json", "number,title,labels",
+            ]
+        )
+        for item in json.loads(_strip_ansi(listing.stdout) or "[]"):
+            labels = [label["name"] for label in item.get("labels") or []]
+            missing = missing_namespaces(labels)
+            if missing:
+                marker = "#" if kind == "issue" else "PR #"
+                gaps.append(
+                    f"  {marker}{item['number']} missing {', '.join(missing)}"
+                    f"  — {item['title'][:60]}"
+                )
+
+    if not gaps:
+        print(f"all {args.state} issues and PRs carry type: and area: labels")
+        return 0
+    print(f"{len(gaps)} unlabelled item(s):")
+    print("\n".join(gaps))
+    return 1
+
+
 def cmd_open(args: argparse.Namespace) -> int:
     old = current_branch()
     if not old:
         raise SystemExit("detached HEAD; checkout a branch first")
+
+    # Refuse before the push, so a rejected open leaves nothing behind.
+    validate_labels(args.label or [])
 
     # Keep remote head stable under current name (prefer wip/…)
     remote_head = old
@@ -294,6 +400,11 @@ def main() -> int:
     p_adopt.add_argument("--number", type=int)
     p_adopt.add_argument("--slug")
     p_adopt.set_defaults(func=cmd_adopt)
+
+    p_audit = sub.add_parser("audit-labels", help="Report issues/PRs missing type: or area:")
+    p_audit.add_argument("--state", default="all", choices=["open", "closed", "all"])
+    p_audit.add_argument("--limit", type=int, default=200)
+    p_audit.set_defaults(func=cmd_audit_labels)
 
     p_check = sub.add_parser("check", help="Verify local branch matches open PR number")
     p_check.add_argument("--number", type=int)

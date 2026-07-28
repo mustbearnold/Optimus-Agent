@@ -97,7 +97,9 @@ plan microtask, and grade claim.
 4. ADRs are monotonic and permanent; never renumber or invent without scanning
    `docs/decisions/`.
 5. Commits and PR titles are **emoji-first Conventional Commits**; labels are
-   emoji + `namespace:value` (see contributing docs).
+   emoji + `namespace:value` (see contributing docs). Every issue and PR carries
+   at least a `type:` and an `area:` label — `github_pr_branch.py open` refuses
+   without them, and `audit-labels` reports anything opened by hand.
 6. Program phase may appear in title **text** (`program P21 …`, `S+++ P12 …`);
    delivery number appears only as `PR #N` / `pr/N-…`. Historical product specs
    named `phase-20*` are **not** program P20.
