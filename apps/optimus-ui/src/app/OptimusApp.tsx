@@ -117,6 +117,10 @@ export function OptimusApp() {
   const [composer, setComposer] = useState(storedComposer?.settings ?? offlineComposer);
   const [bootError, setBootError] = useState('');
   const providerChosen = useRef(storedComposer?.providerChosen ?? false);
+  // Bumped whenever a session is created locally. `refreshRuntime` reads it
+  // before its await and again after: if it moved, the list it is holding was
+  // taken before that session existed, and applying it would erase one.
+  const sessionCreations = useRef(0);
   const activeHandle = useRef<ChatHandle | null>(null);
   const draggingLayout = useRef(false);
   const latestLayout = useRef(state.layout);
@@ -148,6 +152,7 @@ export function OptimusApp() {
 
   const refreshRuntime = useCallback(async () => {
     try {
+      const creationsAtRequest = sessionCreations.current;
       const [doctorResult, sessionsResult, approvalResult, jobResult, campaignResult, scopeResult] = await Promise.all([
         transport.invoke<Doctor>('doctor'),
         transport.invoke<{ sessions?: SessionMeta[] } | SessionMeta[]>('sessions'),
@@ -159,19 +164,26 @@ export function OptimusApp() {
       if (!alive()) return;
       const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
       setDoctor(doctorResult);
-      setSessions(nextSessions);
       setApprovals(approvalResult.pending || []);
       setJobs(jobResult.jobs || []);
       setCampaigns(campaignResult.campaigns || []);
       setProjectScopes(scopeResult.projects || []);
       setAuthorizedProjects(new Set((scopeResult.projects || []).map((project) => project.project_id)));
-      dispatch({
-        type: 'select-session',
-        id:
-          state.selectedSessionId && nextSessions.some((session) => session.id === state.selectedSessionId)
-            ? state.selectedSessionId
-            : nextSessions[0]?.id || null,
-      });
+      // A thread created while this refresh was in flight is newer than the
+      // list it came back with. Overwriting would drop it and then re-select
+      // from a list that never contained it, leaving the user staring at the
+      // thread they just made having silently vanished. The rest of the
+      // refresh is still current, so only the session half is skipped.
+      if (sessionCreations.current === creationsAtRequest) {
+        setSessions(nextSessions);
+        dispatch({
+          type: 'select-session',
+          id:
+            state.selectedSessionId && nextSessions.some((session) => session.id === state.selectedSessionId)
+              ? state.selectedSessionId
+              : nextSessions[0]?.id || null,
+        });
+      }
       setBootError('');
     } catch (error) {
       if (!alive()) return;
@@ -259,6 +271,7 @@ export function OptimusApp() {
     try {
       const created = await transport.invoke<SessionMeta>('new_session');
       if (!alive()) return;
+      sessionCreations.current += 1;
       setSessions((current) => [created, ...current.filter((session) => session.id !== created.id)]);
       // Explicit project (rail "+ in project") always wins. Otherwise keep the
       // current authorized project only — never fall back to projects[0] (#42/#44).
@@ -311,6 +324,7 @@ export function OptimusApp() {
     if (!sessionId) {
       const created = await transport.invoke<SessionMeta>('new_session');
       if (!alive()) return;
+      sessionCreations.current += 1;
       setSessions((current) => [created, ...current]);
       sessionId = created.id;
       dispatch({ type: 'select-session', id: created.id });
