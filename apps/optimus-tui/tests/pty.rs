@@ -443,3 +443,53 @@ fn a_panic_gives_the_terminal_back_too() {
          left nothing to debug:\n{log}"
     );
 }
+
+/// The other half of #104's contract, through the other door (#108). A *worker*
+/// panic kills only its own thread: the face survives, which is exactly why
+/// tearing the screen down would be wrong — and exactly how the crash used to
+/// vanish. The spinner stopped, no answer came, and the session carried on as
+/// if the turn had completed. Three things matter and this asserts all of
+/// them: the face stays up, the turn settles instead of spinning, and an error
+/// row says where the details went.
+#[test]
+fn a_worker_panic_lands_in_the_transcript() {
+    let mut term = Term::launch_with(&[("OPTIMUS_TUI_PANIC_IN_WORKER", "1")]);
+    term.send(b"boom\r");
+
+    // The contract itself: a worker that died without settling is *reported*.
+    term.wait_for(
+        |s| s.contains("stopped unexpectedly"),
+        "the worker crash never reached the transcript: the spinner just \
+         stopped and the turn read as complete",
+    );
+    // The row names the log. On its own line because the pane wraps at forty
+    // columns; the temp home's path fits a line, so the name stays whole.
+    let screen = term.wait_for(
+        |s| s.contains("tui.log"),
+        "the error row does not say where the details went",
+    );
+    assert!(
+        !screen.contains(BUSY),
+        "the spinner kept running after the worker died:\n{screen}"
+    );
+
+    // A worker panic must not bring the face down — that is #104's deliberate
+    // choice, and the reason this row is the only witness the user gets.
+    assert!(
+        !term.exited_within(Duration::from_millis(300)),
+        "a worker panic brought the whole face down"
+    );
+    term.send(b"~");
+    term.wait_for(
+        |s| s.contains('~'),
+        "the composer stopped accepting input after a worker crash",
+    );
+
+    // And the pointer points somewhere real: the payload is in the log the
+    // row named, because stderr spends the whole run redirected there.
+    let log = term.log();
+    assert!(
+        log.contains("OPTIMUS_TUI_PANIC_IN_WORKER"),
+        "the panic payload never reached the log the row points at:\n{log}"
+    );
+}
