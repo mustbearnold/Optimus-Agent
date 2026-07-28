@@ -43,7 +43,7 @@ if [ -x "$HOME/.cargo/bin/cargo" ]; then
   export PATH
 fi
 
-PASSED=(); FAILED=(); SKIPPED=()
+PASSED=(); FAILED=(); SKIPPED=(); SKIPPED_DETAIL=()
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; B=$'\033[1m'; X=$'\033[0m'
@@ -70,6 +70,10 @@ run() {
 skip() {
   printf '%-46s%s\n' "  $1" "${Y}skip${X} ($2)"
   SKIPPED+=("$1")
+  # The reason is already phrased as the missing prerequisite at every call
+  # site, so keeping it alongside the name is all the pre-push hook needs to
+  # tell the pusher what did not run and why (#98).
+  SKIPPED_DETAIL+=("$1	$2")
 }
 
 section() { printf '\n%s\n' "${B}$1${X}"; }
@@ -191,6 +195,7 @@ tier_gates() {
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
+  spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
   reap
 }
 
@@ -367,6 +372,7 @@ tier_all() {
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
+  spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
 
   spawn_section "compile"
   spawn "cargo check" cargo check --workspace --all-targets
@@ -433,6 +439,15 @@ printf '  %s%d passed%s' "$G" "${#PASSED[@]}" "$X"
 [ "${#SKIPPED[@]}" -gt 0 ] && printf ', %s%d skipped%s' "$Y" "${#SKIPPED[@]}" "$X"
 [ "${#FAILED[@]}" -gt 0 ] && printf ', %s%d failed%s' "$R" "${#FAILED[@]}" "$X"
 printf '\n'
+
+# Hand the skip list to whoever invoked us. The pre-push hook uses it to stop
+# calling a partly-run push `clean` (#98); nothing else reads it, and nothing
+# here changes if the variable is unset.
+if [ -n "${OPTIMUS_VERIFY_SKIP_REPORT:-}" ]; then
+  : >"$OPTIMUS_VERIFY_SKIP_REPORT"
+  [ "${#SKIPPED_DETAIL[@]}" -gt 0 ] &&
+    printf '%s\n' "${SKIPPED_DETAIL[@]}" >"$OPTIMUS_VERIFY_SKIP_REPORT"
+fi
 
 if [ "${#FAILED[@]}" -gt 0 ]; then
   printf '\n  failed: %s\n\n' "${FAILED[*]}"
