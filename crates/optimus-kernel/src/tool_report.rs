@@ -232,6 +232,55 @@ pub(crate) fn pack_error_tool_outcome(
     )
 }
 
+/// Builds a failed `ToolOutcome` that carries the real dispatch error instead
+/// of a generic placeholder — the catch-all in `turn_loop::run_turn_loop` for
+/// every tool-execution error that is not a pack error, a control-plane
+/// denial, or a pending approval (those have their own typed handling).
+/// Mirrors `pack_error_tool_outcome` above: the code stays the fixed
+/// `tool_execution_failed` taxonomy, only the message gets richer.
+pub(crate) fn dispatch_error_tool_outcome(
+    call: &ToolCall,
+    descriptor: &optimus_packs::ToolDesc,
+    error: &KernelError,
+) -> ToolOutcome {
+    // Comfortably under `ToolOutcome::validate`'s hard 4096-byte cap (in
+    // optimus_packs) even after the "{tool_id}: " prefix `summary` adds and
+    // the truncation suffix below — a verbose underlying error must shrink a
+    // single tool's failure, never grow it into a turn-aborting validation error.
+    const MAX_ERROR_BYTES: usize = 2000;
+    let cause = truncate_error_detail(&error.to_string(), MAX_ERROR_BYTES);
+    ToolOutcome::failed(
+        call.id.clone(),
+        descriptor.id.clone(),
+        format!("{}: {cause}", descriptor.id.as_str()),
+        ToolErrorDetail {
+            code: "tool_execution_failed".into(),
+            message: cause,
+            retryable: false,
+        },
+        descriptor.replay,
+    )
+}
+
+/// Truncates on a UTF-8 char boundary, like `truncate_preview` above, but for
+/// error text rather than a result preview — and without implying the
+/// missing tail lives anywhere, since a failed tool call has no `data` to
+/// point to.
+fn truncate_error_detail(s: &str, max_bytes: usize) -> String {
+    if s.len() <= max_bytes {
+        return s.to_string();
+    }
+    let mut boundary = max_bytes;
+    while boundary > 0 && !s.is_char_boundary(boundary) {
+        boundary -= 1;
+    }
+    format!(
+        "{}… [error truncated at {boundary} of {} bytes]",
+        &s[..boundary],
+        s.len()
+    )
+}
+
 pub(crate) fn kernel_error_code(error: &KernelError) -> &'static str {
     security_denial::kernel_or_security_code(error)
 }
@@ -269,5 +318,39 @@ mod summarize_tests {
     #[test]
     fn a_result_that_fits_is_its_own_summary_with_nothing_added() {
         assert_eq!(summarize("Found 3 sources"), "Found 3 sources");
+    }
+}
+
+#[cfg(test)]
+mod truncate_error_detail_tests {
+    use super::truncate_error_detail;
+
+    #[test]
+    fn a_short_error_passes_through_unchanged() {
+        let cause = "ssrf blocked: ip 127.0.0.1";
+        assert_eq!(truncate_error_detail(cause, 2000), cause);
+    }
+
+    #[test]
+    fn a_multibyte_character_on_the_truncation_boundary_does_not_panic() {
+        // Same failure mode as summarize's boundary test: the cut point must
+        // never land inside a multi-byte character's encoding. The kept
+        // prefix must respect the byte budget even though the explanatory
+        // suffix this function appends does not — that suffix is what makes
+        // a truncated cause legible, so it is exempt by design.
+        let cause = format!("{}✨🐢🚀✨ trailing", "a".repeat(18));
+        let truncated = truncate_error_detail(&cause, 20);
+        assert!(truncated.starts_with("aaaaaaaaaaaaaaaaaa"));
+        assert!(truncated.contains("error truncated"), "{truncated}");
+    }
+
+    #[test]
+    fn a_long_cause_is_actually_shortened_once_the_budget_dominates_the_suffix() {
+        // At the real budget (2000 bytes) the explanatory suffix is noise
+        // against a genuinely oversized cause, so truncation must shrink it.
+        let cause = "e".repeat(10_000);
+        let truncated = truncate_error_detail(&cause, 2000);
+        assert!(truncated.len() < cause.len(), "{}", truncated.len());
+        assert!(truncated.contains("error truncated at 2000 of 10000 bytes"));
     }
 }

@@ -499,19 +499,9 @@ impl Kernel {
                                 return Err(error);
                             }
                             Err(error) if is_control_plane_tool_error(&error) => return Err(error),
-                            Err(_) => (
+                            Err(error) => (
                                 descriptor.id.clone(),
-                                ToolOutcome::failed(
-                                    call.id.clone(),
-                                    descriptor.id.clone(),
-                                    format!("{} failed", descriptor.id.as_str()),
-                                    ToolErrorDetail {
-                                        code: "tool_execution_failed".into(),
-                                        message: "tool execution failed".into(),
-                                        retryable: false,
-                                    },
-                                    descriptor.replay,
-                                ),
+                                dispatch_error_tool_outcome(&call, &descriptor, &error),
                             ),
                         }
                     };
