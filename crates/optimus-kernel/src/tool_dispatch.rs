@@ -394,46 +394,63 @@ impl Kernel {
             ToolInvocation::BrowserNavigate
             | ToolInvocation::BrowserSnapshot
             | ToolInvocation::BrowserClick => {
-                let mut browser =
-                    best_effector(&self.workspace).map_err(|e| KernelError::Tool(e.to_string()))?;
+                // One effector per session, not per call. The HTTP effector
+                // survives per-call reopening through browser_state.json; a
+                // CDP effector does not — a fresh headless Chrome per call
+                // meant snapshot-after-navigate captured about:blank on every
+                // host with Chrome installed, and paid the launch tax each
+                // time. The session effector is dropped on error so a dead
+                // Chrome is rebuilt, and closed in Drop with the kernel.
+                let home = self.home().to_path_buf();
+                if self.browser.is_none() {
+                    self.browser = Some(
+                        best_effector(&self.workspace)
+                            .map_err(|e| KernelError::Tool(e.to_string()))?,
+                    );
+                }
+                let browser = self.browser.as_mut().expect("effector ensured above");
                 let result = match invocation {
                     ToolInvocation::BrowserNavigate => {
-                        let url = call
-                            .arguments
+                        call.arguments
                             .get("url")
                             .and_then(|v| v.as_str())
                             .ok_or_else(|| {
                                 KernelError::Tool("browser_navigate requires url".into())
-                            })?;
-                        let out = browser
-                            .navigate(url)
-                            .map_err(|e| KernelError::Tool(e.to_string()))?;
-                        // ADR-0040: record agent domain only — never UserPreview session.
-                        record_agent_browser_coord(self.home(), &out, url);
-                        out
+                            })
+                            .and_then(|url| {
+                                let out = browser
+                                    .navigate(url)
+                                    .map_err(|e| KernelError::Tool(e.to_string()))?;
+                                // ADR-0040: record agent domain only — never UserPreview session.
+                                record_agent_browser_coord(&home, &out, url);
+                                Ok(out)
+                            })
                     }
                     ToolInvocation::BrowserSnapshot => browser
                         .snapshot()
-                        .map_err(|e| KernelError::Tool(e.to_string()))?,
+                        .map_err(|e| KernelError::Tool(e.to_string())),
                     ToolInvocation::BrowserClick => {
-                        let idx = call
-                            .arguments
+                        call.arguments
                             .get("index")
                             .and_then(|v| v.as_u64())
-                            .ok_or_else(|| {
-                                KernelError::Tool("browser_click requires index".into())
-                            })? as usize;
-                        let out = browser
-                            .click(idx)
-                            .map_err(|e| KernelError::Tool(e.to_string()))?;
-                        // Clicks navigate the agent effector — same domain bus as navigate.
-                        record_agent_browser_coord(self.home(), &out, "");
-                        out
+                            .ok_or_else(|| KernelError::Tool("browser_click requires index".into()))
+                            .and_then(|idx| {
+                                let out = browser
+                                    .click(idx as usize)
+                                    .map_err(|e| KernelError::Tool(e.to_string()))?;
+                                // Clicks navigate the agent effector — same domain bus as navigate.
+                                record_agent_browser_coord(&home, &out, "");
+                                Ok(out)
+                            })
                     }
                     _ => unreachable!("outer match restricts browser invocations"),
                 };
-                let _ = browser.close();
-                Ok(result)
+                if result.is_err() {
+                    if let Some(mut dead) = self.browser.take() {
+                        let _ = dead.close();
+                    }
+                }
+                result
             }
             ToolInvocation::Unavailable => Err(KernelError::Tool(format!(
                 "tool is unavailable: {}",
@@ -441,6 +458,17 @@ impl Kernel {
             ))),
         }?;
         Ok((tool_id, result))
+    }
+}
+
+impl Drop for Kernel {
+    fn drop(&mut self) {
+        // The session browser outlives individual calls by design; it must
+        // not outlive the session. Close is best-effort — a Chrome that
+        // already died has nothing left to leak.
+        if let Some(mut effector) = self.browser.take() {
+            let _ = effector.close();
+        }
     }
 }
 

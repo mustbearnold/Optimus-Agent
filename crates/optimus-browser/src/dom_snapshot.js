@@ -21,12 +21,12 @@
         const text = (el.textContent || '').trim().slice(0, 80);
         const tag = el.tagName.toLowerCase();
         results.push({
-            index: ++index,
+            index: index++,
             tag: tag,
             text: text,
             bounds: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
             interactive: true
         });
     }
-    return results;
+    return JSON.stringify(results);
 })();

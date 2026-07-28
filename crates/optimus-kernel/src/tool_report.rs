@@ -112,12 +112,57 @@ pub(crate) fn canonical_json(value: &Value) -> Value {
 /// is something the tool states in the data; a preview must not answer it too.
 pub(crate) fn summarize(s: &str) -> String {
     const MAX: usize = 120;
+    // A JSON result's identity lives in a few small fields; a raw prefix
+    // buries them the moment any array (elements, matches, entries) grows.
+    // Headline those fields so the 120-char trace names what happened; the
+    // full payload always rides in `data`.
+    if let Some(headline) = json_headline(s) {
+        return truncate_preview(&headline, MAX);
+    }
+    truncate_preview(s, MAX)
+}
+
+fn json_headline(s: &str) -> Option<String> {
+    let value: Value = serde_json::from_str(s).ok()?;
+    let object = value.as_object()?;
+    let mut parts = Vec::new();
+    for key in [
+        "ok",
+        "final_url",
+        "page_title",
+        "path",
+        "status",
+        "exit_code",
+        "count",
+        "element_count",
+        "found",
+        "stdout",
+        "text",
+    ] {
+        match object.get(key) {
+            Some(Value::String(text)) if !text.is_empty() => {
+                parts.push(format!("{key}={text}"));
+            }
+            Some(field) if field.is_number() || field.is_boolean() => {
+                parts.push(format!("{key}={field}"));
+            }
+            _ => {}
+        }
+    }
+    if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join(" "))
+    }
+}
+
+fn truncate_preview(s: &str, max: usize) -> String {
     let total = s.chars().count();
-    if total <= MAX {
+    if total <= max {
         return s.to_string();
     }
-    let head: String = s.chars().take(MAX).collect();
-    format!("{head}… [preview truncated at {MAX} of {total} chars; the full result is in `data`]")
+    let head: String = s.chars().take(max).collect();
+    format!("{head}… [preview truncated at {max} of {total} chars; the full result is in `data`]")
 }
 
 pub(crate) fn tool_lifecycle_event(
