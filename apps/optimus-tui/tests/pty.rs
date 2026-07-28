@@ -16,6 +16,13 @@
 //! a pty, type bytes, parse the escape stream into a screen — and assert what a
 //! terminal actually shows, cursor included. Deterministic: a temp home, the
 //! offline provider, no credentials, no network, no token spend.
+//!
+//! The second half of the file asserts what a terminal shows *while a turn is
+//! in flight* — the interrupt, the spinner, text arriving a piece at a time.
+//! None of that was reachable before, because the offline model answered in the
+//! same tick the turn started and left no window to observe or interrupt. It
+//! now takes `OPTIMUS_OFFLINE_LATENCY_MS` between chunks, unset everywhere
+//! except here.
 
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
@@ -51,6 +58,14 @@ struct Term {
 
 impl Term {
     fn launch() -> Self {
+        Self::launch_paced(0)
+    }
+
+    /// Launch with the offline model taking `pace_ms` before each chunk of its
+    /// answer, so a turn stays in flight long enough to observe and interrupt.
+    /// At zero — every test that does not need a running turn — the model
+    /// behaves exactly as it always has.
+    fn launch_paced(pace_ms: u64) -> Self {
         let home = tempfile::tempdir().expect("temp home");
         let pair = native_pty_system()
             .openpty(PtySize {
@@ -66,6 +81,9 @@ impl Term {
         // Without a terminal type crossterm cannot emit the sequences under
         // test, and the whole exercise is about those sequences.
         command.env("TERM", "xterm-256color");
+        if pace_ms > 0 {
+            command.env("OPTIMUS_OFFLINE_LATENCY_MS", pace_ms.to_string());
+        }
         let child = pair.slave.spawn_command(command).expect("spawn the tui");
         // The child owns the slave now; holding it here would keep the pty open
         // past the child's exit and hang the reader thread.
@@ -133,6 +151,18 @@ impl Term {
             );
             thread::sleep(Duration::from_millis(20));
         }
+    }
+
+    /// The glyph leading the activity row, or `None` when nothing is running.
+    /// Found by the text beside it rather than by a hard-coded frame list, so
+    /// changing the animation does not break the test that it animates.
+    fn spinner(&self) -> Option<char> {
+        self.screen()
+            .lines()
+            .find(|line| line.contains(BUSY))
+            // The row arrives inside the transcript pane, so the first glyph on
+            // the terminal line is the pane's own border, not the spinner.
+            .and_then(|line| line.trim_start_matches(['│', ' ']).chars().next())
     }
 
     fn exited_within(&mut self, timeout: Duration) -> bool {
@@ -206,6 +236,117 @@ fn arrow_keys_move_the_terminal_cursor_not_only_the_model() {
         term.cursor(),
         (CURSOR_ROW, 6),
         "two Left presses must move the painted caret, not just the buffer"
+    );
+}
+
+/// Enough of a pause between chunks that a test can act between two of them
+/// without racing, and short enough that three tests using it stay quick.
+const PACE_MS: u64 = 1000;
+
+/// A prompt whose echo straddles a chunk boundary. The offline model answers
+/// `offline echo: {prompt}` in twelve-character pieces, so the first piece is
+/// exactly `offline echo` and the marker cannot reach the screen until a later
+/// one. While a turn is mid-flight the marker is therefore on screen exactly
+/// once — in the user's own row — which is what makes "the assistant never
+/// finished its sentence" checkable by counting.
+const PROMPT: &str = "PARTIAL";
+
+/// Substring of the activity row's interrupt hint. Deliberately not the whole
+/// phrase: at forty columns the row runs out of width and the hint clips to
+/// `Ctrl-C to inter`, so a test matching the full sentence silently decides no
+/// turn is ever running.
+const BUSY: &str = "Ctrl-C";
+
+#[test]
+fn ctrl_c_during_a_turn_interrupts_it_and_leaves_the_session_usable() {
+    let mut term = Term::launch_paced(PACE_MS);
+    term.send(format!("{PROMPT}\r").as_bytes());
+    term.wait_for(
+        |s| s.contains("offline echo"),
+        "the turn never started streaming",
+    );
+    assert_eq!(
+        term.screen().matches(PROMPT).count(),
+        1,
+        "precondition: only the user's row carries the marker yet"
+    );
+
+    term.send(b"\x03");
+    let screen = term.wait_for(
+        |s| !s.contains(BUSY),
+        "Ctrl-C never took the turn out of flight",
+    );
+
+    // The whole point of an interrupt: the rest of the answer never arrives.
+    // The activity row is gone, so the turn has settled and no further delta
+    // can land — a second marker on screen would mean the stream ran on.
+    assert_eq!(
+        screen.matches(PROMPT).count(),
+        1,
+        "the answer kept streaming after the interrupt:\n{screen}"
+    );
+    // And the far worse failure — the one this test exists for — is Ctrl-C
+    // being read as "quit" and taking the session down mid-answer.
+    assert!(
+        !term.exited_within(Duration::from_millis(300)),
+        "Ctrl-C killed the session instead of the turn"
+    );
+    term.send(b"~");
+    term.wait_for(
+        |s| s.contains('~'),
+        "the composer stopped accepting input after an interrupt",
+    );
+}
+
+#[test]
+fn the_spinner_turns_while_a_turn_is_in_flight() {
+    let mut term = Term::launch_paced(PACE_MS);
+    term.send(b"spin\r");
+    term.wait_for(
+        |s| s.contains(BUSY),
+        "no activity row while a turn was running",
+    );
+
+    // A spinner painted once and never repainted looks identical to a live one
+    // in any single frame, so the assertion has to be that it *changed*.
+    let first = term.spinner().expect("an activity row while busy");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut moved = false;
+    while Instant::now() < deadline {
+        if term.spinner().is_some_and(|glyph| glyph != first) {
+            moved = true;
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(
+        moved,
+        "the spinner never advanced past {first:?}, so the frame is frozen while the turn runs:\n{}",
+        term.screen()
+    );
+}
+
+#[test]
+fn the_answer_paints_as_it_arrives_rather_than_all_at_once() {
+    let mut term = Term::launch_paced(PACE_MS);
+    term.send(format!("{PROMPT}\r").as_bytes());
+
+    // First chunk on screen, and the answer demonstrably unfinished: a face
+    // that buffered the whole reply and painted it once would never be caught
+    // in this state.
+    let mid = term.wait_for(
+        |s| s.contains("offline echo"),
+        "the first chunk never painted",
+    );
+    assert_eq!(
+        mid.matches(PROMPT).count(),
+        1,
+        "the whole answer landed in one paint, so streaming is not reaching the screen:\n{mid}"
+    );
+
+    term.wait_for(
+        |s| s.matches(PROMPT).count() == 2,
+        "the rest of the answer never arrived",
     );
 }
 

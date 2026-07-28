@@ -194,7 +194,8 @@ fn resume_settled_turn(
             let mut model = ScriptedModel::new(vec![CompletionResponse {
                 text: Some("offline echo: the approved action settled".into()),
                 tool_calls: vec![],
-            }]);
+            }])
+            .paced(offline_pace());
             kernel.resume_pending_turn_with_sink(&mut model, &mut sink, cancellation)
         }
         ProviderId::OpenAiCompat => {
@@ -215,6 +216,29 @@ fn resume_settled_turn(
     result
         .map(|turn| turn.assistant_text)
         .map_err(|error| error.to_string())
+}
+
+/// How long the offline model should take between chunks of its answer, from
+/// `OPTIMUS_OFFLINE_LATENCY_MS`. Zero when unset, which is every real run.
+///
+/// The offline provider is a fake: no credentials, no network, no token spend,
+/// and an answer in the same tick the turn starts. That last part is the
+/// problem. Everything that only exists *while* a turn is in flight —
+/// `Ctrl-C` interrupting it, the spinner turning, text arriving a piece at a
+/// time — has no window a test can aim at, so the terminal gate can only prove
+/// the idle half of each of those behaviours. A fake that can be told to take
+/// its time is a better fake, not a test hook smuggled into production: real
+/// providers are unaffected, and the default is the behaviour every existing
+/// caller already gets.
+///
+/// A malformed value is ignored rather than fatal. This is a development
+/// affordance, and refusing to launch over a typo in a variable that does not
+/// exist in production would be the more surprising behaviour.
+fn offline_pace() -> std::time::Duration {
+    std::env::var("OPTIMUS_OFFLINE_LATENCY_MS")
+        .ok()
+        .and_then(|raw| raw.trim().parse::<u64>().ok())
+        .map_or(std::time::Duration::ZERO, std::time::Duration::from_millis)
 }
 
 fn required_uuid(params: &serde_json::Value, field: &str) -> Result<uuid::Uuid, String> {
@@ -407,7 +431,8 @@ pub fn chat_turn_cancellable(
                     text: Some(format!("offline echo: {message}")),
                     tool_calls: vec![],
                 }])
-            };
+            }
+            .paced(offline_pace());
             kernel
                 .turn_with_controlled_sink_cancellable(
                     &mut model,
