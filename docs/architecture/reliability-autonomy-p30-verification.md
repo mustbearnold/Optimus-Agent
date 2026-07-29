@@ -43,8 +43,8 @@ replacing SmartDeny as the pause mechanism or CommandFsEnvelope as containment.
 | Read only denies mutate | **PASS** | `project_trust_profile` |
 | Classic SmartDeny default path | **PASS** | `phase1_policy_budget`, `approvals_surface` |
 | Crate layers | **PASS** | `check-crate-layers.py` |
-| Composer autonomy labels | **PASS** (source) | `Composer.tsx`; vitest needs local `npm ci` |
-| Desktop IPC access map | **PASS** (compile) | `chat.rs` + `cargo check -p optimus-desktop --no-default-features` |
+| Composer autonomy labels (both composers) | **PASS** | `Composer.test.tsx`, `check-autonomy-profiles.py` — see the correction below |
+| Desktop IPC access map | **PASS** (compile) | `chat.rs` + `cargo check -p optimus-desktop --no-default-features` — the *mapping*, not the menu that feeds it; see the correction below |
 
 ## Hold suite run
 
@@ -85,6 +85,49 @@ Path: live `optimus-desktop` window via CDP `127.0.0.1:9333` →
 
 Evidence: `local/tmp/cua-evidence/p30-user-ui/` (`LEDGER-USER-UI.md`, `pw-*.png`,
 `pw-user-drive.mjs`).
+
+## Correction: "Composer autonomy labels" was recorded against a tree that never existed (#118)
+
+The row above read **PASS (source)** from this file's first writing until
+2026-07-29, and it was wrong for the whole of that time. The React composer
+offered `Full access` / `Ask before effects` / `Read only`, and `full` parsed
+to `AutonomyProfile::UnrestrictedHost` paired with `PolicyMode::Unrestricted` —
+so the *first* item of the menu handed over the host, the exact opposite of
+ADR-0044 decision 7.
+
+Which of the two failure modes it was, since the issue asked: the change was
+never made. `git log -S standard -- Composer.tsx` returns nothing across the
+component's whole history, so no branch lost it in a merge and no commit
+reverted it. The row was recorded from reading a hold-suite screenshot whose
+`Autonomy: Standard` line came from the *runtime* profile plumbing (R30.2/R30.3,
+which did land) rather than from the menu the row names.
+
+The second composer had it worse. `apps/optimus-desktop/ui/index.html` — the
+Wry surface, reached through `OPTIMUS_ELECTRON_UI=legacy` and compiled into the
+binary by `include_str!` — offered `SmartDeny` / `Full` / `Read-only` with
+**`Full` pre-selected**, so that surface booted at unrestricted host without
+anyone choosing it. The *Desktop IPC access map* row above did not catch this
+and was never wrong to pass: it verifies that `chat.rs` maps an access string to
+a profile and a policy, which it does correctly. Nothing verified the menu that
+decides which string gets sent. A mapping is only as good as its inputs, and no
+row owned the inputs.
+
+Three things now stand behind these rows instead of a reading:
+
+- `apps/optimus-ui/src/components/workbench/Composer.test.tsx` asserts the React
+  menu offers Standard first, `unrestricted_host` last, and break-glass under an
+  Expert group.
+- `scripts/check-autonomy-profiles.py` holds *both* composers against the Rust
+  vocabulary on every `just verify` — including that the desktop `<select>`
+  pre-selects `standard` — and its self-test starts by proving the pre-fix tree
+  of each fails it.
+- `apps/optimus-electron/e2e/support/workbench-flow.cjs` asserts a fresh profile
+  boots at `Access: Standard` through the compiled bundle, so the claim survives
+  the build rather than only the source.
+
+A verification row whose evidence column names a *file* rather than a command
+that fails is worth exactly what this one was. A row that verifies a mapping is
+not a row that verifies the surface feeding it, however similar the two sound.
 
 ## Residuals (not P30 exit blockers for broker slice)
 

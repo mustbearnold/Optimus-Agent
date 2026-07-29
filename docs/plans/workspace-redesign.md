@@ -48,7 +48,7 @@ The redesign does not change runtime permissions or approval semantics. Existing
 - **Type:** compact humanist/system sans; monospace only for code and identifiers.
 - **Color:** black and very dark gray translucent surfaces, neutral controls, and distinct semantic warning/success/danger colors. Translucency never uses backdrop blur.
 - **Shape:** zero-radius cards, controls, overlays, and panels throughout the application.
-- **Motion:** short causal transitions. The selected Full access label and icon may use a gentle reduced-motion-safe fire-color cycle; no other ambient animation, glow, blur, or agent theatre.
+- **Motion:** short causal transitions. The selected Unrestricted host label and icon may use a gentle reduced-motion-safe fire-color cycle; no other ambient animation, glow, blur, or agent theatre.
 
 ### Accessibility and reliability
 

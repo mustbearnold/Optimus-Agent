@@ -134,9 +134,21 @@ fresh human click when a durable project trust grant already covers it.
 - Residual: owned-localhost browser leases (R30.7) and product release defaults
   (R30.8) remain program P30 follow-ons. Package-manager structured
   capabilities (R30.6) and the durable trust grant store (R30.5) have landed.
-- Residual: R30.4 is done for the profile plumbing, but the Composer access
-  menu still lists full host authority first — the opposite of this ADR's
-  Decision 7. Tracked as issue #118.
+- Decision 7 reached the surface on 2026-07-29 (#118). *Both* shipped composers
+  offer the five profiles — the React workbench with Standard first, Full
+  project under Advanced and Unrestricted host under Expert, and the Wry
+  desktop composer (`apps/optimus-desktop/ui/index.html`, reached through
+  `OPTIMUS_ELECTRON_UI=legacy`) with the same vocabulary and `standard`
+  pre-selected. The strangler of ADR-0028 is unfinished (#106), so a claim about
+  "the composer" is worth only as much as its narrower reading; the gate reads
+  both files for that reason. `full` and `host` no longer parse to
+  `UnrestrictedHost` in either crate, so a stale sender of the old menu's first
+  value falls closed to Review changes rather than receiving the machine. Two
+  values do not survive a reload — legacy `full`, and `unrestricted_host`
+  itself, both restoring to Standard, which extends §5's "break-glass that
+  survives a restart is not break-glass" from durable grants to the composer's
+  own persistence. `scripts/check-autonomy-profiles.py` holds both menus against
+  this vocabulary on every verify.
 
 ## Alternatives considered
 

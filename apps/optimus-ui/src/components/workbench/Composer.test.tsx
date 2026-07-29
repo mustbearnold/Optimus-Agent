@@ -7,7 +7,7 @@ const settings = {
   provider: 'offline' as const,
   model: 'offline-echo',
   thinking: 'high',
-  access: 'ask',
+  access: 'standard',
   fast: false,
 };
 
@@ -75,17 +75,16 @@ describe('Composer', () => {
       />
     );
 
-    const access = screen.getByRole('button', { name: 'Access: Ask before effects' });
+    const access = screen.getByRole('button', { name: 'Access: Standard' });
     const controls = access.closest('.composer-selects');
     expect(controls?.firstElementChild).toContainElement(access);
     expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument();
 
     await user.click(access);
     const accessMenu = screen.getByRole('listbox', { name: 'Access' });
-    expect(within(accessMenu).getByRole('option', { name: 'Full access' })).toBeInTheDocument();
-    expect(within(accessMenu).getByRole('option', { name: 'Read only' })).toBeInTheDocument();
-    await user.click(within(accessMenu).getByRole('option', { name: 'Full access' }));
-    expect(onSettings).toHaveBeenCalledWith({ ...settings, access: 'full' });
+    expect(within(accessMenu).getByRole('option', { name: /Read only/ })).toBeInTheDocument();
+    await user.click(within(accessMenu).getByRole('option', { name: /Read only/ }));
+    expect(onSettings).toHaveBeenCalledWith({ ...settings, access: 'read_only' });
 
     const trigger = screen.getByRole('button', { name: 'Model and run settings' });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -127,14 +126,14 @@ describe('Composer', () => {
     expect(trigger).not.toHaveTextContent('gpt-5.6-terra');
   });
 
-  it('marks only the selected Full access control for flame styling', () => {
+  it('marks only the selected Unrestricted host control for flame styling', () => {
     render(
       <Composer
         value=""
         runStatus="idle"
         disabled={false}
         isRunOwner={false}
-        settings={{ ...settings, access: 'full' }}
+        settings={{ ...settings, access: 'unrestricted_host' }}
         onChange={() => undefined}
         onSettings={() => undefined}
         onSend={() => undefined}
@@ -142,7 +141,74 @@ describe('Composer', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Access: Full access' })).toHaveClass('is-full-access');
-    expect(screen.getByRole('button', { name: 'Model and run settings' })).not.toHaveClass('is-full-access');
+    expect(screen.getByRole('button', { name: 'Access: Unrestricted host' })).toHaveClass(
+      'is-unrestricted-host'
+    );
+    expect(screen.getByRole('button', { name: 'Model and run settings' })).not.toHaveClass(
+      'is-unrestricted-host'
+    );
+  });
+
+  // Issue #118: the menu offered `Full access` first, and that value turned
+  // SmartDeny off. What the first item is, and where break-glass sits, is the
+  // security property — so it is asserted, not left to the eye.
+  it('offers Standard first and keeps break-glass last, under Expert', async () => {
+    const user = userEvent.setup();
+    const onSettings = vi.fn();
+    render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={settings}
+        onChange={() => undefined}
+        onSettings={onSettings}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Access: Standard' }));
+    const accessMenu = screen.getByRole('listbox', { name: 'Access' });
+    const options = within(accessMenu).getAllByRole('option');
+    expect(options).toHaveLength(5);
+    expect(options[0]).toHaveTextContent('Standard');
+    expect(options[4]).toHaveTextContent('Unrestricted host');
+    expect(options[4].closest('.composer-access-tier')).toHaveClass('is-expert');
+    expect(within(accessMenu).getByRole('group', { name: 'Expert' })).toContainElement(options[4]);
+
+    await user.click(options[4]);
+    expect(onSettings).toHaveBeenCalledWith({ ...settings, access: 'unrestricted_host' });
+  });
+
+  // A wrapping arrow key would put break-glass one keystroke above the
+  // default, which is the distance the tiers exist to create.
+  it('does not wrap ArrowUp from the first option round to break-glass', async () => {
+    const user = userEvent.setup();
+    render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={settings}
+        onChange={() => undefined}
+        onSettings={() => undefined}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Access: Standard' }));
+    const options = within(screen.getByRole('listbox', { name: 'Access' })).getAllByRole('option');
+    options[0].focus();
+
+    await user.keyboard('{ArrowUp}');
+    expect(options[0]).toHaveFocus();
+
+    options[4].focus();
+    await user.keyboard('{ArrowDown}');
+    expect(options[4]).toHaveFocus();
   });
 });

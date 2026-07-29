@@ -785,29 +785,29 @@ select:focus-visible,
   background: var(--surface-2);
 }
 
-@keyframes full-access-flame {
+@keyframes unrestricted-host-flame {
   0% { color: #e98a48; }
   35% { color: #eda052; }
   70% { color: #f0bd68; }
   100% { color: #eb984d; }
 }
 
-.composer-access-trigger.is-full-access,
-.composer-access-trigger.is-full-access:hover,
-.composer-access-trigger.is-full-access[aria-expanded="true"] {
+.composer-access-trigger.is-unrestricted-host,
+.composer-access-trigger.is-unrestricted-host:hover,
+.composer-access-trigger.is-unrestricted-host[aria-expanded="true"] {
   background: transparent;
   box-shadow: none;
 }
 
-.composer-access-trigger.is-full-access > span,
-.composer-access-trigger.is-full-access > svg {
+.composer-access-trigger.is-unrestricted-host > span,
+.composer-access-trigger.is-unrestricted-host > svg {
   color: #eda052;
-  animation: full-access-flame 3600ms ease-in-out infinite alternate;
+  animation: unrestricted-host-flame 3600ms ease-in-out infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .composer-access-trigger.is-full-access > span,
-  .composer-access-trigger.is-full-access > svg {
+  .composer-access-trigger.is-unrestricted-host > span,
+  .composer-access-trigger.is-unrestricted-host > svg {
     animation: none;
     color: #ff9f32;
   }

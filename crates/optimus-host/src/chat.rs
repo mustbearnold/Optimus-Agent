@@ -524,7 +524,7 @@ mod tests {
     #[test]
     fn only_unrestricted_spellings_lift_smart_deny() {
         use optimus_graph::{AutonomyProfile, PolicyMode};
-        for raw in ["full", "unrestricted", "yolo"] {
+        for raw in ["unrestricted_host", "unrestricted", "yolo"] {
             let (profile, policy) = super::access_config(Some(raw));
             assert_eq!(profile, AutonomyProfile::UnrestrictedHost, "{raw}");
             assert_eq!(policy, PolicyMode::Unrestricted, "{raw}");
@@ -533,6 +533,48 @@ mod tests {
             let (_, policy) = super::access_config(Some(raw));
             assert_eq!(policy, PolicyMode::SmartDeny, "{raw} must keep SmartDeny");
         }
+    }
+
+    /// Every value the composer can send, and what it means here. The menu is
+    /// checked against this vocabulary by
+    /// `scripts/check-autonomy-profiles.py`; this pins what each one *does*,
+    /// so a relabelled menu item cannot quietly change the authority behind it
+    /// (#118).
+    #[test]
+    fn each_composer_profile_maps_to_its_own_authority() {
+        use optimus_graph::{AutonomyProfile, PolicyMode};
+        let expected = [
+            ("standard", AutonomyProfile::Standard, PolicyMode::SmartDeny),
+            (
+                "review_changes",
+                AutonomyProfile::ReviewChanges,
+                PolicyMode::SmartDeny,
+            ),
+            (
+                "read_only",
+                AutonomyProfile::ReadOnly,
+                PolicyMode::SmartDeny,
+            ),
+            (
+                "full_project",
+                AutonomyProfile::FullProject,
+                PolicyMode::SmartDeny,
+            ),
+            (
+                "unrestricted_host",
+                AutonomyProfile::UnrestrictedHost,
+                PolicyMode::Unrestricted,
+            ),
+        ];
+        for (raw, profile, policy) in expected {
+            assert_eq!(super::access_config(Some(raw)), (profile, policy), "{raw}");
+        }
+        // The word the old menu offered first is no longer a profile at all.
+        assert_eq!(
+            super::access_config(Some("full")),
+            (AutonomyProfile::ReviewChanges, PolicyMode::SmartDeny),
+            "a stale 'full' sender must fall closed, not receive the host"
+        );
     }
     use serde_json::json;
 
