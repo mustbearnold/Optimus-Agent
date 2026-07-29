@@ -237,6 +237,24 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     await page.getByRole('button', { name: 'Done' }).click();
     await expect.poll(async () => (await nativeViewState(application)).visible).toBe(true);
 
+    // Closing Settings restores the native view, and `visible` flips before the
+    // layout finishes settling back. Reading the divider box during that window
+    // aims the drag at where the divider *was*, and the pane then jumps to the
+    // pointer instead of following it — the observed failure was a preview that
+    // got 70px wider under a drag that should have taken 96px off it. Wait for
+    // the same agreement the post-drag assertion waits for, then measure.
+    await expect
+      .poll(async () => {
+        const native = await nativeViewState(application);
+        const hole = await page.getByTestId('browser-hole').boundingBox();
+        return JSON.stringify(native.bounds) === JSON.stringify(roundBox(hole));
+      })
+      .toBe(true);
+    // Measured here, not at `nativeBefore`: four interactions and a dialog have
+    // happened since, and the claim under test is that *the drag* narrowed the
+    // preview.
+    const widthBeforeDrag = (await nativeViewState(application)).bounds.width;
+
     const divider = page.getByRole('separator', { name: 'Resize evidence workspace' });
     const dividerBox = await divider.boundingBox();
     expect(dividerBox).not.toBeNull();
@@ -252,7 +270,7 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     const holeAfter = await page.getByTestId('browser-hole').boundingBox();
     const nativeAfter = await nativeViewState(application);
     expect(nativeAfter.bounds).toEqual(roundBox(holeAfter));
-    expect(nativeAfter.bounds.width).toBeLessThan(nativeBefore.bounds.width - 80);
+    expect(nativeAfter.bounds.width).toBeLessThan(widthBeforeDrag - 80);
 
     await page.screenshot({
       path: path.join(EVIDENCE_DIR, 'compiled-electron-workbench.png'),
