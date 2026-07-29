@@ -18,6 +18,7 @@
 //! deliberately knows nothing about GitHub — push, draft PRs and merge arrive
 //! in later program P40 phases and stay behind explicit approval.
 
+pub mod catalogue;
 pub mod command;
 pub mod controller;
 pub mod differential;
@@ -26,6 +27,7 @@ pub mod repository;
 pub mod run;
 pub mod worktree;
 
+pub use catalogue::{plan_for, plans_for_run, PhasePlan, UnresolvedStep};
 pub use command::{
     CommandError, CommandOutcome, CommandRunner, ProcessRunner, MAX_CAPTURE_BYTES, SIGNAL_STATUS,
     TIMEOUT_STATUS,

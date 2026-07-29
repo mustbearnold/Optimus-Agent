@@ -130,7 +130,7 @@ This phase builds the spine.
 | E40.6 | **done** | Durable persistence + `resume` from last checkpoint after process restart |
 | E40.7 | partial | R30.5 + R30.6 landed; R30.7 (localhost lease) and R30.8 (release defaults) still open |
 | E40.8 | **done** | `RunDriver` drives a run through the table, recording evidence from real commands |
-| E40.9 | pending | Phase step catalogue: the actual commands each phase runs. Now sourced from `RepositoryPolicyProfile::verification` (E41.3) rather than hard-coded; still wants `test-changed` (P42) for the focused depth |
+| E40.9 | **done** | Phase step catalogue (`catalogue::plan_for`): the commands each phase runs, sourced from `RepositoryPolicyProfile::verification` (E41.3) rather than hard-coded |
 
 **What E40.7 gives a run, and what it deliberately withholds.** A run inside a
 worktree the user already authorized no longer pauses on every ordinary write:
@@ -143,6 +143,22 @@ classify as host changes rather than project execution, so a project-scoped
 grant does not quietly become a host-scoped one. Verified by
 `crates/optimus-kernel/tests/dev_run_trust.rs` (the same write pauses without a
 grant and lands with one) and `crates/optimus-policy/tests/command_classification.rs`.
+
+**Where a phase's commands come from (E40.9).** `catalogue::plan_for` turns a
+phase plus a resolved `RepositoryPolicyProfile` into the steps that phase runs.
+Two distinctions it refuses to collapse. *"No command to run" is not "nothing
+needs running"*: a phase whose evidence is a problem statement or a human
+approval legitimately has no steps, while a phase that should run the
+repository's gate in a repository that never named one has no steps and is
+blocked — both would be an empty `Vec`, so they are separate fields and
+`can_drive()` is false only for the second. And *a differential proof is never a
+step*: one command at one commit cannot establish that a test fails at base and
+passes on the patch, so `FocusedVerify` declares `DifferentialProof` as owed
+elsewhere rather than emitting a plausible single command that would let the
+phase satisfy its hardest contract with its easiest step. A run's full gate is
+never substituted with its focused one. Verified against this repository by
+`crates/optimus-engineering/tests/phase_catalogue.rs` — real `just --summary`,
+real `git`, only `gh` stubbed.
 
 **A distinction E40.8 forced into the model.** Evidence now records whether an
 observation *corroborated*, separately from its exit status. The two are not
@@ -158,6 +174,8 @@ proves nothing.
 - `cargo test -p optimus-engineering`
 - `cargo test -p optimus-kernel --test dev_run_containment`
 - `cargo test -p optimus-kernel --test dev_run_trust`
+- `cargo test -p optimus-engineering --test phase_catalogue` — a run started in
+  this repository can name every command its phases need
 - `python3 scripts/check-crate-layers.py`
 - `python3 scripts/check-project-bleed.py`
 - `python3 scripts/check-module-size.py`
@@ -169,7 +187,9 @@ proves nothing.
 ### Explicit non-claims (P40)
 
 - No GitHub API access of any kind
-- No impact-selected or differential verification implementation
+- ~~No impact-selected or differential verification implementation~~ — landed
+  in P42 (E42.1–E42.4) ahead of this phase closing, because E40.9 needed the
+  commands to exist before it could name them
 - No model routing changes
 - No merge authority
 
