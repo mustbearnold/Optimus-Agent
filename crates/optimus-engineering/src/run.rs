@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::phase::{DevPhase, EvidenceKind, TransitionError};
+use crate::roles::{check_assertion, Role, RoleError, RoleIdentity};
 
 /// Schema version of the persisted record. A run pinned to an older version
 /// still loads; the phase table it ran under is part of its history.
@@ -52,6 +53,14 @@ pub struct EvidenceItem {
     /// Digest of the captured output, so a large log can be referenced without
     /// being carried in the record.
     pub output_digest: Option<String>,
+    /// Who asserted this, and from which context (program P43).
+    ///
+    /// Command outcomes are the controller's: a command either exited zero or
+    /// it did not, and there is no reasoning to doubt. Everything a model
+    /// *claims* carries the context that claimed it, so a review can be
+    /// checked against the contexts that wrote the patch.
+    #[serde(default = "RoleIdentity::controller")]
+    pub author: RoleIdentity,
     /// Whether the observation came out the way it needed to.
     ///
     /// Not the same as "exited zero". A differential proof runs the new
@@ -65,12 +74,23 @@ pub struct EvidenceItem {
 }
 
 impl EvidenceItem {
-    /// A bare fact with no command behind it — a plan, a set of criteria, an
-    /// approval.
+    /// A bare claim with no command behind it — a plan, a set of criteria,
+    /// findings from a review.
+    ///
+    /// Requires an author, because a claim is exactly the kind of evidence
+    /// whose source matters: nothing about the record itself distinguishes an
+    /// independent review from a model agreeing with its own patch. Command
+    /// outcomes take [`EvidenceItem::observed`] instead and are the
+    /// controller's.
     #[must_use]
-    pub fn stated(kind: EvidenceKind, summary: impl Into<String>) -> EvidenceDraft {
+    pub fn stated_by(
+        author: RoleIdentity,
+        kind: EvidenceKind,
+        summary: impl Into<String>,
+    ) -> EvidenceDraft {
         EvidenceDraft {
             kind,
+            author,
             sha: None,
             command: None,
             exit_status: None,
@@ -123,6 +143,7 @@ impl EvidenceItem {
     ) -> EvidenceDraft {
         EvidenceDraft {
             kind,
+            author: RoleIdentity::controller(),
             sha: Some(sha.into()),
             command: Some(command.into()),
             exit_status: Some(exit_status),
@@ -138,6 +159,7 @@ impl EvidenceItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EvidenceDraft {
     kind: EvidenceKind,
+    author: RoleIdentity,
     sha: Option<String>,
     command: Option<String>,
     exit_status: Option<i32>,
@@ -206,6 +228,8 @@ pub enum RunError {
     Transition(#[from] TransitionError),
     #[error("run is halted in {phase:?}; resume it before recording")]
     Halted { phase: DevPhase },
+    #[error("evidence refused: {0}")]
+    Role(#[from] RoleError),
     #[error("path {path} is outside the run's worktree")]
     OutsideWorktree { path: PathBuf },
     #[error("run has no worktree yet")]
@@ -277,9 +301,23 @@ impl DevTaskRun {
 
     /// Append an observation, stamped with the phase and attempt that produced
     /// it. A halted run records nothing: resume it first.
+    ///
+    /// An **assertion** is also checked against the run's role rules before it
+    /// lands (program P43): the wrong role, or a reviewer that already wrote a
+    /// diff here, is refused rather than logged and ignored. Refusing at
+    /// record time is the whole point — a rule applied later would be
+    /// arguing with a log that already says the patch was reviewed.
+    ///
+    /// A command outcome is not checked, and deliberately so. It carries the
+    /// command, the commit, the exit status and a digest of the output; who
+    /// pressed enter changes none of them. Role rules exist to make a *claim*
+    /// attributable, and `just verify` exiting zero is not a claim.
     pub fn record(&mut self, draft: EvidenceDraft) -> Result<&EvidenceItem, RunError> {
         if self.phase.is_halted() {
             return Err(RunError::Halted { phase: self.phase });
+        }
+        if draft.command.is_none() {
+            check_assertion(&draft.author, draft.kind, self.phase, &self.diff_authors())?;
         }
         let seq = self.evidence.len() as u64 + 1;
         self.evidence.push(EvidenceItem {
@@ -287,6 +325,7 @@ impl DevTaskRun {
             kind: draft.kind,
             phase: self.phase,
             attempt: self.attempt(),
+            author: draft.author,
             sha: draft.sha,
             command: draft.command,
             exit_status: draft.exit_status,
@@ -295,6 +334,22 @@ impl DevTaskRun {
             summary: draft.summary,
         });
         Ok(self.evidence.last().expect("just pushed"))
+    }
+
+    /// Every non-controller context that has produced a diff in this run.
+    ///
+    /// Across all phases and attempts, deliberately: an implementer that wrote
+    /// the patch in `Implement` and touched it again in `Repair` is the same
+    /// author, and a review from it is no more independent the second time.
+    /// The controller is excluded because it is deterministic code applying a
+    /// patch, not a context with an opinion about it.
+    #[must_use]
+    pub fn diff_authors(&self) -> std::collections::BTreeSet<String> {
+        self.evidence
+            .iter()
+            .filter(|item| item.kind == EvidenceKind::Diff && item.author.role != Role::Controller)
+            .map(|item| item.author.context.clone())
+            .collect()
     }
 
     /// Evidence kinds recorded by the current phase in its current attempt that
@@ -477,6 +532,13 @@ mod tests {
         )
     }
 
+    /// A fixture author for each evidence kind: one context per role, so the
+    /// P43 separation rules see genuinely distinct producers.
+    fn author(kind: EvidenceKind) -> RoleIdentity {
+        let role = Role::producing(kind).expect("every kind has a producing role");
+        RoleIdentity::new(role, format!("fixture-{}", role.as_str()))
+    }
+
     #[test]
     fn a_phase_cannot_exit_without_its_evidence() {
         let mut run = run();
@@ -490,8 +552,12 @@ mod tests {
     #[test]
     fn evidence_from_another_phase_does_not_count() {
         let mut run = run();
-        run.record(EvidenceItem::stated(EvidenceKind::ProblemStatement, "p"))
-            .unwrap();
+        run.record(EvidenceItem::stated_by(
+            author(EvidenceKind::ProblemStatement),
+            EvidenceKind::ProblemStatement,
+            "p",
+        ))
+        .unwrap();
         run.advance_to(DevPhase::Triage).unwrap();
         // Triage wants acceptance criteria and a reproduction; the intake
         // statement is recorded but belongs to Intake.
@@ -501,13 +567,25 @@ mod tests {
     #[test]
     fn a_re_entered_phase_starts_with_no_evidence() {
         let mut run = run();
-        run.record(EvidenceItem::stated(EvidenceKind::ProblemStatement, "p"))
-            .unwrap();
+        run.record(EvidenceItem::stated_by(
+            author(EvidenceKind::ProblemStatement),
+            EvidenceKind::ProblemStatement,
+            "p",
+        ))
+        .unwrap();
         run.advance_to(DevPhase::Triage).unwrap();
-        run.record(EvidenceItem::stated(EvidenceKind::AcceptanceCriteria, "a"))
-            .unwrap();
-        run.record(EvidenceItem::stated(EvidenceKind::Reproduction, "r"))
-            .unwrap();
+        run.record(EvidenceItem::stated_by(
+            author(EvidenceKind::AcceptanceCriteria),
+            EvidenceKind::AcceptanceCriteria,
+            "a",
+        ))
+        .unwrap();
+        run.record(EvidenceItem::stated_by(
+            author(EvidenceKind::Reproduction),
+            EvidenceKind::Reproduction,
+            "r",
+        ))
+        .unwrap();
         assert!(run.can_exit_phase());
 
         run.halt(StopKind::HumanInterrupt, "coffee").unwrap();
@@ -523,8 +601,12 @@ mod tests {
     fn attempts_exhausted_blocks_rather_than_looping() {
         let mut run = run();
         // Intake allows one attempt; a second entry must block.
-        run.record(EvidenceItem::stated(EvidenceKind::ProblemStatement, "p"))
-            .unwrap();
+        run.record(EvidenceItem::stated_by(
+            author(EvidenceKind::ProblemStatement),
+            EvidenceKind::ProblemStatement,
+            "p",
+        ))
+        .unwrap();
         run.advance_to(DevPhase::Triage).unwrap();
         run.halt(StopKind::HumanInterrupt, "stop").unwrap();
         run.resume().unwrap();

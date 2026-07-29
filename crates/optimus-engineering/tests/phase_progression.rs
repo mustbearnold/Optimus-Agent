@@ -1,9 +1,16 @@
 //! Program P40 exit gate: the phase table is a gate, not a suggestion.
 
 use optimus_engineering::{
-    DevPhase, DevTaskRun, EvidenceItem, EvidenceKind, RunError, StopKind, TaskOrigin,
-    TransitionError,
+    DevPhase, DevTaskRun, EvidenceItem, EvidenceKind, Role, RoleIdentity, RunError, StopKind,
+    TaskOrigin, TransitionError,
 };
+
+/// A fixture author for each evidence kind, with one context per role so the
+/// P43 separation rules see genuinely distinct producers.
+fn author(kind: EvidenceKind) -> RoleIdentity {
+    let role = Role::producing(kind).expect("every kind has a producing role");
+    RoleIdentity::new(role, format!("fixture-{}", role.as_str()))
+}
 
 fn fresh() -> DevTaskRun {
     DevTaskRun::new(
@@ -21,7 +28,8 @@ fn drive_to(run: &mut DevTaskRun, target: DevPhase) {
     while run.phase != target {
         for kind in run.phase.contract().required_evidence {
             if !run.satisfied_evidence().contains(kind) {
-                run.record(EvidenceItem::stated(*kind, "fixture")).unwrap();
+                run.record(EvidenceItem::stated_by(author(*kind), *kind, "fixture"))
+                    .unwrap();
             }
         }
         let next =
@@ -136,7 +144,8 @@ fn a_regression_test_that_passes_at_base_is_not_a_differential_proof() {
 fn a_repaired_patch_re_enters_verification_not_review() {
     let mut run = fresh();
     drive_to(&mut run, DevPhase::Review);
-    run.record(EvidenceItem::stated(
+    run.record(EvidenceItem::stated_by(
+        author(EvidenceKind::ReviewFindings),
         EvidenceKind::ReviewFindings,
         "1 major: the fix hides the failure",
     ))
@@ -149,8 +158,12 @@ fn a_repaired_patch_re_enters_verification_not_review() {
         RunError::Transition(TransitionError::NotAllowed { .. })
     ));
 
-    run.record(EvidenceItem::stated(EvidenceKind::Diff, "repaired"))
-        .unwrap();
+    run.record(EvidenceItem::stated_by(
+        author(EvidenceKind::Diff),
+        EvidenceKind::Diff,
+        "repaired",
+    ))
+    .unwrap();
     run.advance_to(DevPhase::FocusedVerify).unwrap();
     assert_eq!(run.phase, DevPhase::FocusedVerify);
     // The re-entered verification starts empty: the earlier green run belongs
@@ -172,7 +185,8 @@ fn publication_authority_belongs_to_exactly_one_phase() {
 #[test]
 fn a_rejected_issue_is_abandoned_with_a_reason() {
     let mut run = fresh();
-    run.record(EvidenceItem::stated(
+    run.record(EvidenceItem::stated_by(
+        author(EvidenceKind::ProblemStatement),
         EvidenceKind::ProblemStatement,
         "vague",
     ))

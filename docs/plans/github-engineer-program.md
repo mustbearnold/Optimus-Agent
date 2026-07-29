@@ -13,6 +13,7 @@ watches:
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
+  - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
 covers:
   - docs/plans/github-engineer-program.md
 depends_on:
@@ -23,6 +24,7 @@ depends_on:
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
+  - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
   - docs/plans/reliability-autonomy-program.md
   - docs/plans/product-complete-program.md
 validated_by:
@@ -104,7 +106,7 @@ GitHub`), never the mechanism (`Allow shell command?`).
 | **program P40** | Isolated, durable, phased engineering runs | **in progress** |
 | **program P41** | Repository policy resolution + issue triage | **in progress** |
 | **program P42** | Fast informative verification: impact selection + differential regression | **in progress** (E42.1–E42.4 done) |
-| **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | pending |
+| **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | **in progress** (E43.4–E43.6 done) |
 | **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | pending |
 | **program P45** | Feedback ingestion + durable recovery and replay | pending |
 | **program P46** | Anti-weakening enforcement + historical-task benchmark → GITHUB-ENGINEER-V1 | pending |
@@ -325,14 +327,47 @@ again. Recorded in
 | E43.1 | pending | Read-only repository navigator producing the impact map |
 | E43.2 | pending | Implementer with project write authority, no push/merge/approve |
 | E43.3 | pending | Test specialist: adversarial regression coverage, confirms the test catches the original failure |
-| E43.4 | pending | Independent reviewer, read-only, structured findings with severity and evidence |
-| E43.5 | pending | Controller owns phase, budget and policy; writes no implementation code |
-| E43.6 | pending | Model routing table: high effort for root cause / architecture / final review; medium for normal implementation; cheap for classification and summarization; deterministic code for all authority |
+| E43.4 | ✅ done | Independent reviewer, read-only, structured findings with severity and evidence |
+| E43.5 | ✅ done | Controller owns phase, budget and policy; writes no implementation code |
+| E43.6 | ✅ done | Model routing table: high effort for root cause / architecture / final review; medium for normal implementation; cheap for classification and summarization; deterministic code for all authority |
+
+E43.4–E43.6 are the *boundary*, not the agents that fill it.
+[ADR-0056](../decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md)
+turns "the implementation model does not approve its own patch" from a sentence
+in ADR-0052 into a refusal inside `DevTaskRun::record`. Asserted evidence now
+carries the role **and the context** that asserted it; `ReviewFindings` from a
+context that produced a `Diff` in the same run is refused before it reaches the
+log, and the set of diff authors accumulates, so a repair author is still an
+author when review comes round again. Changing the role label does not help,
+which is the whole point — prompting cannot fix a problem where the instruction
+and the violation are written by the same process.
+
+Command outcomes are exempt, deliberately. `just verify` exiting zero carries
+its command, its commit, its exit status and a digest of its output; who
+pressed enter changes none of them. Drawing the line at "is there a command
+behind this?" puts the check exactly where models enter and nowhere else — and
+it is what lets the rule be strict, because everything it applies to is
+something a model said.
+
+E43.6 lands as `routing_for(phase)` returning a role and an `Effort`, not a
+model name. This crate cannot reach the router and should not: picking a
+provider is the kernel's decision, made with telemetry this crate never sees.
+What the phase table knows — and what a router is missing today — is which work
+is expensive to get wrong.
+
+E43.1–E43.3 are the contexts that fill these roles by calling a model. Until
+they exist, a single-context run *stalls* at `REVIEW` rather than
+self-approving. That is the intended behaviour, and it is visible now rather
+than after a PR claims a review that never happened.
 
 ### Exit gate (P43)
 
-- Implementation and review contexts are provably separate
-- Cost per accepted task recorded by model and task class
+- ✅ Implementation and review contexts are provably separate —
+  `crates/optimus-engineering/tests/role_separation.rs`, 10 tests;
+  `the_context_that_wrote_the_patch_cannot_review_it` and
+  `changing_the_label_does_not_change_the_reasoning` are the two that matter
+- ⬜ Cost per accepted task recorded by model and task class — needs E43.1–E43.3
+  and P42's E42.5 telemetry
 
 ---
 

@@ -4,6 +4,7 @@ status: current
 covers:
   - crates/optimus-engineering/src/lib.rs
   - crates/optimus-engineering/src/catalogue.rs
+  - crates/optimus-engineering/src/roles.rs
   - crates/optimus-engineering/src/command.rs
   - crates/optimus-engineering/src/controller.rs
   - crates/optimus-engineering/src/phase.rs
@@ -21,6 +22,7 @@ depends_on:
 validated_by:
   - crates/optimus-engineering/src/phase.rs
   - crates/optimus-engineering/tests/phase_catalogue.rs
+  - crates/optimus-engineering/tests/role_separation.rs
   - crates/optimus-engineering/tests/phase_progression.rs
   - crates/optimus-engineering/tests/worktree_lifecycle.rs
   - crates/optimus-engineering/tests/resume_after_interrupt.rs

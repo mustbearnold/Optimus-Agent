@@ -24,6 +24,7 @@ pub mod controller;
 pub mod differential;
 pub mod phase;
 pub mod repository;
+pub mod roles;
 pub mod run;
 pub mod worktree;
 
@@ -44,6 +45,7 @@ pub use repository::{
     instruction_files_for, resolve_profile, BranchProtection, DeclaredPolicy, RepositoryError,
     RepositoryPolicyProfile, VerificationCommands,
 };
+pub use roles::{check_assertion, routing_for, Effort, Role, RoleError, RoleIdentity};
 pub use run::{
     digest, DevTaskRun, EvidenceDraft, EvidenceItem, RunBudget, RunError, StopKind, StopReason,
     TaskOrigin, TaskPlan, RECORD_VERSION,

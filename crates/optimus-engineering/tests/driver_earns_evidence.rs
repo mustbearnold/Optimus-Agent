@@ -13,9 +13,16 @@ use std::process::Command;
 use std::time::Duration;
 
 use optimus_engineering::{
-    DevPhase, DevTaskRun, EvidenceItem, EvidenceKind, PhaseStep, ProcessRunner, RunDriver,
-    TaskOrigin, WorktreeManager,
+    DevPhase, DevTaskRun, EvidenceItem, EvidenceKind, PhaseStep, ProcessRunner, Role, RoleIdentity,
+    RunDriver, TaskOrigin, WorktreeManager,
 };
+
+/// A fixture author for each evidence kind, with one context per role so the
+/// P43 separation rules see genuinely distinct producers.
+fn author(kind: EvidenceKind) -> RoleIdentity {
+    let role = Role::producing(kind).expect("every kind has a producing role");
+    RoleIdentity::new(role, format!("fixture-{}", role.as_str()))
+}
 
 fn git(cwd: &Path, args: &[&str]) {
     let out = Command::new("git")
@@ -43,7 +50,8 @@ fn seed_repo(root: &Path) {
 fn satisfy_and_advance(run: &mut DevTaskRun, next: DevPhase) {
     for kind in run.phase.contract().required_evidence {
         if !run.satisfied_evidence().contains(kind) {
-            run.record(EvidenceItem::stated(*kind, "fixture")).unwrap();
+            run.record(EvidenceItem::stated_by(author(*kind), *kind, "fixture"))
+                .unwrap();
         }
     }
     run.advance_to(next).unwrap();
