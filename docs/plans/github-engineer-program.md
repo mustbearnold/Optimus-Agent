@@ -15,6 +15,7 @@ watches:
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
   - docs/decisions/0057-an-issue-earns-its-way-into-a-run.md
+  - docs/decisions/0058-a-run-publishes-the-sentence-a-human-approved.md
 covers:
   - docs/plans/github-engineer-program.md
 depends_on:
@@ -27,6 +28,7 @@ depends_on:
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
   - docs/decisions/0057-an-issue-earns-its-way-into-a-run.md
+  - docs/decisions/0058-a-run-publishes-the-sentence-a-human-approved.md
   - docs/plans/reliability-autonomy-program.md
   - docs/plans/product-complete-program.md
 validated_by:
@@ -109,7 +111,7 @@ GitHub`), never the mechanism (`Allow shell command?`).
 | **program P41** | Repository policy resolution + issue triage | **items done** (E41.1–E41.5; exit-gate measurement waits on E43.1) |
 | **program P42** | Fast informative verification: impact selection + differential regression | **in progress** (E42.1–E42.4 done) |
 | **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | **in progress** (E43.4–E43.6 done) |
-| **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | pending |
+| **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | **in progress** (E44.1–E44.2 done, E44.3 core done) |
 | **program P45** | Feedback ingestion + durable recovery and replay | pending |
 | **program P46** | Anti-weakening enforcement + historical-task benchmark → GITHUB-ENGINEER-V1 | pending |
 
@@ -398,12 +400,44 @@ Expert-level GitHub use, not minimum viable. Precise APIs over scraping:
 
 | ID | Status | Item |
 |---|---|---|
-| E44.1 | pending | Safe branch push behind an explicit consequence-stating approval; never rename or delete a remote PR head (GitHub closes the PR) |
-| E44.2 | pending | Draft-PR creation with head-SHA and repository confirmation; PR number comes from GitHub, is never chosen |
-| E44.3 | pending | PR body from `.github/pull_request_template.md` filled only from recorded run evidence; unsupported claims rejected |
+| E44.1 | ✅ done | Safe branch push behind an explicit consequence-stating approval; never rename or delete a remote PR head (GitHub closes the PR) |
+| E44.2 | ✅ done | Draft-PR creation with head-SHA and repository confirmation; PR number comes from GitHub, is never chosen |
+| E44.3 | core done | PR body from `.github/pull_request_template.md` filled only from recorded run evidence; unsupported claims rejected — evidence-only rendering landed with E44.1/E44.2; template-section mapping still pending |
 | E44.4 | pending | Issue linkage with closing keywords, and canonical labels from `.github/labels.yml` applied to both issue and PR |
 | E44.5 | pending | Read checks, workflow runs and **failed job logs only** (`gh pr checks`, `gh run view --log-failed`) |
 | E44.6 | pending | Classify failures: introduced, flake, environmental, stale — keyed on the head SHA the check ran against |
+
+E44.1/E44.2 land as `delivery.rs`, recorded in
+[ADR-0058](../decisions/0058-a-run-publishes-the-sentence-a-human-approved.md).
+The consequence-stating approval this program's preamble demands now has a
+mechanism: a `PublishPlan` renders its consequence as one sentence — commit,
+branch, repository, base — and the human's yes is recorded as `HumanApproval`
+evidence whose summary **is** that sentence. Publishing refuses unless the
+record holds those exact words, and because the sentence embeds the commit, a
+worktree that moved after approval produces a different sentence and the old
+approval covers nothing. The push itself publishes the approved commit as the
+refspec source (`<sha>:refs/heads/<branch>`), not the branch tip, so there is
+no gap between what was approved and what lands.
+
+**"Never rename or delete a remote PR head" is unconstructible, not
+policed.** The refspec is built, never accepted; a branch name that would
+smuggle a second meaning — a colon, a leading `-` or `+`, emptiness, a
+wildcard — is refused at plan construction with the reason named; there is no
+force field and no delete function. And no receipt is believed on exit status
+alone: `git ls-remote` must report the approved commit at the branch, `gh pr
+view --json` must report that head on the created PR, and only the confirmed
+pair corroborates — the differential-proof shape from P42, applied to effects
+on a forge. The PR number is parsed from GitHub's own output and confirmed
+against `gh pr view`; output without one is a refusal, not a guess.
+
+E44.3's core landed with it: `pr_body.rs` renders the PR body from the run
+record and nowhere else. There is no prose parameter — every claim line cites
+the evidence row that backs it, items that did not corroborate never render as
+achievements, and "unsupported claims rejected" is not a checker but the
+absence of anything to write an unsupported claim with. What remains of E44.3
+is mapping the rendered record onto `.github/pull_request_template.md`'s own
+sections; a template's sections are a request for prose, and filling them
+honestly needs more record structure than a run holds today.
 
 ### Exit gate (P44)
 

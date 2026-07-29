@@ -116,6 +116,33 @@ impl EvidenceItem {
         Self::draft(kind, command, exit_status, sha, output, exit_status == 0)
     }
 
+    /// A command whose exit status alone is not the proof.
+    ///
+    /// The push is the example (program P44): `git push` exiting zero says the
+    /// transport worked. Only the remote reporting the pushed commit at the
+    /// branch tip says the branch is there. So the caller reads the effect
+    /// back, passes what it found, and only the pair — exited zero *and* the
+    /// effect was observed — corroborates. The raw status is still recorded
+    /// either way; the log does not hide a push that half-happened.
+    #[must_use]
+    pub fn observed_confirmed(
+        kind: EvidenceKind,
+        command: impl Into<String>,
+        exit_status: i32,
+        sha: impl Into<String>,
+        output: &[u8],
+        confirmed: bool,
+    ) -> EvidenceDraft {
+        Self::draft(
+            kind,
+            command,
+            exit_status,
+            sha,
+            output,
+            exit_status == 0 && confirmed,
+        )
+    }
+
     /// A command whose **failure** is the point.
     ///
     /// The differential proof: run the new regression test against the base

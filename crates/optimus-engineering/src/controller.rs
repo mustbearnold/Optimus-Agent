@@ -300,20 +300,28 @@ impl<'a, R: CommandRunner> RunDriver<'a, R> {
 
     /// Write captured output where the run record's digest can find it.
     fn store_output(&self, output: &[u8]) -> Result<String, ControllerError> {
-        let digest = crate::run::digest(output);
-        std::fs::create_dir_all(&self.evidence_dir)?;
-        let path = self.evidence_dir.join(format!("{digest}.log"));
-        // Content-addressed, so an identical capture is already correct on
-        // disk and rewriting it would only risk truncating a good file.
-        if !path.exists() {
-            std::fs::write(&path, output)?;
-        }
-        Ok(digest)
+        Ok(store_output(&self.evidence_dir, output)?)
     }
 }
 
+/// Write captured output under `evidence_dir`, named by its digest, so the
+/// digests in the run record point at bytes that still exist. Shared with
+/// [`crate::delivery`], whose push and PR receipts keep their logs the same
+/// way a phase step does.
+pub(crate) fn store_output(evidence_dir: &Path, output: &[u8]) -> Result<String, std::io::Error> {
+    let digest = crate::run::digest(output);
+    std::fs::create_dir_all(evidence_dir)?;
+    let path = evidence_dir.join(format!("{digest}.log"));
+    // Content-addressed, so an identical capture is already correct on
+    // disk and rewriting it would only risk truncating a good file.
+    if !path.exists() {
+        std::fs::write(&path, output)?;
+    }
+    Ok(digest)
+}
+
 /// A one-line account of what happened, for a human reading the run record.
-fn describe(outcome: &CommandOutcome) -> String {
+pub(crate) fn describe(outcome: &CommandOutcome) -> String {
     let what = if outcome.timed_out {
         format!("timed out after {}ms", outcome.duration_ms)
     } else {
