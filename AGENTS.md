@@ -188,6 +188,36 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
     merge/release; report known gaps via `report`.
 12. Do not commit, push, publish, install, or deploy unless explicitly asked.
 
+## PR cadence and sizing (mandatory)
+
+Standing delivery contract (owner instruction, 2026-07-29): **many max-quality
+merged PRs per day**. Throughput comes from merge latency, never from thinner
+slices.
+
+- **One session → one PR → merged that session.** Follow-on work in the same
+  session appends to the session's open PR before it merges; never a second
+  open PR per session, never a session that ends with a PR left open silently.
+  If genuinely blocked (red CI, review blocker, absent approver), say so and
+  leave the PR ready-to-merge; the next session merges it **before** starting
+  new work — new work never stacks on an unmerged branch.
+- **The unit is the smallest complete change, not the smallest change.** One
+  intent/decision per PR — in this repository, one ADR ≈ one PR. Self-contained:
+  code + tests + ADR + docs + regenerated Engineering Memory + green gates in
+  the same PR; revertable in one revert. Related program items that share
+  machinery land together; below "independently valuable" is too thin. Size by
+  reviewability of the hand-written core (~200–400 lines); tests and generated
+  files do not count against it.
+- **The cycle:** branch off fresh `main` (`wip/<slug>`) → the unit → push →
+  draft PR → independent fresh-context review and CI in parallel → ready →
+  merge commit (repository precedent) → delete the remote branch (only after
+  merge — deleting the head of an *open* PR closes it; see Naming planes) →
+  prune worktrees and stale branches.
+- This cadence is the standing shape of a delivery request. It does not
+  license commits or pushes in sessions that were not asked to deliver
+  (workflow rule 12).
+- PR #117 (12 commits, +14k lines, 7 ADRs in one PR) is the counterexample
+  this section exists to prevent.
+
 ## Repository conventions
 
 - Rust workspace truth comes from `Cargo.toml` and `cargo metadata`.
