@@ -34,6 +34,26 @@ ui:
 verify:
     @bash scripts/verify.sh all
 
+# --- focused verification (program P42) ---------------------------------------
+
+# What this patch can break, and why. Reports only; runs nothing.
+impact:
+    @python3 scripts/impact_select.py
+
+# Static gates + the tests this patch can actually break (~10s on a leaf crate).
+# Escalates to the whole workspace whenever the selector cannot prove a
+# narrower answer, so a green `dev-check` is never narrower than the truth.
+dev-check:
+    @bash scripts/verify.sh gates
+    @python3 scripts/impact_select.py
+    @cargo test $(python3 scripts/impact_select.py --cargo-args) --all-targets
+
+# Impact-selected tests only, no gates. Fails when nothing is selected: "no
+# tests ran" and "the tests passed" are different sentences.
+test-changed:
+    @python3 scripts/impact_select.py --require-selection
+    @cargo test $(python3 scripts/impact_select.py --cargo-args) --all-targets
+
 # Real-model smoke: real Codex through the host and the TUI pty. Spends
 # tokens; needs the installed home's credential. Release / live-surface gate.
 live:

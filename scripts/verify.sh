@@ -194,6 +194,7 @@ tier_gates() {
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
+  spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
@@ -386,6 +387,7 @@ tier_all() {
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
+  spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py

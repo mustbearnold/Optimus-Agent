@@ -11,6 +11,7 @@ watches:
   - scripts/github_pr_branch.py
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
+  - docs/decisions/0054-a-selector-may-only-over-select.md
 covers:
   - docs/plans/github-engineer-program.md
 depends_on:
@@ -19,6 +20,7 @@ depends_on:
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
+  - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/plans/reliability-autonomy-program.md
   - docs/plans/product-complete-program.md
 validated_by:
@@ -85,8 +87,8 @@ prerequisites for P40's exit, not separate work:
 
 | ID | Status | Item |
 |---|---|---|
-| R30.5 | pending | Durable project trust grant store (outside repo) |
-| R30.6 | pending | Structured package-manager capabilities |
+| R30.5 | **done** | Durable project trust grant store (outside repo) |
+| R30.6 | **done** | Structured package-manager capabilities |
 | R30.7 | pending | Owned-localhost network lease |
 | R30.8 | pending | Product release defaults without breaking offline tests |
 
@@ -99,7 +101,7 @@ GitHub`), never the mechanism (`Allow shell command?`).
 |---|---|---|
 | **program P40** | Isolated, durable, phased engineering runs | **in progress** |
 | **program P41** | Repository policy resolution + issue triage | **in progress** |
-| **program P42** | Fast informative verification: impact selection + differential regression | pending |
+| **program P42** | Fast informative verification: impact selection + differential regression | **in progress** |
 | **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | pending |
 | **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | pending |
 | **program P45** | Feedback ingestion + durable recovery and replay | pending |
@@ -227,25 +229,57 @@ validation — a field that cannot be written cannot be abused.
 
 ## program P42 — Fast, informative verification
 
-A slow gate reduces useful development cycles per day.
+A slow gate reduces useful development cycles per day. The decision and its
+four rules are recorded in
+[ADR-0054](../decisions/0054-a-selector-may-only-over-select.md).
 
 ### Microtasks
 
 | ID | Status | Item |
 |---|---|---|
-| E42.1 | pending | `just dev-check` — very fast static and targeted checks |
-| E42.2 | pending | `just test-changed` — impact-selected tests for the current patch |
-| E42.3 | pending | Impact engine: changed symbol → importers → package → unit/integration/UI tests |
+| E42.1 | **done** | `just dev-check` — static gates plus the tests this patch can break. `just impact` reports the selection without running anything |
+| E42.2 | **done** | `just test-changed` — impact-selected tests, non-zero when nothing is selected |
+| E42.3 | **done** | Impact engine (`scripts/impact_select.py`): changed path → package → reverse-dependency closure → packages and non-cargo suites |
 | E42.4 | pending | Differential regression verification: prove the new test fails at base SHA and passes on the patch |
 | E42.5 | pending | Per-stage duration and failure-rate telemetry |
 | E42.6 | pending | Cache work: `sccache`, shared cargo/npm caches, reused Playwright browsers |
 
+**Over-selection is the only safe error (E42.3).** A selector that runs too
+much costs seconds. A selector that runs too little reports *success* from a
+run that never executed the failing test — the signal and the bug are
+indistinguishable from outside. So an unclassified path escalates to the whole
+workspace, one unclassified path escalates the whole plan, and a change to the
+justfile, `verify.sh`, any `check-*.py`, the selector itself, the manifests or
+`.github/**` always selects everything. The cheapest way to make a patch pass
+must not be to edit the thing that decides what passing means.
+
+**Nothing selected is not a pass (E42.2).** An empty selection reports
+`nothing-selected` and exits non-zero under `--require-selection`. This is
+P41's *absent is not satisfied* one layer down: "no tests ran" and "the tests
+passed" are different sentences.
+
+**Impact is read, not remembered (E42.3).** The closure is computed by
+inverting the workspace manifests, including dev- and build-dependencies, so a
+change to `optimus-store` reaches `optimus-cli` without anything stating that
+path. A hand-maintained table would be correct the day it was written and wrong
+thereafter — `.engineering-memory/source-to-test-map.json` says as much in its
+own `limitations` field.
+
+**`just verify` is untouched.** Focused verification serves the inner loop; the
+pre-push hook still runs all 38 checks. A wrong answer in the selector costs
+cycles, never a missed regression at the boundary that matters.
+
 ### Exit gate (P42)
 
-- `just test-changed` selects a superset of the tests that actually fail for a
-  seeded regression, across ten seeded cases
-- Median focused-verification wall time recorded and lower than `just test`
-- Differential verification refuses a "fix" whose test also passes at base SHA
+- ✅ `just test-changed` selects a superset of the tests that actually fail for
+  a seeded regression, across ten seeded cases —
+  `test_every_seeded_regression_is_selected`, plus the exhaustive
+  `test_every_workspace_package_selects_itself`
+- ✅ Median focused-verification wall time recorded and lower than `just test` —
+  warm cache, `cargo test -p optimus-engineering --all-targets` **0.67s**
+  against `cargo test --workspace --all-targets` **24.9s**
+- ⬜ Differential verification refuses a "fix" whose test also passes at base
+  SHA (E42.4)
 
 ---
 
