@@ -21,6 +21,7 @@
 pub mod command;
 pub mod controller;
 pub mod phase;
+pub mod repository;
 pub mod run;
 pub mod worktree;
 
@@ -32,6 +33,10 @@ pub use controller::{
     ControllerError, DriveOutcome, PhaseStep, RunDriver, StepOutcome, DEFAULT_STEP_TIMEOUT,
 };
 pub use phase::{DevPhase, EvidenceKind, PhaseAuthority, PhaseContract, TransitionError};
+pub use repository::{
+    instruction_files_for, resolve_profile, BranchProtection, DeclaredPolicy, RepositoryError,
+    RepositoryPolicyProfile, VerificationCommands,
+};
 pub use run::{
     digest, DevTaskRun, EvidenceDraft, EvidenceItem, RunBudget, RunError, StopKind, StopReason,
     TaskOrigin, TaskPlan, RECORD_VERSION,

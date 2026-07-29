@@ -10,6 +10,7 @@ watches:
   - justfile
   - scripts/github_pr_branch.py
   - docs/decisions/0052-isolated-durable-engineering-runs.md
+  - docs/decisions/0053-a-repository-is-asked-not-assumed.md
 covers:
   - docs/plans/github-engineer-program.md
 depends_on:
@@ -17,6 +18,7 @@ depends_on:
   - docs/decisions/0033-multi-agent-dag-execution.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
   - docs/decisions/0052-isolated-durable-engineering-runs.md
+  - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/plans/reliability-autonomy-program.md
   - docs/plans/product-complete-program.md
 validated_by:
@@ -96,7 +98,7 @@ GitHub`), never the mechanism (`Allow shell command?`).
 | Phase | Goal | Status |
 |---|---|---|
 | **program P40** | Isolated, durable, phased engineering runs | **in progress** |
-| **program P41** | Repository policy resolution + issue triage | pending |
+| **program P41** | Repository policy resolution + issue triage | **in progress** |
 | **program P42** | Fast informative verification: impact selection + differential regression | pending |
 | **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | pending |
 | **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | pending |
@@ -124,7 +126,7 @@ This phase builds the spine.
 | E40.6 | **done** | Durable persistence + `resume` from last checkpoint after process restart |
 | E40.7 | partial | R30.5 + R30.6 landed; R30.7 (localhost lease) and R30.8 (release defaults) still open |
 | E40.8 | **done** | `RunDriver` drives a run through the table, recording evidence from real commands |
-| E40.9 | pending | Phase step catalogue: the actual `just` commands each phase runs (needs `test-changed`, P42) |
+| E40.9 | pending | Phase step catalogue: the actual commands each phase runs. Now sourced from `RepositoryPolicyProfile::verification` (E41.3) rather than hard-coded; still wants `test-changed` (P42) for the focused depth |
 
 **What E40.7 gives a run, and what it deliberately withholds.** A run inside a
 worktree the user already authorized no longer pauses on every ordinary write:
@@ -171,23 +173,55 @@ proves nothing.
 
 ## program P41 — Repository policy resolution + issue triage
 
-Stop reconstructing repository facts inside prompts.
+Stop reconstructing repository facts inside prompts. The decision and its three
+honesty rules are recorded in
+[ADR-0053](../decisions/0053-a-repository-is-asked-not-assumed.md).
 
 ### Microtasks
 
 | ID | Status | Item |
 |---|---|---|
-| E41.1 | pending | `RepositoryPolicyProfile`: default branch, branch rules, required checks, PR template, merge policy, code ownership. An **absent** protection ruleset resolves to "unprotected", recorded as such — never silently to "satisfied" |
-| E41.2 | pending | Resolve effective `AGENTS.md` set and sensitive-file list into the profile |
-| E41.3 | pending | Resolve focused and full verification commands into the profile |
+| E41.1 | **done** | `RepositoryPolicyProfile`: default branch, three-state protection, required checks, PR template. An **absent** ruleset resolves to `Unprotected` — recorded as such, never silently to "satisfied" |
+| E41.2 | **done** | Effective `AGENTS.md`/`CLAUDE.md` chain and sensitive-path floor resolved into the profile |
+| E41.3 | **done** | Focused and full verification commands resolved into the profile |
 | E41.4 | pending | `TRIAGE` output contract: problem statement, evidence, acceptance criteria, owning components, relevant tests, risk class, change scope, stop condition |
 | E41.5 | pending | Reject or split issues that are too vague or too large, with a recorded reason |
 
+**Three states, not two (E41.1).** `Unprotected` means the forge answered and
+there is no ruleset. `Unknown` means the forge was not reachable — no `gh`, no
+network, expired token, insufficient permission. Collapsing the second into the
+first is how an expired token becomes a green light, so a non-404 failure never
+resolves to "unprotected" and `required_checks()` is empty for `Unknown` without
+that emptiness reading as "nothing is required".
+
+**A repository cannot weaken its own floor (E41.2).** Declared configuration is
+*unioned* with the built-in sensitive set — `.github/**`, `scripts/verify.sh`,
+`scripts/check-*.py`, the justfile, every `AGENTS.md`/`CLAUDE.md`, `.optimus/**`,
+key and env files — and can never subtract from it. Otherwise the first thing a
+bad patch does is edit the file that decides whether patches get reviewed. This
+is program P46 §1's protection, enforced at resolution time rather than at
+review time.
+
+**Detection never invents (E41.3).** Declared commands win; otherwise recipes
+are read from the repository's own task runner. If neither yields anything the
+field stays `None` and `unresolved()` says so. A run that reports "verified"
+from a command nobody declared has proven nothing. `focused = []` in
+configuration resolves to no command, not to "no checks needed".
+
+**Nothing here carries authority.** `DeclaredPolicy` can name commands and add
+sensitive paths. It has no field for credentials, outside-project access, or an
+autonomy profile, so ADR-0044 Decision 5 is enforced by the type rather than by
+validation — a field that cannot be written cannot be abused.
+
 ### Exit gate (P41)
 
-- Profile resolves for this repository with zero prompt-reconstructed fields
+- `cargo test -p optimus-engineering --test repository_profile` — 13
+- Profile resolves for this repository with zero prompt-reconstructed fields —
+  **met**: `cargo test -p optimus-engineering --test repository_profile --
+  --ignored` resolves `main` / `Unprotected` / `.github/pull_request_template.md`
+  / `[AGENTS.md, CLAUDE.md]` / `just gates` / `just verify`, `unresolved: []`
 - Ten historical issues produce acceptance criteria a human accepts without edit
-  in at least eight cases
+  in at least eight cases — **pending**, needs E41.4/E41.5
 
 ---
 
