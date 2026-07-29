@@ -172,6 +172,7 @@ impl Fixture {
 struct ForgeStub {
     create_stdout: String,
     view_stdout: String,
+    view_exit: i32,
     calls: Arc<Mutex<Vec<Vec<String>>>>,
 }
 
@@ -180,7 +181,17 @@ impl ForgeStub {
         Self {
             create_stdout: create_stdout.to_string(),
             view_stdout: view_stdout.to_string(),
+            view_exit: 0,
             calls: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+
+    /// A forge that creates the PR and then cannot be asked about it — the
+    /// 502-after-create shape.
+    fn with_failing_view(create_stdout: &str) -> Self {
+        Self {
+            view_exit: 1,
+            ..Self::new(create_stdout, "")
         }
     }
 
@@ -214,22 +225,83 @@ impl CommandRunner for ForgeStub {
             return ProcessRunner.run(cwd, program, args, timeout);
         }
         self.calls.lock().unwrap().push(args.to_vec());
-        let stdout = if args.get(1).map(String::as_str) == Some("create") {
-            self.create_stdout.clone()
+        let (stdout, stderr, exit_code) = if args.get(1).map(String::as_str) == Some("create") {
+            (self.create_stdout.clone(), String::new(), 0)
+        } else if self.view_exit != 0 {
+            (
+                String::new(),
+                "HTTP 502 Bad Gateway".to_string(),
+                self.view_exit,
+            )
         } else {
-            self.view_stdout.clone()
+            (self.view_stdout.clone(), String::new(), 0)
         };
         Ok(CommandOutcome {
             program: program.to_string(),
             args: args.to_vec(),
-            exit_code: Some(0),
+            exit_code: Some(exit_code),
             stdout: stdout.into_bytes(),
-            stderr: Vec::new(),
+            stderr: stderr.into_bytes(),
             stdout_truncated: false,
             stderr_truncated: false,
             timed_out: false,
             duration_ms: 1,
         })
+    }
+}
+
+/// Real commands, except `git ls-remote`: answers with a commit the remote
+/// does not hold. Exists to prove the read-back is load-bearing — a runner
+/// that lied here must not produce a believed receipt.
+#[derive(Clone)]
+struct LyingLsRemote;
+
+impl CommandRunner for LyingLsRemote {
+    fn run(
+        &self,
+        cwd: &Path,
+        program: &str,
+        args: &[String],
+        timeout: Duration,
+    ) -> Result<CommandOutcome, CommandError> {
+        if program == "git" && args.first().map(String::as_str) == Some("ls-remote") {
+            return Ok(CommandOutcome {
+                program: program.to_string(),
+                args: args.to_vec(),
+                exit_code: Some(0),
+                stdout: b"beef00000000000000000000000000000000beef\trefs/heads/wip/fix-86\n"
+                    .to_vec(),
+                stderr: Vec::new(),
+                stdout_truncated: false,
+                stderr_truncated: false,
+                timed_out: false,
+                duration_ms: 1,
+            });
+        }
+        ProcessRunner.run(cwd, program, args, timeout)
+    }
+}
+
+/// Real commands, except that `git push` reports failure *after* really
+/// pushing — the client killed by a timeout or a dropped connection once the
+/// objects had already landed.
+#[derive(Clone)]
+struct DyingPushClient;
+
+impl CommandRunner for DyingPushClient {
+    fn run(
+        &self,
+        cwd: &Path,
+        program: &str,
+        args: &[String],
+        timeout: Duration,
+    ) -> Result<CommandOutcome, CommandError> {
+        let mut outcome = ProcessRunner.run(cwd, program, args, timeout)?;
+        if program == "git" && args.first().map(String::as_str) == Some("push") {
+            outcome.exit_code = Some(1);
+            outcome.stderr = b"fatal: the remote end hung up unexpectedly".to_vec();
+        }
+        Ok(outcome)
     }
 }
 
@@ -390,20 +462,20 @@ fn the_pr_number_is_githubs_and_the_request_is_pinned_to_the_repository() {
         "the number GitHub printed, nothing else"
     );
     let create = stub.call_args("create");
-    for expected in [
-        "--draft",
-        "--repo",
-        REPOSITORY,
-        "--head",
-        "wip/fix-86",
-        "--base",
-        "main",
-    ] {
-        assert!(
-            create.iter().any(|arg| arg == expected),
-            "gh pr create was missing {expected:?}: {create:?}"
-        );
-    }
+    // Pairing, not membership: the value must follow its own flag, or a
+    // swapped `--head main --base wip/fix-86` would pass a token-presence
+    // check while asking the forge for the reverse PR.
+    let value_of = |flag: &str| {
+        let at = create
+            .iter()
+            .position(|arg| arg == flag)
+            .unwrap_or_else(|| panic!("gh pr create was missing {flag:?}: {create:?}"));
+        create[at + 1].as_str()
+    };
+    assert!(create.iter().any(|arg| arg == "--draft"), "{create:?}");
+    assert_eq!(value_of("--repo"), REPOSITORY);
+    assert_eq!(value_of("--head"), "wip/fix-86");
+    assert_eq!(value_of("--base"), "main");
     let item = f.run.evidence.last().unwrap();
     assert_eq!(item.kind, EvidenceKind::DraftPullRequest);
     assert!(item.corroborates);
@@ -558,6 +630,178 @@ fn the_body_handed_to_the_forge_is_the_rendered_record_byte_for_byte() {
         "the divider drifts on resize",
         "the title comes from the task origin"
     );
+}
+
+#[test]
+fn an_approval_planted_before_the_gate_asks_does_not_authorize() {
+    let f = ready_to_publish("t-planted");
+    let plan = f.plan();
+
+    let mut run = DevTaskRun::new(
+        "t-planted-inner",
+        TaskOrigin::Request { text: "x".into() },
+        &f.repo,
+    );
+    run.branch = Some("wip/fix-86".into());
+    for next in [
+        DevPhase::Triage,
+        DevPhase::Investigate,
+        DevPhase::Plan,
+        DevPhase::PrepareWorktree,
+        DevPhase::Implement,
+    ] {
+        satisfy_and_advance(&mut run, next);
+    }
+    // The exact consequence sentence, planted while the run is implementing —
+    // long before the gate asks a human anything. The words are right; the
+    // row is not the gate's.
+    run.record(plan.approval_draft()).unwrap();
+    for next in [
+        DevPhase::FocusedVerify,
+        DevPhase::Review,
+        DevPhase::FullVerify,
+        DevPhase::ReadyToPublish,
+        DevPhase::Published,
+    ] {
+        satisfy_and_advance(&mut run, next);
+    }
+
+    let mut publisher = Publisher::new(&mut run, ProcessRunner, &f.repo, &f.evidence_dir);
+    let refused = publisher
+        .push(&plan)
+        .expect_err("a planted sentence is not the gate's answer");
+    assert!(
+        matches!(refused, DeliveryError::Unapproved { .. }),
+        "{refused}"
+    );
+    assert_eq!(f.remote_tip(), None, "nothing may have reached the remote");
+}
+
+#[test]
+fn a_lying_read_back_cannot_make_a_push_believed() {
+    let mut f = ready_to_publish("t-lying-remote");
+    let plan = f.plan();
+    let head = f.head();
+    f.approve_and_enter_published(&plan);
+
+    let mut publisher = Publisher::new(&mut f.run, LyingLsRemote, &f.repo, &f.evidence_dir);
+    let refused = publisher
+        .push(&plan)
+        .expect_err("a read-back that disagrees is a refusal");
+    assert!(
+        matches!(refused, DeliveryError::PushUnconfirmed { .. }),
+        "{refused}"
+    );
+    // The push itself really landed — the *belief* is what must not follow.
+    assert_eq!(f.remote_tip().as_ref(), Some(&head));
+    let item = f.run.evidence.last().unwrap();
+    assert_eq!(item.kind, EvidenceKind::PushReceipt);
+    assert!(!item.corroborates, "an unconfirmed push satisfies nothing");
+    assert!(!f.run.can_exit_phase());
+}
+
+#[test]
+fn a_push_that_lands_while_its_client_dies_is_recorded_as_landed() {
+    let mut f = ready_to_publish("t-dying-client");
+    let plan = f.plan();
+    let head = f.head();
+    f.approve_and_enter_published(&plan);
+
+    let mut publisher = Publisher::new(&mut f.run, DyingPushClient, &f.repo, &f.evidence_dir);
+    let error = publisher
+        .push(&plan)
+        .expect_err("no receipt without belief");
+    assert!(
+        matches!(error, DeliveryError::PushLandedClientFailed { .. }),
+        "a landed push must not be reported as refused: {error}"
+    );
+    assert_eq!(
+        f.remote_tip().as_ref(),
+        Some(&head),
+        "the branch is live on the remote"
+    );
+    let item = f.run.evidence.last().unwrap();
+    assert_eq!(item.kind, EvidenceKind::PushReceipt);
+    assert!(!item.corroborates);
+    assert!(
+        item.summary.contains("the branch is live"),
+        "the record must say what actually happened: {}",
+        item.summary
+    );
+}
+
+#[test]
+fn a_refused_push_records_what_the_remote_already_held() {
+    let mut f = ready_to_publish("t-non-ff");
+    // The remote branch already exists — then the local history is rewritten,
+    // so the approved commit is not a fast-forward of what the remote holds.
+    let first = f.head();
+    git(
+        &f.repo,
+        &[
+            "push",
+            "--quiet",
+            "origin",
+            &format!("{first}:refs/heads/wip/fix-86"),
+        ],
+    );
+    git(
+        &f.repo,
+        &["commit", "--amend", "--quiet", "-m", "rewritten"],
+    );
+    let plan = f.plan();
+    f.approve_and_enter_published(&plan);
+
+    let mut publisher = Publisher::new(&mut f.run, ProcessRunner, &f.repo, &f.evidence_dir);
+    let refused = publisher
+        .push(&plan)
+        .expect_err("git refuses a non-fast-forward without force");
+    assert!(
+        matches!(refused, DeliveryError::PushRefused { .. }),
+        "{refused}"
+    );
+    assert_eq!(
+        f.remote_tip().as_ref(),
+        Some(&first),
+        "the remote ref must be untouched"
+    );
+    let item = f.run.evidence.last().unwrap();
+    assert_eq!(item.kind, EvidenceKind::PushReceipt);
+    assert!(!item.corroborates);
+    assert!(
+        item.summary.contains("remote holds"),
+        "the refusal row names what the remote reported: {}",
+        item.summary
+    );
+}
+
+#[test]
+fn a_created_pr_whose_confirmation_fails_is_still_on_the_record() {
+    let mut f = ready_to_publish("t-502");
+    let plan = f.plan();
+    f.approve_and_enter_published(&plan);
+
+    let stub = ForgeStub::with_failing_view(&format!("https://github.com/{REPOSITORY}/pull/122\n"));
+    let mut publisher = Publisher::new(&mut f.run, stub, &f.repo, &f.evidence_dir);
+    publisher.push(&plan).expect("push first");
+    let error = publisher
+        .create_draft_pr(&plan)
+        .expect_err("an unconfirmable PR is no receipt");
+    assert!(
+        matches!(error, DeliveryError::ForgeAnswerUnreadable { .. }),
+        "{error}"
+    );
+    // The PR exists on the forge. The record must say so — otherwise a retry
+    // would open a second one for work that already has a PR.
+    let item = f.run.evidence.last().unwrap();
+    assert_eq!(item.kind, EvidenceKind::DraftPullRequest);
+    assert!(!item.corroborates, "unconfirmed, so it satisfies nothing");
+    assert!(
+        item.summary.contains("PR #122 created"),
+        "the row names the PR that exists without a believed receipt: {}",
+        item.summary
+    );
+    assert!(!f.run.can_exit_phase());
 }
 
 #[test]

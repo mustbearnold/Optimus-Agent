@@ -3,6 +3,7 @@ knowledge_type: decision
 status: current
 covers:
   - crates/optimus-engineering/src/delivery.rs
+  - crates/optimus-engineering/src/publish_plan.rs
   - crates/optimus-engineering/src/pr_body.rs
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
@@ -50,9 +51,9 @@ Two smaller facts with the same shape:
 
 ## Decision
 
-Publication is deterministic code — authority and effects in `delivery.rs`,
-body rendering in `pr_body.rs` — and every rule is a type or a refusal rather
-than an instruction:
+Publication is deterministic code — the plan stated in `publish_plan.rs`,
+authority and effects in `delivery.rs`, body rendering in `pr_body.rs` — and
+every rule is a type or a refusal rather than an instruction:
 
 1. **The approval is a sentence, and the record holds it.** A
    [`PublishPlan`] renders its consequence exactly once:
@@ -185,9 +186,69 @@ real bare remote with real `git push`; only `gh` is stubbed:
 - the body handed to `gh` is byte-identical to the rendered record
 - with both receipts confirmed, `Published` exits to `WaitingForCi`
 
-Plus unit tests in `delivery.rs` for branch/SHA/refspec validation, forge-URL
-parsing, PR-number parsing and consequence rendering, and in `pr_body.rs` for
-body and title rendering.
+- an approval recorded before the gate asked does not authorize the push
+- a lying read-back cannot make a push believed
+- a push that lands while its client dies is recorded as landed
+- a refused push records what the remote already held
+- a created PR whose confirmation fails is still on the record
+
+Plus unit tests in `publish_plan.rs` for branch/remote/repository/SHA/refspec
+validation, forge-URL parsing and consequence rendering, in `delivery.rs` for
+PR-number parsing, and in `pr_body.rs` for body and title rendering, the
+final-attempt filter, and markdown escaping of untrusted words.
+
+## Addendum — independent review hardening (2026-07-29)
+
+An independent fresh-context review of the first implementation returned
+**not mergeable** with two blockers and a set of security should-fixes. All
+were adopted the same day; each is now a rule the code enforces, listed here
+so the decision record matches what ships:
+
+1. **Every exit path leaves a record** (blocker). The first implementation
+   recorded evidence only on the confirmed-success path, so a failed push was
+   invisible to the run record — and rule 4's read-back never ran when the
+   client failed, though a dying client is exactly when the remote's state is
+   in doubt. Now `push` reads the remote back on *every* outcome and records a
+   row before returning: a push that landed while its client died is recorded
+   as landed (`PushLandedClientFailed` — the branch is live, blind retry is the
+   wrong recovery), a refused push records what the remote already held, an
+   unanswerable remote is `PushOutcomeUnknown` (unknown, not refused), and a
+   created PR whose confirmation fails records that the PR exists without a
+   believed receipt.
+2. **The approval is scoped to the gate that asked** (blocker). Sentence
+   equality alone let an approval recorded during any earlier phase authorize
+   a later push — a planted row, or an honest one from a superseded attempt.
+   Authorization now additionally requires the row to sit at
+   `ReadyToPublish` at that phase's *current* attempt: the approval answers
+   the gate that asked, not any gate that ever will ask.
+3. **The repository is host-qualified and the sentence shows it.**
+   `owner/name` alone let `evil.example/owner/name` render the same approval
+   sentence as `github.com`'s. The repository field is `host/owner/name`
+   (gh accepts the `HOST/OWNER/NAME` form in `--repo`), parsed from
+   `git remote get-url --push` (the fetch URL can diverge from where a push
+   actually lands), and validated segment-by-segment — 2–3 segments, no
+   leading `-` or `.`, charset pinned — so a crafted URL cannot smuggle words
+   into the sentence a human reads or arguments onto the `gh` command line.
+4. **Config amplification is pinned off.** `push.followTags`,
+   `push.recurseSubmodules` and friends can widen a push beyond its refspec;
+   the built argv now carries `--no-follow-tags --recurse-submodules=no`, so
+   repository config cannot make the push publish more than the sentence said.
+5. **More names are refused at construction:** a remote that is a path
+   (leading `.` or `~` — `git push .` writes the main checkout's refs), a
+   branch equal to the base branch, a branch that is `HEAD` or `@` or carries
+   non-ASCII-graphic characters (bidi overrides can make two branch names
+   render identically), and a PR number not anchored at the URL's end.
+6. **The rendered body defends itself.** Only evidence from each phase's
+   final attempt renders (a superseded green is not a claim about the tree
+   that ships), and untrusted words — issue titles, asserted summaries — are
+   markdown-escaped, so an unterminated `<!--` in any GitHub user's issue
+   title cannot swallow the evidence citations after it.
+7. **The module split is a boundary, not bookkeeping.** The 800-line gate
+   forced `publish_plan.rs` out of `delivery.rs`, and the seam is the
+   decision's own: `publish_plan.rs` states what one publication will do and
+   refuses malformed names; `delivery.rs` executes a stated plan and records
+   what actually happened. Plan fields are private; delivery reads them
+   through accessors and cannot restate the plan.
 
 ## Conditions for reconsideration
 
@@ -202,6 +263,7 @@ body and title rendering.
 
 ## Relevant code
 
+- `crates/optimus-engineering/src/publish_plan.rs`
 - `crates/optimus-engineering/src/delivery.rs`
 - `crates/optimus-engineering/src/pr_body.rs`
 - `crates/optimus-engineering/src/run.rs` (`EvidenceItem::observed_confirmed`)

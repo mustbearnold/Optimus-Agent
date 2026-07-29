@@ -35,7 +35,10 @@ pub fn title_from_origin(origin: &TaskOrigin) -> String {
 /// its sequence number, so a reviewer can hold any sentence against the row
 /// that backs it. Items that did not corroborate — a red run, an unconfirmed
 /// receipt — never render as claims; the record keeps them, the body does not
-/// repeat them as achievements.
+/// repeat them as achievements. Nor does a *superseded* green: only evidence
+/// from each phase's final attempt renders, because a run that repaired and
+/// re-verified must not present the pre-repair attempt's passing runs as
+/// claims about the tree that ships.
 #[must_use]
 pub fn body_from_evidence(run: &DevTaskRun) -> String {
     const SECTIONS: &[(&str, &[EvidenceKind])] = &[
@@ -63,16 +66,25 @@ pub fn body_from_evidence(run: &DevTaskRun) -> String {
         let mut lines: Vec<String> = Vec::new();
         if *heading == "Summary" {
             lines.push(match &run.origin {
-                TaskOrigin::Issue { number, title } => format!("- Issue #{number}: {title}"),
+                TaskOrigin::Issue { number, title } => {
+                    format!("- Issue #{number}: {}", escape_markdown(title.trim()))
+                }
                 TaskOrigin::Request { text } => {
                     format!(
                         "- Requested directly: {}",
-                        text.lines().next().unwrap_or("").trim()
+                        escape_markdown(text.lines().next().unwrap_or("").trim())
                     )
                 }
             });
         }
-        for item in run.evidence.iter().filter(|item| item.corroborates) {
+        let final_attempt = |item: &crate::run::EvidenceItem| {
+            run.phase_attempts.get(&item.phase).copied().unwrap_or(1) == item.attempt
+        };
+        for item in run
+            .evidence
+            .iter()
+            .filter(|item| item.corroborates && final_attempt(item))
+        {
             if !kinds.contains(&item.kind) {
                 continue;
             }
@@ -85,7 +97,7 @@ pub fn body_from_evidence(run: &DevTaskRun) -> String {
                 ),
                 _ => format!(
                     "- {} ({}, evidence {})",
-                    item.summary.lines().next().unwrap_or("(no summary)"),
+                    escape_markdown(item.summary.lines().next().unwrap_or("(no summary)")),
                     item.author.role.as_str(),
                     item.seq
                 ),
@@ -100,6 +112,24 @@ pub fn body_from_evidence(run: &DevTaskRun) -> String {
         }
     }
     body
+}
+
+/// Backslash-escape the markdown that matters in untrusted text — an issue
+/// title is any GitHub user's words, and an unterminated `<!--` in one would
+/// swallow every line after it, evidence citations included, in the rendered
+/// body while the raw text still carried them. CommonMark honours a backslash
+/// before any ASCII punctuation, so the text stays readable and stops being
+/// markup.
+fn escape_markdown(text: &str) -> String {
+    text.chars()
+        .flat_map(|c| {
+            let escape = matches!(
+                c,
+                '\\' | '`' | '*' | '_' | '{' | '}' | '[' | ']' | '<' | '>' | '#' | '@' | '|'
+            );
+            escape.then_some('\\').into_iter().chain(std::iter::once(c))
+        })
+        .collect()
 }
 
 /// Twelve characters of a SHA for prose; enough to find, short enough to read.
@@ -175,6 +205,69 @@ mod tests {
         );
         // Sections with nothing corroborated do not appear at all.
         assert!(!body.contains("## Review"), "{body}");
+    }
+
+    #[test]
+    fn a_superseded_attempts_green_run_is_not_a_claim() {
+        let mut run = DevTaskRun::new(
+            "t-attempts",
+            TaskOrigin::Request { text: "fix".into() },
+            "/repo",
+        );
+        run.phase = DevPhase::FullVerify;
+        run.phase_attempts.insert(DevPhase::FullVerify, 1);
+        run.record(EvidenceItem::observed(
+            E::FullVerification,
+            "just verify --first-attempt",
+            0,
+            SHA,
+            b"green, then superseded",
+        ))
+        .unwrap();
+        // The phase is re-entered: repair happened, and the old green is about
+        // a tree that no longer exists.
+        run.phase_attempts.insert(DevPhase::FullVerify, 2);
+        run.record(EvidenceItem::observed(
+            E::FullVerification,
+            "just verify --second-attempt",
+            0,
+            SHA,
+            b"green at the tree that ships",
+        ))
+        .unwrap();
+
+        let body = body_from_evidence(&run);
+        assert!(body.contains("--second-attempt"), "{body}");
+        assert!(
+            !body.contains("--first-attempt"),
+            "a superseded green must not render as a claim: {body}"
+        );
+    }
+
+    #[test]
+    fn untrusted_words_render_as_text_not_markup() {
+        let run = DevTaskRun::new(
+            "t-escape",
+            TaskOrigin::Issue {
+                number: 7,
+                title: "crash <!-- @everyone see `rm -rf` [here](x)".into(),
+            },
+            "/repo",
+        );
+        let body = body_from_evidence(&run);
+        // `\<` cannot open an HTML block, so an unterminated comment in a
+        // title cannot swallow the evidence lines after it.
+        assert!(
+            body.contains(r"crash \<!--"),
+            "the '<' must be escaped where the title enters the body: {body}"
+        );
+        assert!(
+            !body.contains("crash <!--"),
+            "the raw markup must not survive: {body}"
+        );
+        assert!(body.contains(r"\@everyone"), "{body}");
+        assert!(body.contains(r"\`rm -rf\`"), "{body}");
+        assert!(body.contains(r"\[here\](x)"), "{body}");
     }
 
     #[test]

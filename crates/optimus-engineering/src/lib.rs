@@ -25,6 +25,7 @@ pub mod delivery;
 pub mod differential;
 pub mod phase;
 pub mod pr_body;
+pub mod publish_plan;
 pub mod repository;
 pub mod roles;
 pub mod run;
@@ -39,16 +40,14 @@ pub use command::{
 pub use controller::{
     ControllerError, DriveOutcome, PhaseStep, RunDriver, StepOutcome, DEFAULT_STEP_TIMEOUT,
 };
-pub use delivery::{
-    parse_forge_repository, parse_pr_number, plan_publish, DeliveryError, DraftPrReceipt,
-    PublishPlan, Publisher, PushReceipt,
-};
+pub use delivery::{parse_pr_number, DeliveryError, DraftPrReceipt, Publisher, PushReceipt};
 pub use differential::{
     DifferentialError, DifferentialProof, DifferentialProver, DifferentialRequest,
     DifferentialVerdict,
 };
 pub use phase::{DevPhase, EvidenceKind, PhaseAuthority, PhaseContract, TransitionError};
 pub use pr_body::{body_from_evidence, title_from_origin};
+pub use publish_plan::{parse_forge_repository, plan_publish, PublishPlan};
 pub use repository::{
     instruction_files_for, resolve_profile, BranchProtection, DeclaredPolicy, RepositoryError,
     RepositoryPolicyProfile, VerificationCommands,
