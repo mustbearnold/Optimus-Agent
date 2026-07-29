@@ -20,6 +20,7 @@
 
 pub mod command;
 pub mod controller;
+pub mod differential;
 pub mod phase;
 pub mod repository;
 pub mod run;
@@ -31,6 +32,10 @@ pub use command::{
 };
 pub use controller::{
     ControllerError, DriveOutcome, PhaseStep, RunDriver, StepOutcome, DEFAULT_STEP_TIMEOUT,
+};
+pub use differential::{
+    DifferentialError, DifferentialProof, DifferentialProver, DifferentialRequest,
+    DifferentialVerdict,
 };
 pub use phase::{DevPhase, EvidenceKind, PhaseAuthority, PhaseContract, TransitionError};
 pub use repository::{

@@ -75,6 +75,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0052 | Engineering runs are isolated, phased, and resumable (program P40) | Accepted | A development task is a durable object with a base SHA, a dedicated worktree, and a code-enforced phase; the main checkout is never written by a run, and evidence — not assertion — advances a phase. |
 | 0053 | A repository is asked, not assumed (program P41) | Accepted | Default branch, branch protection, verification commands, instruction files, and the sensitive-path floor are resolved from git, the forge, and the tree. Absent is not satisfied; unknown is not absent; a repository cannot weaken its own floor. |
 | 0054 | A test selector may only ever over-select (program P42) | Accepted | Focused verification exists, and every rule is biased toward running too much: unknown escalates, the gate cannot shrink itself, impact is transitive through the manifests, and selecting nothing is not passing. `just verify` is unchanged. |
+| 0055 | A fix is proven at the commit it fixes, or it is not proven (program P42) | Accepted | The regression test runs at the base commit with only the test carried across, and only fail-then-pass proves the fix. A base run that never reached the test is `Inconclusive`, not `NotFixed`. |
 
 ## Known documentary debt
 

@@ -12,6 +12,7 @@ watches:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
+  - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
 covers:
   - docs/plans/github-engineer-program.md
 depends_on:
@@ -21,6 +22,7 @@ depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
+  - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
   - docs/plans/reliability-autonomy-program.md
   - docs/plans/product-complete-program.md
 validated_by:
@@ -101,7 +103,7 @@ GitHub`), never the mechanism (`Allow shell command?`).
 |---|---|---|
 | **program P40** | Isolated, durable, phased engineering runs | **in progress** |
 | **program P41** | Repository policy resolution + issue triage | **in progress** |
-| **program P42** | Fast informative verification: impact selection + differential regression | **in progress** |
+| **program P42** | Fast informative verification: impact selection + differential regression | **in progress** (E42.1–E42.4 done) |
 | **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | pending |
 | **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | pending |
 | **program P45** | Feedback ingestion + durable recovery and replay | pending |
@@ -240,7 +242,7 @@ four rules are recorded in
 | E42.1 | **done** | `just dev-check` — static gates plus the tests this patch can break. `just impact` reports the selection without running anything |
 | E42.2 | **done** | `just test-changed` — impact-selected tests, non-zero when nothing is selected |
 | E42.3 | **done** | Impact engine (`scripts/impact_select.py`): changed path → package → reverse-dependency closure → packages and non-cargo suites |
-| E42.4 | pending | Differential regression verification: prove the new test fails at base SHA and passes on the patch |
+| E42.4 | **done** | Differential regression verification (`DifferentialProver`): the new test runs at the base SHA with only the test carried across, and only fail-then-pass proves the fix |
 | E42.5 | pending | Per-stage duration and failure-rate telemetry |
 | E42.6 | pending | Cache work: `sccache`, shared cargo/npm caches, reused Playwright browsers |
 
@@ -269,6 +271,19 @@ own `limitations` field.
 pre-push hook still runs all 38 checks. A wrong answer in the selector costs
 cycles, never a missed regression at the boundary that matters.
 
+**A green suite is not a proof (E42.4).** It establishes that the tests pass,
+not that any of them would have caught the bug. A regression test that passes
+at the base commit would not have caught it and will not catch its return, and
+every signal from a single-commit run says the patch is good. So the test runs
+at base too — with **only the test** carried across, never the fix, because a
+harness asked to run a test that is not there exits non-zero and that false red
+is the most convincing wrong answer available. Four combinations, four named
+verdicts, one of which proves the fix; and a fifth state, `Inconclusive`, for a
+base run that timed out or did not build. Reading that as a genuine failure
+would manufacture a proof out of a broken build — P41's *unknown is not absent*,
+again. Recorded in
+[ADR-0055](../decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md).
+
 ### Exit gate (P42)
 
 - ✅ `just test-changed` selects a superset of the tests that actually fail for
@@ -278,8 +293,8 @@ cycles, never a missed regression at the boundary that matters.
 - ✅ Median focused-verification wall time recorded and lower than `just test` —
   warm cache, `cargo test -p optimus-engineering --all-targets` **0.67s**
   against `cargo test --workspace --all-targets` **24.9s**
-- ⬜ Differential verification refuses a "fix" whose test also passes at base
-  SHA (E42.4)
+- ✅ Differential verification refuses a "fix" whose test also passes at base
+  SHA — `a_test_that_passes_without_the_fix_is_refused`
 
 ---
 

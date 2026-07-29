@@ -123,6 +123,14 @@ pub trait CommandRunner {
 ///
 /// stdin is closed, so a command that decides to prompt fails instead of
 /// hanging until the deadline.
+///
+/// The child gets its own process group, and the deadline kills the group
+/// rather than the child. Killing only the child looks like it works — the
+/// outcome is correctly marked `timed_out` — and then blocks anyway: a
+/// surviving grandchild still holds the stdout pipe open, so draining it does
+/// not reach EOF until the grandchild exits. `sh -c 'sleep 300'` with a
+/// one-second deadline returns after 300 seconds, with a timeout flag on it.
+/// A deadline that does not bound wall time is not a deadline.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct ProcessRunner;
 
@@ -138,17 +146,22 @@ impl CommandRunner for ProcessRunner {
             return Err(CommandError::MissingCwd(cwd.to_path_buf()));
         }
         let started = Instant::now();
-        let mut child = Command::new(program)
+        let mut command = Command::new(program);
+        command
             .current_dir(cwd)
             .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|source| CommandError::Spawn {
-                program: program.to_string(),
-                source,
-            })?;
+            .stderr(Stdio::piped());
+        #[cfg(unix)]
+        {
+            use std::os::unix::process::CommandExt;
+            command.process_group(0);
+        }
+        let mut child = command.spawn().map_err(|source| CommandError::Spawn {
+            program: program.to_string(),
+            source,
+        })?;
 
         // Drain both pipes on their own threads. Polling for the deadline while
         // a full pipe blocks the child is a deadlock, not a timeout.
@@ -165,7 +178,7 @@ impl CommandRunner for ProcessRunner {
                 Ok(None) => {
                     if Instant::now() >= deadline {
                         timed_out = true;
-                        let _ = child.kill();
+                        kill_group(&mut child);
                         let _ = child.wait();
                         break None;
                     }
@@ -195,6 +208,29 @@ impl CommandRunner for ProcessRunner {
             duration_ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
         })
     }
+}
+
+/// Kill the child and everything it started.
+///
+/// On Unix the child leads its own process group (see [`ProcessRunner`]), so
+/// one signal to the negated pid reaches the whole tree. If the group signal
+/// fails — the group is already gone, or the platform is not Unix — fall back
+/// to killing the child alone, which is strictly better than nothing.
+fn kill_group(child: &mut std::process::Child) {
+    #[cfg(unix)]
+    {
+        let pid = i32::try_from(child.id()).unwrap_or(-1);
+        if pid > 0 {
+            // SAFETY: `kill` with a negated pid signals a process group. The
+            // group is the one this child leads, created at spawn, so nothing
+            // outside this call's own subtree can receive it.
+            let sent = unsafe { libc::kill(-pid, libc::SIGKILL) };
+            if sent == 0 {
+                return;
+            }
+        }
+    }
+    let _ = child.kill();
 }
 
 /// Read to EOF, keeping at most `MAX_CAPTURE_BYTES`.
