@@ -307,6 +307,62 @@ fn canonical_project_root(path: &Path, authority_home: &Path) -> Result<PathBuf>
     Ok(canonical)
 }
 
+/// Narrow an authorized project scope down to one engineering run's checkout
+/// (ADR-0052 §2).
+///
+/// The worktree becomes the run's whole filesystem world: not one root among
+/// several, but the only one. Everything the project authorized stays outside
+/// it, including the main checkout the human is using.
+///
+/// A run cannot widen its own authority this way — the worktree has to already
+/// lie *strictly inside* something the user authorized, so a run record naming
+/// `/etc` or naming the project root itself is refused rather than honoured.
+pub(crate) fn dev_run_scope(
+    scope: &ProjectScope,
+    worktree: &Path,
+    home: &Path,
+) -> Result<ProjectScope> {
+    let canonical = canonical_project_root(worktree, home)?;
+    let contained = scope.roots.iter().any(|root| {
+        let root = fs::canonicalize(root).unwrap_or_else(|_| root.clone());
+        canonical.starts_with(&root) && canonical != root
+    });
+    if !contained {
+        return Err(KernelError::Tool(format!(
+            "engineering worktree {} is not inside an authorized root of project {}",
+            canonical.display(),
+            scope.project_id
+        )));
+    }
+    Ok(ProjectScope {
+        project_id: scope.project_id.clone(),
+        roots: vec![canonical.clone()],
+        primary_root: canonical,
+        updated_unix: scope.updated_unix,
+    })
+}
+
+/// Workspace and filesystem roots for a session bound to a project, optionally
+/// narrowed to one engineering run's checkout.
+pub(crate) fn session_roots(
+    home: &Path,
+    project_id: &str,
+    dev_worktree: Option<&Path>,
+) -> Result<(PathBuf, Vec<PathBuf>)> {
+    let scope = ProjectAuthorityStore::open(home)?
+        .scope(project_id)?
+        .ok_or_else(|| {
+            KernelError::Tool(format!(
+                "project {project_id} has no runtime-authorized root"
+            ))
+        })?;
+    let scope = match dev_worktree {
+        Some(worktree) => dev_run_scope(&scope, worktree, home)?,
+        None => scope,
+    };
+    Ok((scope.primary_root, scope.roots))
+}
+
 fn validate_project_id(project_id: &str) -> Result<()> {
     if project_id.is_empty()
         || project_id.len() > 128

@@ -222,6 +222,34 @@ fn now_ms() -> u64 {
         .unwrap_or(0)
 }
 
+/// ADR-0040: publish agent-domain navigation onto the host coordination bus.
+///
+/// Best-effort by design — coord I/O must never fail the tool turn, so every
+/// failure path here returns quietly rather than propagating. A missing bus,
+/// unparseable tool output, or an empty URL all mean "nothing to record".
+pub(crate) fn record_agent_browser_coord(home: &Path, tool_json: &str, fallback_url: &str) {
+    let Ok(mut bus) = BrowserCoordBus::open(home) else {
+        return;
+    };
+    let v: serde_json::Value = serde_json::from_str(tool_json).unwrap_or(serde_json::Value::Null);
+    let title = v
+        .get("title")
+        .or_else(|| v.get("page_title"))
+        .and_then(|t| t.as_str())
+        .map(|s| s.to_string());
+    let final_url = v
+        .get("final_url")
+        .or_else(|| v.get("url"))
+        .and_then(|u| u.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| fallback_url.to_string());
+    if final_url.is_empty() {
+        return;
+    }
+    let _ = bus.record_agent_navigate(&final_url, title);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

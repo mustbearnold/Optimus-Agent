@@ -3167,6 +3167,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "optimus-engineering"
+version = "0.1.0"
+dependencies = [
+ "globset",
+ "libc",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
 name = "optimus-eval"
 version = "0.1.0"
 dependencies = [

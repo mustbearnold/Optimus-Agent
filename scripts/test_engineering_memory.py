@@ -36,6 +36,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "optimus-browser",
                 "optimus-cli",
                 "optimus-desktop",
+                "optimus-engineering",
                 "optimus-eval",
                 "optimus-graph",
                 "optimus-host",
