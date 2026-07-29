@@ -20,6 +20,8 @@ validated_by:
   - scripts/sync-github-labels.py
   - scripts/github_pr_branch.py
   - scripts/test_github_pr_branch.py
+  - scripts/check-codex-workflow.py
+  - scripts/test_codex_workflow.py
 last_verified_commit: null
 ---
 
@@ -39,11 +41,62 @@ file covers **delivery mechanics only**. Coding agents must load both.
    (e.g. `✨ type:feat`). Exactly one leading emoji.
 2. **Namespaced tokens** — `namespace:value` (lowercase, hyphens in values).
 3. **Conventional Commits** for titles and preferred commit subjects.
-4. **One concern per PR** — prefer a stack of small PRs over `🟪 size:XL`.
+4. **One issue outcome per PR** — prefer independent complete changes over
+   `🟪 size:XL`; do not split below independently valuable.
 5. **Executable evidence** outranks prose (see `AGENTS.md` status legend).
 6. **Do not invent labels ad hoc** — extend `.github/labels.yml` and re-sync.
 7. **Do not conflate planes** — `P##` (program) ≠ `PR #N` (delivery) ≠
    `ADR-NNNN` (decision). See [artifact-naming.md](./artifact-naming.md).
+
+## Codex issue-to-auto-merge loop
+
+For repository changes, Codex follows the sole workflow in `AGENTS.md`:
+
+```text
+Focused issue → Codex plan → isolated worktree → tested change → draft PR
+→ CI + Codex review → gated auto-merge → cleanup
+```
+
+- The issue has `Goal`, `Context`, `Constraints`, and testable `Done when`
+  sections. One Codex task, branch, worktree, and PR own that outcome.
+- `caveman-optimus` is active for implementation and delivery. Plan mode comes
+  first for architecture, ambiguous requirements, or risky changes.
+- Implementation starts from fresh `origin/main` in a dedicated
+  `local/worktrees/<slug>` checkout. The main checkout is never the task writer.
+- Open a draft PR after the first coherent, testable checkpoint. Run CI and
+  request `@codex review` while the PR remains draft; resolve actionable
+  findings and conversations before readiness.
+- For this solo repository, no second human approval is required. When every
+  local and GitHub gate is green, run `gh pr merge --auto --merge` and monitor
+  to `MERGED`. A team repository also honors configured human approvals.
+- Red CI, incomplete Codex review, actionable unresolved findings, merge
+  conflicts, high-risk approval boundaries, or `🚫 status:do-not-merge` block
+  automation. Never weaken or bypass a gate to merge.
+- Public GitHub artifacts must not contain credentials or private information.
+  GitHub push protection is only a backup control.
+
+### Repository enforcement (confirmed 2026-07-29)
+
+The public solo repository has auto-merge, merged-head deletion, secret
+scanning, and push protection enabled. Classic protection on `main` applies to
+administrators and requires:
+
+- a pull request, with zero approving human reviews;
+- the latest branch to pass `just verify (Linux)`;
+- all review conversations to be resolved;
+- no force push and no branch deletion.
+
+The zero-review setting avoids a permanent solo-maintainer block. It does not
+remove the mandatory Codex review and resolution steps above. Team repositories
+set their required approval count to at least one.
+
+Audit the live settings before changing this contract:
+
+```bash
+gh api repos/mustbearnold/Optimus-Agent \
+  --jq '{allow_auto_merge,delete_branch_on_merge,security_and_analysis}'
+gh api repos/mustbearnold/Optimus-Agent/branches/main/protection
+```
 
 ## Label format
 
@@ -226,12 +279,14 @@ open PR on GitHub. Local rename is safe and still matches the PR number in
 ### Recommended workflow (scripted)
 
 ```bash
-# 1) Start work
-git checkout main && git pull
-git checkout -b wip/p12-command-fs-envelope
-# … commits …
+# 1) Start one issue in an isolated worktree
+git fetch origin main
+git worktree add -b wip/p12-command-fs-envelope \
+  local/worktrees/p12-command-fs-envelope origin/main
+cd local/worktrees/p12-command-fs-envelope
+# … inspect, implement, test, commit …
 
-# 2) Push + open PR; rename **local** branch to pr/<N>-…
+# 2) Push + open a draft PR; rename **local** branch to pr/<N>-…
 python3 scripts/github_pr_branch.py open \
   --title "🏗️ architecture: S+++ P12 command capability envelope" \
   --slug p12-command-fs-envelope \
@@ -242,6 +297,13 @@ python3 scripts/github_pr_branch.py open \
   --body-file /tmp/pr-body.md
 # → PR #N opened; local branch becomes pr/N-p12-command-fs-envelope
 # → remote head remains wip/p12-command-fs-envelope
+
+# 3) Request @codex review while CI runs; resolve findings, then make ready
+gh pr comment <N> --body '@codex review'
+gh pr ready <N>
+
+# 4) Queue the merge commit behind repository gates and monitor to MERGED
+gh pr merge <N> --auto --merge
 ```
 
 If the PR already exists:
@@ -320,25 +382,46 @@ For multi-phase work (e.g. S+++ P10 then P11 — **program** phases, not PR #s):
 
 ### Review
 
-- Prefer ≥1 review on `🔐 risk:security` / `💥 risk:breaking` / `⬛ size:L+`
+- Keep the PR draft while required CI and `@codex review` run in parallel.
+- Resolve every actionable Codex finding and GitHub conversation before ready.
+- Repeat review after a material diff change.
+- Require an independent security review on `🔐 risk:security`, SmartDeny, or
+  permission-boundary work; a team repository may additionally require a human
+  approval through branch protection.
 - Architecture peels and SmartDeny changes: call out tests that prove fences
 - Use `🚫 status:do-not-merge` while CI or EM is red
 
 ### Merge style
 
-Prefer **merge commit** or **squash** consistently per stack:
+The default delivery method is GitHub merge-commit auto-merge:
 
-- Single-commit feature branches → squash is fine
-- Multi-commit intentional history → merge commit
+```bash
+gh pr merge <N> --auto --merge
+```
+
+Enable it only after the PR is ready, Codex review is complete, actionable
+findings and conversations are resolved, the branch is current/mergeable,
+`github_pr_branch.py check` passes, and the issue's `Done when` conditions are
+proven. Required CI and repository protection remain the final GitHub gates.
+
+Auto-merge then waits instead of bypassing those gates. Monitor until the PR is
+`MERGED`; if GitHub disables auto-merge or a gate turns red, repair the same PR
+or report the exact blocker. After merge, confirm the issue closed and prune the
+task worktree/local branch. GitHub deletes the remote head automatically.
 
 Never force-push `main`.
 
 ## Issues
 
-- Prefer issue templates (bug / feature / architecture)
+- Use an issue form; blank issues are disabled.
+- Every issue must include `Goal`, `Context`, `Constraints`, and testable
+  `Done when` conditions before implementation.
+- One independently valuable outcome maps to one Codex task, isolated worktree,
+  branch, and PR.
 - Title: `bug: …`, `feat: …`, or `architecture: …`
 - After triage: set `area:*`, `priority:*`, and move off `🔍 status:triage`
 - Close with commit footer `Fixes #n` when the PR lands
+- Never include credentials or private information in public issue content.
 
 ## Syncing labels
 

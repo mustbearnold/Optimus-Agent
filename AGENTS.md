@@ -13,6 +13,26 @@ It is intentionally separate from the product runtime constitution:
 Detailed procedures live under `docs/` and `skills/`. For current architecture,
 start with `docs/architecture/system-overview.md`.
 
+## Repository map (mandatory orientation)
+
+| Path | Authority |
+|---|---|
+| `apps/` | CLI, Rust desktop host, Electron shell, and React workbench |
+| `crates/` | Kernel, agents, workflows, runtime policy, memory, packs, storage, evaluation, and browser libraries |
+| `docs/architecture/` | Current architecture, marks, verification records, and safety boundaries |
+| `docs/contracts/` | Cross-surface and high-risk executable contracts |
+| `docs/decisions/` | Permanent monotonic ADRs |
+| `docs/plans/` | Program and implementation-plan authority |
+| `docs/maps/` | Repository ownership and Engineering Memory maps |
+| `scripts/verify.sh` | Single source of truth for local and CI verification |
+| `.github/` | CI, issue forms, PR template, and repository delivery metadata |
+| `.engineering-memory/` | Generated indexes; never edit these files by hand |
+
+Use [`docs/maps/repository-and-ownership.md`](docs/maps/repository-and-ownership.md)
+for package-level ownership and
+[`docs/architecture/system-overview.md`](docs/architecture/system-overview.md)
+for current behaviour and program pointers.
+
 ## Hard project boundary (mandatory)
 
 When developing Optimus Agent, work is confined to the Optimus project tree.
@@ -70,7 +90,7 @@ Do **not** edit, reorganize, install into, or “clean up”:
    the path and ask; do not touch it.
 4. Keep build artifacts, evidence, and temp outputs under this repo
    (`local/tmp/**` preferred) rather than other project directories.
-5. Treat path containment as a hard gate equal to “do not commit unless asked”.
+5. Treat path containment as a hard gate equal to the delivery gates below.
 
 ## Naming planes (mandatory — humans and coding agents)
 
@@ -186,37 +206,80 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
 10. Run `just em-generate` (generate + quick validate).
 11. Run full `python3 scripts/engineering_memory.py validate` before
     merge/release; report known gaps via `report`.
-12. Do not commit, push, publish, install, or deploy unless explicitly asked.
+12. A user request to change, build, fix, or deliver repository work activates
+    the sole Codex delivery workflow below, including its scoped commit, push,
+    draft PR, review, and gated auto-merge steps. A read-only request does not.
+    Install, deploy, release, live-model use, and writes outside the repository
+    still require explicit authorization.
 
-## PR cadence and sizing (mandatory)
+## Sole Codex delivery workflow (mandatory)
 
-Standing delivery contract (owner instruction, 2026-07-29): **many max-quality
-merged PRs per day**. Throughput comes from merge latency, never from thinner
-slices.
+Standing owner instruction (2026-07-29): this is the **only** workflow Codex
+uses for repository changes. It does not grant the installed Optimus product
+new publish, effect, install, deployment, or approval authority:
 
-- **One session → one PR → merged that session.** Follow-on work in the same
-  session appends to the session's open PR before it merges; never a second
-  open PR per session, never a session that ends with a PR left open silently.
-  If genuinely blocked (red CI, review blocker, absent approver), say so and
-  leave the PR ready-to-merge; the next session merges it **before** starting
-  new work — new work never stacks on an unmerged branch.
-- **The unit is the smallest complete change, not the smallest change.** One
-  intent/decision per PR — in this repository, one ADR ≈ one PR. Self-contained:
-  code + tests + ADR + docs + regenerated Engineering Memory + green gates in
-  the same PR; revertable in one revert. Related program items that share
-  machinery land together; below "independently valuable" is too thin. Size by
-  reviewability of the hand-written core (~200–400 lines); tests and generated
-  files do not count against it.
-- **The cycle:** branch off fresh `main` (`wip/<slug>`) → the unit → push →
-  draft PR → independent fresh-context review and CI in parallel → ready →
-  merge commit (repository precedent) → delete the remote branch (only after
-  merge — deleting the head of an *open* PR closes it; see Naming planes) →
-  prune worktrees and stale branches.
-- This cadence is the standing shape of a delivery request. It does not
-  license commits or pushes in sessions that were not asked to deliver
-  (workflow rule 12).
-- PR #117 (12 commits, +14k lines, 7 ADRs in one PR) is the counterexample
-  this section exists to prevent.
+```text
+Focused issue → Codex plan → isolated worktree → tested change → draft PR
+→ CI + Codex review → gated auto-merge → cleanup
+```
+
+1. **Focused issue.** One independently valuable outcome per issue. The issue
+   must state `Goal`, `Context`, `Constraints`, and testable `Done when`
+   conditions before implementation. Assign it and mark it in progress. Never
+   put credentials or private information in a public issue, prompt copied to
+   GitHub, PR, commit, log, or tracked environment file. Push protection is a
+   backup, not permission to expose a secret.
+2. **One task, plan, branch, and worktree.** One Codex task owns one issue. Load
+   and follow the `caveman-optimus` skill before implementation or delivery.
+   Use Plan mode first for architecture, ambiguity, or risky work; otherwise
+   record an explicit task plan. Fetch `origin/main`, create `wip/<slug>`, and
+   create a dedicated worktree under `local/worktrees/<slug>`. Never implement
+   in the main checkout or reuse another issue's branch/worktree.
+3. **Complete engineering loop.** Inspect current source, contracts, tests,
+   ADRs, and Engineering Memory; establish a baseline; implement the smallest
+   complete change; add regression tests; run focused checks, `just check`, EM
+   gates, and `just verify`; review the full diff and secret scan before push.
+   Open a draft PR after the first coherent, testable checkpoint and keep all
+   follow-up fixes for that issue on the same PR.
+4. **Independent review, then automation.** Request `@codex review` on the
+   draft PR while CI runs. Subagents may parallelize independent read-heavy
+   exploration, test execution, security review, or log analysis. Never allow
+   concurrent writers on the same files. Resolve every actionable review
+   finding and conversation, rerun affected checks, update the PR evidence,
+   and repeat review when the diff materially changes.
+5. **Gated auto-merge and terminal outcome.** A solo repository does not
+   require a second human approval. Once the PR is ready, the branch is current
+   and mergeable, `python3 scripts/github_pr_branch.py check` passes, required
+   CI is green, Codex review is complete, actionable findings and conversations
+   are resolved, no `do-not-merge` label exists, and every issue condition is
+   proven, enable merge-commit automation with `gh pr merge --auto --merge`.
+   Monitor until GitHub reports `MERGED`, then confirm the issue closed and
+   prune the worktree/local branch. A team repository also obeys its configured
+   human-approval rules. Never bypass a required gate. If a high-risk action
+   still needs explicit approval or any gate remains red/unresolved, stop with
+   the PR blocked and report the exact evidence.
+
+**Definition of done:** one focused issue; one isolated issue worktree; source,
+tests, ADR/docs, and generated Engineering Memory current as applicable; focused
+checks plus `just verify` green; full diff and secret review complete; draft PR
+reviewed by Codex; all findings and conversations resolved; required CI green;
+PR auto-merged; issue closed; remote head deleted by GitHub; local worktree and
+branch pruned. `MERGED` or an explicitly evidenced blocker is the only terminal
+outcome—an unattended open PR is not done.
+
+PR #117 (12 commits, +14k lines, 7 ADRs in one PR) remains the sizing
+counterexample: automation increases throughput through shorter merge latency,
+never by making changes incomplete or hard to review.
+
+## Codex review rules (mandatory)
+
+Review the whole diff against the owning issue and applicable `AGENTS.md` files.
+Prioritize correctness, security/permission boundaries, data loss, cancellation,
+terminal outcomes, regressions, missing tests, stale Engineering Memory, and
+claims stronger than the evidence. Cite file and line for actionable findings;
+do not request stylistic churn without a concrete maintenance or user impact.
+Any P0/P1 finding, unresolved actionable comment, red required check, merge
+conflict, or `🚫 status:do-not-merge` label blocks readiness and auto-merge.
 
 ## Repository conventions
 
@@ -255,8 +318,9 @@ claude plugin install mattpocock-skills@mattpocock
 ### Issue tracker
 
 GitHub issues on `mustbearnold/Optimus-Agent`, via the `gh` CLI. The two-plane
-branch rule and "never push unless asked" (rule 12) override any skill that ends
-in a push. See `docs/agents/issue-tracker.md`.
+branch rule and the sole Codex delivery workflow override any skill with a
+different branch, publication, review, or merge lifecycle. See
+`docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

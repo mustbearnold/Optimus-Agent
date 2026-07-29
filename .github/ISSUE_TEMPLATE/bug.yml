@@ -9,11 +9,19 @@ body:
     attributes:
       value: |
         Use **Confirmed current behaviour** language. Prefer executable evidence over prose claims.
+        Every implementation issue needs Goal, Context, Constraints, and testable Done when conditions. Never paste credentials or private information.
   - type: textarea
-    id: summary
+    id: goal
     attributes:
-      label: Summary
-      description: What went wrong in one short paragraph.
+      label: Goal
+      description: The single restored outcome this issue must deliver.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Who is affected, where it occurs, and the evidence already known.
     validations:
       required: true
   - type: textarea
@@ -37,6 +45,22 @@ body:
     id: actual
     attributes:
       label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Safety, compatibility, scope, performance, or migration boundaries that must remain true.
+      placeholder: "- Preserve …\n- Do not …"
+    validations:
+      required: true
+  - type: textarea
+    id: done_when
+    attributes:
+      label: Done when
+      description: Testable completion conditions, including the regression proof and affected verification gates.
+      placeholder: "- [ ] …\n- [ ] just verify passes"
     validations:
       required: true
   - type: dropdown

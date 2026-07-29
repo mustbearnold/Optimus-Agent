@@ -5,11 +5,22 @@ labels:
   - "✨ type:feat"
   - "🔍 status:triage"
 body:
-  - type: textarea
-    id: problem
+  - type: markdown
     attributes:
-      label: Problem / opportunity
-      description: Who is blocked and what outcome do they need?
+      value: |
+        Define one independently valuable outcome. Never paste credentials or private information.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What single outcome must exist when this issue is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Who is blocked, what current behaviour exists, and what evidence or prior decision applies?
     validations:
       required: true
   - type: textarea
@@ -17,6 +28,14 @@ body:
     attributes:
       label: Proposed behaviour
       description: Confirmed vs Planned — do not claim implementation that does not exist.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Architectural, safety, compatibility, UX, performance, or scope boundaries.
+      placeholder: "- Preserve …\n- Do not …"
     validations:
       required: true
   - type: dropdown
@@ -47,9 +66,10 @@ body:
         - label: Hermes parity / version gate (⚖️ program:parity)
         - label: Requires ADR (📋 process:adr)
   - type: textarea
-    id: acceptance
+    id: done_when
     attributes:
-      label: Acceptance criteria
-      description: Testable bullets (source + tests).
+      label: Done when
+      description: Testable bullets covering source, tests, docs/ADR, Engineering Memory, and affected gates.
+      placeholder: "- [ ] …\n- [ ] just verify passes"
     validations:
       required: true

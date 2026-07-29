@@ -22,6 +22,12 @@ Naming planes (mandatory — see docs/contributing/artifact-naming.md):
 
 -
 
+## Focused issue
+
+<!-- One issue outcome per PR. Use `Fixes #N` so merge closes it. -->
+
+Fixes #
+
 ## Naming planes
 
 <!-- Coding agents: fill every row that applies. Never set Delivery = Program. -->
@@ -52,6 +58,16 @@ Naming planes (mandatory — see docs/contributing/artifact-naming.md):
 - [ ] Focused unit/integration tests for the changed subsystem
 - [ ] Relevant gates if touched (e.g. `check-crate-layers.py`, observability, IPC matrix)
 - [ ] `python3 scripts/engineering_memory.py generate` + `validate --quick` if EM-owned surface changed
+- [ ] `just verify`
+
+## Review and merge automation
+
+<!-- Keep draft until CI and Codex review complete. Do not bypass red or unresolved gates. -->
+
+- **Codex review:** `@codex review` requested / completed
+- **Required CI:** `just verify (Linux)` pending / passed
+- **Auto-merge:** not enabled / `gh pr merge --auto --merge`
+- **Blockers:** none / list exact red check, unresolved finding, conflict, or approval boundary
 
 ## Risk & rollout
 
@@ -67,5 +83,10 @@ Naming planes (mandatory — see docs/contributing/artifact-naming.md):
 - [ ] `python3 scripts/github_pr_branch.py check` exits 0
 - [ ] Naming planes table has concrete values (`PR #N`, not only “this PR”); program ≠ delivery ≠ ADR number
 - [ ] No secrets or home paths in logs/diffs
+- [ ] No credentials or private information in the issue, PR, commits, logs, or tracked environment files
 - [ ] Docs/ADR updated when contracts or architecture change
 - [ ] Labels applied (emoji + `type:` + `area:` + `size:` minimum)
+- [ ] Draft PR received `@codex review`; every actionable finding and conversation is resolved
+- [ ] Focused checks and `just verify` pass locally; required `just verify (Linux)` CI passes at the latest SHA
+- [ ] PR is current, mergeable, ready, and has no `🚫 status:do-not-merge` label
+- [ ] Gated merge commit automation is enabled with `gh pr merge --auto --merge`

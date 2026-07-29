@@ -185,6 +185,7 @@ tier_gates() {
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
   spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
   spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
+  spawn "codex-workflow"             python3 scripts/check-codex-workflow.py
   spawn "version-validate"           python3 scripts/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
@@ -196,6 +197,8 @@ tier_gates() {
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_codex_workflow"        python3 scripts/test_codex_workflow.py
+  spawn "test_pre_push_hook"         python3 scripts/test_pre_push_hook.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
@@ -378,6 +381,7 @@ tier_all() {
   spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
   spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
   spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
+  spawn "codex-workflow"             python3 scripts/check-codex-workflow.py
   spawn "version-validate"           python3 scripts/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
@@ -389,6 +393,8 @@ tier_all() {
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_codex_workflow"        python3 scripts/test_codex_workflow.py
+  spawn "test_pre_push_hook"         python3 scripts/test_pre_push_hook.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py

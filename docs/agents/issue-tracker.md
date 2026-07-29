@@ -5,7 +5,9 @@ Issues and PRDs for this repo live as GitHub issues on
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
+- **Create an issue**: use a repository issue form or
+  `gh issue create --title "..." --body-file <path>`. Every issue body must
+  contain `Goal`, `Context`, `Constraints`, and testable `Done when` sections.
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
@@ -14,19 +16,40 @@ Issues and PRDs for this repo live as GitHub issues on
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
+## Required issue contract
+
+- One issue describes one independently valuable outcome. Do not bundle
+  unrelated outcomes or split below a complete, reviewable change.
+- One Codex task owns that issue, with one `wip/<slug>` branch, one dedicated
+  `local/worktrees/<slug>` checkout, and one PR.
+- Assign the issue and move it to `🚧 status:in-progress` before implementation.
+- Activate `caveman-optimus`. Use Plan mode first for architecture, ambiguity,
+  or risk; otherwise record a task plan before writing.
+- Public issues, comments, PRs, commits, and logs contain no credentials or
+  private information. Redact before publication; push protection is a backup.
+
 ## Repo-specific constraints that override the defaults
 
 These come from `AGENTS.md` and `docs/contributing/github-conventions.md`, and
 they bind any skill that opens a PR or names a branch:
 
-- **Do not commit, push, publish, install, or deploy unless explicitly asked**
-  (AGENTS.md rule 12). A skill that ends in a push must stop and ask first.
+- **A change/build/fix/delivery request activates the full repository delivery
+  loop.** Codex may commit, push, open/update the draft PR, request review, and
+  enable gated auto-merge for the named issue. Read-only requests do not.
+  Install, deploy, release, and live-model actions still require explicit scope.
 - **Branch naming is two-plane.** The local branch is `pr/<N>-<slug>`; the
   remote head stays `wip/<slug>`. Renaming or deleting the remote head closes
   the open PR. See `docs/contributing/artifact-naming.md`.
+- **The issue worktree is the only writer.** Start it from fresh `origin/main`;
+  never implement in the main checkout or another issue's worktree.
 - **`python3 scripts/github_pr_branch.py check` must exit 0** before a merge.
-- **Commits are emoji-first Conventional Commits.** Multi-commit intentional
-  history merges with a merge commit; a single commit squashes.
+- **Commits are emoji-first Conventional Commits.** Open the PR as draft,
+  request `@codex review`, resolve findings/conversations, make it ready, then
+  run `gh pr merge --auto --merge` after all local gates pass. Required CI and
+  branch protection decide when GitHub merges.
+- **Monitor to a terminal outcome.** Confirm `MERGED`, issue closure, and
+  worktree/local-branch cleanup. Otherwise report an evidenced blocker; never
+  leave an open PR unattended or bypass a red gate.
 
 ## Pull requests as a triage surface
 

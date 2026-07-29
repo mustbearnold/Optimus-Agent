@@ -1,0 +1,68 @@
+name: Engineering task
+description: Documentation, CI, tooling, maintenance, or other bounded engineering outcome.
+title: "chore: "
+labels:
+  - "🧹 type:chore"
+  - "🔍 status:triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One issue owns one independently valuable outcome, Codex task, branch, worktree, and PR. Never paste credentials or private information.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: The single outcome this task must deliver.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Current behaviour, evidence, affected users/developers, and relevant source or decisions.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Scope, safety, compatibility, generated-file, performance, or delivery boundaries.
+      placeholder: "- Preserve …\n- Do not …"
+    validations:
+      required: true
+  - type: textarea
+    id: done_when
+    attributes:
+      label: Done when
+      description: Testable completion conditions, including affected gates.
+      placeholder: "- [ ] …\n- [ ] just verify passes"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - "📖 area:docs"
+        - "🏭 area:ci"
+        - "🧬 area:em"
+        - "🧠 area:kernel"
+        - "🔁 area:runtime"
+        - "🔀 area:workflow"
+        - "🖥️ area:desktop"
+        - "🎨 area:ui"
+        - "other"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority guess
+      options:
+        - "⬇️ priority:p3"
+        - "⚠️ priority:p2"
+        - "🔥 priority:p1"
+        - "🚨 priority:p0"
+    validations:
+      required: true

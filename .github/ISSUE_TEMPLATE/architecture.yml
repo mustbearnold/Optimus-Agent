@@ -11,6 +11,29 @@ body:
       value: |
         **Naming planes (mandatory):** `P##` (program) ≠ GitHub issue/PR number ≠ `ADR-NNNN` ≠ grade.
         See `docs/contributing/artifact-naming.md` and `AGENTS.md`.
+        Define one independently valuable outcome. Never paste credentials or private information.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: The single architectural outcome this issue must deliver.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Current confirmed behaviour, evidence, owning subsystem, and prior decisions.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Architectural laws, compatibility, safety, non-claims, and scope boundaries.
+      placeholder: "- Preserve …\n- Do not claim …"
+    validations:
+      required: true
   - type: dropdown
     id: phase
     attributes:
@@ -59,3 +82,11 @@ body:
         - label: Engineering Memory refresh (🔄 process:em-refresh)
         - label: Security residual / 🔐 risk:security review
         - label: Naming planes understood (P## ≠ PR# ≠ ADR-NNNN)
+  - type: textarea
+    id: done_when
+    attributes:
+      label: Done when
+      description: Testable exit evidence for source, tests, ADR/docs, Engineering Memory, mark/non-claim updates, and gates.
+      placeholder: "- [ ] …\n- [ ] just verify passes"
+    validations:
+      required: true

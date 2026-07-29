@@ -18,6 +18,19 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 TIER="${OPTIMUS_VERIFY_TIER:-all}"
 
+# Git exports repository-local variables such as GIT_DIR to hooks. Those
+# variables are correct for Git's own push process but unsafe for a test suite:
+# a fixture that runs `git init --bare` in a temporary directory will instead
+# reinitialize the real linked-worktree Git directory. Capture the worktree
+# root first, then clear every local Git variable before any gate starts.
+GIT_LOCAL_ENV=()
+while IFS= read -r name; do
+  [ -n "$name" ] && GIT_LOCAL_ENV+=("$name")
+done < <(git rev-parse --local-env-vars)
+for name in "${GIT_LOCAL_ENV[@]}"; do
+  unset "$name"
+done
+
 # Gates that could not run leave their names here. A local skip stays allowed —
 # a fresh worktree has no apps/optimus-electron/node_modules, and blocking on
 # that would only teach --no-verify — but the push stops being called `clean`
