@@ -26,6 +26,7 @@ pub mod phase;
 pub mod repository;
 pub mod roles;
 pub mod run;
+pub mod triage;
 pub mod worktree;
 
 pub use catalogue::{plan_for, plans_for_run, PhasePlan, UnresolvedStep};
@@ -49,5 +50,9 @@ pub use roles::{check_assertion, routing_for, Effort, Role, RoleError, RoleIdent
 pub use run::{
     digest, DevTaskRun, EvidenceDraft, EvidenceItem, RunBudget, RunError, StopKind, StopReason,
     TaskOrigin, TaskPlan, RECORD_VERSION,
+};
+pub use triage::{
+    check, AcceptanceCriterion, ChangeScope, RefusalReason, RiskClass, TriageContext, TriageLimits,
+    TriageOutput, TriageResult, TriageVerdict, Ungrounded,
 };
 pub use worktree::{PreparedWorktree, RemovalOutcome, WorktreeError, WorktreeManager};

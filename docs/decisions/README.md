@@ -77,6 +77,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0054 | A test selector may only ever over-select (program P42) | Accepted | Focused verification exists, and every rule is biased toward running too much: unknown escalates, the gate cannot shrink itself, impact is transitive through the manifests, and selecting nothing is not passing. `just verify` is unchanged. |
 | 0055 | A fix is proven at the commit it fixes, or it is not proven (program P42) | Accepted | The regression test runs at the base commit with only the test carried across, and only fail-then-pass proves the fix. A base run that never reached the test is `Inconclusive`, not `NotFixed`. |
 | 0056 | A reviewer that wrote the patch is not a reviewer (program P43) | Accepted | Asserted evidence carries the role *and the context* that asserted it, and `ReviewFindings` may not come from a context that produced a `Diff` in the same run. Command outcomes are exempt: a process exit status makes no claim. |
+| 0057 | An issue earns its way into a run, or is refused in the reporter's own words (program P41) | Accepted | Triage produces a checkable contract or a grounded refusal; a deterministic checker grounds quotes, paths and risk, and every verdict blames the triage — closing an issue takes an explicit refusal held to the same evidentiary standard. |
 
 ## Known documentary debt
 

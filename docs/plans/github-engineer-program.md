@@ -14,6 +14,7 @@ watches:
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
+  - docs/decisions/0057-an-issue-earns-its-way-into-a-run.md
 covers:
   - docs/plans/github-engineer-program.md
 depends_on:
@@ -25,6 +26,7 @@ depends_on:
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
+  - docs/decisions/0057-an-issue-earns-its-way-into-a-run.md
   - docs/plans/reliability-autonomy-program.md
   - docs/plans/product-complete-program.md
 validated_by:
@@ -104,7 +106,7 @@ GitHub`), never the mechanism (`Allow shell command?`).
 | Phase | Goal | Status |
 |---|---|---|
 | **program P40** | Isolated, durable, phased engineering runs | **in progress** |
-| **program P41** | Repository policy resolution + issue triage | **in progress** |
+| **program P41** | Repository policy resolution + issue triage | **items done** (E41.1–E41.5; exit-gate measurement waits on E43.1) |
 | **program P42** | Fast informative verification: impact selection + differential regression | **in progress** (E42.1–E42.4 done) |
 | **program P43** | Separated navigator / implementer / test-specialist / reviewer roles + model routing | **in progress** (E43.4–E43.6 done) |
 | **program P44** | GitHub delivery: safe push, evidence-backed draft PR, CI diagnosis | pending |
@@ -210,8 +212,8 @@ honesty rules are recorded in
 | E41.1 | **done** | `RepositoryPolicyProfile`: default branch, three-state protection, required checks, PR template. An **absent** ruleset resolves to `Unprotected` — recorded as such, never silently to "satisfied" |
 | E41.2 | **done** | Effective `AGENTS.md`/`CLAUDE.md` chain and sensitive-path floor resolved into the profile |
 | E41.3 | **done** | Focused and full verification commands resolved into the profile |
-| E41.4 | pending | `TRIAGE` output contract: problem statement, evidence, acceptance criteria, owning components, relevant tests, risk class, change scope, stop condition |
-| E41.5 | pending | Reject or split issues that are too vague or too large, with a recorded reason |
+| E41.4 | ✅ done | `TRIAGE` output contract: problem statement, evidence, acceptance criteria, owning components, relevant tests, risk class, change scope, stop condition |
+| E41.5 | ✅ done | Reject or split issues that are too vague or too large, with a recorded reason |
 
 **Three states, not two (E41.1).** `Unprotected` means the forge answered and
 there is no ruleset. `Unknown` means the forge was not reachable — no `gh`, no
@@ -239,6 +241,21 @@ sensitive paths. It has no field for credentials, outside-project access, or an
 autonomy profile, so ADR-0044 Decision 5 is enforced by the type rather than by
 validation — a field that cannot be written cannot be abused.
 
+**A verdict blames the triage, never the issue (E41.4/E41.5).**
+[ADR-0057](../decisions/0057-an-issue-earns-its-way-into-a-run.md): triage
+produces a checkable contract or a refusal, and a deterministic checker decides
+admissibility. Quotes must be findable in the issue body, named components must
+exist, a component under the sensitive floor cannot be filed `Low` risk, a stop
+condition that restates a criterion is refused, and past 3 components / 6
+criteria / 20 files the verdict names the remedy: a `too_large` refusal with a
+proposed split of at least two parts. A refusal is held to the same standard —
+"too vague" needs the reporter's own words, so a model cannot close a report by
+inventing what it said. `Admissible` means *nothing here is demonstrably
+wrong*, not that the criteria are right; that judgement is E43.1's navigator
+and, at the exit gate, a human. `evidence_drafts` takes the verdict as an
+argument and refuses everything except `Admissible`, so unchecked triage output
+has no path into the run record.
+
 ### Exit gate (P41)
 
 - `cargo test -p optimus-engineering --test repository_profile` — 13
@@ -247,7 +264,9 @@ validation — a field that cannot be written cannot be abused.
   --ignored` resolves `main` / `Unprotected` / `.github/pull_request_template.md`
   / `[AGENTS.md, CLAUDE.md]` / `just gates` / `just verify`, `unresolved: []`
 - Ten historical issues produce acceptance criteria a human accepts without edit
-  in at least eight cases — **pending**, needs E41.4/E41.5
+  in at least eight cases — **contract built** (E41.4/E41.5,
+  `cargo test -p optimus-engineering --test triage_contract` — 6); the
+  measurement itself needs E43.1's navigator to produce the ten triages
 
 ---
 
