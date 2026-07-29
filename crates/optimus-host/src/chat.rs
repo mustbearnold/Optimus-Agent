@@ -301,9 +301,11 @@ fn parse_approval_decision(params: &serde_json::Value) -> Result<ChatApprovalDec
 /// Map a surface's `access` string onto the ADR-0044 profile and effect policy.
 ///
 /// Absent/unknown values stay ReviewChanges + SmartDeny (fail closed). Only
-/// `UnrestrictedHost` — spelled `full`, `unrestricted`, or `yolo` — pairs with
-/// `PolicyMode::Unrestricted`; every other profile keeps SmartDeny and lets the
-/// capability broker decide per effect.
+/// `UnrestrictedHost` — spelled `unrestricted_host`, `unrestricted`, or `yolo`
+/// for the CLI flag — pairs with `PolicyMode::Unrestricted`; every other
+/// profile keeps SmartDeny and lets the capability broker decide per effect.
+/// `full` used to reach it and deliberately no longer does (#118): an
+/// ordinary-sounding word must not be the one that hands over the machine.
 pub(crate) fn access_config(
     raw: Option<&str>,
 ) -> (optimus_graph::AutonomyProfile, optimus_graph::PolicyMode) {

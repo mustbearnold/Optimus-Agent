@@ -117,10 +117,12 @@ Three things now stand behind these rows instead of a reading:
 - `apps/optimus-ui/src/components/workbench/Composer.test.tsx` asserts the React
   menu offers Standard first, `unrestricted_host` last, and break-glass under an
   Expert group.
-- `scripts/check-autonomy-profiles.py` holds *both* composers against the Rust
-  vocabulary on every `just verify` — including that the desktop `<select>`
-  pre-selects `standard` — and its self-test starts by proving the pre-fix tree
-  of each fails it.
+- `scripts/check-autonomy-profiles.py` holds *both* composers, their persisted
+  access values, the two Rust profile parsers, and the CLI policy parser on
+  every `just verify`. It proves that each menu defaults to `standard`, neither
+  composer restores break-glass after restart, and only the explicit
+  `unrestricted` CLI word disables effect checks. Its self-tests begin by
+  proving the pre-fix tree of each composer fails.
 - `apps/optimus-electron/e2e/support/workbench-flow.cjs` asserts a fresh profile
   boots at `Access: Standard` through the compiled bundle, so the claim survives
   the build rather than only the source.

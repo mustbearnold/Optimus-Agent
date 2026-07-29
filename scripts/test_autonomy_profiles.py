@@ -92,6 +92,7 @@ FIVE_ITEMS = "\n".join(
 )
 
 STORE_TEMPLATE = """
+type ComposerSettings = {{ access: string }};
 const ACCESS_ALIASES: Readonly<Record<string, string>> = {prototype}{{
   standard: 'standard',
   review_changes: 'review_changes',
@@ -100,11 +101,50 @@ const ACCESS_ALIASES: Readonly<Record<string, string>> = {prototype}{{
   read: 'read_only',
   full_project: '{alias}',
 }}{close};
-export const a = {{ access: '{first}', }};
-export const b = {{ access: '{second}', }};
+export function restoredAccess(raw: unknown): string {{
+  if (typeof raw !== 'string') return 'standard';
+  return ACCESS_ALIASES[raw] ?? 'standard';
+}}
+export const offlineComposer: ComposerSettings = {{
+  access: '{first}',
+}};
+export const codexComposer: ComposerSettings = {{
+  access: '{second}',
+}};
+export function loadComposer(parsed: Record<string, unknown>) {{
+  return {{ settings: {{ access: restoredAccess(parsed.access) }} }};
+}}
 """
 
 NULL_PROTOTYPE = ("Object.assign(Object.create(null), ", ")")
+
+DESKTOP_JS_TEMPLATE = """
+const ACCESS_ALIASES = Object.assign(Object.create(null), {{
+  standard: 'standard',
+  review_changes: 'review_changes',
+  ask: 'review_changes',
+  read_only: 'read_only',
+  read: 'read_only',
+  full_project: '{alias}',
+}});
+function restoredAccess(raw) {{
+  if (typeof raw !== 'string') return '{fallback}';
+  return ACCESS_ALIASES[raw] || '{fallback}';
+}}
+function restoreComposer(c) {{
+  $('access').value = {restore};
+}}
+"""
+
+CLI_TEMPLATE = """
+pub fn parse_policy_mode(policy: &str) -> Result<PolicyMode, Error> {{
+    match policy.to_ascii_lowercase().as_str() {{
+        "smart_deny" | "deny" => Ok(PolicyMode::SmartDeny),
+        {unrestricted} => Ok(PolicyMode::Unrestricted),
+        other => Err(format!("unknown policy {{other}}")),
+    }}
+}}
+"""
 
 
 class AutonomyGateTests(unittest.TestCase):
@@ -116,6 +156,8 @@ class AutonomyGateTests(unittest.TestCase):
         GATE.COMPOSER = root / "Composer.tsx"
         GATE.STORE = root / "composerStore.ts"
         GATE.DESKTOP = root / "index.html"
+        GATE.DESKTOP_JS = root / "app.js"
+        GATE.CLI_PARSERS = root / "parsers.rs"
         self.write()
 
     def tearDown(self) -> None:
@@ -132,13 +174,17 @@ class AutonomyGateTests(unittest.TestCase):
         alias: str = "full_project",
         desktop: str = FIVE_DESKTOP_OPTIONS,
         prototype: tuple[str, str] = NULL_PROTOTYPE,
+        desktop_alias: str = "full_project",
+        desktop_restore: str = "restoredAccess(c.access)",
+        desktop_fallback: str = "standard",
+        cli_unrestricted: str = '"unrestricted"',
     ) -> None:
         GATE.POLICY.write_text(POLICY_TEMPLATE.format(break_glass=policy_break_glass))
         GATE.GRAPH.write_text(
             POLICY_TEMPLATE.format(
                 break_glass=graph_break_glass
                 if graph_break_glass is not None
-                else policy_break_glass
+                else f'{policy_break_glass} | "yolo"'
             )
         )
         GATE.COMPOSER.write_text(MENU_TEMPLATE.format(items=menu, tiers=tiers))
@@ -152,6 +198,16 @@ class AutonomyGateTests(unittest.TestCase):
             )
         )
         GATE.DESKTOP.write_text(DESKTOP_TEMPLATE.format(options=desktop))
+        GATE.DESKTOP_JS.write_text(
+            DESKTOP_JS_TEMPLATE.format(
+                alias=desktop_alias,
+                restore=desktop_restore,
+                fallback=desktop_fallback,
+            )
+        )
+        GATE.CLI_PARSERS.write_text(
+            CLI_TEMPLATE.format(unrestricted=cli_unrestricted)
+        )
 
     def assert_fails(self, reason: str) -> None:
         with self.assertRaises(SystemExit) as caught:
@@ -236,6 +292,16 @@ class AutonomyGateTests(unittest.TestCase):
         self.write(policy_break_glass='"unrestricted_host" if true')
         self.assert_fails("a match guard must not be invisible")
 
+    def test_a_wrapped_or_pattern_cannot_smuggle_break_glass(self) -> None:
+        self.write(
+            policy_break_glass=(
+                '"unrestricted_host"\n'
+                '                | "unrestricted"\n'
+                '                | "surprise"'
+            )
+        )
+        self.assert_fails("a literal on a wrapped line must still be classified")
+
     def test_a_catch_all_that_returns_a_profile_fails(self) -> None:
         source = POLICY_TEMPLATE.format(break_glass='"unrestricted_host"').replace(
             "_ => None,", "_ => Some(Self::UnrestrictedHost),"
@@ -261,6 +327,26 @@ class AutonomyGateTests(unittest.TestCase):
         """'constructor' is a stored value like any other."""
         self.write(prototype=("", ""))
         self.assert_fails("a plain literal answers for words nobody put in it")
+
+    def test_desktop_persistence_cannot_restore_break_glass(self) -> None:
+        self.write(desktop_alias="unrestricted_host")
+        self.assert_fails("the Wry composer must not persist break-glass")
+
+    def test_desktop_persistence_must_use_the_restore_filter(self) -> None:
+        self.write(desktop_restore="c.access")
+        self.assert_fails("the Wry composer must filter persisted access")
+
+    def test_desktop_restore_fallback_must_be_standard(self) -> None:
+        self.write(desktop_fallback="unrestricted_host")
+        self.assert_fails("unknown persisted access must not become break-glass")
+
+    def test_cli_open_cannot_turn_off_effect_checks(self) -> None:
+        self.write(cli_unrestricted='"unrestricted" | "open"')
+        self.assert_fails("only an explicit unrestricted word may disable policy")
+
+    def test_cli_nonliteral_cannot_turn_off_effect_checks(self) -> None:
+        self.write(cli_unrestricted='"unrestricted" | other')
+        self.assert_fails("a catch-all policy pattern must not disable policy")
 
     def test_the_desktop_composer_is_checked_too(self) -> None:
         self.write(

@@ -147,8 +147,12 @@ fresh human click when a durable project trust grant already covers it.
   values do not survive a reload — legacy `full`, and `unrestricted_host`
   itself, both restoring to Standard, which extends §5's "break-glass that
   survives a restart is not break-glass" from durable grants to the composer's
-  own persistence. `scripts/check-autonomy-profiles.py` holds both menus against
-  this vocabulary on every verify.
+  own persistence. The legacy Wry composer now applies the same restore filter
+  as the React composer. The CLI's former `open` policy alias is also removed:
+  only the explicit word `unrestricted` disables effect checks.
+  `scripts/check-autonomy-profiles.py` holds both menus, both persistence paths,
+  both profile parsers, and the CLI policy parser against this vocabulary on
+  every verify.
 
 ## Alternatives considered
 

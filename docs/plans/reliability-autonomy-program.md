@@ -97,8 +97,9 @@ gap in both composers: the React workbench and the Wry desktop UI
 (`apps/optimus-desktop/ui/index.html`, which had `Full` *pre-selected*) each
 offer the five ADR-0044 profiles with `standard` first and `unrestricted_host`
 last under Expert, `full` no longer parses to unrestricted host anywhere, and
-`scripts/check-autonomy-profiles.py` fails `just verify` if either menu and the
-Rust vocabulary drift apart again. Two composers ship because the ADR-0028
+`scripts/check-autonomy-profiles.py` fails `just verify` if either menu,
+persistence path, Rust profile parser, or the CLI's explicit `unrestricted`
+policy word drifts again. Two composers ship because the ADR-0028
 strangler is unfinished ([#106](https://github.com/mustbearnold/Optimus-Agent/issues/106));
 until it lands, a claim about "the composer" has to name which one.
 

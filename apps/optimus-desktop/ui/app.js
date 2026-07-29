@@ -2255,6 +2255,26 @@
   // persists the whole settings object, so a stored provider:'offline' does
   // not by itself mean offline was chosen — it may be pre-sign-in residue.
   let composerProviderChosen = false;
+  // The ADR-0044 profile a stored access value means today, mirroring
+  // apps/optimus-ui/src/state/composerStore.ts. Two words are missing on
+  // purpose: legacy 'full' said "Full access" and meant the whole host, and
+  // 'unrestricted_host' is break-glass, which ADR-0044 §5 keeps out of
+  // anything durable — break-glass that survives a restart is not
+  // break-glass. Both land on Standard, one deliberate click from expert.
+  // Null prototype so 'constructor' and '__proto__' are unknown words too.
+  const ACCESS_ALIASES = Object.assign(Object.create(null), {
+    standard: 'standard',
+    review_changes: 'review_changes',
+    ask: 'review_changes',
+    read_only: 'read_only',
+    read: 'read_only',
+    full_project: 'full_project',
+  });
+  function restoredAccess(raw) {
+    if (typeof raw !== 'string') return 'standard';
+    return ACCESS_ALIASES[raw.trim().toLowerCase()] || 'standard';
+  }
+
   function persistComposer() {
     try {
       localStorage.setItem('optimus.ui.composer', JSON.stringify({
@@ -2494,7 +2514,7 @@
       }
       if (typeof c.thinking === 'boolean') $('thinkingToggle').setAttribute('aria-pressed', c.thinking ? 'true' : 'false');
       if (typeof c.fast === 'boolean') $('fastToggle').setAttribute('aria-pressed', c.fast ? 'true' : 'false');
-      if (c.access) $('access').value = c.access;
+      $('access').value = restoredAccess(c.access);
     } catch {}
     if ($('provider').value === 'offline') $('model').value = 'offline-echo';
     // keep thinking toggle aligned with level
