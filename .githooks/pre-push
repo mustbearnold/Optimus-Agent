@@ -18,6 +18,15 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 TIER="${OPTIMUS_VERIFY_TIER:-all}"
 
+# Git exports repository-local variables to hooks. In the canonical bare-repo
+# plus linked-worktree layout, that includes GIT_DIR and GIT_WORK_TREE; leaving
+# them set makes fixture tests accidentally operate on the outer repository.
+# Resolve ROOT first, then restore normal cwd-based discovery for the verifier.
+while IFS= read -r name; do
+  unset "$name"
+done < <(git rev-parse --local-env-vars)
+cd "$ROOT"
+
 # Gates that could not run leave their names here. A local skip stays allowed —
 # a fresh worktree has no apps/optimus-electron/node_modules, and blocking on
 # that would only teach --no-verify — but the push stops being called `clean`
