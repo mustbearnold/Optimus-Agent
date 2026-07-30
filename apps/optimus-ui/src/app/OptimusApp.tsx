@@ -17,7 +17,6 @@ import type {
   Campaign,
   ChatHandle,
   Doctor,
-  Job,
   Project,
   ProjectRuntimeScope,
   SessionDetail,
@@ -62,7 +61,6 @@ import { TopBar } from '../components/chrome/TopBar';
 import { TextPromptDialog } from '../components/chrome/TextPromptDialog';
 import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
-import { TaskPanel } from '../components/execution/TaskPanel';
 import { MailPage } from '../components/mail/MailPage';
 import { ProjectsRail } from '../components/projects/ProjectsRail';
 import { ProjectSourcesDialog } from '../components/projects/ProjectSourcesDialog';
@@ -94,13 +92,11 @@ export function OptimusApp() {
     activeRunSessionId: null,
     layout: typeof localStorage === 'undefined' ? defaultLayout : loadLayout(),
     settingsOpen: false,
-    taskPanelOpen: false,
     theme: (localStorage.getItem('optimus.react.theme') === 'dark' ? 'dark' : 'light') as 'dark' | 'light',
   }));
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [authorizedProjects, setAuthorizedProjects] = useState<Set<string>>(new Set());
@@ -127,7 +123,6 @@ export function OptimusApp() {
   const latestLayout = useRef(state.layout);
   latestLayout.current = state.layout;
   const selectedSession = sessions.find((session) => session.id === state.selectedSessionId) || null;
-  const activeSession = sessions.find((session) => session.id === state.activeRunSessionId) || null;
   const selectedProject = projects.find(
     (project) => selectedSession && assignments[selectedSession.id] === project.id
   ) || null;
@@ -141,10 +136,8 @@ export function OptimusApp() {
     return derived.length ? [...projects, ...derived] : projects;
   }, [projectScopes, projects]);
   const sourceProject = projects.find((project) => project.id === sourceProjectId) || null;
-  const browserSuspended =
-    state.settingsOpen || state.taskPanelOpen || Boolean(sourceProject);
+  const browserSuspended = state.settingsOpen || Boolean(sourceProject);
   const conversation = useConversation(state.selectedSessionId);
-  const activeConversation = useConversation(state.activeRunSessionId);
   const sessionIndicators = useConversationIndicators(
     sessions.map((session) => session.id)
   );
@@ -154,11 +147,10 @@ export function OptimusApp() {
   const refreshRuntime = useCallback(async () => {
     try {
       const creationsAtRequest = sessionCreations.current;
-      const [doctorResult, sessionsResult, approvalResult, jobResult, campaignResult, scopeResult] = await Promise.all([
+      const [doctorResult, sessionsResult, approvalResult, campaignResult, scopeResult] = await Promise.all([
         transport.invoke<Doctor>('doctor'),
         transport.invoke<{ sessions?: SessionMeta[] } | SessionMeta[]>('sessions'),
         transport.invoke<{ pending?: Approval[] }>('approvals_list'),
-        transport.invoke<{ jobs?: Job[] }>('jobs_list'),
         transport.invoke<{ campaigns?: Campaign[] }>('campaign_list'),
         transport.invoke<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list'),
       ]);
@@ -166,7 +158,6 @@ export function OptimusApp() {
       const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
       setDoctor(doctorResult);
       setApprovals(approvalResult.pending || []);
-      setJobs(jobResult.jobs || []);
       setCampaigns(campaignResult.campaigns || []);
       setProjectScopes(scopeResult.projects || []);
       setAuthorizedProjects(new Set((scopeResult.projects || []).map((project) => project.project_id)));
@@ -192,9 +183,8 @@ export function OptimusApp() {
     }
   }, [alive, state.selectedSessionId]);
 
-  const updateExecutionState = useCallback((nextApprovals: Approval[], nextJobs: Job[]) => {
+  const updateExecutionState = useCallback((nextApprovals: Approval[]) => {
     setApprovals(nextApprovals);
-    setJobs(nextJobs);
   }, []);
 
   useEffect(() => {
@@ -460,7 +450,6 @@ export function OptimusApp() {
   };
 
   const title = selectedSession?.title || 'New session';
-  const busyStatus = activeConversation.status;
   const workVisible = state.layout.compactSurface === 'work';
   const workspaceVisible = state.layout.workspaceOpen;
   const style = {
@@ -667,7 +656,6 @@ export function OptimusApp() {
           </section>
         </div>
 
-        <TaskPanel open={state.taskPanelOpen} jobs={jobs} approvals={approvals} runSession={activeSession} runStatus={busyStatus} onClose={() => dispatch({ type: 'tasks', open: false })} onStop={() => void stop()} />
         <SettingsDialog
           open={state.settingsOpen}
           transport={transport}
