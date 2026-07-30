@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import datetime as dt
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -184,6 +186,21 @@ class PerformanceGateTest(unittest.TestCase):
 
 
 class RepositoryContractTest(unittest.TestCase):
+    def test_git_queries_scope_a_worktree_override_without_process_env(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "linked-worktree-shape"
+            subprocess.run(["git", "init", "--quiet", root], check=True)
+            (root / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", root, "config", "core.bare", "true"],
+                check=True,
+            )
+
+            self.assertEqual(
+                versioning.git_output(root, "status", "--porcelain"),
+                "?? candidate.txt",
+            )
+
     def test_checked_in_version_system_is_well_formed_and_unverified(self) -> None:
         root = Path(__file__).resolve().parents[1]
         result = versioning.evaluate(root, now=dt.datetime.now(versioning.UTC))

@@ -17,6 +17,7 @@ depends_on:
   - docs/decisions/0031-safe-project-work-loop.md
   - docs/decisions/0035-command-capability-envelope.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
+  - docs/decisions/0059-standard-autonomy-is-consequence-bounded.md
 validated_by:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
@@ -73,7 +74,8 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 
 ## program P30 — Capability broker + Standard trust
 
-**Decision:** [ADR-0044](../decisions/0044-bounded-project-trust-and-capability-broker.md)
+**Decisions:** [ADR-0044](../decisions/0044-bounded-project-trust-and-capability-broker.md)
+and [ADR-0059](../decisions/0059-standard-autonomy-is-consequence-bounded.md)
 
 ### Microtasks
 
@@ -84,7 +86,7 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 | R30.3 | **done** | Runtime SmartDeny gate uses broker; trust-profile exact grants |
 | R30.4 | **done** | Composer autonomy labels; Standard first; map IPC access |
 | R30.5 | **done** | Durable project trust grant store (outside repo); applied at `open_dev_run_session` only |
-| R30.6 | **done** | Structured package-manager capabilities (`optimus-policy::command_class`) |
+| R30.6 | **done** | Structured package/command capabilities; recognised remote and command-string shell forms leave the Standard project lane |
 | R30.7 | pending | Owned-localhost network lease |
 | R30.8 | pending | Product release defaults (Auto provider/model) without breaking offline tests |
 
@@ -121,9 +123,19 @@ classifier splits sync (reproduces a lockfile a human already committed) from
 add (chooses something new, reaches a registry) from host install (writes
 outside the project at all, and answers to `SystemModify`).
 
+The 2026-07-31 ADR-0059 hardening also separates recognised git remote
+operations, direct network/remote clients, and command-string shell forms such
+as `sh -c` from direct builds/tests, including case-insensitive Windows
+executable spellings. Local `rsync` remains project-local; remote endpoints ask.
+Project deletes ask until P34 supplies real rollback manifests. This is a
+classifier boundary, not arbitrary-process containment: transparent scripts
+and unknown binaries can still share the network and ambient credentials.
+Universal Standard defaults therefore remain gated on those code-enforced
+authorities rather than on a profile enum flip.
+
 ### Exit gate (P30)
 
-- `cargo test -p optimus-policy` — 22 (15 unit + 7 `command_classification`)
+- `cargo test -p optimus-policy` — 30 (17 unit + 13 `command_classification`)
 - `cargo test -p optimus-kernel --test dev_run_trust` — 6
 - `cargo test -p optimus-runtime --test project_trust_profile`
 - `cargo test -p optimus-runtime --test approvals_surface`

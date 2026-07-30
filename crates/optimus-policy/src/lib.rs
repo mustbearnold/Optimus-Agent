@@ -533,7 +533,9 @@ pub fn build_effect_request_for(
         }
     }
     let reversibility = match capability {
-        CapabilityId::FsProjectDelete => Reversibility::Checkpointed,
+        // Delete effects cannot claim checkpoint recovery until the runtime
+        // actually creates and retains a checkpoint manifest.
+        CapabilityId::FsProjectDelete => Reversibility::Irreversible,
         // A dependency change is recoverable from the lockfile in git; running
         // arbitrary code and changing the host are not.
         CapabilityId::PackageSync | CapabilityId::PackageAdd => Reversibility::Checkpointed,
@@ -542,11 +544,7 @@ pub fn build_effect_request_for(
         }
         _ => Reversibility::Reversible,
     };
-    let externality = match class {
-        Some(CommandClass::HostInstall) => Externality::HostSystem,
-        Some(class) if class.reaches_registry() => Externality::PublicNetwork,
-        _ => Externality::ProjectLocal,
-    };
+    let externality = class.map_or(Externality::ProjectLocal, CommandClass::externality);
     Some(ActionRequest {
         run_id: None,
         actor: "runtime".into(),

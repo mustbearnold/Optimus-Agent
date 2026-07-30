@@ -115,7 +115,12 @@ def command_output(
 
 
 def git_output(root: Path, *args: str) -> str:
-    return command_output(["git", *args], cwd=root).strip()
+    # The canonical Optimus repository is bare with linked worktrees. Its
+    # shared `core.bare=true` otherwise makes an ordinary `git status` fail
+    # even when `root` is a real worktree. Scope the override to this command
+    # instead of exporting GIT_WORK_TREE, which would leak into child fixtures
+    # that intentionally create their own bare repositories.
+    return command_output(["git", f"--work-tree={root.resolve()}", *args], cwd=root).strip()
 
 
 def workspace_version(root: Path) -> str:

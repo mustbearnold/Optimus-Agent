@@ -467,6 +467,12 @@ stable redacted errors while retaining local stderr diagnostics.
 `ProjectWriteFile`, `RunCommand`, and `ProjectRunCommand` as high-risk.
 `AssertFileEquals` does not require approval.
 
+**Confirmed current behaviour (ADR-0059):** the Standard broker lane permits
+direct project work while recognised remote/network commands and command-string
+shell forms ask; uncheckpointed project deletes also ask. Classification does
+not prove an arbitrary binary lacks network or ambient-credential authority,
+so those remain explicit blockers to a universal Standard fallback.
+
 **Confirmed current behaviour (P12):** approved commands use `CommandFsEnvelope`
 (default confined): Linux bwrap binds the workspace read-write only (no full
 root rw bind); `UnrestrictedHost` is explicit break-glass. See ADR-0035.

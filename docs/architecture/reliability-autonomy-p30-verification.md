@@ -12,14 +12,17 @@ covers:
   - apps/optimus-ui/src/state/composerStore.ts
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-host/src/chat.rs
+  - crates/optimus-policy/src/command_class.rs
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
+  - docs/decisions/0059-standard-autonomy-is-consequence-bounded.md
   - scripts/check-autonomy-profiles.py
 depends_on:
   - docs/plans/reliability-autonomy-program.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
+  - docs/decisions/0059-standard-autonomy-is-consequence-bounded.md
 validated_by:
   - apps/optimus-desktop/e2e/02-shell-and-composer.spec.js
   - apps/optimus-ui/src/components/workbench/Composer.test.tsx
@@ -37,9 +40,9 @@ last_verified_commit: null
 
 # program P30 verification — bounded project trust
 
-Planes: **program P30** · decision **ADR-0044** · delivery pending · mark hold S+++
+Planes: **program P30** · decisions **ADR-0044 / ADR-0059** · delivery pending · mark hold S+++
 
-Date: 2026-07-26
+Date: 2026-07-26; consequence-boundary addendum 2026-07-31
 
 ## Goal
 
@@ -52,8 +55,11 @@ replacing SmartDeny as the pause mechanism or CommandFsEnvelope as containment.
 | Item | Result | Evidence |
 |---|:---:|---|
 | ADR-0044 | **PASS** | `docs/decisions/0044-bounded-project-trust-and-capability-broker.md` |
-| `optimus-policy` broker + profiles | **PASS** | `cargo test -p optimus-policy` (15 unit + 7 integration) |
+| `optimus-policy` broker + profiles | **PASS** | `cargo test -p optimus-policy` (17 unit + 13 integration) |
 | Standard auto-allow project write/cmd | **PASS** | `project_trust_profile` |
+| Recognised remote/command-string forms ask | **PASS** | `command_classification` + `project_trust_profile` |
+| Local rsync / transparent script argv stay automatic | **PASS** | `command_classification` + `project_trust_profile` |
+| Uncheckpointed project delete asks | **PASS** | `command_classification` |
 | Review changes still pauses | **PASS** | `project_trust_profile` + `approvals_surface` |
 | Read only denies mutate | **PASS** | `project_trust_profile` |
 | Classic SmartDeny default path | **PASS** | `phase1_policy_budget`, `approvals_surface` |
@@ -159,13 +165,14 @@ A verification row whose evidence column names a *file* rather than a command
 that fails is worth exactly what this one was. A row that verifies a mapping is
 not a row that verifies the surface feeding it, however similar the two sound.
 
-## Residuals (not P30 exit blockers for broker slice)
+## Residuals
 
-- Durable project trust grant store outside repo (R30.5)
-- Structured package-manager capabilities (R30.6)
 - Owned-localhost leases (R30.7)
 - Product Auto provider/model default without breaking offline tests (R30.8)
 - Same-run continuation (program P31)
+- Arbitrary project binaries and transparent scripts still share the Confined
+  network and ambient credential environment. ADR-0059 therefore does not
+  authorize a universal Standard fallback across TUI, CLI, and host defaults.
 
 ## Non-claims
 
@@ -173,3 +180,4 @@ not a row that verifies the surface feeding it, however similar the two sound.
 - Unrestricted host as recommended default
 - Checkpoint/rollback manifests (P34)
 - First-run smoke product readiness (P33)
+- Command classification as proof of arbitrary-process containment

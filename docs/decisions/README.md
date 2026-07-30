@@ -79,6 +79,7 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0056 | A reviewer that wrote the patch is not a reviewer (program P43) | Accepted | Asserted evidence carries the role *and the context* that asserted it, and `ReviewFindings` may not come from a context that produced a `Diff` in the same run. Command outcomes are exempt: a process exit status makes no claim. |
 | 0057 | An issue earns its way into a run, or is refused in the reporter's own words (program P41) | Accepted | Triage produces a checkable contract or a grounded refusal; a deterministic checker grounds quotes, paths and risk, and every verdict blames the triage — closing an issue takes an explicit refusal held to the same evidentiary standard. |
 | 0058 | A run publishes the sentence a human approved, and nothing else (program P44) | Accepted | Approval is the exact consequence sentence held in the record; the push publishes the approved commit as refspec, not the branch tip; delete/rename/force are unconstructible; every effect is read back before it is believed; the PR number is GitHub's; the body is a rendering of the run record with no prose parameter. |
+| 0059 | Standard autonomy is consequence-bounded (program P30) | Accepted | Direct project work remains automatic; recognised remote and command-string shell forms leave that lane; deletes are irreversible until real checkpoints exist; arbitrary-process network and ambient-credential authority remain explicit gaps. |
 
 ## Known documentary debt
 

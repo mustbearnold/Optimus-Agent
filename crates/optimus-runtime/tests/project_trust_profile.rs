@@ -140,18 +140,19 @@ fn standard_auto_allows_project_command() {
     )
     .unwrap();
 
-    let root_hash = rt.workspace_sha256();
     #[cfg(unix)]
-    let effect = Effect::ProjectRunCommand {
-        workspace_sha256: root_hash,
-        program: "sh".into(),
-        args: vec!["-c".into(), "echo trust-ok".into()],
+    let (program, args) = {
+        let script = ws.join("check.sh");
+        std::fs::write(&script, "#!/bin/sh\nexit 0\n").unwrap();
+        ("sh", vec!["check.sh".into()])
     };
     #[cfg(windows)]
+    let (program, args) = ("where.exe", vec!["cmd.exe".into()]);
+    let root_hash = rt.workspace_sha256();
     let effect = Effect::ProjectRunCommand {
         workspace_sha256: root_hash,
-        program: "cmd".into(),
-        args: vec!["/C".into(), "echo trust-ok".into()],
+        program: program.into(),
+        args,
     };
 
     let job = rt
@@ -166,7 +167,53 @@ fn standard_auto_allows_project_command() {
         .unwrap();
 
     let status = rt.run_all(job).unwrap();
-    assert_eq!(status, JobStatus::Succeeded);
+    assert_eq!(
+        status,
+        JobStatus::Succeeded,
+        "capture: {:?}, effect: {:?}",
+        rt.latest_command_capture(job).unwrap(),
+        rt.latest_effect_outcome(job).unwrap()
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn standard_parks_an_opaque_shell_command_for_approval() {
+    let dir = tempdir().unwrap();
+    let ws = dir.path().join("ws");
+    std::fs::create_dir_all(&ws).unwrap();
+    let rt = Runtime::open_with_config(
+        &dir.path().join("o.db"),
+        &ws,
+        RuntimeConfig {
+            policy: PolicyMode::SmartDeny,
+            autonomy_profile: AutonomyProfile::Standard,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let job = rt
+        .create_job(JobSpec {
+            label: "opaque command".into(),
+            budget: Default::default(),
+            nodes: vec![NodeSpec {
+                label: "shell".into(),
+                effect: Effect::ProjectRunCommand {
+                    workspace_sha256: rt.workspace_sha256(),
+                    program: "sh".into(),
+                    args: vec!["-c".into(), "echo hidden consequence".into()],
+                },
+            }],
+        })
+        .unwrap();
+
+    let error = rt.run_next(job).unwrap_err();
+    assert!(matches!(
+        error,
+        optimus_runtime::RuntimeError::NeedsApproval { .. }
+    ));
+    assert_eq!(rt.job_status(job).unwrap(), JobStatus::AwaitingApproval);
 }
 
 /// Typing yolo while an approval is on screen releases that approval, because

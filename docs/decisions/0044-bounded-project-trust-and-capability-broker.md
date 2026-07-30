@@ -210,3 +210,20 @@ Confined envelopes, or if broker latency blocks the turn loop.
 - `crates/optimus-runtime/tests/project_trust_profile.rs` — Standard
   auto-allows a project write; Review changes still pauses
 - `crates/optimus-runtime/tests/approvals_surface.rs` — what an approval shows
+
+## Addendum — consequence-bounded command classification (2026-07-31)
+
+[ADR-0059](0059-standard-autonomy-is-consequence-bounded.md) tightens R30.6
+without changing Standard's product role. Recognised git remote operations,
+network/remote clients, and command-string shell forms such as `sh -c` no
+longer inherit `process.project.execute`; Standard asks at those identified
+boundaries. Uncheckpointed project deletes are now irreversible and ask under
+Standard.
+
+The original sentence “guessing wide is safe” is retained above as decision
+history, not as the current security claim. Unknown project binaries and
+scripts can still reach the shared network and inherited credential variables,
+so classification is defense in depth rather than proof of containment. The
+universal Standard default remains gated on code-enforced arbitrary-process
+network and scoped credential authority. Direct project builds, tests, and
+transparent script argv remain automatic.

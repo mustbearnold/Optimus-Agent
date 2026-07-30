@@ -185,3 +185,17 @@ as strict and harder to game. Reconsider dual versioning only if Optimus no
 longer makes any Hermes-equivalence claim. Any replacement must remain
 fail-closed, exact-release-bound, revision-bound, waiver-free, and independently
 recomputable from raw evidence.
+
+## Addendum — linked-worktree Git queries (2026-07-31)
+
+Revision and cleanliness checks pass `--work-tree=<evaluated root>` on the
+individual Git invocation. The canonical Optimus repository has
+`core.bare=true` with linked worktrees, so cwd alone cannot make `git status`
+recognise a real worktree. A process-wide `GIT_WORK_TREE` workaround is
+forbidden: it leaks into verification fixtures that intentionally create bare
+remotes and changes the meaning of their Git commands.
+
+`scripts/test_optimus_version.py` reproduces the shared `core.bare=true` shape
+and proves the scoped query sees the candidate worktree without mutating the
+process environment. This changes only repository discovery; the clean-tree
+promotion requirement remains unchanged.

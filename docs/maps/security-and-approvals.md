@@ -140,6 +140,14 @@ effects or `FsWorkspace` for write effects.
 `current_dir` and strips loader-injection environment variables (`LD_PRELOAD`,
 `LD_LIBRARY_PATH`, `DYLD_*`, and similar) before spawn.
 
+**Confirmed current behaviour (ADR-0059):** Standard auto-authorizes direct
+project execution, but recognised git remote operations, direct network/remote
+clients, inline git aliases, and command-string shell forms leave that lane and
+ask. Project deletes are irreversible and ask until real rollback manifests
+exist. This classifier is defense in depth, not arbitrary-process containment:
+unknown binaries and transparent scripts still share the confined profile's
+network and ambient environment.
+
 **Confirmed current behaviour (P12):** approved commands run under
 `CommandFsEnvelope` (orthogonal to `PolicyMode` / SmartDeny):
 

@@ -6,8 +6,8 @@
 //! leaves the project.
 
 use optimus_policy::{
-    build_effect_request_for, ActionRequest, AuthorityDecision, AutonomyProfile, CapabilityBroker,
-    CapabilityId, Externality,
+    build_effect_request, build_effect_request_for, ActionRequest, AuthorityDecision,
+    AutonomyProfile, CapabilityBroker, CapabilityId, Externality, Reversibility,
 };
 
 fn request(program: &str, args: &[&str]) -> ActionRequest {
@@ -42,6 +42,189 @@ fn a_trusted_project_still_builds_and_tests_without_asking() {
     ] {
         let decision = decide(AutonomyProfile::Standard, "cargo", &args);
         assert!(allowed(&decision), "cargo {args:?} should not ask");
+    }
+}
+
+#[test]
+fn direct_remote_commands_and_opaque_shells_ask_at_the_standard_boundary() {
+    for (program, args, capability, externality) in [
+        (
+            "git",
+            vec!["push", "origin", "main"],
+            CapabilityId::GitRemotePush,
+            Externality::RemoteService,
+        ),
+        (
+            "git",
+            vec!["fetch", "origin"],
+            CapabilityId::NetworkPublicRead,
+            Externality::RemoteService,
+        ),
+        (
+            "curl",
+            vec!["https://example.test"],
+            CapabilityId::NetworkPublicRead,
+            Externality::RemoteService,
+        ),
+        (
+            "wget",
+            vec!["https://example.test"],
+            CapabilityId::NetworkPublicRead,
+            Externality::RemoteService,
+        ),
+        (
+            "ssh",
+            vec!["host.example"],
+            CapabilityId::ExternalSend,
+            Externality::RemoteService,
+        ),
+        (
+            "scp",
+            vec!["file", "host.example:path"],
+            CapabilityId::ExternalSend,
+            Externality::RemoteService,
+        ),
+        (
+            "rsync",
+            vec!["file", "host.example:path"],
+            CapabilityId::ExternalSend,
+            Externality::RemoteService,
+        ),
+        (
+            "gh",
+            vec!["pr", "create"],
+            CapabilityId::GitRemotePullRequest,
+            Externality::RemoteService,
+        ),
+        (
+            "sh",
+            vec!["-c", "cargo test"],
+            CapabilityId::SystemModify,
+            Externality::HostSystem,
+        ),
+    ] {
+        let request = request(program, &args);
+        assert_eq!(request.capability, capability, "{program} {args:?}");
+        assert_eq!(request.externality, externality, "{program} {args:?}");
+        assert!(
+            CapabilityBroker
+                .decide(AutonomyProfile::Standard, &request)
+                .is_ask(),
+            "Standard must ask for {program} {args:?}"
+        );
+    }
+}
+
+#[test]
+fn executable_name_case_and_windows_extensions_do_not_bypass_the_boundary() {
+    for (program, args) in [
+        ("GIT.EXE", vec!["push", "origin", "main"]),
+        ("CURL.EXE", vec!["https://example.test"]),
+        ("CMD.EXE", vec!["/C", "cargo test"]),
+        ("CMD.EXE", vec!["/K", "cargo test"]),
+        ("PowerShell.EXE", vec!["-c", "cargo test"]),
+        ("PowerShell.EXE", vec!["-e", "Y2FyZ28gdGVzdA=="]),
+        ("PowerShell.EXE", vec!["-enc", "Y2FyZ28gdGVzdA=="]),
+        ("fish", vec!["-C", "curl https://example.test"]),
+        ("fish", vec!["--init-command", "curl https://example.test"]),
+        ("fish", vec!["--command=curl https://example.test"]),
+        ("fish", vec!["--init-command=curl https://example.test"]),
+    ] {
+        let request = request(program, &args);
+        assert!(
+            CapabilityBroker
+                .decide(AutonomyProfile::Standard, &request)
+                .is_ask(),
+            "Standard must ask for {program} {args:?}"
+        );
+    }
+}
+
+#[test]
+fn transparent_interpreter_script_argv_remains_project_execution() {
+    for (program, args) in [
+        ("fish", vec!["scripts/check.fish"]),
+        ("PowerShell.EXE", vec!["-File", "scripts/check.ps1"]),
+    ] {
+        let request = request(program, &args);
+        assert_eq!(
+            request.capability,
+            CapabilityId::ProcessProjectExecute,
+            "{program} {args:?}"
+        );
+        assert_eq!(
+            request.externality,
+            Externality::ProjectLocal,
+            "{program} {args:?}"
+        );
+        assert!(
+            CapabilityBroker
+                .decide(AutonomyProfile::Standard, &request)
+                .is_allow(),
+            "transparent script argv should stay allowed: {program} {args:?}"
+        );
+    }
+}
+
+#[test]
+fn git_remote_plumbing_and_inline_aliases_ask() {
+    for (args, capability) in [
+        (vec!["send-pack", "origin"], CapabilityId::GitRemotePush),
+        (vec!["http-push", "origin"], CapabilityId::GitRemotePush),
+        (
+            vec!["fetch-pack", "origin"],
+            CapabilityId::NetworkPublicRead,
+        ),
+        (
+            vec!["http-fetch", "origin"],
+            CapabilityId::NetworkPublicRead,
+        ),
+        (
+            vec!["remote-https", "origin"],
+            CapabilityId::NetworkPublicRead,
+        ),
+        (
+            vec!["-c", "alias.ship=!curl https://example.test", "ship"],
+            CapabilityId::SystemModify,
+        ),
+    ] {
+        let request = request("git", &args);
+        assert_eq!(request.capability, capability, "git {args:?}");
+        assert!(
+            CapabilityBroker
+                .decide(AutonomyProfile::Standard, &request)
+                .is_ask(),
+            "Standard must ask for git {args:?}"
+        );
+    }
+}
+
+#[test]
+fn local_rsync_remains_project_execution_but_remote_rsync_asks() {
+    let local = request("rsync", &["-a", "src/", "target/"]);
+    assert_eq!(local.capability, CapabilityId::ProcessProjectExecute);
+    assert_eq!(local.externality, Externality::ProjectLocal);
+    assert!(
+        CapabilityBroker
+            .decide(AutonomyProfile::Standard, &local)
+            .is_allow(),
+        "local rsync should stay in the project lane"
+    );
+
+    for endpoint in [
+        "host.example:path",
+        "host.example::module",
+        "rsync://host/module",
+    ] {
+        let remote = request("rsync", &["src/", endpoint]);
+        assert_eq!(remote.capability, CapabilityId::ExternalSend, "{endpoint}");
+        assert_eq!(remote.externality, Externality::RemoteService, "{endpoint}");
+        assert!(
+            CapabilityBroker
+                .decide(AutonomyProfile::Standard, &remote)
+                .is_ask(),
+            "remote rsync must ask for {endpoint}"
+        );
     }
 }
 
@@ -116,10 +299,33 @@ fn read_only_still_refuses_every_command_class() {
 }
 
 #[test]
-fn an_unclassifiable_command_keeps_the_old_conservative_answer() {
+fn an_unclassifiable_command_keeps_the_legacy_project_execution_answer() {
     // No regression for the long tail: unknown programs stay project execution
     // rather than being guessed into a narrower capability.
     let request = request("./deploy.sh", &["--prod"]);
     assert_eq!(request.capability, CapabilityId::ProcessProjectExecute);
     assert_eq!(request.externality, Externality::ProjectLocal);
+}
+
+#[test]
+fn uncheckpointed_delete_effects_ask_in_standard() {
+    for kind in ["DeletePath", "ProjectDeletePath"] {
+        let request = build_effect_request(
+            kind,
+            "deadbeef",
+            Some("roothash".into()),
+            format!("delete through {kind}"),
+            Some("src/old.rs".into()),
+        )
+        .expect("delete effects map to a capability");
+
+        assert_eq!(request.capability, CapabilityId::FsProjectDelete);
+        assert_eq!(request.reversibility, Reversibility::Irreversible);
+        assert!(
+            CapabilityBroker
+                .decide(AutonomyProfile::Standard, &request)
+                .is_ask(),
+            "{kind} must ask until checkpoint manifests exist"
+        );
+    }
 }

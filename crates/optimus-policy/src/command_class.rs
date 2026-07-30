@@ -18,8 +18,16 @@
 //!    --user` write outside the project entirely. Classifying those as project
 //!    execution is how a project-scoped grant quietly becomes a host-scoped
 //!    one, so they map to `SystemModify` and leave the project lane.
-//! 3. **Everything else** stays `ProcessProjectExecute`. Guessing wide is safe;
-//!    guessing narrow is not.
+//! 3. **Project vs remote.** Direct remote clients and git remote operations
+//!    cannot ride on project execution authority. They reuse the existing
+//!    network, git, and external-send capabilities and carry remote-service
+//!    externality.
+//! 4. **Opaque shell wrappers.** `sh -c` (and equivalent wrappers) can conceal
+//!    any host effect in one string. They fall back to `SystemModify` at the
+//!    host boundary rather than inheriting project execution authority.
+//! 5. **Everything else** keeps the legacy `ProcessProjectExecute`
+//!    classification. That fallback is not proof that an arbitrary binary
+//!    lacks remote effects; containment remains a separate authority layer.
 //!
 //! Pure and dependency-free: string in, capability out. The classifier makes
 //! no network or filesystem calls, so it cannot be fooled by state.
@@ -35,6 +43,16 @@ pub enum CommandClass {
     PackageAdd,
     /// Installs outside the project — a host change wearing project clothes.
     HostInstall,
+    /// Pushes commits or refs to a git remote.
+    GitRemotePush,
+    /// Reads from a git remote or a public network endpoint.
+    RemoteRead,
+    /// Uses a remote shell or transfers data to or from another host.
+    RemoteTransfer,
+    /// Operates on GitHub through its remote API.
+    GitHubRemote,
+    /// Hides an arbitrary command string behind a shell interpreter.
+    OpaqueShell,
     /// Runs what is already there: build, test, lint, format, a script.
     ProjectExecute,
 }
@@ -46,6 +64,11 @@ impl CommandClass {
             Self::PackageSync => CapabilityId::PackageSync,
             Self::PackageAdd => CapabilityId::PackageAdd,
             Self::HostInstall => CapabilityId::SystemModify,
+            Self::GitRemotePush => CapabilityId::GitRemotePush,
+            Self::RemoteRead => CapabilityId::NetworkPublicRead,
+            Self::RemoteTransfer => CapabilityId::ExternalSend,
+            Self::GitHubRemote => CapabilityId::GitRemotePullRequest,
+            Self::OpaqueShell => CapabilityId::SystemModify,
             Self::ProjectExecute => CapabilityId::ProcessProjectExecute,
         }
     }
@@ -59,12 +82,30 @@ impl CommandClass {
         )
     }
 
+    /// Where the command's effects occur.
+    #[must_use]
+    pub fn externality(self) -> crate::Externality {
+        match self {
+            Self::HostInstall | Self::OpaqueShell => crate::Externality::HostSystem,
+            Self::GitRemotePush | Self::RemoteRead | Self::RemoteTransfer | Self::GitHubRemote => {
+                crate::Externality::RemoteService
+            }
+            Self::PackageSync | Self::PackageAdd => crate::Externality::PublicNetwork,
+            Self::ProjectExecute => crate::Externality::ProjectLocal,
+        }
+    }
+
     #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Self::PackageSync => "package_sync",
             Self::PackageAdd => "package_add",
             Self::HostInstall => "host_install",
+            Self::GitRemotePush => "git_remote_push",
+            Self::RemoteRead => "remote_read",
+            Self::RemoteTransfer => "remote_transfer",
+            Self::GitHubRemote => "github_remote",
+            Self::OpaqueShell => "opaque_shell",
             Self::ProjectExecute => "project_execute",
         }
     }
@@ -79,7 +120,7 @@ const HOST_INSTALL_FLAGS: &[&str] = &["-g", "--global", "--user", "--system"];
 /// considered, because `./node_modules/.bin/npm` is still npm.
 #[must_use]
 pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
-    let tool = base_name(program);
+    let tool = normalized_tool_name(program);
     let positional: Vec<&str> = args
         .iter()
         .map(String::as_str)
@@ -94,7 +135,41 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
     let named_packages = positional.len() > 1;
     let global = flags.iter().any(|f| HOST_INSTALL_FLAGS.contains(f));
 
-    match tool {
+    match tool.as_str() {
+        "git" if git_sets_inline_alias(args) => CommandClass::OpaqueShell,
+        "git" => match git_subcommand(args) {
+            "push" | "send-pack" | "http-push" => CommandClass::GitRemotePush,
+            "fetch" | "pull" | "clone" | "ls-remote" | "fetch-pack" | "http-fetch"
+            | "remote-http" | "remote-https" | "remote-ftp" | "remote-ftps" => {
+                CommandClass::RemoteRead
+            }
+            _ => CommandClass::ProjectExecute,
+        },
+
+        "curl" | "wget" => CommandClass::RemoteRead,
+        "ssh" | "scp" => CommandClass::RemoteTransfer,
+        "rsync" if args.iter().any(|arg| is_rsync_remote_endpoint(arg)) => {
+            CommandClass::RemoteTransfer
+        }
+        "gh" => CommandClass::GitHubRemote,
+
+        "sh" | "bash" | "dash" | "zsh" | "ksh"
+            if flags.iter().any(|flag| is_shell_command_flag(flag)) =>
+        {
+            CommandClass::OpaqueShell
+        }
+        "fish"
+            if flags
+                .iter()
+                .any(|flag| is_shell_command_flag(flag) || is_fish_init_command_flag(flag)) =>
+        {
+            CommandClass::OpaqueShell
+        }
+        "cmd" if args.iter().any(|arg| is_cmd_command_flag(arg)) => CommandClass::OpaqueShell,
+        "powershell" | "pwsh" if args.iter().any(|arg| is_powershell_command_flag(arg)) => {
+            CommandClass::OpaqueShell
+        }
+
         "cargo" => match sub {
             // `cargo install` puts a binary on PATH, outside the project.
             "install" | "uninstall" => CommandClass::HostInstall,
@@ -183,13 +258,93 @@ fn requirements_only(args: &[String]) -> bool {
     saw_requirement
 }
 
-fn base_name(program: &str) -> &str {
+/// Find a git subcommand after global options such as `-C <path>`.
+fn git_subcommand(args: &[String]) -> &str {
+    let mut iter = args.iter().map(String::as_str);
+    while let Some(arg) = iter.next() {
+        if matches!(
+            arg,
+            "-C" | "-c"
+                | "--git-dir"
+                | "--work-tree"
+                | "--namespace"
+                | "--super-prefix"
+                | "--exec-path"
+        ) {
+            iter.next();
+        } else if !arg.starts_with('-') {
+            return arg;
+        }
+    }
+    ""
+}
+
+fn git_sets_inline_alias(args: &[String]) -> bool {
+    args.windows(2).any(|pair| {
+        pair[0] == "-c"
+            && pair[1]
+                .get(.."alias.".len())
+                .is_some_and(|prefix| prefix.eq_ignore_ascii_case("alias."))
+    })
+}
+
+fn is_shell_command_flag(flag: &str) -> bool {
+    flag == "--command"
+        || flag.starts_with("--command=")
+        || flag
+            .strip_prefix('-')
+            .is_some_and(|short_flags| !short_flags.starts_with('-') && short_flags.contains('c'))
+}
+
+fn is_fish_init_command_flag(flag: &str) -> bool {
+    flag == "-C" || flag == "--init-command" || flag.starts_with("--init-command=")
+}
+
+fn is_cmd_command_flag(flag: &str) -> bool {
+    flag.eq_ignore_ascii_case("/c") || flag.eq_ignore_ascii_case("/k")
+}
+
+fn is_powershell_command_flag(flag: &str) -> bool {
+    let flag = flag.to_ascii_lowercase();
+    matches!(flag.as_str(), "-c" | "-command")
+        || (flag.len() >= 2 && "-encodedcommand".starts_with(flag.as_str()))
+}
+
+/// Rsync treats `host:path`, `host::module`, and `rsync://host/module` as
+/// remote endpoints. Plain project paths remain local project execution.
+fn is_rsync_remote_endpoint(arg: &str) -> bool {
+    if arg.starts_with('-') {
+        return false;
+    }
+    if arg
+        .get(.."rsync://".len())
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("rsync://"))
+    {
+        return true;
+    }
+
+    let Some((host, path)) = arg.split_once(':') else {
+        return false;
+    };
+    if host.is_empty() || host.contains(['/', '\\']) {
+        return false;
+    }
+
+    // A Windows drive path is local even though it contains a colon.
+    !(host.len() == 1
+        && host.as_bytes()[0].is_ascii_alphabetic()
+        && (path.starts_with('/') || path.starts_with('\\')))
+}
+
+fn normalized_tool_name(program: &str) -> String {
     program
         .rsplit(['/', '\\'])
         .next()
         .unwrap_or(program)
+        .to_ascii_lowercase()
         .trim_end_matches(".exe")
         .trim_end_matches(".cmd")
+        .to_string()
 }
 
 #[cfg(test)]
@@ -294,6 +449,116 @@ mod tests {
     }
 
     #[test]
+    fn direct_remote_commands_leave_the_project_lane() {
+        assert_eq!(class("git", &["push"]), CommandClass::GitRemotePush);
+        assert_eq!(class("git", &["fetch", "origin"]), CommandClass::RemoteRead);
+        assert_eq!(
+            class("git", &["-C", "project", "fetch", "origin"]),
+            CommandClass::RemoteRead
+        );
+        for subcommand in ["send-pack", "http-push"] {
+            assert_eq!(
+                class("git", &[subcommand, "origin"]),
+                CommandClass::GitRemotePush,
+                "{subcommand}"
+            );
+        }
+        for subcommand in ["fetch-pack", "http-fetch", "remote-http", "remote-https"] {
+            assert_eq!(
+                class("git", &[subcommand, "origin"]),
+                CommandClass::RemoteRead,
+                "{subcommand}"
+            );
+        }
+        for tool in ["curl", "wget"] {
+            assert_eq!(
+                class(tool, &["https://example.test"]),
+                CommandClass::RemoteRead
+            );
+        }
+        for tool in ["ssh", "scp"] {
+            assert_eq!(class(tool, &["host.example"]), CommandClass::RemoteTransfer);
+        }
+        assert_eq!(
+            class("rsync", &["src/", "host.example:path"]),
+            CommandClass::RemoteTransfer
+        );
+        assert_eq!(
+            class("rsync", &["src/", "rsync://host.example/module"]),
+            CommandClass::RemoteTransfer
+        );
+        assert_eq!(
+            class("rsync", &["-a", "src/", "target/"]),
+            CommandClass::ProjectExecute
+        );
+        assert_eq!(
+            class("rsync", &["C:\\source", "D:\\target"]),
+            CommandClass::ProjectExecute
+        );
+        assert_eq!(class("gh", &["pr", "create"]), CommandClass::GitHubRemote);
+        assert_eq!(
+            CommandClass::GitRemotePush.externality(),
+            crate::Externality::RemoteService
+        );
+    }
+
+    #[test]
+    fn command_string_shell_wrappers_are_opaque_host_commands() {
+        assert_eq!(
+            class("sh", &["-c", "cargo test"]),
+            CommandClass::OpaqueShell
+        );
+        assert_eq!(
+            class("bash", &["--command", "cargo test"]),
+            CommandClass::OpaqueShell
+        );
+        assert_eq!(
+            class("bash", &["-lc", "cargo test"]),
+            CommandClass::OpaqueShell
+        );
+        for flag in [
+            "-C",
+            "--command=curl https://example.test",
+            "--init-command",
+            "--init-command=curl https://example.test",
+        ] {
+            assert_eq!(
+                class("fish", &[flag, "curl https://example.test"]),
+                CommandClass::OpaqueShell,
+                "fish {flag}"
+            );
+        }
+        for flag in ["/C", "/c", "/K", "/k"] {
+            assert_eq!(
+                class("cmd", &[flag, "cargo test"]),
+                CommandClass::OpaqueShell,
+                "cmd {flag}"
+            );
+        }
+        assert_eq!(
+            CommandClass::OpaqueShell.capability(),
+            CapabilityId::SystemModify
+        );
+        assert_eq!(
+            CommandClass::OpaqueShell.externality(),
+            crate::Externality::HostSystem
+        );
+        assert_eq!(
+            class("sh", &["scripts/check.sh"]),
+            CommandClass::ProjectExecute,
+            "a visible project script is not an opaque command string"
+        );
+        assert_eq!(
+            class(
+                "git",
+                &["-c", "alias.ship=!curl https://example.test", "ship"]
+            ),
+            CommandClass::OpaqueShell,
+            "an inline git alias can conceal arbitrary shell execution"
+        );
+    }
+
+    #[test]
     fn the_program_path_does_not_disguise_the_tool() {
         assert_eq!(
             class("/usr/local/bin/cargo", &["add", "serde"]),
@@ -304,10 +569,44 @@ mod tests {
             CommandClass::PackageAdd
         );
         assert_eq!(class("npm.cmd", &["ci"]), CommandClass::PackageSync);
+        assert_eq!(
+            class("C:\\Program Files\\Git\\GIT.EXE", &["push"]),
+            CommandClass::GitRemotePush
+        );
+        assert_eq!(
+            class("CURL.EXE", &["https://example.test"]),
+            CommandClass::RemoteRead
+        );
+        assert_eq!(
+            class("CMD.EXE", &["/C", "cargo test"]),
+            CommandClass::OpaqueShell
+        );
+        for flag in ["-c", "-enc", "-Command", "-EncodedCommand"] {
+            assert_eq!(
+                class("PowerShell.EXE", &[flag, "cargo test"]),
+                CommandClass::OpaqueShell,
+                "{flag}"
+            );
+        }
+        for flag in ["-e", "-en", "-enco", "-encoded"] {
+            assert_eq!(
+                class("PowerShell.EXE", &[flag, "Y2FyZ28gdGVzdA=="]),
+                CommandClass::OpaqueShell,
+                "{flag}"
+            );
+        }
+        assert_eq!(
+            class("PowerShell.EXE", &["-File", "scripts/check.ps1"]),
+            CommandClass::ProjectExecute
+        );
+        assert_eq!(
+            class("fish", &["scripts/check.fish"]),
+            CommandClass::ProjectExecute
+        );
     }
 
     #[test]
-    fn an_unknown_program_is_guessed_wide_not_narrow() {
+    fn an_unknown_program_keeps_the_legacy_project_execution_class() {
         assert_eq!(class("make", &["all"]), CommandClass::ProjectExecute);
         assert_eq!(class("./deploy.sh", &[]), CommandClass::ProjectExecute);
         assert_eq!(
@@ -321,6 +620,7 @@ mod tests {
         assert!(CommandClass::PackageAdd.reaches_registry());
         assert!(CommandClass::PackageSync.reaches_registry());
         assert!(CommandClass::HostInstall.reaches_registry());
+        assert!(!CommandClass::RemoteRead.reaches_registry());
         assert!(!CommandClass::ProjectExecute.reaches_registry());
     }
 }
