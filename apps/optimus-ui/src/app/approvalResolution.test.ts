@@ -39,9 +39,11 @@ describe('approval continuation params', () => {
     });
   });
 
-  it('does not invent a project assignment for an unbound session', () => {
-    expect(
-      approvalResolutionParams('session-a', binding, 'deny', codexComposer)
-    ).not.toHaveProperty('project_id');
+  it('falls closed when the paused turn predates this app lifecycle', () => {
+    const params = approvalResolutionParams('session-a', binding, 'deny', undefined);
+    expect(params).not.toHaveProperty('provider');
+    expect(params).not.toHaveProperty('model');
+    expect(params).not.toHaveProperty('access');
+    expect(params).not.toHaveProperty('project_id');
   });
 });
