@@ -34,6 +34,9 @@ Rules (each is a way #118 could come back):
   - Every stored default is `standard`, in both composers, and neither restores
     a stored value to break-glass: ADR-0044 §5 keeps unrestricted host out of
     anything durable.
+  - The Wry composer renders Full project under Advanced and Unrestricted host
+    under a warning-treated Expert heading; its legacy `smart_deny` value
+    restores to Review changes, while legacy `full` restores to Standard.
   - Only `unrestricted` names `PolicyMode::Unrestricted` on the CLI.
 
 Anything this file cannot classify is a failure, not a pass: an arm the parser
@@ -56,6 +59,7 @@ COMPOSER = ROOT / "apps/optimus-ui/src/components/workbench/Composer.tsx"
 STORE = ROOT / "apps/optimus-ui/src/state/composerStore.ts"
 DESKTOP = ROOT / "apps/optimus-desktop/ui/index.html"
 DESKTOP_JS = ROOT / "apps/optimus-desktop/ui/app.js"
+DESKTOP_STYLE = ROOT / "apps/optimus-desktop/ui/style.css"
 CLI_PARSERS = ROOT / "apps/optimus-cli/src/parsers.rs"
 
 # The complete set of words that may reach break-glass, per crate. Anything
@@ -64,6 +68,22 @@ CLI_PARSERS = ROOT / "apps/optimus-cli/src/parsers.rs"
 # the graph crate only.
 BREAK_GLASS = frozenset({"unrestricted_host", "unrestricted"})
 GRAPH_ONLY = frozenset({"yolo"})
+EXPECTED_ALIASES = {
+    "standard": "standard",
+    "review_changes": "review_changes",
+    "smart_deny": "review_changes",
+    "ask": "review_changes",
+    "read_only": "read_only",
+    "read": "read_only",
+    "full_project": "full_project",
+}
+EXPECTED_TIERS = {
+    "standard": "primary",
+    "review_changes": "primary",
+    "read_only": "primary",
+    "full_project": "advanced",
+    "unrestricted_host": "expert",
+}
 
 
 def fail(message: str) -> None:
@@ -84,6 +104,28 @@ def strip_comments(source: str) -> str:
     real code must not be hidden behind one.
     """
     return re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", source, flags=re.S))
+
+
+def strip_html_comments(source: str) -> str:
+    """Remove balanced HTML comments so dead menu markup cannot satisfy a gate."""
+    output: list[str] = []
+    offset = 0
+    while offset < len(source):
+        opening = source.find("<!--", offset)
+        closing = source.find("-->", offset)
+        if closing >= 0 and (opening < 0 or closing < opening):
+            fail("optimus-desktop/ui/index.html: unmatched HTML comment close")
+        if opening < 0:
+            output.append(source[offset:])
+            break
+        output.append(source[offset:opening])
+        closing = source.find("-->", opening + 4)
+        if closing < 0:
+            fail("optimus-desktop/ui/index.html: unclosed HTML comment")
+        comment = source[opening : closing + 3]
+        output.append("\n" * comment.count("\n"))
+        offset = closing + 3
+    return "".join(output)
 
 
 def braced_contents(source: str, opening: int, surface: str) -> tuple[str, int]:
@@ -107,7 +149,7 @@ def braced_contents(source: str, opening: int, surface: str) -> tuple[str, int]:
             elif char == quote:
                 quote = None
             continue
-        if char in {'"', "'"}:
+        if char in {'"', "'", "`"}:
             quote = char
         elif char == "{":
             depth += 1
@@ -116,6 +158,51 @@ def braced_contents(source: str, opening: int, surface: str) -> tuple[str, int]:
             if depth == 0:
                 return source[opening + 1 : offset], offset
     fail(f"{surface}: opening brace has no matching close")
+
+
+def logical_statements(body: str, surface: str) -> list[str]:
+    """Split a JavaScript block at top-level semicolons.
+
+    A renderer contract must inspect statements that execute in the selected
+    branch, not matching text hidden inside a nested function or conditional.
+    Strings and nested callbacks may contain semicolons without ending their
+    owning statement.
+    """
+    statements: list[str] = []
+    start = 0
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    for offset, char in enumerate(body):
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in {'"', "'", "`"}:
+            quote = char
+        elif char in "({[":
+            depth += 1
+        elif char in ")}]":
+            depth -= 1
+            if depth < 0:
+                fail(f"{surface}: statement has an unmatched closing delimiter")
+        elif char == ";" and depth == 0:
+            statement = body[start : offset + 1].strip()
+            if statement:
+                statements.append(statement)
+            start = offset + 1
+    if quote is not None or depth != 0:
+        fail(f"{surface}: statement has an unclosed string or delimiter")
+    trailing = body[start:].strip()
+    if trailing:
+        statements.append(trailing)
+    if not statements:
+        fail(f"{surface}: block has no statements")
+    return statements
 
 
 def match_body(source: str, signature: str, surface: str) -> str:
@@ -251,8 +338,8 @@ def parse_table(source: str, crate: str) -> dict[str, str]:
 QUOTED = r"""['"]([a-z_]+)['"]"""
 
 
-def menu_options(source: str) -> list[tuple[str, str]]:
-    """(value, tier) for each access option, in the order the menu *renders*.
+def menu_options(source: str) -> list[tuple[str, str, str]]:
+    """(value, tier, hint) for each access option in rendered order.
 
     The composer renders tier by tier, so `accessOptions` order alone is not
     what a human sees: moving the expert tier to the top of `accessTiers` would
@@ -268,16 +355,17 @@ def menu_options(source: str) -> list[tuple[str, str]]:
     if not block:
         fail("Composer.tsx: could not find accessOptions")
 
-    options: list[tuple[str, str]] = []
+    options: list[tuple[str, str, str]] = []
     for entry in re.findall(r"\{([^{}]*)\}", block.group(1)):
         value = re.search(rf"\bvalue:\s*{QUOTED}", entry)
         tier = re.search(rf"\btier:\s*{QUOTED}", entry)
-        if not value or not tier:
+        hint = re.search(r"\bhint:\s*(['\"])(.*?)\1", entry, re.S)
+        if not value or not tier or not hint or not hint.group(2).strip():
             fail(
                 f"Composer.tsx: the access option {entry.strip()!r} does not "
-                "state both a value and a tier"
+                "state a value, tier, and human-readable hint"
             )
-        options.append((value.group(1), tier.group(1)))
+        options.append((value.group(1), tier.group(1), hint.group(2).strip()))
     if not options:
         fail("Composer.tsx: accessOptions has no value/tier pairs")
 
@@ -287,20 +375,21 @@ def menu_options(source: str) -> list[tuple[str, str]]:
     tier_order = re.findall(rf"tier:\s*{QUOTED}", tier_block.group(1))
     if not tier_order:
         fail("Composer.tsx: accessTiers names no tiers")
-    unknown = sorted({tier for _, tier in options} - set(tier_order))
+    unknown = sorted({tier for _, tier, _ in options} - set(tier_order))
     if unknown:
         fail(f"Composer.tsx: options sit in tiers that never render: {unknown}")
 
     return [
-        (value, tier)
+        (value, tier, hint)
         for rendered_tier in tier_order
-        for value, tier in options
+        for value, tier, hint in options
         if tier == rendered_tier
     ]
 
 
-def desktop_options(source: str) -> list[str]:
-    """Option values of the Wry composer's access select, in render order."""
+def desktop_options(source: str) -> list[tuple[str, str, bool, str]]:
+    """(value, tier, warning, hint) for the Wry access select in render order."""
+    source = strip_html_comments(source)
     blocks = re.findall(r'<select id="access".*?</select>', source, re.S)
     if not blocks:
         fail("optimus-desktop/ui/index.html: could not find the access select")
@@ -309,16 +398,237 @@ def desktop_options(source: str) -> list[str]:
             f"optimus-desktop/ui/index.html: {len(blocks)} access selects; the "
             "one the send path reads must be the only one"
         )
-    values = re.findall(r'<option value="([a-z_]+)"', blocks[0])
-    if not values:
+    entries: list[tuple[str, str, bool, str]] = []
+    selected: list[str] = []
+    for attributes in re.findall(r"<option\b([^>]*)>", blocks[0]):
+        value = re.search(r'\bvalue="([a-z_]+)"', attributes)
+        tier = re.search(r'\bdata-tier="([a-z_]+)"', attributes)
+        hint = re.search(r'\bdata-hint="([^"]+)"', attributes)
+        if not value or not tier or not hint or not hint.group(1).strip():
+            fail(
+                "optimus-desktop/ui/index.html: every access option must state "
+                "a canonical value, visible tier, and explanatory hint"
+            )
+        entries.append(
+            (
+                value.group(1),
+                tier.group(1),
+                'data-warning="true"' in attributes,
+                hint.group(1).strip(),
+            )
+        )
+        if re.search(r"(?:^|\s)selected(?:\s|=|$)", attributes):
+            selected.append(value.group(1))
+    if not entries:
         fail("optimus-desktop/ui/index.html: the access select has no options")
-    selected = re.findall(r'<option value="([a-z_]+)"[^>]*\bselected\b', blocks[0])
     if selected != ["standard"]:
         fail(
             "optimus-desktop/ui/index.html: the access select pre-selects "
             f"{selected or ['(nothing)']}; standard is the default profile"
         )
-    return values
+    return entries
+
+
+def desktop_render_contract(source: str, style: str) -> None:
+    """Hold tier, hint, and warning rendering in executed access statements."""
+    source = strip_comments(source)
+    style = strip_comments(style)
+    functions = list(re.finditer(r"\bfunction\s+buildCddHtml\(kind\)\s*\{", source))
+    if len(functions) != 1:
+        fail(
+            "optimus-desktop/ui/app.js: expected one buildCddHtml(kind) "
+            f"function, found {len(functions)}"
+        )
+    function_body, _ = braced_contents(
+        source,
+        functions[0].end() - 1,
+        "optimus-desktop/ui/app.js: buildCddHtml",
+    )
+    access_branches = list(
+        re.finditer(
+            r"\bif\s*\(\s*kind\s*===\s*(['\"])access\1\s*\)\s*\{",
+            function_body,
+        )
+    )
+    if len(access_branches) != 1:
+        fail(
+            "optimus-desktop/ui/app.js: expected one live access-render branch, "
+            f"found {len(access_branches)}"
+        )
+    access_body, _ = braced_contents(
+        function_body,
+        access_branches[0].end() - 1,
+        "optimus-desktop/ui/app.js: access render branch",
+    )
+    statements = logical_statements(
+        access_body, "optimus-desktop/ui/app.js: access render branch"
+    )
+
+    groups = [
+        statement
+        for statement in statements
+        if re.fullmatch(r"const\s+groups\s*=\s*\[\]\s*;", statement)
+    ]
+    collectors = [
+        statement
+        for statement in statements
+        if re.match(
+            r"Array\.from\(\$\((['\"])access\1\)\.options\)"
+            r"\.forEach\(\(o\)\s*=>\s*\{",
+            statement,
+        )
+    ]
+    renders = [
+        statement
+        for statement in statements
+        if re.match(r"return\s+groups\.map\(\(group\)\s*=>\s*\{", statement)
+    ]
+    if len(statements) != 3 or len(groups) != 1 or len(collectors) != 1 or len(renders) != 1:
+        fail(
+            "optimus-desktop/ui/app.js: access rendering must execute one "
+            "groups declaration, one access-option collector, and one grouped "
+            "return; nested or unrelated matching code does not count"
+        )
+
+    collector_open = collectors[0].find("{")
+    collector_body, _ = braced_contents(
+        collectors[0],
+        collector_open,
+        "optimus-desktop/ui/app.js: access option collector",
+    )
+    required_collector = (
+        "o.dataset.tier",
+        "groups.push(group)",
+        "group.options.push(o)",
+    )
+    missing_collector = [
+        token for token in required_collector if token not in collector_body
+    ]
+    if missing_collector:
+        fail(
+            "optimus-desktop/ui/app.js: live access option collection omits "
+            f"{missing_collector}"
+        )
+
+    render_open = renders[0].find("{")
+    render_body, _ = braced_contents(
+        renders[0], render_open, "optimus-desktop/ui/app.js: grouped access return"
+    )
+    render_statements = logical_statements(
+        render_body, "optimus-desktop/ui/app.js: grouped access return"
+    )
+    headings = [
+        statement
+        for statement in render_statements
+        if re.match(r"const\s+heading\s*=", statement)
+    ]
+    option_maps = [
+        statement
+        for statement in render_statements
+        if re.match(
+            r"const\s+options\s*=\s*group\.options\.map\(\(o\)\s*=>\s*\{",
+            statement,
+        )
+    ]
+    group_returns = [
+        statement
+        for statement in render_statements
+        if re.match(r"return\s+", statement)
+    ]
+    if len(headings) != 1 or len(option_maps) != 1 or len(group_returns) != 1:
+        fail(
+            "optimus-desktop/ui/app.js: grouped access return must directly "
+            "build one heading, one option map, and one tier wrapper"
+        )
+    required_heading = ('class="cdd-sec"', 'data-tier="${esc(group.tier)}"')
+    if any(token not in headings[0] for token in required_heading):
+        fail("optimus-desktop/ui/app.js: access tier heading is not rendered live")
+    required_group_return = (
+        'class="cdd-access-tier"',
+        'role="group"',
+        'aria-label="${esc(tierLabel)}"',
+        "${heading}",
+        "${options}",
+    )
+    missing_group_return = [
+        token for token in required_group_return if token not in group_returns[0]
+    ]
+    if missing_group_return:
+        fail(
+            "optimus-desktop/ui/app.js: live tier wrapper omits "
+            f"{missing_group_return}"
+        )
+
+    option_open = option_maps[0].find("{")
+    option_body, _ = braced_contents(
+        option_maps[0], option_open, "optimus-desktop/ui/app.js: access option map"
+    )
+    option_statements = logical_statements(
+        option_body, "optimus-desktop/ui/app.js: access option map"
+    )
+    required_option_statements = {
+        "warning": ("o.dataset.warning", "'true'"),
+        "hint": ("o.dataset.hint",),
+        "active": ("o.value === $('access').value",),
+        "warningClass": ("warning", "access-warning"),
+        "risk": ("warning", "access-risk"),
+        "label": ("o.textContent", "hint"),
+    }
+    for name, tokens in required_option_statements.items():
+        declarations = [
+            statement
+            for statement in option_statements
+            if re.match(rf"const\s+{name}\s*=", statement)
+        ]
+        missing = (
+            list(tokens)
+            if len(declarations) != 1
+            else [token for token in tokens if token not in declarations[0]]
+        )
+        if missing:
+            fail(
+                "optimus-desktop/ui/app.js: live access option rendering must "
+                f"derive {name} from {missing}"
+            )
+    option_returns = [
+        statement for statement in option_statements if re.match(r"return\s+", statement)
+    ]
+    if len(option_returns) != 1:
+        fail("optimus-desktop/ui/app.js: access option map must return one live option")
+    required_option_return = (
+        'role="option"',
+        'aria-label="${esc(label)}"',
+        'aria-selected="${active',
+        "warningClass",
+        "${risk}",
+        'data-tier="${esc(group.tier)}"',
+        'data-v="${esc(o.value)}"',
+        'class="access-copy"',
+        'class="access-hint"',
+    )
+    missing_option_return = [
+        token for token in required_option_return if token not in option_returns[0]
+    ]
+    if missing_option_return:
+        fail(
+            "optimus-desktop/ui/app.js: live access option return omits "
+            f"{missing_option_return}"
+        )
+
+    required_style = (
+        "#cddPortal .cdd-access-tier",
+        '#cddPortal .cdd-sec[data-tier="expert"]',
+        "#cddPortal button.access-warning",
+        "#cddPortal .access-copy",
+        "#cddPortal .access-hint",
+        "var(--warn)",
+    )
+    missing_style = [token for token in required_style if token not in style]
+    if missing_style:
+        fail(
+            "optimus-desktop/ui/style.css: break-glass lacks visible warning "
+            f"treatment {missing_style}"
+        )
 
 
 def alias_table(source: str, surface: str) -> list[tuple[str, str]]:
@@ -328,6 +638,7 @@ def alias_table(source: str, surface: str) -> list[tuple[str, str]]:
     keeps break-glass out of anything durable, so what a stored value restores
     to is as much a part of this vocabulary as what the menu offers.
     """
+    source = strip_comments(source)
     declarations = list(re.finditer(r"\bconst\s+ACCESS_ALIASES\b[^=]*=", source))
     if len(declarations) != 1:
         fail(f"{surface}: expected one ACCESS_ALIASES table, found {len(declarations)}")
@@ -345,9 +656,27 @@ def alias_table(source: str, surface: str) -> list[tuple[str, str]]:
         )
     opening = expression.find("{")
     aliases, _ = braced_contents(expression, opening, f"{surface}: ACCESS_ALIASES")
-    restores = re.findall(rf"([a-z_]+):\s*{QUOTED}", aliases)
+    restores: list[tuple[str, str]] = []
+    property_pattern = re.compile(
+        r"(?:(?P<bare>[a-z_]+)|(?P<key_quote>['\"])(?P<quoted>[a-z_]+)"
+        r"(?P=key_quote))\s*:\s*(?P<value_quote>['\"])(?P<value>[a-z_]+)"
+        r"(?P=value_quote)"
+    )
+    for entry in logical_arms(aliases, f"{surface}: ACCESS_ALIASES"):
+        parsed = property_pattern.fullmatch(entry.strip())
+        if not parsed:
+            fail(
+                f"{surface}: cannot classify ACCESS_ALIASES entry {entry.strip()!r}; "
+                "only explicit bare or quoted string keys may migrate persisted access"
+            )
+        restores.append(
+            (parsed.group("bare") or parsed.group("quoted"), parsed.group("value"))
+        )
     if not restores:
         fail(f"{surface}: ACCESS_ALIASES maps nothing")
+    keys = [stored for stored, _ in restores]
+    if len(keys) != len(set(keys)):
+        fail(f"{surface}: ACCESS_ALIASES repeats a stored spelling")
     return restores
 
 
@@ -468,7 +797,7 @@ def main() -> int:
             )
 
     options = menu_options(read(COMPOSER))
-    values = [value for value, _ in options]
+    values = [value for value, _, _ in options]
     if values != sorted(values, key=profiles.index) or set(values) != set(profiles):
         fail(
             f"Composer.tsx offers {values}, which is not the profile "
@@ -479,21 +808,47 @@ def main() -> int:
     if values[-1] != "unrestricted_host":
         fail(f"Composer.tsx offers {values[-1]!r} last; unrestricted_host must come last")
 
-    tiers = dict(options)
-    if tiers["unrestricted_host"] != "expert":
+    tiers = {value: tier for value, tier, _ in options}
+    if tiers != EXPECTED_TIERS:
         fail(
-            f"Composer.tsx puts unrestricted_host in the {tiers['unrestricted_host']!r} "
-            "tier; break-glass belongs under Expert"
+            f"Composer.tsx assigns access tiers {tiers}; expected exactly "
+            f"{EXPECTED_TIERS}"
         )
+    hints = {value: hint for value, _, hint in options}
     for value in values:
         if value not in policy_table:
             fail(f"Composer.tsx offers {value!r}, which optimus-policy cannot parse")
 
-    desktop = desktop_options(read(DESKTOP))
+    desktop_options_with_tiers = desktop_options(read(DESKTOP))
+    desktop = [value for value, _, _, _ in desktop_options_with_tiers]
     if desktop != profiles:
         fail(
             f"optimus-desktop/ui/index.html offers {desktop}, not the profile "
             f"vocabulary in declaration order {profiles}"
+        )
+    desktop_tiers = {
+        value: tier for value, tier, _, _ in desktop_options_with_tiers
+    }
+    if desktop_tiers != EXPECTED_TIERS:
+        fail(
+            "optimus-desktop/ui/index.html: access tiers are "
+            f"{desktop_tiers}; expected exactly {EXPECTED_TIERS}"
+        )
+    desktop_hints = {
+        value: hint for value, _, _, hint in desktop_options_with_tiers
+    }
+    if desktop_hints != hints:
+        fail(
+            "optimus-desktop/ui/index.html: access explanations differ from "
+            f"Composer.tsx ({desktop_hints} vs {hints})"
+        )
+    warned = [
+        value for value, _, warning, _ in desktop_options_with_tiers if warning
+    ]
+    if warned != ["unrestricted_host"]:
+        fail(
+            "optimus-desktop/ui/index.html: visible warning treatment must name "
+            f"only unrestricted_host, not {warned}"
         )
 
     store = read(STORE)
@@ -507,6 +862,7 @@ def main() -> int:
     # restored straight to unrestricted host would reopen #118 through
     # persistence instead of through the menu.
     desktop_js = read(DESKTOP_JS)
+    desktop_render_contract(desktop_js, read(DESKTOP_STYLE))
     restore_contract(
         store,
         "composerStore.ts",
@@ -519,7 +875,14 @@ def main() -> int:
     )
     restores: list[tuple[str, str]] = []
     for source, surface in ((store, "composerStore.ts"), (desktop_js, "app.js")):
-        for stored, restored in alias_table(source, surface):
+        aliases = alias_table(source, surface)
+        actual_aliases = dict(aliases)
+        if actual_aliases != EXPECTED_ALIASES:
+            fail(
+                f"{surface}: persisted access migrations are {actual_aliases}; "
+                f"expected exactly {EXPECTED_ALIASES}"
+            )
+        for stored, restored in aliases:
             restores.append((stored, restored))
             if restored == "unrestricted_host":
                 fail(

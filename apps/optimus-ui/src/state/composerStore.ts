@@ -36,6 +36,7 @@ const PROVIDERS: ReadonlyArray<ComposerSettings['provider']> = [
 const ACCESS_ALIASES: Readonly<Record<string, string>> = Object.assign(Object.create(null), {
   standard: 'standard',
   review_changes: 'review_changes',
+  smart_deny: 'review_changes',
   ask: 'review_changes',
   read_only: 'read_only',
   read: 'read_only',

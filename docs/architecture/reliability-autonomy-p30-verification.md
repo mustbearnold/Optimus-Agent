@@ -4,19 +4,34 @@ status: current
 owns:
   - docs/architecture/reliability-autonomy-p30-verification.md
 covers:
+  - apps/optimus-cli/src/parsers.rs
+  - apps/optimus-desktop/ui/app.js
+  - apps/optimus-desktop/ui/index.html
+  - apps/optimus-desktop/ui/style.css
+  - apps/optimus-ui/src/components/workbench/Composer.tsx
+  - apps/optimus-ui/src/state/composerStore.ts
+  - crates/optimus-graph/src/lib.rs
+  - crates/optimus-host/src/chat.rs
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
+  - scripts/check-autonomy-profiles.py
 depends_on:
   - docs/plans/reliability-autonomy-program.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
 validated_by:
+  - apps/optimus-desktop/e2e/02-shell-and-composer.spec.js
+  - apps/optimus-ui/src/components/workbench/Composer.test.tsx
+  - apps/optimus-ui/src/state/composerStore.test.ts
+  - crates/optimus-host/src/chat.rs
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-runtime/tests/phase1_policy_budget.rs
   - scripts/check-crate-layers.py
+  - scripts/check-autonomy-profiles.py
+  - scripts/test_autonomy_profiles.py
 last_verified_commit: null
 ---
 
@@ -37,7 +52,7 @@ replacing SmartDeny as the pause mechanism or CommandFsEnvelope as containment.
 | Item | Result | Evidence |
 |---|:---:|---|
 | ADR-0044 | **PASS** | `docs/decisions/0044-bounded-project-trust-and-capability-broker.md` |
-| `optimus-policy` broker + profiles | **PASS** | `cargo test -p optimus-policy` (5) |
+| `optimus-policy` broker + profiles | **PASS** | `cargo test -p optimus-policy` (15 unit + 7 integration) |
 | Standard auto-allow project write/cmd | **PASS** | `project_trust_profile` |
 | Review changes still pauses | **PASS** | `project_trust_profile` + `approvals_surface` |
 | Read only denies mutate | **PASS** | `project_trust_profile` |
@@ -121,8 +136,21 @@ Three things now stand behind these rows instead of a reading:
   access values, the two Rust profile parsers, and the CLI policy parser on
   every `just verify`. It proves that each menu defaults to `standard`, neither
   composer restores break-glass after restart, and only the explicit
-  `unrestricted` CLI word disables effect checks. Its self-tests begin by
-  proving the pre-fix tree of each composer fails.
+  `unrestricted` CLI word disables effect checks. The Wry render contract is
+  scoped to the live `kind === 'access'` branch, requires the same tier and
+  explanatory-hint vocabulary as React, and cannot pass from matching dead
+  code. Exact migration tables keep the old Wry `smart_deny` value at Review
+  changes and legacy `full` at Standard. The parser recognizes explicit bare
+  and quoted literal properties, then rejects computed, spread, duplicate, or
+  otherwise unclassifiable table entries rather than silently omitting them.
+  Wry menu extraction removes balanced HTML comments and rejects malformed
+  ones, so dead markup cannot stand in for the shipped access menu. Its 37
+  self-tests begin by proving the pre-fix tree of each composer fails and include
+  adversarial fixtures for those bypass shapes.
+- `apps/optimus-desktop/e2e/02-shell-and-composer.spec.js` checks the live Wry
+  listbox order and grouping, the break-glass warning's accessible name and
+  explanatory hint, and reload behavior for current and legacy persisted
+  access words.
 - `apps/optimus-electron/e2e/support/workbench-flow.cjs` asserts a fresh profile
   boots at `Access: Standard` through the compiled bundle, so the claim survives
   the build rather than only the source.

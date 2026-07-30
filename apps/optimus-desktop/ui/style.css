@@ -912,6 +912,22 @@
     background:var(--accent-dim);color:var(--accent-text);border-color:transparent;
   }
   #cddPortal .cdd-sec{padding:7px 9px 3px;color:var(--text-3);font-weight:560}
+  #cddPortal .cdd-access-tier{display:flex;flex-direction:column;gap:2px;width:100%}
+  #cddPortal .cdd-access-tier button{align-items:flex-start;white-space:normal}
+  #cddPortal .cdd-sec[data-tier="expert"]{color:var(--warn)}
+  #cddPortal button.access-warning{
+    color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent);
+  }
+  #cddPortal button.access-warning:hover,#cddPortal button.access-warning.active{
+    color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent);
+  }
+  #cddPortal button.access-warning .access-risk{
+    display:inline-grid;place-items:center;width:15px;height:15px;flex:0 0 auto;
+    border:1px solid currentColor;border-radius:50%;font-size:10px;font-weight:700;line-height:1;
+  }
+  #cddPortal .access-copy{display:flex;min-width:0;flex-direction:column;gap:2px}
+  #cddPortal .access-hint{max-width:238px;color:var(--text-3);font-size:9.5px;line-height:1.25}
+  #cddPortal button.access-warning .access-hint{color:inherit;opacity:.82}
   .send{
     right:10px;bottom:10px;width:36px;height:36px;border-radius:11px;
     background:var(--send-bg);box-shadow:0 7px 20px rgba(89,105,230,.3),inset 0 1px 0 rgba(255,255,255,.25);

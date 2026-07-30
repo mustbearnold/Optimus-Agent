@@ -68,13 +68,19 @@ DESKTOP_TEMPLATE = """
 """
 
 FIVE_DESKTOP_OPTIONS = "\n".join(
-    f'  <option value="{value}"{" selected" if value == "standard" else ""}>x</option>'
-    for value in (
-        "standard",
-        "review_changes",
-        "read_only",
-        "full_project",
-        "unrestricted_host",
+    '  <option value="{value}" data-tier="{tier}" data-hint="{hint}"{warning}{selected}>x</option>'.format(
+        value=value,
+        tier=tier,
+        hint=hint,
+        warning=' data-warning="true"' if value == "unrestricted_host" else "",
+        selected=" selected" if value == "standard" else "",
+    )
+    for value, tier, hint in (
+        ("standard", "primary", "y"),
+        ("review_changes", "primary", "y"),
+        ("read_only", "primary", "y"),
+        ("full_project", "advanced", "y"),
+        ("unrestricted_host", "expert", "y"),
     )
 )
 
@@ -96,10 +102,12 @@ type ComposerSettings = {{ access: string }};
 const ACCESS_ALIASES: Readonly<Record<string, string>> = {prototype}{{
   standard: 'standard',
   review_changes: 'review_changes',
+  smart_deny: 'review_changes',
   ask: 'review_changes',
   read_only: 'read_only',
   read: 'read_only',
   full_project: '{alias}',
+{extra_alias}
 }}{close};
 export function restoredAccess(raw: unknown): string {{
   if (typeof raw !== 'string') return 'standard';
@@ -118,14 +126,88 @@ export function loadComposer(parsed: Record<string, unknown>) {{
 
 NULL_PROTOTYPE = ("Object.assign(Object.create(null), ", ")")
 
+ACCESS_RENDER_TEMPLATE = """
+  if (kind === 'access') {
+    const groups = [];
+    Array.from($('access').options).forEach((o) => {
+      const tier = o.dataset.tier || '';
+      let group = groups[groups.length - 1];
+      if (!group || group.tier !== tier) {
+        group = { tier, options: [] };
+        groups.push(group);
+      }
+      group.options.push(o);
+    });
+    return groups.map((group) => {
+      const tierLabel = group.tier === 'primary' ? 'Recommended' : group.tier;
+      const heading = group.tier === 'primary'
+        ? ''
+        : `<div class="cdd-sec" data-tier="${esc(group.tier)}">${esc(tierLabel)}</div>`;
+      const options = group.options.map((o) => {
+        const warning = o.dataset.warning === 'true';
+        const hint = o.dataset.hint || '';
+        const active = o.value === $('access').value;
+        const warningClass = warning ? ' access-warning' : '';
+        const risk = warning ? '<span class="access-risk">!</span>' : '';
+        const label = `${o.textContent}. ${hint}`;
+        return `<button role="option" aria-label="${esc(label)}" aria-selected="${active ? 'true' : 'false'}" class="${warningClass}" data-tier="${esc(group.tier)}" data-v="${esc(o.value)}">${risk}<span class="access-copy"><small class="access-hint">${esc(hint)}</small></span></button>`;
+      }).join('');
+      return `<div class="cdd-access-tier" role="group" aria-label="${esc(tierLabel)}">${heading}${options}</div>`;
+    }).join('');
+  }
+"""
+
+DEAD_ACCESS_RENDER = """
+function unusedAccessRenderer(o) {
+  const tier = o.dataset.tier;
+  const warning = o.dataset.warning;
+  const hint = o.dataset.hint;
+  return '<div class="cdd-access-tier" role="group" aria-label="x">' +
+    '<div class="cdd-sec">' + tier + '</div>' +
+    '<button aria-selected="false" class="access-warning">' +
+    '<span class="access-risk">!</span><span class="access-copy">' +
+    '<small class="access-hint">' + hint + warning + '</small></span></button></div>';
+}
+"""
+
+NESTED_DEAD_ACCESS_RENDER = """
+  if (kind === 'access') {
+    function unusedAccessRenderer() {
+      const groups = [];
+      Array.from($('access').options).forEach((o) => {
+        const tier = o.dataset.tier;
+        let group = { tier, options: [] };
+        groups.push(group);
+        group.options.push(o);
+      });
+      return groups.map((group) => {
+        const heading = `<div class="cdd-sec" data-tier="${esc(group.tier)}"></div>`;
+        const options = group.options.map((o) => {
+          const warning = o.dataset.warning;
+          const hint = o.dataset.hint;
+          const active = o.value === $('access').value;
+          const warningClass = warning ? 'access-warning' : '';
+          const risk = warning ? '<span class="access-risk"></span>' : '';
+          const label = o.textContent;
+          return `<button role="option" aria-label="${esc(label)}" aria-selected="${active}" class="${warningClass}" data-tier="${esc(group.tier)}" data-v="${esc(o.value)}">${risk}<span class="access-copy"><small class="access-hint">${hint}</small></span></button>`;
+        }).join('');
+        return `<div class="cdd-access-tier" role="group" aria-label="${esc('Expert')}">${heading}${options}</div>`;
+      }).join('');
+    }
+    return '<button>flat</button>';
+  }
+"""
+
 DESKTOP_JS_TEMPLATE = """
 const ACCESS_ALIASES = Object.assign(Object.create(null), {{
   standard: 'standard',
   review_changes: 'review_changes',
+  smart_deny: 'review_changes',
   ask: 'review_changes',
   read_only: 'read_only',
   read: 'read_only',
   full_project: '{alias}',
+{extra_alias}
 }});
 function restoredAccess(raw) {{
   if (typeof raw !== 'string') return '{fallback}';
@@ -134,6 +216,19 @@ function restoredAccess(raw) {{
 function restoreComposer(c) {{
   $('access').value = {restore};
 }}
+function buildCddHtml(kind) {{
+{access_render}
+  return '';
+}}
+{extra_js}
+"""
+
+DESKTOP_STYLE_TEMPLATE = """
+#cddPortal .cdd-access-tier {{ display: flex; }}
+#cddPortal .cdd-sec[data-tier="expert"] {{ color: var(--warn); }}
+#cddPortal button.access-warning {{ color: var(--warn); }}
+#cddPortal .access-copy {{ display: flex; }}
+#cddPortal .access-hint {{ color: var(--warn); }}
 """
 
 CLI_TEMPLATE = """
@@ -157,6 +252,7 @@ class AutonomyGateTests(unittest.TestCase):
         GATE.STORE = root / "composerStore.ts"
         GATE.DESKTOP = root / "index.html"
         GATE.DESKTOP_JS = root / "app.js"
+        GATE.DESKTOP_STYLE = root / "style.css"
         GATE.CLI_PARSERS = root / "parsers.rs"
         self.write()
 
@@ -172,11 +268,16 @@ class AutonomyGateTests(unittest.TestCase):
         tiers: str = DEFAULT_TIERS,
         store: tuple[str, str] = ("standard", "standard"),
         alias: str = "full_project",
+        store_extra_alias: str = "",
         desktop: str = FIVE_DESKTOP_OPTIONS,
         prototype: tuple[str, str] = NULL_PROTOTYPE,
         desktop_alias: str = "full_project",
+        desktop_extra_alias: str = "",
         desktop_restore: str = "restoredAccess(c.access)",
         desktop_fallback: str = "standard",
+        desktop_access_render: str = ACCESS_RENDER_TEMPLATE,
+        desktop_extra_js: str = "",
+        desktop_style: str = DESKTOP_STYLE_TEMPLATE,
         cli_unrestricted: str = '"unrestricted"',
     ) -> None:
         GATE.POLICY.write_text(POLICY_TEMPLATE.format(break_glass=policy_break_glass))
@@ -193,6 +294,7 @@ class AutonomyGateTests(unittest.TestCase):
                 first=store[0],
                 second=store[1],
                 alias=alias,
+                extra_alias=store_extra_alias,
                 prototype=prototype[0],
                 close=prototype[1],
             )
@@ -201,10 +303,14 @@ class AutonomyGateTests(unittest.TestCase):
         GATE.DESKTOP_JS.write_text(
             DESKTOP_JS_TEMPLATE.format(
                 alias=desktop_alias,
+                extra_alias=desktop_extra_alias,
                 restore=desktop_restore,
                 fallback=desktop_fallback,
+                access_render=desktop_access_render,
+                extra_js=desktop_extra_js,
             )
         )
+        GATE.DESKTOP_STYLE.write_text(desktop_style)
         GATE.CLI_PARSERS.write_text(
             CLI_TEMPLATE.format(unrestricted=cli_unrestricted)
         )
@@ -332,6 +438,26 @@ class AutonomyGateTests(unittest.TestCase):
         self.write(desktop_alias="unrestricted_host")
         self.assert_fails("the Wry composer must not persist break-glass")
 
+    def test_react_legacy_full_must_restore_to_standard(self) -> None:
+        self.write(store_extra_alias="  full: 'full_project',")
+        self.assert_fails("legacy React full must not migrate to broader authority")
+
+    def test_a_quoted_legacy_alias_cannot_hide_from_the_gate(self) -> None:
+        self.write(store_extra_alias="  'full': 'full_project',")
+        self.assert_fails("quoted persisted aliases must be classified too")
+
+    def test_a_computed_legacy_alias_cannot_hide_from_the_gate(self) -> None:
+        self.write(desktop_extra_alias='  ["full"]: "full_project",')
+        self.assert_fails("computed persisted aliases must fail closed")
+
+    def test_a_spread_alias_table_cannot_hide_from_the_gate(self) -> None:
+        self.write(store_extra_alias="  ...legacyAliases,")
+        self.assert_fails("spread persisted aliases must fail closed")
+
+    def test_desktop_legacy_full_must_restore_to_standard(self) -> None:
+        self.write(desktop_extra_alias="  full: 'full_project',")
+        self.assert_fails("legacy Wry full must not migrate to broader authority")
+
     def test_desktop_persistence_must_use_the_restore_filter(self) -> None:
         self.write(desktop_restore="c.access")
         self.assert_fails("the Wry composer must filter persisted access")
@@ -356,13 +482,73 @@ class AutonomyGateTests(unittest.TestCase):
         )
         self.assert_fails("the Wry composer's own #118 shape must fail")
 
+    def test_a_commented_desktop_access_menu_is_not_live(self) -> None:
+        commented = "<!--\n" + DESKTOP_TEMPLATE.format(options=FIVE_DESKTOP_OPTIONS) + "\n-->"
+        with self.assertRaises(SystemExit) as caught:
+            GATE.desktop_options(commented)
+        self.assertEqual(caught.exception.code, 1)
+
+    def test_desktop_break_glass_must_render_under_expert(self) -> None:
+        self.write(
+            desktop=FIVE_DESKTOP_OPTIONS.replace(
+                'value="unrestricted_host" data-tier="expert"',
+                'value="unrestricted_host" data-tier="primary"',
+            )
+        )
+        self.assert_fails("Wry break-glass must be visibly separated under Expert")
+
+    def test_desktop_full_project_must_render_under_advanced(self) -> None:
+        self.write(
+            desktop=FIVE_DESKTOP_OPTIONS.replace(
+                'value="full_project" data-tier="advanced"',
+                'value="full_project" data-tier="primary"',
+            )
+        )
+        self.assert_fails("Wry full-project authority must sit under Advanced")
+
+    def test_desktop_break_glass_must_carry_warning_treatment(self) -> None:
+        self.write(
+            desktop=FIVE_DESKTOP_OPTIONS.replace(' data-warning="true"', "")
+        )
+        self.assert_fails("Wry break-glass must be visually distinct")
+
+    def test_desktop_warning_style_is_part_of_the_gate(self) -> None:
+        self.write(desktop_style="")
+        self.assert_fails("Wry warning metadata without visible CSS must fail")
+
+    def test_desktop_access_render_tokens_in_dead_code_do_not_pass(self) -> None:
+        self.write(
+            desktop_access_render="  if (kind === 'access') { return '<button>flat</button>'; }",
+            desktop_extra_js=DEAD_ACCESS_RENDER,
+        )
+        self.assert_fails("unused render code must not satisfy the live access branch")
+
+    def test_desktop_access_render_nested_dead_code_does_not_pass(self) -> None:
+        self.write(desktop_access_render=NESTED_DEAD_ACCESS_RENDER)
+        self.assert_fails("nested dead code inside the access branch must not satisfy it")
+
+    def test_desktop_access_hints_must_match_react(self) -> None:
+        self.write(desktop=FIVE_DESKTOP_OPTIONS.replace('data-hint="y"', 'data-hint="different"', 1))
+        self.assert_fails("both shipped composers must explain a profile the same way")
+
+    def test_desktop_accessible_names_must_include_the_hint(self) -> None:
+        self.write(
+            desktop_access_render=ACCESS_RENDER_TEMPLATE.replace(
+                "const label = `${o.textContent}. ${hint}`;",
+                "const label = o.textContent;",
+            )
+        )
+        self.assert_fails("every access option must expose its explanation by name")
+
     def test_a_desktop_default_other_than_standard_fails(self) -> None:
         self.write(
             desktop=FIVE_DESKTOP_OPTIONS.replace(
-                '<option value="standard" selected>', '<option value="standard">'
+                'data-hint="y" selected',
+                'data-hint="y"',
+                1,
             ).replace(
-                '<option value="unrestricted_host">',
-                '<option value="unrestricted_host" selected>',
+                'data-hint="y" data-warning="true"',
+                'data-hint="y" data-warning="true" selected',
             )
         )
         self.assert_fails("a pre-selected break-glass option must fail")

@@ -99,7 +99,12 @@ offer the five ADR-0044 profiles with `standard` first and `unrestricted_host`
 last under Expert, `full` no longer parses to unrestricted host anywhere, and
 `scripts/check-autonomy-profiles.py` fails `just verify` if either menu,
 persistence path, Rust profile parser, or the CLI's explicit `unrestricted`
-policy word drifts again. Two composers ship because the ADR-0028
+policy word drifts again. It also pins the Wry Advanced/Expert warning
+treatment, shared explanatory hints, and exact legacy migrations (`smart_deny`
+→ Review changes, `full` → Standard). The static contract is scoped to the live
+Wry access-rendering branch and rejects migration-table syntax it cannot prove;
+desktop Playwright coverage checks the rendered group order, accessible
+break-glass warning, and reload migrations. Two composers ship because the ADR-0028
 strangler is unfinished ([#106](https://github.com/mustbearnold/Optimus-Agent/issues/106));
 until it lands, a claim about "the composer" has to name which one.
 
@@ -118,7 +123,7 @@ outside the project at all, and answers to `SystemModify`).
 
 ### Exit gate (P30)
 
-- `cargo test -p optimus-policy` — 21 (14 unit + 7 `command_classification`)
+- `cargo test -p optimus-policy` — 22 (15 unit + 7 `command_classification`)
 - `cargo test -p optimus-kernel --test dev_run_trust` — 6
 - `cargo test -p optimus-runtime --test project_trust_profile`
 - `cargo test -p optimus-runtime --test approvals_surface`

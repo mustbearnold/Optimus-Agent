@@ -148,11 +148,22 @@ fresh human click when a durable project trust grant already covers it.
   itself, both restoring to Standard, which extends §5's "break-glass that
   survives a restart is not break-glass" from durable grants to the composer's
   own persistence. The legacy Wry composer now applies the same restore filter
-  as the React composer. The CLI's former `open` policy alias is also removed:
+  as the React composer; its former `smart_deny` value migrates to Review
+  changes rather than upgrading to Standard. Both migration tables are exact,
+  and their gate rejects computed, spread, duplicate, or unclassifiable
+  properties, so legacy `full` cannot drift upward to Full project behind a
+  syntax shape the verifier ignores. The Wry menu renders Full project under
+  Advanced and Unrestricted host under a warning-coloured Expert section
+  instead of presenting a flat authority list. Its options carry the same
+  explanatory hints as React, and the break-glass warning is included in the
+  option's accessible name rather than being visual-only. The CLI's former
+  `open` policy alias is also removed:
   only the explicit word `unrestricted` disables effect checks.
   `scripts/check-autonomy-profiles.py` holds both menus, both persistence paths,
   both profile parsers, and the CLI policy parser against this vocabulary on
-  every verify.
+  every verify; its Wry rendering proof is scoped to the live access branch.
+  Desktop Playwright coverage independently checks the rendered group order,
+  warning semantics, and persisted-value migrations after reload.
 
 ## Alternatives considered
 

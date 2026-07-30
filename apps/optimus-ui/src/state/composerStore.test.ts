@@ -61,6 +61,7 @@ describe('what a stored access value restores to (#118)', () => {
 
   it('restores the ADR-0044 profile behind each legacy word', () => {
     expect(restoredAccess('ask')).toBe('review_changes');
+    expect(restoredAccess('smart_deny')).toBe('review_changes');
     expect(restoredAccess('read')).toBe('read_only');
     expect(restoredAccess('standard')).toBe('standard');
     expect(restoredAccess('full_project')).toBe('full_project');

@@ -377,6 +377,42 @@ test('chat pane scrolls and composer controls exist', async ({ page }) => {
   await page.click('#modelBtn');
   await expect(page.locator('#cddPortal.open')).toBeVisible();
   await expect(page.locator('#cddPortal button[data-kind="model"]').first()).toBeVisible();
+  // Access keeps broader authority behind visible Advanced/Expert boundaries.
+  await page.click('#accessBtn');
+  const tiers = page.locator('#cddPortal .cdd-access-tier');
+  await expect(tiers).toHaveCount(3);
+  await expect(tiers.nth(0)).toHaveAttribute('aria-label', 'Recommended');
+  await expect(tiers.nth(1)).toHaveAttribute('aria-label', 'Advanced');
+  await expect(tiers.nth(2)).toHaveAttribute('aria-label', 'Expert');
+  await expect(tiers.nth(1).locator('.cdd-sec')).toHaveText('Advanced');
+  await expect(tiers.nth(1).locator('button')).toHaveAttribute('data-v', 'full_project');
+  await expect(tiers.nth(2).locator('.cdd-sec')).toHaveText('Expert');
+  const unrestricted = page.locator('#cddPortal button[data-v="unrestricted_host"]');
+  await expect(tiers.nth(2).locator('button')).toHaveCount(1);
+  await expect(tiers.nth(2).locator('button')).toHaveAttribute('data-v', 'unrestricted_host');
+  await expect(page.locator('#cddPortal button[role="option"]')).toHaveCount(5);
+  expect(
+    await page.locator('#cddPortal button[role="option"]').evaluateAll((buttons) =>
+      buttons.map((button) => button.getAttribute('data-v'))
+    )
+  ).toEqual(['standard', 'review_changes', 'read_only', 'full_project', 'unrestricted_host']);
+  const accessibleOptions = [
+    ['standard', 'Standard. Ordinary project work runs; anything else asks'],
+    ['review_changes', 'Review changes. Reads run; writes and commands ask first'],
+    ['read_only', 'Read only. Nothing is changed'],
+    ['full_project', 'Full project. Wider autonomy inside the project; credentials and your system still ask'],
+    ['unrestricted_host', 'Unrestricted host. Break-glass: no pauses, and the whole machine is in reach'],
+  ];
+  for (const [value, name] of accessibleOptions) {
+    await expect(page.locator(`#cddPortal button[data-v="${value}"]`)).toHaveAccessibleName(name);
+  }
+  await expect(page.locator('#cddPortal button.access-warning')).toHaveCount(1);
+  await expect(unrestricted).toHaveClass(/access-warning/);
+  await expect(unrestricted).toHaveAttribute('aria-selected', 'false');
+  await expect(unrestricted.locator('.access-risk')).toHaveText('!');
+  await expect(unrestricted.locator('.access-hint')).toHaveText(
+    'Break-glass: no pauses, and the whole machine is in reach'
+  );
   // single line: composer-bar does not wrap; chips never overlap
   const bar = await page.locator('.composer-bar').evaluate((el) => {
     const cs = getComputedStyle(el);
@@ -400,6 +436,28 @@ test('chat pane scrolls and composer controls exist', async ({ page }) => {
   expect(noOverlap).toBe(true);
   await expect(page.locator('#taskChip')).toBeVisible();
   await expect(page.locator('#taskPanel')).toBeAttached();
+});
+
+test('stored access words migrate without reviving break-glass', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+
+  const migrations = [
+    ['smart_deny', 'review_changes', 'Review changes'],
+    ['full', 'standard', 'Standard'],
+    ['unrestricted_host', 'standard', 'Standard'],
+    ['constructor', 'standard', 'Standard'],
+    ['full_project', 'full_project', 'Full project'],
+  ];
+  for (const [stored, expected, label] of migrations) {
+    await page.evaluate((access) => {
+      localStorage.setItem('optimus.ui.composer', JSON.stringify({ access }));
+    }, stored);
+    await page.reload();
+    await waitForReady(page);
+    await expect(page.locator('#access')).toHaveValue(expected);
+    await expect(page.locator('#accessVal')).toHaveText(label);
+  }
 });
 
 test('theme toggle switches data-theme', async ({ page }) => {
