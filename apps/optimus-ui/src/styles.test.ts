@@ -71,12 +71,23 @@ describe('motion contract', () => {
     expect(css).toMatch(/\.optimus-icon path,[\s\S]*?\.optimus-icon ellipse\s*\{[^}]*stroke-linecap:\s*square[^}]*stroke-linejoin:\s*miter/s);
   });
 
-  it('limits the Full access flame effect to its text and icon', () => {
+  it('limits the Unrestricted host flame effect to its text and icon', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/\.composer-access-trigger\.is-full-access,[\s\S]*?background:\s*transparent;[^}]*box-shadow:\s*none/s);
-    expect(css).toMatch(/\.composer-access-trigger\.is-full-access > span,\s*\.composer-access-trigger\.is-full-access > svg\s*\{[^}]*animation:\s*full-access-flame 3600ms ease-in-out infinite alternate/s);
-    expect(css).not.toMatch(/animation:\s*full-access-flame[^;]*steps\(/s);
-    expect(css).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.composer-access-trigger\.is-full-access > span,[\s\S]*?animation:\s*none/s);
+    expect(css).toMatch(/\.composer-access-trigger\.is-unrestricted-host,[\s\S]*?background:\s*transparent;[^}]*box-shadow:\s*none/s);
+    expect(css).toMatch(/\.composer-access-trigger\.is-unrestricted-host > span,\s*\.composer-access-trigger\.is-unrestricted-host > svg\s*\{[^}]*animation:\s*unrestricted-host-flame 3600ms ease-in-out infinite alternate/s);
+    expect(css).not.toMatch(/animation:\s*unrestricted-host-flame[^;]*steps\(/s);
+    expect(css).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.composer-access-trigger\.is-unrestricted-host > span,[\s\S]*?animation:\s*none/s);
+  });
+
+  // The warning colour must reach the menu option itself, not only the trigger
+  // after break-glass is already chosen (#118). It reads the token rather than
+  // a hex literal so the light theme gets its own contrast-checked value.
+  it('colours the Expert tier before it is picked', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
+    const expertRule = css.match(/\.composer-access-tier\.is-expert button > svg,[^{]*\{([^}]*)\}/);
+    expect(expertRule?.[1]).toContain('color: var(--warning)');
+    expect(expertRule?.[1]).not.toMatch(/#[0-9a-f]{3,8}/i);
+    expect(css).toMatch(/\.composer-access-tier\.is-advanced,\s*\.composer-access-tier\.is-expert\s*\{[^}]*border-top/s);
   });
 
   it('keeps the send control dark in enabled, hover, and disabled states', () => {

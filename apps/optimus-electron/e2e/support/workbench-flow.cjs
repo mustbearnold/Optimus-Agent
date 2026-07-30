@@ -86,12 +86,16 @@ async function offlineWorkbenchFlow(page, options) {
 
   const accessTrigger = page.getByRole('button', { name: /^Access: / });
   const accessLabel = await accessTrigger.getAttribute('aria-label');
+  // What a fresh profile boots at, asserted through the compiled app: Standard,
+  // never break-glass (#118). The unit tests pin the menu; this pins the
+  // bundle a human actually launches.
+  expect(accessLabel).toEqual('Access: Standard');
   await accessTrigger.click();
-  await page
-    .getByRole('listbox', { name: 'Access' })
-    .getByRole('option', { name: 'Ask before effects' })
-    .click();
-  await expect(page.getByRole('button', { name: 'Access: Ask before effects' })).toBeVisible();
+  const accessMenu = page.getByRole('listbox', { name: 'Access' });
+  await expect(accessMenu.getByRole('option').first()).toContainText('Standard');
+  await expect(accessMenu.getByRole('option').last()).toContainText('Unrestricted host');
+  await accessMenu.getByRole('option', { name: 'Review changes' }).click();
+  await expect(page.getByRole('button', { name: 'Access: Review changes' })).toBeVisible();
 
   const composer = page.getByLabel('Message Optimus');
   await composer.fill(prompt);
@@ -143,7 +147,7 @@ async function offlineWorkbenchFlow(page, options) {
     provider: 'offline',
     model: 'offline-echo',
     thinking: 'medium',
-    access: 'ask',
+    access: 'review_changes',
     accessLabelBeforeSelect: accessLabel,
     prompt,
     response,

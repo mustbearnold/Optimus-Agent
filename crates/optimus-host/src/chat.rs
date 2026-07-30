@@ -4,8 +4,9 @@ use std::path::PathBuf;
 
 use optimus_kernel::{
     CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig, CodexOAuthModel,
-    CompletionResponse, Kernel, KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId,
-    RouteRequest, RouteSurface, ScriptedModel, StreamControl, StreamEvent, ToolCall,
+    CompletionResponse, ExecutionManifest, ExecutionStore, Kernel, KernelConfig,
+    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
+    StreamControl, StreamEvent, ToolCall,
 };
 use serde_json::json;
 
@@ -70,15 +71,23 @@ pub fn chat_approval_resolve_cancellable(
     let effect_sha256 = required_effect_sha256(&params)?;
     let decision = parse_approval_decision(&params)?;
     let project_id = optional_project_id(&params)?;
+    let manifest = ExecutionStore::open(home.join("execution.db"))
+        .map_err(|error| error.to_string())?
+        .manifest(run_id)
+        .map_err(|error| error.to_string())?;
+    if manifest.session_id != session_id {
+        return Err("approval continuation route is foreign to the session".into());
+    }
 
-    // The continuation may reach further effects, so it runs under the same
-    // profile the paused turn did. Absent `access` that is ReviewChanges +
-    // SmartDeny, so an omission parks again rather than widening the approval
-    // the user just gave into a standing grant.
-    let access = access_config(params.get("access").and_then(|value| value.as_str()));
+    // Provider, model and authority belong to the durable paused turn, not to
+    // whichever renderer happens to resolve it later. Old manifests migrate to
+    // ReviewChanges. Break-glass also falls closed here: it must not survive a
+    // desktop restart as durable authority (ADR-0044 §5).
+    let access = resume_access_config(&manifest.autonomy_profile, &manifest.command_fs_envelope)?;
     let config = KernelConfig {
-        effect_policy: access.1,
-        autonomy_profile: access.0,
+        effect_policy: access.policy,
+        autonomy_profile: access.profile,
+        command_fs_envelope: access.command_fs_envelope,
         ..KernelConfig::default()
     };
     let mut kernel = match project_id.as_deref() {
@@ -122,7 +131,7 @@ pub fn chat_approval_resolve_cancellable(
     // The decision is durable from here. A continuation that fails must not be
     // reported as a failed approval — the effect already ran and is receipted —
     // so its outcome is carried in the response rather than raised as an error.
-    let resumed = resume_settled_turn(home, &params, &mut kernel, &mut on_event, cancellation);
+    let resumed = resume_settled_turn(home, &manifest, &mut kernel, &mut on_event, cancellation);
 
     // Deliberately return a small presentation model rather than serializing
     // the durable protocol event, which may grow internal-only fields.
@@ -150,32 +159,17 @@ pub fn chat_approval_resolve_cancellable(
 /// continuation of them — not a new turn, and not a new user message.
 fn resume_settled_turn(
     home: &PathBuf,
-    params: &serde_json::Value,
+    manifest: &ExecutionManifest,
     kernel: &mut Kernel,
     on_event: &mut Option<&mut dyn FnMut(StreamEvent) -> StreamControl>,
     cancellation: &CancellationToken,
 ) -> Result<String, String> {
-    let provider = params
-        .get("provider")
-        .and_then(|value| value.as_str())
-        .unwrap_or("codex")
-        .to_string();
-    let model_override = params
-        .get("model")
-        .and_then(|value| value.as_str())
-        .map(|value| value.to_string());
-    let routed_model = match ProviderId::parse(&provider) {
-        Some(ProviderId::Codex) => model_override
-            .as_deref()
-            .map(optimus_kernel::sanitize_codex_oauth_model),
-        Some(ProviderId::OpenAiCompat) => model_override.clone(),
-        _ => None,
-    };
-    let route = optimus_kernel::resolve_route(
-        home,
-        &RouteRequest::standard(RouteSurface::Desktop, &provider, routed_model),
-    )
-    .map_err(|error| error.to_string())?;
+    let provider = ProviderId::parse(&manifest.provider).ok_or_else(|| {
+        format!(
+            "approval continuation has an unknown persisted provider: {}",
+            manifest.provider
+        )
+    })?;
 
     let mut sink = |event: StreamEvent| {
         let control = on_event
@@ -189,7 +183,7 @@ fn resume_settled_turn(
         }
     };
 
-    let result = match route.provider {
+    let result = match provider {
         ProviderId::Offline => {
             let mut model = ScriptedModel::new(vec![CompletionResponse {
                 text: Some("offline echo: the approved action settled".into()),
@@ -200,15 +194,13 @@ fn resume_settled_turn(
         }
         ProviderId::OpenAiCompat => {
             let mut cfg = OpenAiCompatConfig::from_env().map_err(|error| error.to_string())?;
-            if let Some(model) = model_override.clone() {
-                cfg.model = model;
-            }
+            cfg.model = manifest.model.clone();
             let mut provider = OpenAiCompatModel::new(cfg);
             kernel.resume_pending_turn_with_sink(&mut provider, &mut sink, cancellation)
         }
         ProviderId::Codex => {
             let mut cfg = CodexOAuthConfig::from_env(home);
-            cfg.model = route.model.as_str().into();
+            cfg.model = manifest.model.clone();
             let mut provider = CodexOAuthModel::new(cfg).map_err(|error| error.to_string())?;
             kernel.resume_pending_turn_with_sink(&mut provider, &mut sink, cancellation)
         }
@@ -301,21 +293,62 @@ fn parse_approval_decision(params: &serde_json::Value) -> Result<ChatApprovalDec
 /// Map a surface's `access` string onto the ADR-0044 profile and effect policy.
 ///
 /// Absent/unknown values stay ReviewChanges + SmartDeny (fail closed). Only
-/// `UnrestrictedHost` — spelled `full`, `unrestricted`, or `yolo` — pairs with
-/// `PolicyMode::Unrestricted`; every other profile keeps SmartDeny and lets the
-/// capability broker decide per effect.
-pub(crate) fn access_config(
-    raw: Option<&str>,
-) -> (optimus_graph::AutonomyProfile, optimus_graph::PolicyMode) {
+/// `UnrestrictedHost` — spelled `unrestricted_host`, `unrestricted`, or `yolo`
+/// for the CLI flag — pairs `PolicyMode::Unrestricted` with the explicit host
+/// command envelope. Every other profile keeps SmartDeny and the configured
+/// containment. `full` used to reach break-glass and deliberately no longer does
+/// (#118): an ordinary-sounding word must not hand over the machine.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct AccessConfig {
+    profile: optimus_graph::AutonomyProfile,
+    policy: optimus_graph::PolicyMode,
+    command_fs_envelope: Option<optimus_graph::CommandFsEnvelope>,
+}
+
+pub(crate) fn access_config(raw: Option<&str>) -> AccessConfig {
     let profile = raw
         .and_then(optimus_graph::AutonomyProfile::parse)
         .unwrap_or(optimus_graph::AutonomyProfile::ReviewChanges);
-    let policy = if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
-        optimus_graph::PolicyMode::Unrestricted
-    } else {
-        optimus_graph::PolicyMode::SmartDeny
+    let (policy, command_fs_envelope) =
+        if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
+            (
+                optimus_graph::PolicyMode::Unrestricted,
+                Some(optimus_graph::CommandFsEnvelope::UnrestrictedHost),
+            )
+        } else {
+            (optimus_graph::PolicyMode::SmartDeny, None)
+        };
+    AccessConfig {
+        profile,
+        policy,
+        command_fs_envelope,
+    }
+}
+
+fn resume_access_config(
+    autonomy_profile: &str,
+    command_fs_envelope: &str,
+) -> Result<AccessConfig, String> {
+    let profile = optimus_graph::AutonomyProfile::parse(autonomy_profile)
+        .filter(|profile| profile.as_str() == autonomy_profile)
+        .ok_or_else(|| "approval continuation has an invalid autonomy profile".to_string())?;
+    let envelope = match command_fs_envelope {
+        "confined" => optimus_graph::CommandFsEnvelope::Confined,
+        "confined_no_network" => optimus_graph::CommandFsEnvelope::ConfinedNoNetwork,
+        "unrestricted_host" => optimus_graph::CommandFsEnvelope::UnrestrictedHost,
+        _ => return Err("approval continuation has an invalid command envelope".into()),
     };
-    (profile, policy)
+    if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
+        let mut access = access_config(Some("review_changes"));
+        access.command_fs_envelope = Some(optimus_graph::CommandFsEnvelope::ConfinedNoNetwork);
+        return Ok(access);
+    }
+    if envelope == optimus_graph::CommandFsEnvelope::UnrestrictedHost {
+        return Err("approval continuation has inconsistent persisted authority".into());
+    }
+    let mut access = access_config(Some(profile.as_str()));
+    access.command_fs_envelope = Some(envelope);
+    Ok(access)
 }
 
 pub fn chat_turn(
@@ -373,8 +406,9 @@ pub fn chat_turn_cancellable(
             .get("fast")
             .and_then(|v| v.as_bool())
             .unwrap_or(false),
-        effect_policy: access.1,
-        autonomy_profile: access.0,
+        effect_policy: access.policy,
+        autonomy_profile: access.profile,
+        command_fs_envelope: access.command_fs_envelope,
         ..KernelConfig::default()
     };
     let mut kernel = match params.get("project_id").and_then(|value| value.as_str()) {
@@ -515,24 +549,128 @@ mod tests {
     fn access_defaults_to_review_changes_and_smart_deny() {
         use optimus_graph::{AutonomyProfile, PolicyMode};
         for raw in [None, Some(""), Some("garbage")] {
-            let (profile, policy) = super::access_config(raw);
-            assert_eq!(profile, AutonomyProfile::ReviewChanges);
-            assert_eq!(policy, PolicyMode::SmartDeny);
+            let access = super::access_config(raw);
+            assert_eq!(access.profile, AutonomyProfile::ReviewChanges);
+            assert_eq!(access.policy, PolicyMode::SmartDeny);
+            assert_eq!(access.command_fs_envelope, None);
         }
     }
 
     #[test]
+    fn approval_resume_uses_the_persisted_envelope_and_fails_closed() {
+        use optimus_graph::{AutonomyProfile, CommandFsEnvelope, PolicyMode};
+        let isolated = super::resume_access_config("standard", "confined_no_network").unwrap();
+        assert_eq!(isolated.profile, AutonomyProfile::Standard);
+        assert_eq!(isolated.policy, PolicyMode::SmartDeny);
+        assert_eq!(
+            isolated.command_fs_envelope,
+            Some(CommandFsEnvelope::ConfinedNoNetwork),
+            "current product settings must not add network access to a paused turn"
+        );
+
+        let break_glass =
+            super::resume_access_config("unrestricted_host", "unrestricted_host").unwrap();
+        assert_eq!(break_glass.profile, AutonomyProfile::ReviewChanges);
+        assert_eq!(break_glass.policy, PolicyMode::SmartDeny);
+        assert_eq!(
+            break_glass.command_fs_envelope,
+            Some(CommandFsEnvelope::ConfinedNoNetwork),
+            "break-glass authority must not survive a restart"
+        );
+
+        assert!(super::resume_access_config("standard", "unrestricted_host").is_err());
+        assert!(super::resume_access_config("standard", "corrupt").is_err());
+        assert!(super::resume_access_config("corrupt", "confined").is_err());
+    }
+
+    #[test]
     fn only_unrestricted_spellings_lift_smart_deny() {
-        use optimus_graph::{AutonomyProfile, PolicyMode};
-        for raw in ["full", "unrestricted", "yolo"] {
-            let (profile, policy) = super::access_config(Some(raw));
-            assert_eq!(profile, AutonomyProfile::UnrestrictedHost, "{raw}");
-            assert_eq!(policy, PolicyMode::Unrestricted, "{raw}");
+        use optimus_graph::{AutonomyProfile, CommandFsEnvelope, PolicyMode};
+        for raw in ["unrestricted_host", "unrestricted", "yolo"] {
+            let access = super::access_config(Some(raw));
+            assert_eq!(access.profile, AutonomyProfile::UnrestrictedHost, "{raw}");
+            assert_eq!(access.policy, PolicyMode::Unrestricted, "{raw}");
+            assert_eq!(
+                access.command_fs_envelope,
+                Some(CommandFsEnvelope::UnrestrictedHost),
+                "{raw} must make the host-wide command reach explicit"
+            );
         }
         for raw in ["standard", "ask", "read", "full_project"] {
-            let (_, policy) = super::access_config(Some(raw));
-            assert_eq!(policy, PolicyMode::SmartDeny, "{raw} must keep SmartDeny");
+            let access = super::access_config(Some(raw));
+            assert_eq!(
+                access.policy,
+                PolicyMode::SmartDeny,
+                "{raw} must keep SmartDeny"
+            );
+            assert_eq!(
+                access.command_fs_envelope, None,
+                "{raw} must keep the configured containment"
+            );
         }
+    }
+
+    /// Every value the composer can send, and what it means here. The menu is
+    /// checked against this vocabulary by
+    /// `scripts/check-autonomy-profiles.py`; this pins what each one *does*,
+    /// so a relabelled menu item cannot quietly change the authority behind it
+    /// (#118).
+    #[test]
+    fn each_composer_profile_maps_to_its_own_authority() {
+        use optimus_graph::{AutonomyProfile, CommandFsEnvelope, PolicyMode};
+        let expected = [
+            (
+                "standard",
+                AutonomyProfile::Standard,
+                PolicyMode::SmartDeny,
+                None,
+            ),
+            (
+                "review_changes",
+                AutonomyProfile::ReviewChanges,
+                PolicyMode::SmartDeny,
+                None,
+            ),
+            (
+                "read_only",
+                AutonomyProfile::ReadOnly,
+                PolicyMode::SmartDeny,
+                None,
+            ),
+            (
+                "full_project",
+                AutonomyProfile::FullProject,
+                PolicyMode::SmartDeny,
+                None,
+            ),
+            (
+                "unrestricted_host",
+                AutonomyProfile::UnrestrictedHost,
+                PolicyMode::Unrestricted,
+                Some(CommandFsEnvelope::UnrestrictedHost),
+            ),
+        ];
+        for (raw, profile, policy, command_fs_envelope) in expected {
+            assert_eq!(
+                super::access_config(Some(raw)),
+                super::AccessConfig {
+                    profile,
+                    policy,
+                    command_fs_envelope,
+                },
+                "{raw}"
+            );
+        }
+        // The word the old menu offered first is no longer a profile at all.
+        assert_eq!(
+            super::access_config(Some("full")),
+            super::AccessConfig {
+                profile: AutonomyProfile::ReviewChanges,
+                policy: PolicyMode::SmartDeny,
+                command_fs_envelope: None,
+            },
+            "a stale 'full' sender must fall closed, not receive the host"
+        );
     }
     use serde_json::json;
 
@@ -590,9 +728,10 @@ mod tests {
     }
 
     /// The whole point of ADR-0046: approving answers the question that
-    /// provoked the approval, over the same call the TUI and desktop make.
+    /// provoked the approval, over the same call the TUI and desktop make. The
+    /// renderer cannot reroute or widen the process-reopened continuation.
     #[test]
-    fn approving_runs_the_effect_and_returns_the_agent_s_answer() {
+    fn approval_resume_uses_the_durable_route_and_returns_the_agent_s_answer() {
         let home = tempfile::tempdir().unwrap();
         let project = tempfile::tempdir().unwrap();
         let (session_id, binding) = parked_turn(home.path(), project.path());
@@ -622,7 +761,11 @@ mod tests {
                 "effect_sha256": binding.effect_sha256,
                 "decision": "approve",
                 "project_id": "project-a",
-                "provider": "offline",
+                // Hostile/stale renderer routing is ignored. `parked_turn`
+                // persisted an offline + ReviewChanges execution manifest.
+                "provider": "codex",
+                "model": "gpt-5.6-terra",
+                "access": "unrestricted_host",
             }),
             Some(&mut on_event),
         )
@@ -634,11 +777,10 @@ mod tests {
             "the paused turn must finish: {}",
             value["resume_error"]
         );
-        assert!(
-            value["assistant_text"]
-                .as_str()
-                .is_some_and(|text| !text.is_empty()),
-            "approving must produce an answer, not just a receipt: {value}"
+        assert_eq!(
+            value["assistant_text"].as_str(),
+            Some("offline echo: the approved action settled"),
+            "resume must use the durable offline route, not renderer params: {value}"
         );
         assert!(
             !streamed.is_empty(),

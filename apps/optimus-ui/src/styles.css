@@ -2389,7 +2389,7 @@ code {
   z-index: 8;
   bottom: calc(100% + 6px);
   left: 0;
-  min-width: 190px;
+  min-width: 290px;
   display: grid;
   gap: 1px;
   padding: 4px;
@@ -2399,15 +2399,56 @@ code {
   box-shadow: var(--shadow-popover);
 }
 
+.composer-access-tier {
+  display: grid;
+  gap: 1px;
+}
+
+.composer-access-tier.is-advanced,
+.composer-access-tier.is-expert {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.composer-access-heading {
+  margin: 0;
+  padding: 3px 7px 1px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
 .composer-access-menu button {
   min-height: 30px;
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 0 7px;
+  padding: 5px 7px;
   border-radius: 5px;
   color: var(--text-2);
   text-align: left;
+}
+
+.composer-access-option {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.composer-access-option small {
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+/* Break-glass reads as break-glass wherever it appears: the warning colour is
+   carried by the option itself, not only by the trigger once it is chosen. */
+.composer-access-tier.is-expert button > svg,
+.composer-access-tier.is-expert button > .composer-access-option > span {
+  color: var(--warning);
 }
 
 .composer-access-menu button:hover,

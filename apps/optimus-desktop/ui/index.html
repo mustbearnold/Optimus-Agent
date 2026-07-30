@@ -173,7 +173,7 @@
             </div>
             <div class="cdd" id="cddAccess" data-cdd="access">
               <button type="button" class="cdd-btn" id="accessBtn" aria-haspopup="listbox" aria-expanded="false" title="Access">
-                <span class="lbl">access</span><span class="val" id="accessVal">Full</span><span class="chev">▴</span>
+                <span class="lbl">access</span><span class="val" id="accessVal">Standard</span><span class="chev">▴</span>
               </button>
             </div>
           </div>
@@ -204,10 +204,18 @@
               <option value="max">max</option>
               <option value="ultra">ultra→max</option>
             </select>
+            <!-- The ADR-0044 profiles, Standard first and selected, break-glass
+                 last. This surface's default used to be `full`, which parsed to
+                 UnrestrictedHost and turned SmartDeny off before anyone touched
+                 the control (#118); `smart_deny` named a policy mode that was
+                 never a profile at all. scripts/check-autonomy-profiles.py
+                 holds this list against the Rust vocabulary. -->
             <select id="access" tabindex="-1">
-              <option value="smart_deny">SmartDeny</option>
-              <option value="full" selected>Full</option>
-              <option value="read_only">Read-only</option>
+              <option value="standard" data-tier="primary" data-hint="Ordinary project work runs; anything else asks" selected>Standard</option>
+              <option value="review_changes" data-tier="primary" data-hint="Reads run; writes and commands ask first">Review changes</option>
+              <option value="read_only" data-tier="primary" data-hint="Nothing is changed">Read only</option>
+              <option value="full_project" data-tier="advanced" data-hint="Wider autonomy inside the project; credentials and your system still ask">Full project</option>
+              <option value="unrestricted_host" data-tier="expert" data-warning="true" data-hint="Break-glass: no pauses, and the whole machine is in reach">Unrestricted host</option>
             </select>
             <button type="button" id="thinkingToggle" aria-pressed="false">Thinking</button>
             <button type="button" id="fastToggle" aria-pressed="false">Fast</button>

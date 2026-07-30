@@ -177,6 +177,7 @@ tier_gates() {
   spawn "crate-layers"               python3 scripts/check-crate-layers.py
   spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
+  spawn "autonomy-profiles"          python3 scripts/check-autonomy-profiles.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/check-project-bleed.py
   spawn "tool-coverage"              python3 scripts/check-tool-coverage.py
@@ -199,6 +200,7 @@ tier_gates() {
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
+  spawn "test_autonomy_profiles"     python3 scripts/test_autonomy_profiles.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
   spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
@@ -370,6 +372,7 @@ tier_all() {
   spawn "crate-layers"               python3 scripts/check-crate-layers.py
   spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
+  spawn "autonomy-profiles"          python3 scripts/check-autonomy-profiles.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/check-project-bleed.py
   spawn "tool-coverage"              python3 scripts/check-tool-coverage.py
@@ -392,6 +395,7 @@ tier_all() {
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
+  spawn "test_autonomy_profiles"     python3 scripts/test_autonomy_profiles.py
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
   spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py

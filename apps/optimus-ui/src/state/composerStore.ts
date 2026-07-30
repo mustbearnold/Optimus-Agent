@@ -27,11 +27,42 @@ const PROVIDERS: ReadonlyArray<ComposerSettings['provider']> = [
   'openai_compat',
 ];
 
+// The ADR-0044 profile a stored access value means today. Builds before #118
+// wrote the composer's own three-word vocabulary, whose first item — 'full' —
+// meant unrestricted host; those words are read here and nowhere else.
+// Prototype-free: a plain literal answers to 'constructor' and '__proto__'
+// with something that is not a profile, and a lookup table that returns
+// truthy for words nobody put in it is not a table.
+const ACCESS_ALIASES: Readonly<Record<string, string>> = Object.assign(Object.create(null), {
+  standard: 'standard',
+  review_changes: 'review_changes',
+  smart_deny: 'review_changes',
+  ask: 'review_changes',
+  read_only: 'read_only',
+  read: 'read_only',
+  full_project: 'full_project',
+});
+
+/**
+ * The profile a stored value restores to.
+ *
+ * Two values do not restore to themselves. Legacy `'full'` said "Full access"
+ * on the label and meant unrestricted host underneath, so restoring it would
+ * carry authority nobody knowingly picked; and `'unrestricted_host'` is
+ * break-glass, which ADR-0044 §5 keeps out of anything durable — break-glass
+ * that survives a restart is not break-glass. Both land on Standard, and the
+ * expert choice is one deliberate click away.
+ */
+export function restoredAccess(raw: unknown): string {
+  if (typeof raw !== 'string') return 'standard';
+  return ACCESS_ALIASES[raw.trim().toLowerCase()] ?? 'standard';
+}
+
 export const offlineComposer: ComposerSettings = {
   provider: 'offline',
   model: 'offline-echo',
   thinking: 'high',
-  access: 'ask',
+  access: 'standard',
   fast: false,
 };
 
@@ -40,7 +71,7 @@ export const codexComposer: ComposerSettings = {
   provider: 'codex',
   model: 'gpt-5.6-terra',
   thinking: 'high',
-  access: 'ask',
+  access: 'standard',
   fast: false,
 };
 
@@ -58,7 +89,7 @@ export function loadComposer(): StoredComposer | null {
         provider,
         model: parsed.model,
         thinking: typeof parsed.thinking === 'string' ? parsed.thinking : 'high',
-        access: typeof parsed.access === 'string' ? parsed.access : 'ask',
+        access: restoredAccess(parsed.access),
         fast: parsed.fast === true,
       },
       providerChosen: parsed.providerChosen === true,

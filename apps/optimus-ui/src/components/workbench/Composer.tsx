@@ -3,10 +3,54 @@ import type { RunStatus } from '../../ipc/contracts';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
 
+// The ADR-0044 autonomy profiles, in the order that decision 7 states them:
+// Standard first because it is the recommended default, unrestricted host last
+// and behind an Expert heading because it is break-glass, not a routine
+// choice. `value` is the wire string the host parses into an
+// `AutonomyProfile`; `scripts/check-autonomy-profiles.py` fails the build if
+// this list and the Rust vocabulary ever drift apart.
 const accessOptions = [
-  { value: 'full', label: 'Full access', icon: 'terminal' },
-  { value: 'ask', label: 'Ask before effects', icon: 'shield' },
-  { value: 'read', label: 'Read only', icon: 'files' },
+  {
+    value: 'standard',
+    label: 'Standard',
+    hint: 'Ordinary project work runs; anything else asks',
+    icon: 'shield',
+    tier: 'primary',
+  },
+  {
+    value: 'review_changes',
+    label: 'Review changes',
+    hint: 'Reads run; writes and commands ask first',
+    icon: 'check',
+    tier: 'primary',
+  },
+  {
+    value: 'read_only',
+    label: 'Read only',
+    hint: 'Nothing is changed',
+    icon: 'files',
+    tier: 'primary',
+  },
+  {
+    value: 'full_project',
+    label: 'Full project',
+    hint: 'Wider autonomy inside the project; credentials and your system still ask',
+    icon: 'project',
+    tier: 'advanced',
+  },
+  {
+    value: 'unrestricted_host',
+    label: 'Unrestricted host',
+    hint: 'Break-glass: no pauses, and the whole machine is in reach',
+    icon: 'warning',
+    tier: 'expert',
+  },
+] as const;
+
+const accessTiers = [
+  { tier: 'primary', heading: '' },
+  { tier: 'advanced', heading: 'Advanced' },
+  { tier: 'expert', heading: 'Expert' },
 ] as const;
 
 type ComposerSettings = {
@@ -117,7 +161,9 @@ export function Composer({
     };
   }, [accessOpen]);
 
-  const selectedAccess = accessOptions.find((option) => option.value === settings.access) || accessOptions[1];
+  // An unknown stored value falls back to Standard, which is what the host
+  // does with it too — the label never claims more authority than the run has.
+  const selectedAccess = accessOptions.find((option) => option.value === settings.access) || accessOptions[0];
   const selectAccess = (access: string) => {
     onSettings({ ...settings, access });
     setAccessOpen(false);
@@ -155,7 +201,7 @@ export function Composer({
               <button
                 ref={accessTrigger}
                 type="button"
-                className={`composer-access-trigger${settings.access === 'full' ? ' is-full-access' : ''}`}
+                className={`composer-access-trigger${settings.access === 'unrestricted_host' ? ' is-unrestricted-host' : ''}`}
                 aria-label={`Access: ${selectedAccess.label}`}
                 aria-haspopup="listbox"
                 aria-expanded={accessOpen}
@@ -172,24 +218,50 @@ export function Composer({
               </button>
               {accessOpen ? (
                 <div className="composer-access-menu" ref={accessMenu} role="listbox" aria-label="Access">
-                  {accessOptions.map((option) => (
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={option.value === settings.access}
-                      key={option.value}
-                      onClick={() => selectAccess(option.value)}
-                      onKeyDown={(event) => {
-                        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-                        event.preventDefault();
-                        const choices = Array.from(accessMenu.current?.querySelectorAll<HTMLButtonElement>('[role="option"]') || []);
-                        const index = choices.indexOf(event.currentTarget);
-                        choices[(index + (event.key === 'ArrowDown' ? 1 : -1) + choices.length) % choices.length]?.focus();
-                      }}
+                  {accessTiers.map(({ tier, heading }) => (
+                    <div
+                      className={`composer-access-tier is-${tier}`}
+                      key={tier}
+                      role="group"
+                      aria-label={heading || 'Recommended'}
                     >
-                      <Icon name={option.icon} />
-                      <span>{option.label}</span>
-                    </button>
+                      {/* The group already carries this word as its accessible
+                          name; showing it again would read it twice. */}
+                      {heading ? (
+                        <p className="composer-access-heading" aria-hidden="true">
+                          {heading}
+                        </p>
+                      ) : null}
+                      {accessOptions
+                        .filter((option) => option.tier === tier)
+                        .map((option) => (
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={option.value === settings.access}
+                            key={option.value}
+                            onClick={() => selectAccess(option.value)}
+                            onKeyDown={(event) => {
+                              if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+                              event.preventDefault();
+                              const choices = Array.from(accessMenu.current?.querySelectorAll<HTMLButtonElement>('[role="option"]') || []);
+                              const index = choices.indexOf(event.currentTarget);
+                              // Clamped, not wrapped: wrapping put ArrowUp from
+                              // the default one keystroke away from break-glass,
+                              // which is what the tiers exist to prevent. The
+                              // ARIA listbox pattern does not wrap either.
+                              const next = index + (event.key === 'ArrowDown' ? 1 : -1);
+                              choices[Math.min(choices.length - 1, Math.max(0, next))]?.focus();
+                            }}
+                          >
+                            <Icon name={option.icon} />
+                            <span className="composer-access-option">
+                              <span>{option.label}</span>
+                              <small>{option.hint}</small>
+                            </span>
+                          </button>
+                        ))}
+                    </div>
                   ))}
                 </div>
               ) : null}

@@ -1,20 +1,21 @@
 //! Versioned execution manifests, call provenance, and honest replay reports.
 
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use optimus_packs::{ReplayClass, ToolOutcome};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::{
+    execution_support::{
+        ensure_column, insert_manifest, now_unix, read_classes, replay_name, sha256,
+    },
     ChatApprovalStatus, CompletionRequest, CompletionResponse, KernelError, Result, SpanId,
     ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase, TraceContext, TraceId,
 };
 
-pub const EXECUTION_MANIFEST_VERSION: u16 = 1;
+pub const EXECUTION_MANIFEST_VERSION: u16 = 2;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -94,6 +95,8 @@ pub struct ExecutionManifest {
     pub turn_id: Uuid,
     pub provider: String,
     pub model: String,
+    pub autonomy_profile: String,
+    pub command_fs_envelope: String,
     pub prompt_sha256: String,
     pub tool_catalog_sha256: String,
     pub policy_sha256: String,
@@ -165,44 +168,6 @@ pub struct ExecutionStore {
     conn: Connection,
 }
 
-#[allow(clippy::too_many_arguments)]
-fn insert_manifest(
-    connection: &Connection,
-    id: Uuid,
-    session_id: Uuid,
-    turn_id: Uuid,
-    provider: &str,
-    model: &str,
-    prompt: &[u8],
-    tool_catalog: &[u8],
-    policy: &[u8],
-) -> Result<()> {
-    if provider.trim().is_empty() || model.trim().is_empty() {
-        return Err(KernelError::Model(
-            "execution manifest requires provider and model identity".into(),
-        ));
-    }
-    connection.execute(
-        "INSERT INTO execution_manifests(
-           id,version,session_id,turn_id,provider,model,prompt_sha256,
-           tool_catalog_sha256,policy_sha256,status,created_unix
-         ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,'running',?10)",
-        params![
-            id.to_string(),
-            EXECUTION_MANIFEST_VERSION as i64,
-            session_id.to_string(),
-            turn_id.to_string(),
-            provider,
-            model,
-            sha256(prompt),
-            sha256(tool_catalog),
-            sha256(policy),
-            now_unix() as i64
-        ],
-    )?;
-    Ok(())
-}
-
 impl ExecutionStore {
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         if let Some(parent) = path.as_ref().parent() {
@@ -215,6 +180,12 @@ impl ExecutionStore {
              CREATE TABLE IF NOT EXISTS execution_manifests(
                id TEXT PRIMARY KEY,version INTEGER NOT NULL,session_id TEXT NOT NULL,
                turn_id TEXT NOT NULL UNIQUE,provider TEXT NOT NULL,model TEXT NOT NULL,
+               autonomy_profile TEXT NOT NULL DEFAULT 'review_changes' CHECK(autonomy_profile IN (
+                 'standard','review_changes','read_only','full_project','unrestricted_host'
+               )),
+               command_fs_envelope TEXT NOT NULL DEFAULT 'confined_no_network' CHECK(command_fs_envelope IN (
+                 'confined','confined_no_network','unrestricted_host'
+               )),
                prompt_sha256 TEXT NOT NULL CHECK(length(prompt_sha256)=64),
                tool_catalog_sha256 TEXT NOT NULL CHECK(length(tool_catalog_sha256)=64),
                policy_sha256 TEXT NOT NULL CHECK(length(policy_sha256)=64),
@@ -271,6 +242,18 @@ impl ExecutionStore {
         ensure_column(
             &conn,
             "execution_manifests",
+            "autonomy_profile",
+            "TEXT NOT NULL DEFAULT 'review_changes' CHECK(autonomy_profile IN ('standard','review_changes','read_only','full_project','unrestricted_host'))",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_manifests",
+            "command_fs_envelope",
+            "TEXT NOT NULL DEFAULT 'confined_no_network' CHECK(command_fs_envelope IN ('confined','confined_no_network','unrestricted_host'))",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_manifests",
             "duration_ms",
             "INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)",
         )?;
@@ -314,6 +297,8 @@ impl ExecutionStore {
             turn_id,
             provider,
             model,
+            "review_changes",
+            "confined_no_network",
             prompt,
             tool_catalog,
             policy,
@@ -328,6 +313,8 @@ impl ExecutionStore {
         turn_id: Uuid,
         provider: &str,
         model: &str,
+        autonomy_profile: &str,
+        command_fs_envelope: &str,
         prompt: &[u8],
         tool_catalog: &[u8],
         policy: &[u8],
@@ -342,6 +329,8 @@ impl ExecutionStore {
             turn_id,
             provider,
             model,
+            autonomy_profile,
+            command_fs_envelope,
             prompt,
             tool_catalog,
             policy,
@@ -855,7 +844,7 @@ impl ExecutionStore {
     pub fn manifest(&self, id: Uuid) -> Result<ExecutionManifest> {
         self.conn
             .query_row(
-                "SELECT id,version,session_id,turn_id,provider,model,prompt_sha256,
+                "SELECT id,version,session_id,turn_id,provider,model,autonomy_profile,command_fs_envelope,prompt_sha256,
                         tool_catalog_sha256,policy_sha256,status
                  FROM execution_manifests WHERE id=?1",
                 params![id.to_string()],
@@ -865,7 +854,7 @@ impl ExecutionStore {
                             rusqlite::Error::ToSqlConversionFailure(Box::new(error))
                         })
                     };
-                    let status = match row.get::<_, String>(9)?.as_str() {
+                    let status = match row.get::<_, String>(11)?.as_str() {
                         "running" => ExecutionStatus::Running,
                         "succeeded" => ExecutionStatus::Succeeded,
                         "failed" => ExecutionStatus::Failed,
@@ -883,9 +872,11 @@ impl ExecutionStore {
                         turn_id: parse(row.get(3)?)?,
                         provider: row.get(4)?,
                         model: row.get(5)?,
-                        prompt_sha256: row.get(6)?,
-                        tool_catalog_sha256: row.get(7)?,
-                        policy_sha256: row.get(8)?,
+                        autonomy_profile: row.get(6)?,
+                        command_fs_envelope: row.get(7)?,
+                        prompt_sha256: row.get(8)?,
+                        tool_catalog_sha256: row.get(9)?,
+                        policy_sha256: row.get(10)?,
                         status,
                     })
                 },
@@ -939,49 +930,6 @@ impl ExecutionStore {
             tool_call_count: tool_classes.len(),
         })
     }
-}
-
-fn ensure_column(connection: &Connection, table: &str, column: &str, sql_type: &str) -> Result<()> {
-    let mut statement = connection.prepare(&format!("PRAGMA table_info({table})"))?;
-    let columns = statement
-        .query_map([], |row| row.get::<_, String>(1))?
-        .collect::<std::result::Result<Vec<_>, _>>()?;
-    if !columns.iter().any(|value| value == column) {
-        connection.execute_batch(&format!(
-            "ALTER TABLE {table} ADD COLUMN {column} {sql_type}"
-        ))?;
-    }
-    Ok(())
-}
-
-fn read_classes(connection: &Connection, sql: &str, manifest_id: Uuid) -> Result<Vec<String>> {
-    let mut statement = connection.prepare(sql)?;
-    let rows = statement.query_map(params![manifest_id.to_string()], |row| row.get(0))?;
-    rows.collect::<std::result::Result<Vec<_>, _>>()
-        .map_err(KernelError::Sqlite)
-}
-
-fn replay_name(class: ReplayClass) -> &'static str {
-    match class {
-        ReplayClass::Deterministic => "deterministic",
-        ReplayClass::Convergent => "convergent",
-        ReplayClass::FixtureReplayable => "fixture_replayable",
-        ReplayClass::ModelNondeterministic => "model_nondeterministic",
-        ReplayClass::ExternalNondeterministic => "external_nondeterministic",
-        ReplayClass::Destructive => "destructive",
-        ReplayClass::Ambiguous => "ambiguous",
-    }
-}
-
-fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
-}
-
-fn now_unix() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_secs())
-        .unwrap_or(0)
 }
 
 #[cfg(test)]

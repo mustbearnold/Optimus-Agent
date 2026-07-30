@@ -47,9 +47,12 @@ impl AutonomyProfile {
             "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
             "read_only" | "readonly" | "read" => Some(Self::ReadOnly),
             "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
-            // Legacy composer “full” meant unrestricted auto-grant. Keep that
-            // parse path explicit so product can migrate labels separately.
-            "unrestricted_host" | "unrestricted" | "full" | "host" => Some(Self::UnrestrictedHost),
+            // Break-glass answers to words that cannot be misread as ordinary.
+            // “full” and “host” used to land here — the composer's first menu
+            // item said "Full access" and meant this (#118) — so a stale
+            // sender of either now falls closed to ReviewChanges instead of
+            // quietly receiving the whole machine.
+            "unrestricted_host" | "unrestricted" => Some(Self::UnrestrictedHost),
             _ => None,
         }
     }
@@ -631,12 +634,30 @@ mod tests {
             Some(AutonomyProfile::ReviewChanges)
         );
         assert_eq!(
-            AutonomyProfile::parse("full"),
-            Some(AutonomyProfile::UnrestrictedHost)
+            AutonomyProfile::parse("read"),
+            Some(AutonomyProfile::ReadOnly)
         );
         assert_eq!(
             AutonomyProfile::parse("standard"),
             Some(AutonomyProfile::Standard)
         );
+    }
+
+    /// The composer's old first menu item said "Full access" and parsed to
+    /// unrestricted host (#118). An ordinary-sounding word must never carry
+    /// break-glass again: unknown falls to no profile, and a caller that gets
+    /// `None` fails closed to ReviewChanges.
+    #[test]
+    fn an_ordinary_sounding_word_does_not_mean_break_glass() {
+        for raw in ["full", "host", "all", "everything"] {
+            assert_eq!(AutonomyProfile::parse(raw), None, "{raw}");
+        }
+        for raw in ["unrestricted_host", "unrestricted", "UNRESTRICTED_HOST"] {
+            assert_eq!(
+                AutonomyProfile::parse(raw),
+                Some(AutonomyProfile::UnrestrictedHost),
+                "{raw}"
+            );
+        }
     }
 }

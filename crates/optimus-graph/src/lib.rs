@@ -169,9 +169,10 @@ impl AutonomyProfile {
             "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
             "read_only" | "readonly" | "read" => Some(Self::ReadOnly),
             "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
-            "unrestricted_host" | "unrestricted" | "full" | "host" | "yolo" => {
-                Some(Self::UnrestrictedHost)
-            }
+            // Mirrors optimus-policy: break-glass answers only to words that
+            // cannot be misread as ordinary. `yolo` stays because the CLI flag
+            // of that name is unmistakable; `full` and `host` are gone (#118).
+            "unrestricted_host" | "unrestricted" | "yolo" => Some(Self::UnrestrictedHost),
             _ => None,
         }
     }

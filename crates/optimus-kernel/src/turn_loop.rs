@@ -31,6 +31,8 @@ impl Kernel {
             turn_id,
             &provider,
             &model_id,
+            self.config.autonomy_profile.as_str(),
+            self.runtime.command_fs_envelope().as_str(),
             prompt.as_bytes(),
             &tools,
             policy.as_bytes(),

@@ -5,7 +5,7 @@ use optimus_eval::{
     FixtureId, FixtureKind, ReplayBundle, ReplayBundleId, ReplayExecutionStatus, ReplayFixture,
     ReplayStage, ReplayStore, REPLAY_BUNDLE_VERSION,
 };
-use optimus_kernel::{ExecutionManifest, ExecutionStatus};
+use optimus_kernel::{ExecutionManifest, ExecutionStatus, EXECUTION_MANIFEST_VERSION};
 use tempfile::tempdir;
 use uuid::Uuid;
 
@@ -17,11 +17,13 @@ fn sha(value: &[u8]) -> String {
 fn source_manifest(status: ExecutionStatus) -> ExecutionManifest {
     ExecutionManifest {
         id: Uuid::new_v4(),
-        version: 1,
+        version: EXECUTION_MANIFEST_VERSION,
         session_id: Uuid::new_v4(),
         turn_id: Uuid::new_v4(),
         provider: "offline".into(),
         model: "offline-scripted".into(),
+        autonomy_profile: "review_changes".into(),
+        command_fs_envelope: "confined_no_network".into(),
         prompt_sha256: sha(b"prompt"),
         tool_catalog_sha256: sha(b"tools"),
         policy_sha256: sha(b"policy"),

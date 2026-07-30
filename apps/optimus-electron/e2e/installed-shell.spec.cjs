@@ -26,6 +26,10 @@ test('installed Electron shell completes and restores an offline session', async
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
   const home = path.join(EVIDENCE_DIR, 'optimus-home');
   const userData = path.join(EVIDENCE_DIR, 'electron-user-data');
+  // A rerun in the same evidence directory must boot the same way a first run
+  // does. localStorage from the previous run lives under userData, so a stale
+  // composer choice would otherwise decide what this spec observes (#118).
+  fs.rmSync(userData, { recursive: true, force: true });
   fs.mkdirSync(home, { recursive: true });
   fs.mkdirSync(userData, { recursive: true });
   const hostPort = await reservePort();

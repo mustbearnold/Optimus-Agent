@@ -14,6 +14,7 @@ mod compress;
 mod credential;
 mod dev_run;
 mod execution;
+mod execution_support;
 mod fs_sandbox;
 mod fs_search;
 mod home_ops;

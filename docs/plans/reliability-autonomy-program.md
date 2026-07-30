@@ -88,9 +88,25 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 | R30.7 | pending | Owned-localhost network lease |
 | R30.8 | pending | Product release defaults (Auto provider/model) without breaking offline tests |
 
-R30.4 is marked done for the profile plumbing; [#118](https://github.com/mustbearnold/Optimus-Agent/issues/118)
-tracks the part of it that did not land — the access menu still offers full
-host authority first, which is the opposite of "Standard first".
+R30.4 is done in full since 2026-07-29. It was marked done once before that,
+while both access menus still offered full host authority first — the opposite
+of "Standard first" — because the row was recorded from the profile plumbing
+rather than from the menus it names.
+[#118](https://github.com/mustbearnold/Optimus-Agent/issues/118) closed that
+gap in both composers: the React workbench and the Wry desktop UI
+(`apps/optimus-desktop/ui/index.html`, which had `Full` *pre-selected*) each
+offer the five ADR-0044 profiles with `standard` first and `unrestricted_host`
+last under Expert, `full` no longer parses to unrestricted host anywhere, and
+`scripts/check-autonomy-profiles.py` fails `just verify` if either menu,
+persistence path, Rust profile parser, or the CLI's explicit `unrestricted`
+policy word drifts again. It also pins the Wry Advanced/Expert warning
+treatment, shared explanatory hints, and exact legacy migrations (`smart_deny`
+→ Review changes, `full` → Standard). The static contract is scoped to the live
+Wry access-rendering branch and rejects migration-table syntax it cannot prove;
+desktop Playwright coverage checks the rendered group order, accessible
+break-glass warning, and reload migrations. Two composers ship because the ADR-0028
+strangler is unfinished ([#106](https://github.com/mustbearnold/Optimus-Agent/issues/106));
+until it lands, a claim about "the composer" has to name which one.
 
 **What R30.5 deliberately does not do.** A grant is read in exactly one place:
 `Kernel::open_dev_run_session`. A chat session on a trusted project still asks,
@@ -107,7 +123,7 @@ outside the project at all, and answers to `SystemModify`).
 
 ### Exit gate (P30)
 
-- `cargo test -p optimus-policy` — 21 (14 unit + 7 `command_classification`)
+- `cargo test -p optimus-policy` — 22 (15 unit + 7 `command_classification`)
 - `cargo test -p optimus-kernel --test dev_run_trust` — 6
 - `cargo test -p optimus-runtime --test project_trust_profile`
 - `cargo test -p optimus-runtime --test approvals_surface`

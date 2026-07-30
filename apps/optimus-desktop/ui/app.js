@@ -2255,6 +2255,27 @@
   // persists the whole settings object, so a stored provider:'offline' does
   // not by itself mean offline was chosen — it may be pre-sign-in residue.
   let composerProviderChosen = false;
+  // The ADR-0044 profile a stored access value means today, mirroring
+  // apps/optimus-ui/src/state/composerStore.ts. Two words are missing on
+  // purpose: legacy 'full' said "Full access" and meant the whole host, and
+  // 'unrestricted_host' is break-glass, which ADR-0044 §5 keeps out of
+  // anything durable — break-glass that survives a restart is not
+  // break-glass. Both land on Standard, one deliberate click from expert.
+  // Null prototype so 'constructor' and '__proto__' are unknown words too.
+  const ACCESS_ALIASES = Object.assign(Object.create(null), {
+    standard: 'standard',
+    review_changes: 'review_changes',
+    smart_deny: 'review_changes',
+    ask: 'review_changes',
+    read_only: 'read_only',
+    read: 'read_only',
+    full_project: 'full_project',
+  });
+  function restoredAccess(raw) {
+    if (typeof raw !== 'string') return 'standard';
+    return ACCESS_ALIASES[raw.trim().toLowerCase()] || 'standard';
+  }
+
   function persistComposer() {
     try {
       localStorage.setItem('optimus.ui.composer', JSON.stringify({
@@ -2335,9 +2356,34 @@
       ).join('');
     }
     if (kind === 'access') {
-      return Array.from($('access').options).map((o) =>
-        `<button type="button" role="option" class="${o.value === $('access').value ? 'active' : ''}" data-kind="access" data-v="${esc(o.value)}">${esc(o.textContent)}</button>`
-      ).join('');
+      const groups = [];
+      Array.from($('access').options).forEach((o) => {
+        const tier = o.dataset.tier || '';
+        let group = groups[groups.length - 1];
+        if (!group || group.tier !== tier) {
+          group = { tier, options: [] };
+          groups.push(group);
+        }
+        group.options.push(o);
+      });
+      return groups.map((group) => {
+        const tierLabel = group.tier === 'primary'
+          ? 'Recommended'
+          : group.tier[0].toUpperCase() + group.tier.slice(1);
+        const heading = group.tier === 'primary'
+          ? ''
+          : `<div class="cdd-sec" data-tier="${esc(group.tier)}" aria-hidden="true">${esc(tierLabel)}</div>`;
+        const options = group.options.map((o) => {
+          const warning = o.dataset.warning === 'true';
+          const hint = o.dataset.hint || '';
+          const active = o.value === $('access').value;
+          const warningClass = warning ? ' access-warning' : '';
+          const risk = warning ? '<span class="access-risk" aria-hidden="true">!</span>' : '';
+          const label = `${o.textContent}. ${hint}`;
+          return `<button type="button" role="option" aria-label="${esc(label)}" aria-selected="${active ? 'true' : 'false'}" class="${((active ? ' active' : '') + warningClass).trim()}" data-kind="access" data-tier="${esc(group.tier)}" data-v="${esc(o.value)}">${risk}<span class="access-copy"><span>${esc(o.textContent)}</span><small class="access-hint">${esc(hint)}</small></span></button>`;
+        }).join('');
+        return `<div class="cdd-access-tier" data-tier="${esc(group.tier)}" role="group" aria-label="${esc(tierLabel)}">${heading}${options}</div>`;
+      }).join('');
     }
     if (kind === 'think') {
       const lvl = $('thinkingLevel').value;
@@ -2494,7 +2540,7 @@
       }
       if (typeof c.thinking === 'boolean') $('thinkingToggle').setAttribute('aria-pressed', c.thinking ? 'true' : 'false');
       if (typeof c.fast === 'boolean') $('fastToggle').setAttribute('aria-pressed', c.fast ? 'true' : 'false');
-      if (c.access) $('access').value = c.access;
+      $('access').value = restoredAccess(c.access);
     } catch {}
     if ($('provider').value === 'offline') $('model').value = 'offline-echo';
     // keep thinking toggle aligned with level
