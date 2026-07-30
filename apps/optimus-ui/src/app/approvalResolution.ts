@@ -1,11 +1,8 @@
 import type { ToolApprovalBinding } from '../ipc/contracts';
-import type { ComposerSettings } from '../state/composerStore';
-
 export function approvalResolutionParams(
   sessionId: string,
   binding: ToolApprovalBinding,
   decision: 'approve' | 'deny',
-  composer: ComposerSettings | undefined,
   projectId?: string
 ): Record<string, unknown> {
   return {
@@ -17,13 +14,6 @@ export function approvalResolutionParams(
     node_index: binding.node_index,
     effect_sha256: binding.effect_sha256,
     decision,
-    ...(composer
-      ? {
-          provider: composer.provider,
-          model: composer.model,
-          access: composer.access,
-        }
-      : {}),
     ...(projectId ? { project_id: projectId } : {}),
   };
 }

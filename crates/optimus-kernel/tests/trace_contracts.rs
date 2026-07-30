@@ -106,6 +106,7 @@ fn traced_manifest_creation_rolls_back_when_link_insert_fails() {
             turn_id,
             "offline",
             "offline-scripted",
+            "review_changes",
             b"prompt",
             b"tools",
             b"policy",

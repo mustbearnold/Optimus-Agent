@@ -1,13 +1,56 @@
 //! Durable session resume tests.
 
+use optimus_graph::AutonomyProfile;
 use optimus_kernel::{
     list_sessions, CompletionResponse, ExecutionStatus, ExecutionStore, Kernel, KernelConfig,
     KernelError, Message, PolicyMode, ReplayClassification, ScriptedModel, SessionStore, ToolCall,
     TurnStatus,
 };
 use optimus_packs::{PackError, PackId};
+use rusqlite::{params, Connection};
 use serde_json::json;
 use tempfile::tempdir;
+
+#[test]
+fn legacy_manifest_migrates_to_review_changes_authority() {
+    let directory = tempdir().unwrap();
+    let path = directory.path().join("execution.db");
+    let manifest_id = uuid::Uuid::new_v4();
+    let session_id = uuid::Uuid::new_v4();
+    let turn_id = uuid::Uuid::new_v4();
+    let connection = Connection::open(&path).unwrap();
+    connection
+        .execute_batch(
+            "CREATE TABLE execution_manifests(
+               id TEXT PRIMARY KEY,version INTEGER NOT NULL,session_id TEXT NOT NULL,
+               turn_id TEXT NOT NULL UNIQUE,provider TEXT NOT NULL,model TEXT NOT NULL,
+               prompt_sha256 TEXT NOT NULL,tool_catalog_sha256 TEXT NOT NULL,
+               policy_sha256 TEXT NOT NULL,status TEXT NOT NULL,
+               created_unix INTEGER NOT NULL,completed_unix INTEGER
+             );",
+        )
+        .unwrap();
+    connection
+        .execute(
+            "INSERT INTO execution_manifests(
+               id,version,session_id,turn_id,provider,model,prompt_sha256,
+               tool_catalog_sha256,policy_sha256,status,created_unix,completed_unix
+             ) VALUES (?1,1,?2,?3,'offline','offline-scripted',?4,?4,?4,'running',1,NULL)",
+            params![
+                manifest_id.to_string(),
+                session_id.to_string(),
+                turn_id.to_string(),
+                "0".repeat(64),
+            ],
+        )
+        .unwrap();
+    drop(connection);
+
+    let store = ExecutionStore::open(&path).unwrap();
+    let manifest = store.manifest(manifest_id).unwrap();
+    assert_eq!(manifest.version, 1);
+    assert_eq!(manifest.autonomy_profile, "review_changes");
+}
 
 #[test]
 fn session_survives_process_reopen() {
@@ -319,6 +362,7 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
             turn_id,
             "offline",
             "offline-scripted",
+            "review_changes",
             b"resume this once",
             b"tools",
             b"policy",
@@ -393,6 +437,7 @@ fn resume_rejects_terminal_traced_manifest_before_model_execution() {
             turn_id,
             "offline",
             "offline-scripted",
+            "review_changes",
             b"must not rerun",
             b"tools",
             b"policy",
@@ -487,7 +532,14 @@ fn resume_rejects_untraced_manifest_before_model_execution() {
 #[test]
 fn kernel_turn_persists_versioned_manifest_and_replay_report() {
     let directory = tempdir().unwrap();
-    let mut kernel = Kernel::open(directory.path(), KernelConfig::default()).unwrap();
+    let mut kernel = Kernel::open(
+        directory.path(),
+        KernelConfig {
+            autonomy_profile: AutonomyProfile::Standard,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
     let session_id = kernel.session_id();
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("manifest complete".into()),
@@ -501,9 +553,10 @@ fn kernel_turn_persists_versioned_manifest_and_replay_report() {
     let executions = ExecutionStore::open(directory.path().join("execution.db")).unwrap();
     let manifest_id = executions.find_by_turn(turn.id).unwrap().unwrap();
     let manifest = executions.manifest(manifest_id).unwrap();
-    assert_eq!(manifest.version, 1);
+    assert_eq!(manifest.version, 2);
     assert_eq!(manifest.provider, "offline");
     assert_eq!(manifest.model, "offline-scripted");
+    assert_eq!(manifest.autonomy_profile, "standard");
     assert_eq!(manifest.status, ExecutionStatus::Succeeded);
     assert_eq!(manifest.prompt_sha256.len(), 64);
     assert_eq!(manifest.tool_catalog_sha256.len(), 64);

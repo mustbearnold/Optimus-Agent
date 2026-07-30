@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { codexComposer } from '../state/composerStore';
 import { approvalResolutionParams } from './approvalResolution';
 
 const binding = {
@@ -14,13 +13,12 @@ const binding = {
 };
 
 describe('approval continuation params', () => {
-  it('keeps the paused turn under the selected provider and access profile', () => {
+  it('sends only the exact binding and decision authority owned by the renderer', () => {
     expect(
       approvalResolutionParams(
         '44444444-4444-4444-8444-444444444444',
         binding,
         'approve',
-        { ...codexComposer, access: 'full_project' },
         'project-a'
       )
     ).toEqual({
@@ -32,15 +30,12 @@ describe('approval continuation params', () => {
       node_index: binding.node_index,
       effect_sha256: binding.effect_sha256,
       decision: 'approve',
-      provider: 'codex',
-      model: 'gpt-5.6-terra',
-      access: 'full_project',
       project_id: 'project-a',
     });
   });
 
-  it('falls closed when the paused turn predates this app lifecycle', () => {
-    const params = approvalResolutionParams('session-a', binding, 'deny', undefined);
+  it('does not invent routing or project authority', () => {
+    const params = approvalResolutionParams('session-a', binding, 'deny');
     expect(params).not.toHaveProperty('provider');
     expect(params).not.toHaveProperty('model');
     expect(params).not.toHaveProperty('access');

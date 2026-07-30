@@ -38,7 +38,6 @@ import {
   offlineComposer,
   saveComposer,
   shouldPreferCodex,
-  type ComposerSettings,
 } from '../state/composerStore';
 import {
   defaultLayout,
@@ -124,12 +123,6 @@ export function OptimusApp() {
   // taken before that session existed, and applying it would erase one.
   const sessionCreations = useRef(0);
   const activeHandle = useRef<ChatHandle | null>(null);
-  // An approval may be decided after the live, global composer has changed or
-  // another session was selected. Resume with the settings captured when this
-  // session's paused turn started, never with a later authority choice. A turn
-  // loaded after an app restart has no in-memory snapshot and therefore omits
-  // access so the host falls closed to ReviewChanges.
-  const turnComposer = useRef<Record<string, ComposerSettings>>({});
   const draggingLayout = useRef(false);
   const latestLayout = useRef(state.layout);
   latestLayout.current = state.layout;
@@ -344,7 +337,6 @@ export function OptimusApp() {
       return;
     }
     conversationStore.begin(sessionId, text);
-    turnComposer.current[sessionId] = { ...composer };
     setInput('');
     setAnnotation('');
     dispatch({ type: 'set-active-run', id: sessionId });
@@ -402,13 +394,7 @@ export function OptimusApp() {
     const projectId = assignments[sessionId];
     await transport.invoke(
       'chat_approval_resolve',
-      approvalResolutionParams(
-        sessionId,
-        binding,
-        decision,
-        turnComposer.current[sessionId],
-        projectId
-      )
+      approvalResolutionParams(sessionId, binding, decision, projectId)
     );
     const detail = await transport.invoke<SessionDetail>('get_session', { id: sessionId });
     conversationStore.load(detail);
