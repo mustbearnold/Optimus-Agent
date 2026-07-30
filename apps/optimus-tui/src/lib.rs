@@ -21,6 +21,7 @@ use crossterm::ExecutableCommand;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
+mod activity;
 mod commands;
 mod composer;
 mod history;

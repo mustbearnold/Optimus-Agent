@@ -156,7 +156,8 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
 /// it sits directly under the last message where the eye already is.
 pub fn visible_rows(session: &TuiSession, width: u16) -> Vec<Row> {
     let mut rows = transcript::rows(&session.messages, width, session.chrome);
-    if let Some(activity) = session.activity_line() {
+    // Two columns are reserved for the transcript gutter below.
+    if let Some(activity) = session.activity_line(width.saturating_sub(2)) {
         rows.push(Row {
             role: Role::Assistant,
             segments: Vec::new(),
@@ -291,6 +292,32 @@ mod tests {
         assert!(
             screen.contains("Ctrl-C to interrupt"),
             "the spinner must be on screen while a turn runs:\n{screen}"
+        );
+    }
+
+    #[test]
+    fn a_narrow_activity_row_elides_detail_before_the_interrupt_hint() {
+        let (_dir, mut session) = session_with(&[(Role::User, "do something")]);
+        let _worker = session.busy_for_test("model step 1");
+
+        let forty_columns = render(&session, 40, 12).join("\n");
+        assert!(
+            forty_columns.contains("Ctrl-C to interrupt"),
+            "the actionable hint must survive intact at 40 columns:\n{forty_columns}"
+        );
+        assert!(
+            forty_columns.contains("model step…"),
+            "status should be deliberately elided rather than hard-cut:\n{forty_columns}"
+        );
+
+        let very_narrow = render(&session, 20, 12).join("\n");
+        assert!(
+            very_narrow.contains("Ctrl-C"),
+            "even a tiny terminal must retain the compact interrupt cue:\n{very_narrow}"
+        );
+        assert!(
+            !very_narrow.contains("to inter"),
+            "the compact cue must not resemble a clipped sentence:\n{very_narrow}"
         );
     }
 
