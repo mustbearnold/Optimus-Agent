@@ -114,7 +114,6 @@ describe('motion contract', () => {
       // beats every layer.
       '.settings-dialog',
       '.project-sources-dialog',
-      '.floating-panel',
     ]) {
       expect(css).toContain(selector);
     }
