@@ -83,14 +83,7 @@ pub fn chat_approval_resolve_cancellable(
     // whichever renderer happens to resolve it later. Old manifests migrate to
     // ReviewChanges. Break-glass also falls closed here: it must not survive a
     // desktop restart as durable authority (ADR-0044 §5).
-    let persisted_profile = optimus_graph::AutonomyProfile::parse(&manifest.autonomy_profile)
-        .filter(|profile| profile.as_str() == manifest.autonomy_profile)
-        .ok_or_else(|| "approval continuation has an invalid autonomy profile".to_string())?;
-    let access = if persisted_profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
-        access_config(Some("review_changes"))
-    } else {
-        access_config(Some(persisted_profile.as_str()))
-    };
+    let access = resume_access_config(&manifest.autonomy_profile, &manifest.command_fs_envelope)?;
     let config = KernelConfig {
         effect_policy: access.policy,
         autonomy_profile: access.profile,
@@ -332,6 +325,32 @@ pub(crate) fn access_config(raw: Option<&str>) -> AccessConfig {
     }
 }
 
+fn resume_access_config(
+    autonomy_profile: &str,
+    command_fs_envelope: &str,
+) -> Result<AccessConfig, String> {
+    let profile = optimus_graph::AutonomyProfile::parse(autonomy_profile)
+        .filter(|profile| profile.as_str() == autonomy_profile)
+        .ok_or_else(|| "approval continuation has an invalid autonomy profile".to_string())?;
+    let envelope = match command_fs_envelope {
+        "confined" => optimus_graph::CommandFsEnvelope::Confined,
+        "confined_no_network" => optimus_graph::CommandFsEnvelope::ConfinedNoNetwork,
+        "unrestricted_host" => optimus_graph::CommandFsEnvelope::UnrestrictedHost,
+        _ => return Err("approval continuation has an invalid command envelope".into()),
+    };
+    if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
+        let mut access = access_config(Some("review_changes"));
+        access.command_fs_envelope = Some(optimus_graph::CommandFsEnvelope::ConfinedNoNetwork);
+        return Ok(access);
+    }
+    if envelope == optimus_graph::CommandFsEnvelope::UnrestrictedHost {
+        return Err("approval continuation has inconsistent persisted authority".into());
+    }
+    let mut access = access_config(Some(profile.as_str()));
+    access.command_fs_envelope = Some(envelope);
+    Ok(access)
+}
+
 pub fn chat_turn(
     home: &PathBuf,
     params: serde_json::Value,
@@ -535,6 +554,33 @@ mod tests {
             assert_eq!(access.policy, PolicyMode::SmartDeny);
             assert_eq!(access.command_fs_envelope, None);
         }
+    }
+
+    #[test]
+    fn approval_resume_uses_the_persisted_envelope_and_fails_closed() {
+        use optimus_graph::{AutonomyProfile, CommandFsEnvelope, PolicyMode};
+        let isolated = super::resume_access_config("standard", "confined_no_network").unwrap();
+        assert_eq!(isolated.profile, AutonomyProfile::Standard);
+        assert_eq!(isolated.policy, PolicyMode::SmartDeny);
+        assert_eq!(
+            isolated.command_fs_envelope,
+            Some(CommandFsEnvelope::ConfinedNoNetwork),
+            "current product settings must not add network access to a paused turn"
+        );
+
+        let break_glass =
+            super::resume_access_config("unrestricted_host", "unrestricted_host").unwrap();
+        assert_eq!(break_glass.profile, AutonomyProfile::ReviewChanges);
+        assert_eq!(break_glass.policy, PolicyMode::SmartDeny);
+        assert_eq!(
+            break_glass.command_fs_envelope,
+            Some(CommandFsEnvelope::ConfinedNoNetwork),
+            "break-glass authority must not survive a restart"
+        );
+
+        assert!(super::resume_access_config("standard", "unrestricted_host").is_err());
+        assert!(super::resume_access_config("standard", "corrupt").is_err());
+        assert!(super::resume_access_config("corrupt", "confined").is_err());
     }
 
     #[test]

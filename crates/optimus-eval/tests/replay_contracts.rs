@@ -23,6 +23,7 @@ fn source_manifest(status: ExecutionStatus) -> ExecutionManifest {
         provider: "offline".into(),
         model: "offline-scripted".into(),
         autonomy_profile: "review_changes".into(),
+        command_fs_envelope: "confined_no_network".into(),
         prompt_sha256: sha(b"prompt"),
         tool_catalog_sha256: sha(b"tools"),
         policy_sha256: sha(b"policy"),

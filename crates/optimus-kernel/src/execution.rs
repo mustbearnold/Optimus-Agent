@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    execution_support::{ensure_column, now_unix, read_classes, replay_name, sha256},
+    execution_support::{
+        ensure_column, insert_manifest, now_unix, read_classes, replay_name, sha256,
+    },
     ChatApprovalStatus, CompletionRequest, CompletionResponse, KernelError, Result, SpanId,
     ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase, TraceContext, TraceId,
 };
@@ -94,6 +96,7 @@ pub struct ExecutionManifest {
     pub provider: String,
     pub model: String,
     pub autonomy_profile: String,
+    pub command_fs_envelope: String,
     pub prompt_sha256: String,
     pub tool_catalog_sha256: String,
     pub policy_sha256: String,
@@ -165,53 +168,6 @@ pub struct ExecutionStore {
     conn: Connection,
 }
 
-#[allow(clippy::too_many_arguments)]
-fn insert_manifest(
-    connection: &Connection,
-    id: Uuid,
-    session_id: Uuid,
-    turn_id: Uuid,
-    provider: &str,
-    model: &str,
-    autonomy_profile: &str,
-    prompt: &[u8],
-    tool_catalog: &[u8],
-    policy: &[u8],
-) -> Result<()> {
-    if provider.trim().is_empty() || model.trim().is_empty() {
-        return Err(KernelError::Model(
-            "execution manifest requires provider and model identity".into(),
-        ));
-    }
-    if optimus_graph::AutonomyProfile::parse(autonomy_profile)
-        .is_none_or(|profile| profile.as_str() != autonomy_profile)
-    {
-        return Err(KernelError::Model(
-            "execution manifest requires a canonical autonomy profile".into(),
-        ));
-    }
-    connection.execute(
-        "INSERT INTO execution_manifests(
-           id,version,session_id,turn_id,provider,model,autonomy_profile,prompt_sha256,
-           tool_catalog_sha256,policy_sha256,status,created_unix
-         ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,'running',?11)",
-        params![
-            id.to_string(),
-            EXECUTION_MANIFEST_VERSION as i64,
-            session_id.to_string(),
-            turn_id.to_string(),
-            provider,
-            model,
-            autonomy_profile,
-            sha256(prompt),
-            sha256(tool_catalog),
-            sha256(policy),
-            now_unix() as i64
-        ],
-    )?;
-    Ok(())
-}
-
 impl ExecutionStore {
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         if let Some(parent) = path.as_ref().parent() {
@@ -226,6 +182,9 @@ impl ExecutionStore {
                turn_id TEXT NOT NULL UNIQUE,provider TEXT NOT NULL,model TEXT NOT NULL,
                autonomy_profile TEXT NOT NULL DEFAULT 'review_changes' CHECK(autonomy_profile IN (
                  'standard','review_changes','read_only','full_project','unrestricted_host'
+               )),
+               command_fs_envelope TEXT NOT NULL DEFAULT 'confined_no_network' CHECK(command_fs_envelope IN (
+                 'confined','confined_no_network','unrestricted_host'
                )),
                prompt_sha256 TEXT NOT NULL CHECK(length(prompt_sha256)=64),
                tool_catalog_sha256 TEXT NOT NULL CHECK(length(tool_catalog_sha256)=64),
@@ -289,6 +248,12 @@ impl ExecutionStore {
         ensure_column(
             &conn,
             "execution_manifests",
+            "command_fs_envelope",
+            "TEXT NOT NULL DEFAULT 'confined_no_network' CHECK(command_fs_envelope IN ('confined','confined_no_network','unrestricted_host'))",
+        )?;
+        ensure_column(
+            &conn,
+            "execution_manifests",
             "duration_ms",
             "INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)",
         )?;
@@ -333,6 +298,7 @@ impl ExecutionStore {
             provider,
             model,
             "review_changes",
+            "confined_no_network",
             prompt,
             tool_catalog,
             policy,
@@ -348,6 +314,7 @@ impl ExecutionStore {
         provider: &str,
         model: &str,
         autonomy_profile: &str,
+        command_fs_envelope: &str,
         prompt: &[u8],
         tool_catalog: &[u8],
         policy: &[u8],
@@ -363,6 +330,7 @@ impl ExecutionStore {
             provider,
             model,
             autonomy_profile,
+            command_fs_envelope,
             prompt,
             tool_catalog,
             policy,
@@ -876,7 +844,7 @@ impl ExecutionStore {
     pub fn manifest(&self, id: Uuid) -> Result<ExecutionManifest> {
         self.conn
             .query_row(
-                "SELECT id,version,session_id,turn_id,provider,model,autonomy_profile,prompt_sha256,
+                "SELECT id,version,session_id,turn_id,provider,model,autonomy_profile,command_fs_envelope,prompt_sha256,
                         tool_catalog_sha256,policy_sha256,status
                  FROM execution_manifests WHERE id=?1",
                 params![id.to_string()],
@@ -886,7 +854,7 @@ impl ExecutionStore {
                             rusqlite::Error::ToSqlConversionFailure(Box::new(error))
                         })
                     };
-                    let status = match row.get::<_, String>(10)?.as_str() {
+                    let status = match row.get::<_, String>(11)?.as_str() {
                         "running" => ExecutionStatus::Running,
                         "succeeded" => ExecutionStatus::Succeeded,
                         "failed" => ExecutionStatus::Failed,
@@ -905,9 +873,10 @@ impl ExecutionStore {
                         provider: row.get(4)?,
                         model: row.get(5)?,
                         autonomy_profile: row.get(6)?,
-                        prompt_sha256: row.get(7)?,
-                        tool_catalog_sha256: row.get(8)?,
-                        policy_sha256: row.get(9)?,
+                        command_fs_envelope: row.get(7)?,
+                        prompt_sha256: row.get(8)?,
+                        tool_catalog_sha256: row.get(9)?,
+                        policy_sha256: row.get(10)?,
                         status,
                     })
                 },

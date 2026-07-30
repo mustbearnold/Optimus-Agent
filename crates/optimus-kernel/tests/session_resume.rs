@@ -50,6 +50,7 @@ fn legacy_manifest_migrates_to_review_changes_authority() {
     let manifest = store.manifest(manifest_id).unwrap();
     assert_eq!(manifest.version, 1);
     assert_eq!(manifest.autonomy_profile, "review_changes");
+    assert_eq!(manifest.command_fs_envelope, "confined_no_network");
 }
 
 #[test]
@@ -363,6 +364,7 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
             "offline",
             "offline-scripted",
             "review_changes",
+            "confined_no_network",
             b"resume this once",
             b"tools",
             b"policy",
@@ -438,6 +440,7 @@ fn resume_rejects_terminal_traced_manifest_before_model_execution() {
             "offline",
             "offline-scripted",
             "review_changes",
+            "confined_no_network",
             b"must not rerun",
             b"tools",
             b"policy",
@@ -557,6 +560,7 @@ fn kernel_turn_persists_versioned_manifest_and_replay_report() {
     assert_eq!(manifest.provider, "offline");
     assert_eq!(manifest.model, "offline-scripted");
     assert_eq!(manifest.autonomy_profile, "standard");
+    assert_eq!(manifest.command_fs_envelope, "confined");
     assert_eq!(manifest.status, ExecutionStatus::Succeeded);
     assert_eq!(manifest.prompt_sha256.len(), 64);
     assert_eq!(manifest.tool_catalog_sha256.len(), 64);

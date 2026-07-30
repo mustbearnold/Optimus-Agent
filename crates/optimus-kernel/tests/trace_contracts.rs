@@ -107,6 +107,7 @@ fn traced_manifest_creation_rolls_back_when_link_insert_fails() {
             "offline",
             "offline-scripted",
             "review_changes",
+            "confined_no_network",
             b"prompt",
             b"tools",
             b"policy",
