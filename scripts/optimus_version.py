@@ -39,6 +39,23 @@ SEMVER_RE = re.compile(
 )
 FEATURE_ID_RE = re.compile(r"^[a-z0-9]+(?:[.:-][a-z0-9]+)*$")
 UTC = dt.timezone.utc
+GIT_LOCAL_ENV_VARS = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CONFIG",
+    "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_COUNT",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE",
+    "GIT_GRAFT_FILE",
+    "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS",
+    "GIT_REPLACE_REF_BASE",
+    "GIT_PREFIX",
+    "GIT_SHALLOW_FILE",
+    "GIT_COMMON_DIR",
+)
 
 
 class ParityError(RuntimeError):
@@ -117,10 +134,18 @@ def command_output(
 def git_output(root: Path, *args: str) -> str:
     # The canonical Optimus repository is bare with linked worktrees. Its
     # shared `core.bare=true` otherwise makes an ordinary `git status` fail
-    # even when `root` is a real worktree. Scope the override to this command
-    # instead of exporting GIT_WORK_TREE, which would leak into child fixtures
-    # that intentionally create their own bare repositories.
-    return command_output(["git", f"--work-tree={root.resolve()}", *args], cwd=root).strip()
+    # even when `root` is a real worktree. Hooks also export repository-local
+    # Git variables to their children, so discard those before asking about a
+    # potentially different repository. Scope the worktree override to this
+    # command instead of mutating the process environment.
+    env = os.environ.copy()
+    for name in GIT_LOCAL_ENV_VARS:
+        env.pop(name, None)
+    return command_output(
+        ["git", f"--work-tree={root.resolve()}", *args],
+        cwd=root,
+        env=env,
+    ).strip()
 
 
 def workspace_version(root: Path) -> str:

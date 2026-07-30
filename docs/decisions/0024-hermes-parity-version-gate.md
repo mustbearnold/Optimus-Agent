@@ -191,11 +191,14 @@ recomputable from raw evidence.
 Revision and cleanliness checks pass `--work-tree=<evaluated root>` on the
 individual Git invocation. The canonical Optimus repository has
 `core.bare=true` with linked worktrees, so cwd alone cannot make `git status`
-recognise a real worktree. A process-wide `GIT_WORK_TREE` workaround is
-forbidden: it leaks into verification fixtures that intentionally create bare
-remotes and changes the meaning of their Git commands.
+recognise a real worktree. Before inspecting the evaluated root, the query
+removes repository-local `GIT_*` variables inherited from a calling Git hook;
+otherwise the caller's repository silently overrides the evaluated root. A
+process-wide `GIT_WORK_TREE` workaround is forbidden: it leaks into verification
+fixtures that intentionally create bare remotes and changes the meaning of
+their Git commands.
 
 `scripts/test_optimus_version.py` reproduces the shared `core.bare=true` shape
-and proves the scoped query sees the candidate worktree without mutating the
-process environment. This changes only repository discovery; the clean-tree
-promotion requirement remains unchanged.
+and a poisoned hook environment, then proves the scoped query sees the candidate
+worktree without mutating the process environment. This changes only repository
+discovery; the clean-tree promotion requirement remains unchanged.

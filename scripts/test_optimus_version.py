@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import datetime as dt
+import os
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import optimus_version as versioning
 
@@ -196,10 +198,16 @@ class RepositoryContractTest(unittest.TestCase):
                 check=True,
             )
 
-            self.assertEqual(
-                versioning.git_output(root, "status", "--porcelain"),
-                "?? candidate.txt",
-            )
+            inherited_hook_env = {
+                "GIT_DIR": str(Path(temp) / "outer.git"),
+                "GIT_WORK_TREE": str(Path(temp) / "outer-worktree"),
+                "GIT_INDEX_FILE": str(Path(temp) / "outer-index"),
+            }
+            with mock.patch.dict(os.environ, inherited_hook_env):
+                self.assertEqual(
+                    versioning.git_output(root, "status", "--porcelain"),
+                    "?? candidate.txt",
+                )
 
     def test_checked_in_version_system_is_well_formed_and_unverified(self) -> None:
         root = Path(__file__).resolve().parents[1]
