@@ -77,8 +77,9 @@ pub fn chat_approval_resolve_cancellable(
     // the user just gave into a standing grant.
     let access = access_config(params.get("access").and_then(|value| value.as_str()));
     let config = KernelConfig {
-        effect_policy: access.1,
-        autonomy_profile: access.0,
+        effect_policy: access.policy,
+        autonomy_profile: access.profile,
+        command_fs_envelope: access.command_fs_envelope,
         ..KernelConfig::default()
     };
     let mut kernel = match project_id.as_deref() {
@@ -302,22 +303,35 @@ fn parse_approval_decision(params: &serde_json::Value) -> Result<ChatApprovalDec
 ///
 /// Absent/unknown values stay ReviewChanges + SmartDeny (fail closed). Only
 /// `UnrestrictedHost` — spelled `unrestricted_host`, `unrestricted`, or `yolo`
-/// for the CLI flag — pairs with `PolicyMode::Unrestricted`; every other
-/// profile keeps SmartDeny and lets the capability broker decide per effect.
-/// `full` used to reach it and deliberately no longer does (#118): an
-/// ordinary-sounding word must not be the one that hands over the machine.
-pub(crate) fn access_config(
-    raw: Option<&str>,
-) -> (optimus_graph::AutonomyProfile, optimus_graph::PolicyMode) {
+/// for the CLI flag — pairs `PolicyMode::Unrestricted` with the explicit host
+/// command envelope. Every other profile keeps SmartDeny and the configured
+/// containment. `full` used to reach break-glass and deliberately no longer does
+/// (#118): an ordinary-sounding word must not hand over the machine.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct AccessConfig {
+    profile: optimus_graph::AutonomyProfile,
+    policy: optimus_graph::PolicyMode,
+    command_fs_envelope: Option<optimus_graph::CommandFsEnvelope>,
+}
+
+pub(crate) fn access_config(raw: Option<&str>) -> AccessConfig {
     let profile = raw
         .and_then(optimus_graph::AutonomyProfile::parse)
         .unwrap_or(optimus_graph::AutonomyProfile::ReviewChanges);
-    let policy = if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
-        optimus_graph::PolicyMode::Unrestricted
-    } else {
-        optimus_graph::PolicyMode::SmartDeny
-    };
-    (profile, policy)
+    let (policy, command_fs_envelope) =
+        if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
+            (
+                optimus_graph::PolicyMode::Unrestricted,
+                Some(optimus_graph::CommandFsEnvelope::UnrestrictedHost),
+            )
+        } else {
+            (optimus_graph::PolicyMode::SmartDeny, None)
+        };
+    AccessConfig {
+        profile,
+        policy,
+        command_fs_envelope,
+    }
 }
 
 pub fn chat_turn(
@@ -375,8 +389,9 @@ pub fn chat_turn_cancellable(
             .get("fast")
             .and_then(|v| v.as_bool())
             .unwrap_or(false),
-        effect_policy: access.1,
-        autonomy_profile: access.0,
+        effect_policy: access.policy,
+        autonomy_profile: access.profile,
+        command_fs_envelope: access.command_fs_envelope,
         ..KernelConfig::default()
     };
     let mut kernel = match params.get("project_id").and_then(|value| value.as_str()) {
@@ -517,23 +532,37 @@ mod tests {
     fn access_defaults_to_review_changes_and_smart_deny() {
         use optimus_graph::{AutonomyProfile, PolicyMode};
         for raw in [None, Some(""), Some("garbage")] {
-            let (profile, policy) = super::access_config(raw);
-            assert_eq!(profile, AutonomyProfile::ReviewChanges);
-            assert_eq!(policy, PolicyMode::SmartDeny);
+            let access = super::access_config(raw);
+            assert_eq!(access.profile, AutonomyProfile::ReviewChanges);
+            assert_eq!(access.policy, PolicyMode::SmartDeny);
+            assert_eq!(access.command_fs_envelope, None);
         }
     }
 
     #[test]
     fn only_unrestricted_spellings_lift_smart_deny() {
-        use optimus_graph::{AutonomyProfile, PolicyMode};
+        use optimus_graph::{AutonomyProfile, CommandFsEnvelope, PolicyMode};
         for raw in ["unrestricted_host", "unrestricted", "yolo"] {
-            let (profile, policy) = super::access_config(Some(raw));
-            assert_eq!(profile, AutonomyProfile::UnrestrictedHost, "{raw}");
-            assert_eq!(policy, PolicyMode::Unrestricted, "{raw}");
+            let access = super::access_config(Some(raw));
+            assert_eq!(access.profile, AutonomyProfile::UnrestrictedHost, "{raw}");
+            assert_eq!(access.policy, PolicyMode::Unrestricted, "{raw}");
+            assert_eq!(
+                access.command_fs_envelope,
+                Some(CommandFsEnvelope::UnrestrictedHost),
+                "{raw} must make the host-wide command reach explicit"
+            );
         }
         for raw in ["standard", "ask", "read", "full_project"] {
-            let (_, policy) = super::access_config(Some(raw));
-            assert_eq!(policy, PolicyMode::SmartDeny, "{raw} must keep SmartDeny");
+            let access = super::access_config(Some(raw));
+            assert_eq!(
+                access.policy,
+                PolicyMode::SmartDeny,
+                "{raw} must keep SmartDeny"
+            );
+            assert_eq!(
+                access.command_fs_envelope, None,
+                "{raw} must keep the configured containment"
+            );
         }
     }
 
@@ -544,37 +573,58 @@ mod tests {
     /// (#118).
     #[test]
     fn each_composer_profile_maps_to_its_own_authority() {
-        use optimus_graph::{AutonomyProfile, PolicyMode};
+        use optimus_graph::{AutonomyProfile, CommandFsEnvelope, PolicyMode};
         let expected = [
-            ("standard", AutonomyProfile::Standard, PolicyMode::SmartDeny),
+            (
+                "standard",
+                AutonomyProfile::Standard,
+                PolicyMode::SmartDeny,
+                None,
+            ),
             (
                 "review_changes",
                 AutonomyProfile::ReviewChanges,
                 PolicyMode::SmartDeny,
+                None,
             ),
             (
                 "read_only",
                 AutonomyProfile::ReadOnly,
                 PolicyMode::SmartDeny,
+                None,
             ),
             (
                 "full_project",
                 AutonomyProfile::FullProject,
                 PolicyMode::SmartDeny,
+                None,
             ),
             (
                 "unrestricted_host",
                 AutonomyProfile::UnrestrictedHost,
                 PolicyMode::Unrestricted,
+                Some(CommandFsEnvelope::UnrestrictedHost),
             ),
         ];
-        for (raw, profile, policy) in expected {
-            assert_eq!(super::access_config(Some(raw)), (profile, policy), "{raw}");
+        for (raw, profile, policy, command_fs_envelope) in expected {
+            assert_eq!(
+                super::access_config(Some(raw)),
+                super::AccessConfig {
+                    profile,
+                    policy,
+                    command_fs_envelope,
+                },
+                "{raw}"
+            );
         }
         // The word the old menu offered first is no longer a profile at all.
         assert_eq!(
             super::access_config(Some("full")),
-            (AutonomyProfile::ReviewChanges, PolicyMode::SmartDeny),
+            super::AccessConfig {
+                profile: AutonomyProfile::ReviewChanges,
+                policy: PolicyMode::SmartDeny,
+                command_fs_envelope: None,
+            },
             "a stale 'full' sender must fall closed, not receive the host"
         );
     }
