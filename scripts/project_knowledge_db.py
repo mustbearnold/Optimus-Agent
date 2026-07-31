@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import os
 import sqlite3
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 
-DATABASE_SCHEMA_VERSION = 1
+DATABASE_SCHEMA_VERSION = 2
 
 
 class DatabaseError(RuntimeError):
@@ -137,6 +138,52 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         CREATE VIEW retired_files AS SELECT * FROM files WHERE exists_now = 0;
         """,
     ),
+    (
+        2,
+        "temporal-code-graph-and-utc-order",
+        """
+        ALTER TABLE commits ADD COLUMN authored_at TEXT;
+        ALTER TABLE commits ADD COLUMN author_name TEXT;
+        ALTER TABLE commits ADD COLUMN author_email TEXT;
+        CREATE INDEX commits_author_idx ON commits(author_email, position);
+        ALTER TABLE relations ADD COLUMN valid_to_time TEXT;
+        ALTER TABLE relations ADD COLUMN valid_to_position INTEGER
+            REFERENCES commits(position);
+        CREATE TABLE packages (
+            position INTEGER NOT NULL UNIQUE,
+            package_id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            kind TEXT NOT NULL CHECK(kind IN ('cargo', 'npm')),
+            manifest_path TEXT,
+            origin TEXT NOT NULL CHECK(origin IN ('internal', 'external')),
+            exists_now INTEGER CHECK(exists_now IN (0, 1))
+        );
+        CREATE INDEX packages_name_idx ON packages(kind, name);
+        CREATE TABLE package_dependencies (
+            manifest_path TEXT NOT NULL,
+            package_id TEXT NOT NULL REFERENCES packages(package_id) ON DELETE CASCADE,
+            dependency_package_id TEXT NOT NULL REFERENCES packages(package_id),
+            dependency TEXT NOT NULL,
+            dep_kind TEXT NOT NULL,
+            requirement TEXT NOT NULL,
+            valid_from_position INTEGER NOT NULL REFERENCES commits(position),
+            valid_from_time TEXT NOT NULL,
+            valid_to_position INTEGER REFERENCES commits(position),
+            valid_to_time TEXT,
+            PRIMARY KEY(manifest_path, dependency, dep_kind, valid_from_position)
+        );
+        CREATE INDEX package_dependencies_interval_idx
+            ON package_dependencies(dependency_package_id, valid_from_position, valid_to_position);
+        CREATE TABLE code_symbols (
+            path TEXT NOT NULL REFERENCES files(path) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            line INTEGER NOT NULL CHECK(line >= 1),
+            PRIMARY KEY(path, name, kind, line)
+        );
+        CREATE INDEX code_symbols_name_idx ON code_symbols(name, kind);
+        """,
+    ),
 )
 
 
@@ -200,13 +247,15 @@ def _insert_relation(
     *,
     event_time: str | None = None,
     commit_position: int | None = None,
+    valid_to_time: str | None = None,
+    valid_to_position: int | None = None,
     properties: Any | None = None,
 ) -> None:
     connection.execute(
         """INSERT INTO relations(
                relation_id, source_id, predicate, target_id, event_time,
-               commit_position, properties_json
-           ) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               commit_position, valid_to_time, valid_to_position, properties_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             relation_id,
             source_id,
@@ -214,6 +263,8 @@ def _insert_relation(
             target_id,
             event_time,
             commit_position,
+            valid_to_time,
+            valid_to_position,
             compact(properties or {}),
         ),
     )
@@ -234,16 +285,22 @@ def populate(connection: sqlite3.Connection, graph: dict[str, Any]) -> None:
         connection.executemany(
             "INSERT INTO metadata(key, value) VALUES (?, ?)", metadata.items()
         )
+        authors: dict[str, dict[str, str]] = {}
         for position, commit in enumerate(graph["commits"]):
             connection.execute(
-                """INSERT INTO commits(position, sha, committed_at, subject, touch_count)
-                   VALUES (?, ?, ?, ?, ?)""",
+                """INSERT INTO commits(
+                       position, sha, committed_at, subject, touch_count,
+                       authored_at, author_name, author_email
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     position,
                     commit["sha"],
                     commit["committed_at"],
                     commit["subject"],
                     commit["touch_count"],
+                    commit["authored_at"],
+                    commit["author_name"],
+                    commit["author_email"],
                 ),
             )
             _insert_entity(
@@ -255,7 +312,33 @@ def populate(connection: sqlite3.Connection, graph: dict[str, Any]) -> None:
                     "committed_at": commit["committed_at"],
                     "subject": commit["subject"],
                     "touch_count": commit["touch_count"],
+                    "authored_at": commit["authored_at"],
+                    "author_name": commit["author_name"],
+                    "author_email": commit["author_email"],
                 },
+            )
+            identity = commit["author_email"] or commit["author_name"]
+            authors.setdefault(identity, {
+                "name": commit["author_name"], "email": commit["author_email"],
+            })
+        for identity in sorted(authors):
+            _insert_entity(
+                connection,
+                f"author:{identity}",
+                "author",
+                authors[identity]["name"] or identity,
+                authors[identity],
+            )
+        for position, commit in enumerate(graph["commits"]):
+            identity = commit["author_email"] or commit["author_name"]
+            _insert_relation(
+                connection,
+                f"authored:{commit['sha']}",
+                commit["id"],
+                "authored_by",
+                f"author:{identity}",
+                event_time=commit["authored_at"],
+                commit_position=position,
             )
         for commit in graph["commits"]:
             for position, parent in enumerate(commit["parents"]):
@@ -409,6 +492,94 @@ def populate(connection: sqlite3.Connection, graph: dict[str, Any]) -> None:
                     commit_position=position,
                     properties={"sequence": sequence, "status": event["status"]},
                 )
+        for position, package in enumerate(graph.get("packages", [])):
+            connection.execute(
+                """INSERT INTO packages(
+                       position, package_id, name, kind, manifest_path, origin, exists_now
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    position,
+                    package["package_id"],
+                    package["name"],
+                    package["kind"],
+                    package["manifest_path"],
+                    package["origin"],
+                    None if package["exists_now"] is None else int(package["exists_now"]),
+                ),
+            )
+            _insert_entity(
+                connection,
+                f"package:{package['package_id']}",
+                "package",
+                package["name"],
+                package,
+            )
+        for dependency in graph.get("package_dependencies", []):
+            connection.execute(
+                """INSERT INTO package_dependencies(
+                       manifest_path, package_id, dependency_package_id, dependency,
+                       dep_kind, requirement, valid_from_position, valid_from_time,
+                       valid_to_position, valid_to_time
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    dependency["manifest_path"],
+                    dependency["package_id"],
+                    dependency["dependency_package_id"],
+                    dependency["dependency"],
+                    dependency["dep_kind"],
+                    dependency["requirement"],
+                    dependency["valid_from_position"],
+                    dependency["valid_from_time"],
+                    dependency["valid_to_position"],
+                    dependency["valid_to_time"],
+                ),
+            )
+            _insert_relation(
+                connection,
+                "dependency:{}:{}:{}:{}".format(
+                    dependency["manifest_path"], dependency["dependency"],
+                    dependency["dep_kind"], dependency["valid_from_position"],
+                ),
+                f"package:{dependency['package_id']}",
+                "depends_on",
+                f"package:{dependency['dependency_package_id']}",
+                event_time=dependency["valid_from_time"],
+                commit_position=dependency["valid_from_position"],
+                valid_to_time=dependency["valid_to_time"],
+                valid_to_position=dependency["valid_to_position"],
+                properties={
+                    "dependency": dependency["dependency"],
+                    "dep_kind": dependency["dep_kind"],
+                    "requirement": dependency["requirement"],
+                    "manifest_path": dependency["manifest_path"],
+                },
+            )
+        for symbol in graph.get("code_symbols", []):
+            connection.execute(
+                "INSERT INTO code_symbols(path, name, kind, line) VALUES (?, ?, ?, ?)",
+                (symbol["path"], symbol["name"], symbol["kind"], symbol["line"]),
+            )
+            symbol_id = "symbol:{}:{}:{}:{}".format(
+                symbol["path"], symbol["kind"], symbol["name"], symbol["line"]
+            )
+            _insert_entity(connection, symbol_id, "symbol", symbol["name"], symbol)
+            _insert_relation(
+                connection,
+                "declares:{}:{}:{}:{}".format(
+                    symbol["path"], symbol["kind"], symbol["name"], symbol["line"]
+                ),
+                f"file:{symbol['path']}",
+                "declares",
+                symbol_id,
+                properties={"kind": symbol["kind"], "line": symbol["line"]},
+            )
+        connection.executemany(
+            "INSERT INTO metadata(key, value) VALUES (?, ?)",
+            (
+                ("property_graph_sha256", property_graph_digest(connection)),
+                ("domain_sha256", domain_digest(connection)),
+            ),
+        )
 
 
 def _metadata(connection: sqlite3.Connection) -> dict[str, str]:
@@ -431,6 +602,9 @@ def load_graph(connection: sqlite3.Connection) -> dict[str, Any]:
             "sha": row["sha"],
             "parents": parents.get(row["sha"], []),
             "committed_at": row["committed_at"],
+            "authored_at": row["authored_at"],
+            "author_name": row["author_name"],
+            "author_email": row["author_email"],
             "subject": row["subject"],
             "touch_count": row["touch_count"],
         }
@@ -489,6 +663,44 @@ def load_graph(connection: sqlite3.Connection) -> dict[str, Any]:
         }
         for row in connection.execute("SELECT * FROM files ORDER BY path")
     ]
+    packages = [
+        {
+            "package_id": row["package_id"],
+            "name": row["name"],
+            "kind": row["kind"],
+            "manifest_path": row["manifest_path"],
+            "origin": row["origin"],
+            "exists_now": None if row["exists_now"] is None else bool(row["exists_now"]),
+        }
+        for row in connection.execute("SELECT * FROM packages ORDER BY position")
+    ]
+    package_dependencies = [
+        {
+            "manifest_path": row["manifest_path"],
+            "package_id": row["package_id"],
+            "dependency_package_id": row["dependency_package_id"],
+            "dependency": row["dependency"],
+            "dep_kind": row["dep_kind"],
+            "requirement": row["requirement"],
+            "valid_from_position": row["valid_from_position"],
+            "valid_from_time": row["valid_from_time"],
+            "valid_to_position": row["valid_to_position"],
+            "valid_to_time": row["valid_to_time"],
+        }
+        for row in connection.execute(
+            """SELECT * FROM package_dependencies
+               ORDER BY manifest_path, dependency, dep_kind, valid_from_position"""
+        )
+    ]
+    code_symbols = [
+        {
+            "path": row["path"],
+            "name": row["name"],
+            "kind": row["kind"],
+            "line": row["line"],
+        }
+        for row in connection.execute("SELECT * FROM code_symbols ORDER BY path, line")
+    ]
     return {
         "schema_version": int(metadata["graph_schema_version"]),
         "identity": metadata["graph_identity"],
@@ -498,13 +710,41 @@ def load_graph(connection: sqlite3.Connection) -> dict[str, Any]:
         "components": components,
         "files": files,
         "commits": commits,
+        "packages": packages,
+        "package_dependencies": package_dependencies,
+        "code_symbols": code_symbols,
     }
+
+
+def property_graph_digest(connection: sqlite3.Connection) -> str:
+    digest = hashlib.sha256()
+    for row in connection.execute(
+        "SELECT entity_id, kind, label, properties_json FROM entities ORDER BY entity_id"
+    ):
+        digest.update(compact(list(row)).encode())
+        digest.update(b"\0")
+    for row in connection.execute(
+        """SELECT relation_id, source_id, predicate, target_id, event_time,
+                  commit_position, valid_to_time, valid_to_position, properties_json
+           FROM relations ORDER BY relation_id"""
+    ):
+        digest.update(compact(list(row)).encode())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def domain_digest(connection: sqlite3.Connection) -> str:
+    return hashlib.sha256(compact(load_graph(connection)).encode()).hexdigest()
 
 
 def database_stats(connection: sqlite3.Connection) -> dict[str, int]:
     return {
         table: int(connection.execute(f"SELECT count(*) FROM {table}").fetchone()[0])
-        for table in ("commits", "components", "files", "file_events", "entities", "relations")
+        for table in (
+            "commits", "components", "files", "file_events",
+            "packages", "package_dependencies", "code_symbols",
+            "entities", "relations",
+        )
     }
 
 
@@ -521,7 +761,10 @@ def validate(connection: sqlite3.Connection, expected: dict[str, Any] | None = N
     if foreign_keys:
         raise DatabaseError(f"SQLite foreign-key check failed: {foreign_keys[0]}")
     metadata = _metadata(connection)
-    required = {"graph_schema_version", "graph_identity", "head", "scope", "counts"}
+    required = {
+        "graph_schema_version", "graph_identity", "head", "scope", "counts",
+        "property_graph_sha256", "domain_sha256",
+    }
     missing = required - set(metadata)
     if missing:
         raise DatabaseError(f"database metadata is missing: {', '.join(sorted(missing))}")
@@ -537,9 +780,33 @@ def validate(connection: sqlite3.Connection, expected: dict[str, Any] | None = N
             connection.execute("SELECT count(*) FROM files WHERE exists_now = 0").fetchone()[0]
         ),
         "file_events": stats["file_events"],
+        "packages": stats["packages"],
+        "package_dependencies": stats["package_dependencies"],
+        "code_symbols": stats["code_symbols"],
     }
     if actual != counts:
         raise DatabaseError(f"database counts differ from metadata: {actual} != {counts}")
+    misordered_parents = int(
+        connection.execute(
+            """SELECT count(*) FROM commit_parents AS cp
+               JOIN commits AS child ON child.sha = cp.commit_sha
+               JOIN commits AS parent ON parent.sha = cp.parent_sha
+               WHERE parent.position >= child.position"""
+        ).fetchone()[0]
+    )
+    if misordered_parents:
+        raise DatabaseError(
+            f"{misordered_parents} commit parents violate topological ancestry order"
+        )
+    inverted_intervals = int(
+        connection.execute(
+            """SELECT count(*) FROM package_dependencies
+               WHERE valid_to_position IS NOT NULL
+                 AND valid_to_position <= valid_from_position"""
+        ).fetchone()[0]
+    )
+    if inverted_intervals:
+        raise DatabaseError(f"{inverted_intervals} dependency validity intervals are inverted")
     mismatched_files = int(
         connection.execute(
             """SELECT count(*) FROM files AS f
@@ -567,6 +834,15 @@ def validate(connection: sqlite3.Connection, expected: dict[str, Any] | None = N
         "lifecycle_event": int(
             connection.execute("SELECT count(*) FROM component_lifecycle_events").fetchone()[0]
         ),
+        "author": int(
+            connection.execute(
+                """SELECT count(DISTINCT CASE WHEN author_email != ''
+                       THEN author_email ELSE author_name END)
+                   FROM commits"""
+            ).fetchone()[0]
+        ),
+        "package": stats["packages"],
+        "symbol": stats["code_symbols"],
     }
     actual_entities = {
         row["kind"]: row["count"]
@@ -574,6 +850,7 @@ def validate(connection: sqlite3.Connection, expected: dict[str, Any] | None = N
             "SELECT kind, count(*) AS count FROM entities GROUP BY kind"
         )
     }
+    expected_entities = {key: value for key, value in expected_entities.items() if value}
     if actual_entities != expected_entities:
         raise DatabaseError(
             f"property-graph entities are inconsistent: {actual_entities} != {expected_entities}"
@@ -588,7 +865,10 @@ def validate(connection: sqlite3.Connection, expected: dict[str, Any] | None = N
             ).fetchone()[0]
         ),
         "paired_with": int(connection.execute("SELECT count(*) FROM component_pairs").fetchone()[0]),
-        "has_lifecycle_event": expected_entities["lifecycle_event"],
+        "has_lifecycle_event": expected_entities.get("lifecycle_event", 0),
+        "authored_by": stats["commits"],
+        "depends_on": stats["package_dependencies"],
+        "declares": stats["code_symbols"],
     }
     actual_relations = {
         row["predicate"]: row["count"]
@@ -596,10 +876,15 @@ def validate(connection: sqlite3.Connection, expected: dict[str, Any] | None = N
             "SELECT predicate, count(*) AS count FROM relations GROUP BY predicate"
         )
     }
+    expected_relations = {key: value for key, value in expected_relations.items() if value}
     if actual_relations != expected_relations:
         raise DatabaseError(
             f"property-graph relations are inconsistent: {actual_relations} != {expected_relations}"
         )
+    if metadata["property_graph_sha256"] != property_graph_digest(connection):
+        raise DatabaseError("property-graph content differs from its recorded digest")
+    if metadata["domain_sha256"] != domain_digest(connection):
+        raise DatabaseError("domain content differs from its recorded digest")
     if expected is not None and load_graph(connection) != expected:
         raise DatabaseError("database round trip differs from the computed graph")
 
@@ -695,10 +980,12 @@ def _parse_timestamp(value: str) -> str:
 
 
 def resolve_boundary(connection: sqlite3.Connection, point: str) -> TemporalBoundary:
+    escaped = point.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     matches = list(
         connection.execute(
-            "SELECT position, sha, committed_at FROM commits WHERE sha LIKE ? ORDER BY position",
-            (point + "%",),
+            r"""SELECT position, sha, committed_at FROM commits
+                WHERE sha LIKE ? ESCAPE '\' ORDER BY position""",
+            (escaped + "%",),
         )
     )
     if len(matches) == 1:
@@ -726,7 +1013,7 @@ def path_states(path: Path, project_path: str, point: str | None = None) -> list
                     "status": "current" if row["exists_now"] else "D",
                     "at": row["last_committed_change_at"],
                     "commit": row["last_commit_sha"],
-                    "component": row["component_id"],
+                    "component_now": row["component_id"],
                 }
                 for row in connection.execute(
                     f"""SELECT f.* FROM files AS f WHERE {clause} ORDER BY f.path""",
@@ -762,7 +1049,7 @@ def path_states(path: Path, project_path: str, point: str | None = None) -> list
                 "status": row["status"],
                 "at": row["occurred_at"],
                 "commit": row["commit_sha"],
-                "component": row["component_id"],
+                "component_now": row["component_id"],
                 "as_of": boundary.label,
             }
             for row in rows
@@ -810,9 +1097,9 @@ def resolve_entity(connection: sqlite3.Connection, value: str) -> str:
     candidates = list(
         connection.execute(
             """SELECT entity_id FROM entities
-               WHERE entity_id IN (?, ?) OR (kind = 'commit' AND label LIKE ?)
+               WHERE entity_id IN (?, ?, ?) OR (kind = 'commit' AND label LIKE ?)
                ORDER BY entity_id""",
-            (f"file:{value}", f"component:{value}", value + "%"),
+            (f"file:{value}", f"component:{value}", f"package:{value}", value + "%"),
         )
     )
     if len(candidates) == 1:
@@ -841,8 +1128,14 @@ def neighbors(
                 if boundary and boundary.commit_position is not None:
                     conditions.append("(r.commit_position IS NULL OR r.commit_position <= ?)")
                     parameters.append(boundary.commit_position)
+                    conditions.append(
+                        "(r.valid_to_position IS NULL OR r.valid_to_position > ?)"
+                    )
+                    parameters.append(boundary.commit_position)
                 elif boundary:
                     conditions.append("(r.event_time IS NULL OR r.event_time <= ?)")
+                    parameters.append(boundary.timestamp)
+                    conditions.append("(r.valid_to_time IS NULL OR r.valid_to_time > ?)")
                     parameters.append(boundary.timestamp)
                 for row in connection.execute(
                     f"""SELECT r.*, source.kind AS source_kind, target.kind AS target_kind
@@ -862,6 +1155,7 @@ def neighbors(
                             "predicate": row["predicate"],
                             "to": adjacent,
                             "event_time": row["event_time"],
+                            "valid_to_time": row["valid_to_time"],
                             "properties": json.loads(row["properties_json"]),
                         }
                     )

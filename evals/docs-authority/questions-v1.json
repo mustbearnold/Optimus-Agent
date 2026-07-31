@@ -76,6 +76,11 @@
       "route": "development.project-knowledge"
     },
     {
+      "id": "temporal-code-graph",
+      "question": "How can an agent query which packages depended on a crate at a past commit, who authored changes, and where a code symbol is declared?",
+      "route": "development.project-knowledge"
+    },
+    {
       "id": "repository-gates",
       "question": "What exact just gate commands prove a repository change is valid before delivery?",
       "route": "repository.gates"

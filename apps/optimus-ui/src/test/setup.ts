@@ -30,3 +30,44 @@ if (!globalThis.requestAnimationFrame) {
     window.setTimeout(() => callback(performance.now()), 0);
   globalThis.cancelAnimationFrame = (id) => window.clearTimeout(id);
 }
+
+// Node >= 26 defines a configurable global `localStorage` accessor that
+// evaluates to undefined unless the process was started with
+// --localstorage-file, and its presence makes the test environment skip
+// installing jsdom's real Storage — so neither `localStorage` nor
+// `window.localStorage` works. An in-memory Storage keeps the suite
+// independent of the host Node version and of that flag, whose unquoted-path
+// workaround once wrote a stray storage file outside the workspace.
+// Guarded: node-environment suites have no window.
+class TestStorage implements Storage {
+  private store = new Map<string, string>();
+  get length() {
+    return this.store.size;
+  }
+  clear() {
+    this.store.clear();
+  }
+  getItem(key: string) {
+    return this.store.has(key) ? this.store.get(key)! : null;
+  }
+  key(index: number) {
+    return [...this.store.keys()][index] ?? null;
+  }
+  removeItem(key: string) {
+    this.store.delete(key);
+  }
+  setItem(key: string, value: string) {
+    this.store.set(key, String(value));
+  }
+}
+
+if (typeof window !== 'undefined') {
+  for (const storage of ['localStorage', 'sessionStorage'] as const) {
+    if (!globalThis[storage]) {
+      Object.defineProperty(globalThis, storage, {
+        value: new TestStorage(),
+        configurable: true,
+      });
+    }
+  }
+}

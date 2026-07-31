@@ -13,13 +13,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import project_knowledge_code
 import project_knowledge_db
 import repository_ontology
 
 
 ROOT = Path(__file__).resolve().parents[1]
 GRAPH = ROOT / ".engineering-memory" / "temporal-project-graph.sqlite3"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class KnowledgeError(RuntimeError):
@@ -54,10 +55,19 @@ def canonical(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 
+def normalize_time(value: str) -> str:
+    """Project an ISO-8601 value onto UTC so lexical order equals instant order."""
+    parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc).isoformat(timespec="seconds")
+
+
 def parse_history(root: Path = ROOT) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, str]]]]:
     raw = git(
-        "log", "--reverse", "--date=iso-strict",
-        "--format=@@@%H%x09%P%x09%cI%x09%s", "--name-status", "--no-renames", "HEAD",
+        "log", "--reverse", "--topo-order", "--date=iso-strict",
+        "--format=@@@%H%x09%P%x09%cI%x09%aI%x09%an%x09%ae%x09%s",
+        "--name-status", "--no-renames", "HEAD",
         root=root,
     )
     commits: list[dict[str, Any]] = []
@@ -65,13 +75,16 @@ def parse_history(root: Path = ROOT) -> tuple[list[dict[str, Any]], dict[str, li
     current: dict[str, Any] | None = None
     for line in raw.splitlines():
         if line.startswith("@@@"):
-            parts = line[3:].split("\t", 3)
-            if len(parts) != 4:
+            parts = line[3:].split("\t", 6)
+            if len(parts) != 7:
                 raise KnowledgeError("Git history record is malformed")
             current = {
                 "id": f"commit:{parts[0]}", "sha": parts[0],
                 "parents": parts[1].split() if parts[1] else [],
-                "committed_at": parts[2], "subject": parts[3], "touch_count": 0,
+                "committed_at": normalize_time(parts[2]),
+                "authored_at": normalize_time(parts[3]),
+                "author_name": parts[4], "author_email": parts[5],
+                "subject": parts[6], "touch_count": 0,
             }
             commits.append(current)
             continue
@@ -165,9 +178,15 @@ def build_graph(root: Path = ROOT) -> dict[str, Any]:
             "review_by": item.get("review_by"), "current_file_count": len(component_files),
             "last_committed_change_at": last,
             "parent": item.get("parent"), "paired_with": item.get("paired_with", []),
-            "lifecycle_events": item.get("lifecycle_events", []),
+            "lifecycle_events": [
+                {**event, "at": normalize_time(event["at"])}
+                for event in item.get("lifecycle_events", [])
+            ],
         })
     head = git("rev-parse", "HEAD", root=root).strip()
+    code = project_knowledge_code.derive(
+        lambda *args: git(*args, root=root), commits, histories, current, root
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "identity": identity,
@@ -175,6 +194,7 @@ def build_graph(root: Path = ROOT) -> dict[str, Any]:
         "scope": {
             "repository_history": "HEAD ancestry",
             "current_files": "tracked plus non-ignored working files",
+            "code_structure": "manifest dependency intervals plus current-tree symbols",
             "local_state": "separate observation snapshots",
         },
         "counts": {
@@ -182,8 +202,14 @@ def build_graph(root: Path = ROOT) -> dict[str, Any]:
             "current_files": sum(1 for item in files if item["exists"]),
             "historical_files": sum(1 for item in files if not item["exists"]),
             "file_events": sum(len(item["events"]) for item in files),
+            "packages": len(code["packages"]),
+            "package_dependencies": len(code["package_dependencies"]),
+            "code_symbols": len(code["code_symbols"]),
         },
         "components": components, "files": files, "commits": commits,
+        "packages": code["packages"],
+        "package_dependencies": code["package_dependencies"],
+        "code_symbols": code["code_symbols"],
     }
 
 
@@ -305,6 +331,54 @@ def workspace_observation(root: Path = ROOT) -> dict[str, Any]:
             "safe_to_delete": True, "activity": "inactive-generated-cache",
             "proof": "Cargo target layout inside a preserved source snapshot",
         })
+
+    # Duplicate Playwright browser payloads under tmp/ are inactive when the
+    # canonical tools/ payload holds every browser build the duplicate holds.
+    canonical_browsers = development / "tools" / "playwright-browsers"
+    duplicate_browsers = development / "tmp" / "ms-playwright"
+    if duplicate_browsers.is_dir() and canonical_browsers.is_dir():
+        duplicated = {entry.name for entry in duplicate_browsers.iterdir()}
+        retained = {entry.name for entry in canonical_browsers.iterdir()}
+        if duplicated and duplicated <= retained:
+            inactive_generated.append({
+                "path": "workspace://Development/tmp/ms-playwright",
+                "component": "development-temporary-evidence",
+                "bytes": disk_usage(duplicate_browsers), "safe_to_delete": True,
+                "activity": "inactive-generated-cache",
+                "proof": "every browser build is retained by Development/tools/playwright-browsers",
+            })
+
+    # Per-run generated Optimus home directories under compiled-workbench are
+    # runtime output, proven by the generated application-state layout.
+    workbench = development / "tmp" / "compiled-workbench"
+    if workbench.is_dir():
+        for path in sorted(workbench.glob("optimus-home-*")):
+            if path.is_dir() and (
+                (path / "optimus.db").is_file() or (path / "settings.json").is_file()
+            ):
+                inactive_generated.append({
+                    "path": f"workspace://Development/tmp/compiled-workbench/{path.name}",
+                    "component": "development-temporary-evidence",
+                    "bytes": disk_usage(path), "safe_to_delete": True,
+                    "activity": "inactive-generated-cache",
+                    "proof": "generated per-run Optimus home layout under the dedicated temporary area",
+                })
+
+    # Dependency trees inside the preserved pre-migration snapshot are
+    # regenerable from their retained package.json manifests.
+    snapshot_root = development / "Archive" / "stale-root-snapshot"
+    if snapshot_root.is_dir():
+        for pattern in ("node_modules", "*/node_modules", "*/*/node_modules"):
+            for path in sorted(snapshot_root.glob(pattern)):
+                if path.is_dir() and (path.parent / "package.json").is_file():
+                    relative = path.relative_to(snapshot_root)
+                    inactive_generated.append({
+                        "path": f"workspace://Development/Archive/stale-root-snapshot/{relative}",
+                        "component": "development-archive",
+                        "bytes": disk_usage(path), "safe_to_delete": True,
+                        "activity": "inactive-generated-cache",
+                        "proof": "regenerable dependency tree beside its retained package.json manifest",
+                    })
 
     registered = {
         str(Path(line.removeprefix("worktree ")).resolve())
@@ -467,7 +541,7 @@ def print_at(path: str, point: str, root: Path = ROOT) -> None:
     for node in nodes:
         print(
             f"{node['path']} exists={str(node['exists']).lower()} status={node['status']} "
-            f"component={node['component']} at={node['at']} commit={node['commit'][:12]}"
+            f"component_now={node['component_now']} at={node['at']} commit={node['commit'][:12]}"
         )
 
 
@@ -510,9 +584,12 @@ def check(root: Path = ROOT) -> dict[str, int]:
     graph = build_graph(root)
     if graph["counts"]["current_files"] != len(candidate_files(root)):
         raise KnowledgeError("temporal graph omitted current repository files")
-    if any(not item["component"] for item in graph["files"]):
+    known = {component["component_id"] for component in graph["components"]}
+    if any(item["component"] not in known for item in graph["files"]):
         raise KnowledgeError("temporal graph contains an unclassified file")
-    if not any(not item["exists"] for item in graph["files"]):
+    _, histories = parse_history(root)
+    recorded = {item["path"] for item in graph["files"]}
+    if set(histories) - recorded:
         raise KnowledgeError("temporal graph failed to preserve retired paths")
     stats = project_knowledge_db.validate_projection(graph)
     return {

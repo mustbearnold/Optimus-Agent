@@ -115,9 +115,9 @@ path-history path:
 path-at path point:
     @python3 scripts/project_knowledge.py at {{quote(path)}} {{quote(point)}}
 
-# Traverse indexed property-graph relations from a file, component, or commit.
-project-neighbors entity depth="1":
-    @python3 scripts/project_knowledge.py neighbors {{quote(entity)}} --depth {{quote(depth)}}
+# Traverse indexed property-graph relations from a file, component, package, or commit.
+project-neighbors entity depth="1" at="":
+    @python3 scripts/project_knowledge.py neighbors {{quote(entity)}} --depth {{quote(depth)}} {{ if at == "" { "" } else { "--at " + quote(at) } }}
 
 # Run one arbitrary read-only SQL query against the generated database.
 project-query query:

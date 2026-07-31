@@ -4590,7 +4590,28 @@
     },
     {
       "authority": "record",
-      "content_sha256": "4b406d963ddac5d05340980f76be220114f013887e9f77e9ce421ce41e55b97b",
+      "content_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
+      "headings": [
+        "ADR-0066: Temporal project knowledge is a code-aware interval graph",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Evaluation evidence",
+        "Reconsider when"
+      ],
+      "id": "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph",
+      "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Upgrades the temporal project database to schema 2 with UTC-projected event time, topologically ordered ancestry, interval-valid package dependency edges, current-tree code symbols, author identity, and exact content digests.",
+      "title": "ADR-0066: Temporal project knowledge is a code-aware interval graph",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "e8bc49f38e8512aa89bba05422c3c1380a81dcea8713e39c68a3027776a5c387",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5930,7 +5951,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "bf7ea65a0b6551d34efaced0c436d00d424c1a58aa0f55dde588dbedb3bc6c53",
+      "content_sha256": "58ea5e706eaaeab41c98859cd4908c9ea26e6c9ced5414899f98fcb934e7634c",
       "headings": [
         "Temporal project knowledge",
         "Operator commands",
@@ -5943,7 +5964,7 @@
       "review_by": "2026-11-01",
       "reviewed_on": "2026-08-01",
       "status": "current",
-      "summary": "Canonical SQLite temporal project-control database for file history, component lifecycle, local workspace observations, graph traversal, and evidence-backed cleanup decisions.",
+      "summary": "Canonical SQLite temporal project-control database for file history, component lifecycle, code structure with dependency validity intervals, local workspace observations, graph traversal, and evidence-backed cleanup decisions.",
       "title": "Temporal project knowledge",
       "type": "reference"
     },
@@ -6841,7 +6862,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "54d3ffb001d8ad3a134e28c17189a0946ba96777c4b9023f1d0c4f07b1ebe0c8",
+  "documents_sha256": "1f95c41c50fb77b4129f1c37c8f81942a163669b3744a3f10f399224ffb09dd5",
   "routes": [
     {
       "id": "docs.navigation",
@@ -7154,14 +7175,22 @@
         "cleanup candidates",
         "orphan worktree",
         "path history",
-        "disk clutter"
+        "disk clutter",
+        "code knowledge graph",
+        "dependency interval",
+        "depended on",
+        "code symbol",
+        "symbol declared",
+        "who authored",
+        "package dependency"
       ],
       "primary": [
         "project-knowledge"
       ],
       "supporting": [
         "repository-components",
-        "decisions-0064-temporal-project-knowledge-is-derived-provenance"
+        "decisions-0064-temporal-project-knowledge-is-derived-provenance",
+        "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph"
       ]
     },
     {

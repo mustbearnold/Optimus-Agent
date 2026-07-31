@@ -65,6 +65,8 @@ ESCALATING_PATHS = (
     "scripts/docs_system.py",
     "scripts/repository_ontology.py",
     "scripts/project_knowledge.py",
+    "scripts/project_knowledge_code.py",
+    "scripts/project_knowledge_db.py",
     "scripts/test_project_knowledge.py",
     "scripts/managed_project_cleanup.py",
     "scripts/test_managed_project_cleanup.py",

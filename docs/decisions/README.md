@@ -92,6 +92,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0063 | Documentation is a governed authority plane | Accepted | Typed planes, exclusive authority routes, durable source-binding review, deterministic catalog/search, local-link validation, and retrieval benchmarks. |
 | 0064 | Temporal project knowledge is derived provenance | Accepted | Git event history, semantic lifecycle, and local observations remain separate; generated graphs are disposable and age alone never authorizes deletion. |
 | 0065 | Temporal project knowledge is an embedded database | Accepted | The disposable projection is a transactional SQLite property graph with indexed temporal queries, bounded traversal, read-only SQL, migrations, and integrity gates. |
+| 0066 | Temporal project knowledge is a code-aware interval graph | Accepted | Schema 2 projects event time onto UTC over a topological walk, adds interval-valid package dependency edges, current-tree symbols, author identity, exact content digests, and three further closed cleanup conventions. |
 
 ## Known documentary debt
 
