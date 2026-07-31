@@ -129,7 +129,7 @@ def turn_rows(home: Path) -> list[dict[str, Any]]:
 
 def wait_for_turn(home: Path, expected: int, session: str, approval_policy: str, timeout: float) -> None:
     deadline = time.time() + timeout
-    decision_sent_for: set[str] = set()
+    decision_sent_for: set[tuple[str, str]] = set()
     while time.time() < deadline:
         rows = turn_rows(home)
         if len(rows) >= expected and rows[expected - 1]["status"] != "running":
@@ -137,12 +137,16 @@ def wait_for_turn(home: Path, expected: int, session: str, approval_policy: str,
             return
         frame = capture(session)
         running_id = next((row["id"] for row in reversed(rows) if row["status"] == "running"), None)
-        if "Approval required" in frame and running_id and running_id not in decision_sent_for:
+        approval_key = (
+            running_id,
+            hashlib.sha256(frame.encode()).hexdigest(),
+        ) if "Approval required" in frame and running_id else None
+        if approval_key and approval_key not in decision_sent_for:
             if approval_policy == "deny":
                 tmux("send-keys", "-t", session, "Down", "Enter")
             else:
                 tmux("send-keys", "-t", session, "Enter")
-            decision_sent_for.add(running_id)
+            decision_sent_for.add(approval_key)
         time.sleep(0.35)
     raise RuntimeError(f"turn {expected} did not settle in {timeout:.0f}s\n{capture(session)[-3000:]}")
 

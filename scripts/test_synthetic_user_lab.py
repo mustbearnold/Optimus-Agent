@@ -53,15 +53,21 @@ def main() -> int:
         "approval_budget_exceeded", "terminal_turn_failures"
     }
 
-    # Only the final answer of the final session is task evidence. Earlier
-    # context must neither rescue failed cross-session recall nor make a
-    # corrected value look stale.
+    # Earlier conversation context must neither rescue failed cross-session
+    # recall nor make a corrected value look stale.
     final_only = copy.deepcopy(observation)
     final_only["sessions"] = [
         {"messages": [{"role": "assistant", "content": "old context 728 cat"}]},
         {"messages": [{"role": "assistant", "content": required}]},
     ]
     assert evaluate(public, final_only)["passed"]
+
+    workspace_only = copy.deepcopy(observation)
+    workspace_only["sessions"] = [{"messages": [{"role": "assistant", "content": "done"}]}]
+    workspace_only["workspace"] = {
+        "files": [{"path": "artifact.txt", "excerpt": required}],
+    }
+    assert evaluate(public, workspace_only)["passed"]
 
     leaked = copy.deepcopy(cohort)
     leaked["scenarios"][0]["sessions"][0][0] = "[SIM-1] do the task"

@@ -69,7 +69,8 @@ real model completed the user's task.
 ## Scoring
 
 The version-1 score is an integer out of 100: turn completion (40), required and
-forbidden task evidence in the final answer of the final session (25), approval
+forbidden task evidence in the final answer and any bounded adaptive-workspace
+observation (25), approval
 friction (15), tool efficiency (10), and terminal integrity (10). A vertical
 bar in a required term denotes acceptable wording alternatives. A pass requires
 at least 80 and no exact finding. The machine-readable findings are the
@@ -77,7 +78,41 @@ regression inputs; the aggregate score is a trend signal, not a substitute for
 investigating the transcript. `--regrade RUN_DIR` deterministically applies a
 new rubric or evaluator to stored observations without another model call.
 
-Future exploration may replace the deterministic simulator or add a model
-judge, but neither may share context with Optimus or overwrite the objective
-SQLite-derived dimensions. Periodic real-human calibration remains necessary
-to detect simulator habits that stop resembling real users.
+## Adaptive local humans
+
+`scripts/adaptive_user_lab.py` adds exploration without replacing the frozen
+regression cohort. A seeded Ollama model owns the private human and chooses each
+next message after seeing Optimus's last answer plus a bounded inspection of its
+isolated workspace. Optimus still runs through the real TUI on the independently
+selected target provider; the local model is never substituted for Optimus.
+
+The adaptive seam is deliberately domain-neutral. Its scenario classes include
+quick tasks, multi-turn revisions, research, recovery, longitudinal users, and
+real project journeys. These are sampling dimensions, not a product roadmap:
+the harness can add future classes without changing the simulator/Optimus/
+evaluator boundary.
+
+```text
+python3 scripts/adaptive_user_lab.py \
+  --scenario-class project_journey \
+  --simulator-model qwen3:8b \
+  --auth-source ~/.local/share/optimus/auth.json
+```
+
+Private profiles and simulator state remain outside the text sent to Optimus.
+The public manifest stores only the profile hash; the ignored evidence tree
+keeps the private plan for replay diagnosis. Ollama call timing/token counts,
+native frames, target provider/model bindings, workspace facts, transcript,
+and SQLite outcomes are recorded separately.
+
+Scenario-class semantics are enforced structurally. Quick tasks may finish in
+one turn, while revision, recovery, longitudinal, and project journeys require
+the simulator to produce a user-role follow-up until their declared minimum.
+The adapter rejects common role inversions (for example, a simulated user
+claiming it created Optimus's files) and retries locally without spending a
+target-model turn.
+
+A local model is never allowed to grade its own interaction. Periodic real-human
+and independent frontier-model calibration remains necessary to detect simulator
+habits that stop resembling real users, and neither may overwrite the objective
+SQLite-derived dimensions.

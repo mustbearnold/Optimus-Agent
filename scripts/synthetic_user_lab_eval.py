@@ -9,6 +9,7 @@ its own conversation successful.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
@@ -27,9 +28,16 @@ def evaluate(public: dict[str, Any], observation: dict[str, Any]) -> dict[str, A
         if message["role"] == "assistant"
     ] if observation["sessions"] else []
     final_answer = final_messages[-1].casefold() if final_messages else ""
+    workspace_evidence = json.dumps(
+        observation.get("workspace", {}), sort_keys=True
+    ).casefold()
 
     def matches(term: str) -> bool:
-        return any(option.strip().casefold() in final_answer for option in term.split("|"))
+        return any(
+            option.strip().casefold() in final_answer
+            or option.strip().casefold() in workspace_evidence
+            for option in term.split("|")
+        )
 
     missing = [term for term in rubric["required_terms"] if not matches(term)]
     forbidden = [term for term in rubric["forbidden_terms"] if matches(term)]
