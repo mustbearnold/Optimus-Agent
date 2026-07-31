@@ -46,7 +46,7 @@
         "We got a $2,400 grant. Fridge repair is 615.80, produce 740, fuel vouchers 360, labels 84.50 and we promised to keep 15% unspent. Work out whether that fits and put the budget in a CSV for the committee.",
         "I forgot delivery crates, another $190. Update the numbers and be plain about whether we're over the spendable amount."
       ]],
-      "rubric": {"max_approvals": 2, "max_tool_calls": 4, "required_terms": ["190", "over|within|fits"], "forbidden_terms": []}
+      "rubric": {"max_approvals": 2, "max_tool_calls": 4, "required_terms": ["1,990.30|1990.30", "over|within|fits"], "forbidden_terms": []}
     },
     {
       "id": "portfolio-copy-dev",
