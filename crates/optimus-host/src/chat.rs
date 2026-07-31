@@ -3,10 +3,10 @@
 use std::path::PathBuf;
 
 use optimus_kernel::{
-    CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig, CodexOAuthModel,
-    CompletionResponse, ExecutionManifest, ExecutionStore, Kernel, KernelConfig,
-    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
-    StreamControl, StreamEvent, ToolCall,
+    drain_one, CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig,
+    CodexOAuthModel, CompletionResponse, DrainResult, ExecutionManifest, ExecutionStore, Kernel,
+    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface,
+    ScriptedModel, StreamControl, StreamEvent, ToolCall,
 };
 use serde_json::json;
 
@@ -377,7 +377,7 @@ pub fn chat_turn_cancellable(
     let provider = params
         .get("provider")
         .and_then(|v| v.as_str())
-        .unwrap_or("codex")
+        .unwrap_or("auto")
         .to_string();
     let session = params
         .get("session")
@@ -417,16 +417,9 @@ pub fn chat_turn_cancellable(
     }
     .map_err(|e| e.to_string())?;
 
-    let routed_model = match ProviderId::parse(&provider) {
-        Some(ProviderId::Codex) => model_override
-            .as_deref()
-            .map(optimus_kernel::sanitize_codex_oauth_model),
-        Some(ProviderId::OpenAiCompat) => model_override.clone(),
-        _ => None,
-    };
     let route = optimus_kernel::resolve_route(
         home,
-        &RouteRequest::standard(RouteSurface::Desktop, &provider, routed_model),
+        &RouteRequest::standard(RouteSurface::Desktop, &provider, model_override.clone()),
     )
     .map_err(|error| error.to_string())?;
     let used_provider = route.provider.as_str().to_string();
@@ -477,9 +470,12 @@ pub fn chat_turn_cancellable(
                 .map_err(|e| e.to_string())?
         }
         ProviderId::OpenAiCompat => {
-            let mut cfg = OpenAiCompatConfig::from_env().map_err(|e| e.to_string())?;
-            if let Some(m) = model_override.clone() {
-                cfg.model = m;
+            let mut cfg = apply_resolved_openai_model(
+                OpenAiCompatConfig::from_env().map_err(|e| e.to_string())?,
+                route.model.as_str(),
+            );
+            if let Some(base_url) = params.get("base_url").and_then(|value| value.as_str()) {
+                cfg.base_url = base_url.into();
             }
             let mut provider = OpenAiCompatModel::new(cfg);
             kernel
@@ -517,7 +513,63 @@ pub fn chat_turn_cancellable(
         "tool_trace": result.tool_trace,
         "timings": result.timings,
         "provider": used_provider,
+        "model": route.model.as_str(),
     }))
+}
+
+/// Drain one gateway message through the host-owned kernel and canonical route.
+pub fn drain_gateway_once(home: &PathBuf) -> Result<Option<DrainResult>, String> {
+    let home_buf = home.clone();
+    drain_one(home, |message| {
+        let session = message
+            .session_id
+            .as_deref()
+            .map(uuid::Uuid::parse_str)
+            .transpose()
+            .map_err(|error| error.to_string())?;
+        let mut kernel = Kernel::open_session(&home_buf, KernelConfig::default(), session)
+            .map_err(|error| error.to_string())?;
+        let route = optimus_kernel::resolve_route(
+            &home_buf,
+            &RouteRequest::standard(RouteSurface::Gateway, &message.provider, None),
+        )
+        .map_err(|error| error.to_string())?;
+        let result = match route.provider {
+            ProviderId::Offline => {
+                let mut model = ScriptedModel::new(vec![CompletionResponse {
+                    text: Some(format!("[gateway:{}] {}", message.channel, message.text)),
+                    tool_calls: vec![],
+                }]);
+                model.stream_chunks = false;
+                kernel.turn(&mut model, &message.text)
+            }
+            ProviderId::Codex => {
+                let mut config = CodexOAuthConfig::from_env(&home_buf);
+                config.model = route.model.as_str().into();
+                let mut model = CodexOAuthModel::new(config).map_err(|error| error.to_string())?;
+                kernel.turn(&mut model, &message.text)
+            }
+            ProviderId::OpenAiCompat => {
+                let config = apply_resolved_openai_model(
+                    OpenAiCompatConfig::from_env().map_err(|error| error.to_string())?,
+                    route.model.as_str(),
+                );
+                let mut model = OpenAiCompatModel::new(config);
+                kernel.turn(&mut model, &message.text)
+            }
+        }
+        .map_err(|error| error.to_string())?;
+        Ok((result.assistant_text, Some(kernel.session_id().to_string())))
+    })
+    .map_err(|error| error.to_string())
+}
+
+fn apply_resolved_openai_model(
+    mut config: OpenAiCompatConfig,
+    resolved_model: &str,
+) -> OpenAiCompatConfig {
+    config.model = resolved_model.into();
+    config
 }
 
 pub fn stream_event_to_json(ev: &StreamEvent) -> serde_json::Value {
@@ -544,6 +596,31 @@ pub fn stream_event_to_json(ev: &StreamEvent) -> serde_json::Value {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    struct RemovedEnvVar {
+        key: &'static str,
+        original: Option<std::ffi::OsString>,
+    }
+
+    impl RemovedEnvVar {
+        fn new(key: &'static str) -> Self {
+            let original = std::env::var_os(key);
+            std::env::remove_var(key);
+            Self { key, original }
+        }
+    }
+
+    impl Drop for RemovedEnvVar {
+        fn drop(&mut self) {
+            match &self.original {
+                Some(value) => std::env::set_var(self.key, value),
+                None => std::env::remove_var(self.key),
+            }
+        }
+    }
 
     #[test]
     fn access_defaults_to_review_changes_and_smart_deny() {
@@ -678,6 +755,82 @@ mod tests {
         optional_project_id, parse_approval_decision, required_call_id, required_effect_sha256,
         required_node_index, required_uuid,
     };
+
+    #[test]
+    fn omitted_provider_uses_auto_and_fresh_home_stays_offline() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        let _key = RemovedEnvVar::new("OPTIMUS_API_KEY");
+        let home = tempfile::tempdir().unwrap();
+
+        let value = super::chat_turn(
+            &home.path().to_path_buf(),
+            json!({"message": "deterministic default"}),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(value["provider"], "offline");
+        assert_eq!(
+            value["assistant_text"],
+            "offline echo: deterministic default"
+        );
+    }
+
+    #[test]
+    fn explicit_offline_provider_behavior_is_unchanged() {
+        let home = tempfile::tempdir().unwrap();
+        let value = super::chat_turn(
+            &home.path().to_path_buf(),
+            json!({"message": "explicit", "provider": "offline"}),
+            None,
+        )
+        .unwrap();
+        assert_eq!(value["provider"], "offline");
+        assert_eq!(value["assistant_text"], "offline echo: explicit");
+    }
+
+    #[test]
+    fn explicit_model_reaches_the_router_without_alias_sanitizing() {
+        let home = tempfile::tempdir().unwrap();
+        let error = super::chat_turn(
+            &home.path().to_path_buf(),
+            json!({
+                "message": "must fail before a model call",
+                "provider": "codex",
+                // The adapter accepts this convenience alias, but it is not a
+                // canonical model identity owned by the routing catalog.
+                "model": "sol"
+            }),
+            None,
+        )
+        .unwrap_err();
+
+        assert!(
+            error.contains("model_not_owned_by_provider"),
+            "the canonical router must reject the caller's exact value: {error}"
+        );
+        assert_eq!(
+            optimus_kernel::route_decision_count(home.path()).unwrap(),
+            0,
+            "a rejected explicit model must not become a defaulted route"
+        );
+    }
+
+    #[test]
+    fn gateway_openai_adapter_uses_the_resolved_route_model() {
+        let config = optimus_kernel::OpenAiCompatConfig {
+            base_url: "https://example.invalid/v1".into(),
+            api_key: "test-key".into(),
+            model: "ambient-model".into(),
+            organization: None,
+            timeout_secs: 1,
+        };
+
+        assert_eq!(
+            super::apply_resolved_openai_model(config, "routed-model").model,
+            "routed-model"
+        );
+    }
 
     /// Park a real turn on a held effect and hand back its exact binding.
     ///

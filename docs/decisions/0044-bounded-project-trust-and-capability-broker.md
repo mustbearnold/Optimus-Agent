@@ -131,9 +131,10 @@ fresh human click when a durable project trust grant already covers it.
 - Positive: the approval prompt can now say *which* act it is approving —
   "install a binary on your system" reads differently from "run a command in
   this project", and before R30.6 both rendered the same.
-- Residual: owned-localhost browser leases (R30.7) and product release defaults
-  (R30.8) remain program P30 follow-ons. Package-manager structured
-  capabilities (R30.6) and the durable trust grant store (R30.5) have landed.
+- Residual: owned-localhost browser leases (R30.7) remain a program P30
+  follow-on. Package-manager structured capabilities (R30.6), the durable
+  trust grant store (R30.5), and product Auto routing defaults (R30.8) have
+  landed.
 - Decision 7 reached the surface on 2026-07-29 (#118). *Both* shipped composers
   offer the five profiles — the React workbench with Standard first, Full
   project under Advanced and Unrestricted host under Expert, and the Wry
@@ -227,3 +228,23 @@ so classification is defense in depth rather than proof of containment. The
 universal Standard default remains gated on code-enforced arbitrary-process
 network and scoped credential authority. Direct project builds, tests, and
 transparent script argv remain automatic.
+
+## Addendum — Auto is a selection, not a provider identity (2026-07-31)
+
+R30.8 implements decision 7 without inventing an `auto` provider or model.
+`Auto` is the release-surface selection. At the start of each turn the canonical
+router resolves it once to a connected concrete provider in this order: Codex
+OAuth, configured OpenAI-compatible, then the deterministic offline provider.
+An Auto model is absence of an override, so the selected provider supplies its
+canonical default. Every durable route decision and execution record therefore
+continues to name the concrete provider and model actually used.
+
+Auto selection is readiness-based routing, not cross-provider retry. A provider
+failure after selection does not silently send the prompt to another provider.
+Codex access that is already expiring and cannot refresh is not ready. New
+explicit provider and model choices remain exact and sticky; the one legacy
+migration converts pre-Auto, unchosen Offline preference residue to Auto. A fresh
+credential-less or fixture home resolves Auto to offline, which keeps first-run
+chat and offline verification deterministic; adding a credential makes a later
+Auto turn select the corresponding live provider without rewriting the user's
+durable selection.

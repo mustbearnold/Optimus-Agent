@@ -341,7 +341,7 @@ export type StreamEvent =
 export type ChatRequest = {
   session: string;
   message: string;
-  provider: 'offline' | 'codex' | 'openai_compat';
+  provider: 'auto' | 'offline' | 'codex' | 'open-ai-compat';
   model?: string;
   thinking_level?: string;
   fast?: boolean;

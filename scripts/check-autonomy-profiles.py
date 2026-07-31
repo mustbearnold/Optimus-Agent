@@ -31,9 +31,9 @@ Rules (each is a way #118 could come back):
     already outside one author's.
   - The two Rust parse tables agree, so the profile a surface gets cannot
     depend on which crate read the string.
-  - Every stored default is `standard`, in both composers, and neither restores
-    a stored value to break-glass: ADR-0044 §5 keeps unrestricted host out of
-    anything durable.
+  - Every stored default is `standard`, in every React preset, and neither
+    composer restores a stored value to break-glass: ADR-0044 §5 keeps
+    unrestricted host out of anything durable.
   - The Wry composer renders Full project under Advanced and Unrestricted host
     under a warning-treated Expert heading; its legacy `smart_deny` value
     restores to Review changes, while legacy `full` restores to Standard.
@@ -690,7 +690,7 @@ def composer_defaults(source: str) -> list[tuple[str, str]]:
     literals = re.findall(
         r"export const (\w+): ComposerSettings = \{(.*?)\n\};", source, re.S
     )
-    expected = {"offlineComposer", "codexComposer"}
+    expected = {"autoComposer", "offlineComposer", "codexComposer"}
     found = {name for name, _ in literals}
     if found != expected:
         fail(

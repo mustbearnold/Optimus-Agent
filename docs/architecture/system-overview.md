@@ -115,8 +115,9 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 
 ## Control plane and orchestration
 
-**Confirmed current behaviour:** the CLI and desktop directly select a model
-provider, create or resume a `Kernel`, and call `Kernel::turn` or
+**Confirmed current behaviour:** the CLI and desktop select Auto or an explicit
+model provider, resolve Auto once to a concrete provider/model, create or resume
+a `Kernel`, and call `Kernel::turn` or
 `turn_with_sink` or the cancellable variant. Desktop IPC methods are frozen in a single method/domain
 registry and dispatched to small domain modules.
 
@@ -375,9 +376,11 @@ provider/model ownership, required capabilities, local-only privacy, cost
 budget, and explicitly bounded fallback before optional fresh telemetry
 filtering/ranking, then persists route decisions. Telemetry is tied to exact
 route provider/model/trace identity and cannot authorize a statically denied
-candidate. CLI,
-desktop, cron, and gateway use the same resolver. Provider-specific wire parsing
-remains in the adapters.
+candidate. Auto is a request selector that chooses connected Codex, configured
+OpenAI-compatible, or offline in fixed order; it is never persisted as the
+provider/model that executed. Expiring Codex access without refresh capability
+is not connected for this selection. CLI, desktop, cron, and gateway use the
+same resolver. Provider-specific wire parsing remains in the adapters.
 
 **Confirmed current behaviour:** Codex retries once after an HTTP failure with
 system plus last-user messages and no reasoning effort. This provider-local

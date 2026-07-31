@@ -39,7 +39,7 @@ describe('OptimusApp fixture contract', () => {
     }
   });
 
-  it('sends offline chat without a project assignment on first run', async () => {
+  it('sends Auto chat and the fixture resolves it offline on first run', async () => {
     const user = userEvent.setup();
     render(<OptimusApp />);
     const composer = await screen.findByLabelText('Message Optimus');
@@ -47,7 +47,11 @@ describe('OptimusApp fixture contract', () => {
     await user.click(screen.getByRole('button', { name: 'Send message' }));
     expect(screen.queryByRole('dialog', { name: 'Project sources' })).not.toBeInTheDocument();
     expect(
-      await screen.findByText(/offline echo: hello offline|hello offline/i, {}, { timeout: 5000 })
+      await screen.findByText(
+        /working from the offline fixture transport/i,
+        {},
+        { timeout: 5000 }
+      )
     ).toBeInTheDocument();
   });
 

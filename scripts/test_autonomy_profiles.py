@@ -119,6 +119,9 @@ export const offlineComposer: ComposerSettings = {{
 export const codexComposer: ComposerSettings = {{
   access: '{second}',
 }};
+export const autoComposer: ComposerSettings = {{
+  access: '{third}',
+}};
 export function loadComposer(parsed: Record<string, unknown>) {{
   return {{ settings: {{ access: restoredAccess(parsed.access) }} }};
 }}
@@ -266,7 +269,7 @@ class AutonomyGateTests(unittest.TestCase):
         graph_break_glass: str | None = None,
         menu: str = FIVE_ITEMS,
         tiers: str = DEFAULT_TIERS,
-        store: tuple[str, str] = ("standard", "standard"),
+        store: tuple[str, str, str] = ("standard", "standard", "standard"),
         alias: str = "full_project",
         store_extra_alias: str = "",
         desktop: str = FIVE_DESKTOP_OPTIONS,
@@ -293,6 +296,7 @@ class AutonomyGateTests(unittest.TestCase):
             STORE_TEMPLATE.format(
                 first=store[0],
                 second=store[1],
+                third=store[2],
                 alias=alias,
                 extra_alias=store_extra_alias,
                 prototype=prototype[0],
@@ -370,8 +374,12 @@ class AutonomyGateTests(unittest.TestCase):
         self.assert_fails("'ask' meaning two things across crates must fail")
 
     def test_a_default_other_than_standard_fails(self) -> None:
-        self.write(store=("standard", "unrestricted_host"))
+        self.write(store=("standard", "unrestricted_host", "standard"))
         self.assert_fails("a stored default of unrestricted_host must fail")
+
+    def test_the_auto_default_cannot_be_break_glass(self) -> None:
+        self.write(store=("standard", "standard", "unrestricted_host"))
+        self.assert_fails("the Auto preset must default to Standard")
 
     # Everything below reproduces an attack an independent reviewer landed on
     # the first version of this gate. Each one passed it; each one now fails.

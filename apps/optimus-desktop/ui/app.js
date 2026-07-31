@@ -2058,14 +2058,13 @@
     startTurnClock();
     try {
       const provider = $('provider').value;
-      const model = $('model').value;
+      const model = $('model').value.trim();
       const thinkingOn = $('thinkingToggle').getAttribute('aria-pressed') === 'true';
       const fastOn = $('fastToggle').getAttribute('aria-pressed') === 'true';
       const thinkingLevel = thinkingOn ? $('thinkingLevel').value : 'off';
       const access = $('access').value;
       const opts = {
         provider,
-        model,
         session: state.sessionId,
         thinking: thinkingOn,
         thinking_level: thinkingLevel,
@@ -2073,6 +2072,10 @@
         access,
         demo_memory: provider === 'offline' && /editor|prefer|memory/i.test(text),
       };
+      // Empty is the durable Model Auto selection. Omitting the field lets
+      // core apply the concrete provider's default; "auto" is never sent as
+      // a fake model id.
+      if (model) opts.model = model;
       const onEvent = (ev) => {
         if (!ev) return;
         if (ev.type === 'delta' && typeof ev.text === 'string') {
@@ -2187,7 +2190,7 @@
       state.messages[asstIdx].streaming = false;
       state.messages[asstIdx].meta = `
         <span class="pill">provider <em>${esc(res.provider || provider)}</em></span>
-        <span class="pill amber">model <em>${esc(model)}</em></span>
+        <span class="pill amber">model <em>${esc(res.model || model || 'auto')}</em></span>
         <span class="pill">session <em>${esc(String(res.session_id || '').slice(0,8))}</em></span>
         <span class="pill">steps <em>${esc(res.steps)}</em></span>
         <span class="pill">schema <em>${esc(res.schema_tokens_final)}</em></span>
@@ -2251,9 +2254,8 @@
       }
     }, true);
   }
-  // True only after the human picks a provider by hand. Any composer click
-  // persists the whole settings object, so a stored provider:'offline' does
-  // not by itself mean offline was chosen — it may be pre-sign-in residue.
+  // Kept for migration compatibility: builds before Auto stored
+  // providerChosen:false + Offline to mean "no provider chosen yet".
   let composerProviderChosen = false;
   // The ADR-0044 profile a stored access value means today, mirroring
   // apps/optimus-ui/src/state/composerStore.ts. Two words are missing on
@@ -2308,7 +2310,7 @@
     if ($('accessVal')) $('accessVal').textContent = selectLabel($('access'));
     if ($('stModel')) {
       const em = $('stModel').querySelector('em');
-      if (em) em.textContent = $('model').value;
+      if (em) em.textContent = $('model').value || 'auto';
     }
   }
   let _cddOpen = null; // data-cdd kind currently open
@@ -2351,7 +2353,10 @@
       ).join('');
     }
     if (kind === 'model') {
-      return Array.from($('model').options).map((o) =>
+      const provider = $('provider').value;
+      const options = Array.from($('model').options)
+        .filter((o) => modelBelongsToProvider(provider, o.value));
+      return options.map((o) =>
         `<button type="button" role="option" class="${o.value === $('model').value ? 'active' : ''}" data-kind="model" data-v="${esc(o.value)}">${esc(o.textContent)}</button>`
       ).join('');
     }
@@ -2402,6 +2407,13 @@
     }
     return '';
   }
+  function modelBelongsToProvider(provider, model) {
+    if (model === '') return true;
+    if (provider === 'auto') return false;
+    if (provider === 'offline') return model === 'offline-scripted';
+    if (provider === 'open-ai-compat') return model === 'gpt-4.1' || model === 'gpt-4o';
+    return model.startsWith('gpt-5.');
+  }
   function bindPortalActions() {
     const portal = $('cddPortal');
     if (!portal) return;
@@ -2411,10 +2423,12 @@
         e.stopPropagation();
         const k = btn.getAttribute('data-kind');
         if (k === 'provider') {
+          const previous = $('provider').value;
           $('provider').value = btn.getAttribute('data-v');
           composerProviderChosen = true;
-          if ($('provider').value === 'offline') $('model').value = 'offline-echo';
-          else if ($('model').value === 'offline-echo') $('model').value = 'gpt-5.6-terra';
+          // Provider defaults differ; a provider change returns to model Auto
+          // instead of leaking an incompatible explicit model across routes.
+          if ($('provider').value !== previous) $('model').value = '';
           persistComposer(); syncComposerButtons(); closeAllCdd();
           return;
         }
@@ -2527,11 +2541,24 @@
       if (!raw) return;
       const c = JSON.parse(raw);
       composerProviderChosen = c.providerChosen === true;
-      if (c.provider) $('provider').value = c.provider;
-      if (c.model) {
+      const legacyOfflineResidue = !composerProviderChosen && c.provider === 'offline';
+      if (legacyOfflineResidue) {
+        $('provider').value = 'auto';
+        $('model').value = '';
+      } else if (c.provider) {
+        const provider = $('provider');
+        const storedProvider = c.provider === 'openai_compat' ? 'open-ai-compat' : c.provider;
+        const known = Array.from(provider.options).some(o => o.value === storedProvider);
+        if (known) provider.value = storedProvider;
+      }
+      if ($('provider').value === 'auto') {
+        $('model').value = '';
+      } else if (!legacyOfflineResidue && c.model) {
         const m = $('model');
-        const ok = Array.from(m.options).some(o => o.value === c.model);
-        m.value = ok ? c.model : (c.provider === 'offline' ? 'offline-echo' : 'gpt-5.6-terra');
+        const ok = Array.from(m.options).some(o =>
+          o.value === c.model && modelBelongsToProvider($('provider').value, o.value)
+        );
+        m.value = ok ? c.model : '';
       }
       if (c.thinkingLevel) {
         const t = $('thinkingLevel');
@@ -2542,7 +2569,6 @@
       if (typeof c.fast === 'boolean') $('fastToggle').setAttribute('aria-pressed', c.fast ? 'true' : 'false');
       $('access').value = restoredAccess(c.access);
     } catch {}
-    if ($('provider').value === 'offline') $('model').value = 'offline-echo';
     // keep thinking toggle aligned with level
     if ($('thinkingLevel').value === 'off') $('thinkingToggle').setAttribute('aria-pressed', 'false');
     else if ($('thinkingToggle').getAttribute('aria-pressed') !== 'true') {
@@ -3486,7 +3512,7 @@
     setEm('stTokens', doc.core_schema_tokens != null ? String(doc.core_schema_tokens) : '—');
     if ($('stModel') && $('model')) {
       const em = $('stModel').querySelector('em');
-      if (em) em.textContent = $('model').value || '—';
+      if (em) em.textContent = $('model').value || 'auto';
     }
     if ($('stHome')) {
       const home = doc.home || ($('homeMeta') && $('homeMeta').textContent) || '';
@@ -3572,27 +3598,6 @@
     else {
       try { setAuthBanner(await api('authStatus')); } catch {}
     }
-    // Prefer offline when Codex is missing so first-run chat always works —
-    // and symmetrically, prefer Codex when it IS connected. Without the second
-    // arm, provider:'offline' persisted before sign-in outlives the sign-in
-    // and the app answers with the echo model forever (#82). An explicit
-    // human provider choice always wins over both arms.
-    try {
-      const auth = d.auth || {};
-      const provider = $('provider');
-      if (!auth.present) {
-        if (provider) {
-          provider.value = 'offline';
-          const model = $('model');
-          if (model) model.value = 'offline-echo';
-        }
-      } else if (provider && provider.value === 'offline' && !composerProviderChosen) {
-        provider.value = 'codex';
-        const model = $('model');
-        if (model && model.value === 'offline-echo') model.value = 'gpt-5.6-terra';
-      }
-      syncComposerButtons();
-    } catch {}
     if (d.sessions) {
       state.sessions = Array.isArray(d.sessions) ? d.sessions : [];
       renderSessions();

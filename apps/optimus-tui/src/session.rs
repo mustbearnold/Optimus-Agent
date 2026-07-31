@@ -442,6 +442,13 @@ impl TuiSession {
         };
         match picker.kind {
             crate::picker::PickerKind::Provider => {
+                if item.id == "auto" && self.model.is_some() {
+                    self.push(
+                        Role::Error,
+                        "choose model Auto before returning provider selection to Auto".into(),
+                    );
+                    return;
+                }
                 let changed = item.id != self.provider;
                 if changed {
                     self.provider = item.id.clone();
@@ -509,11 +516,10 @@ impl TuiSession {
     /// Stamp who should answer, and how hard, onto an outgoing request.
     ///
     /// Shared by a fresh turn and by the continuation of an approved one. The
-    /// host defaults an absent provider to `codex`, so a resumed turn that
-    /// omitted this would silently answer on a different provider than the turn
-    /// it is resuming — and, for a user on `offline`, on one they never
-    /// configured. Omitted keys mean "no override", which is not the same as an
-    /// empty string and must not be sent as one.
+    /// A resumed explicit-provider turn must keep that provider rather than
+    /// silently falling back to automatic selection. Omitted model and thinking
+    /// keys mean "no override", which is not the same as an empty string and
+    /// must not be sent as one.
     fn apply_model_choice(&self, params: &mut serde_json::Value) {
         params["provider"] = json!(self.provider);
         if let Some(model) = &self.model {
@@ -824,20 +830,21 @@ mod tests {
     }
 
     #[test]
-    fn offline_is_the_default_so_a_first_run_reaches_a_turn() {
+    fn auto_is_the_default_for_a_first_run() {
         let (_dir, session) = session();
-        assert_eq!(session.provider, "offline");
-        assert_eq!(session.status_line(), "offline · new session · ready");
+        assert_eq!(session.provider, "auto");
+        assert_eq!(session.status_line(), "auto · new session · ready");
     }
 
     #[test]
     fn a_remembered_model_and_effort_are_visible_before_the_turn_spends_them() {
         let (_dir, mut session) = session();
+        session.provider = "codex".into();
         session.model = Some("gpt-5-codex".into());
         session.thinking = Some("high".into());
         assert_eq!(
             session.status_line(),
-            "offline/gpt-5-codex · think:high · new session · ready"
+            "codex/gpt-5-codex · think:high · new session · ready"
         );
     }
 
@@ -869,7 +876,7 @@ mod tests {
         assert_eq!(session.messages[1].role, Role::Assistant);
         assert_eq!(
             session.messages[1].text, "offline echo: hello from the tui",
-            "the turn came back through optimus_host"
+            "fresh Auto routing resolved to the deterministic offline provider"
         );
     }
 
@@ -932,7 +939,7 @@ mod tests {
         let params = session.turn_params("hi");
         assert!(params.get("model").is_none());
         assert!(params.get("thinking_level").is_none());
-        assert_eq!(params["provider"], serde_json::json!("offline"));
+        assert_eq!(params["provider"], serde_json::json!("auto"));
     }
 
     #[test]
@@ -945,9 +952,8 @@ mod tests {
         assert_eq!(params["thinking_level"], serde_json::json!("high"));
     }
 
-    /// The host defaults an absent provider to `codex`, so omitting it here
-    /// answers the continuation on a provider the user never selected — and for
-    /// an offline session, on one that needs a credential.
+    /// Resumption keeps an explicit provider/model choice instead of asking the
+    /// automatic selector to make a different decision mid-turn.
     #[test]
     fn a_resumed_turn_answers_on_the_provider_the_paused_one_used() {
         let (_dir, mut session) = session();

@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  autoComposer,
   codexComposer,
   loadComposer,
+  modelOverride,
   offlineComposer,
+  PROVIDER_MODELS,
   restoredAccess,
   saveComposer,
-  shouldPreferCodex,
 } from './composerStore';
 
-describe('composer persistence and the codex-preference rule (#82)', () => {
+describe('composer Auto persistence and resolution', () => {
   beforeEach(() => localStorage.clear());
 
   it('round-trips a saved choice', () => {
@@ -24,7 +26,7 @@ describe('composer persistence and the codex-preference rule (#82)', () => {
     expect(loadComposer()).toBeNull();
   });
 
-  it('rejects an unknown provider or missing model', () => {
+  it('rejects an unknown provider or non-string model', () => {
     localStorage.setItem(
       'optimus.react.composer',
       JSON.stringify({ provider: 'skynet', model: 'x' })
@@ -32,27 +34,100 @@ describe('composer persistence and the codex-preference rule (#82)', () => {
     expect(loadComposer()).toBeNull();
     localStorage.setItem(
       'optimus.react.composer',
-      JSON.stringify({ provider: 'codex', model: '' })
+      JSON.stringify({ provider: 'codex', model: null })
     );
     expect(loadComposer()).toBeNull();
   });
 
-  it('prefers codex on a fresh profile', () => {
-    expect(shouldPreferCodex()).toBe(true);
+  it('round-trips Auto without inventing a model id', () => {
+    saveComposer(autoComposer, false);
+    expect(loadComposer()).toEqual({
+      settings: autoComposer,
+      providerChosen: false,
+    });
+    expect(modelOverride(loadComposer()!.settings.model)).toBeUndefined();
   });
 
-  it('prefers codex over offline residue nobody chose', () => {
+  it('drops an invalid persisted model override from Auto', () => {
+    localStorage.setItem(
+      'optimus.react.composer',
+      JSON.stringify({ ...autoComposer, model: 'gpt-5.6-sol', providerChosen: true })
+    );
+    expect(loadComposer()?.settings).toEqual(autoComposer);
+  });
+
+  it('migrates offline residue nobody chose to Auto', () => {
     // Any settings click persists the whole object; provider:'offline' saved
-    // before sign-in must not pin the app to the echo model afterwards.
+    // before sign-in represented no durable provider intent.
     saveComposer(offlineComposer, false);
-    expect(shouldPreferCodex()).toBe(true);
+    expect(loadComposer()).toEqual({
+      settings: autoComposer,
+      providerChosen: false,
+    });
   });
 
-  it('never overrides an explicit human provider choice', () => {
+  it('migrates the legacy OpenAI module spelling to the canonical wire id', () => {
+    localStorage.setItem(
+      'optimus.react.composer',
+      JSON.stringify({
+        provider: 'openai_compat',
+        model: 'gpt-4.1',
+        thinking: 'medium',
+        access: 'standard',
+        fast: false,
+        providerChosen: true,
+      })
+    );
+    expect(loadComposer()).toEqual({
+      settings: {
+        provider: 'open-ai-compat',
+        model: 'gpt-4.1',
+        thinking: 'medium',
+        access: 'standard',
+        fast: false,
+      },
+      providerChosen: true,
+    });
+  });
+
+  it('drops a persisted model that is not owned by its provider', () => {
+    localStorage.setItem(
+      'optimus.react.composer',
+      JSON.stringify({
+        provider: 'openai_compat',
+        model: 'gpt-5.6-sol',
+        providerChosen: true,
+      })
+    );
+    expect(loadComposer()?.settings).toEqual({
+      provider: 'open-ai-compat',
+      model: '',
+      thinking: 'high',
+      access: 'standard',
+      fast: false,
+    });
+  });
+
+  it('keeps explicit human provider choices sticky', () => {
     saveComposer(offlineComposer, true);
-    expect(shouldPreferCodex()).toBe(false);
+    expect(loadComposer()?.settings).toEqual(offlineComposer);
     saveComposer(codexComposer, true);
-    expect(shouldPreferCodex()).toBe(false);
+    expect(loadComposer()?.settings).toEqual(codexComposer);
+  });
+
+  it('keeps Auto as the durable selector for the canonical router', () => {
+    expect(autoComposer).toEqual(expect.objectContaining({ provider: 'auto', model: '' }));
+    expect(PROVIDER_MODELS).toEqual(expect.objectContaining({
+      auto: [],
+      offline: ['offline-scripted'],
+      'open-ai-compat': ['gpt-4.1', 'gpt-4o'],
+    }));
+  });
+
+  it('returns only real explicit model overrides', () => {
+    expect(modelOverride('')).toBeUndefined();
+    expect(modelOverride('   ')).toBeUndefined();
+    expect(modelOverride(' gpt-5.6-sol ')).toBe('gpt-5.6-sol');
   });
 });
 

@@ -22,7 +22,7 @@ mod system;
 
 pub use chat::{
     chat_approval_resolve, chat_approval_resolve_cancellable, chat_turn, chat_turn_cancellable,
-    stream_delivery_control, stream_event_to_json,
+    drain_gateway_once, stream_delivery_control, stream_event_to_json,
 };
 pub use contract::{IpcEnvelope, IpcReply};
 pub use home::resolve_home;

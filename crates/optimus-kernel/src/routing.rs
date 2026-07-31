@@ -39,7 +39,9 @@ impl ProviderId {
             // `open-ai-compat` is the serde kebab-case form that
             // `providers_catalog` puts on the wire; a surface must be able to
             // send back the id it was given.
-            "openai" | "openai-compat" | "open-ai-compat" => Some(Self::OpenAiCompat),
+            "openai" | "openai_compat" | "openai-compat" | "open-ai-compat" => {
+                Some(Self::OpenAiCompat)
+            }
             _ => None,
         }
     }
@@ -286,12 +288,10 @@ pub fn provider_catalog() -> Vec<ProviderDescriptor> {
 /// Live catalog with connect state (Codex credentials, openai-compat env, offline always up).
 pub fn provider_catalog_status(home: impl AsRef<Path>) -> Vec<ProviderCatalogStatus> {
     let home = home.as_ref();
-    let codex_present = crate::CodexAuthStore::open(home)
+    let codex_status = crate::CodexAuthStore::open(home)
         .ok()
-        .and_then(|store| store.status().ok())
-        .map(|s| s.present)
-        .unwrap_or(false);
-    let openai_base = std::env::var("OPTIMUS_OPENAI_BASE_URL")
+        .and_then(|store| store.status().ok());
+    let openai_key = std::env::var("OPTIMUS_API_KEY")
         .ok()
         .filter(|v| !v.trim().is_empty());
     provider_catalog()
@@ -302,29 +302,17 @@ pub fn provider_catalog_status(home: impl AsRef<Path>) -> Vec<ProviderCatalogSta
                     ProviderConnectState::Connected,
                     "local scripted provider".into(),
                 ),
-                ProviderId::Codex => {
-                    if codex_present {
-                        (
-                            ProviderConnectState::Connected,
-                            "codex credentials present".into(),
-                        )
-                    } else {
-                        (
-                            ProviderConnectState::Disconnected,
-                            "no codex credentials".into(),
-                        )
-                    }
-                }
+                ProviderId::Codex => codex_connection(codex_status.as_ref()),
                 ProviderId::OpenAiCompat => {
-                    if openai_base.is_some() {
+                    if openai_key.is_some() {
                         (
                             ProviderConnectState::Connected,
-                            "OPTIMUS_OPENAI_BASE_URL set".into(),
+                            "OPTIMUS_API_KEY present".into(),
                         )
                     } else {
                         (
                             ProviderConnectState::Disconnected,
-                            "OPTIMUS_OPENAI_BASE_URL unset".into(),
+                            "OPTIMUS_API_KEY unset".into(),
                         )
                     }
                 }
@@ -348,6 +336,23 @@ pub fn provider_catalog_status(home: impl AsRef<Path>) -> Vec<ProviderCatalogSta
         .collect()
 }
 
+fn codex_connection(status: Option<&crate::CodexAuthStatus>) -> (ProviderConnectState, String) {
+    match status {
+        Some(status) if status.present && (!status.access_expiring || status.has_refresh) => (
+            ProviderConnectState::Connected,
+            "codex credentials usable".into(),
+        ),
+        Some(status) if status.present && status.access_expiring && !status.has_refresh => (
+            ProviderConnectState::Disconnected,
+            "codex access token expiring without refresh token".into(),
+        ),
+        _ => (
+            ProviderConnectState::Disconnected,
+            "no codex credentials".into(),
+        ),
+    }
+}
+
 pub fn is_known_codex_model(model: &str) -> bool {
     CODEX_MODEL_CATALOG.iter().any(|(id, _)| *id == model)
 }
@@ -363,6 +368,21 @@ pub fn sanitize_codex_oauth_model(model: &str) -> String {
         "luna" => "gpt-5.6-luna".into(),
         _ => DEFAULT_CODEX_MODEL.into(),
     }
+}
+
+fn automatic_provider_order(statuses: &[ProviderCatalogStatus]) -> Vec<ProviderId> {
+    [
+        ProviderId::Codex,
+        ProviderId::OpenAiCompat,
+        ProviderId::Offline,
+    ]
+    .into_iter()
+    .filter(|id| {
+        statuses
+            .iter()
+            .any(|status| status.id == *id && status.connect == ProviderConnectState::Connected)
+    })
+    .collect()
 }
 
 pub fn resolve_route(home: impl AsRef<Path>, request: &RouteRequest) -> Result<RouteDecision> {
@@ -382,49 +402,75 @@ fn resolve_route_internal(
     request: &RouteRequest,
     trace: Option<TraceContext>,
 ) -> Result<RouteDecision> {
-    let requested = ProviderId::parse(&request.requested_provider).ok_or_else(|| {
-        KernelError::Model(format!(
-            "unknown provider identity: {}",
-            request.requested_provider
-        ))
-    })?;
+    let home = home.as_ref();
+    let automatic = request
+        .requested_provider
+        .trim()
+        .eq_ignore_ascii_case("auto");
+    if automatic && request.requested_model.is_some() {
+        return Err(KernelError::Model(
+            "automatic model selection is represented by an absent requested model".into(),
+        ));
+    }
+    let requested = if automatic {
+        None
+    } else {
+        Some(
+            ProviderId::parse(&request.requested_provider).ok_or_else(|| {
+                KernelError::Model(format!(
+                    "unknown provider identity: {}",
+                    request.requested_provider
+                ))
+            })?,
+        )
+    };
     let catalog = provider_catalog();
-    let requested_descriptor = catalog
-        .iter()
-        .find(|descriptor| descriptor.id == requested)
-        .expect("canonical provider is present in catalog");
-    let mut candidates = vec![requested_descriptor];
-    if request.allow_fallback {
-        if !request.fallback_order.is_empty() {
-            for raw in &request.fallback_order {
-                let Some(id) = ProviderId::parse(raw) else {
-                    continue;
-                };
-                if id == requested {
-                    continue;
-                }
-                if let Some(descriptor) = catalog.iter().find(|d| d.id == id) {
-                    if !candidates.iter().any(|c| c.id == descriptor.id) {
-                        candidates.push(descriptor);
+    let mut candidates = Vec::new();
+    if automatic {
+        let statuses = provider_catalog_status(home);
+        for id in automatic_provider_order(&statuses) {
+            if let Some(descriptor) = catalog.iter().find(|descriptor| descriptor.id == id) {
+                candidates.push(descriptor);
+            }
+        }
+    } else {
+        let requested = requested.expect("explicit provider was parsed");
+        let requested_descriptor = catalog
+            .iter()
+            .find(|descriptor| descriptor.id == requested)
+            .expect("canonical provider is present in catalog");
+        candidates.push(requested_descriptor);
+        if request.allow_fallback {
+            if !request.fallback_order.is_empty() {
+                for raw in &request.fallback_order {
+                    let Some(id) = ProviderId::parse(raw) else {
+                        continue;
+                    };
+                    if id == requested {
+                        continue;
+                    }
+                    if let Some(descriptor) = catalog.iter().find(|d| d.id == id) {
+                        if !candidates.iter().any(|c| c.id == descriptor.id) {
+                            candidates.push(descriptor);
+                        }
                     }
                 }
+            } else {
+                candidates.extend(
+                    catalog
+                        .iter()
+                        .filter(|descriptor| descriptor.id != requested),
+                );
             }
-        } else {
-            candidates.extend(
-                catalog
-                    .iter()
-                    .filter(|descriptor| descriptor.id != requested),
-            );
         }
     }
     if let Some(policy) = &request.telemetry_policy {
         policy.validate()?;
     }
-    let home = home.as_ref();
     let mut rejected = Vec::new();
     let mut approved = Vec::new();
     for descriptor in candidates {
-        let is_primary = descriptor.id == requested;
+        let is_primary = requested.is_some_and(|requested| descriptor.id == requested);
         match evaluate_candidate(descriptor, request, is_primary) {
             Ok(model) => {
                 let aggregate = request
@@ -464,11 +510,13 @@ fn resolve_route_internal(
             Err(reason) => rejected.push(format!("{}:{reason}", descriptor.id.as_str())),
         }
     }
-    if request.telemetry_policy.is_some() {
+    if request.telemetry_policy.is_some() && !automatic {
         approved.sort_by_key(telemetry_rank);
     }
     if let Some((descriptor, model, aggregate)) = approved.into_iter().next() {
-        let mut reasons = if descriptor.id == requested {
+        let mut reasons = if automatic {
+            vec!["automatic connected provider satisfies policy".into()]
+        } else if requested.is_some_and(|requested| descriptor.id == requested) {
             vec!["requested provider satisfies policy".into()]
         } else {
             vec!["explicit bounded fallback satisfies policy".into()]
@@ -486,7 +534,7 @@ fn resolve_route_internal(
             surface: request.surface,
             provider: descriptor.id,
             model,
-            fallback_from: (descriptor.id != requested).then_some(requested),
+            fallback_from: requested.filter(|requested| descriptor.id != *requested),
             reasons,
             created_unix: now_unix(),
             trace_id: trace.map(|value| value.trace_id.to_string()),
@@ -639,6 +687,43 @@ fn now_unix() -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    struct EnvVarGuard {
+        key: &'static str,
+        original: Option<std::ffi::OsString>,
+    }
+
+    impl EnvVarGuard {
+        fn set(key: &'static str, value: &str) -> Self {
+            let guard = Self {
+                key,
+                original: std::env::var_os(key),
+            };
+            std::env::set_var(key, value);
+            guard
+        }
+
+        fn remove(key: &'static str) -> Self {
+            let guard = Self {
+                key,
+                original: std::env::var_os(key),
+            };
+            std::env::remove_var(key);
+            guard
+        }
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            match &self.original {
+                Some(value) => std::env::set_var(self.key, value),
+                None => std::env::remove_var(self.key),
+            }
+        }
+    }
 
     /// Any id a surface reads from the catalog must parse back to the same
     /// provider. The picker, the CLI, and the React capabilities page all do this
@@ -667,8 +752,166 @@ mod tests {
     #[test]
     fn provider_aliases_resolve_to_canonical_identity() {
         assert_eq!(ProviderId::parse("openai"), Some(ProviderId::OpenAiCompat));
+        assert_eq!(
+            ProviderId::parse("openai_compat"),
+            Some(ProviderId::OpenAiCompat),
+            "legacy persisted provider spelling remains readable"
+        );
         assert_eq!(ProviderId::parse("codex-oauth"), Some(ProviderId::Codex));
+        assert_eq!(
+            ProviderId::parse("auto"),
+            None,
+            "auto is a selector, never a concrete provider identity"
+        );
         assert!(ModelId::parse("bad model with spaces").is_err());
+    }
+
+    #[test]
+    fn automatic_selection_prefers_connected_codex_then_openai_then_offline() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        let _key = EnvVarGuard::remove("OPTIMUS_API_KEY");
+        let directory = tempdir().unwrap();
+        let mut statuses = provider_catalog_status(directory.path());
+
+        assert_eq!(
+            automatic_provider_order(&statuses),
+            vec![ProviderId::Offline]
+        );
+        statuses
+            .iter_mut()
+            .find(|status| status.id == ProviderId::OpenAiCompat)
+            .unwrap()
+            .connect = ProviderConnectState::Connected;
+        assert_eq!(
+            automatic_provider_order(&statuses),
+            vec![ProviderId::OpenAiCompat, ProviderId::Offline]
+        );
+        statuses
+            .iter_mut()
+            .find(|status| status.id == ProviderId::Codex)
+            .unwrap()
+            .connect = ProviderConnectState::Connected;
+        assert_eq!(
+            automatic_provider_order(&statuses),
+            vec![
+                ProviderId::Codex,
+                ProviderId::OpenAiCompat,
+                ProviderId::Offline
+            ]
+        );
+    }
+
+    #[test]
+    fn automatic_codex_readiness_requires_usable_or_refreshable_access() {
+        let status = |access_expiring, has_refresh| crate::CodexAuthStatus {
+            present: true,
+            access_expiring,
+            has_refresh,
+            source_note: "test".into(),
+            base_url: crate::DEFAULT_CODEX_BASE_URL.into(),
+            account_id: None,
+        };
+
+        assert_eq!(
+            codex_connection(Some(&status(true, false))),
+            (
+                ProviderConnectState::Disconnected,
+                "codex access token expiring without refresh token".into()
+            )
+        );
+        assert_eq!(
+            codex_connection(Some(&status(true, true))).0,
+            ProviderConnectState::Connected,
+            "an expiring access token is usable when it can refresh"
+        );
+        assert_eq!(
+            codex_connection(Some(&status(false, false))).0,
+            ProviderConnectState::Connected,
+            "a non-expiring access token does not require refresh authority"
+        );
+    }
+
+    #[test]
+    fn automatic_fresh_home_selects_and_persists_concrete_offline_default() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        let _key = EnvVarGuard::remove("OPTIMUS_API_KEY");
+        let directory = tempdir().unwrap();
+        let request = RouteRequest::standard(RouteSurface::Desktop, "auto", None);
+
+        let decision = resolve_route(directory.path(), &request).unwrap();
+
+        assert_eq!(decision.provider, ProviderId::Offline);
+        assert_eq!(decision.model.as_str(), "offline-scripted");
+        assert_eq!(decision.fallback_from, None);
+        assert_eq!(
+            decision.reasons,
+            vec!["automatic connected provider satisfies policy"]
+        );
+        let connection = Connection::open(directory.path().join("routing.db")).unwrap();
+        let persisted = connection
+            .query_row(
+                "SELECT requested_provider,selected_provider,selected_model,reasons_json
+                 FROM route_decisions WHERE id=?1",
+                [decision.id.to_string()],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, String>(3)?,
+                    ))
+                },
+            )
+            .unwrap();
+        assert_eq!(persisted.0, "auto");
+        assert_eq!(persisted.1, "offline");
+        assert_eq!(persisted.2, "offline-scripted");
+        assert!(persisted
+            .3
+            .contains("automatic connected provider satisfies policy"));
+    }
+
+    #[test]
+    fn automatic_openai_readiness_matches_the_adapter_environment() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        let _key = EnvVarGuard::remove("OPTIMUS_API_KEY");
+        let _irrelevant_base =
+            EnvVarGuard::set("OPTIMUS_OPENAI_BASE_URL", "https://wrong.example/v1");
+        let directory = tempdir().unwrap();
+
+        let disconnected = provider_catalog_status(directory.path());
+        let openai = disconnected
+            .iter()
+            .find(|status| status.id == ProviderId::OpenAiCompat)
+            .unwrap();
+        assert_eq!(openai.connect, ProviderConnectState::Disconnected);
+        assert_eq!(openai.connect_detail, "OPTIMUS_API_KEY unset");
+
+        let _configured_key = EnvVarGuard::set("OPTIMUS_API_KEY", "test-key");
+        let connected = provider_catalog_status(directory.path());
+        let openai = connected
+            .iter()
+            .find(|status| status.id == ProviderId::OpenAiCompat)
+            .unwrap();
+        assert_eq!(openai.connect, ProviderConnectState::Connected);
+        assert_eq!(openai.connect_detail, "OPTIMUS_API_KEY present");
+
+        let route = resolve_route(
+            directory.path(),
+            &RouteRequest::standard(RouteSurface::Desktop, "auto", None),
+        )
+        .unwrap();
+        assert_eq!(route.provider, ProviderId::OpenAiCompat);
+        assert_eq!(route.model.as_str(), "gpt-4.1");
+    }
+
+    #[test]
+    fn automatic_model_is_absence_not_a_fake_model_identity() {
+        let directory = tempdir().unwrap();
+        let request = RouteRequest::standard(RouteSurface::Desktop, "auto", Some("auto".into()));
+        let error = resolve_route(directory.path(), &request).unwrap_err();
+        assert!(error.to_string().contains("absent requested model"));
+        assert_eq!(route_decision_count(directory.path()).unwrap(), 0);
     }
 
     #[test]

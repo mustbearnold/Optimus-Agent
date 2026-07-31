@@ -90,15 +90,15 @@ Critical reliability work continues. Breadth no longer controls the roadmap.
 ## Prerequisite (carried from program P30)
 
 Project-scoped automatic permission for routine engineering work is the first
-item of this program and is **half built**. The remaining P30 microtasks are
-prerequisites for P40's exit, not separate work:
+item of this program and has one remaining prerequisite. The remaining P30
+microtask is a prerequisite for P40's exit, not separate work:
 
 | ID | Status | Item |
 |---|---|---|
 | R30.5 | **done** | Durable project trust grant store (outside repo) |
 | R30.6 | **done** | Structured package-manager capabilities |
 | R30.7 | pending | Owned-localhost network lease |
-| R30.8 | pending | Product release defaults without breaking offline tests |
+| R30.8 | **done** | Auto provider/model release defaults preserve deterministic offline tests |
 
 Permission prompts must state the consequence (`Publish branch wip/fix-123 to
 GitHub`), never the mechanism (`Allow shell command?`).
@@ -134,7 +134,7 @@ This phase builds the spine.
 | E40.4 | **done** | Branch + worktree lifecycle: create, reuse on resume, remove on completion, retain-and-report on dirty abandon |
 | E40.5 | **done** | Worktree path becomes the run's ADR-0031 root binding (`Kernel::open_dev_run_session`) |
 | E40.6 | **done** | Durable persistence + `resume` from last checkpoint after process restart |
-| E40.7 | partial | R30.5 + R30.6 landed; R30.7 (localhost lease) and R30.8 (release defaults) still open |
+| E40.7 | partial | R30.5 + R30.6 + R30.8 landed; R30.7 (localhost lease) remains open |
 | E40.8 | **done** | `RunDriver` drives a run through the table, recording evidence from real commands |
 | E40.9 | **done** | Phase step catalogue (`catalogue::plan_for`): the commands each phase runs, sourced from `RepositoryPolicyProfile::verification` (E41.3) rather than hard-coded |
 

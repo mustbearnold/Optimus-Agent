@@ -2,6 +2,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+mod chat;
 mod doctor;
 mod gateway_http;
 mod parsers;
@@ -14,14 +15,12 @@ use optimus_eval::{
     EvaluationResourceMeasurement, MetricThreshold, MAX_EVALUATION_DATASET_BYTES,
 };
 use optimus_kernel::{
-    acknowledge_delivery, drain_one, enqueue, gateway_status, list_ambiguous_sends, list_inbox,
-    list_outbox, list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn,
+    acknowledge_delivery, enqueue, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
+    list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn,
     load_telegram_config, open_cron, open_seeded_agent_registry, open_seeded_workflow_registry,
-    parse_causal_query, resolve_route, run_read_file_handoff, run_write_file_handoff,
-    run_write_then_read_handoff, sanitize_codex_oauth_model, tick_cron, write_causal_export,
-    BrowserSession, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, Kernel,
-    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, ReadFileHandoffRequest,
-    RouteRequest, RouteSurface, ScriptedModel, ToolCall, WriteFileHandoffRequest,
+    parse_causal_query, run_read_file_handoff, run_write_file_handoff, run_write_then_read_handoff,
+    tick_cron, write_causal_export, BrowserSession, CodexAuthStore, CompletionResponse, Kernel,
+    KernelConfig, ReadFileHandoffRequest, ScriptedModel, ToolCall, WriteFileHandoffRequest,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
@@ -98,13 +97,13 @@ enum Commands {
         #[arg(long)]
         session: Option<String>,
     },
-    /// Live chat (openai-compat API key or --provider codex OAuth)
+    /// Chat using automatic provider selection unless explicitly overridden
     Chat {
         message: String,
-        /// Provider: openai (default) | codex
-        #[arg(long, default_value = "openai")]
+        /// Provider: auto (default) | offline | openai | codex
+        #[arg(long, default_value = "auto")]
         provider: String,
-        /// Override model
+        /// Override model; `auto` leaves selection to the provider
         #[arg(long)]
         model: Option<String>,
         /// Override base URL (openai provider only)
@@ -745,61 +744,9 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             session,
             thinking,
             fast,
-        } => {
-            let sid = parse_session(session)?;
-            let mut kcfg = KernelConfig::default();
-            if let Some(t) = thinking {
-                if t != "off" {
-                    kcfg.thinking_level = Some(t);
-                }
-            }
-            kcfg.fast_mode = fast;
-            let mut kernel = Kernel::open_session(&cli.home, kcfg, sid)?;
-            println!("session {}", kernel.session_id());
-            let route_model = if ProviderId::parse(&provider) == Some(ProviderId::Codex) {
-                model.as_deref().map(sanitize_codex_oauth_model)
-            } else {
-                model.clone()
-            };
-            let route = resolve_route(
-                &cli.home,
-                &RouteRequest::standard(RouteSurface::Cli, &provider, route_model),
-            )?;
-            let result = match route.provider {
-                ProviderId::Codex => {
-                    let mut cfg = CodexOAuthConfig::from_env(&cli.home);
-                    cfg.model = route.model.as_str().into();
-                    println!("model {}", cfg.model);
-                    let mut provider = CodexOAuthModel::new(cfg)?;
-                    kernel.turn(&mut provider, &message)?
-                }
-                ProviderId::OpenAiCompat => {
-                    let mut cfg = OpenAiCompatConfig::from_env()?;
-                    if let Some(m) = model {
-                        cfg.model = m;
-                    }
-                    if let Some(b) = base_url {
-                        cfg.base_url = b;
-                    }
-                    let mut provider = OpenAiCompatModel::new(cfg);
-                    kernel.turn(&mut provider, &message)?
-                }
-                ProviderId::Offline => return Err("offline is not supported by live chat".into()),
-            };
-            println!("{}", result.assistant_text);
-            if !result.tool_trace.is_empty() {
-                println!("[tools: {}]", result.tool_trace.join(" | "));
-            }
-            println!(
-                "[provider={provider} session={} steps={} packs={:?} schema_tokens={} compressed={}]",
-                kernel.session_id(),
-                result.steps,
-                result.loaded_packs,
-                result.schema_tokens_final,
-                result.compressed
-            );
-            Ok(())
-        }
+        } => chat::run_chat(
+            &cli.home, message, provider, model, base_url, session, thinking, fast,
+        ),
         Commands::Sessions => {
             for s in list_sessions(&cli.home)? {
                 println!(
@@ -903,7 +850,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         }
                         if with_gateway {
                             loop {
-                                match drain_gateway_once(&cli.home)? {
+                                match chat::drain_gateway_once(&cli.home)? {
                                     None => break,
                                     Some(r) => println!(
                                         "[gateway] {} {} {}",
@@ -1074,7 +1021,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 Ok(())
             }
             GatewayCmd::Drain => {
-                match drain_gateway_once(&cli.home)? {
+                match chat::drain_gateway_once(&cli.home)? {
                     None => println!("inbox empty"),
                     Some(r) => println!("{} {} {}", r.id, r.status, r.reply_preview),
                 }
@@ -1083,7 +1030,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             GatewayCmd::DrainAll => {
                 let mut n = 0usize;
                 loop {
-                    match drain_gateway_once(&cli.home)? {
+                    match chat::drain_gateway_once(&cli.home)? {
                         None => break,
                         Some(r) => {
                             println!("{} {} {}", r.id, r.status, r.reply_preview);
@@ -1574,60 +1521,6 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             Ok(())
         }
     }
-}
-
-fn drain_gateway_once(
-    home: &std::path::Path,
-) -> Result<Option<optimus_kernel::DrainResult>, Box<dyn std::error::Error>> {
-    let home_buf = home.to_path_buf();
-    let out = drain_one(home, |msg| {
-        let mut kernel = match parse_session(msg.session_id.clone()) {
-            Ok(sid) => match Kernel::open_session(&home_buf, KernelConfig::default(), sid) {
-                Ok(k) => k,
-                Err(e) => return Err(e.to_string()),
-            },
-            Err(e) => return Err(e.to_string()),
-        };
-        let route = match resolve_route(
-            &home_buf,
-            &RouteRequest::standard(RouteSurface::Gateway, &msg.provider, None),
-        ) {
-            Ok(route) => route,
-            Err(error) => return Err(error.to_string()),
-        };
-        let result = match route.provider {
-            ProviderId::Offline => {
-                let mut model = ScriptedModel::new(vec![CompletionResponse {
-                    text: Some(format!("[gateway:{}] {}", msg.channel, msg.text)),
-                    tool_calls: vec![],
-                }]);
-                model.stream_chunks = false;
-                kernel.turn(&mut model, &msg.text)
-            }
-            ProviderId::Codex => {
-                let mut cfg = CodexOAuthConfig::from_env(&home_buf);
-                cfg.model = route.model.as_str().into();
-                let mut model = match CodexOAuthModel::new(cfg) {
-                    Ok(model) => model,
-                    Err(error) => return Err(error.to_string()),
-                };
-                kernel.turn(&mut model, &msg.text)
-            }
-            ProviderId::OpenAiCompat => {
-                let cfg = match OpenAiCompatConfig::from_env() {
-                    Ok(config) => config,
-                    Err(error) => return Err(error.to_string()),
-                };
-                let mut model = OpenAiCompatModel::new(cfg);
-                kernel.turn(&mut model, &msg.text)
-            }
-        };
-        match result {
-            Ok(r) => Ok((r.assistant_text, Some(kernel.session_id().to_string()))),
-            Err(e) => Err(e.to_string()),
-        }
-    })?;
-    Ok(out)
 }
 
 fn parse_session(

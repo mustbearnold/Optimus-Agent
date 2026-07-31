@@ -66,6 +66,7 @@ replacing SmartDeny as the pause mechanism or CommandFsEnvelope as containment.
 | Crate layers | **PASS** | `check-crate-layers.py` |
 | Composer autonomy labels (both composers) | **PASS** | `Composer.test.tsx`, `check-autonomy-profiles.py` — see the correction below |
 | Desktop IPC access map | **PASS** (compile) | `chat.rs` + `cargo check -p optimus-desktop --no-default-features` — the *mapping*, not the menu that feeds it; see the correction below |
+| Auto provider/model release default | **PASS** | canonical router resolves to connected Codex, configured OpenAI-compatible, or offline; desktop/TUI/CLI regressions preserve explicit choices and deterministic fixture homes |
 
 ## Hold suite run
 
@@ -168,7 +169,6 @@ not a row that verifies the surface feeding it, however similar the two sound.
 ## Residuals
 
 - Owned-localhost leases (R30.7)
-- Product Auto provider/model default without breaking offline tests (R30.8)
 - Same-run continuation (program P31)
 - Arbitrary project binaries and transparent scripts still share the Confined
   network and ambient credential environment. ADR-0059 therefore does not

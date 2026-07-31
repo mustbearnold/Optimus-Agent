@@ -16,8 +16,9 @@ validated_by:
   - crates/optimus-kernel/tests/codex_oauth.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - crates/optimus-eval/tests/integrity_integration.rs
-  - apps/optimus-cli/tests/**
-  - apps/optimus-desktop/e2e/**
+  - apps/optimus-cli/tests/chat_auto.rs
+  - apps/optimus-ui/src/state/composerStore.test.ts
+  - apps/optimus-desktop/ui/composer-auto.test.cjs
 last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 ---
 
@@ -27,9 +28,9 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 
 **Confirmed current behaviour:** Optimus implements a canonical typed route
 resolver for provider/model ownership, required capabilities, privacy, bounded
-cost, explicit fallback, and durable decision records. Provider health,
-measurement-driven cost/latency, and evaluation-driven selection are not
-implemented.
+cost, explicit fallback, readiness-based Auto selection, and durable decision
+records. Runtime provider health, measurement-driven cost/latency, and
+evaluation-driven selection are not implemented.
 
 ## Provider adapters
 
@@ -58,14 +59,25 @@ its request; the OpenAI-compatible request mapper currently omits both.
 
 | Surface | Confirmed current behaviour |
 |---|---|
-| CLI chat/cron | Builds a `RouteRequest`; canonical resolver rejects unknown provider/model identities and policy violations. |
-| Desktop chat | Uses the same resolver; misspelled providers no longer enter a catch-all Codex branch. |
+| CLI chat/cron | Builds a `RouteRequest`; chat defaults to Auto while explicit cron routes remain exact. Legacy persisted `openai_compat` schedules normalize to the canonical OpenAI-compatible identity before execution. The canonical resolver rejects unknown provider/model identities and policy violations. |
+| Desktop chat | Uses the same resolver and defaults to Auto; misspelled providers no longer enter a catch-all Codex branch. |
 | Gateway HTTP | Uses the same resolver before constructing an adapter. |
 | Cron tick | Uses the same resolver while retaining cron-owned scheduling/claim semantics. |
 
 **Confirmed current behaviour:** all four surfaces share canonical provider
 identity, model ownership, privacy, capability, and budget evaluation. Adapter
 construction and transport remain surface-owned.
+
+**Confirmed current behaviour:** `auto` is a requested selection, never a
+`ProviderId` or `ModelId`. At turn start it selects the first connected
+policy-eligible provider in the fixed order Codex OAuth, configured
+OpenAI-compatible, then offline. Codex credentials that are already expiring
+without refresh capability are not considered connected. No model override
+means the selected provider's canonical default. Decisions persist the
+requested `auto` value and the concrete selected provider/model. New explicit
+choices remain exact after selection; legacy unchosen Offline preference
+residue is migrated to Auto. A post-selection provider failure does not trigger
+a silent cross-provider retry.
 
 ## Cancellation boundary
 

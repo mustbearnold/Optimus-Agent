@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RunStatus } from '../../ipc/contracts';
 import { frameCoordinator } from '../../performance/frameCoordinator';
+import {
+  PROVIDER_MODELS,
+  type ComposerProvider,
+  type ComposerSettings,
+} from '../../state/composerStore';
 import { Icon } from '../chrome/Icon';
 
 // The ADR-0044 autonomy profiles, in the order that decision 7 states them:
@@ -53,14 +58,6 @@ const accessTiers = [
   { tier: 'expert', heading: 'Expert' },
 ] as const;
 
-type ComposerSettings = {
-  provider: 'offline' | 'codex' | 'openai_compat';
-  model: string;
-  thinking: string;
-  access: string;
-  fast: boolean;
-};
-
 type Props = {
   value: string;
   runStatus: RunStatus;
@@ -100,7 +97,7 @@ export function Composer({
     high: 'High',
     xhigh: 'Extra high',
   }[settings.thinking] || settings.thinking;
-  const modelLabel = visibleModelLabel(settings.provider, settings.model);
+  const modelLabel = visibleModelLabel(settings.model);
 
   useEffect(() => {
     frameCoordinator.schedule('layout-write', () => {
@@ -295,22 +292,20 @@ export function Composer({
                         ref={providerSelect}
                         value={settings.provider}
                         onChange={(event) => {
-                          const provider = event.target.value as ComposerSettings['provider'];
+                          const provider = event.target.value as ComposerProvider;
                           onSettings({
                             ...settings,
                             provider,
-                            model:
-                              provider === 'offline'
-                                ? 'offline-echo'
-                                : settings.model === 'offline-echo'
-                                  ? 'gpt-5.6-terra'
-                                  : settings.model,
+                            // Provider defaults differ. Reset to model Auto
+                            // rather than carrying an incompatible explicit id.
+                            model: provider === settings.provider ? settings.model : '',
                           });
                         }}
                       >
+                        <option value="auto">Auto</option>
                         <option value="offline">Offline</option>
                         <option value="codex">Codex</option>
-                        <option value="openai_compat">OpenAI compatible</option>
+                        <option value="open-ai-compat">OpenAI compatible</option>
                       </select>
                     </label>
                     <label>
@@ -319,14 +314,12 @@ export function Composer({
                         value={settings.model}
                         onChange={(event) => onSettings({ ...settings, model: event.target.value })}
                       >
-                        {settings.provider === 'offline' ? (
-                          <option value="offline-echo">offline-echo</option>
-                        ) : (
-                          <>
-                            <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
-                            <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
-                          </>
-                        )}
+                        <option value="">Auto</option>
+                        {PROVIDER_MODELS[settings.provider].map((model) => (
+                          <option value={model} key={model}>
+                            {visibleModelLabel(model)}
+                          </option>
+                        ))}
                       </select>
                     </label>
                     <label>
@@ -376,8 +369,8 @@ export function Composer({
   );
 }
 
-function visibleModelLabel(provider: ComposerSettings['provider'], model: string) {
-  if (provider === 'offline') return model;
+function visibleModelLabel(model: string) {
+  if (!model) return 'Auto';
   const match = /^gpt-(\d+(?:\.\d+)*)(?:-([a-z0-9]+))?$/i.exec(model);
   if (!match) return model;
   const [, version, name] = match;

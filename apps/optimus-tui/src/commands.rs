@@ -74,7 +74,7 @@ fn help(session: &mut TuiSession) {
         [
             "/providers        pick a provider from a list",
             "/provider <id>    switch provider, remembered next launch",
-            "/model <id>       override the model, or 'default'",
+            "/model <id>       override the model, or 'auto'",
             "/thinking <lvl>   minimal|low|medium|high|xhigh|max, or off",
             "/approval         decide the pending exact approval",
             "/yolo             unrestricted access, releases the open approval",
@@ -109,24 +109,28 @@ fn providers(session: &mut TuiSession) {
                 .and_then(|v| v.as_array())
                 .cloned()
                 .unwrap_or_default();
-            let items: Vec<PickerItem> = rows
-                .iter()
-                .map(|row| {
-                    let id = row.get("id").and_then(|v| v.as_str()).unwrap_or("?");
-                    let model = row
-                        .get("default_model")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("?");
-                    let connect = row.get("connect").and_then(|v| v.as_str()).unwrap_or("?");
-                    PickerItem {
-                        id: id.to_string(),
-                        label: format!("{id}  ({model})"),
-                        detail: connect.to_string(),
-                        current: id == session.provider,
-                        connected: connect.eq_ignore_ascii_case("connected"),
-                    }
-                })
-                .collect();
+            let mut items = vec![PickerItem {
+                id: "auto".into(),
+                label: "Auto  (recommended)".into(),
+                detail: "best available provider".into(),
+                current: session.provider == "auto",
+                connected: true,
+            }];
+            items.extend(rows.iter().map(|row| {
+                let id = row.get("id").and_then(|v| v.as_str()).unwrap_or("?");
+                let model = row
+                    .get("default_model")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("?");
+                let connect = row.get("connect").and_then(|v| v.as_str()).unwrap_or("?");
+                PickerItem {
+                    id: id.to_string(),
+                    label: format!("{id}  ({model})"),
+                    detail: connect.to_string(),
+                    current: id == session.provider,
+                    connected: connect.eq_ignore_ascii_case("connected"),
+                }
+            }));
             if items.is_empty() {
                 session.push(Role::Error, "no providers in the catalog".into());
                 return;
@@ -146,14 +150,22 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
         session.push(Role::Error, "usage: /provider <id> — see /providers".into());
         return;
     }
-    let known: Vec<String> = handle_ipc(&session.home, "providers_catalog", json!({}))
+    let mut known: Vec<String> = handle_ipc(&session.home, "providers_catalog", json!({}))
         .ok()
         .and_then(|value| value.get("providers").and_then(|v| v.as_array()).cloned())
         .unwrap_or_default()
         .iter()
         .filter_map(|row| row.get("id").and_then(|v| v.as_str()).map(str::to_string))
         .collect();
+    known.insert(0, "auto".into());
 
+    if argument.eq_ignore_ascii_case("auto") && session.model.is_some() {
+        session.push(
+            Role::Error,
+            "choose model Auto before returning provider selection to Auto".into(),
+        );
+        return;
+    }
     if !known.is_empty() && !known.iter().any(|id| id == argument) {
         session.push(
             Role::Error,
@@ -169,7 +181,7 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
     );
 }
 
-/// `/model <id>` — override the provider's default model, or `default` to stop.
+/// `/model <id>` — override the selected model, or `auto` to stop overriding.
 ///
 /// Not validated against a catalog the way `/provider` is: model ids come and
 /// go faster than any list Optimus holds, and refusing a real id because a
@@ -178,17 +190,25 @@ fn set_model(session: &mut TuiSession, argument: &str) {
     match argument {
         "" => session.push(
             Role::Error,
-            "usage: /model <id>, or /model default to use the provider's own".into(),
+            "usage: /model <id>, or /model auto to let Optimus choose".into(),
         ),
-        "default" | "reset" | "none" => {
+        choice
+            if ["auto", "default", "reset", "none"]
+                .iter()
+                .any(|value| choice.eq_ignore_ascii_case(value)) =>
+        {
             session.model = None;
             session.remember_model_choice();
-            session.push(
-                Role::Assistant,
-                format!("model is now {}'s default", session.provider),
-            );
+            session.push(Role::Assistant, "model selection is now Auto".into());
         }
         id => {
+            if session.provider.eq_ignore_ascii_case("auto") {
+                session.push(
+                    Role::Error,
+                    "choose a provider before setting an explicit model".into(),
+                );
+                return;
+            }
             session.model = Some(id.to_string());
             session.remember_model_choice();
             session.push(
@@ -413,7 +433,7 @@ mod tests {
         );
         assert_eq!(
             picker.confirm().unwrap().id,
-            "offline",
+            "auto",
             "it opens on the provider already in effect"
         );
     }
@@ -435,7 +455,7 @@ mod tests {
         let (_dir, mut session) = session();
         dispatch(&mut session, "/providers");
         session.confirm_picker();
-        assert_eq!(session.provider, "offline");
+        assert_eq!(session.provider, "auto");
         assert!(
             session.messages.is_empty(),
             "re-picking the active provider should not announce a change"
@@ -490,7 +510,7 @@ mod tests {
     fn an_unknown_provider_is_refused_with_the_real_list() {
         let (_dir, mut session) = session();
         dispatch(&mut session, "/provider nope");
-        assert_eq!(session.provider, "offline", "provider must not change");
+        assert_eq!(session.provider, "auto", "provider must not change");
         assert_eq!(session.messages[0].role, Role::Error);
         assert!(session.messages[0].text.contains("have:"));
     }
@@ -525,6 +545,7 @@ mod tests {
     fn a_model_choice_outlives_the_process() {
         let (_dir, mut session) = session();
         let home = session.home.clone();
+        dispatch(&mut session, "/provider codex");
         dispatch(&mut session, "/model gpt-5");
         dispatch(&mut session, "/thinking high");
 
@@ -539,10 +560,35 @@ mod tests {
         // set case would resurrect a model the user just dismissed.
         let (_dir, mut session) = session();
         let home = session.home.clone();
+        dispatch(&mut session, "/provider codex");
         dispatch(&mut session, "/model gpt-5");
         dispatch(&mut session, "/model default");
 
         assert_eq!(TuiSession::new(home).model, None);
+    }
+
+    #[test]
+    fn model_auto_clears_and_persists_the_override() {
+        let (_dir, mut session) = session();
+        let home = session.home.clone();
+        dispatch(&mut session, "/provider codex");
+        dispatch(&mut session, "/model gpt-5");
+        dispatch(&mut session, "/model Auto");
+
+        assert_eq!(session.model, None);
+        assert_eq!(TuiSession::new(home).model, None);
+    }
+
+    #[test]
+    fn auto_provider_does_not_silently_discard_an_explicit_model() {
+        let (_dir, mut session) = session();
+        dispatch(&mut session, "/provider codex");
+        dispatch(&mut session, "/model gpt-5");
+        dispatch(&mut session, "/provider auto");
+
+        assert_eq!(session.provider, "codex");
+        assert_eq!(session.model.as_deref(), Some("gpt-5"));
+        assert_eq!(session.messages.last().unwrap().role, Role::Error);
     }
 
     #[test]

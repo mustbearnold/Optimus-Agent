@@ -158,7 +158,7 @@ export function CronWorkbench({
             <select value={provider} onChange={(e) => setProvider(e.target.value)}>
               <option value="offline">offline</option>
               <option value="codex">codex</option>
-              <option value="openai_compat">openai_compat</option>
+              <option value="open-ai-compat">open-ai-compat</option>
             </select>
           </label>
           <label>

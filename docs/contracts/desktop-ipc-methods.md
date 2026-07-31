@@ -60,6 +60,11 @@ the latest durable turn state.
 ### Scheduling
 `cron_list`, `cron_add`, `cron_tick`
 
+`cron_add.provider` accepts a concrete provider catalog wire id and persists its
+canonical runtime identity. The legacy React spelling `openai_compat` is
+accepted only as migration input, normalized on new writes, and normalized
+before routing older persisted schedules.
+
 ### Runtime
 `approvals_list`, `approvals_grant`, `jobs_list`, `campaign_list`, `campaign_create`, `campaign_run`, `campaign_status`, `term_run`, `browser_navigate`, `browser_click`, `browser_reload`
 
@@ -72,6 +77,13 @@ the latest durable turn state.
 
 ### Chat
 `chat`, `chat_offline`, `chat_approval_resolve`
+
+`ChatRequest.provider` accepts the catalog wire ids `offline`, `codex`, and
+`open-ai-compat` plus `auto`. `auto` is a selector evaluated by the Rust router
+at turn start, while the returned result and durable route decision name the
+concrete provider/model used. An omitted model means the selected provider's
+default; the literal model id `auto` is not sent. Explicit model ids reach the
+canonical router unchanged and must be owned by the requested provider.
 
 `chat_approval_resolve` accepts a session-owned approval decision only when the
 request repeats the pending event's `run_id`, `call_id`, `job_id`, `node_id`,

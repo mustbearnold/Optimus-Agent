@@ -104,6 +104,7 @@ describe('CronWorkbench', () => {
     await user.type(everyInput, '120');
     await user.clear(promptInput);
     await user.type(promptInput, 'check health');
+    await user.selectOptions(screen.getByLabelText('Provider'), 'open-ai-compat');
     await user.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() =>
@@ -113,6 +114,7 @@ describe('CronWorkbench', () => {
           name: 'Hourly',
           every_secs: 120,
           prompt: 'check health',
+          provider: 'open-ai-compat',
         })
       )
     );

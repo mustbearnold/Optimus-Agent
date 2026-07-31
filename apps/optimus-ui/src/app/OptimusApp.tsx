@@ -32,11 +32,10 @@ import {
   useConversationIndicators,
 } from '../state/conversationStore';
 import {
-  codexComposer,
+  autoComposer,
   loadComposer,
-  offlineComposer,
+  modelOverride,
   saveComposer,
-  shouldPreferCodex,
 } from '../state/composerStore';
 import {
   defaultLayout,
@@ -111,7 +110,7 @@ export function OptimusApp() {
   const [renameSession, setRenameSession] = useState<SessionMeta | null>(null);
   const [workspaceMaximized, setWorkspaceMaximized] = useState(false);
   const [storedComposer] = useState(loadComposer);
-  const [composer, setComposer] = useState(storedComposer?.settings ?? offlineComposer);
+  const [composer, setComposer] = useState(storedComposer?.settings ?? autoComposer);
   const [bootError, setBootError] = useState('');
   const providerChosen = useRef(storedComposer?.providerChosen ?? false);
   // Bumped whenever a session is created locally. `refreshRuntime` reads it
@@ -190,22 +189,6 @@ export function OptimusApp() {
   useEffect(() => {
     void refreshRuntime();
   }, [refreshRuntime]);
-
-  useEffect(() => {
-    // A stored human provider choice always wins. Absent one, prefer Codex
-    // the moment auth is present — pre-sign-in offline residue must not
-    // outlive the sign-in (#82). The fixture transport reports mode
-    // 'fixture' and keeps its offline default so tests and the browser
-    // demo stay deterministic.
-    if (!shouldPreferCodex()) return;
-    transport
-      .invoke<{ present?: boolean; mode?: string }>('auth_status')
-      .then((auth) => {
-        if (auth.present !== true || auth.mode === 'fixture') return;
-        if (shouldPreferCodex()) setComposer(codexComposer);
-      })
-      .catch(() => undefined);
-  }, []);
 
   useEffect(() => {
     const id = state.selectedSessionId;
@@ -330,12 +313,13 @@ export function OptimusApp() {
     setInput('');
     setAnnotation('');
     dispatch({ type: 'set-active-run', id: sessionId });
+    const model = modelOverride(composer.model);
     const handle = transport.chat(
       {
         session: sessionId,
         message: text,
         provider: composer.provider,
-        model: composer.model,
+        ...(model ? { model } : {}),
         thinking_level: composer.thinking,
         fast: composer.fast,
         access: composer.access,

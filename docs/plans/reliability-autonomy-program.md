@@ -88,7 +88,7 @@ and [ADR-0059](../decisions/0059-standard-autonomy-is-consequence-bounded.md)
 | R30.5 | **done** | Durable project trust grant store (outside repo); applied at `open_dev_run_session` only |
 | R30.6 | **done** | Structured package/command capabilities; recognised remote and command-string shell forms leave the Standard project lane |
 | R30.7 | pending | Owned-localhost network lease |
-| R30.8 | pending | Product release defaults (Auto provider/model) without breaking offline tests |
+| R30.8 | **done** | Product release defaults use one-turn Auto provider/model resolution while offline fixtures remain deterministic |
 
 R30.4 is done in full since 2026-07-29. It was marked done once before that,
 while both access menus still offered full host authority first — the opposite
@@ -143,7 +143,7 @@ authorities rather than on a profile enum flip.
 - Security map updated for trust-profile grants
 - Review changes still pauses high-risk effects (ADR-0031 behaviour preserved)
 
-Not exit-gated yet: R30.7 and R30.8 remain open, so P30 stays **in progress**.
+Not exit-gated yet: R30.7 remains open, so P30 stays **in progress**.
 
 ### Explicit non-claims (P30)
 

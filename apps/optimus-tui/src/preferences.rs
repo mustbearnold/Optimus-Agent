@@ -13,9 +13,10 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-/// Offline needs no credential and no network, so a first run always reaches a
-/// working turn. It stays the default for anyone who has never chosen.
-pub const DEFAULT_PROVIDER: &str = "offline";
+/// Let routing choose the best available provider for a first run. In a fresh
+/// or disconnected home this deterministically resolves to offline, while an
+/// explicit provider choice remains sticky.
+pub const DEFAULT_PROVIDER: &str = "auto";
 
 const FILE: &str = "tui-preferences.json";
 
@@ -71,7 +72,15 @@ impl Preferences {
         if self.provider.trim().is_empty() {
             self.provider = DEFAULT_PROVIDER.to_string();
         }
-        self.model = self.model.filter(|value| !value.trim().is_empty());
+        if self.provider.eq_ignore_ascii_case("openai_compat") {
+            self.provider = "open-ai-compat".to_string();
+        }
+        self.model = self
+            .model
+            .filter(|value| !value.trim().is_empty() && !value.trim().eq_ignore_ascii_case("auto"));
+        if self.provider.eq_ignore_ascii_case("auto") {
+            self.model = None;
+        }
         self.thinking = self.thinking.filter(|value| !value.trim().is_empty());
         self
     }
@@ -87,7 +96,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn a_first_run_gets_the_credential_free_provider() {
+    fn a_first_run_delegates_provider_and_model_selection_to_auto() {
         let dir = tempdir().unwrap();
         let prefs = Preferences::load(dir.path());
         assert_eq!(prefs.provider, DEFAULT_PROVIDER);
@@ -145,6 +154,48 @@ mod tests {
         assert_eq!(prefs.provider, DEFAULT_PROVIDER);
         assert_eq!(prefs.model, None, "an empty model is not a model");
         assert_eq!(prefs.thinking, None);
+    }
+
+    #[test]
+    fn an_auto_model_is_absence_not_a_literal_model_override() {
+        let dir = tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("tui-preferences.json"),
+            r#"{"provider":"codex","model":"Auto"}"#,
+        )
+        .unwrap();
+
+        let prefs = Preferences::load(dir.path());
+        assert_eq!(prefs.provider, "codex");
+        assert_eq!(prefs.model, None);
+    }
+
+    #[test]
+    fn automatic_provider_drops_a_stale_explicit_model() {
+        let dir = tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("tui-preferences.json"),
+            r#"{"provider":"auto","model":"gpt-5.6-sol"}"#,
+        )
+        .unwrap();
+
+        let prefs = Preferences::load(dir.path());
+        assert_eq!(prefs.provider, "auto");
+        assert_eq!(prefs.model, None);
+    }
+
+    #[test]
+    fn legacy_openai_provider_spelling_migrates_to_the_catalog_wire_id() {
+        let dir = tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("tui-preferences.json"),
+            r#"{"provider":"openai_compat","model":"gpt-4.1"}"#,
+        )
+        .unwrap();
+
+        let prefs = Preferences::load(dir.path());
+        assert_eq!(prefs.provider, "open-ai-compat");
+        assert_eq!(prefs.model.as_deref(), Some("gpt-4.1"));
     }
 
     #[test]

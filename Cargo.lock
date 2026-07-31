@@ -3129,6 +3129,7 @@ dependencies = [
  "clap",
  "optimus-eval",
  "optimus-graph",
+ "optimus-host",
  "optimus-kernel",
  "optimus-packs",
  "optimus-runtime",

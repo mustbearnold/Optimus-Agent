@@ -5,7 +5,7 @@ import { Composer } from './Composer';
 
 const settings = {
   provider: 'offline' as const,
-  model: 'offline-echo',
+  model: 'offline-scripted',
   thinking: 'high',
   access: 'standard',
   fast: false,
@@ -92,7 +92,7 @@ describe('Composer', () => {
 
     const popover = screen.getByRole('dialog', { name: 'Model and run settings' });
     expect(within(popover).getByLabelText('Provider')).toHaveValue('offline');
-    expect(within(popover).getByLabelText('Model')).toHaveValue('offline-echo');
+    expect(within(popover).getByLabelText('Model')).toHaveValue('offline-scripted');
     expect(within(popover).getByLabelText('Thinking level')).toHaveValue('high');
     await user.click(within(popover).getByRole('switch', { name: 'Fast mode' }));
     expect(onSettings).toHaveBeenCalledWith({ ...settings, fast: true });
@@ -124,6 +124,89 @@ describe('Composer', () => {
     expect(trigger).toHaveTextContent('High');
     expect(trigger).not.toHaveTextContent('effort');
     expect(trigger).not.toHaveTextContent('gpt-5.6-terra');
+  });
+
+  it('keeps Auto selected for canonical routing', async () => {
+    const user = userEvent.setup();
+    const onSettings = vi.fn();
+    render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={{ ...settings, provider: 'auto', model: '' }}
+        onChange={() => undefined}
+        onSettings={onSettings}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Model and run settings' })).toHaveTextContent('Auto');
+    await user.click(screen.getByRole('button', { name: 'Model and run settings' }));
+    const popover = screen.getByRole('dialog', { name: 'Model and run settings' });
+    const providerSelect = within(popover).getByLabelText('Provider');
+    expect(providerSelect).toHaveValue('auto');
+    expect(within(providerSelect).getByRole('option', { name: 'Auto' })).toBeInTheDocument();
+    const modelSelect = within(popover).getByLabelText('Model');
+    expect(modelSelect).toHaveValue('');
+    expect(within(modelSelect).getAllByRole('option')).toHaveLength(1);
+
+    await user.selectOptions(within(popover).getByLabelText('Provider'), 'offline');
+    expect(onSettings).toHaveBeenCalledWith({
+      ...settings,
+      provider: 'offline',
+      model: '',
+    });
+  });
+
+  it('sends the canonical OpenAI wire id and exposes only OpenAI-owned models', async () => {
+    const user = userEvent.setup();
+    const onSettings = vi.fn();
+    const first = render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={{ ...settings, provider: 'codex', model: 'gpt-5.6-terra' }}
+        onChange={() => undefined}
+        onSettings={onSettings}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Model and run settings' }));
+    const popover = screen.getByRole('dialog', { name: 'Model and run settings' });
+    await user.selectOptions(within(popover).getByLabelText('Provider'), 'open-ai-compat');
+    expect(onSettings).toHaveBeenCalledWith({
+      ...settings,
+      provider: 'open-ai-compat',
+      model: '',
+    });
+    first.unmount();
+
+    render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={{ ...settings, provider: 'open-ai-compat', model: 'gpt-4.1' }}
+        onChange={() => undefined}
+        onSettings={onSettings}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+    await user.click(screen.getByRole('button', { name: 'Model and run settings' }));
+    const model = within(screen.getByRole('dialog', { name: 'Model and run settings' }))
+      .getByLabelText('Model');
+    expect(
+      within(model).getAllByRole('option').map((option) => option.getAttribute('value'))
+    ).toEqual(['', 'gpt-4.1', 'gpt-4o']);
   });
 
   it('marks only the selected Unrestricted host control for flame styling', () => {

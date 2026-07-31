@@ -230,8 +230,16 @@ export function createFixtureTransport(): OptimusTransport {
     chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle {
       const id = streamId++;
       let cancelled = false;
+      const provider = request.provider === 'auto' ? 'offline' : request.provider;
+      const model =
+        request.model ||
+        (provider === 'offline'
+          ? 'offline-scripted'
+          : provider === 'codex'
+            ? 'gpt-5.6-terra'
+            : 'gpt-4.1');
       const response =
-        `I’m working from the ${request.provider} fixture transport. ` +
+        `I’m working from the ${provider} fixture transport. ` +
         `The React workbench keeps this stream attached to “${sessionTitle(request.session)}”, ` +
         'projects activity at most once per display frame, and preserves partial text if you stop it.';
       const chunks = response.match(/.{1,7}/g) || [response];
@@ -292,7 +300,10 @@ export function createFixtureTransport(): OptimusTransport {
         details.set(request.session, detail);
         const session = sessions.find((candidate) => candidate.id === request.session);
         if (session) session.message_count = detail.messages.length;
-        onEvent({ type: 'done', result: { provider: request.provider } });
+        onEvent({
+          type: 'done',
+          result: { provider, model },
+        });
       })();
       return {
         streamId: id,

@@ -1,11 +1,14 @@
-// Which provider/model the composer boots with, and when the app may change
-// it. The rule (#82): an explicit human provider choice always wins; absent
-// one, prefer Codex the moment auth is present and offline otherwise, so
-// first-run chat always works but pre-sign-in offline residue never outlives
-// the sign-in.
+// Durable provider/model intent. `auto` is a real user-facing selection, not
+// a temporary alias for whichever provider happened to be available at boot.
+// Resolution happens at send/display time, so authentication may change the
+// concrete route without overwriting the durable Auto choice.
+
+export type ComposerProvider = 'auto' | 'offline' | 'codex' | 'open-ai-compat';
 
 export type ComposerSettings = {
-  provider: 'offline' | 'codex' | 'openai_compat';
+  provider: ComposerProvider;
+  // Empty means Auto: omit the model field and let the selected provider's
+  // routing contract choose. Never persist or send a made-up model id.
   model: string;
   thinking: string;
   access: string;
@@ -21,11 +24,30 @@ export type StoredComposer = {
 };
 
 const STORAGE_KEY = 'optimus.react.composer';
-const PROVIDERS: ReadonlyArray<ComposerSettings['provider']> = [
+const PROVIDERS: ReadonlyArray<ComposerProvider> = [
+  'auto',
   'offline',
   'codex',
-  'openai_compat',
+  'open-ai-compat',
 ];
+
+// Mirrors the canonical provider catalog in optimus-kernel/src/routing.rs.
+// The empty option rendered by Composer is Model Auto and is deliberately not
+// a model identity in this table.
+export const PROVIDER_MODELS: Readonly<Record<ComposerProvider, readonly string[]>> = {
+  auto: [],
+  offline: ['offline-scripted'],
+  codex: [
+    'gpt-5.6-sol',
+    'gpt-5.6-terra',
+    'gpt-5.6-luna',
+    'gpt-5.5',
+    'gpt-5.4',
+    'gpt-5.4-mini',
+    'gpt-5.3-codex-spark',
+  ],
+  'open-ai-compat': ['gpt-4.1', 'gpt-4o'],
+};
 
 // The ADR-0044 profile a stored access value means today. Builds before #118
 // wrote the composer's own three-word vocabulary, whose first item — 'full' —
@@ -60,7 +82,7 @@ export function restoredAccess(raw: unknown): string {
 
 export const offlineComposer: ComposerSettings = {
   provider: 'offline',
-  model: 'offline-echo',
+  model: 'offline-scripted',
   thinking: 'high',
   access: 'standard',
   fast: false,
@@ -75,24 +97,55 @@ export const codexComposer: ComposerSettings = {
   fast: false,
 };
 
+export const autoComposer: ComposerSettings = {
+  provider: 'auto',
+  model: '',
+  thinking: 'high',
+  access: 'standard',
+  fast: false,
+};
+
 export function loadComposer(): StoredComposer | null {
   if (typeof localStorage === 'undefined') return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const provider = parsed.provider as ComposerSettings['provider'];
-    if (!PROVIDERS.includes(provider)) return null;
-    if (typeof parsed.model !== 'string' || !parsed.model) return null;
+    const storedProvider = parsed.provider;
+    let provider: ComposerProvider;
+    if (storedProvider === 'openai_compat') {
+      // Pre-canonical React builds persisted the Rust module spelling rather
+      // than the provider catalog's wire identity.
+      provider = 'open-ai-compat';
+    } else if (
+      typeof storedProvider === 'string' &&
+      PROVIDERS.includes(storedProvider as ComposerProvider)
+    ) {
+      provider = storedProvider as ComposerProvider;
+    } else {
+      return null;
+    }
+    if (typeof parsed.model !== 'string') return null;
+    let model = parsed.model;
+    const providerChosen = parsed.providerChosen === true;
+    // Builds before Auto used providerChosen:false + Offline as their
+    // "works before sign-in" residue. Preserve the lack of intent by
+    // migrating that exact legacy shape to Auto.
+    if (!providerChosen && provider === 'offline') {
+      provider = 'auto';
+      model = '';
+    }
+    if (provider === 'auto') model = '';
+    if (model && !PROVIDER_MODELS[provider].includes(model)) model = '';
     return {
       settings: {
         provider,
-        model: parsed.model,
+        model,
         thinking: typeof parsed.thinking === 'string' ? parsed.thinking : 'high',
         access: restoredAccess(parsed.access),
         fast: parsed.fast === true,
       },
-      providerChosen: parsed.providerChosen === true,
+      providerChosen,
     };
   } catch {
     return null;
@@ -109,9 +162,7 @@ export function saveComposer(settings: ComposerSettings, providerChosen: boolean
   }
 }
 
-// Whether boot may promote the composer to Codex: nothing stored, or the
-// stored provider is offline residue nobody explicitly chose.
-export function shouldPreferCodex(): boolean {
-  const stored = loadComposer();
-  return !stored || (!stored.providerChosen && stored.settings.provider === 'offline');
+export function modelOverride(model: string): string | undefined {
+  const value = model.trim();
+  return value || undefined;
 }

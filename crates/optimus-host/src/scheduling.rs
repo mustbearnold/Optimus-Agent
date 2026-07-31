@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use optimus_kernel::{open_cron, tick_cron};
+use optimus_kernel::{open_cron, tick_cron, ProviderId};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -63,10 +63,13 @@ pub(super) fn handle(
             if prompt.chars().count() > 8_000 {
                 return Err("prompt too long".into());
             }
-            let provider = params
+            let raw_provider = params
                 .get("provider")
                 .and_then(|v| v.as_str())
                 .unwrap_or("offline");
+            let provider = ProviderId::parse(raw_provider)
+                .ok_or_else(|| format!("unknown provider identity: {raw_provider}"))?
+                .as_str();
             // UI cannot mint lease tokens or bypass claim path — add only.
             let store = open_cron(home).map_err(|e| e.to_string())?;
             let j = store
@@ -152,4 +155,33 @@ fn cron_job_json(j: optimus_kernel::CronJob) -> serde_json::Value {
         "prompt": j.prompt,
         "created_at": j.created_at,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::handle;
+    use serde_json::json;
+
+    #[test]
+    fn cron_add_migrates_the_legacy_openai_spelling_to_the_catalog_id() {
+        let home = tempfile::tempdir().unwrap();
+        let job = handle(
+            &home.path().to_path_buf(),
+            "cron_add",
+            json!({
+                "name": "legacy",
+                "every_secs": 60,
+                "prompt": "tick",
+                "provider": "openai_compat",
+            }),
+        )
+        .unwrap();
+
+        assert_eq!(job["provider"], "openai-compat");
+        let stored = optimus_kernel::open_cron(home.path())
+            .unwrap()
+            .list()
+            .unwrap();
+        assert_eq!(stored[0].provider, "openai-compat");
+    }
 }

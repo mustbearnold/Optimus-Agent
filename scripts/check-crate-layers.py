@@ -44,8 +44,8 @@ BANNED_CONSTRUCTORS = (
 # (app-relative file, constructor) -> allowed occurrence count.
 # Seeded 2026-07-28 from #65's measured violation table; may only shrink.
 APPS_ALLOWLIST: dict[tuple[str, str], int] = {
-    # chat-offline (main.rs:700), chat (main.rs:757), gateway drain (main.rs:1585)
-    ("optimus-cli/src/main.rs", "Kernel::open_session"): 3,
+    # chat-offline (main.rs)
+    ("optimus-cli/src/main.rs", "Kernel::open_session"): 1,
     # gateway HTTP server
     ("optimus-cli/src/gateway_http.rs", "Kernel::open_session"): 1,
     # jobs / resume / resume-all
