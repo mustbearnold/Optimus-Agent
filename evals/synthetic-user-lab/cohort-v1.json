@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "cohort_id": "everyday-autonomy-v1",
+  "description": "Seeded, blind, stateful conversations for the native Optimus TUI.",
+  "scenarios": [
+    {
+      "id": "shift-handover-mara",
+      "kind": "fresh",
+      "private_profile": {
+        "person": "Mara, an early-shift warehouse supervisor",
+        "communication": "Direct, rushed, and comfortable correcting details after seeing a draft.",
+        "latent_goal": "Leave a usable handover, not merely receive advice about writing one."
+      },
+      "approval_policy": "approve_confined",
+      "sessions": [[
+        "I've got five minutes before I leave. Make me a clean handover note: bay 4 scanner is flaky, pallet 728 is waiting on a damage photo, Lee starts the cycle count at 2, and the courier cutoff is 3:30. Save it in the workspace and tell me where.",
+        "Small correction: it's pallet 782, not 728. Update the same note instead of making another one."
+      ]],
+      "rubric": {"max_approvals": 2, "max_tool_calls": 4, "required_terms": ["782"], "forbidden_terms": ["728"]}
+    },
+    {
+      "id": "family-week-jo",
+      "kind": "fresh",
+      "private_profile": {
+        "person": "Jo, a parent coordinating a crowded week",
+        "communication": "Writes in fragments and assumes obvious calendar conflicts will be noticed.",
+        "latent_goal": "A realistic plan that changes cleanly when one constraint moves."
+      },
+      "approval_policy": "deny",
+      "sessions": [[
+        "Can you untangle tomorrow for me? School dropoff 8:20, dentist across town 10:40, groceries before 3, pick-up 3:15, and I need 90 quiet minutes for invoices. Travel to the dentist is half an hour each way.",
+        "Dentist just moved to 1:50. Keep the invoice block intact and redo only what has to move."
+      ]],
+      "rubric": {"max_approvals": 0, "max_tool_calls": 0, "required_terms": ["1:50", "invoice"], "forbidden_terms": []}
+    },
+    {
+      "id": "grant-budget-sam",
+      "kind": "fresh",
+      "private_profile": {
+        "person": "Sam, a volunteer running a neighbourhood food pantry",
+        "communication": "Warm but numerically uncertain; gives raw amounts without a tidy format.",
+        "latent_goal": "Catch the arithmetic and leave behind a reusable budget artifact."
+      },
+      "approval_policy": "approve_confined",
+      "sessions": [[
+        "We got a $2,400 grant. Fridge repair is 615.80, produce 740, fuel vouchers 360, labels 84.50 and we promised to keep 15% unspent. Work out whether that fits and put the budget in a CSV for the committee.",
+        "I forgot delivery crates, another $190. Update the numbers and be plain about whether we're over the spendable amount."
+      ]],
+      "rubric": {"max_approvals": 2, "max_tool_calls": 4, "required_terms": ["190", "over|within|fits"], "forbidden_terms": []}
+    },
+    {
+      "id": "portfolio-copy-dev",
+      "kind": "fresh",
+      "private_profile": {
+        "person": "Dev, a junior designer applying for their first studio role",
+        "communication": "Self-conscious and asks for help without giving a formal specification.",
+        "latent_goal": "Sound credible without having their voice replaced by corporate filler."
+      },
+      "approval_policy": "deny",
+      "sessions": [[
+        "This portfolio intro sounds awful: 'I am a passionate creative who leverages design thinking to make impactful experiences.' I mostly do clear wayfinding and small community posters. Can you make it sound like a real person wrote it?",
+        "That's closer. Make it two sentences, keep the community part, and don't call me passionate or innovative."
+      ]],
+      "rubric": {"max_approvals": 0, "max_tool_calls": 0, "required_terms": ["community|communities"], "forbidden_terms": ["passionate", "innovative"]}
+    },
+    {
+      "id": "garden-returner-ani",
+      "kind": "returning",
+      "private_profile": {
+        "person": "Ani, a renter gradually planning a small balcony garden",
+        "communication": "Returns days later with one remembered constraint changed.",
+        "latent_goal": "Discover whether Optimus distinguishes a durable relationship from one giant chat."
+      },
+      "approval_policy": "deny",
+      "sessions": [
+        ["I get four hours of morning sun on a windy third-floor balcony. Help me choose three edible plants for pots, but nothing toxic to cats."],
+        ["I'm back about the balcony plants. The basil pot can only be 18 cm wide. Does that change your three picks?"]
+      ],
+      "rubric": {"max_approvals": 0, "max_tool_calls": 1, "required_terms": ["18", "cat"], "forbidden_terms": ["earlier three picks"]}
+    }
+  ]
+}

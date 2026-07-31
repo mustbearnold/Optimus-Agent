@@ -232,6 +232,7 @@ tier_gates() {
   spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
+  spawn "test_synthetic_user_lab"    python3 scripts/test_synthetic_user_lab.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_autonomy_profiles"     python3 scripts/test_autonomy_profiles.py
@@ -431,6 +432,7 @@ tier_all() {
   spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
+  spawn "test_synthetic_user_lab"    python3 scripts/test_synthetic_user_lab.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
   spawn "test_autonomy_profiles"     python3 scripts/test_autonomy_profiles.py
