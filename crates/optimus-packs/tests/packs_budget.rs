@@ -334,6 +334,7 @@ fn canonical_descriptor_owns_output_schema_and_replay_class() {
     assert_eq!(read.output_schema["additionalProperties"], false);
     assert_eq!(read.replay, ReplayClass::Deterministic);
     assert_eq!(write.replay, ReplayClass::Convergent);
+    assert!(write.description.contains("absolute_path"));
 }
 
 #[test]

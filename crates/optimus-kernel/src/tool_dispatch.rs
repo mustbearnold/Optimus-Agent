@@ -10,6 +10,34 @@ use super::*;
 use crate::browser_coord::record_agent_browser_coord;
 
 impl Kernel {
+    /// Add the path a user can actually open to a successful workspace write.
+    ///
+    /// Runtime receipts stay portable and content-addressed, so they retain the
+    /// relative path. The model-facing tool result may also name the resolved
+    /// host path: without it, an agent asked "where did you save that?" has to
+    /// probe `pwd` or system mount metadata after the write already succeeded.
+    pub(crate) fn enrich_workspace_tool_data(
+        &self,
+        invocation: ToolInvocation,
+        arguments: &Value,
+        data: &mut Value,
+    ) {
+        if invocation != ToolInvocation::WriteFile {
+            return;
+        }
+        let Some(relative_path) = arguments.get("path").and_then(Value::as_str) else {
+            return;
+        };
+        let Some(object) = data.as_object_mut() else {
+            return;
+        };
+        object.insert("relative_path".into(), json!(relative_path));
+        object.insert(
+            "absolute_path".into(),
+            json!(self.workspace().join(relative_path).display().to_string()),
+        );
+    }
+
     pub(crate) fn tool_schemas(&self) -> Vec<ToolSchema> {
         self.packs.loaded_tools().into_iter().cloned().collect()
     }

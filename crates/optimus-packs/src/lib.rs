@@ -692,7 +692,7 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                 ),
                 tool(
                     ToolInvocation::WriteFile,
-                    "Write workspace file",
+                    "Write workspace file; returns relative_path and absolute_path without terminal",
                     120,
                     object_schema(
                         json!({"path":{"type":"string"},"contents":{"type":"string"}}),

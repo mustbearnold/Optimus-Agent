@@ -335,6 +335,11 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
         .expect("the approved call's result must reach the model");
     let data: serde_json::Value = serde_json::from_str(&carried.content).unwrap();
     assert_eq!(data["data"]["ok"], json!(true));
+    assert_eq!(
+        data["data"]["absolute_path"],
+        json!(project.path().join("src/proof.txt").display().to_string()),
+        "the resumed model must not need a terminal probe to report the saved path"
+    );
     assert!(
         !data["data"]["receipt"].is_null(),
         "the model must see what the effect produced, not just that it ran: {}",
@@ -966,6 +971,11 @@ fn write_file_tool_uses_durable_job() {
     let outcome: ToolOutcome = serde_json::from_str(&tool_message.content).unwrap();
     assert_eq!(outcome.kind, ToolOutcomeKind::Succeeded);
     assert_eq!(outcome.tool_id.as_str(), "write_file");
+    assert_eq!(outcome.data["relative_path"], json!("note.txt"));
+    assert_eq!(
+        outcome.data["absolute_path"],
+        json!(k.workspace().join("note.txt").display().to_string())
+    );
     assert!(outcome.provenance.is_some());
     let provenance = outcome.provenance.as_ref().unwrap();
     assert_eq!(provenance.effect_sha256.len(), 64);

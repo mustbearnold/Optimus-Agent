@@ -251,6 +251,13 @@ impl Kernel {
                     receipt_sha256: effect.receipt_hash,
                 });
                 if succeeded {
+                    self.enrich_workspace_tool_data(
+                        descriptor.invocation,
+                        &call.arguments,
+                        &mut outcome.data,
+                    );
+                }
+                if succeeded {
                     (
                         ChatApprovalStatus::Approved,
                         outcome,

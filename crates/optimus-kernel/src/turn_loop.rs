@@ -403,8 +403,13 @@ impl Kernel {
                             Ok((tool_id, result)) => {
                                 let summary =
                                     format!("{}: {}", descriptor.id.as_str(), summarize(&result));
-                                let data = serde_json::from_str(&result)
+                                let mut data = serde_json::from_str(&result)
                                     .unwrap_or_else(|_| json!({"text": result}));
+                                self.enrich_workspace_tool_data(
+                                    descriptor.invocation,
+                                    &call.arguments,
+                                    &mut data,
+                                );
                                 (
                                     tool_id,
                                     ToolOutcome::succeeded(
