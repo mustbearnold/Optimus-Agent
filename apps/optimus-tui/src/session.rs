@@ -32,6 +32,7 @@ use crate::tool_line::{readable, tool_step};
 use crate::transcript::Chrome;
 
 mod approval;
+mod reservation;
 
 // Both are exercised from this module's test block, beside the rest of the
 // surface's behaviour; neither is called from production code up here.
@@ -128,6 +129,8 @@ pub struct ToolStep {
 /// One observable step of a turn. The wire shape for any transport.
 #[derive(Debug, Clone)]
 pub enum TurnUpdate {
+    /// A fresh turn reserved its durable identity before contacting a provider.
+    SessionReserved(String),
     /// Assistant answer text, streamed.
     Text(String),
     /// Soft status for the footer; never mixed into the answer.
@@ -314,7 +317,7 @@ impl TuiSession {
         self.answer_started = false;
         self.begin("working");
 
-        let params = self.turn_params(&prompt);
+        let mut params = self.turn_params(&prompt);
 
         let (tx, rx) = mpsc::channel();
         let cancel = Arc::new(CancellationToken::new());
@@ -329,6 +332,9 @@ impl TuiSession {
             #[cfg(debug_assertions)]
             if std::env::var_os("OPTIMUS_TUI_PANIC_IN_WORKER").is_some() {
                 panic!("OPTIMUS_TUI_PANIC_IN_WORKER");
+            }
+            if !reservation::ensure(&home, &mut params, &tx) {
+                return;
             }
             let mut sink = stream_sink(tx.clone());
             let outcome = chat_turn_cancellable(&home, params, Some(&mut sink), &worker_cancel);
@@ -571,6 +577,9 @@ impl TuiSession {
         let mut parked = false;
         for update in batch {
             match update {
+                TurnUpdate::SessionReserved(session_id) => {
+                    self.session_id = Some(session_id);
+                }
                 TurnUpdate::Text(delta) => self.append_assistant(&delta),
                 TurnUpdate::Status(status) => self.status = status,
                 TurnUpdate::Tool(step) => self.apply_tool_step(step),
@@ -895,6 +904,34 @@ mod tests {
         settle(&mut session);
         assert_eq!(session.session_id.as_deref(), Some(first.as_str()));
         assert_eq!(session.messages.len(), 4);
+    }
+
+    #[test]
+    fn a_failed_first_turn_keeps_its_session_for_the_follow_up() {
+        let (_dir, mut session) = session();
+        session.provider = "missing-provider".into();
+        session.composer.set("first request");
+        session.submit();
+        settle(&mut session);
+        let first = session
+            .session_id
+            .clone()
+            .expect("the durable id exists before provider failure");
+        assert_eq!(
+            session.turn_params("continue that request")["session"],
+            serde_json::json!(first),
+            "the follow-up is bound before another provider attempt"
+        );
+
+        session.composer.set("continue that request");
+        session.submit();
+        settle(&mut session);
+
+        assert_eq!(session.session_id.as_deref(), Some(first.as_str()));
+        let store = optimus_kernel::SessionStore::open(session.home.join("sessions.db")).unwrap();
+        let sessions = store.list().unwrap();
+        assert_eq!(sessions.len(), 1, "follow-up must not fork");
+        assert_eq!(sessions[0].id.to_string(), first);
     }
 
     #[test]

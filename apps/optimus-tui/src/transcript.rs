@@ -127,7 +127,7 @@ fn greeting() -> Vec<Row> {
         Row {
             role: Role::Assistant,
             segments: vec![Segment::plain(
-                "  Describe a task and press Enter. Ctrl-C stops a run; Esc exits.",
+                "  Describe a task and press Enter. Ctrl-C stops a run; Esc clears a draft.",
             )],
         },
     ]
@@ -354,6 +354,13 @@ mod tests {
 
     fn plain(rows: &[Row]) -> Vec<String> {
         rows.iter().map(Row::plain).collect()
+    }
+
+    #[test]
+    fn greeting_describes_escape_as_draft_clear_not_exit() {
+        let greeting = plain(&rows(&[], 80, Chrome::Plain)).join("\n");
+        assert!(greeting.contains("Esc clears a draft"));
+        assert!(!greeting.contains("Esc exits"));
     }
 
     #[test]
