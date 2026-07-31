@@ -134,7 +134,10 @@ def validate_candidate(worktree: Worktree, relative: str) -> Path | None:
         path.resolve(strict=True).relative_to(worktree.root)
     except (OSError, ValueError) as exc:
         raise HygieneError(f"cleanable path escapes assigned worktree: {relative}") from exc
-    ignored = git(worktree, "check-ignore", "-q", "--", relative)
+    # A trailing-slash ignore rule matches directory contents and the directory
+    # path in Git's pathspec semantics only when the probe is also directory-shaped.
+    ignore_probe = f"{relative}/" if path.is_dir() else relative
+    ignored = git(worktree, "check-ignore", "--no-index", "-q", "--", ignore_probe)
     if ignored.returncode != 0:
         raise HygieneError(f"cleanable path is not gitignored: {relative}")
     tracked = git(worktree, "ls-files", "--", relative)

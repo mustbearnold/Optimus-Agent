@@ -98,10 +98,11 @@ Hot path for coding agents:
 4. `validate --quick` (use full `validate` before delivery/release)
 5. `report`
 
-`check` and the bounded lenses materialize a missing cache automatically.
-`generate` is an optional cache warm/rebuild command, not a source change or a
-delivery step. `validate` computes and validates the deterministic maps in
-memory and therefore succeeds on a clean checkout with no
+`check` is read-only and treats a missing cache as a cold in-memory baseline.
+Bounded lenses materialize a missing cache automatically. `generate` is an
+optional cache warm/rebuild command, not a source change or a delivery step.
+`validate` computes and validates the deterministic maps in memory and
+therefore succeeds on a clean checkout with no
 `.engineering-memory/` directory.
 
 ## Frontmatter ownership

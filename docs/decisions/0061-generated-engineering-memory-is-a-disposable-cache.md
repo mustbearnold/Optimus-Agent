@@ -44,8 +44,9 @@ Generated `.engineering-memory/` JSON is an ignored, disposable local cache.
    Git delivery history remain authority.
 2. `.engineering-memory/` is ignored in full. No generated file is required in
    a commit, review, checkout, archive, or release.
-3. `check` and bounded lenses materialize a missing or structurally unusable
-   cache automatically.
+3. `check` remains read-only and uses the current authoritative tree as an
+   in-memory baseline when cache is absent. Bounded lenses materialize a
+   missing or structurally unusable cache automatically.
 4. A complete but stale cache may provide a local before/after comparison.
    Current lens facts are computed from the authoritative tree rather than
    served as current from that stale cache.

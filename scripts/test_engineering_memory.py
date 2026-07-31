@@ -468,10 +468,15 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertNotIn("owns", overview_relations)
 
     def test_context_lens_stays_within_budget(self) -> None:
-        pack = EM.build_context_pack(
-            budget_tokens=3000,
-            paths=["crates/optimus-kernel/src/execution.rs"],
-        )
+        with mock.patch.object(
+            EM,
+            "maps_for_lens",
+            return_value=EM.build_maps(refresh_staleness=True),
+        ):
+            pack = EM.build_context_pack(
+                budget_tokens=3000,
+                paths=["crates/optimus-kernel/src/execution.rs"],
+            )
         self.assertTrue(pack["ok"])
         self.assertLessEqual(pack["used_tokens"], 3000)
         self.assertIn("EM_CONTEXT v2", pack["text"])
@@ -630,6 +635,28 @@ class EngineeringMemoryTests(unittest.TestCase):
                         value = json.loads((cache / name).read_text(encoding="utf-8"))
                         self.assertEqual(value["generated_by"], EM.GENERATOR)
                         self.assertIs(value["do_not_edit"], True)
+            finally:
+                EM._HASH_CACHE = old_cache
+                EM._HASH_CACHE_DIRTY = old_dirty
+
+    def test_check_uses_missing_cache_as_read_only_cold_baseline(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="engineering-memory-check-", dir=ROOT
+        ) as directory:
+            cache = Path(directory) / ".engineering-memory"
+            old_cache = EM._HASH_CACHE
+            old_dirty = EM._HASH_CACHE_DIRTY
+            try:
+                EM._HASH_CACHE = {"version": 1, "entries": {}}
+                EM._HASH_CACHE_DIRTY = False
+                with (
+                    mock.patch.object(EM, "MEMORY_DIR", cache),
+                    mock.patch.object(EM, "HASH_CACHE_PATH", cache / ".hash-cache.json"),
+                ):
+                    result = EM.check_staleness()
+                    self.assertTrue(result["ok"], result)
+                    self.assertEqual(result["changed_files"], [])
+                    self.assertFalse(cache.exists())
             finally:
                 EM._HASH_CACHE = old_cache
                 EM._HASH_CACHE_DIRTY = old_dirty

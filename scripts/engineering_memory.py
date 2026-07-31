@@ -2270,12 +2270,19 @@ def live_file_sha_map() -> dict[str, str]:
 
 
 def check_staleness() -> dict[str, Any]:
-    ensure_cache()
+    # `check` is a read-only gate. A missing disposable cache establishes the
+    # current authoritative tree as its in-memory baseline; bounded lenses may
+    # materialize cache files when acceleration is actually requested.
+    loaded = load_generated_maps()
+    has_baseline = cache_is_complete(loaded)
     new_files = live_file_sha_map()
-    current = build_knowledge_staleness(refresh=False, sha_map=new_files)
+    current = build_knowledge_staleness(
+        refresh=not has_baseline,
+        sha_map=new_files,
+    )
     old_index_path = MEMORY_DIR / "repository-index.json"
     changed_files: list[str] = []
-    if old_index_path.exists():
+    if has_baseline and old_index_path.exists():
         try:
             old = json.loads(old_index_path.read_text(encoding="utf-8"))
             old_files = {item["path"]: item["sha256"] for item in old.get("files", [])}
@@ -2286,12 +2293,10 @@ def check_staleness() -> dict[str, Any]:
             )
         except (OSError, json.JSONDecodeError, MemoryError) as exc:
             changed_files = [f"unable to compare repository index: {exc}"]
-    else:
-        changed_files = ["no generated repository baseline"]
     stale_documents = [item["document"] for item in current["documents"] if item["stale"]]
     impact = None
     impact_path = MEMORY_DIR / "change-impact.json"
-    if impact_path.exists():
+    if has_baseline and impact_path.exists():
         try:
             impact = json.loads(impact_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -2319,7 +2324,8 @@ def check_staleness() -> dict[str, Any]:
             affected[path] = stale_docs
         if watch_docs:
             watch_hits[path] = watch_docs
-    _save_hash_cache()
+    if has_baseline:
+        _save_hash_cache()
     return {
         "ok": not stale_documents and not changed_files,
         "changed_files": changed_files,
@@ -2377,10 +2383,8 @@ def query_impact(paths: list[str]) -> dict[str, Any]:
 
 
 def query_stale() -> dict[str, Any]:
-    ensure_cache()
-    current = build_knowledge_staleness(refresh=False)
+    current = maps_for_lens()["knowledge-staleness.json"]
     stale = [item for item in current["documents"] if item.get("stale")]
-    _save_hash_cache()
     return {
         "ok": not stale,
         "stale_count": len(stale),
