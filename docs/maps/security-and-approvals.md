@@ -47,6 +47,7 @@ validated_by:
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
+  - crates/optimus-kernel/src/credential.rs
   - crates/optimus-packs/tests/packs_budget.rs
   - apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
@@ -263,14 +264,17 @@ messaging exactly-once remains residual — doctor/UI/CLI state that explicitly.
 
 **Confirmed current behaviour:** Codex credentials are serialized through
 `SystemCredentialProtector`. Windows stores a DPAPI-protected versioned envelope
-and migrates legacy plaintext once; corruption fails without rewrite. Other
-platforms retain a versioned plaintext fallback but apply user-only file
-permissions where the platform supports them. Import reads Hermes or Codex CLI
-credential files. Status responses omit token values.
+and migrates legacy plaintext once; corruption fails without rewrite. Linux
+encrypts the versioned credential envelope with AES-256-GCM and keeps the
+random 32-byte master key in Secret Service. The keyring value is Base64 text
+so text-typed Secret Service implementations never receive invalid UTF-8; reads
+also accept the legacy raw 32-byte form. The encrypted credential file remains
+owner-only. Platforms without either backend fail closed. Import reads Hermes
+or Codex CLI credential files. Status responses omit token values.
 
-**Unknown or unresolved behaviour:** non-Windows encryption-at-rest, backup/key
-recovery, credential expiry/revocation automation, comprehensive redaction
-audit, and local IPC process authorization remain absent.
+**Unknown or unresolved behaviour:** backup/key recovery, credential
+expiry/revocation automation, comprehensive redaction audit, and local IPC
+process authorization remain absent.
 
 ## Security ownership gaps
 

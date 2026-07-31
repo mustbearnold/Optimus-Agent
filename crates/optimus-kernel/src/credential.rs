@@ -361,7 +361,11 @@ mod platform {
                 Err(KeyringError::NoEntry) => Ok(None),
                 Err(error) => Err(map_keyring_error(error)),
             },
-            |key| entry.set_secret(key).map_err(map_keyring_error),
+            |key| {
+                entry
+                    .set_password(&encode_master_key(key))
+                    .map_err(map_keyring_error)
+            },
             || {
                 use aes_gcm::aead::rand_core::RngCore;
                 use aes_gcm::aead::OsRng;
@@ -371,6 +375,13 @@ mod platform {
                 key
             },
         )
+    }
+
+    #[cfg(target_os = "linux")]
+    pub(super) fn encode_master_key(key: &[u8]) -> String {
+        use base64::Engine as _;
+
+        base64::engine::general_purpose::STANDARD.encode(key)
     }
 
     #[cfg(target_os = "linux")]
@@ -412,7 +423,20 @@ mod platform {
     }
 
     #[cfg(target_os = "linux")]
-    fn decode_master_key(secret: &[u8]) -> Result<[u8; KEY_LEN]> {
+    pub(super) fn decode_master_key(secret: &[u8]) -> Result<[u8; KEY_LEN]> {
+        use base64::Engine as _;
+
+        let decoded;
+        let secret = if secret.len() == KEY_LEN {
+            secret
+        } else {
+            decoded = base64::engine::general_purpose::STANDARD
+                .decode(secret)
+                .map_err(|_| {
+                    KernelError::Model("Secret Service returned a malformed credential key".into())
+                })?;
+            decoded.as_slice()
+        };
         if secret.len() != KEY_LEN {
             return Err(KernelError::Model(
                 "Secret Service returned a credential key with unexpected length".into(),
@@ -575,7 +599,10 @@ mod linux_crypto_tests {
 
     use tempfile::tempdir;
 
-    use super::platform::{load_or_create_master_key_locked, protect_with_key, unprotect_with_key};
+    use super::platform::{
+        decode_master_key, encode_master_key, load_or_create_master_key_locked, protect_with_key,
+        unprotect_with_key,
+    };
 
     #[test]
     fn secret_service_key_encrypts_with_authentication_and_random_nonce() {
@@ -596,6 +623,16 @@ mod linux_crypto_tests {
         let last = tampered.last_mut().expect("ciphertext byte");
         *last ^= 1;
         assert!(unprotect_with_key(&key, &tampered).is_err());
+    }
+
+    #[test]
+    fn secret_service_master_key_is_stored_as_utf8_text() {
+        let key = [0xff_u8; 32];
+        let encoded = encode_master_key(&key);
+
+        assert!(encoded.is_ascii());
+        assert_eq!(decode_master_key(encoded.as_bytes()).unwrap(), key);
+        assert_eq!(decode_master_key(&key).unwrap(), key);
     }
 
     #[test]

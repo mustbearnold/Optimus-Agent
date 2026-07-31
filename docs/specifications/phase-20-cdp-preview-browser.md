@@ -5,7 +5,8 @@ covers:
   - Cargo.toml
   - crates/optimus-browser/src/**
   - crates/optimus-packs/src/**
-  - crates/optimus-kernel/src/**
+  - crates/optimus-kernel/src/browser.rs
+  - crates/optimus-kernel/src/lib.rs
   - apps/optimus-desktop/src/**
   - apps/optimus-desktop/ui/**
 depends_on:
