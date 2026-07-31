@@ -90,6 +90,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0061 | Generated Engineering Memory is a disposable cache | Accepted | Source, tests, curated docs, ADRs, and Git remain authority; ignored deterministic maps auto-materialize for lenses and validation computes truth without cache artifacts. |
 | 0062 | Source and Development are separate workspace planes | Accepted | Current clean view is named Repository; Git, worktrees, land evidence, tools, builds, caches, and recoverable root shadow live under Development. |
 | 0063 | Documentation is a governed authority plane | Accepted | Typed planes, exclusive authority routes, durable source-binding review, deterministic catalog/search, local-link validation, and retrieval benchmarks. |
+| 0064 | Temporal project knowledge is derived provenance | Accepted | Git event history, semantic lifecycle, and local observations remain separate; generated graphs are disposable and age alone never authorizes deletion. |
 
 ## Known documentary debt
 

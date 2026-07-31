@@ -144,6 +144,30 @@ def validate_database(payload: dict[str, Any], root: Path = ROOT) -> list[dict[s
             errors.append(f"{component_id}: at least one common misconception is required")
         if not isinstance(component.get("safe_to_delete"), bool):
             errors.append(f"{component_id}: safe_to_delete must be boolean")
+        lifecycle_events = component.get("lifecycle_events", [])
+        if not isinstance(lifecycle_events, list):
+            errors.append(f"{component_id}: lifecycle_events must be a list")
+            lifecycle_events = []
+        previous_at = ""
+        for event in lifecycle_events:
+            if not isinstance(event, dict):
+                errors.append(f"{component_id}: lifecycle event must be an object")
+                continue
+            at = str(event.get("at", ""))
+            state = event.get("state")
+            if state not in LIFECYCLES:
+                errors.append(f"{component_id}: lifecycle event has invalid state")
+            try:
+                dt.date.fromisoformat(at)
+            except ValueError:
+                errors.append(f"{component_id}: lifecycle event date must be ISO")
+            if previous_at and at < previous_at:
+                errors.append(f"{component_id}: lifecycle events must be chronological")
+            previous_at = at
+            if not event.get("reason") or not event.get("evidence"):
+                errors.append(f"{component_id}: lifecycle event needs reason and evidence")
+        if lifecycle_events and lifecycle_events[-1].get("state") != component.get("lifecycle"):
+            errors.append(f"{component_id}: latest lifecycle event must match current lifecycle")
         if path.startswith("workspace://"):
             if component.get("repository_role") != "external":
                 errors.append(f"{component_id}: workspace URI must have external role")

@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -109,12 +110,17 @@ def build_plan(caller: Path) -> dict[str, Any]:
     assigned = (root / "Development" / "worktrees").resolve()
     retire: list[dict[str, Any]] = []
     prunable: list[dict[str, str]] = []
-    for item in worktree_blocks(common, root):
+    blocks = worktree_blocks(common, root)
+    registered_paths: set[Path] = set()
+    registration_heads: dict[str, str] = {}
+    for item in blocks:
         shown = item.get("worktree", "")
         path = Path(shown).resolve(strict=False)
+        registration_heads[Path(shown).name] = item.get("HEAD", "")
         if "prunable" in item:
             prunable.append({"registered": shown, "head": item.get("HEAD", "")})
             continue
+        registered_paths.add(path)
         if path == caller or path == (root / "Repository").resolve() or "bare" in item:
             continue
         try:
@@ -131,11 +137,41 @@ def build_plan(caller: Path) -> dict[str, Any]:
             "branch": item.get("branch", "detached"), "tree": tree,
             "dirty": tree != head_tree,
         })
+    for receipt_path in sorted(
+        (root / "Development" / "land" / "worktree-retirements").glob("receipt-*.json")
+    ):
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        for item in [*receipt.get("pruned", []), *receipt.get("retired", [])]:
+            shown = str(item.get("registered") or item.get("path") or "")
+            if shown and item.get("head"):
+                registration_heads.setdefault(Path(shown).name, str(item["head"]))
+    orphan: list[dict[str, Any]] = []
+    if assigned.is_dir():
+        for path in sorted(assigned.iterdir(), key=lambda value: value.name):
+            resolved = path.resolve(strict=False)
+            if not path.is_dir() or resolved == caller or resolved in registered_paths:
+                continue
+            marker = path / ".git"
+            registration = path.name
+            if marker.is_file():
+                line = marker.read_text(encoding="utf-8").strip()
+                if line.startswith("gitdir: "):
+                    registration = Path(line.removeprefix("gitdir: ").strip()).name
+            head = registration_heads.get(registration)
+            if not head:
+                raise Refusal(f"orphan checkout has no recorded former HEAD: {path}")
+            tree = snapshot_tree(common, path, head, root / "Development" / "land" / "tmp")
+            head_tree = run(common, root, "show", "-s", "--format=%T", head).stdout.strip()
+            orphan.append({
+                "path": str(resolved), "registration": registration,
+                "head": head, "tree": tree, "dirty": tree != head_tree,
+            })
     plan = {
         "schema_version": 1,
         "caller": str(caller),
         "retire": sorted(retire, key=lambda value: value["path"]),
         "prunable": sorted(prunable, key=lambda value: value["registered"]),
+        "orphan": sorted(orphan, key=lambda value: value["path"]),
     }
     digest = hashlib.sha256(canonical(plan).encode()).hexdigest()
     plan["sha256"] = digest
@@ -166,11 +202,12 @@ def execute(caller: Path, digest: str) -> dict[str, Any]:
         if actual != expected:
             raise Refusal("worktree state changed after planning; generate a new plan")
         recovered: list[dict[str, str]] = []
-        for item in expected["retire"]:
+        for item in [*expected["retire"], *expected.get("orphan", [])]:
             if item["dirty"]:
                 message = (
                     "Optimus managed retired-worktree recovery\n\n"
-                    f"Path: {item['path']}\nBranch: {item['branch']}\nPlan: {digest}\n"
+                    f"Path: {item['path']}\n"
+                    f"Branch: {item.get('branch', 'orphaned-registration')}\nPlan: {digest}\n"
                 )
                 created = run(
                     common, root,
@@ -187,6 +224,16 @@ def execute(caller: Path, digest: str) -> dict[str, Any]:
                 if updated.returncode != 0:
                     raise Refusal(f"cannot record recovery ref for {item['path']}")
                 recovered.append({"path": item["path"], "ref": ref, "commit": created.stdout.strip()})
+        for item in expected.get("orphan", []):
+            path_to_remove = Path(item["path"])
+            try:
+                path_to_remove.relative_to((root / "Development" / "worktrees").resolve())
+            except ValueError as error:
+                raise Refusal(f"orphan path escaped assigned root: {path_to_remove}") from error
+            if path_to_remove == caller:
+                raise Refusal("active caller appeared in orphan retirement plan")
+            shutil.rmtree(path_to_remove)
+        for item in expected["retire"]:
             removed = run(common, root, "worktree", "remove", "--force", item["registered"])
             if removed.returncode != 0:
                 raise Refusal(f"cannot retire {item['path']}: {removed.stderr.strip()}")
@@ -196,6 +243,7 @@ def execute(caller: Path, digest: str) -> dict[str, Any]:
         receipt = {
             "schema_version": 1, "plan_sha256": digest,
             "retired": expected["retire"], "pruned": expected["prunable"],
+            "orphaned_directories": expected.get("orphan", []),
             "recoveries": recovered,
         }
         receipt_path = root / "Development" / "land" / "worktree-retirements" / f"receipt-{digest}.json"
@@ -216,7 +264,10 @@ def main() -> int:
             print(canonical(result), end="")
         else:
             result = execute(Path.cwd(), args.sha256)
-            print(f"WORKTREES_RETIRED count={len(result['retired'])} pruned={len(result['pruned'])}")
+            print(
+                f"WORKTREES_RETIRED count={len(result['retired'])} "
+                f"orphans={len(result['orphaned_directories'])} pruned={len(result['pruned'])}"
+            )
         return 0
     except Refusal as error:
         print(f"managed worktree retirement refused: {error}", file=sys.stderr)

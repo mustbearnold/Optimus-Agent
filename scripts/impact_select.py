@@ -64,6 +64,10 @@ ESCALATING_PATHS = (
     "scripts/engineering_memory.py",
     "scripts/docs_system.py",
     "scripts/repository_ontology.py",
+    "scripts/project_knowledge.py",
+    "scripts/test_project_knowledge.py",
+    "scripts/managed_project_cleanup.py",
+    "scripts/test_managed_project_cleanup.py",
     "docs/repository-components.json",
     "scripts/verify_skip_report.py",
 )

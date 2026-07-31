@@ -87,6 +87,34 @@ orient:
 explain-path path:
     @python3 scripts/repository_ontology.py explain-path {{quote(path)}}
 
+# Rebuild the deterministic file/component/commit provenance graph.
+project-graph:
+    @python3 scripts/project_knowledge.py generate
+
+# Current source history, lifecycle deadlines, and machine-local disk state.
+project-status:
+    @python3 scripts/project_knowledge.py status
+
+# Ranked cleanup candidates with deletion authority kept separate from age.
+cleanup-candidates:
+    @python3 scripts/project_knowledge.py cleanup
+
+# Freeze the exact inactive generated-output set before destructive cleanup.
+project-cleanup-plan:
+    @python3 scripts/managed_project_cleanup.py plan
+
+# Remove only the unchanged generated paths from a reviewed exact plan.
+project-cleanup plan_sha256:
+    @python3 scripts/managed_project_cleanup.py execute {{quote(plan_sha256)}}
+
+# Show the complete retained Git history for a current or deleted path.
+path-history path:
+    @python3 scripts/project_knowledge.py history {{quote(path)}}
+
+# Append an immutable local observation under Development/land.
+project-snapshot:
+    @python3 scripts/project_knowledge.py snapshot
+
 # --- focused verification (program P42) ---------------------------------------
 
 # What this patch can break, and why. Reports only; runs nothing.
@@ -195,6 +223,7 @@ em-check:
 # Engineering Memory: regenerate then validate.
 em-generate:
     python3 scripts/engineering_memory.py generate
+    python3 scripts/project_knowledge.py generate
     python3 scripts/engineering_memory.py validate --quick
 
 # Engineering Memory: budgeted context pack for agent prompts.

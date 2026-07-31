@@ -34,6 +34,11 @@ project-content memory, or a production retrieval index.
 2. **Cache** — disposable deterministic indexes in `.engineering-memory/`
 3. **Lenses** — budgeted query views for agents and humans
 
+The temporal project graph is another disposable computed view. It retains
+Git-backed file events and component relationships, while local disk/worktree
+observations remain append-only Development evidence. See
+[`docs/project-knowledge.md`](../project-knowledge.md).
+
 Source, executable tests, curated docs, and accepted decisions remain
 authority. Raw generated JSON is an ignored local acceleration cache: it may be
 deleted at any time and is never delivery evidence. Agents should load lenses,
@@ -94,6 +99,8 @@ python scripts/engineering_memory.py generate
 python scripts/engineering_memory.py validate
 python scripts/engineering_memory.py validate --quick
 python scripts/engineering_memory.py binding > ../optimus-binding.json
+just project-status
+just path-history crates/optimus-kernel
 ```
 
 Hot path for coding agents:

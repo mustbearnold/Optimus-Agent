@@ -16,7 +16,8 @@
     "engineering-memory.authority",
     "testing.synthetic-users",
     "repository.gates"
-    ,"repository.components"
+    ,"repository.components",
+    "development.project-knowledge"
   ],
   "routes": [
     {
@@ -114,6 +115,12 @@
       "keywords": ["what is this path", "component database", "does it ship", "safe to delete", "apps", "crates", "evals", "Source", "Repository", "Development", "stale experiment", "development wiki"],
       "primary": ["repository-components"],
       "supporting": ["repository-and-ownership-map", "development-instructions"]
+    },
+    {
+      "id": "development.project-knowledge",
+      "keywords": ["temporal knowledge graph", "project graph", "what changed", "last edited", "stale file", "cleanup candidates", "orphan worktree", "path history", "disk clutter"],
+      "primary": ["project-knowledge"],
+      "supporting": ["repository-components", "decisions-0064-temporal-project-knowledge-is-derived-provenance"]
     },
     {
       "id": "repository.gates",

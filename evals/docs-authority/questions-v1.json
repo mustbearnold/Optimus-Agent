@@ -71,6 +71,11 @@
       "route": "repository.components"
     },
     {
+      "id": "temporal-project-knowledge",
+      "question": "How does the temporal project knowledge graph show what changed when, stale or deleted paths, orphan worktrees, and safe cleanup without deleting stable source merely because it is old?",
+      "route": "development.project-knowledge"
+    },
+    {
       "id": "repository-gates",
       "question": "What exact just gate commands prove a repository change is valid before delivery?",
       "route": "repository.gates"

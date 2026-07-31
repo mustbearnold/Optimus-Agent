@@ -115,7 +115,7 @@
       "resolved_files": 5
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "f92e0a755aff66a5c52a0475fea20a4f96b292084bc31630cc8a410d4f9a86f5",
+      "binding_sha256": "68e313b68066b76a9dab8274e9f31fe6bdfda81b6765d8dbd5ad0bcf346662d2",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -139,7 +139,7 @@
       "resolved_files": 340
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "b9ff60151c5b83d2b233f51a3416600bccbb9dac1876f413bceca3bd2503c227",
+      "binding_sha256": "eb901d8f7fc836235d061486eeaedca6b3ed49f7d147cf588ec4bb2a04a39cc3",
       "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9
@@ -343,7 +343,7 @@
       "resolved_files": 102
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "5a18e401e8895a6ea593f150c8dc1b2a8558f57ad5f5983a034967ac567b4bfa",
+      "binding_sha256": "5287ab6c59e93800b430a660c46defb6b87bfc177b18d0f0a5503df9ae475b8a",
       "document_sha256": "8c361418e4d79c1d596de7e95f44385d86cae955fcee56d6c60792b61b7c4271",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 7
@@ -475,7 +475,7 @@
       "resolved_files": 6
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "95e86f7e0e515c361fca638c1aa0c97c0071c9eb87c3242fa2ef572b0ba6e159",
+      "binding_sha256": "41d0ef997da004bb83dc0fc27669a11ebfcd48128697769896f799154fb5081f",
       "document_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -517,22 +517,28 @@
       "resolved_files": 9
     },
     "decisions-0061-generated-engineering-memory-is-a-disposable-cache": {
-      "binding_sha256": "9a28ed5c8b5d3a7ad16e6af467c57f92e67101b1013c3b2a00e2a9e0aa546ca0",
+      "binding_sha256": "b9aa44daef7d7256dfa1024a14e37296ae2ee55a2003d5c96428f7757daaa02c",
       "document_sha256": "ee80ffd15add51f53203901a513a41994b766b23ab7fdc335ad5b6ce866cf60d",
       "path": "docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md",
       "resolved_files": 7
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "194d191de152a80f8dcdaf340dadd5573311c824d42ac9a887a870ec7b651825",
+      "binding_sha256": "866e76ba2bf3d8671d5fdd0e78ede623c0b3676cc2642abcc5b8bccadd1fba32",
       "document_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 11
     },
+    "decisions-0064-temporal-project-knowledge-is-derived-provenance": {
+      "binding_sha256": "ce6a5895f708c0fced17b480b35abb4f4a0b0b3f3fff73d544a8d4d6546e923e",
+      "document_sha256": "5f80902db846a3a4d34cd221d80c8c0539c13c6fb39aa9d1fdb98e0b4a51f7ec",
+      "path": "docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md",
+      "resolved_files": 8
+    },
     "decisions-readme": {
-      "binding_sha256": "7528d2d77a09f6b4612a806ec5e02a1be055b0cb2f9cc51e8b03dbbc32cfb18c",
-      "document_sha256": "5fadbe79ca82d0b478ad61f7c5d6600f071a4b1177a005b1ac05fd0fd848e2f5",
+      "binding_sha256": "7407ca31701d94be16ee1746a42f24f239d7f84ad8e2769c52071b62b2600260",
+      "document_sha256": "01335ff744d434d733eaee5d7f01894b53da8865403110aece61a110007fde85",
       "path": "docs/decisions/README.md",
-      "resolved_files": 68
+      "resolved_files": 69
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "c6578999a91e142ec9b1556250e4f2d5cdae8373ea2223d4c8fdaecf8b1fac47",
@@ -548,13 +554,13 @@
     },
     "docs-home": {
       "binding_sha256": null,
-      "document_sha256": "f32b613bfc3c599d1e91cee934c2c7345b02b104fd8a9d338b736bfcba7e1093",
+      "document_sha256": "aa258e9de5278a07e67c4ea52704ef34434832f16f14e3777fdd3659ab38c37e",
       "path": "docs/README.md",
       "resolved_files": 0
     },
     "engineering-memory-readme": {
       "binding_sha256": "4ac3787a8299bb986c0298567a6614715e0559fbc679ee27942a7302e6569f83",
-      "document_sha256": "3e14b4b68d5775f93332cd09e0668f605387744288ed7c0beda492a634505b24",
+      "document_sha256": "bdbeb23edc6d50f60fd413f932ce7f3221dd8b70ca4289609fbdb4b7812c9647",
       "path": "docs/engineering-memory/README.md",
       "resolved_files": 9
     },
@@ -571,7 +577,7 @@
       "resolved_files": 0
     },
     "lessons-ai-agent-mistakes": {
-      "binding_sha256": "a0c42ec4d4490b3717f188364a58e73e30bc8b7d388d3892ea4b6a34df1c9eab",
+      "binding_sha256": "96bbf90580d00f24e1e21954330d436f7525e24399cb2e89a9aed6820d5d40d5",
       "document_sha256": "21be856d4021e53b22ee1fa16614dbca606c1a088d15d44372db1b9ac45d3102",
       "path": "docs/lessons/ai-agent-mistakes.md",
       "resolved_files": 7
@@ -606,15 +612,21 @@
       "path": "docs/maps/README.md",
       "resolved_files": 0
     },
+    "project-knowledge": {
+      "binding_sha256": "a019383c0f611c7d9aa4c3b214dc2f2b1b53d81226fd773e465db2039c84a572",
+      "document_sha256": "22644dfcb8e91ab8d45b15243a168673349451cd76fb41c975e703e09565a471",
+      "path": "docs/project-knowledge.md",
+      "resolved_files": 8
+    },
     "repository-and-ownership-map": {
-      "binding_sha256": "32f0e905f9f54a56f689f71ae1ac4c487e8b982ac7bbf94008eb285781ecbff1",
+      "binding_sha256": "bc0ae54884242fb59aec5c8affbe15b7e2b9c57f490b2a296460a213920cb219",
       "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 23
     },
     "repository-components": {
-      "binding_sha256": "2182ac49c52c23c3671c7426437d3077dc19fd186d6492d30c08576cc1aca61d",
-      "document_sha256": "a76a6db4c0a0bbf3d557cdbdc86ca775ba6feefd8debb9fd7581af256dba2093",
+      "binding_sha256": "41cde0369f2b36f00f5669dc5483f2cbab8e3930ce86ad78f0453c7cb1dcb38c",
+      "document_sha256": "88f63add7fe02df420e385644a31d2e82efcada9bc8aa8ec8738c97288e28c18",
       "path": "docs/repository-components.md",
       "resolved_files": 29
     },

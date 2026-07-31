@@ -918,6 +918,35 @@
       "summary": "Developer procedure for source-backed Engineering Memory regeneration and validation."
     },
     {
+      "concern": "experiment",
+      "distribution": "none",
+      "id": "retired-leptos-spike",
+      "lifecycle": "historical",
+      "lifecycle_events": [
+        {
+          "at": "2026-08-01",
+          "evidence": "Git deletion event plus docs/history repository cleanup record",
+          "reason": "The executable spike was removed after its verdict was captured in project history.",
+          "state": "historical"
+        }
+      ],
+      "not": [
+        "An active frontend direction",
+        "Current executable source"
+      ],
+      "optional_path": true,
+      "paired_with": [
+        "development-knowledge"
+      ],
+      "parent": "repository-root",
+      "path": "spikes/001-leptos-wry-csr",
+      "repository_role": "historical",
+      "retention": "conditional",
+      "safe_to_delete": true,
+      "storage_plane": "repository",
+      "summary": "Retired standalone Leptos and Wry experiment preserved only as a compact historical verdict."
+    },
+    {
       "concern": "development-tooling",
       "distribution": "generated-local",
       "id": "cargo-build-cache",
@@ -953,6 +982,142 @@
       "safe_to_delete": false,
       "storage_plane": "development",
       "summary": "Machine-local worktrees, delivery records, evidence, caches, tools, and archives."
+    },
+    {
+      "concern": "evidence",
+      "distribution": "generated-local",
+      "id": "development-archive",
+      "lifecycle": "historical",
+      "not": [
+        "Current repository authority",
+        "Automatically disposable data"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/Archive",
+      "repository_role": "external",
+      "retention": "conditional",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Recoverable pre-migration and historical local snapshots awaiting explicit retention decisions."
+    },
+    {
+      "concern": "delivery-control",
+      "distribution": "generated-local",
+      "id": "development-git-control",
+      "lifecycle": "primary",
+      "not": [
+        "Disposable cache",
+        "A user-editable source checkout"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/git",
+      "repository_role": "external",
+      "retention": "essential",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Shared Git object database and linked-worktree registrations for managed delivery."
+    },
+    {
+      "concern": "evidence",
+      "distribution": "generated-local",
+      "id": "development-land-records",
+      "lifecycle": "primary",
+      "not": [
+        "Temporary build cache",
+        "GitHub repository content"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/land",
+      "repository_role": "external",
+      "retention": "essential",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Managed checkpoints, land receipts, recovery refs, locks, and verification evidence."
+    },
+    {
+      "concern": "knowledge",
+      "distribution": "generated-local",
+      "id": "development-reference",
+      "lifecycle": "supporting",
+      "not": [
+        "Optimus source authority",
+        "Installed product data"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/reference",
+      "repository_role": "external",
+      "retention": "conditional",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Machine-local external reference material used for comparison and development research."
+    },
+    {
+      "concern": "development-tooling",
+      "distribution": "generated-local",
+      "id": "development-scratch",
+      "lifecycle": "generated",
+      "not": [
+        "Managed land evidence",
+        "Authored source progress"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/t",
+      "repository_role": "external",
+      "retention": "regenerable",
+      "safe_to_delete": true,
+      "storage_plane": "development",
+      "summary": "Disposable development scratch and short-lived temporary files."
+    },
+    {
+      "concern": "evidence",
+      "distribution": "generated-local",
+      "id": "development-temporary-evidence",
+      "lifecycle": "generated",
+      "not": [
+        "Versioned repository data",
+        "Blanket safe-to-delete cache"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/tmp",
+      "repository_role": "external",
+      "retention": "conditional",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Large temporary and raw evidence area requiring per-child retention review before cleanup."
+    },
+    {
+      "concern": "development-tooling",
+      "distribution": "generated-local",
+      "id": "development-tools",
+      "lifecycle": "supporting",
+      "not": [
+        "Product runtime tools",
+        "Always-safe deletion"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/tools",
+      "repository_role": "external",
+      "retention": "conditional",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Machine-local bundled development tools and browser payloads required by managed gates."
+    },
+    {
+      "concern": "development-tooling",
+      "distribution": "generated-local",
+      "id": "development-worktrees",
+      "lifecycle": "generated",
+      "not": [
+        "Permanent source archives",
+        "Remote branches"
+      ],
+      "parent": "workspace-development-state",
+      "path": "workspace://Development/worktrees",
+      "repository_role": "external",
+      "retention": "conditional",
+      "safe_to_delete": false,
+      "storage_plane": "development",
+      "summary": "Isolated active coding-agent checkouts; stale instances require managed recovery-aware retirement."
     },
     {
       "concern": "workspace-view",
@@ -1021,7 +1186,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "f32b613bfc3c599d1e91cee934c2c7345b02b104fd8a9d338b736bfcba7e1093",
+      "content_sha256": "aa258e9de5278a07e67c4ea52704ef34434832f16f14e3777fdd3659ab38c37e",
       "headings": [
         "Optimus Agent documentation",
         "Start with the answer you need",
@@ -4372,7 +4537,33 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5fadbe79ca82d0b478ad61f7c5d6600f071a4b1177a005b1ac05fd0fd848e2f5",
+      "content_sha256": "5f80902db846a3a4d34cd221d80c8c0539c13c6fb39aa9d1fdb98e0b4a51f7ec",
+      "headings": [
+        "ADR-0064: Temporal project knowledge is derived provenance",
+        "Context",
+        "Decision",
+        "Reasons",
+        "Alternatives considered",
+        "Consequences",
+        "Risks and mitigations",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0064-temporal-project-knowledge-is-derived-provenance",
+      "path": "docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Establishes a derived temporal project graph that separates Git event history, authored semantic lifecycle, and append-only local observations while forbidding deletion by age alone.",
+      "title": "ADR-0064: Temporal project knowledge is derived provenance",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "01335ff744d434d733eaee5d7f01894b53da8865403110aece61a110007fde85",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -4449,7 +4640,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "3e14b4b68d5775f93332cd09e0668f605387744288ed7c0beda492a634505b24",
+      "content_sha256": "bdbeb23edc6d50f60fd413f932ce7f3221dd8b70ca4289609fbdb4b7812c9647",
       "headings": [
         "Optimus Engineering Memory",
         "Planes",
@@ -5712,7 +5903,26 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "a76a6db4c0a0bbf3d557cdbdc86ca775ba6feefd8debb9fd7581af256dba2093",
+      "content_sha256": "22644dfcb8e91ab8d45b15243a168673349451cd76fb41c975e703e09565a471",
+      "headings": [
+        "Temporal project knowledge",
+        "Operator commands",
+        "Safety laws",
+        "Provenance model"
+      ],
+      "id": "project-knowledge",
+      "path": "docs/project-knowledge.md",
+      "plane": "current",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Canonical temporal project-control system for file history, component lifecycle, local workspace observations, and evidence-backed cleanup decisions.",
+      "title": "Temporal project knowledge",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "88f63add7fe02df420e385644a31d2e82efcada9bc8aa8ec8738c97288e28c18",
       "headings": [
         "Repository component authority",
         "Agent startup",
@@ -6604,7 +6814,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "81393ff64d0d7f53df6f7f2352c7e7d28321c3bf2833a2b084ee8c855f9bf6c8",
+  "documents_sha256": "b6f863d6f2464ec6d7a4c638829543dcd25bd4c3c24aa3fca5c6b7f32876aef2",
   "routes": [
     {
       "id": "docs.navigation",
@@ -6904,6 +7114,27 @@
       "supporting": [
         "repository-and-ownership-map",
         "development-instructions"
+      ]
+    },
+    {
+      "id": "development.project-knowledge",
+      "keywords": [
+        "temporal knowledge graph",
+        "project graph",
+        "what changed",
+        "last edited",
+        "stale file",
+        "cleanup candidates",
+        "orphan worktree",
+        "path history",
+        "disk clutter"
+      ],
+      "primary": [
+        "project-knowledge"
+      ],
+      "supporting": [
+        "repository-components",
+        "decisions-0064-temporal-project-knowledge-is-derived-provenance"
       ]
     },
     {

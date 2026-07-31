@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -46,16 +47,20 @@ class WorktreeRetirementTests(unittest.TestCase):
             repository = root / "Repository"
             command(root.parent, "git", f"--git-dir={common}", "worktree", "add", "--detach", str(repository), commit)
             (stale / "file.txt").write_text("unlanded\n", encoding="utf-8")
+            orphan = root / "Development" / "worktrees" / "orphan-copy"
+            shutil.copytree(stale, orphan)
 
             planned = retirement.plan(current)
             self.assertEqual([str(stale)], [item["path"] for item in planned["retire"]])
+            self.assertEqual([str(orphan)], [item["path"] for item in planned["orphan"]])
             self.assertTrue(planned["retire"][0]["dirty"])
 
             receipt = retirement.execute(current, planned["sha256"])
             self.assertFalse(stale.exists())
+            self.assertFalse(orphan.exists())
             self.assertTrue(current.exists())
             self.assertTrue(repository.exists())
-            recovery = receipt["recoveries"][0]
+            recovery = next(item for item in receipt["recoveries"] if item["path"] == str(stale))
             recovered = command(root.parent, "git", f"--git-dir={common}", "show", f"{recovery['commit']}:file.txt")
             self.assertEqual(recovered, "unlanded")
 

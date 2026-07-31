@@ -50,8 +50,17 @@ This is the generated human view of `docs/repository-components.json`.
 | `skills` | Focused procedures for coding agents developing and verifying Optimus Agent. | `supporting` | `repository-only` | no |
 | `skills/optimus-native-ui-testing` | Developer procedure for installed native UI and live-surface verification. | `supporting` | `repository-only` | no |
 | `skills/update-engineering-memory` | Developer procedure for source-backed Engineering Memory regeneration and validation. | `supporting` | `repository-only` | no |
+| `spikes/001-leptos-wry-csr` | Retired standalone Leptos and Wry experiment preserved only as a compact historical verdict. | `historical` | `none` | yes |
 | `target` | Ignored Cargo build cache and compiled development output. | `generated` | `generated-local` | yes |
 | `workspace://Development` | Machine-local worktrees, delivery records, evidence, caches, tools, and archives. | `generated` | `generated-local` | no |
+| `workspace://Development/Archive` | Recoverable pre-migration and historical local snapshots awaiting explicit retention decisions. | `historical` | `generated-local` | no |
+| `workspace://Development/git` | Shared Git object database and linked-worktree registrations for managed delivery. | `primary` | `generated-local` | no |
+| `workspace://Development/land` | Managed checkpoints, land receipts, recovery refs, locks, and verification evidence. | `primary` | `generated-local` | no |
+| `workspace://Development/reference` | Machine-local external reference material used for comparison and development research. | `supporting` | `generated-local` | no |
+| `workspace://Development/t` | Disposable development scratch and short-lived temporary files. | `generated` | `generated-local` | yes |
+| `workspace://Development/tmp` | Large temporary and raw evidence area requiring per-child retention review before cleanup. | `generated` | `generated-local` | no |
+| `workspace://Development/tools` | Machine-local bundled development tools and browser payloads required by managed gates. | `supporting` | `generated-local` | no |
+| `workspace://Development/worktrees` | Isolated active coding-agent checkouts; stale instances require managed recovery-aware retirement. | `generated` | `generated-local` | no |
 | `workspace://Repository` | Clean read-only view of the exact content landed on GitHub main. | `generated` | `none` | no |
 
 Use `just explain-path <path>` for misconceptions, pairings, and output destinations.

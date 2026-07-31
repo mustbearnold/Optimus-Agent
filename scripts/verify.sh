@@ -223,6 +223,7 @@ tier_gates() {
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/docs_system.py check
   spawn "repository-ontology"        python3 scripts/repository_ontology.py check
+  spawn "temporal-project-knowledge" python3 scripts/project_knowledge.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
@@ -230,6 +231,8 @@ tier_gates() {
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_docs_system"           python3 scripts/test_docs_system.py
   spawn "test_repository_ontology"   python3 scripts/test_repository_ontology.py
+  spawn "test_project_knowledge"      python3 scripts/test_project_knowledge.py
+  spawn "test_managed_project_cleanup" python3 scripts/test_managed_project_cleanup.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
@@ -431,6 +434,7 @@ tier_all() {
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/docs_system.py check
   spawn "repository-ontology"        python3 scripts/repository_ontology.py check
+  spawn "temporal-project-knowledge" python3 scripts/project_knowledge.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
@@ -438,6 +442,8 @@ tier_all() {
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_docs_system"           python3 scripts/test_docs_system.py
   spawn "test_repository_ontology"   python3 scripts/test_repository_ontology.py
+  spawn "test_project_knowledge"      python3 scripts/test_project_knowledge.py
+  spawn "test_managed_project_cleanup" python3 scripts/test_managed_project_cleanup.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
