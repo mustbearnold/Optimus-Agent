@@ -7,13 +7,11 @@
 # without a CI job that builds it") — this job is what makes Linux claimed.
 name: verify
 
-# push covers main (post-merge proof); pull_request covers every wip/** head —
-# both triggers on wip branches would run each SHA twice for nothing.
+# Every pushed branch verifies its exact SHA. A completed implementation branch
+# can therefore satisfy main's required check before the same commit is
+# fast-forwarded to main; the main push also provides post-land proof.
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
 
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}

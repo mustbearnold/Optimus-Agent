@@ -70,47 +70,44 @@ Do **not** edit, reorganize, install into, or “clean up”:
    the path and ask; do not touch it.
 4. Keep build artifacts, evidence, and temp outputs under this repo
    (`local/tmp/**` preferred) rather than other project directories.
-5. Treat path containment as a hard gate equal to “do not commit unless asked”.
+5. Treat path containment as a hard gate equal to “do not land unverified work”.
 
 ## Naming planes (mandatory — humans and coding agents)
 
 Identifiers from **different planes are never interchangeable**. Coding agents
-must enforce this on every branch name, commit subject, PR title, ADR, issue,
-plan microtask, and grade claim.
+must enforce this on every branch name, commit subject, ADR, issue, plan
+microtask, and grade claim.
 
 | Plane | Token | Authority |
 |---|---|---|
 | Decision | `ADR-NNNN` | `docs/decisions/` |
 | Program | `P##` (program phase) | **Active:** `docs/plans/product-complete-program.md` (program P20–P29). Historical S+++: `docs/plans/s-plus-plus-plus-program.md` (P10–P19 done). Always say **program P##** in prose. |
 | Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` (e.g. full-app `S*.*`) |
-| Delivery | `PR #N` · local `pr/N-slug` | GitHub + `scripts/github_pr_branch.py` |
+| Delivery | full Git commit SHA on `origin/main` | remote `refs/heads/main` |
 | Grade / mark | mark + grade (`S+++`, `A-`…) | `docs/architecture/architecture-marks.md` |
 | Runtime product | `id@version` / crate / pack | source contracts, SemVer, EM |
 
 **Hard gates**
 
-1. `P12` ≠ `PR #12` ≠ `ADR-0012` ≠ grade `S+++`. Never “align” numbers across planes.
-2. GitHub assigns PR numbers. Do not choose a PR number or force local
-   `pr/12-…` because the program phase is P12.
-3. After a PR opens: local branch **must** be `pr/<N>-…`; remote head stays
-   `wip/…` (renaming remote head **closes** the PR).
-4. ADRs are monotonic and permanent; never renumber or invent without scanning
+1. `P12` ≠ a delivery SHA ≠ `ADR-0012` ≠ grade `S+++`. Never “align” identifiers
+   across planes.
+2. ADRs are monotonic and permanent; never renumber or invent without scanning
    `docs/decisions/`.
-5. Commits and PR titles are **emoji-first Conventional Commits**; labels are
-   emoji + `namespace:value` (see contributing docs). Every issue and PR carries
-   at least a `type:` and an `area:` label — `github_pr_branch.py open` refuses
-   without them, and `audit-labels` reports anything opened by hand.
-6. Program phase may appear in title **text** (`program P21 …`, `S+++ P12 …`);
-   delivery number appears only as `PR #N` / `pr/N-…`. Historical product specs
+3. Commits are **emoji-first Conventional Commits**.
+4. Program phase may appear in commit text (`program P21 …`, `S+++ P12 …`);
+   delivery identity is the full landed commit SHA. Historical product specs
    named `phase-20*` are **not** program P20.
-7. Grades move only with source + tests + docs exit criteria — not because a
-   PR merged or a phase label was applied. Product ledger rows are not grades.
-8. Runtime product ids are not program phases or ADR numbers.
+5. Grades move only with source + tests + docs exit criteria — not because a
+   commit landed or a phase label was applied. Product ledger rows are not
+   grades.
+6. Runtime product ids are not program phases or ADR numbers.
+7. A temporary or feature branch is never delivery. Only the SHA read back from
+   remote `refs/heads/main` proves completion.
 
 **Canonical detail:** [`docs/contributing/artifact-naming.md`](docs/contributing/artifact-naming.md)  
-**GitHub mechanics:** [`docs/contributing/github-conventions.md`](docs/contributing/github-conventions.md)
+**Optional issue mechanics:** [`docs/contributing/github-conventions.md`](docs/contributing/github-conventions.md)
 
-If a proposed name collapses two planes, **stop and rename** before commit/PR.
+If a proposed name collapses two planes, **stop and rename** before commit.
 
 ## Architectural laws
 
@@ -185,38 +182,44 @@ If a proposed name collapses two planes, **stop and rename** before commit/PR.
    that pack.
 10. Run `just em-generate` (generate + quick validate).
 11. Run full `python3 scripts/engineering_memory.py validate` before
-    merge/release; report known gaps via `report`.
-12. Do not commit, push, publish, install, or deploy unless explicitly asked.
+    delivery/release; report known gaps via `report`.
+12. The standing direct-main delivery authorization below permits ordinary Git
+    commits and verified pushes for completed Optimus work. Publishing,
+    installing, or deploying outside that Git delivery remains task-scoped.
 
-## PR cadence and sizing (mandatory)
+## Direct-main delivery and sizing (mandatory)
 
-Standing delivery contract (owner instruction, 2026-07-29): **many max-quality
-merged PRs per day**. Throughput comes from merge latency, never from thinner
-slices.
+Standing delivery contract (owner instruction, 2026-07-31):
 
-- **One session → one PR → merged that session.** Follow-on work in the same
-  session appends to the session's open PR before it merges; never a second
-  open PR per session, never a session that ends with a PR left open silently.
-  If genuinely blocked (red CI, review blocker, absent approver), say so and
-  leave the PR ready-to-merge; the next session merges it **before** starting
-  new work — new work never stacks on an unmerged branch.
-- **The unit is the smallest complete change, not the smallest change.** One
-  intent/decision per PR — in this repository, one ADR ≈ one PR. Self-contained:
-  code + tests + ADR + docs + regenerated Engineering Memory + green gates in
-  the same PR; revertable in one revert. Related program items that share
-  machinery land together; below "independently valuable" is too thin. Size by
-  reviewability of the hand-written core (~200–400 lines); tests and generated
-  files do not count against it.
-- **The cycle:** branch off fresh `main` (`wip/<slug>`) → the unit → push →
-  draft PR → independent fresh-context review and CI in parallel → ready →
-  merge commit (repository precedent) → delete the remote branch (only after
-  merge — deleting the head of an *open* PR closes it; see Naming planes) →
-  prune worktrees and stale branches.
-- This cadence is the standing shape of a delivery request. It does not
-  license commits or pushes in sessions that were not asked to deliver
-  (workflow rule 12).
-- PR #117 (12 commits, +14k lines, 7 ADRs in one PR) is the counterexample
-  this section exists to prevent.
+- **Delivery means `origin/main`.** An isolated worktree, local commit, or push
+  to `codex/**`, `wip/**`, or any other feature branch is only implementation
+  state and must never be reported as complete.
+- **Start isolated and current.** Work only in an assigned isolated worktree
+  based on current `origin/main`.
+- **The unit is the smallest complete change, not the smallest change.** Keep
+  one coherent intent self-contained: code + tests + ADR/docs when required +
+  regenerated Engineering Memory + green gates. Related program items that
+  share machinery land together; below “independently valuable” is too thin.
+- **Verify the exact SHA.** Run focused checks and full `just verify`, then
+  commit with ordinary Git. Push the completed commit to its implementation
+  branch so `just verify (Linux)` runs against that exact SHA. The workflow runs
+  on every pushed branch; no pull request is required.
+- **Fast-forward only.** Confirm current `origin/main` is an ancestor of the
+  verified commit, then push that exact commit as a non-force fast-forward to
+  `refs/heads/main`. Never merge, squash, or force-push to deliver.
+- **Read back the remote.** Run `git ls-remote origin refs/heads/main` and
+  require its SHA to equal the intended commit before reporting delivery.
+- **Handle concurrency honestly.** If `main` advances, update the isolated
+  worktree safely, rerun affected verification for the resulting SHA, and retry
+  the fast-forward. Never overwrite concurrent work.
+- **A rejection is a blocker, not alternate delivery.** Repair authorized
+  repository configuration when safe; otherwise report the exact rejection.
+  Never silently fall back to a feature branch or claim completion.
+- Pull requests and issues are not part of the delivery path. Do not introduce
+  that ceremony for routine Optimus delivery.
+- Every completion report states the landed commit SHA, confirmed
+  `origin/main` SHA, verification result and skips, worktree cleanliness, and
+  anything genuinely unfinished.
 
 ## Repository conventions
 
@@ -233,7 +236,8 @@ slices.
   runtime constitution. The installed Optimus runtime must never mutate either.
 - Naming planes and GitHub process are mandatory for coding agents (see Naming
   planes above). Follow `docs/contributing/artifact-naming.md` and
-  `docs/contributing/github-conventions.md`; do not invent alternate schemes.
+  `docs/contributing/github-conventions.md` for optional issue administration;
+  the direct-main delivery policy above controls VCS delivery.
 - New reusable procedures belong in a focused repository skill. Keep this file
   concise.
 
@@ -254,9 +258,9 @@ claude plugin install mattpocock-skills@mattpocock
 
 ### Issue tracker
 
-GitHub issues on `mustbearnold/Optimus-Agent`, via the `gh` CLI. The two-plane
-branch rule and "never push unless asked" (rule 12) override any skill that ends
-in a push. See `docs/agents/issue-tracker.md`.
+GitHub issues on `mustbearnold/Optimus-Agent`, via the `gh` CLI, only when a
+task explicitly requires issue administration. Issues are not a delivery gate.
+See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
