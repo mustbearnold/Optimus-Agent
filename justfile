@@ -50,6 +50,15 @@ undo label:
 land task_id model_flag model effort_flag effort:
     @python3 scripts/managed_delivery.py land {{quote(task_id)}} {{quote(model_flag)}} {{quote(model)}} {{quote(effort_flag)}} {{quote(effort)}}
 
+# Classify every remote branch against main and print the immutable plan digest.
+branch-retirement-plan superseded_json="{}":
+    @python3 scripts/managed_branch_retirement.py plan --superseded-json {{quote(superseded_json)}}
+
+# Delete the exact reviewed plan atomically. Every branch is protected by its
+# observed SHA; main is never included in the push.
+retire-branches plan_sha256 superseded_json="{}":
+    @python3 scripts/managed_branch_retirement.py execute {{quote(plan_sha256)}} --superseded-json {{quote(superseded_json)}}
+
 # --- focused verification (program P42) ---------------------------------------
 
 # What this patch can break, and why. Reports only; runs nothing.

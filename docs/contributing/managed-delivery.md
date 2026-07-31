@@ -4,6 +4,8 @@ status: current
 owns:
   - scripts/managed_delivery.py
   - scripts/test_managed_delivery.py
+  - scripts/managed_branch_retirement.py
+  - scripts/test_managed_branch_retirement.py
   - docs/contributing/managed-delivery.md
 watches:
   - justfile
@@ -11,6 +13,7 @@ watches:
   - AGENTS.md
 validated_by:
   - scripts/test_managed_delivery.py
+  - scripts/test_managed_branch_retirement.py
 last_verified_commit: null
 ---
 
@@ -27,6 +30,8 @@ Coding agents use exactly:
 just checkpoint <label>
 just undo <label>
 just land <task-id> --model <model> --effort <level>
+just branch-retirement-plan '<superseded-json>'
+just retire-branches <plan-sha256> '<superseded-json>'
 ```
 
 They do not run raw history-changing Git. `scripts/managed_delivery.py` is the
@@ -104,6 +109,23 @@ evidence and refusal attempt but does not move the task branch or remote main. A
 push rejection retains the private candidate commit for diagnosis and retry.
 A landed task id is immutable; repeating the same provenance is idempotent,
 while different model or effort values refuse.
+
+## Remote branch retirement
+
+Branch deletion is deliberately separate from landing. The plan command reads
+every remote head and classifies each non-main tip as either an ancestor already
+contained in `main` or an explicitly superseded tip with a recorded reason. Any
+unresolved tip refuses the plan.
+
+The plan's canonical JSON has a SHA-256 digest. Execution recalculates the
+complete remote state and refuses if that digest changed. It then deletes every
+reviewed branch in one atomic push, with an exact-SHA lease per ref. `main` is
+structurally excluded, so a red push removes no branches and concurrent branch
+movement cannot be silently discarded.
+
+A successful operation writes an immutable receipt under
+`local/land/branch-retirements/`. Agents do not replace this command with raw
+`git push --delete`, non-atomic loops, or `gh`.
 
 If remote main changes while gates run, land refuses before committing or
 pushing. A race after the final check is still protected by Git's non-force
