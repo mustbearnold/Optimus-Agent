@@ -13,11 +13,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import project_knowledge_db
 import repository_ontology
 
 
 ROOT = Path(__file__).resolve().parents[1]
-GRAPH = ROOT / ".engineering-memory" / "temporal-project-graph.json"
+GRAPH = ROOT / ".engineering-memory" / "temporal-project-graph.sqlite3"
 SCHEMA_VERSION = 1
 
 
@@ -112,6 +113,16 @@ def component_for(path: str, catalog: dict[str, Any]) -> dict[str, Any]:
     return repository_ontology.resolve_component(path, catalog)
 
 
+def source_identity(root: Path = ROOT, current: list[str] | None = None) -> str:
+    identity = hashlib.sha256()
+    paths = current if current is not None else candidate_files(root)
+    for relative in paths:
+        identity.update(relative.encode())
+        identity.update(b"\0")
+        identity.update(hashlib.sha256((root / relative).read_bytes()).digest())
+    return identity.hexdigest()
+
+
 def build_graph(root: Path = ROOT) -> dict[str, Any]:
     catalog = repository_ontology.catalog_payload()
     commits, histories = parse_history(root)
@@ -120,17 +131,13 @@ def build_graph(root: Path = ROOT) -> dict[str, Any]:
     states = working_states(root)
     files: list[dict[str, Any]] = []
     all_paths = sorted(current_set | set(histories))
-    identity = hashlib.sha256()
+    identity = source_identity(root, current)
     for relative in all_paths:
         path = root / relative
         exists = relative in current_set
         history = histories.get(relative, [])
         component = component_for(relative, catalog)
         content_sha = hashlib.sha256(path.read_bytes()).hexdigest() if exists else None
-        if exists:
-            identity.update(relative.encode())
-            identity.update(b"\0")
-            identity.update(bytes.fromhex(content_sha or ""))
         files.append({
             "id": f"file:{relative}", "path": relative, "exists": exists,
             "bytes": path.stat().st_size if exists else 0,
@@ -163,7 +170,7 @@ def build_graph(root: Path = ROOT) -> dict[str, Any]:
     head = git("rev-parse", "HEAD", root=root).strip()
     return {
         "schema_version": SCHEMA_VERSION,
-        "identity": identity.hexdigest(),
+        "identity": identity,
         "head": head,
         "scope": {
             "repository_history": "HEAD ancestry",
@@ -180,11 +187,29 @@ def build_graph(root: Path = ROOT) -> dict[str, Any]:
     }
 
 
+def graph_path(root: Path = ROOT) -> Path:
+    return root / ".engineering-memory" / GRAPH.name
+
+
 def write_graph(root: Path = ROOT) -> dict[str, Any]:
     graph = build_graph(root)
-    GRAPH.parent.mkdir(parents=True, exist_ok=True)
-    GRAPH.write_text(canonical(graph), encoding="utf-8")
+    project_knowledge_db.write_database(graph_path(root), graph)
     return graph
+
+
+def ensure_current_database(root: Path = ROOT) -> Path:
+    path = graph_path(root)
+    identity = source_identity(root)
+    head = git("rev-parse", "HEAD", root=root).strip()
+    if not project_knowledge_db.matches_source(path, identity, head):
+        project_knowledge_db.write_database(path, build_graph(root))
+    return path
+
+
+def database_graph(root: Path = ROOT) -> dict[str, Any]:
+    path = ensure_current_database(root)
+    with project_knowledge_db.connect(path, readonly=True) as connection:
+        return project_knowledge_db.load_graph(connection)
 
 
 def parse_time(value: str | None) -> dt.datetime | None:
@@ -357,7 +382,7 @@ def cleanup_report(
 
 
 def current_bundle(root: Path = ROOT) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    graph = build_graph(root)
+    graph = database_graph(root)
     observation = workspace_observation(root)
     return graph, observation, cleanup_report(graph, observation)
 
@@ -417,12 +442,9 @@ def print_cleanup(root: Path = ROOT) -> None:
 
 
 def print_history(path: str, root: Path = ROOT) -> None:
-    graph = build_graph(root)
     normalized = repository_ontology.normalize_path(path, root)
-    nodes = [
-        item for item in graph["files"]
-        if item["path"] == normalized or item["path"].startswith(normalized.rstrip("/") + "/")
-    ]
+    database = ensure_current_database(root)
+    nodes = project_knowledge_db.path_history(database, normalized)
     if not nodes:
         raise KnowledgeError(f"no current or historical path matches {path}")
     print(f"PATH HISTORY: {normalized}")
@@ -433,6 +455,37 @@ def print_history(path: str, root: Path = ROOT) -> None:
         )
         for event in node["events"][-10:]:
             print(f"  {event['at']} {event['status']} {event['commit'][:12]}")
+
+
+def print_at(path: str, point: str, root: Path = ROOT) -> None:
+    normalized = repository_ontology.normalize_path(path, root)
+    database = ensure_current_database(root)
+    nodes = project_knowledge_db.path_states(database, normalized, point)
+    if not nodes:
+        raise KnowledgeError(f"no path matches {path} at {point}")
+    print(f"PATH STATE AT {point}: {normalized}")
+    for node in nodes:
+        print(
+            f"{node['path']} exists={str(node['exists']).lower()} status={node['status']} "
+            f"component={node['component']} at={node['at']} commit={node['commit'][:12]}"
+        )
+
+
+def print_neighbors(entity: str, depth: int, point: str | None, root: Path = ROOT) -> None:
+    database = ensure_current_database(root)
+    candidate = entity
+    if not entity.startswith(("file:", "component:", "commit:", "lifecycle:")) and "/" in entity:
+        candidate = repository_ontology.normalize_path(entity, root)
+    resolved = project_knowledge_db.neighbors(
+        database, candidate, depth=depth, point=point
+    )
+    print(canonical({"entity": entity, "at": point or "current", "relations": resolved}), end="")
+
+
+def print_query(query: str, root: Path = ROOT) -> None:
+    database = ensure_current_database(root)
+    columns, rows = project_knowledge_db.readonly_query(database, query)
+    print(canonical({"columns": columns, "rows": rows}), end="")
 
 
 def snapshot(root: Path = ROOT) -> Path:
@@ -461,7 +514,12 @@ def check(root: Path = ROOT) -> dict[str, int]:
         raise KnowledgeError("temporal graph contains an unclassified file")
     if not any(not item["exists"] for item in graph["files"]):
         raise KnowledgeError("temporal graph failed to preserve retired paths")
-    return graph["counts"]
+    stats = project_knowledge_db.validate_projection(graph)
+    return {
+        **graph["counts"],
+        "database_entities": stats["entities"],
+        "database_relations": stats["relations"],
+    }
 
 
 def main() -> int:
@@ -473,18 +531,34 @@ def main() -> int:
     sub.add_parser("cleanup")
     history_parser = sub.add_parser("history")
     history_parser.add_argument("path")
+    at_parser = sub.add_parser("at")
+    at_parser.add_argument("path")
+    at_parser.add_argument("point")
+    neighbors_parser = sub.add_parser("neighbors")
+    neighbors_parser.add_argument("entity")
+    neighbors_parser.add_argument("--depth", type=int, default=1)
+    neighbors_parser.add_argument("--at")
+    query_parser = sub.add_parser("query")
+    query_parser.add_argument("sql")
     sub.add_parser("snapshot")
     args = parser.parse_args()
     try:
         if args.command == "generate":
             graph = write_graph()
-            print(f"TEMPORAL_PROJECT_GRAPH_GENERATED identity={graph['identity']}")
+            with project_knowledge_db.connect(graph_path(), readonly=True) as connection:
+                stats = project_knowledge_db.database_stats(connection)
+            print(
+                "TEMPORAL_PROJECT_DATABASE_GENERATED "
+                f"identity={graph['identity']} entities={stats['entities']} "
+                f"relations={stats['relations']}"
+            )
         elif args.command == "check":
             counts = check()
             print(
-                "TEMPORAL_PROJECT_GRAPH_OK "
+                "TEMPORAL_PROJECT_DATABASE_OK "
                 f"commits={counts['commits']} files={counts['current_files']} "
-                f"historical={counts['historical_files']} events={counts['file_events']}"
+                f"historical={counts['historical_files']} events={counts['file_events']} "
+                f"entities={counts['database_entities']} relations={counts['database_relations']}"
             )
         elif args.command == "status":
             print_status()
@@ -492,10 +566,20 @@ def main() -> int:
             print_cleanup()
         elif args.command == "history":
             print_history(args.path)
+        elif args.command == "at":
+            print_at(args.path, args.point)
+        elif args.command == "neighbors":
+            print_neighbors(args.entity, args.depth, args.at)
+        elif args.command == "query":
+            print_query(args.sql)
         else:
             print(f"PROJECT_KNOWLEDGE_SNAPSHOT {snapshot()}")
         return 0
-    except (KnowledgeError, repository_ontology.OntologyError) as error:
+    except (
+        KnowledgeError,
+        project_knowledge_db.DatabaseError,
+        repository_ontology.OntologyError,
+    ) as error:
         print(f"TEMPORAL_PROJECT_KNOWLEDGE_FAILED\n{error}", file=sys.stderr)
         return 1
 

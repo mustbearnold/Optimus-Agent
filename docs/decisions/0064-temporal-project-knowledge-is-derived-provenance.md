@@ -107,6 +107,13 @@ Reconsider the JSON representation when query volume or cross-repository links
 cannot be answered within a bounded local process. Any replacement must retain
 the three-clock separation and the no-deletion-by-age law.
 
+## Representation addendum (2026-08-01)
+
+ADR-0065 replaces the JSON representation with an embedded SQLite property
+graph after historical and relationship queries became a first-class operator
+surface. It does not replace this decision's provenance authorities, three-clock
+separation, disposable-projection rule or cleanup safety laws.
+
 ## Relevant code
 
 - `scripts/project_knowledge.py`

@@ -5,8 +5,8 @@ plane: decision
 status: current
 authority: record
 summary: This index preserves existing decisions and exposes their current documentary state. Source and tests still determine whether an accepted design is fully implemented.
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+reviewed_on: 2026-08-01
+review_by: 2026-11-01
 knowledge_type: decision-index
 covers:
   - docs/decisions/*.md
@@ -91,6 +91,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0062 | Source and Development are separate workspace planes | Accepted | Current clean view is named Repository; Git, worktrees, land evidence, tools, builds, caches, and recoverable root shadow live under Development. |
 | 0063 | Documentation is a governed authority plane | Accepted | Typed planes, exclusive authority routes, durable source-binding review, deterministic catalog/search, local-link validation, and retrieval benchmarks. |
 | 0064 | Temporal project knowledge is derived provenance | Accepted | Git event history, semantic lifecycle, and local observations remain separate; generated graphs are disposable and age alone never authorizes deletion. |
+| 0065 | Temporal project knowledge is an embedded database | Accepted | The disposable projection is a transactional SQLite property graph with indexed temporal queries, bounded traversal, read-only SQL, migrations, and integrity gates. |
 
 ## Known documentary debt
 

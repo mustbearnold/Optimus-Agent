@@ -4537,7 +4537,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5f80902db846a3a4d34cd221d80c8c0539c13c6fb39aa9d1fdb98e0b4a51f7ec",
+      "content_sha256": "e96e777722a9cd086113850b595d6c122df1ea5ef2868de52cb9599047d5bf28",
       "headings": [
         "ADR-0064: Temporal project knowledge is derived provenance",
         "Context",
@@ -4548,6 +4548,7 @@
         "Risks and mitigations",
         "Evaluation evidence",
         "Conditions for reconsideration",
+        "Representation addendum (2026-08-01)",
         "Relevant code",
         "Relevant tests"
       ],
@@ -4563,7 +4564,33 @@
     },
     {
       "authority": "record",
-      "content_sha256": "01335ff744d434d733eaee5d7f01894b53da8865403110aece61a110007fde85",
+      "content_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
+      "headings": [
+        "ADR-0065: Temporal project knowledge is an embedded database",
+        "Context",
+        "Decision",
+        "Reasons",
+        "Alternatives considered",
+        "Consequences",
+        "Risks and mitigations",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0065-temporal-project-knowledge-is-an-embedded-database",
+      "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Establishes the temporal project graph as an embedded transactional SQLite database with normalized domain tables, property-graph relations, indexed historical queries, migrations, and integrity gates.",
+      "title": "ADR-0065: Temporal project knowledge is an embedded database",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "4b406d963ddac5d05340980f76be220114f013887e9f77e9ce421ce41e55b97b",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -4571,8 +4598,8 @@
       "id": "decisions-readme",
       "path": "docs/decisions/README.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
       "status": "current",
       "summary": "This index preserves existing decisions and exposes their current documentary state. Source and tests still determine whether an accepted design is fully implemented.",
       "title": "Architecture decision index",
@@ -4640,7 +4667,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "bdbeb23edc6d50f60fd413f932ce7f3221dd8b70ca4289609fbdb4b7812c9647",
+      "content_sha256": "72035b3bd6cf80c521563788a82bcd345d283eec82b9e046ef8bc906ce4a5816",
       "headings": [
         "Optimus Engineering Memory",
         "Planes",
@@ -4655,8 +4682,8 @@
       "id": "engineering-memory-readme",
       "path": "docs/engineering-memory/README.md",
       "plane": "current",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
       "status": "current",
       "summary": "Optimus Engineering Memory is repository-local development knowledge for building Optimus itself. It is not runtime memory, conversation memory, project-content memory, or a production retrieval index.",
       "title": "Optimus Engineering Memory",
@@ -5903,7 +5930,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "22644dfcb8e91ab8d45b15243a168673349451cd76fb41c975e703e09565a471",
+      "content_sha256": "bf7ea65a0b6551d34efaced0c436d00d424c1a58aa0f55dde588dbedb3bc6c53",
       "headings": [
         "Temporal project knowledge",
         "Operator commands",
@@ -5916,13 +5943,13 @@
       "review_by": "2026-11-01",
       "reviewed_on": "2026-08-01",
       "status": "current",
-      "summary": "Canonical temporal project-control system for file history, component lifecycle, local workspace observations, and evidence-backed cleanup decisions.",
+      "summary": "Canonical SQLite temporal project-control database for file history, component lifecycle, local workspace observations, graph traversal, and evidence-backed cleanup decisions.",
       "title": "Temporal project knowledge",
       "type": "reference"
     },
     {
       "authority": "canonical",
-      "content_sha256": "88f63add7fe02df420e385644a31d2e82efcada9bc8aa8ec8738c97288e28c18",
+      "content_sha256": "ada3df616a79be4853f6141a7f93e26ecb581adb6aeccbb64329cb421ce65c92",
       "headings": [
         "Repository component authority",
         "Agent startup",
@@ -6814,7 +6841,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "b6f863d6f2464ec6d7a4c638829543dcd25bd4c3c24aa3fca5c6b7f32876aef2",
+  "documents_sha256": "54d3ffb001d8ad3a134e28c17189a0946ba96777c4b9023f1d0c4f07b1ebe0c8",
   "routes": [
     {
       "id": "docs.navigation",

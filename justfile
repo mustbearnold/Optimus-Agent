@@ -87,7 +87,7 @@ orient:
 explain-path path:
     @python3 scripts/repository_ontology.py explain-path {{quote(path)}}
 
-# Rebuild the deterministic file/component/commit provenance graph.
+# Atomically rebuild the indexed SQLite file/component/commit provenance graph.
 project-graph:
     @python3 scripts/project_knowledge.py generate
 
@@ -110,6 +110,18 @@ project-cleanup plan_sha256:
 # Show the complete retained Git history for a current or deleted path.
 path-history path:
     @python3 scripts/project_knowledge.py history {{quote(path)}}
+
+# Query a path as it existed at an exact commit or ISO-8601 timestamp.
+path-at path point:
+    @python3 scripts/project_knowledge.py at {{quote(path)}} {{quote(point)}}
+
+# Traverse indexed property-graph relations from a file, component, or commit.
+project-neighbors entity depth="1":
+    @python3 scripts/project_knowledge.py neighbors {{quote(entity)}} --depth {{quote(depth)}}
+
+# Run one arbitrary read-only SQL query against the generated database.
+project-query query:
+    @python3 scripts/project_knowledge.py query {{quote(query)}}
 
 # Append an immutable local observation under Development/land.
 project-snapshot:

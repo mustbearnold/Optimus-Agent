@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 import project_knowledge
+import project_knowledge_db
 
 
 FIRST = "1" * 40
@@ -58,6 +59,108 @@ def test_graph_retains_deleted_paths_and_is_deterministic() -> None:
         assert keep["content_sha256"]
 
 
+def fixture_graph(root: Path) -> dict[str, object]:
+    (root / "keep.txt").write_text("current\n", encoding="utf-8")
+    with mock.patch.object(project_knowledge, "git", side_effect=fake_git):
+        return project_knowledge.build_graph(root)
+
+
+def test_database_migrates_and_round_trips_the_computed_graph() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        graph = fixture_graph(root)
+        database = root / "graph.sqlite3"
+        stats = project_knowledge_db.write_database(database, graph)
+        assert stats["file_events"] == 4
+        assert stats["entities"] > stats["files"]
+        with project_knowledge_db.connect(database, readonly=True) as connection:
+            assert connection.execute("PRAGMA user_version").fetchone()[0] == 1
+            migrations = list(connection.execute("SELECT version, name FROM schema_migrations"))
+            assert [tuple(row) for row in migrations] == [
+                (1, "initial-temporal-property-graph")
+            ]
+            project_knowledge_db.validate(connection, graph)
+            assert project_knowledge_db.load_graph(connection) == graph
+
+
+def test_database_rebuilds_atomically_when_projection_identity_changes() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        graph = fixture_graph(root)
+        database = root / "graph.sqlite3"
+        assert project_knowledge_db.ensure_database(database, graph) is True
+        assert project_knowledge_db.ensure_database(database, graph) is False
+        changed = {**graph, "identity": "a" * 64}
+        assert project_knowledge_db.ensure_database(database, changed) is True
+        with project_knowledge_db.connect(database, readonly=True) as connection:
+            assert project_knowledge_db.load_graph(connection)["identity"] == "a" * 64
+
+
+def test_as_of_queries_distinguish_commit_time_and_deletion() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        graph = fixture_graph(root)
+        database = root / "graph.sqlite3"
+        project_knowledge_db.write_database(database, graph)
+        before = project_knowledge_db.path_states(database, "old.txt", FIRST[:8])
+        after = project_knowledge_db.path_states(database, "old.txt", SECOND)
+        assert before[0]["exists"] is True
+        assert before[0]["status"] == "A"
+        assert after[0]["exists"] is False
+        assert after[0]["status"] == "D"
+        timestamp = project_knowledge_db.path_states(
+            database, "keep.txt", "2026-07-15T00:00:00Z"
+        )
+        assert timestamp[0]["commit"] == FIRST
+
+
+def test_property_graph_traversal_and_read_only_sql() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        graph = fixture_graph(root)
+        database = root / "graph.sqlite3"
+        project_knowledge_db.write_database(database, graph)
+        relations = project_knowledge_db.neighbors(database, "keep.txt", depth=1)
+        assert {item["predicate"] for item in relations} == {"changed_in", "classified_as"}
+        columns, rows = project_knowledge_db.readonly_query(
+            database, "SELECT count(*) AS retained FROM retired_files"
+        )
+        assert columns == ["retained"]
+        assert rows == [{"retained": 1}]
+        try:
+            project_knowledge_db.readonly_query(database, "DELETE FROM files")
+        except project_knowledge_db.DatabaseError as error:
+            assert "authorized" in str(error).casefold()
+        else:
+            raise AssertionError("read-only query surface accepted a mutation")
+        try:
+            project_knowledge_db.readonly_query(
+                database, f"ATTACH DATABASE '{root / 'escape.sqlite3'}' AS extra_db"
+            )
+        except project_knowledge_db.DatabaseError as error:
+            assert "authorized" in str(error).casefold()
+        else:
+            raise AssertionError("read-only query surface accepted ATTACH")
+        assert not (root / "escape.sqlite3").exists()
+
+
+def test_integrity_gate_detects_property_graph_tampering() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        graph = fixture_graph(root)
+        database = root / "graph.sqlite3"
+        project_knowledge_db.write_database(database, graph)
+        with project_knowledge_db.connect(database) as connection:
+            connection.execute("DELETE FROM relations WHERE predicate = 'classified_as'")
+        with project_knowledge_db.connect(database, readonly=True) as connection:
+            try:
+                project_knowledge_db.validate(connection)
+            except project_knowledge_db.DatabaseError as error:
+                assert "relations are inconsistent" in str(error)
+            else:
+                raise AssertionError("property-graph tampering passed integrity validation")
+
+
 def test_cleanup_separates_age_from_deletion_authority() -> None:
     old = "2025-01-01T00:00:00+00:00"
     graph = {
@@ -103,6 +206,11 @@ def test_cleanup_separates_age_from_deletion_authority() -> None:
 
 def main() -> int:
     test_graph_retains_deleted_paths_and_is_deterministic()
+    test_database_migrates_and_round_trips_the_computed_graph()
+    test_database_rebuilds_atomically_when_projection_identity_changes()
+    test_as_of_queries_distinguish_commit_time_and_deletion()
+    test_property_graph_traversal_and_read_only_sql()
+    test_integrity_gate_detects_property_graph_tampering()
     test_cleanup_separates_age_from_deletion_authority()
     print("PROJECT_KNOWLEDGE_TESTS_OK")
     return 0

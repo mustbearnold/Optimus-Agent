@@ -4,12 +4,13 @@ doc_type: reference
 plane: current
 status: current
 authority: canonical
-summary: Canonical temporal project-control system for file history, component lifecycle, local workspace observations, and evidence-backed cleanup decisions.
+summary: Canonical SQLite temporal project-control database for file history, component lifecycle, local workspace observations, graph traversal, and evidence-backed cleanup decisions.
 reviewed_on: 2026-08-01
 review_by: 2026-11-01
 knowledge_type: temporal-project-knowledge
 owns:
   - scripts/project_knowledge.py
+  - scripts/project_knowledge_db.py
   - scripts/test_project_knowledge.py
   - scripts/managed_project_cleanup.py
   - scripts/test_managed_project_cleanup.py
@@ -17,6 +18,7 @@ depends_on:
   - docs/repository-components.json
   - scripts/repository_ontology.py
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md
+  - docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md
 validated_by:
   - scripts/test_project_knowledge.py
   - scripts/verify.sh
@@ -35,11 +37,27 @@ their authority:
 3. **Observation time** — append-only snapshots of machine-local Development
    areas, physical worktrees, generated caches, and disk use.
 
-The generated graph is `.engineering-memory/temporal-project-graph.json`. It is
-an ignored, deterministic cache; Git history and the authored component
-database remain authority. Machine-local observations are never embedded into
-that deterministic graph because two correct worktrees may have different
-build caches.
+The generated database is
+`.engineering-memory/temporal-project-graph.sqlite3`. It is an ignored,
+disposable SQLite projection; Git history and the authored component database
+remain authority. Machine-local observations are never embedded into that
+deterministic projection because two correct worktrees may have different build
+caches.
+
+The database is a normalized, indexed property graph rather than a serialized
+document. Domain tables retain commits, parents, components, lifecycle events,
+files and file events. Generic `entities` and `relations` tables expose
+`changed_in`, `classified_as`, component-parent, pairing, commit-parent and
+lifecycle edges for bounded traversal. Foreign keys, `CHECK` constraints,
+schema migrations, count reconciliation, graph round trips and SQLite integrity
+checks are executable gates.
+
+Generation happens in a private new database, with fact population committed in
+one transaction. The complete file is validated, flushed and atomically renamed
+over the previous projection.
+Missing, stale, corrupt or unsupported local projections are rebuilt from
+authority; an invalid database can never become authority merely because it is
+persistent.
 
 ## Operator commands
 
@@ -47,6 +65,9 @@ build caches.
 just project-status
 just cleanup-candidates
 just path-history spikes/001-leptos-wry-csr
+just path-at scripts/project_knowledge.py 5df1d567
+just project-neighbors scripts/project_knowledge.py 2
+just project-query "SELECT path, occurred_at, status FROM file_events ORDER BY occurred_at DESC LIMIT 10"
 just project-snapshot
 just project-graph
 just project-cleanup-plan
@@ -58,6 +79,13 @@ inactive generated output recommended for cleanup, active but regenerable
 caches, physical orphan worktrees requiring managed retirement, lifecycle
 decisions due, and old stable source that must not be deleted merely because it
 has not changed.
+
+`path-at` accepts an unambiguous commit id or ISO-8601 timestamp and reconstructs
+path existence from indexed events. `project-neighbors` traverses property-graph
+edges to a maximum depth of four. `project-query` accepts one arbitrary SQL
+statement through a query-only SQLite connection; attempted writes are refused.
+These query commands materialize or refresh the disposable database before
+reading it.
 
 ## Safety laws
 
@@ -76,7 +104,11 @@ has not changed.
 
 ## Provenance model
 
-File and component nodes are entities, commits are recorded activities, and
-file events carry the derivation and time edge. This is a deliberately bounded
-project graph, not a second source-control system and not a runtime Optimus
-memory database.
+File, component, commit and lifecycle nodes are entities. Indexed relations
+carry predicates, event time, commit order and typed properties. Commit order
+answers exact historical queries without pretending wall-clock timestamps are
+an ancestry order; timestamp queries retain their wall-clock meaning.
+
+This is a deliberately bounded embedded project database, not a second
+source-control system, an external graph service or a runtime Optimus memory
+database.

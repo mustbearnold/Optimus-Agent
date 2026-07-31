@@ -5,8 +5,8 @@ plane: current
 status: current
 authority: canonical
 summary: Optimus Engineering Memory is repository-local development knowledge for building Optimus itself. It is not runtime memory, conversation memory, project-content memory, or a production retrieval index.
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+reviewed_on: 2026-08-01
+review_by: 2026-11-01
 knowledge_type: engineering-memory-guide
 covers:
   - AGENTS.md
@@ -34,15 +34,17 @@ project-content memory, or a production retrieval index.
 2. **Cache** — disposable deterministic indexes in `.engineering-memory/`
 3. **Lenses** — budgeted query views for agents and humans
 
-The temporal project graph is another disposable computed view. It retains
-Git-backed file events and component relationships, while local disk/worktree
-observations remain append-only Development evidence. See
+The temporal project database is another disposable computed view. Its embedded
+SQLite property graph retains Git-backed file events and component
+relationships, while local disk/worktree observations remain append-only
+Development evidence. See
 [`docs/project-knowledge.md`](../project-knowledge.md).
 
 Source, executable tests, curated docs, and accepted decisions remain
-authority. Raw generated JSON is an ignored local acceleration cache: it may be
-deleted at any time and is never delivery evidence. Agents should load lenses,
-not whole map files, into prompts.
+authority. Generated JSON and SQLite projections are ignored local acceleration
+caches: they may be deleted at any time and are never delivery evidence. Agents
+should load lenses and bounded queries, not whole generated stores, into
+prompts.
 
 ## Claim labels
 

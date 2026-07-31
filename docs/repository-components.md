@@ -53,10 +53,11 @@ just path-history spikes/001-leptos-wry-csr
 The complete generated human view is [`COMPONENTS.md`](COMPONENTS.md). Never
 edit it manually.
 
-The component database is the semantic present tense. The
-[temporal project graph](project-knowledge.md) joins it to Git event history and
-machine-local Development observations so removed paths, lifecycle changes,
-orphan worktrees, and inactive generated caches remain explainable.
+The component database is the semantic present tense. The embedded
+[temporal project database](project-knowledge.md) joins it to Git event history
+and machine-local Development observations so removed paths, lifecycle changes,
+orphan worktrees, and inactive generated caches remain explainable and
+queryable.
 
 ## Enforcement
 
