@@ -97,7 +97,7 @@ microtask is a prerequisite for P40's exit, not separate work:
 |---|---|---|
 | R30.5 | **done** | Durable project trust grant store (outside repo) |
 | R30.6 | **done** | Structured package-manager capabilities |
-| R30.7 | pending | Owned-localhost network lease |
+| R30.7 | in progress | Owned-localhost network lease — exact constraint/browser foundation landed; runtime issuer/lifecycle remains |
 | R30.8 | **done** | Auto provider/model release defaults preserve deterministic offline tests |
 
 Permission prompts must state the consequence (`Publish branch wip/fix-123 to

@@ -8,6 +8,8 @@ mod command_class;
 
 pub use command_class::{capability_for_command, classify_command, CommandClass};
 
+use std::net::{IpAddr, Ipv4Addr};
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -159,6 +161,13 @@ impl CapabilityId {
                 | Self::CommerceSpend
         )
     }
+
+    fn requires_owned_localhost_binding(self) -> bool {
+        matches!(
+            self,
+            Self::ProcessProjectServe | Self::NetworkLocalhostOwned | Self::BrowserLocalhostOwned
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -193,11 +202,72 @@ pub struct EffectDigest {
     pub sha256_hex: String,
 }
 
+/// Exact constraint envelope for one candidate Optimus-owned localhost lease.
+///
+/// An IP address is used rather than a hostname so `localhost` resolution cannot
+/// widen the grant. The broker validates envelope coherence only: a trusted
+/// runtime caller must prove process/listener ownership, liveness, generation,
+/// and expiry before requesting a decision with this value.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OwnedLocalhostBinding {
+    pub lease_id: Uuid,
+    /// Initially only plain HTTP is supported. Encoding the scheme keeps a
+    /// future HTTPS widening from silently inheriting an HTTP authority.
+    pub scheme: OwnedLocalhostScheme,
+    pub host: IpAddr,
+    pub port: u16,
+    pub project_scope_id: String,
+    pub project_root_hash: String,
+    pub session_id: Uuid,
+    pub run_id: Uuid,
+    pub owner_job_id: Uuid,
+    pub owner_attempt_id: Uuid,
+    pub process_tree_id: String,
+    pub generation: u64,
+    pub expires_unix: u64,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum OwnedLocalhostScheme {
+    Http,
+}
+
+impl OwnedLocalhostBinding {
+    fn is_valid_for(&self, request: &ActionRequest) -> bool {
+        self.scheme == OwnedLocalhostScheme::Http
+            && !self.lease_id.is_nil()
+            && self.host == IpAddr::V4(Ipv4Addr::LOCALHOST)
+            && self.port != 0
+            && !self.project_scope_id.is_empty()
+            && request.project_scope_id.as_deref() == Some(self.project_scope_id.as_str())
+            && self.project_root_hash.len() == 64
+            && self
+                .project_root_hash
+                .bytes()
+                .all(|byte| byte.is_ascii_hexdigit())
+            && request.target.project_root_hash.as_deref() == Some(self.project_root_hash.as_str())
+            && request.externality == Externality::OwnedLocalhost
+            && !self.session_id.is_nil()
+            && !self.run_id.is_nil()
+            && request.run_id == Some(self.run_id)
+            && !self.owner_job_id.is_nil()
+            && !self.owner_attempt_id.is_nil()
+            && !self.process_tree_id.trim().is_empty()
+            && self.process_tree_id.trim() == self.process_tree_id
+            && self.process_tree_id.len() <= 256
+            && self.generation != 0
+            && self.expires_unix != 0
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ActionTarget {
     pub summary: String,
     pub project_root_hash: Option<String>,
     pub relative_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owned_localhost: Option<OwnedLocalhostBinding>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -218,6 +288,8 @@ pub struct ActionRequest {
 pub struct AppliedConstraints {
     pub project_root_hash: Option<String>,
     pub profile: AutonomyProfile,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owned_localhost: Option<OwnedLocalhostBinding>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -278,6 +350,36 @@ pub struct CapabilityBroker;
 
 impl CapabilityBroker {
     pub fn decide(&self, profile: AutonomyProfile, request: &ActionRequest) -> AuthorityDecision {
+        if request.target.owned_localhost.is_some()
+            && !request.capability.requires_owned_localhost_binding()
+        {
+            return AuthorityDecision::Deny {
+                code: "unexpected_owned_localhost_binding".into(),
+                reason: "Owned-localhost constraints cannot be attached to another capability."
+                    .into(),
+                recovery: None,
+            };
+        }
+        if request.capability.requires_owned_localhost_binding()
+            && !request
+                .target
+                .owned_localhost
+                .as_ref()
+                .is_some_and(|binding| binding.is_valid_for(request))
+        {
+            return AuthorityDecision::Deny {
+                code: "invalid_owned_localhost_binding".into(),
+                reason: format!(
+                    "{} requires coherent localhost lease constraints for the same project and run.",
+                    request.capability.as_str()
+                ),
+                recovery: Some(RecoveryAction {
+                    label: "Acquire an owned localhost lease".into(),
+                    detail: "Prove the exact listener and process-tree ownership before requesting this capability.".into(),
+                }),
+            };
+        }
+
         // Hard fences first.
         if matches!(request.capability, CapabilityId::CommerceSpend)
             || matches!(request.sensitivity, Sensitivity::Credential)
@@ -452,6 +554,7 @@ impl CapabilityBroker {
             constraints: AppliedConstraints {
                 project_root_hash: request.target.project_root_hash.clone(),
                 profile,
+                owned_localhost: request.target.owned_localhost.clone(),
             },
             reason: DecisionReason {
                 code: code.into(),
@@ -555,6 +658,7 @@ pub fn build_effect_request_for(
             summary,
             project_root_hash,
             relative_path,
+            owned_localhost: None,
         },
         effect_digest: EffectDigest {
             sha256_hex: effect_hash.to_string(),
@@ -580,6 +684,7 @@ mod tests {
                 summary: "test".into(),
                 project_root_hash: Some("abc".into()),
                 relative_path: Some("src/App.tsx".into()),
+                owned_localhost: None,
             },
             effect_digest: EffectDigest {
                 sha256_hex: "a".repeat(64),
@@ -588,6 +693,35 @@ mod tests {
             sensitivity: Sensitivity::Ordinary,
             externality: Externality::ProjectLocal,
         }
+    }
+
+    fn owned_localhost_binding() -> OwnedLocalhostBinding {
+        OwnedLocalhostBinding {
+            lease_id: Uuid::from_u128(10),
+            scheme: OwnedLocalhostScheme::Http,
+            host: IpAddr::V4(Ipv4Addr::LOCALHOST),
+            port: 4173,
+            project_scope_id: "project-a".into(),
+            project_root_hash: "a".repeat(64),
+            session_id: Uuid::from_u128(1),
+            run_id: Uuid::from_u128(2),
+            owner_job_id: Uuid::from_u128(3),
+            owner_attempt_id: Uuid::from_u128(4),
+            process_tree_id: "optimus-command-42.service".into(),
+            generation: 1,
+            expires_unix: 4_102_444_800,
+        }
+    }
+
+    fn owned_localhost_req(capability: CapabilityId) -> ActionRequest {
+        let binding = owned_localhost_binding();
+        let mut request = req(capability);
+        request.run_id = Some(binding.run_id);
+        request.project_scope_id = Some(binding.project_scope_id.clone());
+        request.target.project_root_hash = Some(binding.project_root_hash.clone());
+        request.externality = Externality::OwnedLocalhost;
+        request.target.owned_localhost = Some(binding);
+        request
     }
 
     #[test]
@@ -615,6 +749,185 @@ mod tests {
             &req(CapabilityId::FsProjectWrite),
         );
         assert!(matches!(d, AuthorityDecision::Deny { .. }));
+    }
+
+    #[test]
+    fn standard_allows_exact_owned_localhost_capabilities_and_copies_constraints() {
+        for capability in [
+            CapabilityId::ProcessProjectServe,
+            CapabilityId::NetworkLocalhostOwned,
+            CapabilityId::BrowserLocalhostOwned,
+        ] {
+            let request = owned_localhost_req(capability);
+            let expected = request.target.owned_localhost.clone();
+            let decision = CapabilityBroker.decide(AutonomyProfile::Standard, &request);
+            match decision {
+                AuthorityDecision::Allow { constraints, .. } => {
+                    assert_eq!(constraints.owned_localhost, expected, "{capability:?}");
+                }
+                other => panic!("expected localhost allow for {capability:?}, got {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn owned_localhost_capabilities_deny_without_a_binding() {
+        for capability in [
+            CapabilityId::ProcessProjectServe,
+            CapabilityId::NetworkLocalhostOwned,
+            CapabilityId::BrowserLocalhostOwned,
+        ] {
+            let mut request = req(capability);
+            request.externality = Externality::OwnedLocalhost;
+            let decision = CapabilityBroker.decide(AutonomyProfile::Standard, &request);
+            assert!(
+                matches!(
+                    decision,
+                    AuthorityDecision::Deny { ref code, .. }
+                        if code == "invalid_owned_localhost_binding"
+                ),
+                "{capability:?}: {decision:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn owned_localhost_constraints_cannot_ride_an_unrelated_capability() {
+        let mut request = req(CapabilityId::FsProjectRead);
+        request.target.owned_localhost = Some(owned_localhost_binding());
+        let decision = CapabilityBroker.decide(AutonomyProfile::Standard, &request);
+        assert!(matches!(
+            decision,
+            AuthorityDecision::Deny { ref code, .. }
+                if code == "unexpected_owned_localhost_binding"
+        ));
+    }
+
+    #[test]
+    fn owned_localhost_binding_fails_closed_when_malformed_or_transferred() {
+        let base = owned_localhost_req(CapabilityId::BrowserLocalhostOwned);
+        let mut malformed = Vec::new();
+
+        let mut request = base.clone();
+        request.target.owned_localhost.as_mut().unwrap().lease_id = Uuid::nil();
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.target.owned_localhost.as_mut().unwrap().host =
+            IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.target.owned_localhost.as_mut().unwrap().port = 0;
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.project_scope_id = Some("project-b".into());
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.target.project_root_hash = Some("other-root".into());
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.externality = Externality::ProjectLocal;
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.target.owned_localhost.as_mut().unwrap().session_id = Uuid::nil();
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request
+            .target
+            .owned_localhost
+            .as_mut()
+            .unwrap()
+            .owner_job_id = Uuid::nil();
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request
+            .target
+            .owned_localhost
+            .as_mut()
+            .unwrap()
+            .owner_attempt_id = Uuid::nil();
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request
+            .target
+            .owned_localhost
+            .as_mut()
+            .unwrap()
+            .process_tree_id = " ".into();
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request.target.owned_localhost.as_mut().unwrap().generation = 0;
+        malformed.push(request);
+
+        let mut request = base.clone();
+        request
+            .target
+            .owned_localhost
+            .as_mut()
+            .unwrap()
+            .expires_unix = 0;
+        malformed.push(request);
+
+        let mut request = base;
+        request.run_id = Some(Uuid::from_u128(3));
+        malformed.push(request);
+
+        for request in malformed {
+            let decision = CapabilityBroker.decide(AutonomyProfile::Standard, &request);
+            assert!(matches!(
+                decision,
+                AuthorityDecision::Deny { ref code, .. }
+                    if code == "invalid_owned_localhost_binding"
+            ));
+        }
+    }
+
+    #[test]
+    fn read_only_denies_owned_project_serve_with_a_valid_binding() {
+        let decision = CapabilityBroker.decide(
+            AutonomyProfile::ReadOnly,
+            &owned_localhost_req(CapabilityId::ProcessProjectServe),
+        );
+        assert!(matches!(
+            decision,
+            AuthorityDecision::Deny { ref code, .. } if code == "read_only_profile"
+        ));
+    }
+
+    #[test]
+    fn review_changes_asks_for_owned_project_serve_with_a_valid_binding() {
+        let decision = CapabilityBroker.decide(
+            AutonomyProfile::ReviewChanges,
+            &owned_localhost_req(CapabilityId::ProcessProjectServe),
+        );
+        assert!(decision.is_ask());
+    }
+
+    #[test]
+    fn old_serialized_targets_and_constraints_default_the_binding_to_none() {
+        let target: ActionTarget = serde_json::from_value(serde_json::json!({
+            "summary": "legacy",
+            "project_root_hash": "abc",
+            "relative_path": null
+        }))
+        .unwrap();
+        assert_eq!(target.owned_localhost, None);
+
+        let constraints: AppliedConstraints = serde_json::from_value(serde_json::json!({
+            "project_root_hash": "abc",
+            "profile": "standard"
+        }))
+        .unwrap();
+        assert_eq!(constraints.owned_localhost, None);
     }
 
     #[test]

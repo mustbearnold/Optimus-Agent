@@ -70,7 +70,7 @@ Untrusted WebView/HTTP request
   -> kernel/runtime/store
 
 External URL
-  -> HTTP(S)-only + DNS/IP/redirect SSRF checks
+  -> HTTP(S)-only + DNS/IP/pre-connect redirect SSRF checks
   -> bounded body/text/link extraction
 ```
 
@@ -185,8 +185,22 @@ preview WebContentsView partition are **forbidden** without a break-glass ADR.
 **Confirmed current behaviour:** the agent browser HTTP effector is bounded
 HTTP text/link navigation (optional CDP backend when available). It permits only
 HTTP(S), rejects local/private and metadata destinations before DNS resolution
-and after every redirect, limits redirects/body/history, and does not execute
-page JavaScript on the HTTP path.
+and validates every redirect target before issuing the next request, limits
+redirects/body/history, and does not execute page JavaScript on the HTTP path.
+
+**Confirmed current behaviour (ADR-0060 foundation):** the broker rejects
+`process.project.serve`, `network.localhost.owned`, and
+`browser.localhost.owned` unless the request carries a coherent
+project/session/run/socket constraint envelope, and rejects that envelope on
+unrelated capabilities; allowed decisions copy it into applied constraints.
+This pure check does not prove the publicly serializable fields are live. CDP
+remains public-only by default. Its explicit owned-localhost authority permits
+only one `http://127.0.0.1:<port>` origin and is applied to initial navigation,
+requests intercepted on the attached tab, and post-action final-URL checks.
+**No runtime product path issues that authority yet**: structured serve,
+listener proof, revocation, cleanup, and worker/service-worker/WebSocket
+coverage below the tab target remain R30.7 residuals, so arbitrary localhost
+stays denied.
 
 **Confirmed current behaviour:** `web_search` returns a versioned extract
 envelope (`schema_version`, `provenance_url`, `source`, `retrieved_at_unix_ms`)

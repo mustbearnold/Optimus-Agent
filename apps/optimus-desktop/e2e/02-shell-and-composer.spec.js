@@ -506,15 +506,14 @@ test('active composer turn exposes Stop and preserves partial text on cancellati
   await expect(page.locator('.msg.assistant').last()).not.toContainText('Error:');
 });
 
-test('fresh home without codex boots offline with synced labels; codex promotion needs credentials', async ({ page }) => {
-  // The #82 rule has two arms. This pins the deterministic one: a home with
-  // no auth.json boots offline (chat always works) and the composer buttons
-  // reflect it. The credentialed arm — boot promotes offline residue to
-  // codex — needs a real auth.json and is pinned by e2e-live/.
+test('fresh home boots at Auto while route resolution remains offline without credentials', async ({ page }) => {
+  // R30.8 keeps one product-facing Auto intent. A fresh home has no Codex
+  // credentials, so the host still resolves a sent turn deterministically to
+  // offline; the composer itself must not persist that one-turn resolution.
   await page.goto('/');
   await page.waitForFunction(() => window.__optimusBridgeInstalled === true);
   await waitForReady(page);
-  await expect(page.locator('#provider')).toHaveValue('offline');
-  await expect(page.locator('#model')).toHaveValue('offline-echo');
-  await expect(page.locator('#provVal')).toContainText('Offline');
+  await expect(page.locator('#provider')).toHaveValue('auto');
+  await expect(page.locator('#model')).toHaveValue('');
+  await expect(page.locator('#provVal')).toContainText('Auto');
 });

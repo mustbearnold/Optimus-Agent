@@ -472,8 +472,38 @@ pub fn chrome_binary_path() -> Option<PathBuf> {
 }
 
 // ---------------------------------------------------------------------------
-// HTTP fetch logic (unchanged from original browser.rs)
+// HTTP fetch logic
 // ---------------------------------------------------------------------------
+
+const MAX_HTTP_REDIRECTS: usize = 5;
+
+fn redirect_target(
+    current: &Url,
+    status: u16,
+    location: Option<&str>,
+    redirects_followed: usize,
+) -> Result<Option<Url>> {
+    if !matches!(status, 301 | 302 | 303 | 307 | 308) {
+        return Ok(None);
+    }
+    if redirects_followed >= MAX_HTTP_REDIRECTS {
+        return Err(BrowserError::Http(format!(
+            "redirect limit exceeded ({MAX_HTTP_REDIRECTS})"
+        )));
+    }
+    let location = location
+        .map(str::trim)
+        .filter(|location| !location.is_empty())
+        .ok_or_else(|| BrowserError::Http(format!("redirect status {status} missing Location")))?;
+    let target = current
+        .join(location)
+        .map_err(|error| BrowserError::Url(format!("redirect Location: {error}")))?;
+    // This check must happen before the next request. Validating only the
+    // response's final URL is too late: an automatic redirect may already have
+    // reached a loopback/private target.
+    assert_url_safe(&target)?;
+    Ok(Some(target))
+}
 
 pub fn fetch_page(
     url_str: &str,
@@ -484,24 +514,47 @@ pub fn fetch_page(
     let url = Url::parse(url_str).map_err(|e| BrowserError::Url(e.to_string()))?;
     assert_url_safe(&url)?;
 
-    let agent = ureq::AgentBuilder::new().timeout(timeout).build();
-    let resp = agent
-        .get(url.as_str())
-        .set(
-            "User-Agent",
-            "OptimusAgent/0.1 (+https://local; research browser effector)",
-        )
-        .set(
-            "Accept",
-            "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
-        )
-        .call()
-        .map_err(|e| BrowserError::Http(e.to_string()))?;
+    let deadline = std::time::Instant::now()
+        .checked_add(timeout)
+        .ok_or_else(|| BrowserError::Http("browser timeout overflow".into()))?;
+    let agent = ureq::AgentBuilder::new().redirects(0).build();
+    let mut current = url;
+    let mut redirects_followed = 0;
+    let resp = loop {
+        // Every hop is deliberately a GET. The HTTP browser is a read-only
+        // effector and never carries a request body across redirects.
+        let remaining = deadline
+            .checked_duration_since(std::time::Instant::now())
+            .filter(|remaining| !remaining.is_zero())
+            .ok_or_else(|| BrowserError::Http("browser request deadline exceeded".into()))?;
+        let response = agent
+            .get(current.as_str())
+            .timeout(remaining)
+            .set(
+                "User-Agent",
+                "OptimusAgent/0.1 (+https://local; research browser effector)",
+            )
+            .set(
+                "Accept",
+                "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
+            )
+            .call()
+            .map_err(|e| BrowserError::Http(e.to_string()))?;
+        match redirect_target(
+            &current,
+            response.status(),
+            response.header("Location"),
+            redirects_followed,
+        )? {
+            Some(target) => {
+                current = target;
+                redirects_followed += 1;
+            }
+            None => break response,
+        }
+    };
     let status = resp.status();
-    let final_url = resp.get_url().to_string();
-    // Fail closed: unparsable redirect target is not a free pass (SSRF residual).
-    let fu = Url::parse(&final_url).map_err(|e| BrowserError::Url(format!("final_url: {e}")))?;
-    assert_url_safe(&fu)?;
+    let final_url = current.to_string();
     let mut body = Vec::new();
     resp.into_reader()
         .take(max_bytes as u64 + 1)
@@ -867,6 +920,89 @@ mod tests {
     fn allows_example_parse() {
         let u = Url::parse("https://example.com/path").unwrap();
         assert!(assert_url_safe(&u).is_ok());
+    }
+
+    #[test]
+    fn redirect_target_resolves_relative_locations_before_the_next_request() {
+        let current = Url::parse("https://example.com/a/page?old=1").unwrap();
+        let target = redirect_target(&current, 302, Some("../next?new=1"), 0)
+            .unwrap()
+            .unwrap();
+        assert_eq!(target.as_str(), "https://example.com/next?new=1");
+    }
+
+    #[test]
+    fn redirect_target_blocks_loopback_before_it_can_be_requested() {
+        let current = Url::parse("https://example.com/start").unwrap();
+        for location in [
+            "http://127.0.0.1/admin",
+            "http://localhost/admin",
+            "//[::1]/admin",
+        ] {
+            let error = redirect_target(&current, 302, Some(location), 0).unwrap_err();
+            assert!(
+                matches!(error, BrowserError::Ssrf(_)),
+                "expected pre-connect SSRF refusal for {location}, got {error:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn redirect_target_fails_closed_on_missing_empty_or_malformed_location() {
+        let current = Url::parse("https://example.com/start").unwrap();
+        for location in [None, Some(""), Some("   ")] {
+            assert!(matches!(
+                redirect_target(&current, 301, location, 0),
+                Err(BrowserError::Http(_))
+            ));
+        }
+        assert!(matches!(
+            redirect_target(&current, 301, Some("http://["), 0),
+            Err(BrowserError::Url(_))
+        ));
+    }
+
+    #[test]
+    fn redirect_target_enforces_a_small_hard_hop_limit() {
+        let current = Url::parse("https://example.com/start").unwrap();
+        assert!(redirect_target(
+            &current,
+            308,
+            Some("https://example.com/final"),
+            MAX_HTTP_REDIRECTS - 1
+        )
+        .unwrap()
+        .is_some());
+        assert!(matches!(
+            redirect_target(
+                &current,
+                308,
+                Some("https://example.com/too-far"),
+                MAX_HTTP_REDIRECTS
+            ),
+            Err(BrowserError::Http(_))
+        ));
+    }
+
+    #[test]
+    fn redirect_target_handles_only_redirect_statuses() {
+        let current = Url::parse("https://example.com/start").unwrap();
+        for status in [301, 302, 303, 307, 308] {
+            assert!(
+                redirect_target(&current, status, Some("/next"), 0)
+                    .unwrap()
+                    .is_some(),
+                "status {status}"
+            );
+        }
+        for status in [200, 204, 300, 304, 305, 400] {
+            assert!(
+                redirect_target(&current, status, None, 0)
+                    .unwrap()
+                    .is_none(),
+                "status {status}"
+            );
+        }
     }
 
     /// S1.8 / browser.http: HTTP effector fails closed on SSRF without CDP.

@@ -90,11 +90,15 @@ test('compiled Electron shell secures Rust transport and aligns native preview',
     // surfacing as an unrelated width assertion 160 lines later.
     await expect
       .poll(() =>
-        application.evaluate(({ BrowserWindow }) =>
-          BrowserWindow.getAllWindows()[0].getContentSize().join('x')
-        )
+        application.evaluate(({ BrowserWindow }) => {
+          const [width, height] = BrowserWindow.getAllWindows()[0].getContentSize();
+          // Some X11 window managers retain a two-pixel decoration correction
+          // even for setContentSize. This is not the work-area clamp the test
+          // guards against; all later geometry uses the observed baseline.
+          return width === 1600 && height >= 1000 && height <= 1002;
+        })
       )
-      .toBe('1600x1000');
+      .toBe(true);
     await expect(page).toHaveURL(/^optimus-app:\/\/ui\//);
     await expect(page.getByRole('complementary', { name: 'Projects and sessions' })).toBeVisible();
     // The evidence workspace is chat-first and starts closed (workspace-redesign

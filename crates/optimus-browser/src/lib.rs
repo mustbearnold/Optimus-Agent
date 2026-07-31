@@ -53,6 +53,47 @@ pub enum BrowserError {
 
 pub type Result<T> = std::result::Result<T, BrowserError>;
 
+/// Immutable network authority for one CDP browser session.
+///
+/// Public HTTP(S) is always available. A caller may additionally grant one
+/// exact owned development-server origin. The localhost grant is deliberately
+/// numeric and HTTP-only: hostnames can be rebound, and a port-adjacent service
+/// is not owned merely because another service on the same machine is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BrowserNetworkAuthority {
+    owned_localhost_port: Option<u16>,
+}
+
+impl BrowserNetworkAuthority {
+    /// Public HTTP(S), with every local/private destination denied.
+    #[must_use]
+    pub const fn public_only() -> Self {
+        Self {
+            owned_localhost_port: None,
+        }
+    }
+
+    /// Public HTTP(S) plus exactly `http://127.0.0.1:<port>`.
+    pub fn public_with_owned_localhost(port: u16) -> Result<Self> {
+        if port == 0 {
+            return Err(BrowserError::Ssrf(
+                "owned localhost port must be non-zero".into(),
+            ));
+        }
+        Ok(Self {
+            owned_localhost_port: Some(port),
+        })
+    }
+
+    fn permits_owned_localhost(&self, url: &Url) -> bool {
+        self.owned_localhost_port.is_some_and(|port| {
+            url.scheme() == "http"
+                && url.host_str() == Some("127.0.0.1")
+                && url.port_or_known_default() == Some(port)
+        })
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Data types
 // ---------------------------------------------------------------------------
@@ -232,12 +273,15 @@ fn is_forbidden_ip(ip: IpAddr) -> bool {
     }
 }
 
-fn validate_network_url(url: &Url) -> Result<()> {
+fn validate_network_url(url: &Url, authority: BrowserNetworkAuthority) -> Result<()> {
     if !matches!(url.scheme(), "http" | "https") {
         return Err(BrowserError::Ssrf(format!(
             "scheme {} is not allowed",
             url.scheme()
         )));
+    }
+    if authority.permits_owned_localhost(url) {
+        return Ok(());
     }
     let host = url
         .host_str()
@@ -265,18 +309,26 @@ fn validate_network_url(url: &Url) -> Result<()> {
     Ok(())
 }
 
-fn validate_navigation_url(value: &str) -> Result<()> {
+fn validate_navigation_url(value: &str, authority: BrowserNetworkAuthority) -> Result<()> {
     let url = Url::parse(value).map_err(|error| BrowserError::Ssrf(error.to_string()))?;
-    validate_network_url(&url)
+    validate_network_url(&url, authority)
 }
 
-fn is_safe_request_url(value: &str) -> bool {
+/// Validate a browser-reported final URL after navigation or a click.
+///
+/// Keeping this separate from initial-input parsing makes the post-redirect
+/// check impossible to accidentally omit from either path.
+fn validate_final_url(value: &str, authority: BrowserNetworkAuthority) -> Result<()> {
+    validate_navigation_url(value, authority)
+}
+
+fn is_safe_request_url(value: &str, authority: BrowserNetworkAuthority) -> bool {
     let Ok(url) = Url::parse(value) else {
         return false;
     };
     match url.scheme() {
         "about" | "blob" | "data" => true,
-        "http" | "https" => validate_network_url(&url).is_ok(),
+        "http" | "https" => validate_network_url(&url, authority).is_ok(),
         _ => false,
     }
 }
@@ -289,11 +341,21 @@ pub struct CdpBrowserSession {
     _path: PathBuf,
     browser: Option<Arc<Browser>>,
     tab: Option<Arc<Tab>>,
+    network_authority: BrowserNetworkAuthority,
 }
 
 impl CdpBrowserSession {
     /// Open a new CDP browser session, launching Chromium if needed.
     pub fn open(workspace: impl AsRef<Path>, opts: BrowserOptions) -> Result<Self> {
+        Self::open_with_network_authority(workspace, opts, BrowserNetworkAuthority::public_only())
+    }
+
+    /// Open a CDP session with an explicit immutable network authority.
+    pub fn open_with_network_authority(
+        workspace: impl AsRef<Path>,
+        opts: BrowserOptions,
+        network_authority: BrowserNetworkAuthority,
+    ) -> Result<Self> {
         let (path, user_data_dir) =
             prepare_state_paths(workspace.as_ref(), opts.user_data_dir.as_deref())?;
         let mut safe_opts = opts;
@@ -316,8 +378,8 @@ impl CdpBrowserSession {
         tab.enable_fetch(Some(&patterns), None)
             .map_err(|error| BrowserError::Launch(error.to_string()))?;
         tab.enable_request_interception(Arc::new(
-            |_: Arc<Transport>, _: SessionId, intercepted: RequestPausedEvent| {
-                if is_safe_request_url(&intercepted.params.request.url) {
+            move |_: Arc<Transport>, _: SessionId, intercepted: RequestPausedEvent| {
+                if is_safe_request_url(&intercepted.params.request.url, network_authority) {
                     RequestPausedDecision::Continue(None)
                 } else {
                     RequestPausedDecision::Fail(Fetch::FailRequest {
@@ -333,12 +395,13 @@ impl CdpBrowserSession {
             _path: path,
             browser: Some(browser_arc),
             tab: Some(tab),
+            network_authority,
         })
     }
 
     /// Navigate to a URL, wait for load, return page state.
     pub fn navigate(&mut self, url: &str) -> Result<PageState> {
-        validate_navigation_url(url)?;
+        validate_navigation_url(url, self.network_authority)?;
         let tab = self.tab_ref()?;
 
         tab.navigate_to(url)
@@ -347,7 +410,7 @@ impl CdpBrowserSession {
         tab.wait_until_navigated()
             .map_err(|e| BrowserError::Navigation(e.to_string()))?;
 
-        validate_navigation_url(&tab.get_url())?;
+        validate_final_url(&tab.get_url(), self.network_authority)?;
 
         Self::capture_page_state(tab)
     }
@@ -414,6 +477,7 @@ impl CdpBrowserSession {
         std::thread::sleep(Duration::from_millis(500));
         let _ = tab.wait_until_navigated();
 
+        validate_final_url(&tab.get_url(), self.network_authority)?;
         Self::capture_page_state(tab)
     }
 
@@ -495,6 +559,7 @@ mod tests {
 
     #[test]
     fn navigation_policy_rejects_local_and_non_http_urls() {
+        let authority = BrowserNetworkAuthority::public_only();
         for url in [
             "http://127.0.0.1/",
             "http://[::1]/",
@@ -503,21 +568,78 @@ mod tests {
             "file:///etc/passwd",
         ] {
             assert!(
-                matches!(validate_navigation_url(url), Err(BrowserError::Ssrf(_))),
+                matches!(
+                    validate_navigation_url(url, authority),
+                    Err(BrowserError::Ssrf(_))
+                ),
                 "expected navigation to reject {url}"
             );
         }
-        assert!(validate_navigation_url("https://93.184.216.34/path").is_ok());
+        assert!(validate_navigation_url("https://93.184.216.34/path", authority).is_ok());
     }
 
     #[test]
     fn request_policy_blocks_network_pivots_but_allows_inline_resources() {
-        assert!(!is_safe_request_url("http://10.0.0.1/private"));
-        assert!(!is_safe_request_url("http://localhost/admin"));
-        assert!(!is_safe_request_url("file:///etc/passwd"));
-        assert!(is_safe_request_url("https://93.184.216.34/app.js"));
-        assert!(is_safe_request_url("data:text/plain,hello"));
-        assert!(is_safe_request_url("blob:https://example.com/id"));
+        let authority = BrowserNetworkAuthority::public_only();
+        assert!(!is_safe_request_url("http://10.0.0.1/private", authority));
+        assert!(!is_safe_request_url("http://localhost/admin", authority));
+        assert!(!is_safe_request_url("file:///etc/passwd", authority));
+        assert!(is_safe_request_url(
+            "https://93.184.216.34/app.js",
+            authority
+        ));
+        assert!(is_safe_request_url("data:text/plain,hello", authority));
+        assert!(is_safe_request_url(
+            "blob:https://example.com/id",
+            authority
+        ));
+    }
+
+    #[test]
+    fn owned_localhost_authority_is_one_exact_numeric_origin() {
+        let authority = BrowserNetworkAuthority::public_with_owned_localhost(4173).unwrap();
+
+        assert!(validate_navigation_url("http://127.0.0.1:4173/", authority).is_ok());
+        assert!(is_safe_request_url(
+            "http://127.0.0.1:4173/assets/app.js",
+            authority
+        ));
+        for denied in [
+            "http://127.0.0.1:4174/",
+            "http://127.0.0.2:4173/",
+            "http://localhost:4173/",
+            "http://[::1]:4173/",
+            "https://127.0.0.1:4173/",
+            "http://10.0.0.1:4173/",
+            "http://169.254.169.254:4173/",
+        ] {
+            assert!(
+                validate_navigation_url(denied, authority).is_err(),
+                "owned origin must not authorize {denied}"
+            );
+        }
+    }
+
+    #[test]
+    fn final_redirect_validation_uses_the_same_exact_authority() {
+        let authority = BrowserNetworkAuthority::public_with_owned_localhost(4173).unwrap();
+
+        assert!(validate_final_url("http://127.0.0.1:4173/ready", authority).is_ok());
+        assert!(validate_final_url("http://127.0.0.1:4174/pivot", authority).is_err());
+        assert!(validate_final_url("http://localhost:4173/pivot", authority).is_err());
+        assert!(validate_final_url("file:///etc/passwd", authority).is_err());
+    }
+
+    #[test]
+    fn owned_localhost_port_must_be_non_zero() {
+        assert!(BrowserNetworkAuthority::public_with_owned_localhost(0).is_err());
+    }
+
+    #[test]
+    fn default_http_port_is_the_same_exact_socket() {
+        let authority = BrowserNetworkAuthority::public_with_owned_localhost(80).unwrap();
+        assert!(validate_navigation_url("http://127.0.0.1/", authority).is_ok());
+        assert!(validate_navigation_url("http://127.0.0.1:80/", authority).is_ok());
     }
 
     #[test]

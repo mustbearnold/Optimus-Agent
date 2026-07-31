@@ -18,6 +18,7 @@ covers:
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
   - docs/decisions/0059-standard-autonomy-is-consequence-bounded.md
+  - docs/decisions/0060-owned-localhost-is-a-process-bound-lease.md
   - scripts/check-autonomy-profiles.py
 depends_on:
   - docs/plans/reliability-autonomy-program.md
@@ -40,7 +41,7 @@ last_verified_commit: null
 
 # program P30 verification — bounded project trust
 
-Planes: **program P30** · decisions **ADR-0044 / ADR-0059** · delivery pending · mark hold S+++
+Planes: **program P30** · decisions **ADR-0044 / ADR-0059 / ADR-0060** · delivery pending · mark hold S+++
 
 Date: 2026-07-26; consequence-boundary addendum 2026-07-31
 
@@ -168,7 +169,11 @@ not a row that verifies the surface feeding it, however similar the two sound.
 
 ## Residuals
 
-- Owned-localhost leases (R30.7)
+- Owned-localhost leases (R30.7): exact broker constraints, CDP request
+  authority, click final-URL validation, and pre-connect HTTP redirect checks
+  are implemented. The structured owned-server effect, listener proof, active
+  registry, expiry/cancellation cleanup, non-tab-target CDP egress coverage, and
+  end-to-end issuance path remain.
 - Same-run continuation (program P31)
 - Arbitrary project binaries and transparent scripts still share the Confined
   network and ambient credential environment. ADR-0059 therefore does not

@@ -74,8 +74,9 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 
 ## program P30 — Capability broker + Standard trust
 
-**Decisions:** [ADR-0044](../decisions/0044-bounded-project-trust-and-capability-broker.md)
-and [ADR-0059](../decisions/0059-standard-autonomy-is-consequence-bounded.md)
+**Decisions:** [ADR-0044](../decisions/0044-bounded-project-trust-and-capability-broker.md),
+[ADR-0059](../decisions/0059-standard-autonomy-is-consequence-bounded.md), and
+[ADR-0060](../decisions/0060-owned-localhost-is-a-process-bound-lease.md)
 
 ### Microtasks
 
@@ -87,7 +88,7 @@ and [ADR-0059](../decisions/0059-standard-autonomy-is-consequence-bounded.md)
 | R30.4 | **done** | Composer autonomy labels; Standard first; map IPC access |
 | R30.5 | **done** | Durable project trust grant store (outside repo); applied at `open_dev_run_session` only |
 | R30.6 | **done** | Structured package/command capabilities; recognised remote and command-string shell forms leave the Standard project lane |
-| R30.7 | pending | Owned-localhost network lease |
+| R30.7 | in progress | Owned-localhost network lease — exact constraint/browser foundation and pre-connect redirect checks landed; runtime-owned serve lifecycle remains |
 | R30.8 | **done** | Product release defaults use one-turn Auto provider/model resolution while offline fixtures remain deterministic |
 
 R30.4 is done in full since 2026-07-29. It was marked done once before that,
@@ -143,7 +144,8 @@ authorities rather than on a profile enum flip.
 - Security map updated for trust-profile grants
 - Review changes still pauses high-risk effects (ADR-0031 behaviour preserved)
 
-Not exit-gated yet: R30.7 remains open, so P30 stays **in progress**.
+Not exit-gated yet: R30.7's runtime issuer and lifecycle remain open, so P30
+stays **in progress**.
 
 ### Explicit non-claims (P30)
 

@@ -79,7 +79,9 @@ async function offlineWorkbenchFlow(page, options) {
   await runSettings.click();
   const popover = page.getByRole('dialog', { name: 'Model and run settings' });
   await popover.getByLabel('Provider').selectOption('offline');
-  await expect(popover.getByLabel('Model')).toHaveValue('offline-echo');
+  // R30.8 preserves model Auto when switching providers; the host resolves
+  // this one turn to the deterministic offline fixture.
+  await expect(popover.getByLabel('Model')).toHaveValue('');
   await popover.getByLabel('Thinking level').selectOption('medium');
   await page.keyboard.press('Escape');
   await expect(popover).toHaveCount(0);
@@ -145,7 +147,7 @@ async function offlineWorkbenchFlow(page, options) {
     mode: options.mode,
     uiUrl: page.url(),
     provider: 'offline',
-    model: 'offline-echo',
+    model: 'auto',
     thinking: 'medium',
     access: 'review_changes',
     accessLabelBeforeSelect: accessLabel,

@@ -476,6 +476,17 @@ shell forms ask; uncheckpointed project deletes also ask. Classification does
 not prove an arbitrary binary lacks network or ambient-credential authority,
 so those remain explicit blockers to a universal Standard fallback.
 
+**Confirmed current behaviour (ADR-0060 foundation):** owned-localhost
+capabilities require a coherent project/session/run/process-tree/socket
+constraint envelope, which cannot ride an unrelated capability. The pure broker
+does not establish liveness. The agent CDP backend is public-only unless
+constructed with one exact numeric HTTP loopback origin, and it checks
+navigation, intercepted requests, and post-click URLs. The HTTP backend follows
+redirects manually and validates each target before connection. The runtime
+issuer and owned-server lifecycle are still absent, and worker/service-worker
+target coverage is not yet proven, so this is a fail-closed authority contract
+rather than a shipped localhost product path.
+
 **Confirmed current behaviour (P12):** approved commands use `CommandFsEnvelope`
 (default confined): Linux bwrap binds the workspace read-write only (no full
 root rw bind); `UnrestrictedHost` is explicit break-glass. See ADR-0035.
