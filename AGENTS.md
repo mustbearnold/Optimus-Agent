@@ -41,9 +41,13 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 
 ### Canonical root
 
-- Repository root: `/home/mustbearn/Projects/Optimus Agent`
+- Workspace wrapper: `/home/mustbearn/Projects/Optimus Agent`
+- Clean landed-source view: `/home/mustbearn/Projects/Optimus Agent/Source`
 - Development happens only in an assigned linked worktree under
-  `/home/mustbearn/Projects/Optimus Agent/local/worktrees/`.
+  `/home/mustbearn/Projects/Optimus Agent/Development/worktrees/`.
+- `Source/` is a detached, clean view of remote `main`; never develop there.
+  The wrapper's `local` and `.git` compatibility links resolve into
+  `Development/` and exist only for older automation.
 - Resolve both the repository and active worktree with `readlink -f` / `pwd -P`
   before editing. Compare resolved paths, never remembered aliases.
 - If the active workspace is not an assigned Optimus worktree, **stop**. Never
@@ -54,7 +58,7 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 Only create/modify/delete files under:
 
 1. The assigned worktree under
-   `/home/mustbearn/Projects/Optimus Agent/local/worktrees/**` (source, docs,
+   `/home/mustbearn/Projects/Optimus Agent/Development/worktrees/**` (source, docs,
    skills, scripts, and worktree-local build/evidence)
 2. Optimus install/runtime paths **only when the task explicitly requires
    install, relaunch, uninstall, or live desktop verification**:
@@ -64,7 +68,7 @@ Only create/modify/delete files under:
    - `~/.local/share/icons/**/optimus-agent.*`
    - `~/.local/bin/optimus` and `~/.local/bin/optimus-cli` when they are
      Optimus-managed symlinks
-3. `/home/mustbearn/Projects/Optimus Agent/local/land/**` only through
+3. `/home/mustbearn/Projects/Optimus Agent/Development/land/**` only through
    `just checkpoint`, `just undo`, or `just land`; it holds locks, immutable
    task receipts, private checkpoint records, and verification evidence.
 
@@ -94,8 +98,8 @@ Do **not** edit, reorganize, install into, or “clean up”:
    worktree or an explicitly allowed Optimus install path above.
 3. Refuse cross-project drive-by fixes. If another project is implicated, report
    the path and ask; do not touch it.
-4. Keep build artifacts, evidence, and temp outputs under this repo
-   (`local/tmp/**` preferred) rather than other project directories.
+4. Keep build artifacts, evidence, and temp outputs inside the assigned
+   worktree or the Optimus `Development/` plane rather than other projects.
 5. Treat path containment as a hard gate equal to “do not land unverified work”.
 
 ## Naming planes (mandatory — humans and coding agents)

@@ -59,6 +59,14 @@ branch-retirement-plan superseded_json="{}":
 retire-branches plan_sha256 superseded_json="{}":
     @python3 scripts/managed_branch_retirement.py execute {{quote(plan_sha256)}} --superseded-json {{quote(superseded_json)}}
 
+# Preview the one-time Source/Development workspace migration.
+workspace-layout-report:
+    @python3 scripts/workspace_layout.py report
+
+# Apply the reviewed migration without raw Git or broad deletion.
+workspace-layout-apply:
+    @python3 scripts/workspace_layout.py apply
+
 # --- focused verification (program P42) ---------------------------------------
 
 # What this patch can break, and why. Reports only; runs nothing.

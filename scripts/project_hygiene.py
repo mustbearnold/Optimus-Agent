@@ -46,6 +46,7 @@ class Worktree:
     git_dir: Path
     common_dir: Path
     repository_root: Path
+    development_root: Path
 
 
 def resolve_worktree(root: Path = ROOT) -> Worktree:
@@ -73,9 +74,21 @@ def resolve_worktree(root: Path = ROOT) -> Worktree:
     pointed = Path(backpointer.read_text(encoding="utf-8").strip()).resolve(strict=False)
     if pointed != gitfile.resolve(strict=False):
         raise HygieneError("worktree metadata backpointer does not match this checkout")
-    if common_dir.name != ".git" or not common_dir.is_dir():
+    if common_dir.name == ".git" and common_dir.is_dir():
+        repository_root = common_dir.parent
+        development_root = repository_root / "local"
+    elif (
+        common_dir.name == "git"
+        and common_dir.parent.name == "Development"
+        and common_dir.is_dir()
+    ):
+        development_root = common_dir.parent
+        repository_root = development_root.parent
+    else:
         raise HygieneError("common Git directory is not the Optimus bare repository")
-    return Worktree(root, git_dir, common_dir, common_dir.parent)
+    return Worktree(
+        root, git_dir, common_dir, repository_root.resolve(), development_root.resolve()
+    )
 
 
 def path_size(path: Path) -> int:
@@ -163,7 +176,7 @@ def _report_external(worktree: Worktree) -> list[str]:
         path = worktree.repository_root / relative
         if path.exists() and not path.is_symlink():
             lines.append(f"REPORT_ONLY {path} bytes={path_size(path)}")
-    worktrees_root = worktree.repository_root / "local/worktrees"
+    worktrees_root = worktree.development_root / "worktrees"
     if worktrees_root.is_dir():
         for sibling in sorted(worktrees_root.iterdir()):
             if sibling.resolve(strict=False) == worktree.root:

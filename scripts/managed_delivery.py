@@ -78,10 +78,19 @@ class Repository:
         if not commondir_file.is_file():
             raise Refusal("the checkout is not a registered linked worktree")
         common_dir = (git_dir / commondir_file.read_text(encoding="utf-8").strip()).resolve()
-        if common_dir.name != ".git" or not common_dir.is_dir():
+        if common_dir.name == ".git" and common_dir.is_dir():
+            repo_root = common_dir.parent.resolve()
+            development_root = repo_root / "local"
+        elif (
+            common_dir.name == "git"
+            and common_dir.parent.name == "Development"
+            and common_dir.is_dir()
+        ):
+            development_root = common_dir.parent.resolve()
+            repo_root = development_root.parent.resolve()
+        else:
             raise Refusal("cannot resolve the canonical bare Git directory")
-        repo_root = common_dir.parent.resolve()
-        assigned_root = (repo_root / "local" / "worktrees").resolve()
+        assigned_root = (development_root / "worktrees").resolve()
         try:
             relative = root.relative_to(assigned_root)
         except ValueError as error:
@@ -96,13 +105,21 @@ class Repository:
         if registered_marker != marker.resolve():
             raise Refusal("linked worktree registration points at a different checkout")
 
+        identity_file = git_dir / "optimus-worktree-id"
+        worktree_id = hashlib.sha256(str(root).encode()).hexdigest()[:16]
+        if identity_file.is_file():
+            preserved = identity_file.read_text(encoding="utf-8").strip()
+            if not re.fullmatch(r"[0-9a-f]{16}", preserved):
+                raise Refusal("linked worktree has an invalid managed identity")
+            worktree_id = preserved
+
         provisional = cls(
             root=root,
             git_dir=git_dir,
             common_dir=common_dir,
             repo_root=repo_root,
-            state_dir=repo_root / "local" / "land",
-            worktree_id=hashlib.sha256(str(root).encode()).hexdigest()[:16],
+            state_dir=development_root / "land",
+            worktree_id=worktree_id,
             branch="",
         )
         branch = provisional.git(["symbolic-ref", "--quiet", "HEAD"]).stdout.strip()
@@ -127,7 +144,7 @@ class Repository:
             git_dir=git_dir,
             common_dir=common_dir,
             repo_root=repo_root,
-            state_dir=repo_root / "local" / "land",
+            state_dir=development_root / "land",
             worktree_id=provisional.worktree_id,
             branch=branch,
         )

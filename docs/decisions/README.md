@@ -82,6 +82,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0059 | Standard autonomy is consequence-bounded (program P30) | Accepted | Direct project work remains automatic; recognised remote and command-string shell forms leave that lane; deletes are irreversible until real checkpoints exist; arbitrary-process network and ambient-credential authority remain explicit gaps. |
 | 0060 | Owned localhost is a process-bound lease (program P30) | Accepted | Exact loopback origin authority is bound to a verified owned process, project, run, generation, and expiry; issuance remains incomplete and localhost stays denied by default. |
 | 0061 | Generated Engineering Memory is a disposable cache | Accepted | Source, tests, curated docs, ADRs, and Git remain authority; ignored deterministic maps auto-materialize for lenses and validation computes truth without cache artifacts. |
+| 0062 | Source and Development are separate workspace planes | Accepted | Clean detached Source view; local Git, worktrees, land evidence, tools, builds, caches, and recoverable root shadow live under Development. |
 
 ## Known documentary debt
 
