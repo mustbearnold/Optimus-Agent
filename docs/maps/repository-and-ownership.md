@@ -4,7 +4,7 @@ doc_type: reference
 plane: current
 status: current
 authority: supporting
-summary: Confirmed current behaviour: this is a Rust 2021 workspace with Rust 1.85 as the declared minimum. cargo metadata --no-deps reports eighteen workspace packages: libraries optimus-store, optimus-graph, optimus-runtime, optimus-memory,...
+summary: Supporting map of Optimus domain boundaries and application surfaces; the executable repository component database owns package inventory, lifecycle, distribution, and removal truth.
 reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: repository-map
@@ -27,7 +27,9 @@ owns:
   - crates/optimus-artifacts/Cargo.toml
   - crates/optimus-agent/Cargo.toml
   - crates/optimus-workflow/Cargo.toml
+  - crates/optimus-engineering/Cargo.toml
   - crates/optimus-eval/Cargo.toml
+  - docs/repository-components.json
 watches:
   - apps/**/src/**
   - crates/**/src/**
@@ -50,7 +52,9 @@ covers:
   - crates/optimus-artifacts/Cargo.toml
   - crates/optimus-agent/Cargo.toml
   - crates/optimus-workflow/Cargo.toml
+  - crates/optimus-engineering/Cargo.toml
   - crates/optimus-eval/Cargo.toml
+  - docs/repository-components.json
 depends_on:
   - README.md
 validated_by:
@@ -60,51 +64,14 @@ last_verified_commit: 09fddbc1b60a6b37f9f80680988ea5036a9b8eec
 
 # Repository and ownership map
 
-## Audit basis
+## Audit basis and package ownership
 
-**Confirmed current behaviour:** this is a Rust 2021 workspace with Rust
-1.85 as the declared minimum. `cargo metadata --no-deps` reports **eighteen**
-workspace packages: libraries `optimus-store`, `optimus-graph`,
-`optimus-runtime`, `optimus-memory`, `optimus-skills`, `optimus-packs`,
-`optimus-ops`, `optimus-artifacts`, `optimus-agent`, `optimus-workflow`,
-`optimus-kernel`, `optimus-eval`, `optimus-browser`, `optimus-policy`,
-`optimus-host`; applications `optimus-cli`, `optimus-desktop`, and
-`optimus-tui`. Electron (`apps/optimus-electron`) and React UI
-(`apps/optimus-ui`) are npm packages outside Cargo metadata but are the default
-desktop shell.
-
-**Confirmed current behaviour:** the repository is a Git checkout on `main` with
-GitHub `origin`; Engineering Memory records both commit identity and deterministic
-file/tree SHA-256 values.
-
-**Confirmed current behaviour:** a standalone Leptos CSR experiment exists at
-`spikes/001-leptos-wry-csr`. It declares its own workspace and is not a member of
-the root Cargo workspace.
-
-## Package ownership
-
-| Package | Kind | Owns | Direct local dependencies |
-|---|---|---|---|
-| `optimus-store` | library | SQLite Work Graph projections, approvals, ordered events | none |
-| `optimus-graph` | library | Job/node/effect domain and transition helpers | store |
-| `optimus-runtime` | library | Job execution, SmartDeny, process bounds/capture, crash resume, campaigns | graph, store, skills, policy |
-| `optimus-memory` | library | Evidence-native runtime memory and temporal recall | none |
-| `optimus-skills` | library | Runtime procedural-skill lifecycle and permission closure | none |
-| `optimus-packs` | library | **Sole** `ToolDesc` / pack catalog, operational metadata, capability budgets | none |
-| `optimus-ops` | library | Operator gateway delivery authority and cron schedule store | none |
-| `optimus-artifacts` | library | Content-addressed artifact store | none (serde/sha2/fs2 only) |
-| `optimus-agent` | library | Specialist contracts, registry, invocation ledger | packs, runtime, graph |
-| `optimus-workflow` | library | Workflow contracts, run ledger, built-in DAG verticals | agent, artifacts, packs, runtime, graph |
-| `optimus-kernel` | library | Model/tool turn loop, sessions, execution/trace, routing, credentials; re-exports agent/workflow/artifacts/ops; **no second tool catalog** | graph, runtime, memory, skills, packs, ops, agent, workflow, artifacts |
-| `optimus-eval` | library | Offline integrity/trajectory eval, evaluation reports, fixture replay | kernel, graph, runtime, memory, packs |
-| `optimus-browser` | library | CDP browser backend (optional agent tools; not the Electron preview view) | (see crate Cargo.toml) |
-| `optimus-policy` | library | ADR-0044 autonomy profiles, capabilities, and the capability broker | none |
-| `optimus-host` | library | Exact IPC method registry and domain dispatch every surface speaks (ADR-0045) | kernel, packs, runtime, graph |
-| `optimus-tui` | binary | Terminal face over the linked-in agent host: streamed turns, provider picker, exact approval resolution | host, kernel |
-| `optimus-cli` | binary | Headless/operator command surface and loopback gateway HTTP | kernel, eval, graph, runtime, skills, packs |
-| `optimus-desktop` | binary | Rust host (`--host-only` for Electron) + Legacy Wry shell, native IPC, HTTP test harness | kernel, graph, runtime, packs |
-| `apps/optimus-electron` | npm app | Default Electron shell, preload, preview `WebContentsView` | host IPC |
-| `apps/optimus-ui` | npm app | React workbench presentation (no FS authority) | Electron transport |
+**Confirmed current behaviour:** Rust and npm package identity is derived from
+their manifests. Component meaning, distribution, lifecycle, common confusion,
+generated-output destination, and removal conditions are governed by the
+[repository component authority](../repository-components.md) and rendered in
+the generated [component wiki](../COMPONENTS.md). This supporting map does not
+repeat those tables because a second handwritten inventory inevitably drifts.
 
 ## Domain modularity (P13 / ADR-0036)
 
@@ -140,15 +107,17 @@ jobs, gateway, built-in eval, and campaigns.
 
 ### Desktop
 
-**Confirmed current behaviour:** the native Wry/Tao shell uses WebKitGTK on Linux
-and WebView2 on Windows. It serves one inline UI document through Wry IPC at the
+**Confirmed current behaviour:** the Wry/Tao shell uses WebKitGTK on Linux and
+WebView2 on Windows. It serves one inline UI document through Wry IPC at the
 platform custom-protocol URL (`optimus://localhost/` on Linux and
 `http://optimus.localhost/` on Windows). A separate loopback HTTP mode exists for
 Playwright and browser testing. The IPC method registry and its domain modules
 (system, sessions, scheduling, runtime, files, chat, OS) now live in
 `crates/optimus-host` (ADR-0045); the desktop binary is a transport over them. Linux user installation and
 desktop registration are owned by `scripts/rebuild-install-relaunch.sh` and the
-XDG data/bin/application/icon locations it manages.
+XDG data/bin/application/icon locations it manages. Electron plus React is the
+default Linux install; the Windows rebuild/install path still uses Wry, so the
+Wry UI is rollback-only but not yet safe to remove.
 
 **Confirmed current behaviour:** `apps/optimus-electron` is the default
 repository-level shell and owns the context-isolated preload, host
@@ -181,18 +150,12 @@ project state grants Rust filesystem access.
 - **Unknown/unresolved:** model-chosen specialist routing, OTLP/OpenTelemetry
   export (local causal export exists — ADR-0037), or GPU adapters.
 
-## Missing top-level domains
+## Top-level domains
 
-**Confirmed current behaviour:** there are no root `agents/`, `workflows/`,
-`tools/`, `prompts/`, `evals/`, `fixtures/`, or `packages/` directories. Their
-absence is not proof the concepts are absent: tools are in
-`optimus-packs`; general workflow and agent contracts live in `optimus-workflow`
-and `optimus-agent` (kernel re-exports);
-execution remains in jobs/campaigns/cron/gateway; prompts are inline.
-
-**Planned behaviour:** add a top-level domain only when it has an implemented,
-typed artifact that cannot live clearly in the established Rust package. Do not
-restructure the whole repository to imitate a template.
+**Confirmed current behaviour:** every tracked top-level domain and every
+immediate app, crate, evaluation suite, and developer skill must exist in the
+component database. `evals/` contains reproducible definitions; generated
+results belong in `Development/`. Adding an unclassified domain is a red gate.
 
 ## Adapted Engineering Memory structure
 

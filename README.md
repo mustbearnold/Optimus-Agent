@@ -140,15 +140,10 @@ just ui       # Vitest, Electron, Playwright
 ```
 
 [`scripts/verify.sh`](scripts/verify.sh) is the single source of truth. The
-justfile, the `pre-push` hook, humans, and coding agents all call it, so there
-is no second command list to drift. It runs every gate to completion and reports
-the full picture rather than stopping at the first failure.
-
-Enable the local gate once per clone (push is gated, not commit):
-
-```bash
-just setup-hooks
-```
+justfile, managed land, humans, and coding agents all call it, so there is no
+second hook or hosted-workflow command list to drift. It runs every gate to
+completion and reports the full picture rather than stopping at the first
+failure. `just land` runs it with skipped gates forbidden before delivery.
 
 The Hermes parity gate is fail-closed by design and is deliberately **not** part
 of `just verify`. Check it with `just parity`.

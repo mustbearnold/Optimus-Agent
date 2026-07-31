@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Disposable integration test for the Source/Development migration."""
+"""Disposable integration test for Repository/Development workspace management."""
 
 from __future__ import annotations
 
@@ -69,8 +69,8 @@ def main() -> int:
         planned = LAYOUT.report(task)
         assert "README.md" in planned["source_shadow_entries"]
         result = LAYOUT.apply_layout(task)
-        assert result["source_ref"] == "refs/heads/main"
-        assert (root / "Source" / "README.md").read_text() == "landed source\n"
+        assert result["repository_ref"] == "refs/heads/main"
+        assert (root / "Repository" / "README.md").read_text() == "landed source\n"
         assert (root / "Development" / "git").is_dir()
         assert (root / "Development" / "worktrees" / "task").is_dir()
         assert (root / "Development" / "Archive" / "stale-root-snapshot" / "README.md").is_file()
@@ -84,6 +84,56 @@ def main() -> int:
         assert repository.state_dir == (root / "Development" / "land").resolve()
         assert repository.branch == "refs/heads/task/layout"
         assert repository.git(["status", "--porcelain=v1"]).stdout == ""
+        assert command(moved_task, "git", "status", "--porcelain=v1") == ""
+
+        # Simulate the originally shipped name and prove managed sync performs
+        # the one-time Source -> Repository correction without losing identity.
+        command(
+            base, "git", f"--git-dir={root / 'Development' / 'git'}",
+            "worktree", "move", str(root / "Repository"), str(root / "Source"),
+        )
+        synchronized = LAYOUT.sync_repository_view(moved_task)
+        assert synchronized["renamed_source"] is True
+        assert not (root / "Source").exists()
+        assert (root / "Repository" / "README.md").read_text() == "landed source\n"
+        assert "`Repository/`" in (root / "WORKSPACE.md").read_text()
+
+        # A checked-out main is never moved behind its worktree's back, even
+        # when it is clean at first and subsequently contains local work.
+        main_checkout = root / "Development" / "worktrees" / "main-checkout"
+        command(
+            base, "git", f"--git-dir={root / 'Development' / 'git'}",
+            "worktree", "add", str(main_checkout), "main",
+        )
+        main_before = command(main_checkout, "git", "rev-parse", "HEAD")
+        (main_checkout / "local.txt").write_text("do not disturb\n", encoding="utf-8")
+
+        # Live main advances independently; sync fetches the exact object,
+        # updates the detached view and tracking identity, while reporting the
+        # checked-out local main as blocked rather than mutating it.
+        (seed / "README.md").write_text("new landed source\n", encoding="utf-8")
+        command(seed, "git", "add", "README.md")
+        command(seed, "git", "commit", "-m", "next")
+        next_sha = command(seed, "git", "rev-parse", "HEAD")
+        synchronized = LAYOUT.sync_repository_view(moved_task)
+        assert synchronized["target"] == next_sha
+        assert synchronized["local_main"]["status"] == "blocked_checked_out"
+        assert synchronized["local_main"]["sha"] == main_before
+        assert str(main_checkout) in synchronized["local_main"]["checked_out_at"]
+        assert synchronized["origin_main"] == next_sha
+        assert (root / "Repository" / "README.md").read_text() == "new landed source\n"
+        assert command(main_checkout, "git", "rev-parse", "HEAD") == main_before
+        assert (main_checkout / "local.txt").read_text() == "do not disturb\n"
+
+        dirty = root / "Repository" / "untracked.txt"
+        dirty.write_text("human edit\n", encoding="utf-8")
+        try:
+            LAYOUT.sync_repository_view(moved_task)
+        except LAYOUT.LayoutRefusal as error:
+            assert "local changes" in str(error)
+        else:
+            raise AssertionError("repository synchronization accepted a dirty clean view")
+        dirty.unlink()
 
         try:
             LAYOUT.apply_layout(moved_task)

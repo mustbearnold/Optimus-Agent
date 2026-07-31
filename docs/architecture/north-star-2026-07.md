@@ -122,10 +122,11 @@ on observing Hermes. The guard against a self-authored bar is structural:
 | C3 | One core per home — a second surface probes and attaches, never spawns | test + probe path | red — `apps/optimus-electron/main.cjs:213` always spawns |
 | C4 | All 82 host methods classified across all four surfaces (`unclassified → 0`); the 22 critical methods may never be N/A on a human-facing surface | generalised `check-desktop-ipc-matrix.py` | red — terminal reaches 8 of 22 |
 | C5 | `apps/` layering allowlist shrinks to zero | `check-crate-layers.py` extended to `apps/` | red — no `apps/` coverage yet |
-| C6 | CI green at the SHA; one workflow runs `just verify` on push + PR; **a skipped gate fails the build** | `.github/workflows/verify.yml` | red — zero workflows exist |
+| C6 | Managed land verifies the exact candidate, forbids skipped gates, performs a non-force delivery, and reads remote `main` back | `scripts/managed_delivery.py` + immutable land receipt | red — managed delivery did not exist |
 
-C6 is the prerequisite: until it lands, C1–C5 are claims, and the platform rule
-claims no platforms at all. Sequence: C6 → C5 + C2 → ledger re-key → C1 + C3.
+C6 is the prerequisite: until it lands, C1–C5 are claims. The managed land
+implementation now supplies C6 without a second GitHub Actions workflow or raw
+push path. Sequence remains C6 → C5 + C2 → ledger re-key → C1 + C3.
 
 C4 rider: the durable-partial-turn interrupt (#64) is a registry method and
 must appear in this matrix as reachable on **all four surfaces** — #66 binds it

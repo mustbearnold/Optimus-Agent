@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Single source of truth for Optimus local gates.
 #
-# Every caller — humans, coding agents, the pre-push hook, and the justfile —
+# Every caller — humans, coding agents, managed land, and the justfile —
 # runs this script. There is no second list of commands to drift out of sync.
 #
 # Usage: scripts/verify.sh [tier]
@@ -10,7 +10,7 @@
 #   check   gates + cargo check + clippy              (~35s)
 #   test    check + cargo test                        (~60s)
 #   ui      JS unit suites + Playwright               (~2min)
-#   all     every tier above (default; pre-push gate)
+#   all     every tier above (default; managed land gate)
 #   live    real-model smoke: real Codex through the host and the TUI pty.
 #           Spends tokens and needs a real credential, so it is NOT in `all`;
 #           it is the gate for releases and for changes to live surfaces.
@@ -105,8 +105,8 @@ skip() {
   printf '%-46s%s\n' "  $1" "${Y}skip${X} ($2)"
   SKIPPED+=("$1")
   # The reason is already phrased as the missing prerequisite at every call
-  # site, so keeping it alongside the name is all the pre-push hook needs to
-  # tell the pusher what did not run and why (#98).
+  # site, so keeping it alongside the name is all a strict caller needs to
+  # explain what did not run and why.
   SKIPPED_DETAIL+=("$1	$2")
 }
 
@@ -222,15 +222,18 @@ tier_gates() {
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/docs_system.py check
+  spawn "repository-ontology"        python3 scripts/repository_ontology.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_docs_system"           python3 scripts/test_docs_system.py
+  spawn "test_repository_ontology"   python3 scripts/test_repository_ontology.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
+  spawn "test_worktree_retirement"   python3 scripts/test_managed_worktree_retirement.py
   spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_workspace_layout"      python3 scripts/test_workspace_layout.py
@@ -427,15 +430,18 @@ tier_all() {
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/docs_system.py check
+  spawn "repository-ontology"        python3 scripts/repository_ontology.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_docs_system"           python3 scripts/test_docs_system.py
+  spawn "test_repository_ontology"   python3 scripts/test_repository_ontology.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
+  spawn "test_worktree_retirement"   python3 scripts/test_managed_worktree_retirement.py
   spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_workspace_layout"      python3 scripts/test_workspace_layout.py
@@ -522,9 +528,8 @@ printf '  %s%d passed%s' "$G" "${#PASSED[@]}" "$X"
 [ "${#FAILED[@]}" -gt 0 ] && printf ', %s%d failed%s' "$R" "${#FAILED[@]}" "$X"
 printf '\n'
 
-# Hand the skip list to whoever invoked us. The pre-push hook uses it to stop
-# calling a partly-run push `clean` (#98); nothing else reads it, and nothing
-# here changes if the variable is unset.
+# Hand the skip list to whoever invoked us. Managed land forbids skips; local
+# callers may render the missing prerequisites. Nothing changes when unset.
 if [ -n "${OPTIMUS_VERIFY_SKIP_REPORT:-}" ]; then
   : >"$OPTIMUS_VERIFY_SKIP_REPORT"
   [ "${#SKIPPED_DETAIL[@]}" -gt 0 ] &&
@@ -536,10 +541,9 @@ if [ "${#FAILED[@]}" -gt 0 ]; then
   exit 1
 fi
 
-# Skip-is-failure mode (success criterion C6, north-star-2026-07.md). Locally a
-# skip is a nudge to install a dev dependency; on a bare CI runner it is a gate
-# silently not running — green with silent skips is exactly the self-serving
-# shape the criteria ban. CI sets OPTIMUS_VERIFY_FORBID_SKIPS=1.
+# Skip-is-failure mode. Locally a skip identifies a missing development
+# prerequisite; managed land sets OPTIMUS_VERIFY_FORBID_SKIPS=1 so a gate that
+# silently did not run can never become delivery evidence.
 if [ -n "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ] && [ "${#SKIPPED[@]}" -gt 0 ]; then
   printf '\n  skipped (forbidden by OPTIMUS_VERIFY_FORBID_SKIPS): %s\n\n' "${SKIPPED[*]}"
   exit 1

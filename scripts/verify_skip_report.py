@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Render the gates that `verify.sh` did not run, for the pre-push hook.
+"""Render the gates that a local `verify.sh` invocation did not run.
 
 `verify.sh` allows skips locally on purpose: a contributor without tmux, or a
-fresh `git worktree` with no `apps/optimus-electron/node_modules`, can still
-push. CI forbids them (`OPTIMUS_VERIFY_FORBID_SKIPS=1`).
+fresh worktree with no `apps/optimus-electron/node_modules`, can still inspect
+the available suite. Managed land forbids them (`OPTIMUS_VERIFY_FORBID_SKIPS=1`).
 
 What was not intended is the hook printing `clean` afterwards. A push that ran
 28 of 31 gates is not clean, it is partly verified, and the difference is
-exactly what CI is about to find. This turns the skip list into a sentence that
-says so.
+exactly what strict verification is designed to prevent. This turns the skip
+list into a sentence that says so.
 
-Kept separate from the hook because a bash heredoc is not testable and this is.
+Kept separate from the runner because a bash heredoc is not testable and this is.
 """
 
 from __future__ import annotations
@@ -47,14 +47,14 @@ def render(skipped: list[tuple[str, str]]) -> str:
     width = max(len(name) for name, _ in skipped)
     lines = [
         '',
-        f'[pre-push] {count} {gates} did not run here — CI will run {"it" if count == 1 else "them"}:',
+        f'[verify] {count} {gates} did not run here — managed land will refuse:',
         '',
     ]
     lines += [f'    {name:<{width}}  {reason}' for name, reason in skipped]
     lines += [
         '',
         '  Each line names the missing prerequisite. To make a skip fail locally,',
-        '  the way it already does on CI:',
+        '  the same strict mode used by managed land:',
         '',
         '    OPTIMUS_VERIFY_FORBID_SKIPS=1 just verify',
         '',

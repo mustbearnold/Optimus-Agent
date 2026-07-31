@@ -36,6 +36,9 @@ Coding agents use exactly:
 just checkpoint <label>
 just undo <label>
 just land <task-id> --model <model> --effort <level>
+just workspace-repository-sync
+just worktree-retirement-plan
+just retire-worktrees <plan-sha256>
 just branch-retirement-plan '<superseded-json>'
 just retire-branches <plan-sha256> '<superseded-json>'
 ```
@@ -92,8 +95,10 @@ Land is conservative:
 7. Push that exact commit non-force to remote `refs/heads/main`, then read it
    back. Local `refs/heads/main` is never moved because it may be checked out in
    another linked worktree.
-8. Write an immutable task receipt and move only the invoking task branch to the
-   landed commit.
+8. Write an immutable remote-delivery receipt, then reconcile the invoking task
+   branch, tracking identity, and detached `Repository/` view independently.
+   Local presentation failures are recorded as degraded follow-up state; they
+   cannot turn an already accepted remote delivery into a false refusal.
 
 The generated message contains the task id, affected seams, conservative
 diff-derived symbols, full-suite fixture result, gate status, producing model,
@@ -108,6 +113,7 @@ Shared, ignored control state lives under `local/land/`:
 - `tasks/<task-id>/` — immutable attempts and the terminal land receipt;
 - `evidence/` — full verification output;
 - `locks/` — per-worktree and final-land serialization;
+- `workspace-sync/` — retryable Repository/local-identity reconciliation attempts;
 - `tmp/` — alternate indexes.
 
 Writes use temporary files, `fsync`, and atomic rename. A red gate writes its
@@ -132,6 +138,21 @@ movement cannot be silently discarded.
 A successful operation writes an immutable receipt under
 `local/land/branch-retirements/`. Agents do not replace this command with raw
 `git push --delete`, non-atomic loops, or `gh`.
+
+## Worktree retirement
+
+`worktree-retirement-plan` inventories every checkout except the invoking
+assigned worktree and the clean `Repository/` view. The plan records exact HEAD,
+branch, content tree, dirty state, and every already-missing registration under
+one SHA-256 digest.
+
+`retire-worktrees` refuses if any planned state changed. Before removing a dirty
+checkout it writes the complete non-ignored tree to a private
+`refs/optimus/retired-worktrees/**` recovery commit. It then removes the exact
+planned checkouts and prunes dead registrations under the shared land lock.
+Ignored caches are disposable; source progress is recoverable. The active
+worktree is structurally excluded, so ordinary development retains one isolated
+checkout rather than accumulating every past agent session.
 
 If remote main changes while gates run, land refuses before committing or
 pushing. A race after the final check is still protected by Git's non-force

@@ -108,8 +108,8 @@ just verify
 ```
 
 `just verify` runs every gate above through `scripts/verify.sh`, the single
-source of truth shared by the justfile, the `.githooks/pre-push` gate, humans,
-and coding agents. Narrower tiers: `just gates` · `just check` · `just test` ·
+source of truth shared by the justfile, managed land, humans, and coding agents.
+Narrower tiers: `just gates` · `just check` · `just test` ·
 `just ui`.
 
 The Hermes parity gate is deliberately excluded from `just verify` because it is

@@ -62,6 +62,9 @@ ESCALATING_PATHS = (
     "scripts/check-*.py",
     "scripts/impact_select.py",
     "scripts/engineering_memory.py",
+    "scripts/docs_system.py",
+    "scripts/repository_ontology.py",
+    "docs/repository-components.json",
     "scripts/verify_skip_report.py",
 )
 

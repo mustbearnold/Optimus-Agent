@@ -5,7 +5,7 @@
 #
 #   just            list recipes
 #   just check      static gates + compile        (~35s, the inner loop)
-#   just verify     everything                    (pre-push gate)
+#   just verify     everything                    (managed land gate)
 
 set shell := ["bash", "-uc"]
 
@@ -30,7 +30,7 @@ test:
 ui:
     @bash scripts/verify.sh ui
 
-# Every tier. This is what the pre-push hook runs.
+# Every tier. Managed land runs this with skips forbidden.
 verify:
     @bash scripts/verify.sh all
 
@@ -59,13 +59,33 @@ branch-retirement-plan superseded_json="{}":
 retire-branches plan_sha256 superseded_json="{}":
     @python3 scripts/managed_branch_retirement.py execute {{quote(plan_sha256)}} --superseded-json {{quote(superseded_json)}}
 
-# Preview the one-time Source/Development workspace migration.
+# Preview the one-time Repository/Development workspace migration.
 workspace-layout-report:
     @python3 scripts/workspace_layout.py report
 
 # Apply the reviewed migration without raw Git or broad deletion.
 workspace-layout-apply:
     @python3 scripts/workspace_layout.py apply
+
+# Synchronize local main identities and the clean Repository view to live GitHub main.
+workspace-repository-sync:
+    @python3 scripts/workspace_layout.py sync
+
+# Produce an exact, recovery-aware plan for every stale worktree except this one.
+worktree-retirement-plan:
+    @python3 scripts/managed_worktree_retirement.py plan
+
+# Preserve dirty trees, retire the exact reviewed worktrees, and prune dead registrations.
+retire-worktrees plan_sha256:
+    @python3 scripts/managed_worktree_retirement.py execute {{quote(plan_sha256)}}
+
+# Bounded startup card for every coding agent.
+orient:
+    @python3 scripts/repository_ontology.py orient
+
+# Explain what a path is, whether it ships, and whether it is removable.
+explain-path path:
+    @python3 scripts/repository_ontology.py explain-path {{quote(path)}}
 
 # --- focused verification (program P42) ---------------------------------------
 
@@ -193,11 +213,6 @@ install:
 
 # --- setup -------------------------------------------------------------------
 
-# Point git at the versioned hooks in .githooks (run once per clone).
-setup-hooks:
-    git config core.hooksPath .githooks
-    @echo "core.hooksPath -> .githooks"
-
 # Install npm dependencies for all JS surfaces.
 setup-npm:
     npm --prefix apps/optimus-ui ci
@@ -206,4 +221,4 @@ setup-npm:
     npm --prefix apps/optimus-desktop exec -- playwright install chromium
 
 # One-time setup for a fresh clone.
-setup: setup-hooks setup-npm
+setup: setup-npm

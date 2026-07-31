@@ -16,6 +16,7 @@
     "engineering-memory.authority",
     "testing.synthetic-users",
     "repository.gates"
+    ,"repository.components"
   ],
   "routes": [
     {
@@ -68,7 +69,7 @@
     },
     {
       "id": "development.workspace",
-      "keywords": ["Source", "Development", "workspace", "worktree", "project folder", "separate planes", "wrapper"],
+      "keywords": ["Repository", "Source", "Development", "workspace", "worktree", "project folder", "separate planes", "wrapper"],
       "primary": ["decision-0062-source-and-development-are-separate-workspace-planes"],
       "supporting": ["development-instructions"]
     },
@@ -107,6 +108,12 @@
       "keywords": ["synthetic user", "persona", "human simulation", "harness test", "journey", "failure case", "adversarial testing"],
       "primary": ["specifications-synthetic-user-lab"],
       "supporting": ["maps-observability-and-evaluations"]
+    },
+    {
+      "id": "repository.components",
+      "keywords": ["what is this path", "component database", "does it ship", "safe to delete", "apps", "crates", "evals", "Source", "Repository", "Development", "stale experiment", "development wiki"],
+      "primary": ["repository-components"],
+      "supporting": ["repository-and-ownership-map", "development-instructions"]
     },
     {
       "id": "repository.gates",

@@ -27,6 +27,12 @@ validated_by:
 - **Status:** Accepted
 - **Date:** 2026-07-31
 
+> **Current naming (2026-08-01):** the clean view is now `Repository/`, not
+> `Source/`. The original name below is preserved as decision history.
+> `Repository/` means the complete reproducible GitHub content—product source,
+> tests, evaluation definitions, docs, and build logic. `Development/` remains
+> machine-local worktrees, evidence, caches, tools, and delivery records.
+
 ## Context
 
 The Optimus project root accumulated two different kinds of state in one view:
@@ -136,3 +142,12 @@ The decision makes the invariant in the Decision section explicit and testable. 
 - `scripts/test_workspace_layout.py`
 - `scripts/test_managed_delivery.py`
 - `scripts/test_project_hygiene.py`
+
+## Repository naming addendum (2026-08-01)
+
+`Source/` was technically accurate but semantically misleading: people and
+agents repeatedly inferred that tests, evaluations, docs, and development
+automation did not belong there. The managed workspace command therefore
+renames the clean view to `Repository/`, synchronizes it to exact remote-main
+identity, and leaves checked-out local `main` untouched. Compatibility with the
+old name is input-only for path explanation and one-time managed migration.

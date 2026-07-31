@@ -25,6 +25,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, Sequence
 
+import workspace_layout
+
 
 SCHEMA_VERSION = 1
 SLUG = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
@@ -498,6 +500,9 @@ def run_verify(repo: Repository, evidence_path: Path) -> tuple[int, str]:
         raise Refusal("scripts/verify.sh is missing")
     env = sanitized_env()
     env["OPTIMUS_VERIFY_FORBID_SKIPS"] = "1"
+    bundled_tools = repo.state_dir.parent / "tools" / "just" / "bin"
+    if (bundled_tools / "just").is_file():
+        env["PATH"] = f"{bundled_tools}:{env.get('PATH', '')}"
     completed = subprocess.run(
         ["bash", str(verify), "all"],
         cwd=repo.root,
@@ -527,8 +532,57 @@ def completed_receipt(
     remote = remote_main(repo)
     if remote != commit and not is_ancestor(repo, commit, remote):
         raise Refusal("task receipt exists but its commit is not on remote main")
+    local = reconcile_local_state(repo, receipt, remote)
+    if local["status"] != "synchronized":
+        print(f"warning: landed task is current; local synchronization is {local['status']}")
     print(f"task {task_id} already landed: {commit}")
     return receipt
+
+
+def reconcile_local_state(
+    repo: Repository,
+    receipt: dict[str, object],
+    remote: str,
+    *,
+    already_locked: bool = False,
+) -> dict[str, object]:
+    """Best-effort, retryable local presentation after remote acceptance."""
+
+    def run() -> dict[str, object]:
+        result: dict[str, object] = {"status": "synchronized", "target": remote}
+        errors: list[str] = []
+        commit = str(receipt["commit"]["sha"])
+        expected_tree = str(receipt["tree"])
+        try:
+            current_branch = ref_oid(repo, repo.branch)
+            if current_branch != commit:
+                if repo.snapshot_tree() == expected_tree:
+                    repo.git(["update-ref", repo.branch, commit, current_branch or ZERO_OID])
+                    repo.git(["read-tree", "--reset", commit])
+                else:
+                    errors.append("task worktree changed after delivery; branch reconciliation deferred")
+        except Exception as error:  # Remote delivery is already terminal.
+            errors.append(f"task worktree reconciliation failed: {error}")
+        if repo.common_dir.parent.name == "Development":
+            try:
+                result["repository"] = workspace_layout.sync_repository_view(
+                    repo.root, remote, already_locked=True
+                )
+            except Exception as error:  # Local presentation must never falsify delivery.
+                errors.append(f"Repository synchronization failed: {error}")
+        if errors:
+            result["status"] = "degraded"
+            result["errors"] = errors
+            try:
+                workspace_layout.record_sync_attempt(repo.repo_root, result)
+            except Exception:
+                pass
+        return result
+
+    if already_locked:
+        return run()
+    with lock(repo.state_dir / "locks" / "land.lock"):
+        return run()
 
 
 def land(repo: Repository, task_id: str, model: str, effort: str) -> dict[str, object]:
@@ -692,20 +746,17 @@ def land(repo: Repository, task_id: str, model: str, effort: str) -> dict[str, o
         }
         receipt["landed_at"] = now()
         atomic_json(task_dir / "receipt.json", receipt, exclusive=True)
+        local = reconcile_local_state(repo, receipt, readback, already_locked=True)
 
-        # Move only the assigned task branch. Local refs/heads/main may be
-        # checked out in another worktree and is deliberately untouched.
-        repo.git(["update-ref", repo.branch, candidate, head])
-        repo.git(["read-tree", "--reset", candidate])
-        repo.git(["update-ref", "refs/remotes/origin/main", readback])
-
-    if receipt["state"] != "landed":
-        raise Refusal(
-            f"push was accepted as {candidate}, but remote readback is {readback}; "
-            f"immutable receipt state is {receipt['state']}"
-        )
     print(f"landed {task_id}: {candidate}")
     print(f"remote main: {readback}")
+    print(f"local synchronization: {local['status']}")
+    if receipt["state"] == "landed_readback_conflict":
+        print(
+            "warning: remote accepted the candidate but readback no longer contains it; "
+            "see the immutable receipt",
+            file=sys.stderr,
+        )
     return receipt
 
 

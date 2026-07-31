@@ -101,7 +101,7 @@ fn the_focused_gate_comes_from_the_justfile_not_from_a_guess() {
 }
 
 #[test]
-fn the_full_gate_is_the_one_the_pre_push_hook_runs() {
+fn the_full_gate_is_the_one_managed_land_runs() {
     let root = repo_root();
     let profile = resolve_profile(&OfflineRunner, &root, &DeclaredPolicy::default())
         .expect("this repository resolves");

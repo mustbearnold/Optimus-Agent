@@ -66,8 +66,10 @@ At this review point, the highest-confidence cross-domain needs are:
   product;
 - mature specialist routing and bounded collaboration from registered verticals
   into useful general orchestration;
-- keep the documentation and Engineering Memory truth layers smaller and more
-  semantically reliable than the history they preserve.
+- keep the governed component database, documentation, and Engineering Memory
+  smaller and more semantically reliable than the history they preserve;
+- retire disposable development worktrees and generated output continuously so
+  they never masquerade as current repository content.
 
 Named programs under `docs/plans/` are historical or supporting implementation
 records unless this document explicitly promotes one. They cannot silently

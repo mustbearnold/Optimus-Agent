@@ -38,7 +38,7 @@
     },
     "architecture-north-star-2026-07": {
       "binding_sha256": null,
-      "document_sha256": "f6e96d053150647fbfdfc40a346bd1e030f8a4428a74a3bb4ec9681ab4f2e815",
+      "document_sha256": "b36be520d8280f0cdc392dff585e62f5f79731828f30796a2189601d0e037907",
       "path": "docs/architecture/north-star-2026-07.md",
       "resolved_files": 0
     },
@@ -68,12 +68,12 @@
     },
     "architecture-sota-scorecard": {
       "binding_sha256": null,
-      "document_sha256": "805840517bc4c6e50779cb40aad4da6d269c31352ed68517219501c67ba53e49",
+      "document_sha256": "2e9dad0527230b6ea74f306a2ad61adb97fa0fe5b6ec5eb24b168e0792b2b271",
       "path": "docs/architecture/sota-scorecard.md",
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "aa1a7142fec0716cf44492857045fc5196a03483fb6fe3003903480e268efcde",
+      "binding_sha256": "0c0d368547ed0614f4b50570b82d1eca96ab24d2fabec2a3404e65b3e107a209",
       "document_sha256": "a751c298a4835f088aff704876654661a150be63c2f71dd1d41e7afa2cc47c98",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
@@ -109,13 +109,13 @@
       "resolved_files": 5
     },
     "contributing-managed-delivery": {
-      "binding_sha256": "cf5da351e41dd5db4fccb96fc4d914a9fee6cb730ddee3ccd3eaf8f8c1afaf2f",
-      "document_sha256": "0692666decc70aff64ba4b437e1609c0f649786e34ed6083372ddec40da0c102",
+      "binding_sha256": "cfb16382eac2f230edc0419d749aa2a62e3d58f4783675cabf08270d94d9b0ee",
+      "document_sha256": "2674455464f28c3bfd59f134b99ae8d95cc7bb4d1f237c32918c49dd2206782b",
       "path": "docs/contributing/managed-delivery.md",
       "resolved_files": 5
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "d9a9880fc10a12df8634119073f90bfe2d1236b7e6710ccd02ad66144c57b474",
+      "binding_sha256": "f92e0a755aff66a5c52a0475fea20a4f96b292084bc31630cc8a410d4f9a86f5",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -127,20 +127,20 @@
       "resolved_files": 0
     },
     "current-roadmap": {
-      "binding_sha256": "8a3d266457a23040939b17c576c3d9a7e8bd0bcd23ed7814cb6ee058a726e632",
-      "document_sha256": "9dd643faf6ea907a5097c3a3260fe8583aa74341fd6109192e7936ab18d4f46a",
+      "binding_sha256": "a497b1bf85f3d63649846f6a14ed933ef54daf999437f1bd9d987007a688c0e2",
+      "document_sha256": "85f52b88ab2d990a425086e736777d0307f28a5c730913a169cdbc9debddd216",
       "path": "docs/current/roadmap.md",
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "b4faf3ccdc90e10bb75ae8904a8932598d7ed6b5d3dbc40d5dd7108c3eb6f22f",
-      "document_sha256": "4dd3b7a7b6a75dca4659112ceeb0e35cbade8df2041309fda79a869cd40b8c79",
+      "binding_sha256": "0ed58d2395f2f20a20fe14eefd727441d16a7d9c6c86fd69dd17f84ec30bf3c2",
+      "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 340
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "de733efd15a4e1be2aea31fb9f847a5179cf7f04b9b0693687c25a711141fb1c",
-      "document_sha256": "404ea602e8ff9264947cc4182b4493deecf0cc77715202a8fd714593b9441a28",
+      "binding_sha256": "b9ff60151c5b83d2b233f51a3416600bccbb9dac1876f413bceca3bd2503c227",
+      "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9
     },
@@ -253,7 +253,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "bfe8031f09eae7d3637044b2be0b0a6f7fa60eb9b18c95bc056e8f512054b839",
+      "binding_sha256": "500f82da87ee24d148e2bab7a96cdb06b8cf4d46cc586ec56140a1e6ea915c79",
       "document_sha256": "e707a52dbe8dad51c74781e1f4b4b14e8607951b5f173e9296fa3ffae6e07d04",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -307,7 +307,7 @@
       "resolved_files": 16
     },
     "decisions-0026-separate-development-and-runtime-agents": {
-      "binding_sha256": "fbdc66774063043f04c04383127df69e29d9751df6985488ad76ff44889af927",
+      "binding_sha256": "1eeb25c40354ac209c1aa2651cede96268d576ce31bd666154f2270b7d575a31",
       "document_sha256": "48479242a324749b37582d686c2a8ffac4f5e958067d245161951f6408232331",
       "path": "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "resolved_files": 5
@@ -343,7 +343,7 @@
       "resolved_files": 102
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "f7ca468f54df9293f541898915fd9974e5d046f89144ef1d8c78807f7533124b",
+      "binding_sha256": "5a18e401e8895a6ea593f150c8dc1b2a8558f57ad5f5983a034967ac567b4bfa",
       "document_sha256": "8c361418e4d79c1d596de7e95f44385d86cae955fcee56d6c60792b61b7c4271",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 7
@@ -445,7 +445,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "d7492bdfab298f0ab6cea9f6a3def18b1ad552db2891a222de21e5fc3bceb68b",
+      "binding_sha256": "5a2c8493c5f9e154522081b9bc62bba418a00e2a0283192f488bb553d8b241de",
       "document_sha256": "133cf880d4d8b44a176b9a2d5cf41ef7cae47df7b6ea66cca5de0f0c48550d21",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -463,7 +463,7 @@
       "resolved_files": 11
     },
     "decisions-0052-isolated-durable-engineering-runs": {
-      "binding_sha256": "6d1d4d1e462de351c47418484e0c3c6130f2a57279437b542214242b28b538aa",
+      "binding_sha256": "8a3bd8507d991171ccac7dedd0411127aca7dd95ee4af64ce33c6adb89595e56",
       "document_sha256": "93cc24322505a4dfa0a75808b2ab99c94628405a910e74e76fc7e8e904ec86b2",
       "path": "docs/decisions/0052-isolated-durable-engineering-runs.md",
       "resolved_files": 24
@@ -475,7 +475,7 @@
       "resolved_files": 6
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "6ae0fc5db5d1e45a556a76f4348a6501ac2cca61c1309bfb5768c9344ddb7da4",
+      "binding_sha256": "95e86f7e0e515c361fca638c1aa0c97c0071c9eb87c3242fa2ef572b0ba6e159",
       "document_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -523,14 +523,14 @@
       "resolved_files": 7
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "2868528e45fed34e3eff476b7b2bb07303892a48e413f815d75f319860984d3b",
+      "binding_sha256": "194d191de152a80f8dcdaf340dadd5573311c824d42ac9a887a870ec7b651825",
       "document_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 11
     },
     "decisions-readme": {
-      "binding_sha256": "c3e90c992c7522592ed8fb142a3a5378a24715a23ff840443dcfd472af8a614f",
-      "document_sha256": "83ba45da0635473bbacd207d27eabfe6c2a91de020723b9c433465a257a4ebe4",
+      "binding_sha256": "7528d2d77a09f6b4612a806ec5e02a1be055b0cb2f9cc51e8b03dbbc32cfb18c",
+      "document_sha256": "5fadbe79ca82d0b478ad61f7c5d6600f071a4b1177a005b1ac05fd0fd848e2f5",
       "path": "docs/decisions/README.md",
       "resolved_files": 68
     },
@@ -548,12 +548,12 @@
     },
     "docs-home": {
       "binding_sha256": null,
-      "document_sha256": "cea0ccf4ab46b75d05ba8782b62b00d573f2cb057774b5951b6dd6dbedabb505",
+      "document_sha256": "f32b613bfc3c599d1e91cee934c2c7345b02b104fd8a9d338b736bfcba7e1093",
       "path": "docs/README.md",
       "resolved_files": 0
     },
     "engineering-memory-readme": {
-      "binding_sha256": "7d222e160f69ffa5ba641d37f08cd6fa651948fd3292f2cbe76f6ec19f8c623c",
+      "binding_sha256": "4ac3787a8299bb986c0298567a6614715e0559fbc679ee27942a7302e6569f83",
       "document_sha256": "3e14b4b68d5775f93332cd09e0668f605387744288ed7c0beda492a634505b24",
       "path": "docs/engineering-memory/README.md",
       "resolved_files": 9
@@ -571,7 +571,7 @@
       "resolved_files": 0
     },
     "lessons-ai-agent-mistakes": {
-      "binding_sha256": "68b1fb47c31d9944dd668baf85cdd2695791e90668aa1dc809d48fb67f0d2846",
+      "binding_sha256": "a0c42ec4d4490b3717f188364a58e73e30bc8b7d388d3892ea4b6a34df1c9eab",
       "document_sha256": "21be856d4021e53b22ee1fa16614dbca606c1a088d15d44372db1b9ac45d3102",
       "path": "docs/lessons/ai-agent-mistakes.md",
       "resolved_files": 7
@@ -607,10 +607,16 @@
       "resolved_files": 0
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "e926fe8f1e551c35fba5519945f8df8fdaa3cc138efca167fff133cbbb05132b",
-      "document_sha256": "a73b492c46aea6c321ecd8d96c306598125e70e7863a33c85b9f91e5f13082ef",
+      "binding_sha256": "32f0e905f9f54a56f689f71ae1ac4c487e8b982ac7bbf94008eb285781ecbff1",
+      "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
       "path": "docs/maps/repository-and-ownership.md",
-      "resolved_files": 21
+      "resolved_files": 23
+    },
+    "repository-components": {
+      "binding_sha256": "2182ac49c52c23c3671c7426437d3077dc19fd186d6492d30c08576cc1aca61d",
+      "document_sha256": "a76a6db4c0a0bbf3d557cdbdc86ca775ba6feefd8debb9fd7581af256dba2093",
+      "path": "docs/repository-components.md",
+      "resolved_files": 29
     },
     "specifications-electron-react-migration-slice-1": {
       "binding_sha256": null,

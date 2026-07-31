@@ -25,6 +25,7 @@ supporting detail or history, never hidden authority.
 | How coding agents develop Optimus | [Development law](../AGENTS.md) |
 | How Optimus behaves for users | [Runtime constitution](../OPTIMUS_AGENTS.md) |
 | How changes reach main | [Managed delivery](contributing/managed-delivery.md) |
+| What a path is, whether it ships, or whether it can be removed | [Repository components](repository-components.md) |
 | Which decision governs something | [Decision index](decisions/README.md) |
 | Which source/test owns a subsystem | [Repository map](maps/repository-and-ownership.md) |
 | Why an old document says something different | [History policy](current/history-policy.md) |
@@ -62,6 +63,8 @@ just docs-check
 just docs-search "approval behaviour"
 just docs-context architecture.overview
 just docs-benchmark
+just orient
+just explain-path apps/optimus-desktop
 ```
 
 `docs-check` fails on missing metadata, orphaned current authority, ambiguous

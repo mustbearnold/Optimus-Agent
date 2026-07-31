@@ -13,6 +13,8 @@ It is intentionally separate from the product runtime constitution:
 Detailed procedures live under `docs/` and `skills/`. Start every documentation
 lookup at `docs/README.md`; it routes current status, roadmap, architecture,
 operations, decisions, and history without making agents scan the whole tree.
+Start every development turn with `just orient`; use `just explain-path <path>`
+before guessing whether a directory ships, is development-only, or is removable.
 
 ## Instruction-plane firewall (mandatory)
 
@@ -43,10 +45,12 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 ### Canonical root
 
 - Workspace wrapper: `/home/mustbearn/Projects/Optimus Agent`
-- Clean landed-source view: `/home/mustbearn/Projects/Optimus Agent/Source`
+- Clean landed-repository view: `/home/mustbearn/Projects/Optimus Agent/Repository`
 - Development happens only in an assigned linked worktree under
   `/home/mustbearn/Projects/Optimus Agent/Development/worktrees/`.
-- `Source/` is a detached, clean view of remote `main`; never develop there.
+- `Repository/` is the complete reproducible GitHub repository: product source,
+  tests, evaluation definitions, documentation, and build logic. It is a
+  detached, clean view of remote `main`; never develop there.
   The wrapper's `local` and `.git` compatibility links resolve into
   `Development/` and exist only for older automation.
 - Resolve both the repository and active worktree with `readlink -f` / `pwd -P`
@@ -93,8 +97,8 @@ Do **not** edit, reorganize, install into, or “clean up”:
 
 ### Enforcement checklist (every Optimus development turn)
 
-1. Confirm the workspace resolves to the assigned linked worktree under the
-   canonical repository.
+1. Run `just orient` and confirm the workspace resolves to the assigned linked
+   worktree under the canonical repository.
 2. Before any write/patch/rm, assert the target path is inside that assigned
    worktree or an explicitly allowed Optimus install path above.
 3. Refuse cross-project drive-by fixes. If another project is implicated, report
@@ -184,9 +188,9 @@ If a proposed name collapses two planes, **stop and rename** before commit.
 ## Development workflow
 
 0. Gates run through `just`, never as hand-typed command lists. `just check` is
-   the inner loop; `just verify` is the full gate and is what `pre-push` runs.
+   the inner loop and `just verify` is the complete land gate.
    `scripts/verify.sh` is the single source of truth — add new gates there, not
-   to a doc. Run `just setup-hooks` once per clone.
+   to a hook, workflow, or doc. Managed `just land` is the only delivery path.
 1. Identify the owning subsystem and read its Engineering Memory through lenses,
    not by dumping raw `.engineering-memory/*.json` into prompts.
 2. Inspect current source, related tests, contracts, and ADRs.

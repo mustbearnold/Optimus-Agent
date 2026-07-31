@@ -18,6 +18,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
+import repository_ontology
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
@@ -25,8 +27,9 @@ ROUTES = DOCS / "authority-routes.json"
 CATALOG_JSON = DOCS / "catalog.json"
 CATALOG_MD = DOCS / "CATALOG.md"
 LOCK = DOCS / "verification-lock.json"
+COMPONENTS_MD = DOCS / "COMPONENTS.md"
 BENCHMARK = ROOT / "evals" / "docs-authority" / "questions-v1.json"
-GENERATED = {CATALOG_JSON.resolve(), CATALOG_MD.resolve(), LOCK.resolve()}
+GENERATED = {CATALOG_JSON.resolve(), CATALOG_MD.resolve(), LOCK.resolve(), COMPONENTS_MD.resolve()}
 
 REQUIRED = {
     "doc_id", "doc_type", "plane", "status", "authority", "summary",
@@ -519,6 +522,7 @@ def catalog_payload(documents: list[Document], routes: dict[str, Any]) -> dict[s
         "default_planes": ["current", "decision", "work"],
         "documents": entries,
         "routes": routes["routes"],
+        "components": repository_ontology.catalog_payload()["components"],
     }
 
 
@@ -549,6 +553,7 @@ def canonical_json(payload: Any) -> str:
 
 
 def generate(documents: list[Document], routes: dict[str, Any]) -> None:
+    repository_ontology.generate()
     payload = catalog_payload(documents, routes)
     CATALOG_JSON.write_text(canonical_json(payload), encoding="utf-8")
     CATALOG_MD.write_text(catalog_markdown(payload), encoding="utf-8")
@@ -651,6 +656,7 @@ def check_generated(documents: list[Document], routes: dict[str, Any]) -> None:
 
 
 def validate_all(documents: list[Document], routes: dict[str, Any]) -> dict[str, Any]:
+    ontology = repository_ontology.check()
     entries = [document.entry() for document in documents] + special_entries()
     validate_routes(entries, routes)
     validate_links(documents)
@@ -662,6 +668,7 @@ def validate_all(documents: list[Document], routes: dict[str, Any]) -> dict[str,
         "routes": len(routes["routes"]),
         "benchmark_questions": result["questions"],
         "benchmark_top_one": result["top_one_rate"],
+        "components": ontology["components"],
     }
 
 

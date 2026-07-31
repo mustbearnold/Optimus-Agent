@@ -71,3 +71,9 @@ Repository changes use assigned `Development/worktrees/*` checkouts and reach
 main only through `just land`. GitHub issues, pull requests, `gh`, and manual Git
 history commands are not the current repository-development workflow. These
 development rules do not become Optimus product behaviour.
+
+The clean landed view is `Repository/`; it contains every reproducible GitHub
+asset, including source, tests, evaluation definitions, docs, and build logic.
+Generated runs and caches belong in `Development/`. The executable
+[component authority](../repository-components.md), `just orient`, and
+`just explain-path` prevent new or stale paths from becoming anonymous clutter.

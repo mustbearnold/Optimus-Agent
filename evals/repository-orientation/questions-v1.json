@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "questions": [
+    {
+      "id": "evals-are-versioned-inputs",
+      "question": "Why is evals inside Repository and can I delete it?",
+      "path": "evals",
+      "component": "evaluation-definitions",
+      "facts": {
+        "storage_plane": "repository",
+        "concern": "evaluation-definition",
+        "distribution": "repository-only",
+        "safe_to_delete": false
+      }
+    },
+    {
+      "id": "persona-output-leaves-repository",
+      "question": "Where should generated persona transcripts go?",
+      "path": "evals/synthetic-user-lab",
+      "component": "synthetic-user-evaluation",
+      "facts": {
+        "storage_plane": "repository",
+        "distribution": "repository-only"
+      }
+    },
+    {
+      "id": "desktop-host-is-not-ui",
+      "question": "Is optimus-desktop the React interface?",
+      "path": "apps/optimus-desktop",
+      "component": "optimus-desktop",
+      "facts": {
+        "lifecycle": "primary",
+        "distribution": "binary"
+      }
+    },
+    {
+      "id": "wry-is-bounded-rollback",
+      "question": "Can the Wry UI directory be removed today?",
+      "path": "apps/optimus-desktop/ui",
+      "component": "desktop-wry-fallback",
+      "facts": {
+        "lifecycle": "rollback-only",
+        "safe_to_delete": false
+      }
+    },
+    {
+      "id": "electron-is-shell",
+      "question": "Which component owns the native Electron shell and preview host?",
+      "path": "apps/optimus-electron",
+      "component": "optimus-electron",
+      "facts": {
+        "concern": "product-interface",
+        "distribution": "bundled"
+      }
+    },
+    {
+      "id": "react-is-presentation",
+      "question": "Does optimus-ui own filesystem and policy authority?",
+      "path": "apps/optimus-ui",
+      "component": "optimus-ui",
+      "facts": {
+        "lifecycle": "primary",
+        "safe_to_delete": false
+      }
+    },
+    {
+      "id": "developer-skills-not-runtime-skills",
+      "question": "Are top-level skills installed Optimus runtime skills?",
+      "path": "skills",
+      "component": "developer-skills",
+      "facts": {
+        "concern": "development-tooling",
+        "distribution": "repository-only"
+      }
+    },
+    {
+      "id": "agent-crate-not-product",
+      "question": "Does crates/optimus-agent mean the whole Optimus Agent product?",
+      "path": "crates/optimus-agent",
+      "component": "optimus-agent",
+      "facts": {
+        "distribution": "transitive",
+        "safe_to_delete": false
+      }
+    },
+    {
+      "id": "engineering-is-incubating",
+      "question": "Is optimus-engineering already integrated and shipped?",
+      "path": "crates/optimus-engineering",
+      "component": "optimus-engineering",
+      "facts": {
+        "lifecycle": "incubating",
+        "distribution": "repository-only"
+      }
+    },
+    {
+      "id": "development-is-local-state",
+      "question": "Is Development the GitHub source repository?",
+      "path": "workspace://Development",
+      "component": "workspace-development-state",
+      "facts": {
+        "storage_plane": "development",
+        "repository_role": "external"
+      }
+    },
+    {
+      "id": "repository-is-complete-content",
+      "question": "Is Repository only runtime source code?",
+      "path": "workspace://Repository",
+      "component": "workspace-repository-view",
+      "facts": {
+        "storage_plane": "repository",
+        "repository_role": "external"
+      }
+    }
+  ]
+}

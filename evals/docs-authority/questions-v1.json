@@ -32,7 +32,7 @@
     },
     {
       "id": "workspace-planes",
-      "question": "Why are Source and Development separate in the project folder and where do worktrees belong?",
+      "question": "Why are Repository and Development separate in the project folder and where do worktrees belong?",
       "route": "development.workspace"
     },
     {
@@ -64,6 +64,11 @@
       "id": "persona-testing",
       "question": "How should synthetic users and personas run real multi-turn journeys and record harness failure cases?",
       "route": "testing.synthetic-users"
+    },
+    {
+      "id": "component-database",
+      "question": "What is this repository path, does it ship, is it safe to delete, and where is the development component wiki?",
+      "route": "repository.components"
     },
     {
       "id": "repository-gates",
