@@ -5,12 +5,16 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fnmatch
 import hashlib
 import json
+import os
 import re
+import subprocess
 import sys
 import urllib.parse
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -393,12 +397,48 @@ def validate_links(documents: list[Document]) -> None:
         raise DocsError("\n".join(errors))
 
 
+@lru_cache(maxsize=1)
+def candidate_repository_files() -> tuple[str, ...]:
+    """Tracked plus non-ignored candidate files, independent of build output."""
+    marker = ROOT / ".git"
+    if marker.is_file():
+        line = marker.read_text(encoding="utf-8").strip()
+        if not line.startswith("gitdir:"):
+            raise DocsError("worktree .git pointer is malformed")
+        git_dir = Path(line.removeprefix("gitdir:").strip())
+        if not git_dir.is_absolute():
+            git_dir = (ROOT / git_dir).resolve()
+    elif marker.is_dir():
+        git_dir = marker
+    else:
+        raise DocsError("cannot resolve Git metadata for documentation bindings")
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    result = subprocess.run(
+        [
+            "git", f"--git-dir={git_dir}", f"--work-tree={ROOT}", "ls-files",
+            "-z", "--cached", "--others", "--exclude-standard",
+        ],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.decode(errors="replace").strip() or "unknown Git failure"
+        raise DocsError(f"cannot enumerate documentation binding candidates: {detail}")
+    return tuple(sorted(item.decode() for item in result.stdout.split(b"\0") if item))
+
+
 def glob_files(pattern: str) -> list[Path]:
     pattern = pattern.strip()
-    candidate = ROOT / pattern
     if not any(char in pattern for char in "*?["):
+        candidate = ROOT / pattern
         return [candidate] if candidate.is_file() else []
-    return sorted(path for path in ROOT.glob(pattern) if path.is_file())
+    return [
+        ROOT / relative
+        for relative in candidate_repository_files()
+        if fnmatch.fnmatchcase(relative, pattern)
+    ]
 
 
 def binding_digest(document: Document) -> tuple[str, int] | None:

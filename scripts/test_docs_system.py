@@ -7,6 +7,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import docs_system as docs
 
@@ -119,6 +120,25 @@ class DocsSystemTests(unittest.TestCase):
         self.assertEqual(locked["document_sha256"], "ab" * 32)
         self.assertIsNone(locked["binding_sha256"])
         self.assertEqual(locked["resolved_files"], 0)
+
+    def test_binding_globs_exclude_files_outside_git_candidate_universe(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tracked = root / "apps" / "source.ts"
+            ignored = root / "apps" / "dist" / "bundle.js"
+            tracked.parent.mkdir(parents=True)
+            ignored.parent.mkdir(parents=True)
+            tracked.write_text("source", encoding="utf-8")
+            ignored.write_text("build output", encoding="utf-8")
+            with (
+                mock.patch.object(docs, "ROOT", root),
+                mock.patch.object(
+                    docs,
+                    "candidate_repository_files",
+                    return_value=("apps/source.ts",),
+                ),
+            ):
+                self.assertEqual(docs.glob_files("apps/**"), [tracked])
 
 
 if __name__ == "__main__":

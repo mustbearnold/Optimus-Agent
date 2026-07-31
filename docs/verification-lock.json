@@ -127,16 +127,16 @@
       "resolved_files": 0
     },
     "current-roadmap": {
-      "binding_sha256": "bd7f0c4e7be76cbdc7e50c0c942ca2dc5cdc018232718d7faca257835062516e",
+      "binding_sha256": "8a3d266457a23040939b17c576c3d9a7e8bd0bcd23ed7814cb6ee058a726e632",
       "document_sha256": "9dd643faf6ea907a5097c3a3260fe8583aa74341fd6109192e7936ab18d4f46a",
       "path": "docs/current/roadmap.md",
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "c64181a96f906d41b25070c66f2213ecbd45960f37cc58ba8ae48d43d17c9462",
+      "binding_sha256": "b4faf3ccdc90e10bb75ae8904a8932598d7ed6b5d3dbc40d5dd7108c3eb6f22f",
       "document_sha256": "4dd3b7a7b6a75dca4659112ceeb0e35cbade8df2041309fda79a869cd40b8c79",
       "path": "docs/current/status.md",
-      "resolved_files": 17492
+      "resolved_files": 340
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "de733efd15a4e1be2aea31fb9f847a5179cf7f04b9b0693687c25a711141fb1c",
@@ -319,22 +319,22 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "0336df130c4f3c822c11237c2c375d7027aa1cfbf1553608324e45611aff94c5",
+      "binding_sha256": "6658f940d6dd0f49bef08ab0c749b12d8136e37456f03ae0f399fde62923f0c6",
       "document_sha256": "de58fe424aee66fd31dadbb254c470c0a0bb0d57bf66fe722c4249f660abebca",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 17091
+      "resolved_files": 121
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "ba2838595732cebb0b8b59516b561efdc96b69ffc73b2c66e670efd768f5168d",
+      "binding_sha256": "93d8a060bdf723baaa50213d3cdf97e37d661611696bab7cfc7fc30314a90c5a",
       "document_sha256": "9947d9bb090b59f83e953b336120a79b9b467acc3358fbb7b9ab9b936169f8f8",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 17091
+      "resolved_files": 121
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "0c1709f62f2852e866d8460cfb5eacfd6cfe321b326ea6d4aa0fedddf46541fd",
+      "binding_sha256": "4ef716688e8593e771325b6cff6dbd8285fa9a5468a32743d8f965c3f63e2e03",
       "document_sha256": "5454bddfb445341aa15389f08ffe6d6b9e2286eec7e54ad096ebd8864b0a0ad0",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 17077
+      "resolved_files": 107
     },
     "decisions-0031-safe-project-work-loop": {
       "binding_sha256": "5de8f6e8f5ae3014753a3d08deb9f960dbe816d918eaa15ef5a186508bf7f73f",
@@ -391,10 +391,10 @@
       "resolved_files": 13
     },
     "decisions-0040-shared-browser-contract": {
-      "binding_sha256": "c6cda3b8017771f59d9aa9d75c31c698a631d03ae1cc90fed1dff18eb0f5c3fd",
+      "binding_sha256": "db85c727468bd924c89ee2723732aea0b739ba0ade5473fc2f1668b639db9c0e",
       "document_sha256": "a3a0ea9785a0909c028c2557ccbd43b5d2088b7347a2acc5d689a2f80024d469",
       "path": "docs/decisions/0040-shared-browser-contract.md",
-      "resolved_files": 766
+      "resolved_files": 28
     },
     "decisions-0041-mcp-ingress-pack-gated": {
       "binding_sha256": "5a894a6601c1cb3e53b350723b8364ea65536fda4565906297e8e1e51c3230e6",
@@ -523,28 +523,28 @@
       "resolved_files": 7
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "83d5673d89db5f5283967e96a59cff81f3e856b1daa61bb92ca7f71a44f02cd7",
-      "document_sha256": "95613b1e185a16e8f3bb16f082cc09d838bf9e3afce1deb06c6b553c8572ab65",
+      "binding_sha256": "2868528e45fed34e3eff476b7b2bb07303892a48e413f815d75f319860984d3b",
+      "document_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 11
     },
     "decisions-readme": {
-      "binding_sha256": "363b46ef9de47c9cedcfbe3143c5c7723e930b32e7fe40278fad7aada7762862",
+      "binding_sha256": "c3e90c992c7522592ed8fb142a3a5378a24715a23ff840443dcfd472af8a614f",
       "document_sha256": "83ba45da0635473bbacd207d27eabfe6c2a91de020723b9c433465a257a4ebe4",
       "path": "docs/decisions/README.md",
       "resolved_files": 68
     },
     "design-codex-convergence-experience-contract": {
-      "binding_sha256": "0d7e7cafe91e7e6ff990d5440f168463d552f59d2c0654aef99f02c039a77707",
+      "binding_sha256": "c6578999a91e142ec9b1556250e4f2d5cdae8373ea2223d4c8fdaecf8b1fac47",
       "document_sha256": "1df6d7f82e0ec8a0a18602ada10d71cc1f42168ec21c02cd57fe2e204d8a0e1c",
       "path": "docs/design/codex-convergence-experience-contract.md",
-      "resolved_files": 17074
+      "resolved_files": 104
     },
     "design-codex-convergence-state-matrix": {
-      "binding_sha256": "50e7f8a9d2bb3d75568c54ed8ccfb0a9037bb01057e2cce21da6b3d8fa2485a0",
+      "binding_sha256": "e41960aacfbf3d108c58141f5e1a16432b557be05e495f947e16d0b23a029d4b",
       "document_sha256": "f986075be9aec2905b191c44a4e54a633a6f54ac0d4eb76c8bc6330b1e876dae",
       "path": "docs/design/codex-convergence-state-matrix.md",
-      "resolved_files": 17073
+      "resolved_files": 103
     },
     "docs-home": {
       "binding_sha256": null,
@@ -619,10 +619,10 @@
       "resolved_files": 0
     },
     "specifications-in-transcript-approval-resolution": {
-      "binding_sha256": "b6aef8e80a9cb90f07c179b71691d64a876c707a4da9f570f032cd4cbaee880f",
+      "binding_sha256": "ca0879935cc628023b4a0b297c2140afae3ccbea42f7c73a23bf7fceba5db480",
       "document_sha256": "922011db9de79508c195994cd38c294f4754cb22c6760256d5544252baa354bd",
       "path": "docs/specifications/in-transcript-approval-resolution.md",
-      "resolved_files": 853
+      "resolved_files": 115
     },
     "specifications-react-workbench-electron-preview-cutover": {
       "binding_sha256": null,

@@ -101,6 +101,9 @@ retrieval evaluation measures the experience a fresh agent actually receives.
 - A reviewer can acknowledge a stale document incorrectly. Named refresh makes
   the act auditable but cannot replace technical judgment; source and tests
   therefore remain higher authority.
+- Broad source globs could absorb ignored build output and become timing
+  dependent. Bindings therefore enumerate only Git-tracked and non-ignored
+  candidate files, never caches, dependencies, or compiled output.
 
 ## Evaluation evidence
 
