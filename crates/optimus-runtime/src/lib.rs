@@ -3,10 +3,11 @@
 mod campaign;
 mod command_envelope;
 mod effect_outcome;
+mod owned_localhost;
 mod process_ownership;
+mod workspace_identity;
 use process_ownership::*;
 
-use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -22,7 +23,6 @@ use std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-use cap_std::ambient_authority;
 use cap_std::fs::Dir;
 use optimus_graph::{
     create_job, create_job_with_id as graph_create_job_with_id, interrupt_running_nodes_for_job,
@@ -49,6 +49,7 @@ pub use optimus_graph::{
     AutonomyProfile, CommandFsEnvelope, Effect, JobBudget, JobId, JobSpec, JobStatus, NodeSpec,
     NodeStatus, PolicyMode, RuntimeConfig,
 };
+pub use owned_localhost::{OwnedLocalhostExecutionContext, OwnedLocalhostUse, VerifiedOwnedServer};
 
 /// Construct a [`JobId`] from a raw UUID (stable API for CLI/desktop).
 pub fn job_id(id: Uuid) -> JobId {
@@ -184,43 +185,11 @@ pub struct Runtime {
     workspace: PathBuf,
     workspace_dir: Dir,
     config: RuntimeConfig,
+    owned_localhost: std::sync::Arc<std::sync::Mutex<owned_localhost::OwnedLocalhostLeaseRegistry>>,
+    owned_localhost_scope: String,
 }
 
 impl Runtime {
-    pub fn open(db_path: &Path, workspace: &Path) -> Result<Self> {
-        Self::open_with_config(db_path, workspace, RuntimeConfig::default())
-    }
-
-    pub fn open_with_config(
-        db_path: &Path,
-        workspace: &Path,
-        config: RuntimeConfig,
-    ) -> Result<Self> {
-        fs::create_dir_all(workspace)?;
-        let workspace = fs::canonicalize(workspace)?;
-        let workspace_dir = Dir::open_ambient_dir(&workspace, ambient_authority())?;
-        let store = Store::open(db_path).map_err(GraphError::from)?;
-        Ok(Self {
-            store,
-            workspace,
-            workspace_dir,
-            config,
-        })
-    }
-
-    pub fn workspace_path(&self) -> &Path {
-        &self.workspace
-    }
-
-    /// Stable identity used by project-bound effects to prevent cross-root replay.
-    pub fn workspace_sha256(&self) -> String {
-        Self::path_sha256(&self.workspace)
-    }
-
-    pub fn canonical_workspace_sha256(path: &Path) -> Result<String> {
-        Ok(Self::path_sha256(&fs::canonicalize(path)?))
-    }
-
     pub fn create_job(&self, spec: JobSpec) -> Result<JobId> {
         let created = create_job(&self.store, spec)?;
         Ok(created.id)
@@ -1341,18 +1310,11 @@ impl Runtime {
         }
         Ok(rel.to_path_buf())
     }
+}
 
-    fn verify_workspace_sha256(&self, expected: &str) -> Result<()> {
-        if expected.len() != 64 || expected != self.workspace_sha256() {
-            return Err(RuntimeError::PathEscape(
-                "project effect workspace identity does not match the active runtime root".into(),
-            ));
-        }
-        Ok(())
-    }
-
-    fn path_sha256(path: &Path) -> String {
-        format!("{:x}", Sha256::digest(path.to_string_lossy().as_bytes()))
+impl Drop for Runtime {
+    fn drop(&mut self) {
+        owned_localhost::revoke_all_on_drop(self);
     }
 }
 

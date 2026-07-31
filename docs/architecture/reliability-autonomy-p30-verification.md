@@ -171,9 +171,11 @@ not a row that verifies the surface feeding it, however similar the two sound.
 
 - Owned-localhost leases (R30.7): exact broker constraints, CDP request
   authority, click final-URL validation, and pre-connect HTTP redirect checks
-  are implemented. The structured owned-server effect, listener proof, active
-  registry, expiry/cancellation cleanup, non-tab-target CDP egress coverage, and
-  end-to-end issuance path remain.
+  are implemented. The runtime also has a default-inactive live registry with
+  exact context/generation/expiry/liveness checks and ordered revocation
+  primitives. The structured owned-server effect, atomic listener proof,
+  production proof constructor, lifecycle/supervisor wiring, non-tab-target CDP
+  egress coverage, and end-to-end issuance path remain.
 - Same-run continuation (program P31)
 - Arbitrary project binaries and transparent scripts still share the Confined
   network and ambient credential environment. ADR-0059 therefore does not

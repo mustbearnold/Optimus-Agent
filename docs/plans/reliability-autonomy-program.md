@@ -88,7 +88,7 @@ Advanced breadth (full PTY I/O, live CUA, Hermes gate, messaging depth) stays
 | R30.4 | **done** | Composer autonomy labels; Standard first; map IPC access |
 | R30.5 | **done** | Durable project trust grant store (outside repo); applied at `open_dev_run_session` only |
 | R30.6 | **done** | Structured package/command capabilities; recognised remote and command-string shell forms leave the Standard project lane |
-| R30.7 | in progress | Owned-localhost network lease — exact constraint/browser foundation and pre-connect redirect checks landed; runtime-owned serve lifecycle remains |
+| R30.7 | in progress | Owned-localhost network lease — exact constraint/browser boundary plus default-inactive runtime registry and revocation fencing landed; verified serve/issuer/browser lifecycle remains |
 | R30.8 | **done** | Product release defaults use one-turn Auto provider/model resolution while offline fixtures remain deterministic |
 
 R30.4 is done in full since 2026-07-29. It was marked done once before that,

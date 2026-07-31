@@ -482,10 +482,16 @@ constraint envelope, which cannot ride an unrelated capability. The pure broker
 does not establish liveness. The agent CDP backend is public-only unless
 constructed with one exact numeric HTTP loopback origin, and it checks
 navigation, intercepted requests, and post-click URLs. The HTTP backend follows
-redirects manually and validates each target before connection. The runtime
-issuer and owned-server lifecycle are still absent, and worker/service-worker
-target coverage is not yet proven, so this is a fail-closed authority contract
-rather than a shipped localhost product path.
+redirects manually and validates each target before connection. The runtime now
+contains a default-inactive lease registry: a copied binding cannot become
+authority without exact live membership, the same opaque execution context, current
+generation/expiry, retained-listener liveness, and a non-serializable use
+guard. Revocation removes membership before bounded use drain and process
+cleanup. No production constructor can create the opaque listener proof yet;
+no production path can mint the execution context either. The structured
+issuer/owned-server lifecycle, timer-driven expiry, restart orphan cleanup, and
+worker/service-worker target coverage remain absent. This is still a
+fail-closed authority substrate rather than a shipped localhost product path.
 
 **Confirmed current behaviour (P12):** approved commands use `CommandFsEnvelope`
 (default confined): Linux bwrap binds the workspace read-write only (no full

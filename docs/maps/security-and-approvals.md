@@ -197,10 +197,15 @@ This pure check does not prove the publicly serializable fields are live. CDP
 remains public-only by default. Its explicit owned-localhost authority permits
 only one `http://127.0.0.1:<port>` origin and is applied to initial navigation,
 requests intercepted on the attached tab, and post-action final-URL checks.
-**No runtime product path issues that authority yet**: structured serve,
-listener proof, revocation, cleanup, and worker/service-worker/WebSocket
-coverage below the tab target remain R30.7 residuals, so arbitrary localhost
-stays denied.
+The runtime registry treats that serializable envelope as a non-bearer receipt:
+use also requires exact active membership, the same opaque execution identity, current
+generation/expiry, retained-listener liveness, and a live use guard. Revocation
+fences new use before bounded drain and owner cleanup. **No runtime product path
+issues that authority yet**: neither the opaque verified-listener proof nor
+execution context has a production constructor. Structured serve, atomic
+listener ownership, lifecycle/supervisor wiring, restart orphan cleanup, and
+worker/service-worker/WebSocket coverage below the tab target remain R30.7
+residuals. Arbitrary localhost stays denied.
 
 **Confirmed current behaviour:** `web_search` returns a versioned extract
 envelope (`schema_version`, `provenance_url`, `source`, `retrieved_at_unix_ms`)

@@ -3,6 +3,7 @@ knowledge_type: decision
 status: current
 covers:
   - crates/optimus-policy/src/lib.rs
+  - crates/optimus-runtime/src/owned_localhost.rs
   - crates/optimus-runtime/src/process_ownership.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-browser/src/lib.rs
@@ -13,6 +14,7 @@ depends_on:
   - docs/decisions/0059-standard-autonomy-is-consequence-bounded.md
 validated_by:
   - crates/optimus-policy/src/lib.rs
+  - crates/optimus-runtime/src/owned_localhost.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-browser/src/lib.rs
 last_verified_commit: null
@@ -94,15 +96,25 @@ rather than trusting publicly serializable fields.
 
 This decision lands in stages without weakening the default deny:
 
-- **Landed with this ADR:** exact broker constraints; public-only browser
+- **Landed foundation:** exact broker constraints; public-only browser
   constructors; an explicit CDP authority for one exact numeric origin;
   attached-tab CDP request interception; final-URL checks after navigation and
-  clicks; manual HTTP redirects validated before the next connection.
+  clicks; manual HTTP redirects validated before the next connection; and a
+  runtime registry where serialized bindings are non-bearer receipts. The
+  registry requires exact live membership, the same opaque execution context,
+  generation, expiry, and retained-listener liveness on every use. Revocation
+  fences new uses, waits boundedly for active use guards, then cleans the
+  retained owner or quarantines a failed cleanup for retry, and records ordered
+  evidence. Neither the verified-listener proof nor the opaque execution context
+  has a production constructor yet, so the substrate cannot issue product
+  authority by itself.
 - **Still required for R30.7:** the structured serve effect, listener ownership
-  proof, active lease registry, turn/session cancellation and expiry cleanup,
-  HTTP leased-origin connection, worker/service-worker and WebSocket egress
-  coverage below a single tab target, and one end-to-end serve/browse/revoke
-  test.
+  proof and atomic runtime-owned front listener, trusted kernel-to-runtime
+  issuance context, lifecycle hook wiring and active expiry supervision, HTTP
+  leased-origin connection, worker/service-worker and WebSocket egress coverage
+  below a single tab target, restart orphan-process recovery, and one end-to-end
+  serve/browse/revoke test. Generations are process-local until the retained
+  listener/store projection makes cross-process exclusivity authoritative.
 
 Until those remaining items land, no product path issues the new authority and
 localhost stays denied. Program P30 microtask R30.7 therefore remains in
@@ -169,6 +181,10 @@ domains. Coordination is not shared credentials or shared network authority.
   only one exact numeric origin while adjacent/private destinations stay denied.
 - `cargo test -p optimus-kernel browser::tests --lib` proves HTTP redirects are
   resolved and checked before the next request.
+- `cargo test -p optimus-runtime owned_localhost --lib` proves inactive,
+  transferred, expired, revoked, stale-generation, dead-listener, foreign-root,
+  and non-exact-origin bindings fail closed; it also proves revocation fences
+  new use before bounded drain and ordered process cleanup.
 - `just check` holds formatting, layering, module size, compilation, clippy, and
   Engineering Memory consistency for the combined slice.
 
@@ -183,6 +199,8 @@ lease based on hostname convenience alone.
 ## Relevant code
 
 - `crates/optimus-policy/src/lib.rs` — exact binding and broker constraints
+- `crates/optimus-runtime/src/owned_localhost.rs` — non-bearer live registry,
+  use guards, expiry/generation fencing, revocation, cleanup, and audit evidence
 - `crates/optimus-kernel/src/browser.rs` — pre-connect HTTP redirect validation
 - `crates/optimus-browser/src/lib.rs` — immutable CDP request authority
 - `crates/optimus-runtime/src/process_ownership.rs` — existing retained
@@ -191,5 +209,6 @@ lease based on hostname convenience alone.
 ## Relevant tests
 
 - `crates/optimus-policy/src/lib.rs` — broker binding and compatibility tests
+- `crates/optimus-runtime/src/owned_localhost.rs` — registry and lifecycle tests
 - `crates/optimus-browser/src/lib.rs` — exact CDP origin/request tests
 - `crates/optimus-kernel/src/browser.rs` — manual redirect policy tests
