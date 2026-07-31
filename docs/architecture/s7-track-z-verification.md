@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-s7-track-z-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program residual S7 + Track Z · delivery PR #40 · product-complete held · Hermes gate NOT claimed
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/s7-track-z-verification.md
 covers:
@@ -16,7 +23,6 @@ validated_by:
   - crates/optimus-ops/src/media_fixtures.rs
   - crates/optimus-ops/src/channel_adapters.rs
   - crates/optimus-packs/src/lib.rs
-last_verified_commit: null
 ---
 
 # S7 operator depth + Track Z scaffolds verification

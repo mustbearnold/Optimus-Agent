@@ -1,6 +1,13 @@
 ---
-knowledge_type: design-contract
+doc_id: design-codex-convergence-experience-contract
+doc_type: explanation
+plane: current
 status: current
+authority: supporting
+summary: - Product / feature: Optimus Agent desktop workbench, measured Codex-shell convergence and multi-folder projects. - Primary user: a developer supervising coding-agent work across local repositories and evidence surfaces. - Job: state an...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: design-contract
 covers:
   - apps/optimus-ui/**
   - apps/optimus-electron/**
@@ -11,7 +18,6 @@ validated_by:
   - apps/optimus-ui/src/**/*.test.ts
   - apps/optimus-ui/src/**/*.test.tsx
   - apps/optimus-electron/e2e/*.spec.cjs
-last_verified_commit: null
 ---
 
 # Codex-converged Optimus experience contract

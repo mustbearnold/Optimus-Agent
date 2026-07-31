@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-14-gateway-eval
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-19 Priority: function > Hermes; UI polish last.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 14 — gateway + cron serve + trajectory eval
 
 Date: 2026-07-19  

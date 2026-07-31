@@ -1,6 +1,13 @@
 ---
+doc_id: evidence-engineering-memory-v2-redesign-report
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: - Date: 2026-07-25 - Worktree: /home/mustbearnold/Projects/worktrees/optimus-engineering-memory-v2 - Branch: redesign/engineering-memory-v2 - Base: main @ c8b7e27
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: evidence
-status: current
 covers:
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
@@ -9,7 +16,6 @@ depends_on:
   - docs/decisions/0032-engineering-memory-compact-lenses.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # Engineering Memory v2 redesign report

@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0049-module-size-is-measured-honestly
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0049: The module-size law is measured honestly, and does not tax splitting, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - scripts/check-module-size.py
   - docs/architecture/module-size-baseline.json
@@ -9,7 +16,6 @@ depends_on:
   - docs/architecture/optimus-exceeds-hermes.md
 validated_by:
   - scripts/test_module_size.py
-last_verified_commit: null
 ---
 
 # ADR-0049: The module-size law is measured honestly, and does not tax splitting

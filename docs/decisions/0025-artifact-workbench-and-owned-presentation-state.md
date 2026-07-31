@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0025-artifact-workbench-and-owned-presentation-state
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0025: Artifact workbench and owned presentation state, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - DESIGN.md
   - apps/optimus-desktop/src/ui.rs
@@ -17,7 +24,6 @@ validated_by:
   - apps/optimus-desktop/e2e/06-preview-browser.spec.js
   - apps/optimus-desktop/e2e/07-vantage-design.spec.js
   - apps/optimus-desktop/src/ui.rs
-last_verified_commit: null
 ---
 
 # ADR-0025: Artifact workbench and owned presentation state

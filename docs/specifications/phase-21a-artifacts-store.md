@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-21a-artifacts-store
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-23 Goal: Close SOTA loss #2 with a real store + list surface, not a stub panel.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: active
 covers:
   - crates/optimus-kernel/src/artifacts.rs
   - crates/optimus-host/src/files.rs

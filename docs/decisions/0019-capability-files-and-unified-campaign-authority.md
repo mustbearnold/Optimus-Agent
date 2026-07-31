@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0019-capability-files-and-unified-campaign-authority
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0019: Capability files and unified campaign authority, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - Cargo.toml
   - crates/optimus-runtime/src/lib.rs

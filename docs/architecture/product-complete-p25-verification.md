@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p25-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P25 · delivery PR #35 · architecture hold (Durability / Control-plane / UI / Security) · ledger artifacts.store-ui, cron.lifecycle → parity
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p25-verification.md
 covers:
@@ -16,7 +23,6 @@ validated_by:
   - apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx
   - apps/optimus-ui/src/components/cron/CronWorkbench.tsx
   - scripts/check-desktop-ipc-matrix.py
-last_verified_commit: null
 ---
 
 # Product-complete program P25 verification

@@ -1,3 +1,14 @@
+---
+doc_id: evidence-s7-track-z-hold-2026-07-25
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Planes: S7 operator depth · Track Z scaffolds · delivery PR #40 · PRODUCT-COMPLETE held · Hermes gate unverified
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S7 + Track Z hold — 2026-07-25
 
 Planes: **S7 operator depth** · **Track Z scaffolds** · delivery **PR #40** ·

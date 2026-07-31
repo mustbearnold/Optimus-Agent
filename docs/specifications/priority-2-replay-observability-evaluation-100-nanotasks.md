@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-priority-2-replay-observability-evaluation-100-nanotasks
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: - Task range: n101–n200, exactly 100 tasks - Repository: mustbearnold/Optimus-Agent - Delivery: verified milestone commits pushed directly to origin/main; GitHub Issues are the work ledger; no branches or pull requests - Execution: one...
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 owns:
   - docs/specifications/priority-2-replay-observability-evaluation-100-nanotasks.md
   - docs/contracts/high-risk-contracts.md

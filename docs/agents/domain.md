@@ -1,3 +1,14 @@
+---
+doc_id: agents-domain
+doc_type: reference
+plane: current
+status: current
+authority: supporting
+summary: How coding agents should consume this repository's domain documentation.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Domain Docs
 
 > Developer-agent configuration only. Never inject this file into an installed
@@ -44,6 +55,13 @@ Every ADR carries YAML front matter that the Engineering Memory generator reads:
 
 ```yaml
 ---
+doc_id: decisions-NNNN-short-title
+doc_type: decision
+plane: decision
+authority: record
+summary: The decision and the system boundary it governs.
+reviewed_on: YYYY-MM-DD
+review_by: YYYY-MM-DD
 knowledge_type: decision
 status: current
 covers:
@@ -52,12 +70,13 @@ depends_on:
   - docs/architecture/some-blueprint.md
 validated_by:
   - path/to/the/test/that/proves/it.rs
-last_verified_commit: null
 ---
 ```
 
-An ADR without it will fail the `engineering-memory-valid` gate. After adding
-one, run `just em-generate` — never hand-edit `.engineering-memory/*.json`.
+An ADR without it will fail the documentation or Engineering Memory gate. After
+adding one, run `just docs-generate`, then explicitly acknowledge reviewed
+bindings with `just docs-refresh <doc-id>`. `just em-generate` only rebuilds the
+disposable local lens cache; never hand-edit `.engineering-memory/*.json`.
 
 ## When an ADR is required
 

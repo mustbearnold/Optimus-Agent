@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p13-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P13 · decision ADR-0036 · delivery PR #23
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P13 verification — domain modularity
 
 Date: 2026-07-25  

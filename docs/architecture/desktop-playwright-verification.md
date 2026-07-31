@@ -1,3 +1,14 @@
+---
+doc_id: architecture-desktop-playwright-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Optimus desktop now supports headless browser testing:
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Desktop Playwright verification — 2026-07-19
 
 ## Harness

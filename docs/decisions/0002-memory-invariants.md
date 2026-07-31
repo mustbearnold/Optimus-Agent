@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0002-memory-invariants
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Accepted — 2026-07-18 (invariants locked; full store is Phase 2)
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0002: Memory invariants (MetaMemory-native)
 
 ## Status

@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-0-work-isolation-settings
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-23 Goal: Let users choose work isolation intent in Settings; persist under home.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: active
 covers:
   - crates/optimus-kernel/src/product_settings.rs
   - crates/optimus-host/src/system.rs

@@ -1,3 +1,14 @@
+---
+doc_id: architecture-release-and-parity-gates
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Date: 2026-07-25 Planes: program P17 · grade mark Release / parity gating · delivery PR #27
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Release and parity gates (operator matrix)
 
 Date: 2026-07-25  

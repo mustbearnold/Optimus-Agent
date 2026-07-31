@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-15-campaigns
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-19 Priority: function > Hermes; UI polish last. Testing: deterministic isolation (unique homes, no wall sleeps, explicit seeds).
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 15 — multi-agent durable campaigns
 
 Date: 2026-07-19  

@@ -1,3 +1,14 @@
+---
+doc_id: architecture-optimus-exceeds-hermes
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Mission: Rebuild the personal agent category so Optimus exceeds Hermes Agent on every axis that matters in production: reliability, learning quality, memory integrity, cost, latency, security, multi-agent durability, desktop UX,...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Optimus Agent — Rebuild Blueprint (2026-07-18)
 
 > **Documentary status (P16, updated 2026-07-27): SUPERSEDED** by

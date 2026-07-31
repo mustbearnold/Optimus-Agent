@@ -1,3 +1,14 @@
+---
+doc_id: architecture-sandbox-functional-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: - CLI/desktop install: %LOCALAPPDATA%\Programs\OptimusAgent\ - Default home: %LOCALAPPDATA%\optimus - HTTP sandbox: optimus-desktop --http 8787 --home <tmp> - Note: computeruse tool not available in this Hermes session; exercised via...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Sandbox functional verification — 2026-07-19
 
 ## Environment

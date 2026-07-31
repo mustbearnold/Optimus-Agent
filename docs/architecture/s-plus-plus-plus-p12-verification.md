@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p12-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P12 · decision ADR-0035 · delivery PR #22
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P12 verification — command capability envelope
 
 Date: 2026-07-25  

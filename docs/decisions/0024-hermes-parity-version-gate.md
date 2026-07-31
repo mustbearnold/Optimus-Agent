@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0024-hermes-parity-version-gate
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0024: Fail-closed Hermes parity version gate, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - docs/architecture/optimus-version.json
   - docs/architecture/hermes-baselines/hermes-0.19.0.json
@@ -19,7 +26,6 @@ validated_by:
   - scripts/test_optimus_version.py
   - scripts/check-parity-ledger.py
   - apps/optimus-cli/src/main.rs
-last_verified_commit: null
 ---
 
 # ADR-0024: Fail-closed Hermes parity version gate

@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0020-work-graph-integrity-and-loopback-security
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0020: Work Graph integrity and loopback security, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - Cargo.toml
   - crates/optimus-store/src/lib.rs
@@ -30,7 +37,6 @@ validated_by:
   - apps/optimus-cli/tests/gateway_http.rs
   - apps/optimus-desktop/src/server.rs
   - apps/optimus-desktop/e2e
-last_verified_commit: null
 ---
 
 # ADR-0020: Work Graph integrity and loopback security

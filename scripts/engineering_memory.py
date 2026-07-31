@@ -2138,7 +2138,7 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
         if not frontmatter:
             errors.append(f"missing frontmatter: {rel}")
             continue
-        for field in ("knowledge_type", "status", "depends_on", "validated_by", "last_verified_commit"):
+        for field in ("knowledge_type", "status", "depends_on", "validated_by"):
             if field not in frontmatter:
                 errors.append(f"frontmatter missing {field}: {rel}")
         if "covers" not in frontmatter and "owns" not in frontmatter:

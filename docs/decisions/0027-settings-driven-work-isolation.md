@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0027-settings-driven-work-isolation
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0027: Settings-driven work isolation modes, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/product_settings.rs
   - crates/optimus-host/src/system.rs
@@ -12,7 +19,6 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/src/product_settings.rs
   - crates/optimus-host/src/system.rs
-last_verified_commit: null
 ---
 
 # ADR-0027: Settings-driven work isolation modes

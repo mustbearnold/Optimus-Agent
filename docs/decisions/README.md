@@ -1,13 +1,19 @@
 ---
-knowledge_type: decision-index
+doc_id: decisions-readme
+doc_type: reference
+plane: decision
 status: current
+authority: record
+summary: This index preserves existing decisions and exposes their current documentary state. Source and tests still determine whether an accepted design is fully implemented.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision-index
 covers:
   - docs/decisions/*.md
 depends_on:
   - docs/architecture/system-overview.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # Architecture decision index
@@ -83,6 +89,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0060 | Owned localhost is a process-bound lease (program P30) | Accepted | Exact loopback origin authority is bound to a verified owned process, project, run, generation, and expiry; issuance remains incomplete and localhost stays denied by default. |
 | 0061 | Generated Engineering Memory is a disposable cache | Accepted | Source, tests, curated docs, ADRs, and Git remain authority; ignored deterministic maps auto-materialize for lenses and validation computes truth without cache artifacts. |
 | 0062 | Source and Development are separate workspace planes | Accepted | Clean detached Source view; local Git, worktrees, land evidence, tools, builds, caches, and recoverable root shadow live under Development. |
+| 0063 | Documentation is a governed authority plane | Accepted | Typed planes, exclusive authority routes, durable source-binding review, deterministic catalog/search, local-link validation, and retrieval benchmarks. |
 
 ## Known documentary debt
 

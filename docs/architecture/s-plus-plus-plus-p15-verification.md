@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p15-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P15 · decision ADR-0038 · delivery PR #25
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P15 verification — UI IPC architecture
 
 Date: 2026-07-25  

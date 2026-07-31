@@ -1,6 +1,13 @@
 ---
+doc_id: plans-reliability-autonomy-program
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Historical execution plan for post–product-complete reliability: turn Optimus from “technically capable behind a permission wall” into “describe the outcome; complete and verify the work,” without discarding exact-effect audit.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: plan
-status: current
 owns:
   - docs/plans/reliability-autonomy-program.md
 watches:
@@ -22,12 +29,16 @@ validated_by:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - scripts/check-crate-layers.py
-last_verified_commit: null
 ---
 
 # Reliability and autonomy program — program P30+
 
-**Execution authority** for post–product-complete reliability: turn Optimus from
+> **Historical program record (2026-07-31).** Delivered source and accepted ADRs
+> remain authoritative, but this phase sequence and its parking rules are not
+> the active queue. See the domain-neutral
+> [current roadmap](../current/roadmap.md).
+
+**Historical execution plan** for post–product-complete reliability: turn Optimus from
 “technically capable behind a permission wall” into “describe the outcome;
 complete and verify the work,” without discarding exact-effect audit.
 

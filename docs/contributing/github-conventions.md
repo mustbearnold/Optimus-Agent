@@ -1,12 +1,18 @@
 ---
-knowledge_type: process
+doc_id: contributing-github-conventions
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: This repository no longer uses GitHub issues, pull requests, labels, or gh for development workflow or delivery. This file remains as a tombstone so older ADRs and plans have a stable link and coding agents do not rediscover the former...
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: process
 covers:
   - docs/contributing/github-conventions.md
 watches:
   - AGENTS.md
   - docs/contributing/artifact-naming.md
-last_verified_commit: null
 ---
 
 # Historical GitHub conventions

@@ -1,3 +1,14 @@
+---
+doc_id: evidence-pr32-run-controller-p0-board-2026-07-25
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Planes: design-note multi-agent P0 (not program phase) · delivery PR #32 · architecture S+++ hold
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # PR #32 three-expert review board — 2026-07-25
 
 Planes: design-note multi-agent P0 (not program phase) · delivery **PR #32** · architecture S+++ hold

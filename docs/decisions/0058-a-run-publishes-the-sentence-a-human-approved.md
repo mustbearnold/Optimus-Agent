@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0058-a-run-publishes-the-sentence-a-human-approved
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P44
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-engineering/src/delivery.rs
   - crates/optimus-engineering/src/publish_plan.rs
@@ -12,7 +19,6 @@ depends_on:
   - docs/plans/github-engineer-program.md
 validated_by:
   - crates/optimus-engineering/tests/delivery.rs
-last_verified_commit: null
 ---
 
 # ADR-0058: A run publishes the sentence a human approved, and nothing else

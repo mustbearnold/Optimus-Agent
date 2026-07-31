@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0039-files-mutate-effect-taxonomy
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-25 - Program: program P22
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
@@ -17,7 +24,6 @@ validated_by:
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-kernel/tests/domain_modularity.rs
-last_verified_commit: null
 ---
 
 # ADR-0039: Files-mutate effect taxonomy (program P22)
@@ -63,7 +69,7 @@ Work Graph + SmartDeny + cap-std plane (no second ambient write path).
   multi-project mutate lease is settings-honest but may ship in the same program
   wave as isolation enforcement tests.
 
-## Alternatives
+## Alternatives considered
 
 - Shell-based mutate via `RunCommand` — rejected (weaker receipts, harder
   confinement proofs).
@@ -73,3 +79,32 @@ Work Graph + SmartDeny + cap-std plane (no second ambient write path).
 
 - Incomplete match arms when adding variants — mitigated by exhaustive Rust
   matches + closed tool registry (ADR-0036 / program P21).
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Evaluation evidence
+
+- `crates/optimus-runtime/tests/path_confinement.rs`
+- `crates/optimus-runtime/tests/approvals_surface.rs`
+- `crates/optimus-kernel/tests/domain_modularity.rs`
+
+## Conditions for reconsideration
+
+Reconsider when the named boundary or threat model changes and a replacement preserves typed enforcement, observability, deterministic failure, and regression coverage.
+
+## Relevant code
+
+- `crates/optimus-graph/src/lib.rs`
+- `crates/optimus-runtime/src/lib.rs`
+- `crates/optimus-packs/src/lib.rs`
+- `crates/optimus-kernel/src/lib.rs`
+
+## Relevant tests
+
+- `crates/optimus-runtime/tests/path_confinement.rs`
+- `crates/optimus-runtime/tests/approvals_surface.rs`
+- `crates/optimus-kernel/tests/domain_modularity.rs`

@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0033-multi-agent-dag-execution
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0033: Multi-agent DAG execution (P10), including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-workflow/src/workflow_run.rs
   - crates/optimus-workflow/src/specialist_vertical.rs
@@ -15,7 +22,6 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/tests/specialist_vertical.rs
   - crates/optimus-kernel/tests/workflow_dag.rs
-last_verified_commit: null
 ---
 
 # ADR-0033: Multi-agent DAG execution (P10)

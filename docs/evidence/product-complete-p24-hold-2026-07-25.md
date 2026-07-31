@@ -1,3 +1,14 @@
+---
+doc_id: evidence-product-complete-p24-hold-2026-07-25
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Planes: program P24 · delivery PR #34 · architecture hold
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Product-complete program P24 hold — 2026-07-25
 
 Planes: **program P24** · delivery **PR #34** · architecture hold

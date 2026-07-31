@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p20-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P20 · delivery PR #30 · architecture hold (marks unchanged)
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p20-verification.md
 covers:
@@ -12,7 +19,6 @@ validated_by:
   - scripts/optimus_version.py
   - scripts/check-parity-ledger.py
   - scripts/check-architecture-marks.py
-last_verified_commit: null
 ---
 
 # Product-complete program P20 verification

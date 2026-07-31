@@ -1,6 +1,13 @@
 ---
-knowledge_type: contract
+doc_id: contracts-desktop-shell-and-ipc-matrix
+doc_type: reference
+plane: current
 status: current
+authority: canonical
+summary: Install authority: scripts/rebuild-install-relaunch.sh stages Electron as the primary entry and keeps Wry as a secondary action.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: contract
 owns:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py

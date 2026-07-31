@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0035-command-capability-envelope
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0035: Command capability envelope + Unrestricted break-glass (P12), including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-runtime/src/command_envelope.rs
   - crates/optimus-runtime/src/lib.rs
@@ -22,7 +29,6 @@ validated_by:
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-runtime/src/command_envelope.rs
   - crates/optimus-kernel/src/network_policy.rs
-last_verified_commit: null
 ---
 
 # ADR-0035: Command capability envelope + Unrestricted break-glass (P12)
@@ -83,7 +89,7 @@ not be confused with “full host FS for commands.”
 - Negative: RO system binds still allow **reading** some system paths; S+++
   claims writable confinement + SmartDeny, not a full air-gap.
 
-## Alternatives
+## Alternatives considered
 
 - **Landlock-only without bwrap.** Rejected for now: bwrap already in the
   path; Landlock can complement later.
@@ -99,9 +105,41 @@ not be confused with “full host FS for commands.”
   UnrestrictedHost for break-glass.
 - systemd-run user session unavailable: spawn fails closed (existing).
 
-## Reconsideration
+## Conditions for reconsideration
 
 - When Windows AppContainer (or equivalent) lands, relax
   `ConfinedNoNetwork` fail-closed and re-document residual.
 - If product needs selectable network policy for Confined without isolation
   profile change, promote network into an independent config field.
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Evaluation evidence
+
+- `crates/optimus-runtime/tests/command_envelope.rs`
+- `crates/optimus-runtime/tests/path_confinement.rs`
+- `crates/optimus-runtime/tests/approvals_surface.rs`
+- `crates/optimus-runtime/src/command_envelope.rs`
+- `crates/optimus-kernel/src/network_policy.rs`
+
+## Relevant code
+
+- `crates/optimus-runtime/src/command_envelope.rs`
+- `crates/optimus-runtime/src/lib.rs`
+- `crates/optimus-graph/src/lib.rs`
+- `crates/optimus-kernel/src/network_policy.rs`
+- `crates/optimus-kernel/src/product_settings.rs`
+- `crates/optimus-kernel/src/browser.rs`
+- `crates/optimus-kernel/src/web_search.rs`
+
+## Relevant tests
+
+- `crates/optimus-runtime/tests/command_envelope.rs`
+- `crates/optimus-runtime/tests/path_confinement.rs`
+- `crates/optimus-runtime/tests/approvals_surface.rs`
+- `crates/optimus-runtime/src/command_envelope.rs`
+- `crates/optimus-kernel/src/network_policy.rs`

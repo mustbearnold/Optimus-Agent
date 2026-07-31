@@ -1,3 +1,14 @@
+---
+doc_id: evidence-adaptive-synthetic-user-lab-2026-07-31
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: - Persona simulator: Ollama 0.32.5, qwen3:8b, 16,384-token context. - GPU observation during generation: RTX 5070, 100% GPU residency, about 7.4 GiB model memory. Plan calls took 2.6–3.3 seconds and warm follow-up calls took 0.6–1.5...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Adaptive Synthetic User Lab — 2026-07-31
 
 **Status:** Confirmed current behaviour for the named runs only

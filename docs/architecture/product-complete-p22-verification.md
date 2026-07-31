@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p22-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P22 · delivery PR #31 · architecture hold (Security / Durability / Domain) · ledger files.mutate (parity), projects.scope (partial honesty)
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p22-verification.md
 covers:
@@ -13,7 +20,6 @@ validated_by:
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-kernel/tests/domain_modularity.rs
   - crates/optimus-packs/tests/packs_budget.rs
-last_verified_commit: null
 ---
 
 # Product-complete program P22 verification

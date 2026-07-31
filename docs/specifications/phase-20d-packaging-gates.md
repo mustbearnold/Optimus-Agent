@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-20d-packaging-gates
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-23 Goal: Close Phase 20 with honest doctor reporting and CI-safe browser tests.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: active
 covers:
   - crates/optimus-host/src/system.rs
   - crates/optimus-kernel/src/browser.rs

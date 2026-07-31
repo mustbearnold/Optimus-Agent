@@ -1,3 +1,14 @@
+---
+doc_id: evidence-synthetic-user-lab-2026-07-31
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: - Base commit: 8e4f2dd1eef187603340d0af77d6faf25a3883a7 - Candidate binary SHA-256: e003055e9eec4fcfd25e7e5a58bc6c333e3d7a5d76799a4baa8a41111d5187d0 - Surface: native optimus terminal UI in isolated tmux ptys - Live provider/model:...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Synthetic User Lab evidence — 2026-07-31
 
 ## Candidate and method

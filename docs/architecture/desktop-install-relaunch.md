@@ -1,3 +1,14 @@
+---
+doc_id: architecture-desktop-install-relaunch
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Confirmed current behaviour: the installer stages Electron + React as the primary desktop entry and keeps the Wry/Tao binary as a desktop-action rollback (LegacyWry). The Rust host (optimus-desktop --host-only) remains authority for IPC...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Desktop install and relaunch convention
 
 ## Default shell

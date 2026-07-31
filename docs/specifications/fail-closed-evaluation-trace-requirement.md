@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-fail-closed-evaluation-trace-requirement
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Historical record for Fail-closed evaluation trace requirement; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-eval/tests/evaluation_contracts.rs

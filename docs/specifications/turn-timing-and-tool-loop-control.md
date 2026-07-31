@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-turn-timing-and-tool-loop-control
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Confirmed pre-change behaviour: a Desktop request for current AI news ended with max steps exceeded (8) while the UI displayed websearch ×52 and activatepack ×2. Review found that the task UI incremented on both running and completion...
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 issue: https://github.com/mustbearnold/Optimus-Agent/issues/4
 covers:
   - crates/optimus-kernel/src/lib.rs

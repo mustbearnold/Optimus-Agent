@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-18-hermes-parity-shell
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-19 Historical plan: docs/plans/historical/2026-07-19130511-hermes-parity-rome-shell.md Process: subagent-driven-development
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 18 — Hermes-parity shell + Digital Rome (Sprint S1 in flight)
 
 **Date:** 2026-07-19  

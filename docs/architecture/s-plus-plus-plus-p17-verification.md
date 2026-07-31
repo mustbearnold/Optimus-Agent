@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p17-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P17 · decision (process; version/parity policy) · delivery PR #27
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P17 verification — release / parity gating
 
 Date: 2026-07-25  

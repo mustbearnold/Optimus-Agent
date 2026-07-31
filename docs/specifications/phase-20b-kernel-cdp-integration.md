@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-20b-kernel-cdp-integration
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-22 Prerequisite: P20A — crates/optimus-browser crate exists with CdpBrowserSession Goal: Wire the CDP browser crate into the kernel so browsernavigate, browserclick, browsersnapshot tools use CDP when Chrome is available,...
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: draft
 covers:
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-kernel/src/lib.rs

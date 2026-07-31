@@ -1,3 +1,14 @@
+---
+doc_id: architecture-north-star-2026-07
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Decided in #61. Both halves were already half-built and never named as the point:
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Optimus Agent — North Star (2026-07)
 
 > **Documentary status:** Current and canonical. Supersedes

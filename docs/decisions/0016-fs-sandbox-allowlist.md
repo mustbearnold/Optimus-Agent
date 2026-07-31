@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0016-fs-sandbox-allowlist
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: - Date: historical Phase P1; status honesty 2026-07-25 (P16)
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0016-B: FS sandbox allowlist for desktop Files pane
 
 > **Alias:** ADR-0016-B (file historically numbered `0016-fs-sandbox-allowlist.md`).

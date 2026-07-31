@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p21-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P21 · delivery PR #30 · architecture hold (Domain / Security / Control-plane) · ledger core.tool-loop, core.pack-budget
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p21-verification.md
 covers:

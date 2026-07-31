@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0022-versioned-agent-and-workflow-contracts
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0022: Versioned agent and workflow contracts, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/agent.rs
   - crates/optimus-kernel/src/workflow.rs

@@ -1,6 +1,13 @@
 ---
-knowledge_type: contract
+doc_id: contracts-desktop-ipc-methods
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: Cross-surface allowlist matrix (Rust registry vs Electron vs React): desktop-shell-and-ipc-matrix.md and python3 scripts/check-desktop-ipc-matrix.py.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: contract
 covers:
   - crates/optimus-host/src/router.rs
   - apps/optimus-desktop/src/main.rs

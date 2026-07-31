@@ -144,6 +144,30 @@ modules-ratchet:
 
 # --- project systems ---------------------------------------------------------
 
+# Documentation authority, metadata, local links, staleness and retrieval.
+docs-check:
+    python3 scripts/docs_system.py check
+
+# Regenerate the deterministic catalog. This never refreshes source bindings.
+docs-generate:
+    python3 scripts/docs_system.py generate
+
+# Acknowledge reviewed source changes for named current documents only.
+docs-refresh *doc_ids:
+    python3 scripts/docs_system.py refresh {{doc_ids}}
+
+# Search current authority by intent. History and evidence are opt-in.
+docs-search query:
+    python3 scripts/docs_system.py search {{quote(query)}}
+
+# Return the bounded primary/supporting pack for one authority route.
+docs-context route:
+    python3 scripts/docs_system.py context {{quote(route)}}
+
+# Prove representative fresh-agent questions resolve to the expected authority.
+docs-benchmark:
+    python3 scripts/docs_system.py benchmark
+
 # Engineering Memory: staleness check.
 em-check:
     python3 scripts/engineering_memory.py check

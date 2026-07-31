@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0018-fail-closed-runtime-safety
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0018: Fail-closed runtime path and campaign decoding, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-runtime/src/lib.rs
   - crates/optimus-runtime/src/campaign.rs
@@ -11,7 +18,6 @@ depends_on:
 validated_by:
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-runtime/src/campaign.rs
-last_verified_commit: null
 ---
 
 # ADR-0018: Fail-closed runtime path and campaign decoding

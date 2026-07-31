@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0029-react-workbench-and-electron-preview-view
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0029: React workbench and Electron preview view, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - apps/optimus-ui/**
   - apps/optimus-electron/**
@@ -15,7 +22,6 @@ validated_by:
   - apps/optimus-ui/src/**/*.test.tsx
   - apps/optimus-electron/test/*.test.cjs
   - apps/optimus-electron/e2e/*.spec.cjs
-last_verified_commit: null
 ---
 
 # ADR-0029: React workbench and Electron preview view

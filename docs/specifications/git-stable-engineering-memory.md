@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-git-stable-engineering-memory
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: - Date: 2026-07-20 - Mode: Standard, deterministic authority repair - Owner: Engineering Memory generator, validator, and current architecture prose
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py

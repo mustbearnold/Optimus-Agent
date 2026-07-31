@@ -1,6 +1,13 @@
 ---
-knowledge_type: plan
+doc_id: plans-product-complete-program
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Architecture quality marks are all S+++ (board). That climb is complete and historical for mark exits. It remains a hold constraint (never demote marks for product speed).
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: plan
 owns:
   - docs/plans/product-complete-program.md
 watches:
@@ -43,7 +50,6 @@ validated_by:
   - scripts/check-crate-layers.py
   - scripts/check-desktop-ipc-matrix.py
   - scripts/check-observability-gate.py
-last_verified_commit: null
 ---
 
 # Product-complete program — P20–P29

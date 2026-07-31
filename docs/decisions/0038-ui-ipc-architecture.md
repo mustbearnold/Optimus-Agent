@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0038-ui-ipc-architecture
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0038: UI IPC architecture completeness (P15), including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py
@@ -19,7 +26,6 @@ validated_by:
   - apps/optimus-electron/test/preview-security.test.cjs
   - apps/optimus-electron/test/browser-policy.test.cjs
   - apps/optimus-ui/src/state/conversationStore.test.ts
-last_verified_commit: null
 ---
 
 # ADR-0038: UI IPC architecture completeness (P15)
@@ -65,7 +71,7 @@ static test.
   matrix + unit/security tests are the merge gate. Live native install still
   uses `skills/optimus-native-ui-testing` when claiming shell changes.
 
-## Alternatives
+## Alternatives considered
 
 - **Expose all host methods to Electron invoke.** Rejected: chat/window/OS need
   dedicated channels; main-only staging must stay host-gated.
@@ -77,6 +83,38 @@ static test.
 - New host methods forgotten in matrix classification. Mitigated by
   `uncovered` error and unit test `test_every_host_method_is_classified`.
 
-## Reconsideration
+## Conditions for reconsideration
 
 - Add vertical IPC methods to critical set when product surfaces them.
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Evaluation evidence
+
+- `scripts/check-desktop-ipc-matrix.py`
+- `scripts/test_desktop_ipc_matrix.py`
+- `apps/optimus-electron/test/preview-security.test.cjs`
+- `apps/optimus-electron/test/browser-policy.test.cjs`
+- `apps/optimus-ui/src/state/conversationStore.test.ts`
+
+## Relevant code
+
+- `scripts/check-desktop-ipc-matrix.py`
+- `scripts/test_desktop_ipc_matrix.py`
+- `apps/optimus-electron/main.cjs`
+- `apps/optimus-electron/preload.cjs`
+- `apps/optimus-ui/src/ipc/contracts.ts`
+- `crates/optimus-host/src/router.rs`
+- `scripts/rebuild-install-relaunch.sh`
+
+## Relevant tests
+
+- `scripts/check-desktop-ipc-matrix.py`
+- `scripts/test_desktop_ipc_matrix.py`
+- `apps/optimus-electron/test/preview-security.test.cjs`
+- `apps/optimus-electron/test/browser-policy.test.cjs`
+- `apps/optimus-ui/src/state/conversationStore.test.ts`

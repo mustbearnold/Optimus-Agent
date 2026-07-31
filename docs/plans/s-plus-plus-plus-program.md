@@ -1,6 +1,13 @@
 ---
-knowledge_type: plan
+doc_id: plans-s-plus-plus-plus-program
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Authority for architecture S+++ sequencing after Phases 0–5 (complete): this document. App execution after P19: product-complete-program.md.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: plan
 owns:
   - docs/plans/s-plus-plus-plus-program.md
 watches:
@@ -24,7 +31,6 @@ validated_by:
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-kernel/tests/specialist_vertical.rs
   - scripts/check-observability-gate.py
-last_verified_commit: null
 ---
 
 # S+++ program — lowest-to-highest dimension plan

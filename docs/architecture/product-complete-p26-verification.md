@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p26-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P26 · delivery PR #36 · architecture hold (Domain / Security / Doc hygiene) · ledger skills.ui, memory.ui, desktop.logs, surface.commands → parity (packs console completes product story for core.pack-budget)
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p26-verification.md
 covers:
@@ -14,7 +21,6 @@ validated_by:
   - apps/optimus-ui/src/components/consoles/ConsolesPage.tsx
   - apps/optimus-ui/src/components/chrome/CommandPalette.tsx
   - scripts/check-desktop-ipc-matrix.py
-last_verified_commit: null
 ---
 
 # Product-complete program P26 verification

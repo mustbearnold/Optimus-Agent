@@ -221,11 +221,13 @@ tier_gates() {
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
+  spawn "documentation-contract"     python3 scripts/docs_system.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
+  spawn "test_docs_system"           python3 scripts/test_docs_system.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py

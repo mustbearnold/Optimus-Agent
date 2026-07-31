@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p28-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P28 · delivery PR #37 · architecture hold (Durability local leases/receipts · Security · Observability) · ledger gateway.queue, gateway.telegram, gateway.ui → parity
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p28-verification.md
 covers:
@@ -14,7 +21,6 @@ validated_by:
   - crates/optimus-host/src/messaging.rs
   - apps/optimus-ui/src/components/mail/MailPage.tsx
   - scripts/check-desktop-ipc-matrix.py
-last_verified_commit: null
 ---
 
 # Product-complete program P28 verification

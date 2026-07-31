@@ -1,12 +1,18 @@
 ---
-knowledge_type: process
+doc_id: contributing-project-hygiene
+doc_type: how-to
+plane: current
 status: current
+authority: supporting
+summary: just clean-report inventories rebuildable output in the assigned worktree and reports larger shared-root or sibling-worktree candidates without touching them. just clean deletes only a closed, tested allowlist inside the assigned linked...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: process
 covers:
   - scripts/project_hygiene.py
   - justfile
 validated_by:
   - scripts/test_project_hygiene.py
-last_verified_commit: null
 ---
 
 # Project hygiene

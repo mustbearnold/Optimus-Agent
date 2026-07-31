@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p29-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P29 · delivery PR #39 · architecture hold (all marks S+++) · PRODUCT-COMPLETE board
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p29-verification.md
 covers:
@@ -15,7 +22,6 @@ validated_by:
   - scripts/check-architecture-marks.py
   - scripts/check-parity-ledger.py
   - scripts/optimus_version.py
-last_verified_commit: null
 ---
 
 # Product-complete program P29 verification

@@ -1,3 +1,14 @@
+---
+doc_id: specifications-synthetic-user-lab
+doc_type: reference
+plane: current
+status: current
+authority: canonical
+summary: The Synthetic User Lab turns ad-hoc role-play into repeatable product evidence. It drives the real native terminal UI, not a private kernel shortcut, and binds each result to the candidate binary plus Optimus's durable SQLite records.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Synthetic User Lab
 
 **Status:** Confirmed current behaviour (version 1)

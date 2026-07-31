@@ -1,6 +1,13 @@
 ---
-knowledge_type: contract-risk-register
+doc_id: contracts-high-risk-contracts
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: This is a prioritized gap register, not a claim that every listed contract is implemented. “Documented” means an ADR or test expresses part of the behavior; it does not replace executable enforcement.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: contract-risk-register
 owns:
   - crates/optimus-store/src/lib.rs
   - crates/optimus-graph/src/lib.rs

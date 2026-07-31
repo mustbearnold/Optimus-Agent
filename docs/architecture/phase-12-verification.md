@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-12-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Historical record for Phase 12 verification — browser effector + durable cron; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 12 verification — browser effector + durable cron
 
 Date: 2026-07-19

@@ -1,3 +1,14 @@
+---
+doc_id: architecture-desktop-0-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: apps/optimus-desktop — native Windows WebView2 host (tao + wry) embedding the conversation-first UI.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Desktop shell (desktop-0) — 2026-07-18
 
 ## Deliverable

@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0016-canonical-tool-contract
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: - Date: historical (PF-04); identity alias formalized 2026-07-25 (P16)
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0016-A: Canonical tool and pack contract
 
 > **Alias:** ADR-0016-A (file historically numbered `0016-canonical-tool-contract.md`).

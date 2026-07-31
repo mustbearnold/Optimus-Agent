@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-reliability-autonomy-p30-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P30 · decisions ADR-0044 / ADR-0059 / ADR-0060 · delivery pending · mark hold S+++
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/reliability-autonomy-p30-verification.md
 covers:
@@ -36,7 +43,6 @@ validated_by:
   - scripts/check-crate-layers.py
   - scripts/check-autonomy-profiles.py
   - scripts/test_autonomy_profiles.py
-last_verified_commit: null
 ---
 
 # program P30 verification — bounded project trust

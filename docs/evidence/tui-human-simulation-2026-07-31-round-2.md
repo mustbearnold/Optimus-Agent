@@ -1,3 +1,14 @@
+---
+doc_id: evidence-tui-human-simulation-2026-07-31-round-2
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: - Base commit: 6f182691029fb47d7f77d13fa93e3bf2e6c06f56 - Pre-fix debug binary SHA-256: c4f96b42db22f0f784806054dcb411be220247f73fecadf6bc0cfd238eb47fd8 - Post-fix debug binary SHA-256:...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # TUI human-simulation evidence — 2026-07-31, round 2
 
 ## Candidate

@@ -1,3 +1,14 @@
+---
+doc_id: architecture-durability-and-backup
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Date: 2026-07-25 Planes: program P18 · mark Durability / crash safety · delivery PR #28
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Durability and backup (operator contract)
 
 Date: 2026-07-25  

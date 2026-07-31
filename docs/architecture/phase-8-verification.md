@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-8-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Per ADR-0010 — extractive context compression:
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 8 verification — 2026-07-18
 
 ## Scope delivered

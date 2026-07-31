@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-workspace-redesign-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: workspace redesign (docs/plans/workspace-redesign.md, Slice 1) · architecture hold (all marks S+++) · no program P## claim
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/workspace-redesign-verification.md
 covers:
@@ -17,7 +24,6 @@ validated_by:
   - apps/optimus-electron/e2e/installed-shell.spec.cjs
   - apps/optimus-ui/src/app/OptimusApp.test.tsx
   - scripts/verify.sh
-last_verified_commit: null
 ---
 
 # Workspace redesign — shell verification

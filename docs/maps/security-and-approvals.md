@@ -1,6 +1,13 @@
 ---
-knowledge_type: security-map
+doc_id: map-security-and-approvals
+doc_type: reference
+plane: current
 status: current
+authority: canonical
+summary: Confirmed current behaviour: raw model tool names are untrusted lookup keys. The kernel resolves them through the exact ToolId set advertised for that completion step, requires non-empty unique call IDs and canonical names, requires...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: security-map
 owns:
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs

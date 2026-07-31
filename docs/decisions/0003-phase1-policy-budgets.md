@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0003-phase1-policy-budgets
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Decision record for ADR-0003: Phase 1 policy, budgets, and bounded commands, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0003: Phase 1 policy, budgets, and bounded commands
 
 ## Status

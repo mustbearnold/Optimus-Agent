@@ -1,6 +1,13 @@
 ---
-knowledge_type: architecture
+doc_id: architecture-architecture-marks
+doc_type: explanation
+plane: current
 status: current
+authority: supporting
+summary: This is the long-horizon scorecard for Optimus architectural quality. It is not a Hermes feature ledger and not a product-completeness checklist.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: architecture
 owns:
   - docs/architecture/architecture-marks.md
   - docs/plans/s-plus-trust-spine.md
@@ -21,7 +28,6 @@ depends_on:
 validated_by:
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-runtime/tests/path_confinement.rs
-last_verified_commit: null
 ---
 
 # Architecture marks (S+++ program)

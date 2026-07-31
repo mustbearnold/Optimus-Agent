@@ -1,3 +1,14 @@
+---
+doc_id: architecture-capability-baseline-2026-07
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Evidence-backed answer to #60: what Optimus Agent actually does today. Every claim below is measured from the tree at commit 14d8f39, not from optimus-exceeds-hermes.md and not from memory.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Capability baseline — July 2026
 
 Evidence-backed answer to [#60](https://github.com/mustbearnold/Optimus-Agent/issues/60):

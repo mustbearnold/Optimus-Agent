@@ -1,3 +1,14 @@
+---
+doc_id: evidence-product-complete-p22-hold-2026-07-25
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Planes: program P22 · delivery PR #31 · architecture hold
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Product-complete program P22 hold — 2026-07-25
 
 Planes: **program P22** · delivery **PR #31** · architecture hold

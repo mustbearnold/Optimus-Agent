@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0055-a-fix-is-proven-at-the-commit-it-fixes
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P42
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-engineering/src/differential.rs
   - crates/optimus-engineering/src/command.rs
@@ -11,7 +18,6 @@ depends_on:
   - docs/plans/github-engineer-program.md
 validated_by:
   - crates/optimus-engineering/tests/differential_proof.rs
-last_verified_commit: null
 ---
 
 # ADR-0055: A fix is proven at the commit it fixes, or it is not proven

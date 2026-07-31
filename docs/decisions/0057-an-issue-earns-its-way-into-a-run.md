@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0057-an-issue-earns-its-way-into-a-run
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P41
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-engineering/src/triage.rs
 depends_on:
@@ -11,7 +18,6 @@ depends_on:
   - docs/plans/github-engineer-program.md
 validated_by:
   - crates/optimus-engineering/tests/triage_contract.rs
-last_verified_commit: null
 ---
 
 # ADR-0057: An issue earns its way into a run, or is refused in the reporter's own words

@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0047-turn-step-budget
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-27 - Program: program P30+ (TUI + core foundation)
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/turn_loop.rs
@@ -11,7 +18,6 @@ depends_on:
   - docs/decisions/0046-approval-resumes-the-turn.md
 validated_by:
   - crates/optimus-kernel/tests/kernel_turn.rs
-last_verified_commit: null
 ---
 
 # ADR-0047: A turn's step budget is 32 model round trips

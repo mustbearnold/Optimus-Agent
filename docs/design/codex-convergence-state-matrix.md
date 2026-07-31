@@ -1,6 +1,13 @@
 ---
-knowledge_type: design-state-matrix
+doc_id: design-codex-convergence-state-matrix
+doc_type: explanation
+plane: current
 status: current
+authority: supporting
+summary: Queued, paused, backgrounded, and durable resume are currently inapplicable to the foreground chat contract. Jobs and cron expose their own runtime states; the UI must not map them onto foreground chat.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: design-state-matrix
 covers:
   - apps/optimus-ui/**
   - apps/optimus-electron/**
@@ -9,7 +16,6 @@ depends_on:
 validated_by:
   - apps/optimus-ui/src/**/*.test.ts
   - apps/optimus-electron/e2e/*.spec.cjs
-last_verified_commit: null
 ---
 
 # Codex-converged Optimus state matrix

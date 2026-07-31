@@ -1,3 +1,14 @@
+---
+doc_id: evidence-product-complete-p28-hold-2026-07-25
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Planes: program P28 · delivery PR #37 · architecture hold (Durability local · Security · Observability)
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Product-complete program P28 hold — 2026-07-25
 
 Planes: **program P28** · delivery **PR #37** · architecture hold (Durability

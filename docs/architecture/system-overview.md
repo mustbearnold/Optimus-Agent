@@ -1,6 +1,13 @@
 ---
-knowledge_type: architecture
+doc_id: architecture-system-overview
+doc_type: explanation
+plane: current
 status: current
+authority: canonical
+summary: This document describes the repository as it exists now. The historical blueprint in optimus-exceeds-hermes.md remains useful product direction, but it contains planned components and is not proof of implementation.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: architecture
 owns:
   - Cargo.toml
   - crates/optimus-kernel/src/lib.rs
@@ -669,6 +676,7 @@ availability mandatory.
     **Closed product program:** [product-complete-program.md](../plans/product-complete-program.md)
     (program P20–P29 **PRODUCT-COMPLETE** with residuals); historical task record
     [full-app-microtasks.md](../plans/full-app-microtasks.md). Current roadmap:
-    [github-engineer-program.md](../plans/github-engineer-program.md) (program P40–P46).
+    [current/roadmap.md](../current/roadmap.md); named phase programs are
+    historical implementation records unless that roadmap promotes them.
     Operator gate matrix: [release-and-parity-gates.md](./release-and-parity-gates.md).
     Durability backup/doctor: [durability-and-backup.md](./durability-and-backup.md).

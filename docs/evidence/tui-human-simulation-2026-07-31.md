@@ -1,3 +1,14 @@
+---
+doc_id: evidence-tui-human-simulation-2026-07-31
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: - Base commit: 1b8fc94c5d6809a33d6817587830e12a74885be9 - Debug binary SHA-256 after the fix: c4f96b42db22f0f784806054dcb411be220247f73fecadf6bc0cfd238eb47fd8 - Surface: native optimus terminal UI in an isolated tmux session -...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # TUI human-simulation evidence — 2026-07-31
 
 ## Candidate

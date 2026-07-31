@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0026-separate-development-and-runtime-agents
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0026: Separate development AGENTS.md from Optimus runtime constitution, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - AGENTS.md
   - OPTIMUS_AGENTS.md
@@ -10,7 +17,6 @@ depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
 validated_by:
   - crates/optimus-kernel/src/system_prompt.rs
-last_verified_commit: null
 ---
 
 # ADR-0026: Separate development AGENTS.md from Optimus runtime constitution

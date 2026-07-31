@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-read-only-cli-evaluation-comparison
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Historical record for Read-only CLI evaluation comparison; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - apps/optimus-cli/src/main.rs
   - apps/optimus-cli/tests/eval_compare.rs
@@ -10,7 +17,6 @@ depends_on:
   - docs/specifications/authoritative-offline-candidate-binding.md
 validated_by:
   - apps/optimus-cli/tests/eval_compare.rs
-last_verified_commit: null
 ---
 
 # Read-only CLI evaluation comparison

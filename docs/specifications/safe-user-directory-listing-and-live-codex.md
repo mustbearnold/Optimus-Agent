@@ -1,6 +1,13 @@
 ---
-title: Safe user directory listing and live Codex regression
+doc_id: specifications-safe-user-directory-listing-and-live-codex
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: Confirmed current behaviour: On 2026-07-21 a native installed Desktop turn using Codex OAuth, gpt-5.6-sol, and medium thinking received list all files on my onedrive desktop on windows. The first model step activated the Desktop pack....
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+title: Safe user directory listing and live Codex regression
 issue: https://github.com/mustbearnold/Optimus-Agent/issues/5
 owners:
   - optimus-packs

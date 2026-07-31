@@ -1,6 +1,13 @@
 ---
-knowledge_type: process
+doc_id: contributing-artifact-naming
+doc_type: how-to
+plane: current
 status: current
+authority: supporting
+summary: This is the canonical identity model for Optimus engineering artifacts. It is a development document and is never loaded as installed-product behaviour.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: process
 owns:
   - docs/contributing/artifact-naming.md
 watches:
@@ -17,7 +24,6 @@ depends_on:
   - docs/plans/product-complete-program.md
   - docs/plans/github-engineer-program.md
   - docs/architecture/architecture-marks.md
-last_verified_commit: null
 ---
 
 # Artifact naming planes
@@ -60,7 +66,7 @@ development document and is never loaded as installed-product behaviour.
 | Architecture S+++ climb | P10-P19 | `s-plus-plus-plus-program.md` | historical |
 | Product-complete daily app | P20-P29 | `product-complete-program.md` | closed / historical |
 | Reliability and autonomy | P30-P35 | `reliability-autonomy-program.md` | P30 prerequisite; P31-P35 parked |
-| GitHub Engineer product capability | P40-P46 | `github-engineer-program.md` | active |
+| GitHub Engineer product capability | P40-P46 | `github-engineer-program.md` | historical |
 
 Always say “program P##” in prose. Historical specification filenames such as
 `phase-20*` are document-local names, not program identifiers.

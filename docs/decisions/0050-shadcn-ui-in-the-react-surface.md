@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0050-shadcn-ui-in-the-react-surface
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0050: Overlays come from Radix via shadcn/ui, not from hand-written CSS, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - apps/optimus-ui/src/tailwind.css
   - apps/optimus-ui/vite.config.ts
@@ -10,7 +17,6 @@ depends_on:
   - docs/decisions/0045-agent-host-and-surface-transports.md
 validated_by:
   - apps/optimus-ui/src/components/chrome/TextPromptDialog.test.tsx
-last_verified_commit: null
 ---
 
 # ADR-0050: Overlays come from Radix via shadcn/ui, not from hand-written CSS

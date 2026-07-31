@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decision-0062-source-and-development-are-separate-workspace-planes
+doc_type: decision
+plane: decision
 status: current
+authority: canonical
+summary: Decision record for ADR-0062: Source and Development are separate workspace planes, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - AGENTS.md
   - justfile
@@ -13,7 +20,6 @@ validated_by:
   - scripts/test_workspace_layout.py
   - scripts/test_managed_delivery.py
   - scripts/test_project_hygiene.py
-last_verified_commit: null
 ---
 
 # ADR-0062: Source and Development are separate workspace planes
@@ -110,3 +116,23 @@ Remove compatibility links after all supported tooling and remembered paths
 use Development directly. Reconsider detached Source only if a different clean
 orientation mechanism proves equally understandable without becoming a writable
 main checkout.
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Relevant code
+
+- `AGENTS.md`
+- `justfile`
+- `scripts/workspace_layout.py`
+- `scripts/managed_delivery.py`
+- `scripts/project_hygiene.py`
+
+## Relevant tests
+
+- `scripts/test_workspace_layout.py`
+- `scripts/test_managed_delivery.py`
+- `scripts/test_project_hygiene.py`

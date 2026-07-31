@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-candidate-aware-evaluation-comparison
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Historical record for Candidate-aware evaluation comparison; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-eval/tests/evaluation_contracts.rs

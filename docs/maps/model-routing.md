@@ -1,6 +1,13 @@
 ---
-knowledge_type: model-routing-map
+doc_id: map-model-routing
+doc_type: reference
+plane: current
 status: current
+authority: canonical
+summary: Confirmed current behaviour: Optimus implements a canonical typed route resolver for provider/model ownership, required capabilities, privacy, bounded cost, explicit fallback, readiness-based Auto selection, and durable decision...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: model-routing-map
 covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/openai_compat.rs

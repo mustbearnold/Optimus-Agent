@@ -1,3 +1,14 @@
+---
+doc_id: evidence-phase-20-cdp-browser-2026-07-23
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Date: 2026-07-23 Milestone closed: P20D packaging + gates (after P20A–C)
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 20 CDP Preview Browser — evidence
 
 **Date:** 2026-07-23  

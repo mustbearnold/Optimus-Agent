@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0023-fixture-replay-trace-telemetry-evaluation
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0023: Fixture-only replay, causal traces, routing telemetry, and versioned evaluation, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-eval/src/replay.rs
   - crates/optimus-kernel/src/trace.rs

@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0044-bounded-project-trust-and-capability-broker
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-26 - Program: program P30
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-policy/src/command_class.rs
@@ -24,7 +31,6 @@ validated_by:
   - crates/optimus-kernel/tests/dev_run_trust.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
   - crates/optimus-runtime/tests/approvals_surface.rs
-last_verified_commit: null
 ---
 
 # ADR-0044: Bounded project trust and capability broker
@@ -189,7 +195,7 @@ Rejected. Would discard ADR-0031’s audit architecture.
   `full` carefully: prefer `full_project` for product; keep explicit
   `unrestricted` / `unrestricted_host` for break-glass.
 
-## Reconsideration
+## Conditions for reconsideration
 
 Revisit if Standard auto-allow produces user-visible unsafe host effects under
 Confined envelopes, or if broker latency blocks the turn loop.
@@ -248,3 +254,17 @@ credential-less or fixture home resolves Auto to offline, which keeps first-run
 chat and offline verification deterministic; adding a credential makes a later
 Auto turn select the corresponding live provider without rewriting the user's
 durable selection.
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Evaluation evidence
+
+- `crates/optimus-policy/src/lib.rs`
+- `crates/optimus-policy/tests/command_classification.rs`
+- `crates/optimus-kernel/tests/dev_run_trust.rs`
+- `crates/optimus-runtime/tests/project_trust_profile.rs`
+- `crates/optimus-runtime/tests/approvals_surface.rs`

@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-stream-delivery-cancellation
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: - Date: 2026-07-20 - Mode: Standard, behavior-first TDD - Owner: optimus-kernel cancellation contract and desktop stream adapters
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/tests/kernel_turn.rs

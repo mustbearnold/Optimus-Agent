@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-atomic-kernel-turn-trace-binding
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Historical record for Atomic kernel-turn trace binding; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/src/lib.rs

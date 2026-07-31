@@ -1,6 +1,13 @@
 ---
-knowledge_type: lesson-ledger
+doc_id: lessons-ai-agent-mistakes
+doc_type: explanation
+plane: current
 status: current
+authority: supporting
+summary: Only repeatable lessons belong here. Task-by-task progress belongs in execution evidence, not this ledger.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: lesson-ledger
 owns:
   - AGENTS.md
   - docs/engineering-memory/README.md
@@ -21,7 +28,6 @@ depends_on:
   - docs/decisions/0032-engineering-memory-compact-lenses.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # Recurring AI coding-agent mistakes

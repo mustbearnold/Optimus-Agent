@@ -1,6 +1,13 @@
 ---
-knowledge_type: repository-map
+doc_id: repository-and-ownership-map
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: Confirmed current behaviour: this is a Rust 2021 workspace with Rust 1.85 as the declared minimum. cargo metadata --no-deps reports eighteen workspace packages: libraries optimus-store, optimus-graph, optimus-runtime, optimus-memory,...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: repository-map
 owns:
   - Cargo.toml
   - apps/optimus-tui/Cargo.toml

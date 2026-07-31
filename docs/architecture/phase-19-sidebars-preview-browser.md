@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-19-sidebars-preview-browser
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Historical plan/spec: docs/plans/historical/2026-07-19134540-sidebar-parity-codex-preview-browser-spec.md Process: parallel subagent-driven-development; difficulty-tiered briefs
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 19 — Sidebars + FS + Preview Browser (execution log)
 
 **Historical plan/spec:** `docs/plans/historical/2026-07-19_134540-sidebar-parity-codex-preview-browser-spec.md`

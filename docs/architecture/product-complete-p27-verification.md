@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p27-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P27 · delivery PR #38 · architecture hold (Domain / Security / Control-plane) · ledger provider.catalog, provider.failover, mcp.client, plugins.signed → parity
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p27-verification.md
 covers:
@@ -15,7 +22,6 @@ validated_by:
   - crates/optimus-packs/src/signed.rs
   - crates/optimus-host/src/extensibility.rs
   - apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx
-last_verified_commit: null
 ---
 
 # Product-complete program P27 verification

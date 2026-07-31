@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0012-kernel-effectors
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Superseded in part by ADR-0016 — 2026-07-20
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0012: Kernel effectors — terminal + browser stubs
 
 ## Status

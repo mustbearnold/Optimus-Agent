@@ -1,6 +1,13 @@
 ---
-knowledge_type: memory-map
+doc_id: map-memory-and-retrieval
+doc_type: reference
+plane: current
 status: current
+authority: canonical
+summary: Confirmed current behaviour: claims carry tenant/user/project scope, subject, predicate, object JSON, memory type, origin, trust, allowed use, sensitivity, optional retention deadline, valid-time and transaction-time bounds, evidence...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: memory-map
 owns:
   - crates/optimus-memory/src/lib.rs
   - crates/optimus-kernel/src/session.rs

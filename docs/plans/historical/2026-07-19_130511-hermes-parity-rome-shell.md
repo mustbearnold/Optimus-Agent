@@ -1,3 +1,14 @@
+---
+doc_id: plans-historical-2026-07-19-130511-hermes-parity-rome-shell
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Goal: Make Optimus Desktop a conversation-first Windows shell that matches Hermes Desktop information architecture and daily-use surfaces, exceeds Hermes on Optimus’s architectural wins (durability, memory fence, SmartDeny, packs,...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Optimus Desktop — Hermes Parity Shell + Digital Rome Aesthetic
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.

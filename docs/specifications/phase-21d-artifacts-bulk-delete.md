@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-21d-artifacts-bulk-delete
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-23 Goal: Close the bulk-ops gap on the artifacts store with multi-select delete.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: active
 covers:
   - crates/optimus-kernel/src/artifacts.rs
   - crates/optimus-host/src/files.rs

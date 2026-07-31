@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0004-metamemory-mvp
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Decision record for ADR-0004: MetaMemory MVP (Phase 2), including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0004: MetaMemory MVP (Phase 2)
 
 ## Status

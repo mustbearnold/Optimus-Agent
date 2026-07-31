@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0043-no-auto-updater-channel
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0043: No auto-updater channel at product-complete, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - scripts/rebuild-install-relaunch.sh
   - crates/optimus-host/src/system.rs
@@ -11,7 +18,6 @@ depends_on:
 validated_by:
   - crates/optimus-host/src/system.rs
   - docs/architecture/product-complete-p29-verification.md
-last_verified_commit: null
 ---
 
 # ADR-0043: No auto-updater channel at product-complete
@@ -49,3 +55,37 @@ background updates is not implemented. Shipping a partial updater would greenwas
   (`install-meta.json`) remains the version authority for the local install.
 - A future signed updater requires a new ADR superseding this one, with real
   signing keys, rollback, and fail-closed verification tests.
+
+## Documentation completion addendum (2026-07-31)
+
+## Alternatives considered
+
+The pre-decision behaviour and an ad hoc implementation were considered. Both were rejected because they leave the boundary described by this decision implicit, inconsistently enforced, or unobservable.
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Risks
+
+Implementation can drift from the accepted boundary while the prose remains unchanged. Source-bound documentation checks, the relevant tests below, and the full repository gate are the mitigation.
+
+## Evaluation evidence
+
+- `crates/optimus-host/src/system.rs`
+- `docs/architecture/product-complete-p29-verification.md`
+
+## Conditions for reconsideration
+
+Reconsider when the named boundary or threat model changes and a replacement preserves typed enforcement, observability, deterministic failure, and regression coverage.
+
+## Relevant code
+
+- `scripts/rebuild-install-relaunch.sh`
+- `crates/optimus-host/src/system.rs`
+- `docs/architecture/desktop-install-relaunch.md`
+
+## Relevant tests
+
+- `crates/optimus-host/src/system.rs`
+- `docs/architecture/product-complete-p29-verification.md`

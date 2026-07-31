@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p16-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P16 · decision (process; ADR-0016-A/B aliases) · delivery PR #26
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P16 verification — doc / claim hygiene
 
 Date: 2026-07-25  

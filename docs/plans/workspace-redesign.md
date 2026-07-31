@@ -1,3 +1,14 @@
+---
+doc_id: plans-workspace-redesign
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Status: implementation in progress Owner: apps/optimus-ui Completion branch: implementation
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Optimus workspace redesign
 
 Status: implementation in progress

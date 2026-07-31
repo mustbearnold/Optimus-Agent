@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p24-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P24 · delivery PR #34 · architecture hold (UI / Observability) · ledger chat.thinking-tools, session.search-hygiene → parity
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p24-verification.md
 covers:
@@ -14,7 +21,6 @@ validated_by:
   - apps/optimus-ui/src/state/conversationStore.ts
   - apps/optimus-ui/src/components/workbench/Transcript.tsx
   - scripts/check-desktop-ipc-matrix.py
-last_verified_commit: null
 ---
 
 # Product-complete program P24 verification

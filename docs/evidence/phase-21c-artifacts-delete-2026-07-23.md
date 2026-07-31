@@ -1,3 +1,14 @@
+---
+doc_id: evidence-phase-21c-artifacts-delete-2026-07-23
+doc_type: evidence
+plane: evidence
+status: historical
+authority: record
+summary: Bounded evidence record for Phase 21C Artifacts delete + filter — evidence; it does not override current product authority.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 21C Artifacts delete + filter — evidence
 
 **Date:** 2026-07-23

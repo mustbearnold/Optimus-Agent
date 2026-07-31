@@ -1,6 +1,13 @@
 ---
-knowledge_type: plan
+doc_id: plans-s-plus-trust-spine
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: s-plus-plus-plus-program.md (P10–P19, lowest architecture grade → highest until all S+++).
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: plan
 owns:
   - docs/plans/s-plus-trust-spine.md
 watches:
@@ -17,7 +24,6 @@ validated_by:
   - crates/optimus-runtime/tests/approvals_surface.rs
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-kernel/tests/session_resume.rs
-last_verified_commit: null
 ---
 
 # S+++ program — Phase 0–5 foundation (done)

@@ -1,3 +1,14 @@
+---
+doc_id: architecture-desktop-2-streaming
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: End-to-end token streaming for daily chat:
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Desktop streaming (desktop-2) — 2026-07-19
 
 ## What shipped

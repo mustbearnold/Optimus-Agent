@@ -1,0 +1,119 @@
+{
+  "required_routes": [
+    "docs.navigation",
+    "docs.history",
+    "product.status",
+    "product.roadmap",
+    "architecture.overview",
+    "development.instructions",
+    "runtime.constitution",
+    "development.delivery",
+    "development.workspace",
+    "desktop.stack",
+    "security.approvals",
+    "models.routing",
+    "memory.systems",
+    "engineering-memory.authority",
+    "testing.synthetic-users",
+    "repository.gates"
+  ],
+  "routes": [
+    {
+      "id": "docs.navigation",
+      "keywords": ["documentation", "docs", "find", "index", "catalog", "where should I start"],
+      "primary": ["docs-home"],
+      "supporting": ["history-policy"]
+    },
+    {
+      "id": "docs.history",
+      "keywords": ["history", "historical", "superseded", "precedence", "old plan", "contradiction", "record"],
+      "primary": ["history-policy"],
+      "supporting": ["docs-home"]
+    },
+    {
+      "id": "product.status",
+      "keywords": ["Optimus today", "what exists", "implemented", "current capability", "current gaps", "product status"],
+      "primary": ["current-status"],
+      "supporting": ["architecture-system-overview", "repository-readme"]
+    },
+    {
+      "id": "product.roadmap",
+      "keywords": ["roadmap", "next", "priority", "direction", "future", "product goal", "north star"],
+      "primary": ["current-roadmap"],
+      "supporting": ["current-status"]
+    },
+    {
+      "id": "architecture.overview",
+      "keywords": ["architecture", "system design", "structured runtime", "components", "crates", "tools", "surfaces", "modular", "specialist agents"],
+      "primary": ["architecture-system-overview"],
+      "supporting": ["repository-and-ownership-map", "current-status"]
+    },
+    {
+      "id": "development.instructions",
+      "keywords": ["coding agent", "developer rules", "development law", "AGENTS", "edit repository", "build Optimus"],
+      "primary": ["development-instructions"],
+      "supporting": ["docs-home", "contributing-managed-delivery"]
+    },
+    {
+      "id": "runtime.constitution",
+      "keywords": ["Optimus behavior", "runtime instruction", "product session", "constitution", "user interaction", "product agent"],
+      "primary": ["runtime-constitution"],
+      "supporting": ["current-status"]
+    },
+    {
+      "id": "development.delivery",
+      "keywords": ["checkpoint", "land", "delivery", "save progress", "commit", "main", "managed git"],
+      "primary": ["contributing-managed-delivery"],
+      "supporting": ["development-instructions"]
+    },
+    {
+      "id": "development.workspace",
+      "keywords": ["Source", "Development", "workspace", "worktree", "project folder", "separate planes", "wrapper"],
+      "primary": ["decision-0062-source-and-development-are-separate-workspace-planes"],
+      "supporting": ["development-instructions"]
+    },
+    {
+      "id": "desktop.stack",
+      "keywords": ["desktop", "Electron", "React", "Wry", "IPC", "shell", "host", "shipped surface"],
+      "primary": ["contracts-desktop-shell-and-ipc-matrix"],
+      "supporting": ["architecture-system-overview"]
+    },
+    {
+      "id": "security.approvals",
+      "keywords": ["security", "approval", "permission", "SmartDeny", "risk", "trust", "autonomy", "capability broker"],
+      "primary": ["map-security-and-approvals"],
+      "supporting": ["contracts-high-risk-contracts", "runtime-constitution"]
+    },
+    {
+      "id": "models.routing",
+      "keywords": ["model", "provider", "routing", "reasoning", "OAuth", "OpenAI", "local model", "Auto"],
+      "primary": ["map-model-routing"],
+      "supporting": ["architecture-system-overview"]
+    },
+    {
+      "id": "memory.systems",
+      "keywords": ["memory", "retrieval", "session", "project knowledge", "conversation index", "semantic search", "workspace memory"],
+      "primary": ["map-memory-and-retrieval"],
+      "supporting": ["engineering-memory-readme"]
+    },
+    {
+      "id": "engineering-memory.authority",
+      "keywords": ["Engineering Memory", "generated knowledge", "stale docs", "source binding", "context lens", "impact lens"],
+      "primary": ["engineering-memory-readme"],
+      "supporting": ["map-memory-and-retrieval", "development-instructions"]
+    },
+    {
+      "id": "testing.synthetic-users",
+      "keywords": ["synthetic user", "persona", "human simulation", "harness test", "journey", "failure case", "adversarial testing"],
+      "primary": ["specifications-synthetic-user-lab"],
+      "supporting": ["maps-observability-and-evaluations"]
+    },
+    {
+      "id": "repository.gates",
+      "keywords": ["gate", "verify", "test command", "just check", "just verify", "CI", "validation"],
+      "primary": ["development-instructions"],
+      "supporting": ["repository-readme", "contributing-managed-delivery"]
+    }
+  ],
+  "schema_version": 1
+}

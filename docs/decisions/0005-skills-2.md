@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0005-skills-2
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Decision record for ADR-0005: Skills 2.0 — outcome-gated procedural memory, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0005: Skills 2.0 — outcome-gated procedural memory
 
 ## Status

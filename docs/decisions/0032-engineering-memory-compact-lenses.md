@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0032-engineering-memory-compact-lenses
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0032: Compact Engineering Memory facts and budgeted agent lenses, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
@@ -12,7 +19,6 @@ depends_on:
   - docs/specifications/git-stable-engineering-memory.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # ADR-0032: Compact Engineering Memory facts and budgeted agent lenses

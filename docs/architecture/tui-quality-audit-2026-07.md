@@ -1,3 +1,14 @@
+---
+doc_id: architecture-tui-quality-audit-2026-07
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: The mandate lands on north-star ground that already exists: criterion C4 says the terminal reaches 8 of 22 critical host methods, and the thesis says no surface may lose track of its project — the TUI currently has no project concept at...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Terminal face quality audit (2026-07)
 
 > **Documentary status:** Point-in-time audit at `9c1318d`, driven against the

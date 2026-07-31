@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-in-transcript-approval-resolution
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: - User and job: a local developer reviews one exact project mutation at the point where Optimus paused, decides whether it may run, and continues without leaving the owning session. - Durable outcome: the exact decision, bound effect,...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: specification
 covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/execution.rs
@@ -14,7 +21,6 @@ validated_by:
   - crates/optimus-host/src/**
   - apps/optimus-ui/src/components/workbench/Transcript.test.tsx
   - apps/optimus-ui/src/state/conversationStore.test.ts
-last_verified_commit: null
 ---
 
 # In-transcript exact approval resolution

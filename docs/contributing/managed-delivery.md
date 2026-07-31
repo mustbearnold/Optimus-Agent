@@ -1,6 +1,13 @@
 ---
-knowledge_type: process
+doc_id: contributing-managed-delivery
+doc_type: how-to
+plane: current
 status: current
+authority: canonical
+summary: This is a developer control-plane workflow. It does not change Optimus Agent runtime permissions, approval policy, prompts, or product behaviour.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: process
 owns:
   - scripts/managed_delivery.py
   - scripts/test_managed_delivery.py
@@ -14,7 +21,6 @@ watches:
 validated_by:
   - scripts/test_managed_delivery.py
   - scripts/test_managed_branch_retirement.py
-last_verified_commit: null
 ---
 
 # Managed delivery

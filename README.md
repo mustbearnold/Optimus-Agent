@@ -217,11 +217,11 @@ The Bash installer automatically delegates to that script when run under Git Bas
 
 ## Documentation
 
+- [Documentation home](docs/README.md) — start here for every current answer
+- [Current status](docs/current/status.md)
+- [Current roadmap](docs/current/roadmap.md)
 - [System overview](docs/architecture/system-overview.md)
-- [Current north star](docs/architecture/north-star-2026-07.md)
-- [Desktop install and relaunch](docs/architecture/desktop-install-relaunch.md)
-- ADRs under `docs/decisions/`
-- Phase verification records under `docs/architecture/`
+- [Decision index](docs/decisions/README.md)
 
 ## North star
 

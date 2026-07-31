@@ -1,3 +1,14 @@
+---
+doc_id: architecture-desktop-1-daily-use
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Still not a full Hermes replacement (no messenger gateway, cron UI, browser automation, skill editor).
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Desktop daily-use path (desktop-1) — 2026-07-18
 
 ## Honest status

@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0000-locked-defaults
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: User approval: "Go ahead" after recommendation to lock §11 and begin Phase 0. Policy: blanket approval → choose recommended defaults and execute.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Locked defaults (2026-07-18)
 
 User approval: "Go ahead" after recommendation to lock §11 and begin Phase 0.

@@ -1,6 +1,13 @@
 ---
-knowledge_type: observability-evaluation-map
+doc_id: maps-observability-and-evaluations
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: Partially implemented behaviour: event order is strong inside a single Work Graph database, but subsystem events do not share one cross-store transaction or OpenTelemetry export.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: observability-evaluation-map
 owns:
   - crates/optimus-store/src/lib.rs
   - crates/optimus-graph/src/lib.rs
@@ -57,7 +64,6 @@ validated_by:
   - scripts/check-observability-gate.py
   - apps/optimus-cli/tests/eval_report.rs
   - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
-last_verified_commit: null
 ---
 
 # Observability, replay, and evaluation map

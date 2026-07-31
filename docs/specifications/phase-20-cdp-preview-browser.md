@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-20-cdp-preview-browser
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-22 Priority: P1 — fills SOTA scorecard's #1 product loss Builds on: Phase 18/19 sidebars, FS, terminal, and HTTP browser effector
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: draft
 covers:
   - Cargo.toml
   - crates/optimus-browser/src/**

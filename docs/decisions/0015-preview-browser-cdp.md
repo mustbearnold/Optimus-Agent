@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0015-preview-browser-cdp
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Accepted (design); partially superseded for trust domains by ADR-0040 SharedBrowserContract (2026-07-25). CDP process lifecycle intent remains; shared one browser session is not product law.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0015: Preview Browser via CDP (not iframe-only)
 
 ## Status

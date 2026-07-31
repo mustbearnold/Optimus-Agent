@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0052-isolated-durable-engineering-runs
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P40
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-engineering/src/lib.rs
   - crates/optimus-engineering/src/catalogue.rs
@@ -29,7 +36,6 @@ validated_by:
   - crates/optimus-engineering/tests/driver_earns_evidence.rs
   - crates/optimus-kernel/tests/dev_run_containment.rs
   - scripts/check-crate-layers.py
-last_verified_commit: null
 ---
 
 # ADR-0052: Engineering runs are isolated, phased, and resumable

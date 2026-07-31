@@ -10,8 +10,9 @@ It is intentionally separate from the product runtime constitution:
 | `AGENTS.md` | Developers / coding agents building Optimus | No |
 | `OPTIMUS_AGENTS.md` | Installed Optimus Agent product sessions | Yes |
 
-Detailed procedures live under `docs/` and `skills/`. For current architecture,
-start with `docs/architecture/system-overview.md`.
+Detailed procedures live under `docs/` and `skills/`. Start every documentation
+lookup at `docs/README.md`; it routes current status, roadmap, architecture,
+operations, decisions, and history without making agents scan the whole tree.
 
 ## Instruction-plane firewall (mandatory)
 
@@ -111,7 +112,7 @@ microtask, and grade claim.
 | Plane | Token | Authority |
 |---|---|---|
 | Decision | `ADR-NNNN` | `docs/decisions/` |
-| Program | `P##` (program phase) | **Active:** `docs/plans/github-engineer-program.md` (program P40–P46). Program P30 is a prerequisite/parked reliability track; P20–P29 and P10–P19 are closed history. Always say **program P##** in prose. |
+| Program | `P##` (historical program phase) | `docs/plans/**`; no program document overrides the current roadmap in `docs/current/roadmap.md`. Always say **program P##** in historical prose. |
 | Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` (e.g. full-app `S*.*`) |
 | Delivery | full Git commit SHA on `origin/main` | remote `refs/heads/main` |
 | Grade / mark | mark + grade (`S+++`, `A-`…) | `docs/architecture/architecture-marks.md` |
@@ -206,14 +207,18 @@ If a proposed name collapses two planes, **stop and rename** before commit.
    can see what was checked and when.
 7. Review security, approval, cancellation, terminal outcomes, observability,
    replay implications, and CPU fallback where applicable.
-8. Run `just em-check` before refreshing memory.
-9. If changed/stale, run `just em-context` and update only owned knowledge from
+8. Run `just docs-check`. If a current or planned document or one of its source
+   bindings changed, review only the reported document ids, run
+   `just docs-refresh <doc-id>...`, and regenerate the deterministic catalog
+   with `just docs-generate`. Generation never acknowledges semantic review.
+9. Run `just em-check` before refreshing Engineering Memory.
+10. If changed/stale, run `just em-context` and update only owned knowledge from
    that pack.
-10. Run `just em-generate` only when warming or rebuilding the disposable local
+11. Run `just em-generate` only when warming or rebuilding the disposable local
     cache is useful; generated JSON is not delivery state.
-11. Run full `python3 scripts/engineering_memory.py validate` before
+12. Run full `python3 scripts/engineering_memory.py validate` before
     delivery/release; report known gaps via `report`.
-12. VCS changes go only through the managed delivery commands below. Publishing,
+13. VCS changes go only through the managed delivery commands below. Publishing,
     installing, or deploying outside that Git delivery remains task-scoped.
 
 ## Managed autonomous delivery (mandatory)

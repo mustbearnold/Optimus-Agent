@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-phase-20c-desktop-browser-sidebar
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-22 Prerequisite: P20B — Kernel has besteffector() dispatching to CDP or HTTP Goal: Replace the desktop Browser tab stub with a live preview panel that shows the current browser page screenshot (CDP) or text (HTTP...
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: specification
-status: draft
 covers:
   - apps/optimus-desktop/ui/index.html
   - apps/optimus-desktop/src/bridge.rs

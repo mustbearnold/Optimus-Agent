@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-10-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: - Import Hermes tokens into Optimus home first: auth codex import-hermes - Tokens never logged
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 10 verification — 2026-07-18
 
 ## Scope delivered

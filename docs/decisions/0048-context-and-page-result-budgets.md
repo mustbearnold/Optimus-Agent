@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0048-context-and-page-result-budgets
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0048: Context and page-result budgets are sized for tools, not for chat, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/compress.rs
   - crates/optimus-kernel/src/browser.rs
@@ -11,7 +18,6 @@ depends_on:
   - docs/decisions/0047-turn-step-budget.md
 validated_by:
   - crates/optimus-kernel/tests/compression_turn.rs
-last_verified_commit: null
 ---
 
 # ADR-0048: Context and page-result budgets are sized for tools, not for chat

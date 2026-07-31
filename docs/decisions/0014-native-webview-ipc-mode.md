@@ -1,3 +1,14 @@
+---
+doc_id: decisions-0014-native-webview-ipc-mode
+doc_type: decision
+plane: decision
+status: current
+authority: record
+summary: Decision record for ADR-0014: Native WebView IPC must not use fetch HTTP mode, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # ADR-0014: Native WebView IPC must not use fetch HTTP mode
 
 ## Status

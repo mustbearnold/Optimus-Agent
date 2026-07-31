@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0053-a-repository-is-asked-not-assumed
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P41
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-engineering/src/repository.rs
 depends_on:
@@ -11,7 +18,6 @@ depends_on:
 validated_by:
   - crates/optimus-engineering/src/repository.rs
   - crates/optimus-engineering/tests/repository_profile.rs
-last_verified_commit: null
 ---
 
 # ADR-0053: A repository is asked, not assumed

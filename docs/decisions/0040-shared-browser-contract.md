@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0040-shared-browser-contract
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-25 - Program: product-complete program P23
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/browser_coord.rs
   - crates/optimus-kernel/src/browser.rs
@@ -16,7 +23,6 @@ validated_by:
   - crates/optimus-kernel/src/browser.rs
   - apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx
   - apps/optimus-electron/test/preview-security.test.cjs
-last_verified_commit: null
 ---
 
 # ADR-0040: SharedBrowserContract (coordinated, not merged trust)
@@ -85,9 +91,38 @@ host-visible bus for observability and honest dual-URL status.
 - Preview security tests remain merge-blocking.
 - Future “open this agent URL in preview” is a **host event**, never cookie jar merge.
 
-## Evidence
+## Evaluation evidence
 
 - `crates/optimus-kernel/src/browser_coord.rs` (+ unit tests)
 - HTTP agent browser SSRF tests in `browser.rs` / `network_policy.rs`
 - React annotation gallery + Add to prompt tests
+- `apps/optimus-electron/test/preview-security.test.cjs`
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Risks
+
+Implementation can drift from the accepted boundary while the prose remains unchanged. Source-bound documentation checks, the relevant tests below, and the full repository gate are the mitigation.
+
+## Conditions for reconsideration
+
+Reconsider when the named boundary or threat model changes and a replacement preserves typed enforcement, observability, deterministic failure, and regression coverage.
+
+## Relevant code
+
+- `crates/optimus-kernel/src/browser_coord.rs`
+- `crates/optimus-kernel/src/browser.rs`
+- `apps/optimus-ui/src/components/workspace/BrowserSurface.tsx`
+- `apps/optimus-electron/**`
+- `docs/maps/security-and-approvals.md`
+
+## Relevant tests
+
+- `crates/optimus-kernel/src/browser_coord.rs`
+- `crates/optimus-kernel/src/browser.rs`
+- `apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx`
 - `apps/optimus-electron/test/preview-security.test.cjs`

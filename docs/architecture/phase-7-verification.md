@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-7-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Per ADR-0009 — durable kernel chat sessions:
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 7 verification — 2026-07-18
 
 ## Scope delivered

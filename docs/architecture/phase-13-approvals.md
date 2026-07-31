@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-13-approvals
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-19 Priority note: function > Hermes first; UI polish last (user directive).
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 13 — SmartDeny approvals surface (function)
 
 Date: 2026-07-19  

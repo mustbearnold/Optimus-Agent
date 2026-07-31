@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-priority-1-integrity-100-nanotasks
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: - Task range: n001–n100, exactly 100 tasks - Parent contract: m45–m56 of the accepted 30-micro-task specification - Repository: mustbearnold/Optimus-Agent - Delivery: verified commits pushed directly to origin/main; GitHub Issues are...
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 owns:
   - docs/specifications/priority-1-integrity-100-nanotasks.md
   - docs/contracts/high-risk-contracts.md

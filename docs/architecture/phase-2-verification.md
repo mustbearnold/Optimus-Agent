@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-2-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Per ADR-0002 / ADR-0004 — crate optimus-memory:
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 2 verification — 2026-07-18
 
 ## Scope delivered

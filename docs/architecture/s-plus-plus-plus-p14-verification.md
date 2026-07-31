@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p14-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P14 · decision ADR-0037 · delivery PR #24
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P14 verification — observability export
 
 Date: 2026-07-25  

@@ -1,3 +1,14 @@
+---
+doc_id: plans-historical-2026-07-19-134540-sidebar-parity-codex-preview-browser-spec
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Goal: Specify and sequence a complete Optimus Desktop dual-rail control surface that (1) matches or exceeds Hermes Desktop left-nav + session/operator chrome, (2) matches Hermes right-rail files/terminal/artifacts, and (3) ships a...
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Optimus Desktop — Full Sidebar Parity + Codex-Class Preview Browser
 
 > **For Hermes:** Use subagent-driven-development after this plan is accepted.  

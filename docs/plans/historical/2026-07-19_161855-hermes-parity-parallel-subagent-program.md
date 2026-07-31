@@ -1,3 +1,14 @@
+---
+doc_id: plans-historical-2026-07-19-161855-hermes-parity-parallel-subagent-program
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Goal: Deliver every Hermes capability through Optimus with equal-or-better behavior, while maximizing safe subagent parallelism and routing each task by difficulty to the least expensive reasoning level that preserves correctness.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Optimus Agent — Hermes Parity-Plus Parallel Subagent Program
 
 > **For Hermes:** Execute with `subagent-driven-development`, one bounded vertical ticket at a time, using the orchestration rules below.

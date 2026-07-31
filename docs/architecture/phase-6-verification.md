@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-6-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Per ADR-0008 — OpenAI-compatible ModelProvider:
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 6 verification — 2026-07-18
 
 ## Scope delivered

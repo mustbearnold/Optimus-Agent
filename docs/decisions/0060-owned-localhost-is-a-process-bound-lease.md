@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0060-owned-localhost-is-a-process-bound-lease
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-31 - Program: program P30
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/src/owned_localhost.rs
@@ -17,7 +24,6 @@ validated_by:
   - crates/optimus-runtime/src/owned_localhost.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-browser/src/lib.rs
-last_verified_commit: null
 ---
 
 # ADR-0060: Owned localhost is a process-bound lease (program P30)

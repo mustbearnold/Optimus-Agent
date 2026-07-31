@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-authoritative-offline-candidate-binding
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Historical record for Authoritative offline candidate binding; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - crates/optimus-eval/src/evaluation.rs
   - crates/optimus-kernel/src/lib.rs

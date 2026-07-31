@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-17-search-thinking-models
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Historical record for Phase 17 — thinking levels, Codex catalog, web_search; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 17 — thinking levels, Codex catalog, web_search
 
 Date: 2026-07-19

@@ -1,0 +1,85 @@
+{
+  "questions": [
+    {
+      "id": "status-now",
+      "question": "What is Optimus Agent today, what is actually implemented, and what remains incomplete?",
+      "route": "product.status"
+    },
+    {
+      "id": "roadmap-next",
+      "question": "What should Optimus work on next and which document is the current product roadmap?",
+      "route": "product.roadmap"
+    },
+    {
+      "id": "architecture",
+      "question": "How is Optimus structured across its runtime, crates, surfaces, tools, and specialist agents?",
+      "route": "architecture.overview"
+    },
+    {
+      "id": "instruction-plane",
+      "question": "Which rules must a coding agent follow while developing the Optimus repository?",
+      "route": "development.instructions"
+    },
+    {
+      "id": "product-plane",
+      "question": "Which constitution controls how the installed Optimus product behaves in a user session?",
+      "route": "runtime.constitution"
+    },
+    {
+      "id": "managed-delivery",
+      "question": "How do I save progress and land a finished task to main with checkpoint and land?",
+      "route": "development.delivery"
+    },
+    {
+      "id": "workspace-planes",
+      "question": "Why are Source and Development separate in the project folder and where do worktrees belong?",
+      "route": "development.workspace"
+    },
+    {
+      "id": "desktop-truth",
+      "question": "Which desktop shell, React surface, Rust host, legacy Wry path, and IPC methods are actually shipped?",
+      "route": "desktop.stack"
+    },
+    {
+      "id": "approval-trust",
+      "question": "How do approvals, trust, autonomy, risk and SmartDeny work without making Optimus a permission wall?",
+      "route": "security.approvals"
+    },
+    {
+      "id": "model-routing",
+      "question": "How does Optimus choose a provider, model, OAuth account, local model, and reasoning budget?",
+      "route": "models.routing"
+    },
+    {
+      "id": "memory-boundaries",
+      "question": "How do runtime memory, session history, project knowledge, retrieval and Engineering Memory differ?",
+      "route": "memory.systems"
+    },
+    {
+      "id": "engineering-memory",
+      "question": "What is Engineering Memory, how are source bindings checked, and which context lens should an agent use?",
+      "route": "engineering-memory.authority"
+    },
+    {
+      "id": "persona-testing",
+      "question": "How should synthetic users and personas run real multi-turn journeys and record harness failure cases?",
+      "route": "testing.synthetic-users"
+    },
+    {
+      "id": "repository-gates",
+      "question": "What exact just gate commands prove a repository change is valid before delivery?",
+      "route": "repository.gates"
+    },
+    {
+      "id": "docs-navigation",
+      "question": "Where is the documentation front door, catalog, and search entrypoint?",
+      "route": "docs.navigation"
+    },
+    {
+      "id": "docs-history",
+      "question": "How should an agent treat historical, superseded, contradictory, and old plan documentation?",
+      "route": "docs.history"
+    }
+  ],
+  "schema_version": 1
+}

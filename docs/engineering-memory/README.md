@@ -1,6 +1,13 @@
 ---
-knowledge_type: engineering-memory-guide
+doc_id: engineering-memory-readme
+doc_type: reference
+plane: current
 status: current
+authority: canonical
+summary: Optimus Engineering Memory is repository-local development knowledge for building Optimus itself. It is not runtime memory, conversation memory, project-content memory, or a production retrieval index.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: engineering-memory-guide
 covers:
   - AGENTS.md
   - OPTIMUS_AGENTS.md
@@ -13,7 +20,6 @@ depends_on:
   - docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # Optimus Engineering Memory
@@ -109,8 +115,15 @@ therefore succeeds on a clean checkout with no
 
 ```yaml
 ---
-knowledge_type: map
+doc_id: map-example
+doc_type: reference
+plane: current
 status: current
+authority: supporting
+summary: Current source-bound example map for one Optimus subsystem.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: map
 covers:                 # legacy alias of owns
   - crates/owner/src/file.rs
 owns:                   # preferred hard invalidation set
@@ -121,11 +134,15 @@ depends_on:
   - docs/decisions/NNNN-decision.md
 validated_by:
   - crates/owner/tests/**
-last_verified_commit: <historical source commit or null>
 ---
 ```
 
 `owns`/`covers` + `depends_on` drive staleness. `watches` is advisory impact only.
+The committed `docs/verification-lock.json` is the durable semantic-review
+record for every current or planned document, including its own content hash
+and any resolved source bindings. `just docs-generate` never refreshes it; use
+`just docs-refresh <doc-id>` only after reviewing the named document against
+its resolved bindings.
 
 ## Disposable computed facts (schema v2)
 
@@ -147,7 +164,8 @@ Deleting the cache changes neither computed bytes nor tree identity. A stale
 cache may be used only to explain change since the last local projection;
 current lens facts are recomputed from authority.
 
-Curated `last_verified_commit` values are historical provenance only.
+Legacy `last_verified_commit` values are historical provenance only and are no
+longer required. They cannot substitute for the source-binding lock.
 
 ## Cost boundary
 

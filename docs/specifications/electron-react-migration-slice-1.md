@@ -1,6 +1,13 @@
 ---
+doc_id: specifications-electron-react-migration-slice-1
+doc_type: reference
+plane: work
+status: planned
+authority: supporting
+summary: Confirmed current behaviour: this scaffold slice is complete and has been superseded by docs/specifications/react-workbench-electron-preview-cutover.md for current renderer, preload, native Browser, responsive, motion, accessibility,...
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
 knowledge_type: specification
-status: active
 covers:
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-electron/**

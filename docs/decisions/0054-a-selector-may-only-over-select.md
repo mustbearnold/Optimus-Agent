@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0054-a-selector-may-only-over-select
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P42
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - scripts/impact_select.py
   - justfile
@@ -11,7 +18,6 @@ depends_on:
   - docs/plans/github-engineer-program.md
 validated_by:
   - scripts/test_impact_select.py
-last_verified_commit: null
 ---
 
 # ADR-0054: A test selector may only ever over-select

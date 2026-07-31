@@ -1,6 +1,13 @@
 ---
+doc_id: plans-engineering-memory-phases
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Status: completed in the initial foundation.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: implementation-plan
-status: current
 owns:
   - AGENTS.md
   - docs/architecture/system-overview.md
@@ -28,7 +35,6 @@ depends_on:
   - Cargo.toml
 validated_by:
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # Engineering Memory phased implementation plan

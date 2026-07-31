@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0059-standard-autonomy-is-consequence-bounded
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-31 - Program: program P30
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-policy/src/command_class.rs
   - crates/optimus-policy/src/lib.rs
@@ -12,7 +19,6 @@ depends_on:
 validated_by:
   - crates/optimus-policy/tests/command_classification.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs
-last_verified_commit: null
 ---
 
 # ADR-0059: Standard autonomy is consequence-bounded

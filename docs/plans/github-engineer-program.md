@@ -1,6 +1,13 @@
 ---
+doc_id: plans-github-engineer-program
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Historical execution plan for making the Optimus product capable of completing durable engineering runs. It must not narrow the domain-neutral current roadmap or become a repository-development workflow.
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: plan
-status: current
 owns:
   - docs/plans/github-engineer-program.md
 watches:
@@ -34,19 +41,24 @@ validated_by:
   - scripts/check-crate-layers.py
   - scripts/check-project-bleed.py
   - scripts/check-module-size.py
-last_verified_commit: null
 ---
 
 # GitHub Engineer program — P40–P46
+
+> **Historical program record (2026-07-31).** This plan remains valuable as
+> design and implementation history for the engineering vertical, but it is no
+> longer the primary Optimus roadmap. Current product direction is
+> [`docs/current/roadmap.md`](../current/roadmap.md). Existing ADRs and delivered
+> source retain their authority; unfinished phase rows are not an active queue.
 
 > **Installed-product capability roadmap.** This specifies how Optimus Agent
 > may perform engineering work for a selected project. It is not a VCS or
 > workflow instruction for humans, Codex, Claude, or other coding agents
 > developing this repository.
 
-**Execution authority for making the Optimus product capable of completing
-durable engineering runs.** This program supersedes feature-breadth work as
-the primary product roadmap driver until GITHUB-ENGINEER-V1 is reached.
+**Historical execution plan for making the Optimus product capable of
+completing durable engineering runs.** It must not narrow the domain-neutral
+current roadmap or become a repository-development workflow.
 
 | Authority | Document | Role |
 |---|---|---|

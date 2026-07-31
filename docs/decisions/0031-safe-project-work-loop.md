@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0031-safe-project-work-loop
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0031: Safe project work loop and durable tool lifecycle, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-graph/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
@@ -23,7 +30,6 @@ validated_by:
   - crates/optimus-host/src/chat.rs
   - apps/optimus-ui/src/components/workbench/Transcript.test.tsx
   - apps/optimus-ui/src/state/conversationStore.test.ts
-last_verified_commit: null
 ---
 
 # ADR-0031: Safe project work loop and durable tool lifecycle

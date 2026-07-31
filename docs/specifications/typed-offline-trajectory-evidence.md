@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-typed-offline-trajectory-evidence
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Historical record for Typed offline trajectory evidence; retained for provenance and excluded from default retrieval.
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 covers:
   - crates/optimus-eval/src/eval.rs
   - crates/optimus-kernel/src/lib.rs

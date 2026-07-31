@@ -1,6 +1,13 @@
 ---
-knowledge_type: implementation-plan
+doc_id: plans-full-app-microtasks
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: Authority for gaps: docs/architecture/parity-capability-ledger.json
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: implementation-plan
 owns:
   - docs/architecture/parity-capability-ledger.json
   - docs/architecture/sota-scorecard.md
@@ -33,7 +40,6 @@ depends_on:
 validated_by:
   - scripts/check-parity-ledger.py
   - scripts/test_engineering_memory.py
-last_verified_commit: null
 ---
 
 # Full-app micro-tasks (efficiency-ordered)

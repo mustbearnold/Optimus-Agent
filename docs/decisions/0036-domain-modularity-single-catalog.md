@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0036-domain-modularity-single-catalog
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0036: Domain modularity — single catalog and memory planes (P13), including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-packs/**
   - crates/optimus-memory/**
@@ -21,7 +28,6 @@ validated_by:
   - crates/optimus-memory/tests/metamemory_mvp.rs
   - crates/optimus-runtime/tests/skill_bridge.rs
   - scripts/check-domain-modularity.py
-last_verified_commit: null
 ---
 
 # ADR-0036: Domain modularity — single catalog and memory planes (P13)
@@ -62,7 +68,7 @@ script would fail if a second catalog or grant path appears.
 - Residual: product knowledge / retrieval indexes remain unimplemented (not a
   modularity hole — absence of a second catalog, not missing features).
 
-## Alternatives
+## Alternatives considered
 
 - **Merge skills into packs.** Rejected: procedural vs capability catalogs are
   different planes (ADR-0005 / ADR-0016).
@@ -74,7 +80,40 @@ script would fail if a second catalog or grant path appears.
 - New surfaces inventing local tool lists. Mitigated by domain modularity script
   and code review against AGENTS laws.
 
-## Reconsideration
+## Conditions for reconsideration
 
 - If MCP tools become first-class, they must enter through packs descriptors,
   not a parallel registry.
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Evaluation evidence
+
+- `crates/optimus-kernel/tests/domain_modularity.rs`
+- `crates/optimus-packs/tests/packs_budget.rs`
+- `crates/optimus-skills/tests/skills_lifecycle.rs`
+- `crates/optimus-memory/tests/metamemory_mvp.rs`
+- `crates/optimus-runtime/tests/skill_bridge.rs`
+- `scripts/check-domain-modularity.py`
+
+## Relevant code
+
+- `crates/optimus-packs/**`
+- `crates/optimus-memory/**`
+- `crates/optimus-skills/**`
+- `crates/optimus-store/**`
+- `crates/optimus-kernel/src/lib.rs`
+- `scripts/check-domain-modularity.py`
+
+## Relevant tests
+
+- `crates/optimus-kernel/tests/domain_modularity.rs`
+- `crates/optimus-packs/tests/packs_budget.rs`
+- `crates/optimus-skills/tests/skills_lifecycle.rs`
+- `crates/optimus-memory/tests/metamemory_mvp.rs`
+- `crates/optimus-runtime/tests/skill_bridge.rs`
+- `scripts/check-domain-modularity.py`

@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-3-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Per ADR-0005 — crate optimus-skills:
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 3 verification — 2026-07-18
 
 ## Scope delivered

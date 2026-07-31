@@ -1,3 +1,14 @@
+---
+doc_id: architecture-s-plus-plus-plus-p18-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-25 Planes: program P18 · decision (process; local SQLite durability scope) · delivery PR #28
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # S+++ P18 verification — durability / crash safety
 
 Date: 2026-07-25  

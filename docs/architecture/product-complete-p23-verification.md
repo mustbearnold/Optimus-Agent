@@ -1,6 +1,13 @@
 ---
+doc_id: architecture-product-complete-p23-verification
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Planes: program P23 · delivery PR #33 · architecture hold (Security / UI) · ledger browser.cdp, browser.http, browser.annotations, web.search → parity
+reviewed_on: 2026-07-31
+review_by: never
 knowledge_type: verification
-status: current
 owns:
   - docs/architecture/product-complete-p23-verification.md
 covers:
@@ -14,7 +21,6 @@ validated_by:
   - crates/optimus-kernel/src/web_search.rs
   - apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx
   - apps/optimus-electron/test/preview-security.test.cjs
-last_verified_commit: null
 ---
 
 # Product-complete program P23 verification

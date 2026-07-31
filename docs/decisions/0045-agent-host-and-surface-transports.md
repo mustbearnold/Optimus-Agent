@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0045-agent-host-and-surface-transports
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-27 - Program: program P30+ (TUI + core foundation)
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-host/src/lib.rs
   - crates/optimus-host/src/router.rs
@@ -15,7 +22,6 @@ depends_on:
 validated_by:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/check-crate-layers.py
-last_verified_commit: null
 ---
 
 # ADR-0045: Agent host and surface transports

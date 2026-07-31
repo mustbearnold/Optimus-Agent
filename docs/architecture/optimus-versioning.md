@@ -1,3 +1,14 @@
+---
+doc_id: architecture-optimus-versioning
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Optimus product version: 0.1.0 Tracked Hermes target: 0.19.0 at upstream revision 8967e73e Verified Hermes parity version: none
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Optimus versioning and Hermes parity policy
 
 **Status:** active, fail-closed  

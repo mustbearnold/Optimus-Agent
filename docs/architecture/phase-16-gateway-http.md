@@ -1,3 +1,14 @@
+---
+doc_id: architecture-phase-16-gateway-http
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Date: 2026-07-19 Priority: function > Hermes; UI polish last. Tests: deterministic (unique home, free port, health poll not blind sleep, maxrequests exit).
+reviewed_on: 2026-07-31
+review_by: never
+---
+
 # Phase 16 — gateway HTTP + campaign IPC
 
 Date: 2026-07-19  

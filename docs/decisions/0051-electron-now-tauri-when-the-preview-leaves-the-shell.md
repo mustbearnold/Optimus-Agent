@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: - Date: 2026-07-29 - Program: program P30+ (TUI + core foundation)
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - apps/optimus-electron/main.cjs
   - apps/optimus-ui/src/app/OptimusApp.tsx
@@ -15,7 +22,6 @@ depends_on:
 validated_by:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/check-module-size.py
-last_verified_commit: null
 ---
 
 # ADR-0051: Electron now, Tauri when the preview leaves the shell

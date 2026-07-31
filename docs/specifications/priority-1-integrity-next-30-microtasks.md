@@ -1,6 +1,13 @@
 ---
-knowledge_type: specification
+doc_id: specifications-priority-1-integrity-next-30-microtasks
+doc_type: history
+plane: history
 status: historical
+authority: historical
+summary: - Task range: m27–m56 - Execution authority: complete all thirty tasks locally, in order, without subagents. The later explicit GitHub workflow authorization superseded the original no-commit/no-push delivery restriction; verified...
+reviewed_on: 2026-07-31
+review_by: never
+knowledge_type: specification
 owns:
   - docs/specifications/priority-1-integrity-next-30-microtasks.md
   - docs/contracts/high-risk-contracts.md

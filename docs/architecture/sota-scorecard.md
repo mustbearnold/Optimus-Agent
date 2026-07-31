@@ -1,3 +1,14 @@
+---
+doc_id: architecture-sota-scorecard
+doc_type: explanation
+plane: current
+status: current
+authority: supporting
+summary: Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+---
+
 # Optimus vs Hermes — evidence-backed SOTA scorecard
 
 Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial

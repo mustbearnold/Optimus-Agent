@@ -1,6 +1,13 @@
 ---
-knowledge_type: decision
+doc_id: decisions-0037-local-causal-export
+doc_type: decision
+plane: decision
 status: current
+authority: record
+summary: Decision record for ADR-0037: Local causal export (not OTLP) — P14, including its context, consequences, and current documentary status.
+reviewed_on: 2026-07-31
+review_by: 2026-10-31
+knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/causal.rs
   - apps/optimus-cli/src/main.rs
@@ -12,7 +19,6 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/tests/causal_trace.rs
   - scripts/check-observability-gate.py
-last_verified_commit: null
 ---
 
 # ADR-0037: Local causal export (not OTLP) — P14
@@ -48,7 +54,7 @@ export would imply a distributed telemetry product Optimus does not ship.
   `security_denials` on export is best-effort from lifecycle **phase names**
   only (often empty for FS/SSRF fences until denials are durably coded).
 
-## Alternatives
+## Alternatives considered
 
 - **OTLP first.** Rejected for P14 scope/honesty.
 - **Only human `trace show`.** Rejected — S+++ needs machine-readable export.
@@ -58,7 +64,29 @@ export would imply a distributed telemetry product Optimus does not ship.
 - Consumers parse JSON without version check. Mitigate: require `export_version`
   and `format == optimus.causal.v1`.
 
-## Reconsideration
+## Conditions for reconsideration
 
 - Add OTLP when an external collector is a product requirement with redaction
   parity tests.
+
+## Documentation completion addendum (2026-07-31)
+
+## Reasons
+
+The decision makes the invariant in the Decision section explicit and testable. It is preferred because the failure described in Context cannot be managed reliably through prompt convention or caller discipline alone.
+
+## Evaluation evidence
+
+- `crates/optimus-kernel/tests/causal_trace.rs`
+- `scripts/check-observability-gate.py`
+
+## Relevant code
+
+- `crates/optimus-kernel/src/causal.rs`
+- `apps/optimus-cli/src/main.rs`
+- `scripts/check-observability-gate.py`
+
+## Relevant tests
+
+- `crates/optimus-kernel/tests/causal_trace.rs`
+- `scripts/check-observability-gate.py`
