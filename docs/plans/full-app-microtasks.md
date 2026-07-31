@@ -1,6 +1,6 @@
 ---
 knowledge_type: implementation-plan
-status: current
+status: historical
 owns:
   - docs/architecture/parity-capability-ledger.json
   - docs/architecture/sota-scorecard.md
@@ -38,20 +38,17 @@ last_verified_commit: null
 
 # Full-app micro-tasks (efficiency-ordered)
 
-> **Authority banner (program P20):** this file is the **task queue** (`S*.*`).
-> **Phase exit gates** live in
-> [product-complete-program.md](./product-complete-program.md) (**program P20–P29**).
-> Architecture S+++ (P10–P19) is done and is a **hold**, not the next work queue.
-> Historical specs named `docs/specifications/phase-20*` are **not** program P20.
+> **Historical backlog.** This was the program P20–P29 task queue. Those phases
+> are closed; completed rows remain evidence and unfinished S7/Track Z rows do
+> not become current work automatically. Current roadmap authority is
+> [github-engineer-program.md](./github-engineer-program.md).
 
 **Authority for gaps:** `docs/architecture/parity-capability-ledger.json`
 
 **Scorecard rollup:** `docs/architecture/sota-scorecard.md`
 
-**How to use this plan:** pick microtasks under the **open program phase** exit
-in `product-complete-program.md`. Within a stage, tasks marked `//` may run in
-parallel when they do not share a write surface. One active coding outcome per
-agent; mark status in this file when a stage closes.
+**How to use this plan:** consult it for historical scope and evidence only.
+New work must be owned by a current plan or a managed local task record.
 
 ### Stage → program phase map
 

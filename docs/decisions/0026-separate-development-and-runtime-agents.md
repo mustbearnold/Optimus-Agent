@@ -5,10 +5,11 @@ covers:
   - AGENTS.md
   - OPTIMUS_AGENTS.md
   - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-kernel/src/system_prompt.rs
 depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
 validated_by:
-  - crates/optimus-kernel/src/lib.rs
+  - crates/optimus-kernel/src/system_prompt.rs
 last_verified_commit: null
 ---
 
@@ -70,12 +71,14 @@ registry that preserves the same source and ownership separation.
 ## Relevant code
 
 - `crates/optimus-kernel/src/lib.rs`
+- `crates/optimus-kernel/src/system_prompt.rs`
 - `AGENTS.md`
 - `OPTIMUS_AGENTS.md`
 
 ## Relevant tests
 
-- `crates/optimus-kernel/src/lib.rs` unit tests for runtime system instructions
+- `crates/optimus-kernel/src/system_prompt.rs` unit tests for runtime system
+  instructions
 
 ## Consequences
 

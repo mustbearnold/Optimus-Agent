@@ -13,27 +13,49 @@ It is intentionally separate from the product runtime constitution:
 Detailed procedures live under `docs/` and `skills/`. For current architecture,
 start with `docs/architecture/system-overview.md`.
 
+## Instruction-plane firewall (mandatory)
+
+A request about **how a coding agent should develop Optimus** is not a product
+requirement. Development instructions about autonomy, orchestration, model
+selection, reasoning effort, permissions, tools, VCS, testing, or reporting
+govern the agents changing this repository only. Never copy them into product
+prompts, policy defaults, UI behaviour, or runtime capabilities unless the user
+explicitly asks to change Optimus Agent itself.
+
+Interpret these common requests precisely:
+
+| User request | Plane | Meaning |
+|---|---|---|
+| “Work autonomously on Optimus” | Development | Make progress in the assigned worktree without repeatedly asking for routine choices. |
+| “Use agents/models appropriate to the task” | Development | The primary coding agent selects and orchestrates bounded engineering subtasks. |
+| “Make Optimus more autonomous” | Product | Change runtime behaviour, with source, tests, docs, and safety review. |
+| “Change how Optimus asks for approval” | Product | Change the product policy/UX, not the coding-agent permission model. |
+
+When wording is ambiguous, preserve the existing product behaviour and treat
+the request as development-process guidance. A product change needs explicit
+product/runtime intent and executable evidence.
+
 ## Hard project boundary (mandatory)
 
 When developing Optimus Agent, work is confined to the Optimus project tree.
 
 ### Canonical root
 
-- Absolute root: `/mnt/Projects/Optimus Agent`
-- Resolve with `readlink -f` / `pwd -P` before editing. Two symlinked aliases
-  resolve to that same root and are equally valid entry points —
-  `~/Projects/Optimus Agent` (kept so pre-move absolute paths still work) and
-  `~/2TB Projects/Optimus Agent`. Compare **resolved** paths, never literal ones:
-  a string match against `~/Projects/...` no longer proves anything either way.
-- If the active workspace is not this root (or a path inside it), **stop**.
-  Switch to the Optimus project first. Do not “helpfully” edit elsewhere.
+- Repository root: `/home/mustbearn/Projects/Optimus Agent`
+- Development happens only in an assigned linked worktree under
+  `/home/mustbearn/Projects/Optimus Agent/local/worktrees/`.
+- Resolve both the repository and active worktree with `readlink -f` / `pwd -P`
+  before editing. Compare resolved paths, never remembered aliases.
+- If the active workspace is not an assigned Optimus worktree, **stop**. Never
+  edit the bare repository root or another worktree directly.
 
 ### Allowed write scope
 
 Only create/modify/delete files under:
 
-1. `/mnt/Projects/Optimus Agent/**` (source, docs, skills, scripts,
-   local build/evidence under this tree)
+1. The assigned worktree under
+   `/home/mustbearn/Projects/Optimus Agent/local/worktrees/**` (source, docs,
+   skills, scripts, and worktree-local build/evidence)
 2. Optimus install/runtime paths **only when the task explicitly requires
    install, relaunch, uninstall, or live desktop verification**:
    - `~/.local/share/optimus-agent/**`
@@ -42,12 +64,15 @@ Only create/modify/delete files under:
    - `~/.local/share/icons/**/optimus-agent.*`
    - `~/.local/bin/optimus` and `~/.local/bin/optimus-cli` when they are
      Optimus-managed symlinks
+3. `/home/mustbearn/Projects/Optimus Agent/local/land/**` only through
+   `just checkpoint`, `just undo`, or `just land`; it holds locks, immutable
+   task receipts, private checkpoint records, and verification evidence.
 
 ### Forbidden without explicit user instruction naming that other target
 
 Do **not** edit, reorganize, install into, or “clean up”:
 
-- Sibling projects under `~/Projects/` **or `/mnt/Projects/`** (for example
+- Sibling projects under `~/Projects/` (for example
   `Hermes Next`, `Heracles Agent`, `i-have-adhd`, `spicybrowse`, or any future
   non-Optimus folder). Optimus shares `/mnt/Projects/` with several unrelated
   trees, so being on the same disk grants nothing.
@@ -63,9 +88,10 @@ Do **not** edit, reorganize, install into, or “clean up”:
 
 ### Enforcement checklist (every Optimus development turn)
 
-1. Confirm the workspace root resolves to `/mnt/Projects/Optimus Agent`.
-2. Before any write/patch/rm, assert the target path is inside that root or an
-   explicitly allowed Optimus install path above.
+1. Confirm the workspace resolves to the assigned linked worktree under the
+   canonical repository.
+2. Before any write/patch/rm, assert the target path is inside that assigned
+   worktree or an explicitly allowed Optimus install path above.
 3. Refuse cross-project drive-by fixes. If another project is implicated, report
    the path and ask; do not touch it.
 4. Keep build artifacts, evidence, and temp outputs under this repo
@@ -81,7 +107,7 @@ microtask, and grade claim.
 | Plane | Token | Authority |
 |---|---|---|
 | Decision | `ADR-NNNN` | `docs/decisions/` |
-| Program | `P##` (program phase) | **Active:** `docs/plans/product-complete-program.md` (program P20–P29). Historical S+++: `docs/plans/s-plus-plus-plus-program.md` (P10–P19 done). Always say **program P##** in prose. |
+| Program | `P##` (program phase) | **Active:** `docs/plans/github-engineer-program.md` (program P40–P46). Program P30 is a prerequisite/parked reliability track; P20–P29 and P10–P19 are closed history. Always say **program P##** in prose. |
 | Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` (e.g. full-app `S*.*`) |
 | Delivery | full Git commit SHA on `origin/main` | remote `refs/heads/main` |
 | Grade / mark | mark + grade (`S+++`, `A-`…) | `docs/architecture/architecture-marks.md` |
@@ -104,8 +130,7 @@ microtask, and grade claim.
 7. A temporary or feature branch is never delivery. Only the SHA read back from
    remote `refs/heads/main` proves completion.
 
-**Canonical detail:** [`docs/contributing/artifact-naming.md`](docs/contributing/artifact-naming.md)  
-**Optional issue mechanics:** [`docs/contributing/github-conventions.md`](docs/contributing/github-conventions.md)
+**Canonical detail:** [`docs/contributing/artifact-naming.md`](docs/contributing/artifact-naming.md)
 
 If a proposed name collapses two planes, **stop and rename** before commit.
 
@@ -173,53 +198,46 @@ If a proposed name collapses two planes, **stop and rename** before commit.
    knowledge has a cutoff; an inherited practice decays silently, and a suite
    that is green because it is old is the self-serving green the north-star
    criteria ban. Check the maturity of anything new before depending on it,
-   and record the finding with sources on the owning issue so the next pass
+   and record the finding with sources in the managed local task/provenance record so the next pass
    can see what was checked and when.
 7. Review security, approval, cancellation, terminal outcomes, observability,
    replay implications, and CPU fallback where applicable.
 8. Run `just em-check` before refreshing memory.
 9. If changed/stale, run `just em-context` and update only owned knowledge from
    that pack.
-10. Run `just em-generate` (generate + quick validate).
+10. Run `just em-generate` only when warming or rebuilding the disposable local
+    cache is useful; generated JSON is not delivery state.
 11. Run full `python3 scripts/engineering_memory.py validate` before
     delivery/release; report known gaps via `report`.
-12. The standing direct-main delivery authorization below permits ordinary Git
-    commits and verified pushes for completed Optimus work. Publishing,
+12. VCS changes go only through the managed delivery commands below. Publishing,
     installing, or deploying outside that Git delivery remains task-scoped.
 
-## Direct-main delivery and sizing (mandatory)
+## Managed autonomous delivery (mandatory)
 
 Standing delivery contract (owner instruction, 2026-07-31):
 
-- **Delivery means `origin/main`.** An isolated worktree, local commit, or push
-  to `codex/**`, `wip/**`, or any other feature branch is only implementation
-  state and must never be reported as complete.
-- **Start isolated and current.** Work only in an assigned isolated worktree
-  based on current `origin/main`.
-- **The unit is the smallest complete change, not the smallest change.** Keep
-  one coherent intent self-contained: code + tests + ADR/docs when required +
-  regenerated Engineering Memory + green gates. Related program items that
-  share machinery land together; below “independently valuable” is too thin.
-- **Verify the exact SHA.** Run focused checks and full `just verify`, then
-  commit with ordinary Git. Push the completed commit to its implementation
-  branch so `just verify (Linux)` runs against that exact SHA. The workflow runs
-  on every pushed branch; no pull request is required.
-- **Fast-forward only.** Confirm current `origin/main` is an ancestor of the
-  verified commit, then push that exact commit as a non-force fast-forward to
-  `refs/heads/main`. Never merge, squash, or force-push to deliver.
-- **Read back the remote.** Run `git ls-remote origin refs/heads/main` and
-  require its SHA to equal the intended commit before reporting delivery.
-- **Handle concurrency honestly.** If `main` advances, update the isolated
-  worktree safely, rerun affected verification for the resulting SHA, and retry
-  the fast-forward. Never overwrite concurrent work.
-- **A rejection is a blocker, not alternate delivery.** Repair authorized
-  repository configuration when safe; otherwise report the exact rejection.
-  Never silently fall back to a feature branch or claim completion.
-- Pull requests and issues are not part of the delivery path. Do not introduce
-  that ceremony for routine Optimus delivery.
-- Every completion report states the landed commit SHA, confirmed
-  `origin/main` SHA, verification result and skips, worktree cleanliness, and
-  anything genuinely unfinished.
+- Never run `gh` or use pull requests, issues, or GitHub workflow ceremony.
+- Never run raw history-changing Git commands, including `git commit`,
+  `git push`, `git merge`, `git rebase`, `git stash`, or `git reset`. Read-only
+  `git status`, `git diff`, `git log`, and `git show` remain allowed.
+- Work only in the assigned isolated worktree. Save recoverable progress with
+  `just checkpoint <label>`.
+- Finish only through
+  `just land <task-id> --model <model> --effort <level>`. `land` alone runs the
+  affected gates and fixtures, fast-forwards main, and generates the commit
+  message and provenance record.
+- The primary agent owns routine orchestration: derive a stable task id from the
+  task, assess difficulty, select an actually available model and reasoning
+  effort, and delegate bounded subtasks when useful. Do not ask the user to make
+  these routine implementation choices, and never record a model or effort that
+  did not produce the work.
+- If `land` refuses, fix the reported gate/fixture and retry, or use
+  `just undo <label>`. Never bypass a red land with raw Git.
+- If `checkpoint`, `land`, or `undo` is unavailable or cannot express the
+  required operation, leave the verified work in the assigned worktree and
+  report the tooling limitation. Do not improvise with raw Git.
+- Delivery means the SHA that `land` places on `origin/main`. Worktree changes,
+  checkpoints, and feature branches are not completion.
 
 ## Repository conventions
 
@@ -228,44 +246,29 @@ Standing delivery contract (owner instruction, 2026-07-31):
 - Durable effects go through `optimus-runtime`; do not bypass SmartDeny.
 - Runtime memory (`optimus-memory`), session state, skills, project knowledge,
   retrieval indexes, and Engineering Memory are distinct systems.
-- `.engineering-memory/*.json` files are generated by
-  `scripts/engineering_memory.py`; edit their source code/docs, not the JSON.
+- `.engineering-memory/` is an ignored disposable cache generated by
+  `scripts/engineering_memory.py`; never edit or commit its JSON.
 - Prefer Engineering Memory lenses (`context`, `impact`, `owner`, `tools`,
   `report`, `stat`) over loading whole generated maps into model context.
 - `AGENTS.md` is a developer control artifact. `OPTIMUS_AGENTS.md` is the product
   runtime constitution. The installed Optimus runtime must never mutate either.
-- Naming planes and GitHub process are mandatory for coding agents (see Naming
-  planes above). Follow `docs/contributing/artifact-naming.md` and
-  `docs/contributing/github-conventions.md` for optional issue administration;
-  the direct-main delivery policy above controls VCS delivery.
+- Naming planes are mandatory for coding agents (see Naming planes above).
+  `docs/contributing/artifact-naming.md` defines identity; the managed delivery
+  policy above controls all VCS delivery.
 - New reusable procedures belong in a focused repository skill. Keep this file
   concise.
 
 ## Agent skills
 
-The `mattpocock-skills` plugin supplies the engineering workflow skills. Its
-per-repo configuration lives in `docs/agents/` and is committed — these files are
-read by `to-tickets`, `triage`, `to-spec`, `wayfinder`, `domain-modeling` and
-`code-review`. Edit them directly rather than re-running
-`/setup-matt-pocock-skills`.
+Provider-specific skills are optional accelerators, never repository
+requirements. Any Codex, Claude, or other coding-agent skill remains subordinate
+to this file, the assigned-worktree boundary, and managed delivery. Do not add
+provider installation ceremony to routine tasks.
 
-The plugin itself installs per machine, not per clone:
+### Task records
 
-```
-claude plugin marketplace add mattpocock/skills
-claude plugin install mattpocock-skills@mattpocock
-```
-
-### Issue tracker
-
-GitHub issues on `mustbearnold/Optimus-Agent`, via the `gh` CLI, only when a
-task explicitly requires issue administration. Issues are not a delivery gate.
-See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-The five canonical roles, each label string equal to its name. See
-`docs/agents/triage-labels.md`.
+The managed land system owns task and provenance records. Repository development
+does not use GitHub issues or pull requests as an execution or delivery plane.
 
 ### Domain docs
 

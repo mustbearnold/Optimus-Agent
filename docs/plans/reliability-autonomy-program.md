@@ -40,7 +40,8 @@ constraints**. This program does not demote marks for product speed.
 |---|---|---|
 | Program | **program** `P30`, `P31`, … | **this document** |
 | Decision | `ADR-NNNN` | `docs/decisions/` |
-| Delivery | `PR #N` / `pr/N-…` | GitHub |
+| Repository implementation delivery | managed task id + full SHA on `origin/main` | `just land` |
+| Product forge artifact | issue / draft PR produced by an installed Optimus run | product run record + forge |
 | Grade / mark | architecture hold only | `architecture-marks.md` |
 
 ## Product promise

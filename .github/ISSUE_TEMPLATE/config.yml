@@ -1,8 +1,0 @@
-blank_issues_enabled: true
-contact_links:
-  - name: Architecture marks & S+++ program
-    url: https://github.com/mustbearnold/Optimus-Agent/blob/main/docs/architecture/architecture-marks.md
-    about: Architecture quality grades and program phases (not product bugs).
-  - name: System overview
-    url: https://github.com/mustbearnold/Optimus-Agent/blob/main/docs/architecture/system-overview.md
-    about: Confirmed vs planned behaviour before filing architecture claims.

@@ -34,6 +34,22 @@ ui:
 verify:
     @bash scripts/verify.sh all
 
+# --- managed delivery --------------------------------------------------------
+
+# Save every non-ignored source change without moving HEAD or the task branch.
+checkpoint label:
+    @python3 scripts/managed_delivery.py checkpoint {{quote(label)}}
+
+# Restore a named checkpoint in this worktree. Creates a safety checkpoint first.
+undo label:
+    @python3 scripts/managed_delivery.py undo {{quote(label)}}
+
+# Verify, generate the commit and fast-forward remote main. The flag-shaped
+# arguments are positional here so the public invocation stays explicit while
+# every shell interpolation remains separately quoted.
+land task_id model_flag model effort_flag effort:
+    @python3 scripts/managed_delivery.py land {{quote(task_id)}} {{quote(model_flag)}} {{quote(model)}} {{quote(effort_flag)}} {{quote(effort)}}
+
 # --- focused verification (program P42) ---------------------------------------
 
 # What this patch can break, and why. Reports only; runs nothing.
@@ -83,6 +99,14 @@ dev-legacy:
     cargo run -p optimus-desktop
 
 # --- fix ---------------------------------------------------------------------
+
+# Report worktree-local rebuildable artifacts and shared report-only candidates.
+clean-report:
+    python3 scripts/project_hygiene.py report
+
+# Delete only the closed, verified allowlist inside this assigned worktree.
+clean:
+    python3 scripts/project_hygiene.py clean
 
 # Apply rustfmt and machine-applicable clippy fixes.
 fix:

@@ -29,4 +29,4 @@ Codex-class preview requires real localhost pages, multi-tab, screenshots, and a
 - Doctor flag `preview_browser` flips true only when CDP session can start
 
 ## See also
-`.hermes/plans/2026-07-19_134540-sidebar-parity-codex-preview-browser-spec.md`
+`docs/plans/historical/2026-07-19_134540-sidebar-parity-codex-preview-browser-spec.md`

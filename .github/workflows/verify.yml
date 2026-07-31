@@ -1,17 +1,16 @@
-# Success criterion C6 (docs/architecture/north-star-2026-07.md): CI green at
-# the SHA. One workflow, running the same `just verify` the pre-push hook runs,
+# Success criterion C6 (docs/architecture/north-star-2026-07.md): clean-Ubuntu
+# validation at the landed SHA. One workflow runs the same `just verify`,
 # with OPTIMUS_VERIFY_FORBID_SKIPS=1 so a gate that silently skips (missing npm
 # deps, missing Playwright browser) fails the build instead of greenwashing it.
 #
-# This is also the platform claim required by #62 ("no platform is claimed
-# without a CI job that builds it") — this job is what makes Linux claimed.
+# This is post-land platform evidence, not the repository delivery mechanism.
 name: verify
 
-# Every pushed branch verifies its exact SHA. A completed implementation branch
-# can therefore satisfy main's required check before the same commit is
-# fast-forwarded to main; the main push also provides post-land proof.
+# Managed land is the only delivery path. Validate only the resulting main SHA.
 on:
   push:
+    branches:
+      - main
 
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}

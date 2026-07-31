@@ -1,6 +1,6 @@
 ---
 knowledge_type: plan
-status: current
+status: historical
 owns:
   - docs/plans/product-complete-program.md
 watches:
@@ -48,8 +48,10 @@ last_verified_commit: null
 
 # Product-complete program — P20–P29
 
-**Execution authority for finishing the daily Optimus app after architecture
-S+++ (program P10–P19):** this document.
+> **Closed historical program.** P20–P29 reached PRODUCT-COMPLETE. This file
+> preserves exit criteria and evidence; it is not the current execution queue.
+> Current roadmap authority is
+> [github-engineer-program.md](./github-engineer-program.md).
 
 Architecture quality marks are **all S+++**
 ([board](../evidence/s-plus-plus-plus-review-2026-07-25.md)). That climb is
@@ -75,9 +77,9 @@ Always say **program P20** (etc.) in new prose.
 
 | Plane | Token | Authority |
 |---|---|---|
-| Program | **program** `P20`…`P29` | **this document** (active); historical S+++ = P10–P19 |
+| Program | **program** `P20`…`P29` | **this document** (closed history); historical S+++ = P10–P19 |
 | Decision | `ADR-NNNN` | `docs/decisions/` |
-| Delivery | `PR #N` / `pr/N-…` | GitHub (never force PR# = phase) |
+| Historical delivery | `PR #N` / `pr/N-…` | preserved record of how this closed program shipped |
 | Plan microtask | `S*.*` | `full-app-microtasks.md` |
 | Historical product slice | `docs/specifications/phase-20*`, `phase-21*`, evidence `phase-20-*` | cite by **full path only** |
 | Spec-local subheads | old `P20A` / `P21A` in historical specs | **not** program plane |
@@ -638,7 +640,7 @@ Plus phase-specific proofs. Evidence pattern:
 |---|---|
 | [s-plus-trust-spine.md](./s-plus-trust-spine.md) | Done (foundation 0–5) |
 | [s-plus-plus-plus-program.md](./s-plus-plus-plus-program.md) | Done (architecture S+++ P10–P19) — hold constraint |
-| [full-app-microtasks.md](./full-app-microtasks.md) | Current task queue under this program’s exits |
+| [full-app-microtasks.md](./full-app-microtasks.md) | Historical task record under this closed program’s exits |
 | [engineering-memory-phases.md](./engineering-memory-phases.md) | EM system; orthogonal |
 
 ## Failure handling

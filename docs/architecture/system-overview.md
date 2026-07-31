@@ -60,6 +60,27 @@ it contains planned components and is not proof of implementation.
 - **Unknown or unresolved behaviour** — evidence or a settled contract is
   missing.
 
+## Instruction planes
+
+**Confirmed current behaviour:** Optimus has two deliberately separate root
+instruction surfaces:
+
+| Surface | Audience | Runtime loading |
+|---|---|---|
+| `AGENTS.md` | Humans and coding agents developing Optimus | Never injected into product chat |
+| `OPTIMUS_AGENTS.md` | Installed Optimus product sessions | Embedded by `optimus-kernel` |
+
+Development requests about autonomy, orchestration, model/reasoning selection,
+VCS, testing, or reporting remain in the development plane. They do not alter
+product prompts, permission defaults, routing, or approval behaviour unless the
+user explicitly requests a product/runtime change.
+
+`crates/optimus-kernel/src/system_prompt.rs` constructs the product system
+message from `OPTIMUS_AGENTS.md` and has regression coverage excluding the
+development-only body. ADR-0026 owns this boundary. A selected third-party
+project may contribute task-local project instructions; those remain distinct
+from both Optimus root surfaces.
+
 ## Current topology
 
 **Confirmed current behaviour**
@@ -645,8 +666,9 @@ availability mandatory.
     **P10–P19 done** — all architecture marks **S+++** (board:
     [s-plus-plus-plus-review-2026-07-25.md](../evidence/s-plus-plus-plus-review-2026-07-25.md);
     history: [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md)).
-    **Product program:** [product-complete-program.md](../plans/product-complete-program.md)
-    (program P20–P29 **PRODUCT-COMPLETE** with residuals); task queue
-    [full-app-microtasks.md](../plans/full-app-microtasks.md).
+    **Closed product program:** [product-complete-program.md](../plans/product-complete-program.md)
+    (program P20–P29 **PRODUCT-COMPLETE** with residuals); historical task record
+    [full-app-microtasks.md](../plans/full-app-microtasks.md). Current roadmap:
+    [github-engineer-program.md](../plans/github-engineer-program.md) (program P40–P46).
     Operator gate matrix: [release-and-parity-gates.md](./release-and-parity-gates.md).
     Durability backup/doctor: [durability-and-backup.md](./durability-and-backup.md).

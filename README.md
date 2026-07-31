@@ -4,6 +4,16 @@ Optimus Agent is a durable local AI-agent runtime with a native desktop shell, e
 
 Ubuntu is the primary desktop target. Windows remains supported through platform-specific shell and installer paths.
 
+## Instruction authority
+
+- Building or changing Optimus: [`AGENTS.md`](AGENTS.md) is the development
+  authority for humans and coding agents.
+- Running the installed product: [`OPTIMUS_AGENTS.md`](OPTIMUS_AGENTS.md) is the
+  constitution embedded into Optimus chat sessions.
+- Development requests are not product requirements. “Work autonomously on
+  Optimus” tells a coding agent how to develop; it does not silently change how
+  the Optimus product handles tools, permissions, models, or approvals.
+
 ## Status
 
 The daily-use path includes:
@@ -150,7 +160,7 @@ The runtime cancellation suite includes a Linux descendant-process regression. I
 
 ## Workspace
 
-Emoji matches the GitHub `area:*` label for that package (see Issues/PRs).
+Emoji provides a compact visual label for each workspace area.
 
 ```text
 💻 apps/optimus-cli          jobs, skills, packs, chat, sessions, auth, vertical
@@ -172,26 +182,14 @@ Emoji matches the GitHub `area:*` label for that package (see Issues/PRs).
 🌐 crates/optimus-browser    CDP browser backend
 ```
 
-## Contributing (GitHub)
+## Developing Optimus
 
-Commits, branches, PRs, issues, and labels follow
-[docs/contributing/github-conventions.md](docs/contributing/github-conventions.md).
-**Naming planes** (mandatory for humans and coding agents — `P##` ≠ `PR #N` ≠
-`ADR-NNNN`) are defined in
-[docs/contributing/artifact-naming.md](docs/contributing/artifact-naming.md)
-and enforced in [`AGENTS.md`](AGENTS.md).
+Start with [`AGENTS.md`](AGENTS.md). Development uses assigned isolated
+worktrees and the repository-managed checkpoint/land workflow; coding agents do
+not use raw history-changing Git, pull requests, issues, or `gh`.
 
-- **Commits / PR titles (visible on Commits tab):** emoji-first Conventional Commits
-  - `✨ feat(scope): …` · `🔧 fix: …` · `♻️ refactor: …` · `📝 docs: …` · `🧹 chore: …`
-- **Branches:** local `pr/<PR-number>-<short-kebab>` once a PR exists (start as `wip/…`)
-  - leading digits are the **GitHub PR number**, never the program phase (`P12` may land as PR `#21`)
-  - helper: `python3 scripts/github_pr_branch.py open|adopt|check`
-  - remote head stays `wip/…` (renaming remote head closes the PR on GitHub)
-- **Labels (Issues / PRs):** one leading emoji + namespace, e.g.
-  - ✨ `type:feat` · 🔧 `type:fix` · ♻️ `type:refactor` · 📝 `type:docs`
-  - 🧠 `area:kernel` · 🔁 `area:runtime` · 🔀 `area:workflow` · 🖥️ `area:desktop`
-  - 🔥 `priority:p1` · 👀 `status:needs-review` · ▪️ `size:S` · 🔐 `risk:security`
-- **Sync labels:** `python3 scripts/sync-github-labels.py` from [`.github/labels.yml`](.github/labels.yml)
+Artifact identity planes (`P##` ≠ task id ≠ `ADR-NNNN` ≠ grade) are defined in
+[artifact-naming.md](docs/contributing/artifact-naming.md).
 
 ### Default desktop (Electron + React)
 
@@ -220,7 +218,7 @@ The Bash installer automatically delegates to that script when run under Git Bas
 ## Documentation
 
 - [System overview](docs/architecture/system-overview.md)
-- [Architecture direction](docs/architecture/optimus-exceeds-hermes.md)
+- [Current north star](docs/architecture/north-star-2026-07.md)
 - [Desktop install and relaunch](docs/architecture/desktop-install-relaunch.md)
 - ADRs under `docs/decisions/`
 - Phase verification records under `docs/architecture/`

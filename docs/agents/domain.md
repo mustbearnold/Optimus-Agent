@@ -1,29 +1,27 @@
 # Domain Docs
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+> Developer-agent configuration only. Never inject this file into an installed
+> Optimus product prompt.
+
+How coding agents should consume this repository's domain documentation.
 
 This repo is **single-context**. It is a Rust workspace with several crates, but
 one domain — there is no `CONTEXT-MAP.md` and no per-context glossary.
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root — the domain glossary (Job, Node, Event,
-  Interrupted, Resume, Workspace) and the public seams.
+- **`CONTEXT.md`** at the repo root — concise foundational domain language.
+- **`docs/architecture/system-overview.md`** — current architecture authority
+  and implemented topology.
 - **`docs/decisions/`** — the ADRs. Read the ones that touch the area you're
   about to work in. `docs/decisions/README.md` is the index; use it to find the
   relevant numbers rather than reading the whole directory.
 - **`AGENTS.md`** — the engineering rules. Its hard project boundary and its
   numbered rules bind skills exactly as they bind a human.
 
-If any of these files don't exist, **proceed silently**. Don't flag their
-absence; don't suggest creating them upfront. The `/domain-modeling` skill
-(reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates
-them lazily when terms or decisions actually get resolved.
-
 ## File structure
 
-ADRs live in **`docs/decisions/`**, not `docs/adr/` — the skills' default. When
-a skill says "write an ADR" or "read `docs/adr/`", it means this directory.
+ADRs live in **`docs/decisions/`**, not `docs/adr/`.
 
 ```
 /
@@ -69,13 +67,12 @@ an ADR has not finished.
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal,
-a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift
-to synonyms the glossary explicitly avoids.
+When output names a domain concept in a plan, change, or test, use the term as
+defined in `CONTEXT.md`. Do not drift to synonyms the glossary explicitly
+avoids.
 
-If the concept you need isn't in the glossary yet, that's a signal — either
-you're inventing language the project doesn't use (reconsider) or there's a real
-gap (note it for `/domain-modeling`).
+If the concept is absent, either use established source vocabulary or update the
+glossary as part of the same verified change.
 
 ## Flag ADR conflicts
 

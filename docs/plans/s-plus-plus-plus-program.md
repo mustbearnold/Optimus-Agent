@@ -654,8 +654,8 @@ L = multi-PR; M = one or few PRs; S = short.
 |---|---|
 | [s-plus-trust-spine.md](./s-plus-trust-spine.md) | **Done** foundation Phases 0–5 |
 | **This plan** | **Complete** architecture S+++ Phases P10–P19 (hold constraint) |
-| [product-complete-program.md](./product-complete-program.md) | **Active** app execution authority (program P20–P29) |
-| [full-app-microtasks.md](./full-app-microtasks.md) | Product microtask queue under product-complete exits |
+| [product-complete-program.md](./product-complete-program.md) | **Closed historical** app program (program P20–P29) |
+| [full-app-microtasks.md](./full-app-microtasks.md) | Historical product microtask record |
 | [engineering-memory-phases.md](./engineering-memory-phases.md) | EM system evolution; use lenses each phase |
 
 ---

@@ -1,7 +1,7 @@
 # Phase 18 — Hermes-parity shell + Digital Rome (Sprint S1 in flight)
 
 **Date:** 2026-07-19  
-**Plan:** `.hermes/plans/2026-07-19_130511-hermes-parity-rome-shell.md`  
+**Historical plan:** `docs/plans/historical/2026-07-19_130511-hermes-parity-rome-shell.md`
 **Process:** subagent-driven-development
 
 ## Sprint S1 scope

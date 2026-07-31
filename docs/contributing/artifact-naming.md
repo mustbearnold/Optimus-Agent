@@ -5,204 +5,115 @@ owns:
   - docs/contributing/artifact-naming.md
 watches:
   - AGENTS.md
-  - docs/contributing/github-conventions.md
   - docs/plans/s-plus-plus-plus-program.md
   - docs/plans/product-complete-program.md
+  - docs/plans/github-engineer-program.md
   - docs/architecture/architecture-marks.md
   - docs/decisions/README.md
-  - .github/pull_request_template.md
-  - .github/ISSUE_TEMPLATE/architecture.yml
 covers:
   - docs/contributing/artifact-naming.md
 depends_on:
-  - docs/contributing/github-conventions.md
   - docs/plans/s-plus-plus-plus-program.md
   - docs/plans/product-complete-program.md
+  - docs/plans/github-engineer-program.md
   - docs/architecture/architecture-marks.md
-validated_by:
-  - scripts/github_pr_branch.py
-  - scripts/test_github_pr_branch.py
 last_verified_commit: null
 ---
 
-# Artifact naming planes (mandatory)
+# Artifact naming planes
 
-This is the **canonical identity model** for Optimus engineering artifacts.
-Humans and **coding agents** must use these planes without conflating them.
-
-GitHub delivery mechanics (commits, branches, labels, PR titles) live in
-[github-conventions.md](./github-conventions.md). This document defines **what
-each identifier means** and **which plane it belongs to**.
+This is the canonical identity model for Optimus engineering artifacts. It is a
+development document and is never loaded as installed-product behaviour.
 
 ## Core law
 
-> **Identifiers from different planes are never interchangeable.**
+> Identifiers from different planes are never interchangeable.
 >
-> `P12` ≠ `PR #12` ≠ `ADR-0012` ≠ grade `S+++` ≠ runtime `agent@version`.
-
-Coding agents **must** refuse to invent cross-plane renames, “align” a program
-phase to a PR number, or treat a GitHub issue number as an ADR id.
+> `P12` ≠ task id ≠ delivery SHA ≠ `ADR-0012` ≠ grade `S+++` ≠ runtime
+> `agent@version`.
 
 ## The six planes
 
 | Plane | Token shape | Authority | Example |
 |---|---|---|---|
-| **1. Decision** | `ADR-NNNN` (zero-padded) | `docs/decisions/NNNN-*.md` | `ADR-0034` |
-| **2. Program** | `P##` (program phase) | **Active** program doc under `docs/plans/` | program `P21` tool contract; historical `P12` Security |
-| **3. Plan / microtask** | Plan-local id (`S1`, `C3`, `M7`…) | Owning plan doc under `docs/plans/` | P12 microtask `S3` |
-| **4. Delivery** | `PR #N` + local branch `pr/N-slug` | GitHub + `scripts/github_pr_branch.py` | `PR #21`, branch `pr/21-p12-command-fs-envelope` |
-| **5. Grade / mark** | Mark name + grade | `docs/architecture/architecture-marks.md` | Security **A-** → **S+++** |
-| **6. Runtime product** | `id@version` / crate / pack id | Source contracts, SemVer, EM | `workspace_writer@1`, crate `optimus-runtime` |
+| Decision | `ADR-NNNN` | `docs/decisions/NNNN-*.md` | `ADR-0060` |
+| Program | `P##` | Active owning plan under `docs/plans/` | program P21 |
+| Plan / microtask | Plan-local id (`S1`, `C3`, `M7`…) | Owning plan | P21 M7 |
+| Delivery | task id + full SHA on `origin/main` | managed land record + remote main | `instruction-plane-cleanup`, `a081…` |
+| Grade / mark | Mark name + grade | `docs/architecture/architecture-marks.md` | Security A- |
+| Runtime product | `id@version`, crate, or pack id | Source contracts and SemVer | `workspace_writer@1` |
 
-### Plane 1 — Decision (ADR)
+### Decision
 
-- File: `docs/decisions/NNNN-short-kebab.md`
-- Title: `# ADR-NNNN: <Decision title> (P##)` when a program phase owns it
-- Numbers are **monotonic and permanent**. Never renumber, reuse, or “fix”
-  history by rewriting an old ADR to hide prior reasoning (see ADR index).
-- New ADRs use the modern frontmatter + sections template (Context, Decision,
-  Consequences, Alternatives, Risks, Reconsideration).
-- Link the program phase in prose (`P11`) and in the title parenthetical; do
-  **not** force ADR number == program phase.
+- ADR numbers are zero-padded, monotonic, and permanent.
+- Scan `docs/decisions/README.md` before allocating the next number.
+- Do not rewrite or renumber accepted history to align it with another plane.
+- A program phase may appear in ADR title text, but does not determine the ADR
+  number.
 
-### Plane 2 — Program (`P##`)
+### Program
 
-`P##` is a **program phase** under the **active program document**. Multiple
-programs may use the same token shape; always qualify in prose as
-**program P##** and name the owning plan.
+`P##` is meaningful only with its owning program:
 
 | Program | Phases | Authority | Status |
 |---|---|---|---|
-| Architecture S+++ climb | P10–P19 (P0–P5 trust spine; P6–P9 reserved) | [s-plus-plus-plus-program.md](../plans/s-plus-plus-plus-program.md) | **done / historical** (hold constraint) |
-| Product-complete daily app | **program P20–P29** | [product-complete-program.md](../plans/product-complete-program.md) | **active execution authority** |
+| Architecture S+++ climb | P10-P19 | `s-plus-plus-plus-program.md` | historical |
+| Product-complete daily app | P20-P29 | `product-complete-program.md` | closed / historical |
+| Reliability and autonomy | P30-P35 | `reliability-autonomy-program.md` | P30 prerequisite; P31-P35 parked |
+| GitHub Engineer product capability | P40-P46 | `github-engineer-program.md` | active |
 
-- Sequence is program-defined (S+++ was grade-ordered; product-complete is
-  critical-path ordered), **not** GitHub-ordered.
-- One program phase may span **multiple PRs**.
-- One PR may touch **at most one primary program phase** (plus hold-suite
-  regressions). Do not merge “P21+P22” in one delivery unless explicitly
-  approved as a hold/fix exception.
-- Historical product slice docs named `docs/specifications/phase-20*` /
-  `phase-21*` and evidence `phase-20-*` are **not** program plane. Cite by full
-  path. Spec-local subheads like `P20A` in those files are not program phases.
-- In commit/PR titles, program phase is optional scope **text**, not a
-  substitute for the delivery number:
+Always say “program P##” in prose. Historical specification filenames such as
+`phase-20*` are document-local names, not program identifiers.
 
-```text
-🏗️ architecture: S+++ P12 command capability envelope
-✨ feat(packs): program P21 fail-closed tool registry
-♻️ refactor(kernel): peel agent contracts for P11
-```
-### Plane 3 — Plan / microtask
+### Plan / microtask
 
-- Microtasks live inside plan docs (`M*`, `C*`, `S*`, exit gates).
-- Issues may cite microtasks: `architecture: P12 S3 path preflight for RunCommand`.
-- Microtask ids are **plan-local**. Do not mint global “ticket ids” that collide
-  with ADR or PR numbers.
+Microtask ids are local to their owning plan. Never mint a global ticket,
+delivery, ADR, or branch identity from a plan-local id.
 
-### Plane 4 — Delivery (GitHub)
+### Delivery
 
-| Stage | Local branch | Remote PR head | Identity |
-|---|---|---|---|
-| Before PR | `wip/<short-kebab>` | (none / same) | no PR yet |
-| PR open | **`pr/<N>-<short-kebab>`** | stays `wip/<short-kebab>` | **PR #N** is truth |
-| Merged | delete local | may auto-delete remote | PR remains history |
+The primary coding agent derives a stable task id from the user outcome and
+selects an actually available producing model and reasoning effort. Only
+`just land <task-id> --model <model> --effort <level>` may create delivery
+history. The land record binds:
 
-Rules (coding-agent hard gates):
+- task id and affected seam;
+- symbols touched;
+- fixture and gate results;
+- producing model and reasoning effort;
+- the full commit SHA placed on `origin/main`.
 
-1. **PR number is assigned by GitHub**, never chosen to match `P##`.
-2. After open: local branch **must** be `pr/<N>-…` via
-   `python3 scripts/github_pr_branch.py open|adopt`.
-3. **Never rename/delete the remote head** of an open PR (closes the PR).
-4. Slug may include the program phase for humans (`p12-command-fs-envelope`)
-   but the **leading number is always the PR number**.
-5. Commits and PR titles: **emoji-first Conventional Commits**
-   ([github-conventions.md](./github-conventions.md)).
-6. Labels: emoji + `namespace:value`; minimum on PRs:
-   one `type:` + ≥1 `area:` + one `size:`.
+The SHA read back from `origin/main` is delivery truth. A worktree, checkpoint,
+temporary branch, local diff, issue, or pull request is not delivery.
 
-### Plane 5 — Grade / mark
+### Grade / mark
 
-- Grades (`S+++`, `A-`, …) measure **architecture quality dimensions**.
-- A grade moves only when source + tests + docs meet exit criteria
-  ([architecture-marks.md](../architecture/architecture-marks.md)).
-- Never claim a mark is S+++ because “P12 is done” without updating marks and
-  gates. Planned work is never graded Confirmed.
+Grades measure architecture quality. They move only when source, tests, docs,
+and exit criteria support the claim. A landed task or finished program phase
+does not automatically change a grade.
 
-### Plane 6 — Runtime product identity
+### Runtime product
 
-- Agents, workflows, packs, tools, and crate public APIs use **product ids and
-  versions** (`agent_id@version`, `ToolDesc`, SemVer crates).
-- These are **not** program phases and **not** ADRs.
-- Do not name a Rust type `P12Runner` or an agent `adr_0034_agent`.
+Agent ids, workflow ids, tool ids, pack ids, and crate versions belong to the
+runtime product plane. Do not name a product type after an ADR, task id, or
+program phase.
 
-## Worked example (do this every time)
+## Worked example
 
-Illustrative only: GitHub may assign **any** PR number. Program phase never
-dictates delivery. (A prior docs PR happened to be `#21`; that is coincidence.)
-
-| Layer | Correct value | Wrong value |
+| Plane | Correct | Wrong |
 |---|---|---|
-| Program | **P12** Security boundary → S+++ | calling it “phase 21” |
-| ADR (if needed) | **ADR-0035** (next free number after scanning) | ADR-0012 or ADR-P12 |
-| Delivery | **PR #N** (whatever GitHub assigns, e.g. `#21`) | forcing branch `pr/12-…` because P12 |
-| Local branch | `pr/<N>-p12-command-fs-envelope` | `p12`, `pr/12-…`, `feature/security` |
-| Remote head | `wip/p12-command-fs-envelope` | renamed to `pr/<N>-…` (closes PR) |
-| Grade target | Security **S+++** after exit gate | “S+++ because PR merged” |
-| Runtime | capability envelope APIs / effect ids | `P12Envelope` as public product name |
+| Program | program P21 | “task 21” |
+| Decision | next free ADR number after scanning | ADR-0021 because the program is P21 |
+| Task | `pack-registry-integrity` | `P21` |
+| Delivery | exact SHA reported by `just land` | a feature branch or checkpoint |
+| Grade | measured result after exit gates | “S+++ because it landed” |
+| Runtime id | `pack_registry@1` | `p21_agent` |
 
-Cross-reference phrase for PR bodies:
+## Coding-agent checklist
 
-```markdown
-**Planes:** program `P12` · delivery `PR #21` · decision `ADR-00xx` (if any) ·
-mark Security A-→S+++
-```
-
-## Coding-agent enforcement checklist
-
-Before naming a file, branch, commit, ADR, issue, or PR, every coding agent
-**must**:
-
-1. Identify which **plane** the identifier belongs to.
-2. Use the **token shape** for that plane only.
-3. Never set Delivery number equal to Program phase “for neatness”.
-4. Never renumber ADRs or invent ADR numbers without scanning
-   `docs/decisions/`.
-5. Put program phase in **title text** / body / ADR parenthetical; put PR
-   number only in **delivery** (`PR #N`, `pr/N-…`).
-6. Follow [github-conventions.md](./github-conventions.md) for emoji commits,
-   labels, and branch lifecycle.
-7. On architecture work: update plan microtasks, marks, ADR (if boundary), and
-   Engineering Memory per `AGENTS.md` workflow — same change set as code when
-   the phase exit gate requires it.
-8. If unsure of the next ADR number or program phase: **read the index/plan**;
-   do not guess.
-
-## Where each plane is written
-
-| Plane | Primary docs |
-|---|---|
-| Decision | `docs/decisions/`, [README index](../decisions/README.md) |
-| Program | Active: `docs/plans/product-complete-program.md` (P20–P29). Historical S+++: `docs/plans/s-plus-plus-plus-program.md` (+ trust spine for P0–P5) |
-| Plan / microtask | `docs/plans/**` |
-| Delivery | [github-conventions.md](./github-conventions.md), PR template, `github_pr_branch.py` |
-| Grade | `docs/architecture/architecture-marks.md` |
-| Runtime product | crate APIs, `optimus-packs::ToolDesc`, version gates, EM |
-
-## Anti-patterns (refuse these)
-
-- “Open PR #12 for P12 so numbers match”
-- Branch `pr/12-…` when the open PR is `#21`
-- ADR titled only “P12” with no decision statement
-- Renaming remote `wip/…` to `pr/N-…` (closes the PR)
-- Commit subject without leading type emoji
-- Claiming mark S+++ without marks file + exit tests
-- Using program phase as a runtime agent or workflow id
-- Free-text labels or branches (`tmp`, `fix2`, `Johns-PR`)
-
-## Related
-
-- Developer laws: [`AGENTS.md`](../../AGENTS.md) (Naming planes section)
-- GitHub process: [github-conventions.md](./github-conventions.md)
-- Product runtime constitution (separate): [`OPTIMUS_AGENTS.md`](../../OPTIMUS_AGENTS.md)
-  — does **not** govern repo artifact naming
+1. Name the plane whenever a bare identifier could be ambiguous.
+2. Derive task ids from outcomes, not program or ADR numbers.
+3. Never invent or manually edit commit messages; the land system owns them.
+4. Record only the model and reasoning effort that actually produced the work.
+5. Keep historical GitHub identifiers as historical evidence, never current
+   delivery authority.

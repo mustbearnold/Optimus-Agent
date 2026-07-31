@@ -226,6 +226,10 @@ docs/
 
 `AGENTS.md` is development-only. `OPTIMUS_AGENTS.md` is the product runtime
 constitution injected into Optimus chat system prompts.
+Instructions about how coding agents should develop this repository remain in
+the development plane; they are not product requirements and must not be copied
+into runtime prompts, routing, permissions, or approval defaults without an
+explicit product-change request.
 **Confirmed current behaviour:** generated repository identity is the sorted
 source-record `tree_sha256`; UTF-8 text uses canonical LF and binary bytes remain
 exact. Generated maps deliberately exclude ambient Git

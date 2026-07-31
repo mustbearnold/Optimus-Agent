@@ -3,14 +3,15 @@
 
 Engineering Memory is a three-plane system:
 1. Authority plane — curated docs/skills/laws
-2. Fact plane — compact deterministic generated indexes
+2. Cache plane — disposable compact deterministic generated indexes
 3. Lens plane — budgeted query views for agents (`context`, `impact`, ...)
 
 The generator intentionally uses only Python's standard library plus `cargo
 metadata`. It treats Rust source as canonical for the current tool catalog and
 fails closed when the expected catalog shape cannot be reconciled.
 
-Agents should prefer query lenses over loading raw generated JSON into prompts.
+Generated JSON is an ignored local cache, never repository authority. Agents
+should prefer query lenses over loading raw generated JSON into prompts.
 """
 
 from __future__ import annotations
@@ -141,10 +142,8 @@ class MemoryError(RuntimeError):
 
 
 def relative(path: Path) -> str:
-    # Lexical normalisation only — resolve() follows symlinks, which files a
-    # committed symlink (CLAUDE.md -> AGENTS.md) under its target's path on
-    # symlink-capable checkouts and under its own path everywhere else, making
-    # the staleness baseline checkout-dependent.
+    # Lexical normalisation only. resolve() follows symlinks and can make a
+    # source identity depend on how the checkout materialised them.
     absolute = path if path.is_absolute() else ROOT / path
     return os.path.relpath(os.path.normpath(str(absolute)), str(ROOT)).replace(os.sep, "/")
 
@@ -154,12 +153,8 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def canonical_file_bytes(path: Path) -> bytes:
-    # Hash symlinks by their target string — git's own storage model. Following
-    # the link makes the hash depend on how the checkout materialised it: a
-    # clone with core.symlinks=false writes a regular file holding the target
-    # path, while a symlink-capable checkout resolves to the target's content.
-    # CLAUDE.md (-> AGENTS.md) made the staleness gate fail on every clean
-    # clone for exactly this reason.
+    # Hash symlinks by their target string, matching Git's storage model.
+    # Following a link makes the hash checkout-platform dependent.
     if path.is_symlink():
         return os.readlink(path).encode("utf-8")
     data = path.read_bytes()
@@ -2053,8 +2048,63 @@ def load_generated_maps() -> dict[str, Any]:
         path = MEMORY_DIR / name
         if not path.exists():
             continue
-        loaded[name] = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            loaded[name] = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            # The directory is an ignored cache. A partial/corrupt entry is a
+            # cache miss, not corruption of repository authority.
+            continue
     return loaded
+
+
+def cache_is_complete(loaded: dict[str, Any]) -> bool:
+    """A cache is usable only when every deterministic artifact has this schema."""
+    markers_ok = all(
+        name in loaded
+        and loaded[name].get("generated_by") == GENERATOR
+        and loaded[name].get("do_not_edit") is True
+        and loaded[name].get("schema_version") == SCHEMA_VERSION
+        for name in GENERATED_NAMES
+    )
+    if not markers_ok:
+        return False
+    declared = loaded["manifest.json"].get("artifact_sha256")
+    if not isinstance(declared, dict):
+        return False
+    return all(
+        declared.get(name)
+        == sha256_bytes(canonical_json(loaded[name]).encode("utf-8"))
+        for name in GENERATED_NAMES
+        if name != "manifest.json"
+    )
+
+
+def cache_matches_live_tree(loaded: dict[str, Any]) -> bool:
+    if not cache_is_complete(loaded):
+        return False
+    live = live_file_sha_map()
+    live_tree = records_tree_hash(
+        [{"path": path, "sha256": digest} for path, digest in live.items()]
+    )
+    return loaded["repository-index.json"].get("tree_sha256") == live_tree
+
+
+def ensure_cache() -> dict[str, Any]:
+    """Materialize a missing/broken disposable cache from authoritative inputs."""
+    loaded = load_generated_maps()
+    if cache_is_complete(loaded):
+        return loaded
+    maps = build_maps(refresh_staleness=True)
+    write_maps(maps)
+    return maps
+
+
+def maps_for_lens() -> dict[str, Any]:
+    """Serve current facts while preserving a stale cache as comparison evidence."""
+    loaded = ensure_cache()
+    if cache_matches_live_tree(loaded):
+        return loaded
+    return build_maps(refresh_staleness=True)
 
 
 def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
@@ -2062,61 +2112,22 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
         raise MemoryError(f"unknown validate mode: {mode}")
     errors: list[str] = []
     warnings: list[str] = []
-    expected: dict[str, Any] | None = None
-    if mode == "full":
-        expected = build_maps(refresh_staleness=True)
-    loaded: dict[str, Any] = {}
-    for name in GENERATED_NAMES:
-        path = MEMORY_DIR / name
-        if not path.exists():
-            errors.append(f"missing generated file {relative(path)}")
-            continue
-        try:
-            loaded[name] = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            errors.append(f"invalid JSON {relative(path)}: {exc}")
-            continue
-        if expected is not None and loaded[name] != expected[name]:
-            errors.append(f"generated file drift: {relative(path)} (run generate; do not edit manually)")
-        if loaded[name].get("generated_by") != GENERATOR or loaded[name].get("do_not_edit") is not True:
-            errors.append(f"missing generated marker: {relative(path)}")
-        if loaded[name].get("schema_version") != SCHEMA_VERSION:
-            errors.append(
-                f"schema_version mismatch in {relative(path)}: "
-                f"{loaded[name].get('schema_version')} != {SCHEMA_VERSION}"
-            )
-
-    live_sha_map: dict[str, str] | None = None
+    # Validation proves the deterministic projection computed from authoritative
+    # source and curated docs. The ignored on-disk cache may be absent, stale, or
+    # corrupt without weakening this proof.
+    expected = build_maps(refresh_staleness=True)
+    loaded = expected
+    live_sha_map = live_file_sha_map()
     docs_changed = True
-    if mode == "quick" and "repository-index.json" in loaded:
-        try:
-            live_sha_map = live_file_sha_map()
-            live_tree = records_tree_hash(
-                [{"path": path, "sha256": digest} for path, digest in live_sha_map.items()]
+    for name in GENERATED_NAMES:
+        value = loaded[name]
+        if value.get("generated_by") != GENERATOR or value.get("do_not_edit") is not True:
+            errors.append(f"missing generated marker in computed {name}")
+        if value.get("schema_version") != SCHEMA_VERSION:
+            errors.append(
+                f"schema_version mismatch in computed {name}: "
+                f"{value.get('schema_version')} != {SCHEMA_VERSION}"
             )
-            if live_tree != loaded["repository-index.json"].get("tree_sha256"):
-                errors.append("quick validate: repository tree_sha256 drift (run generate)")
-            old_files = {
-                item["path"]: item["sha256"]
-                for item in loaded["repository-index.json"].get("files", [])
-            }
-            changed = sorted(
-                path
-                for path in set(old_files) | set(live_sha_map)
-                if old_files.get(path) != live_sha_map.get(path)
-            )
-            docs_changed = any(path.startswith("docs/") and path.endswith(".md") for path in changed)
-            live_staleness = build_knowledge_staleness(refresh=False, sha_map=live_sha_map)
-            for document in live_staleness.get("documents", []):
-                if document.get("stale"):
-                    errors.append(f"stale Engineering Memory: {document['document']}")
-            live_impact = build_change_impact()
-            if live_impact.get("pattern_to_knowledge") != loaded.get("change-impact.json", {}).get(
-                "pattern_to_knowledge"
-            ):
-                errors.append("quick validate: change-impact pattern drift (run generate)")
-        except (MemoryError, OSError, subprocess.SubprocessError) as exc:
-            errors.append(f"quick validate failed: {exc}")
 
     for rel in IMPORTANT_DOCS:
         path = ROOT / rel
@@ -2146,18 +2157,18 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
         for path in sorted((ROOT / "docs").rglob("*.md")):
             errors.extend(f"broken local link: {problem}" for problem in local_link_problems(path))
 
-    if loaded and mode == "full":
+    if mode == "full":
         for name, data in loaded.items():
             for problem in sorted(set(reference_problems(data))):
                 errors.append(f"{name}: {problem}")
-    elif loaded and mode == "quick":
+    else:
         # Quick mode still checks path refs on compact registries without full rebuild.
         for name in ("tool-registry.json", "workflow-registry.json", "contract-coverage.json"):
             if name in loaded:
                 for problem in sorted(set(reference_problems(loaded[name]))):
                     errors.append(f"{name}: {problem}")
 
-    fallback_tools_registry = (expected or {}).get("tool-registry.json", {})
+    fallback_tools_registry = expected.get("tool-registry.json", {})
     tools_registry = loaded.get("tool-registry.json", fallback_tools_registry)
     try:
         tools = expand_tool_registry(tools_registry).get("tools", [])
@@ -2187,17 +2198,17 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
         ("workflow-registry.json", "workflows"),
         ("prompt-registry.json", "prompts"),
     ):
-        fallback_rows = (expected or {}).get(registry_name, {}).get(array_name, [])
+        fallback_rows = expected.get(registry_name, {}).get(array_name, [])
         rows = loaded.get(registry_name, {}).get(array_name, fallback_rows)
         ids = [row.get("id") for row in rows]
         if len(ids) != len(set(ids)):
             errors.append(f"duplicate IDs in {registry_name}")
-    fallback_agents = (expected or {}).get("agent-registry.json", {})
+    fallback_agents = expected.get("agent-registry.json", {})
     agent_registry = loaded.get("agent-registry.json", fallback_agents)
     agents = agent_registry.get("agents", [])
     if not agents and agent_registry.get("contract_substrate", {}).get("status") != "implemented":
         warnings.append("no implemented specialist agents or universal agent schema")
-    fallback_workflows = (expected or {}).get("workflow-registry.json", {}).get("workflows", [])
+    fallback_workflows = expected.get("workflow-registry.json", {}).get("workflows", [])
     workflows = loaded.get("workflow-registry.json", {}).get("workflows", fallback_workflows)
     for workflow in workflows:
         if workflow.get("cancellation", {}).get("status") != "implemented":
@@ -2205,7 +2216,7 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
         if not workflow.get("completion") or not workflow.get("failure"):
             errors.append(f"workflow {workflow['id']} lacks terminal outcome declarations")
 
-    fallback_contracts = (expected or {}).get("contract-coverage.json", {}).get("contracts", [])
+    fallback_contracts = expected.get("contract-coverage.json", {}).get("contracts", [])
     contracts = loaded.get("contract-coverage.json", {}).get("contracts", fallback_contracts)
     errors.extend(current_architecture_semantic_errors(workflows, contracts))
 
@@ -2213,7 +2224,7 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
     if mode == "full":
         staleness = loaded.get(
             "knowledge-staleness.json",
-            (expected or {}).get("knowledge-staleness.json", {}),
+            expected.get("knowledge-staleness.json", {}),
         )
         for document in staleness.get("documents", []):
             if document.get("stale"):
@@ -2223,7 +2234,7 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
                 errors.append(
                     f"legacy covered_files payload present in staleness for {document.get('document')}"
                 )
-        impact = loaded.get("change-impact.json", (expected or {}).get("change-impact.json", {}))
+        impact = loaded.get("change-impact.json", expected.get("change-impact.json", {}))
         if "source_to_knowledge" in impact:
             errors.append("legacy source_to_knowledge payload present in change-impact")
         if "pattern_to_knowledge" not in impact:
@@ -2245,7 +2256,7 @@ def validate_maps(strict: bool = False, mode: str = "full") -> dict[str, Any]:
         "mode": mode,
         "errors": sorted(set(errors)),
         "warnings": sorted(set(warnings)),
-        "generated_files": len(GENERATED_NAMES),
+        "computed_artifacts": len(GENERATED_NAMES),
         "tool_count": len(tools),
         "available_tool_count": sum(1 for tool in tools if tool.get("available")),
         "workflow_count": len(workflows),
@@ -2259,6 +2270,7 @@ def live_file_sha_map() -> dict[str, str]:
 
 
 def check_staleness() -> dict[str, Any]:
+    ensure_cache()
     new_files = live_file_sha_map()
     current = build_knowledge_staleness(refresh=False, sha_map=new_files)
     old_index_path = MEMORY_DIR / "repository-index.json"
@@ -2331,7 +2343,7 @@ def tool_card(tool: dict[str, Any]) -> dict[str, Any]:
 
 
 def query_tools(available_only: bool = False) -> dict[str, Any]:
-    loaded = load_generated_maps()
+    loaded = maps_for_lens()
     registry = loaded.get("tool-registry.json")
     if registry is None:
         registry = compress_tool_registry(parse_tool_catalog())
@@ -2345,15 +2357,7 @@ def query_tools(available_only: bool = False) -> dict[str, Any]:
 
 
 def query_owner(path: str) -> dict[str, Any]:
-    impact = None
-    impact_path = MEMORY_DIR / "change-impact.json"
-    if impact_path.exists():
-        try:
-            impact = json.loads(impact_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            impact = None
-    if not impact or "pattern_to_knowledge" not in impact:
-        impact = build_change_impact()
+    impact = maps_for_lens()["change-impact.json"]
     hits = impact_for_paths([path], impact).get(path, [])
     return {
         "ok": True,
@@ -2364,15 +2368,7 @@ def query_owner(path: str) -> dict[str, Any]:
 
 
 def query_impact(paths: list[str]) -> dict[str, Any]:
-    impact = None
-    impact_path = MEMORY_DIR / "change-impact.json"
-    if impact_path.exists():
-        try:
-            impact = json.loads(impact_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            impact = None
-    if not impact or "pattern_to_knowledge" not in impact:
-        impact = build_change_impact()
+    impact = maps_for_lens()["change-impact.json"]
     return {
         "ok": True,
         "paths": paths,
@@ -2381,6 +2377,7 @@ def query_impact(paths: list[str]) -> dict[str, Any]:
 
 
 def query_stale() -> dict[str, Any]:
+    ensure_cache()
     current = build_knowledge_staleness(refresh=False)
     stale = [item for item in current["documents"] if item.get("stale")]
     _save_hash_cache()
@@ -2438,7 +2435,7 @@ def build_context_pack(
     ]
     impact = query_impact(selected_paths) if selected_paths else {"affected": {}}
     stale = query_stale()
-    loaded = load_generated_maps()
+    loaded = maps_for_lens()
     tree = loaded.get("repository-index.json", {}).get("tree_sha256", "unknown")
     lines = [
         f"EM_CONTEXT v2 tree={tree} budget={budget_tokens}",
@@ -2552,7 +2549,7 @@ def build_context_pack(
 
 
 def build_report() -> dict[str, Any]:
-    loaded = load_generated_maps()
+    loaded = maps_for_lens()
     check = check_staleness()
     stale = query_stale()
     manifest = loaded.get("manifest.json", {})
@@ -2571,12 +2568,13 @@ def build_report() -> dict[str, Any]:
         "recommendation": (
             "no knowledge refresh required"
             if check.get("ok") and stale.get("ok")
-            else "run context lens, update owned docs, then generate+validate"
+            else "run context lens, update owned docs, then validate"
         ),
     }
 
 
 def build_stat() -> dict[str, Any]:
+    ensure_cache()
     total = 0
     per_file: dict[str, dict[str, int]] = {}
     for name in GENERATED_NAMES:
@@ -2619,9 +2617,9 @@ def print_result(result: dict[str, Any], as_json: bool) -> None:
             print(f"ERROR: {error}")
         for warning in result.get("warnings", []):
             print(f"WARNING: {warning}")
-        if "generated_files" in result:
+        if "computed_artifacts" in result:
             print(
-                f"generated={result['generated_files']} agents={result['agent_count']} "
+                f"computed={result['computed_artifacts']} agents={result['agent_count']} "
                 f"tools={result['tool_count']} available_tools={result['available_tool_count']} "
                 f"workflows={result['workflow_count']}"
             )

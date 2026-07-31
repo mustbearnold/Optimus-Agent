@@ -29,6 +29,24 @@ last_verified_commit: null
 Only repeatable lessons belong here. Task-by-task progress belongs in execution
 evidence, not this ledger.
 
+## Translating development instructions into product behaviour
+
+**Failure:** The user tells a coding agent to work autonomously, select stronger
+models, orchestrate subagents, avoid approval chatter, or follow a particular
+VCS process. The coding agent then changes Optimus product prompts, routing,
+permissions, or approval UX as though the development instruction were a
+runtime feature request.
+
+**Correction:** First identify the instruction plane. Requests about how the
+current coding agent should build Optimus remain development policy in
+`AGENTS.md`. Change the product only when the user explicitly names Optimus
+runtime/product behaviour. When ambiguous, preserve product behaviour and
+proceed autonomously with repository development.
+
+**Gate:** `scripts/check-instruction-planes.py` verifies the root audience
+markers and the product prompt source; kernel tests verify that the development
+`AGENTS.md` body is not injected into product sessions.
+
 ## Status inflation
 
 - **Problem:** planned or partially implemented architecture is described as

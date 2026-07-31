@@ -17,7 +17,7 @@ state. Source and tests still determine whether an accepted design is fully
 implemented.
 
 **Identity:** `ADR-NNNN` is the **decision** plane only. It is never equal to
-S+++ program phase `P##` or delivery `PR #N`. See
+program phase `P##`, a managed-land task id, or a delivery SHA. See
 [artifact-naming.md](../contributing/artifact-naming.md).
 
 | ID | Decision | Documentary status | Implementation interpretation |
@@ -80,6 +80,8 @@ S+++ program phase `P##` or delivery `PR #N`. See
 | 0057 | An issue earns its way into a run, or is refused in the reporter's own words (program P41) | Accepted | Triage produces a checkable contract or a grounded refusal; a deterministic checker grounds quotes, paths and risk, and every verdict blames the triage — closing an issue takes an explicit refusal held to the same evidentiary standard. |
 | 0058 | A run publishes the sentence a human approved, and nothing else (program P44) | Accepted | Approval is the exact consequence sentence held in the record; the push publishes the approved commit as refspec, not the branch tip; delete/rename/force are unconstructible; every effect is read back before it is believed; the PR number is GitHub's; the body is a rendering of the run record with no prose parameter. |
 | 0059 | Standard autonomy is consequence-bounded (program P30) | Accepted | Direct project work remains automatic; recognised remote and command-string shell forms leave that lane; deletes are irreversible until real checkpoints exist; arbitrary-process network and ambient-credential authority remain explicit gaps. |
+| 0060 | Owned localhost is a process-bound lease (program P30) | Accepted | Exact loopback origin authority is bound to a verified owned process, project, run, generation, and expiry; issuance remains incomplete and localhost stays denied by default. |
+| 0061 | Generated Engineering Memory is a disposable cache | Accepted | Source, tests, curated docs, ADRs, and Git remain authority; ignored deterministic maps auto-materialize for lenses and validation computes truth without cache artifacts. |
 
 ## Known documentary debt
 

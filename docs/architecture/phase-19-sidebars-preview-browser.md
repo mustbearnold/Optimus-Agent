@@ -1,6 +1,6 @@
 # Phase 19 — Sidebars + FS + Preview Browser (execution log)
 
-**Plan/spec:** `.hermes/plans/2026-07-19_134540-sidebar-parity-codex-preview-browser-spec.md`  
+**Historical plan/spec:** `docs/plans/historical/2026-07-19_134540-sidebar-parity-codex-preview-browser-spec.md`
 **Process:** parallel subagent-driven-development; difficulty-tiered briefs
 
 ## Completed (P0–P1 + P3A)

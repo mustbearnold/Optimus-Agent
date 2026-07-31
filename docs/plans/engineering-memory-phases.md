@@ -7,6 +7,7 @@ owns:
   - docs/engineering-memory/README.md
   - docs/decisions/0017-engineering-memory-separation.md
   - docs/decisions/0032-engineering-memory-compact-lenses.md
+  - docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
   - skills/update-engineering-memory/SKILL.md
@@ -77,17 +78,17 @@ Implement contracts in risk order:
 Each contract gets focused tests, integration tests, event semantics, and a
 coverage entry. Documentation does not grant implementation status.
 
-## Phase 4 — deterministic indexes and CI
+## Phase 4 — deterministic indexes and validation
 
-**Status: initial local implementation now; CI planned.**
+**Status: implemented and superseded in storage authority by ADR-0061.**
 
 - Generate package/dependency/source/test/registry maps.
 - Compare covered-tree hashes before generation.
 - Add strict mode for unresolved schema/contract/evaluation gaps.
 - Replace regex extraction with `cargo metadata`, rustdoc JSON, or another typed
   compiler surface when stable for this toolchain.
-- Add CI only when a CI environment/repository exists; do not pretend one is
-  present now.
+- Validate the computed projection in CI without requiring generated artifacts
+  to be committed.
 
 ## Phase 5 — specialist architecture and evaluations
 
@@ -128,16 +129,34 @@ reduction versus pre-redesign dumps while preserving fail-closed validation.
 - Fit the development target (RTX 5070 12 GB) with headroom and retain a tested
   CPU fallback.
 
+## Phase 8 — disposable local projection
+
+**Status: implemented in ADR-0061 (2026-07-31).**
+
+- Make `.engineering-memory/` an ignored local cache rather than tracked facts.
+- Keep source, tests, curated docs, and accepted decisions authoritative.
+- Auto-materialize a missing cache through `check` and bounded lenses.
+- Serve current lens facts from deterministic computation when a local cache is
+  stale, while retaining the old cache long enough to explain local change.
+- Validate computed maps in memory without requiring, reading, or comparing
+  generated cache files.
+- Preserve sorted canonical JSON and content-addressed tree identity.
+- Keep Engineering Memory separate from product/session/project memory.
+
+**Exit evidence:** validation passes with no generated cache files; a bounded
+lens recreates all cache artifacts; two in-memory projections remain byte
+identical.
+
 ## Change protocol
 
 For every phase:
 
-1. run `check` before edits;
+1. run `check` before edits (it creates a missing local cache);
 2. review affected documents/contracts/tests;
 3. implement the smallest coherent slice;
 4. run focused then integration/evaluation gates;
 5. update curated knowledge;
-6. run `generate` and `validate`;
+6. run `validate`; optionally run `generate` only to warm/rebuild the cache;
 7. report unresolved stale knowledge and known gaps.
 
 No phase authorizes a wholesale repository restructure or production publishing.

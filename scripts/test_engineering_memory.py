@@ -586,13 +586,53 @@ class EngineeringMemoryTests(unittest.TestCase):
             self.assertEqual(binary_record["bytes"], 3)
             self.assertIsNone(binary_record["lines"])
 
-    def test_checked_in_generated_files_have_markers(self) -> None:
-        for name in EM.GENERATED_NAMES:
-            path = EM.MEMORY_DIR / name
-            self.assertTrue(path.exists(), name)
-            value = json.loads(path.read_text(encoding="utf-8"))
-            self.assertEqual(value["generated_by"], EM.GENERATOR)
-            self.assertIs(value["do_not_edit"], True)
+    def test_validation_computes_truth_without_generated_cache_files(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="engineering-memory-disposable-", dir=ROOT
+        ) as directory:
+            cache = Path(directory) / ".engineering-memory"
+            old_cache = EM._HASH_CACHE
+            old_dirty = EM._HASH_CACHE_DIRTY
+            try:
+                EM._HASH_CACHE = {"version": 1, "entries": {}}
+                EM._HASH_CACHE_DIRTY = False
+                with (
+                    mock.patch.object(EM, "MEMORY_DIR", cache),
+                    mock.patch.object(EM, "HASH_CACHE_PATH", cache / ".hash-cache.json"),
+                ):
+                    result = EM.validate_maps(mode="quick")
+                    self.assertTrue(result["ok"], result["errors"])
+                    self.assertFalse(
+                        any((cache / name).exists() for name in EM.GENERATED_NAMES)
+                    )
+            finally:
+                EM._HASH_CACHE = old_cache
+                EM._HASH_CACHE_DIRTY = old_dirty
+
+    def test_bounded_lens_materializes_missing_disposable_cache(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="engineering-memory-lens-", dir=ROOT
+        ) as directory:
+            cache = Path(directory) / ".engineering-memory"
+            old_cache = EM._HASH_CACHE
+            old_dirty = EM._HASH_CACHE_DIRTY
+            try:
+                EM._HASH_CACHE = {"version": 1, "entries": {}}
+                EM._HASH_CACHE_DIRTY = False
+                with (
+                    mock.patch.object(EM, "MEMORY_DIR", cache),
+                    mock.patch.object(EM, "HASH_CACHE_PATH", cache / ".hash-cache.json"),
+                ):
+                    result = EM.query_tools(available_only=True)
+                    self.assertTrue(result["ok"])
+                    self.assertTrue(result["tools"])
+                    for name in EM.GENERATED_NAMES:
+                        value = json.loads((cache / name).read_text(encoding="utf-8"))
+                        self.assertEqual(value["generated_by"], EM.GENERATOR)
+                        self.assertIs(value["do_not_edit"], True)
+            finally:
+                EM._HASH_CACHE = old_cache
+                EM._HASH_CACHE_DIRTY = old_dirty
 
     def test_update_skill_has_valid_minimal_frontmatter(self) -> None:
         path = ROOT / "skills/update-engineering-memory/SKILL.md"

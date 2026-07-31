@@ -1,6 +1,6 @@
 /target
 /local/
-.engineering-memory/.hash-cache.json
+/.engineering-memory/
 **/node_modules/
 **/test-results/
 **/playwright-report/
@@ -13,11 +13,6 @@ apps/optimus-ui/dist/
 .DS_Store
 *.pdb
 Cargo.lock.bak
-
-# Claude Code personal overrides (shared config lives in .claude/settings.json)
-.claude/settings.local.json
-# Personal skill symlinks point outside the repo; the shared ones are relative.
-.claude/skills/i-have-adhd
 
 # A runtime home the TUI creates when run from the tree. Holds auth.json.
 /.optimus/

@@ -26,6 +26,36 @@ cd "$ROOT" || exit 1
 
 TIER="${1:-all}"
 
+# Reuse the repository-managed Playwright payload when this linked worktree has
+# one. CI and ordinary clones fall back to Playwright's default cache. Keeping
+# this path discovery here makes every gate caller see the same browser rather
+# than reporting dozens of assertion failures caused by one missing executable.
+if [ -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]; then
+  for browser_cache in \
+    "$ROOT/local/tools/playwright-browsers" \
+    "$ROOT/../../tools/playwright-browsers"
+  do
+    if [ -d "$browser_cache" ]; then
+      PLAYWRIGHT_BROWSERS_PATH="$(cd "$browser_cache" && pwd -P)"
+      export PLAYWRIGHT_BROWSERS_PATH
+      break
+    fi
+  done
+fi
+
+if ! command -v tmux >/dev/null 2>&1; then
+  for tmux_bin_dir in \
+    "$ROOT/local/tools/tmux-root/usr/bin" \
+    "$ROOT/../../tools/tmux-root/usr/bin"
+  do
+    if [ -x "$tmux_bin_dir/tmux" ]; then
+      PATH="$tmux_bin_dir:$PATH"
+      export PATH
+      break
+    fi
+  done
+fi
+
 # Normalise the Rust toolchain for this script's lifetime.
 #
 # This host has two Rust installations: a distribution cargo/rustc in /usr/bin
@@ -176,6 +206,7 @@ tier_gates() {
   spawn "architecture-marks"         python3 scripts/check-architecture-marks.py
   spawn "crate-layers"               python3 scripts/check-crate-layers.py
   spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
+  spawn "instruction-planes"         python3 scripts/check-instruction-planes.py
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   spawn "autonomy-profiles"          python3 scripts/check-autonomy-profiles.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
@@ -196,7 +227,9 @@ tier_gates() {
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
-  spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
+  spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
+  spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py
@@ -371,6 +404,7 @@ tier_all() {
   spawn "architecture-marks"         python3 scripts/check-architecture-marks.py
   spawn "crate-layers"               python3 scripts/check-crate-layers.py
   spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
+  spawn "instruction-planes"         python3 scripts/check-instruction-planes.py
   spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
   spawn "autonomy-profiles"          python3 scripts/check-autonomy-profiles.py
   spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
@@ -391,7 +425,9 @@ tier_all() {
   spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
   spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
-  spawn "test_github_pr_branch"      python3 scripts/test_github_pr_branch.py
+  spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
+  spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
+  spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/test_module_size.py

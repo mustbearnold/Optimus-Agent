@@ -8,7 +8,6 @@ watches:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-workflow/**
   - justfile
-  - scripts/github_pr_branch.py
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
@@ -40,9 +39,14 @@ last_verified_commit: null
 
 # GitHub Engineer program — P40–P46
 
-**Execution authority for making Optimus able to develop Optimus.** This
-program supersedes feature-breadth work as the primary roadmap driver until
-GITHUB-ENGINEER-V1 is reached.
+> **Installed-product capability roadmap.** This specifies how Optimus Agent
+> may perform engineering work for a selected project. It is not a VCS or
+> workflow instruction for humans, Codex, Claude, or other coding agents
+> developing this repository.
+
+**Execution authority for making the Optimus product capable of completing
+durable engineering runs.** This program supersedes feature-breadth work as
+the primary product roadmap driver until GITHUB-ENGINEER-V1 is reached.
 
 | Authority | Document | Role |
 |---|---|---|
@@ -62,13 +66,15 @@ Always say **program P40** (etc.) in new prose.
 | Program | **program** `P40`…`P46` | this document |
 | Plan microtask | `E40.1`…`E46.n` | this document |
 | Decision | `ADR-NNNN` | `docs/decisions/` |
-| Delivery | `PR #N` / `pr/N-…` | GitHub (never force PR# = phase) |
+| Repository implementation delivery | managed task id + full SHA on `origin/main` | `just land` |
+| Product forge artifact | issue / draft PR produced by an installed Optimus run | product run record + forge |
 
-`P40` ≠ `PR #40` ≠ `ADR-0040`. `E40.1` is a microtask, never a grade.
+`P40` ≠ repository task id ≠ product `PR #40` ≠ `ADR-0040`. `E40.1` is a
+microtask, never a grade.
 
 ## The objective
 
-> Convert one well-scoped GitHub issue in this repository into one
+> Convert one well-scoped GitHub issue in a selected repository into one
 > independently reviewed, fully verified **draft** pull request with minimal
 > human involvement.
 
@@ -261,10 +267,10 @@ has no path into the run record.
 ### Exit gate (P41)
 
 - `cargo test -p optimus-engineering --test repository_profile` — 13
-- Profile resolves for this repository with zero prompt-reconstructed fields —
-  **met**: `cargo test -p optimus-engineering --test repository_profile --
-  --ignored` resolves `main` / `Unprotected` / `.github/pull_request_template.md`
-  / `[AGENTS.md, CLAUDE.md]` / `just gates` / `just verify`, `unresolved: []`
+- Profile resolution is proven against neutral temporary-repository fixtures,
+  including optional pull-request templates, labels, and either `AGENTS.md` or
+  `CLAUDE.md`; this repository's own development ceremony is not a product
+  fixture.
 - Ten historical issues produce acceptance criteria a human accepts without edit
   in at least eight cases — **contract built** (E41.4/E41.5,
   `cargo test -p optimus-engineering --test triage_contract` — 6); the

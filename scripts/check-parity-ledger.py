@@ -25,8 +25,9 @@ LEDGER = ROOT / "docs" / "architecture" / "parity-capability-ledger.json"
 SCORECARD = ROOT / "docs" / "architecture" / "sota-scorecard.md"
 PROGRAM = (
     ROOT
-    / ".hermes"
+    / "docs"
     / "plans"
+    / "historical"
     / "2026-07-19_161855-hermes-parity-parallel-subagent-program.md"
 )
 E2E_DIR = ROOT / "apps" / "optimus-desktop" / "e2e"
