@@ -15,6 +15,7 @@ ratatui = "0.29"
 crossterm = "0.28"
 # Already in the tree via ratatui; direct use for grapheme-correct editing.
 unicode-segmentation = "1"
+unicode-width = "0.2"
 
 # Redirecting stderr away from the frame needs dup/dup2; see `logging`.
 [target.'cfg(unix)'.dependencies]

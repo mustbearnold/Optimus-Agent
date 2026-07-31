@@ -261,11 +261,9 @@ const PACE_MS: u64 = 1000;
 /// finished its sentence" checkable by counting.
 const PROMPT: &str = "PARTIAL";
 
-/// Substring of the activity row's interrupt hint. Deliberately not the whole
-/// phrase: at forty columns the row runs out of width and the hint clips to
-/// `Ctrl-C to inter`, so a test matching the full sentence silently decides no
-/// turn is ever running.
-const BUSY: &str = "Ctrl-C";
+/// The complete activity-row interrupt hint. Width-aware elision must preserve
+/// this sentence at forty columns instead of clipping it mid-word.
+const BUSY: &str = "Ctrl-C to interrupt";
 
 #[test]
 fn ctrl_c_during_a_turn_interrupts_it_and_leaves_the_session_usable() {

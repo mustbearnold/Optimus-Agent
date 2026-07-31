@@ -267,7 +267,7 @@ impl TuiSession {
     ///
     /// Returns `None` when idle, so the row simply is not laid out — an
     /// always-present placeholder would read as a stuck spinner.
-    pub fn activity_line(&self) -> Option<String> {
+    pub fn activity_line(&self, width: u16) -> Option<String> {
         if !self.busy() {
             return None;
         }
@@ -277,9 +277,11 @@ impl TuiSession {
             (None, "") => "working",
             (None, status) => status,
         };
-        Some(format!(
-            "{spinner} {what}… {}s · Ctrl-C to interrupt",
-            self.elapsed_secs()
+        Some(crate::activity::text(
+            spinner,
+            what,
+            self.elapsed_secs(),
+            usize::from(width),
         ))
     }
 
@@ -1386,13 +1388,13 @@ mod tests {
     fn the_spinner_animates_and_names_the_running_tool() {
         let (_dir, mut session) = session();
         assert!(
-            session.activity_line().is_none(),
+            session.activity_line(80).is_none(),
             "an idle session shows no spinner"
         );
 
         let _tx = install_worker(&mut session, WorkerKind::Turn);
         session.begin("working");
-        let first = session.activity_line().expect("a running turn spins");
+        let first = session.activity_line(80).expect("a running turn spins");
         assert!(first.contains("working"), "{first}");
         assert!(first.contains("Ctrl-C to interrupt"), "{first}");
 
@@ -1400,12 +1402,12 @@ mod tests {
         let mut glyphs = std::collections::HashSet::new();
         for _ in 0..40 {
             session.tick();
-            glyphs.insert(session.activity_line().unwrap().chars().next().unwrap());
+            glyphs.insert(session.activity_line(80).unwrap().chars().next().unwrap());
         }
         assert!(glyphs.len() > 1, "the spinner must actually animate");
 
         session.running_tool = Some("web_search".into());
-        assert!(session.activity_line().unwrap().contains("web_search"));
+        assert!(session.activity_line(80).unwrap().contains("web_search"));
     }
 
     #[test]
@@ -1420,7 +1422,7 @@ mod tests {
         })
         .unwrap();
         settle(&mut session);
-        assert!(session.activity_line().is_none());
+        assert!(session.activity_line(80).is_none());
         assert!(session.running_tool.is_none());
     }
 
