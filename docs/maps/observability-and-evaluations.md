@@ -27,6 +27,8 @@ owns:
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/ui/app.js
+  - scripts/perf_harness.py
+  - scripts/test_perf_harness.py
 watches:
   - crates/optimus-store/src/**
   - crates/optimus-graph/src/**
@@ -275,3 +277,24 @@ default-change delivery for prompts, workflows, tools, model routing, retrieval,
 and memory. The
 result must separate quality, reliability, cost, latency, security, and human
 correction rather than collapsing them into one score.
+
+## Performance baseline harness
+
+**Confirmed current behaviour:** `scripts/perf_harness.py` (self-tested by
+`scripts/test_perf_harness.py`) measures the eight `performance_rules`
+scenarios from `docs/architecture/optimus-version.json` against the current
+tree's `optimus` binary using only deterministic, credential-free offline
+paths: `version` for cold-start, `chat-offline` ScriptedModel turns for
+single-turn/long-session/session-resume, the seeded `vertical` write/read
+handoff workflows for multi-tool-turn and delegated-task, and offline `cron
+tick` for scheduled-job. It records wall p50/p95, kernel-accounted peak RSS,
+seeds, a hashed machine fingerprint, and the Git revision; TTFT and cost are
+recorded as null with stated reasons because the offline scripted path has no
+streaming seam and no billable provider. browser-task is honestly skipped as
+`requires: live` (SSRF law: public web only). Quick mode (5 samples / 2
+seeds, `just perf-run`) is labelled below the 30-sample / 3-seed protocol
+minimum; `--full` runs the protocol shape. Results are **informational until
+ADR-0069 is accepted**: `just perf-baseline` deliberately overwrites
+`docs/architecture/perf-baseline.json`, and `just perf-compare` reports
+ratios, exiting non-zero only with `--enforce` on the same machine
+fingerprint. Nothing here is wired into any release or verify gate.

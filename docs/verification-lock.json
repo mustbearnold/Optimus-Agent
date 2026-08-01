@@ -73,7 +73,7 @@
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "8c4d8e6369fb5f09ceda09ed9d038f57a1725e66569a244d6e35c9eea54b6394",
+      "binding_sha256": "4ae2325d99303d3fd57a0d23975db128ea223ce377616c395621ad37d16874b7",
       "document_sha256": "a751c298a4835f088aff704876654661a150be63c2f71dd1d41e7afa2cc47c98",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
@@ -115,7 +115,7 @@
       "resolved_files": 7
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "e3842fc0eea6ec494c99491caa5cdd7fbf187476b38cb7ab5ee653cb10d65917",
+      "binding_sha256": "c0e272b68f662e31844d3dc552ec712842686476db51ebde6a8e41c8e7dec39b",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -139,7 +139,7 @@
       "resolved_files": 343
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "7752c3004a5022dbe7aa0452f0d8653160b052ac98dbd14d8d7e7c24bf6c824f",
+      "binding_sha256": "73ff665d31e0c222ca1b332270b5251935f27572b11b8fb838d4c9323b1fd56e",
       "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9
@@ -475,7 +475,7 @@
       "resolved_files": 6
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "4d24c56b4d2d6aec616d2fd105b6da6346ec900cd0a0e72fa3629cbb3600cdf5",
+      "binding_sha256": "1d5a730ec68786490059b37236670af8725142f916ffbb13b75899b0a21ff55a",
       "document_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -535,31 +535,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "2305cb959898b7f92529b4bc191eae3be4c22f3b34a1acd8c162d7c8e8fb5982",
+      "binding_sha256": "7d446f808b75a5d9e97dc6f63f55a14070b7fd85fc5ec38d3f89700eeb11765c",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "93edccf7efb529bb676dc227b5b0bd2b4456e30a47e86d11da23052f3b77f728",
+      "binding_sha256": "f7635327b74effd0bba736765081e6a3b284bb2af380275e5a343feb04b09377",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "5d3eb4253173ba70635e6486819170a4da223ef0d21720c66bc4d484eeb511d2",
+      "binding_sha256": "110cff168f44f4561efb41225c340afc6e211d3bb943780fe5772bcdf4d9851f",
       "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "236a661748fe9df9c119c838fd31d4265bb4cb5f5f4e8348708b4e315dbbe2d5",
+      "binding_sha256": "90c589b13c4e444c0c5f89dc115950811b4f802e8959d483150f34c35b810f4f",
       "document_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "bb70f3e936ca9538f500237cbb3c20c7606e7c39d838033a8c4c80a3629e4bf3",
+      "binding_sha256": "9662bab6ab6241c77b9d175b3bf499921e34bfaca8e35f62d7fe78548d0d351a",
       "document_sha256": "9ea65b9cbcd13c1606858f711aa09d8483f80cd2c7935121ec4080ad3bf57499",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
@@ -631,10 +631,10 @@
       "resolved_files": 23
     },
     "maps-observability-and-evaluations": {
-      "binding_sha256": "ecb251f0cf63ff778baf0aa409cb51a01083682777be9c9240b659041199a4f1",
-      "document_sha256": "ecf4f13f0e85827fdfdc3484946091c139c00af918ee8c29e4c413f259cb0bca",
+      "binding_sha256": "af15f3b89020269e9ae1f97519f5937fca415b7763a36d9e3cf477a4c23f230d",
+      "document_sha256": "a22805e762c94c709fd7eca03e6c8e34a52057241329cc9462141c4f8d4a686b",
       "path": "docs/maps/observability-and-evaluations.md",
-      "resolved_files": 24
+      "resolved_files": 26
     },
     "maps-readme": {
       "binding_sha256": null,
@@ -643,7 +643,7 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "2eee8d0aa83fdbab177c60945c052221cacdb8a3235b3f906c813325d96e0eed",
+      "binding_sha256": "5e9c2202f5eec81ddbaec668c888f916111ad26d30898a4f38f5a71345ef44f5",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12

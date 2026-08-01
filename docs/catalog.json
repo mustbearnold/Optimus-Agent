@@ -5399,7 +5399,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "ecf4f13f0e85827fdfdc3484946091c139c00af918ee8c29e4c413f259cb0bca",
+      "content_sha256": "a22805e762c94c709fd7eca03e6c8e34a52057241329cc9462141c4f8d4a686b",
       "headings": [
         "Observability, replay, and evaluation map",
         "Structured runtime evidence",
@@ -5408,7 +5408,8 @@
         "Evaluation coverage",
         "Missing observability",
         "Missing evaluation dimensions",
-        "Planned evaluation gate"
+        "Planned evaluation gate",
+        "Performance baseline harness"
       ],
       "id": "maps-observability-and-evaluations",
       "path": "docs/maps/observability-and-evaluations.md",
@@ -7002,7 +7003,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "8daebc2ccaa19788789e4451a282af7433fea71a630ab3f070745c148ae36d99",
+  "documents_sha256": "2c6e58317fd46fd361486c72dc692b6074f136ffbf27cc51f029af6ebd9a0a4c",
   "routes": [
     {
       "id": "docs.navigation",

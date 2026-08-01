@@ -161,6 +161,20 @@ test-changed:
 live:
     @bash scripts/verify.sh live
 
+# --- performance baseline (informational until ADR-0069 is accepted) ----------
+
+# Measure one or all perf scenarios offline (quick 5x2; pass a scenario id).
+perf-run scenario="all":
+    @python3 scripts/perf_harness.py run --scenario {{quote(scenario)}}
+
+# Deliberately overwrite docs/architecture/perf-baseline.json with a fresh run.
+perf-baseline:
+    @python3 scripts/perf_harness.py baseline
+
+# Compare a fresh quick run against the committed baseline; report only.
+perf-compare:
+    @python3 scripts/perf_harness.py compare
+
 # --- build and run -----------------------------------------------------------
 
 # Debug build of the whole workspace.
