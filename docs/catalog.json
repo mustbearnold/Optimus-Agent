@@ -4020,7 +4020,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "10874b0aef95122bf41c454d07f86254eb96b7b210c6d178f8d2b60ddc198ef9",
+      "content_sha256": "2fbc37d6c738f10f4fb686b2c2ad7537c34cf1fb12c75de6a4147063ad40ea81",
       "headings": [
         "ADR-0046: Approving an exact action resumes the turn",
         "Context",
@@ -4794,7 +4794,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "656a5cc0322c9a9ec30d22e9d07e2c7803f93f400b958190d95f618133cb976c",
+      "content_sha256": "f34deedf4abab63caead0550d3324b58885ee5ff3db41f4ad39b306810caa104",
       "headings": [
         "ADR-0075: A block owns its lifecycle; rows only paint it",
         "Context",
@@ -7196,7 +7196,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "9b3df08a65b930d53235505af26b41fe6d30d17154301a8ede6bc5ede3d32b6c",
+  "documents_sha256": "c2e8fbfa2af312dbe53746ab26e5454529b423b9f7a0224b3d5721a0166bdc57",
   "routes": [
     {
       "id": "docs.navigation",

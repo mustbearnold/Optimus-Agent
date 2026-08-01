@@ -7,39 +7,43 @@
 //! thread never blocks on a model call, which is what lets text stream in and
 //! Ctrl-C interrupt a run in flight.
 //!
-//! [`TurnUpdate`] is deliberately a plain data enum rather than a callback: it is
-//! the seam a future stdio or WebSocket transport publishes to, so a remote
-//! client and the terminal consume identical events (ADR-0045).
+//! Split along its seams under the module-size law (ADR-0075): this file keeps
+//! session state and its small moves; [`event_adapter`] owns the typed wire
+//! shape ([`TurnUpdate`]) and its consumption; [`workers`] spawns the turn and
+//! connect workers; [`approval`] decides parked effects; [`reservation`]
+//! secures durable identity before a provider is contacted.
 
 use std::path::PathBuf;
-use std::sync::mpsc::{self, Receiver, TryRecvError};
+#[cfg(test)]
+use std::sync::mpsc;
+use std::sync::mpsc::Receiver;
 use std::sync::Arc;
-use std::thread;
 use std::time::Instant;
 
-use optimus_host::{chat_turn_cancellable, handle_ipc};
-use optimus_kernel::codex_device_login::device_code_login_with;
-use optimus_kernel::CodexAuthStore;
-use optimus_kernel::{
-    CancellationToken, StreamControl, StreamEvent, ToolApprovalBinding, ToolLifecyclePhase,
-};
+use optimus_host::handle_ipc;
+use optimus_kernel::{CancellationToken, ToolApprovalBinding};
 use serde_json::json;
 
 use crate::composer::Composer;
 use crate::history::History;
 use crate::preferences::Preferences;
-use crate::tool_line::{readable, tool_step};
 use crate::transcript::Chrome;
 
 mod approval;
+mod event_adapter;
 mod reservation;
+mod workers;
 
-// Both are exercised from this module's test block, beside the rest of the
-// surface's behaviour; neither is called from production code up here.
+pub use event_adapter::{ToolStep, TurnUpdate};
+
+// All are exercised from this module's test block, beside the rest of the
+// surface's behaviour; none is called from production code up here.
+#[cfg(test)]
+use crate::tool_line::tool_step;
 #[cfg(test)]
 pub(crate) use approval::approval_binding_fixture;
 #[cfg(test)]
-use approval::resolved_update;
+use approval::{decision_line, resolved_update};
 
 /// Braille frames, the conventional terminal spinner.
 const SPINNER: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -47,54 +51,6 @@ const SPINNER: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '�
 /// Render frames per spinner step. The loop polls at 40ms, so this animates at
 /// roughly 12 steps a second — visible motion without strobing.
 const SPINNER_EVERY: usize = 2;
-
-/// Feed kernel stream events to the screen thread as transcript updates.
-///
-/// Shared by both workers. Resolving an approval resumes the turn it paused
-/// (ADR-0046), so it is a streaming turn like any other and has to present the
-/// same events the same way — a second translation would drift.
-fn stream_sink(stream: mpsc::Sender<TurnUpdate>) -> impl FnMut(StreamEvent) -> StreamControl {
-    move |event: StreamEvent| {
-        let update = match event {
-            StreamEvent::TextDelta(text) => Some(TurnUpdate::Text(text)),
-            StreamEvent::Status(text) => Some(TurnUpdate::Status(text)),
-            // A paused exact effect needs a decision, so it becomes an action
-            // row; every other tool phase is visible work and belongs in the
-            // transcript. Thinking and timing detail do not — those belong in
-            // a dock.
-            StreamEvent::Tool(tool) => match (&tool.phase, &tool.approval) {
-                (ToolLifecyclePhase::ApprovalRequired, Some(binding)) => {
-                    Some(TurnUpdate::Approval(Box::new(binding.clone())))
-                }
-                _ => Some(TurnUpdate::Tool(tool_step(&tool))),
-            },
-            _ => None,
-        };
-        let Some(update) = update else {
-            return StreamControl::Continue;
-        };
-        // A closed receiver means the screen is gone; stop the turn rather than
-        // keep spending tokens into a void.
-        if stream.send(update).is_err() {
-            StreamControl::Cancel
-        } else {
-            StreamControl::Continue
-        }
-    }
-}
-
-/// Marks the decision in the transcript, under the card it answers.
-///
-/// Written on the screen thread the moment the user decides, not when the host
-/// replies: resolving now resumes the paused turn (ADR-0046), so the reply is
-/// the agent's answer and arrives after. Recording the decision late would print
-/// it beneath the answer it led to.
-fn decision_line(decision: &str) -> &'static str {
-    match decision {
-        "approve" => "approved — running the exact action…",
-        _ => "denied — it will not run",
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Role {
@@ -116,43 +72,6 @@ pub struct Message {
     pub call_id: Option<String>,
 }
 
-/// One tool call's progress, already rendered for the transcript.
-#[derive(Debug, Clone)]
-pub struct ToolStep {
-    /// Identity of the call, so successive phases update one row.
-    pub call_id: String,
-    pub name: String,
-    pub line: String,
-    pub running: bool,
-}
-
-/// One observable step of a turn. The wire shape for any transport.
-#[derive(Debug, Clone)]
-pub enum TurnUpdate {
-    /// A fresh turn reserved its durable identity before contacting a provider.
-    SessionReserved(String),
-    /// Assistant answer text, streamed.
-    Text(String),
-    /// Soft status for the footer; never mixed into the answer.
-    Status(String),
-    /// A tool call started, finished, or failed.
-    Tool(ToolStep),
-    /// An exact effect paused awaiting a human decision. The turn will park
-    /// (settle as failed at the kernel API) while the job stays pending.
-    Approval(Box<ToolApprovalBinding>),
-    /// The decision was carried out, naming the call it settled. Not terminal:
-    /// the turn it unblocked runs on, and whatever happens next belongs to that
-    /// turn rather than to the decision. It is sent the moment the resolver
-    /// returns, so a continuation that later fails cannot leave a spent card on
-    /// the screen — and it names the call because that continuation may already
-    /// have parked on an approval of its own, which must survive.
-    ApprovalSettled(String),
-    /// Terminal success: the durable session id and the settled answer.
-    Done { session_id: String, text: String },
-    /// Terminal failure, already rendered for a human.
-    Failed(String),
-}
-
 /// What the worker thread is doing, which decides how its terminal update is
 /// rendered: turns stream into an open assistant bubble, the other kinds settle
 /// with a standalone message.
@@ -170,16 +89,6 @@ struct ActiveTurn {
     /// Set once this worker's stream reported an `Approval`, so its terminal
     /// failure is rendered as a park rather than an error.
     awaiting_approval: bool,
-}
-
-/// Why a drain ended the turn (#108). Every clean worker path sends
-/// `Done`/`Failed` before its sender drops; a channel that vanishes without
-/// one is a worker that panicked past its final send, and the difference is
-/// the difference between saying nothing and reporting a crash.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum TurnEnd {
-    Settled,
-    WorkerGone,
 }
 
 pub struct TuiSession {
@@ -299,78 +208,6 @@ impl TuiSession {
         self.started.map_or(0, |at| at.elapsed().as_secs())
     }
 
-    /// Send whatever is in the composer as one turn, on a worker thread.
-    pub fn submit(&mut self) {
-        let prompt = self.composer.text().trim().to_string();
-        if prompt.is_empty() || self.busy() {
-            return;
-        }
-        self.composer.take();
-        // Remembered across launches: retyping a long prompt because the
-        // process restarted is exactly the friction a terminal face should
-        // not have.
-        self.history.record(&prompt);
-        self.history.save(&self.home);
-        // Submitting anything is a commitment to watch the reply arrive, and
-        // both command output and turns answer at the tail.
-        self.scroll_back = 0;
-        // Slash commands answer locally and never reach the model.
-        if crate::commands::dispatch(self, &prompt) {
-            return;
-        }
-        self.push(Role::User, prompt.clone());
-        // No empty assistant bubble is opened: the first text delta creates it,
-        // so a turn that calls tools first does not leave a blank row above them.
-        self.answer_started = false;
-        self.begin("working");
-
-        let mut params = self.turn_params(&prompt);
-
-        let (tx, rx) = mpsc::channel();
-        let cancel = Arc::new(CancellationToken::new());
-        let worker_cancel = Arc::clone(&cancel);
-        let home = self.home.clone();
-
-        thread::spawn(move || {
-            // Proving the crash arm needs a worker that really dies mid-turn
-            // (#108). Debug builds only, same contract as
-            // OPTIMUS_TUI_PANIC_ON_KEY: no released binary can be made to
-            // panic by its environment; `tests/pty.rs` is the sole caller.
-            #[cfg(debug_assertions)]
-            if std::env::var_os("OPTIMUS_TUI_PANIC_IN_WORKER").is_some() {
-                panic!("OPTIMUS_TUI_PANIC_IN_WORKER");
-            }
-            if !reservation::ensure(&home, &mut params, &tx) {
-                return;
-            }
-            let mut sink = stream_sink(tx.clone());
-            let outcome = chat_turn_cancellable(&home, params, Some(&mut sink), &worker_cancel);
-            let final_update = match outcome {
-                Ok(value) => TurnUpdate::Done {
-                    session_id: value
-                        .get("session_id")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default()
-                        .to_string(),
-                    text: value
-                        .get("assistant_text")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default()
-                        .to_string(),
-                },
-                Err(error) => TurnUpdate::Failed(error),
-            };
-            let _ = tx.send(final_update);
-        });
-
-        self.active = Some(ActiveTurn {
-            updates: rx,
-            cancel,
-            kind: WorkerKind::Turn,
-            awaiting_approval: false,
-        });
-    }
-
     /// Hand the mouse back before printing something the user must copy.
     ///
     /// Capture costs the terminal's own click-and-drag selection, so a flow
@@ -390,61 +227,6 @@ impl TuiSession {
             Role::Assistant,
             "mouse released so you can select the code — `/mouse` takes it back".into(),
         );
-    }
-
-    /// Start Codex device-code sign-in on a worker.
-    ///
-    /// Selecting a provider that is not connected should *connect* it, not just
-    /// relabel the session. The verification URL and code go into the transcript
-    /// and the URL is opened in a browser; the worker polls until the user
-    /// finishes or it times out.
-    pub fn connect_codex(&mut self) {
-        if self.busy() {
-            return;
-        }
-        self.release_mouse_for_copying();
-        self.push(Role::Assistant, "starting Codex sign-in…".into());
-        self.begin("waiting for authorization");
-
-        let (tx, rx) = mpsc::channel();
-        let cancel = Arc::new(CancellationToken::new());
-        let home = self.home.clone();
-        let prompt_tx = tx.clone();
-
-        thread::spawn(move || {
-            let outcome = CodexAuthStore::open(&home)
-                .map_err(|e| e.to_string())
-                .and_then(|store| {
-                    device_code_login_with(&store, &mut |prompt| {
-                        let _ = prompt_tx.send(TurnUpdate::Text(format!(
-                            "\n  1. Open: {}\n  2. Enter code: {}\n",
-                            prompt.verification_url, prompt.user_code
-                        )));
-                        // Best effort: the code above is enough on its own if no
-                        // browser opens, so a failure here is not the flow failing.
-                        let _ = optimus_host::handle_ipc(
-                            &home,
-                            "open_url",
-                            json!({ "url": prompt.verification_url }),
-                        );
-                    })
-                    .map_err(|e| e.to_string())
-                });
-            let _ = tx.send(match outcome {
-                Ok(()) => TurnUpdate::Done {
-                    session_id: String::new(),
-                    text: "Codex connected. Tokens stored in this Optimus home.".into(),
-                },
-                Err(error) => TurnUpdate::Failed(format!("Codex sign-in failed: {error}")),
-            });
-        });
-
-        self.active = Some(ActiveTurn {
-            updates: rx,
-            cancel,
-            kind: WorkerKind::Connect,
-            awaiting_approval: false,
-        });
     }
 
     /// Apply the highlighted picker row and close it.
@@ -499,23 +281,6 @@ impl TuiSession {
         self.scroll_back = back.round() as usize;
     }
 
-    /// Build one turn's params. Separate from `submit` so tests can assert the
-    /// wire shape — notably that /yolo rides the turn as `access: "yolo"`.
-    fn turn_params(&self, prompt: &str) -> serde_json::Value {
-        let mut params = json!({ "message": prompt });
-        self.apply_model_choice(&mut params);
-        if let Some(id) = &self.session_id {
-            params["session"] = json!(id);
-        }
-        // /yolo applies to new effects too: the turn itself runs UnrestrictedHost.
-        if self.yolo {
-            params["access"] = json!("yolo");
-        } else if let Some(profile) = self.access {
-            params["access"] = json!(profile);
-        }
-        params
-    }
-
     /// Write the current provider, model and effort down for the next launch.
     ///
     /// Called by the commands that change them rather than on every turn: a
@@ -544,142 +309,6 @@ impl TuiSession {
         }
         if let Some(thinking) = &self.thinking {
             params["thinking_level"] = json!(thinking);
-        }
-    }
-
-    /// Drain whatever the worker has produced. Called every frame; never blocks.
-    pub fn pump(&mut self) {
-        let Some(active) = &self.active else {
-            return;
-        };
-        let kind = active.kind;
-        let mut awaiting = active.awaiting_approval;
-        // Collect first: applying updates needs `&mut self`, which cannot overlap
-        // the borrow on the receiver.
-        let mut batch = Vec::new();
-        // Not a bool, because *why* the turn ended decides what the user is
-        // told (#108). A worker that settles sends `Done`/`Failed` before its
-        // sender drops; a channel that disappears without one means a panic
-        // unwound past that final send. Queued updates are delivered before
-        // `Disconnected`, so a worker that settled and then died still reads
-        // as settled.
-        let mut finished: Option<TurnEnd> = None;
-        loop {
-            match active.updates.try_recv() {
-                Ok(update) => {
-                    let terminal =
-                        matches!(update, TurnUpdate::Done { .. } | TurnUpdate::Failed(_));
-                    batch.push(update);
-                    if terminal {
-                        finished = Some(TurnEnd::Settled);
-                        break;
-                    }
-                }
-                Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => {
-                    finished = Some(TurnEnd::WorkerGone);
-                    break;
-                }
-            }
-        }
-
-        let mut parked = false;
-        for update in batch {
-            match update {
-                TurnUpdate::SessionReserved(session_id) => {
-                    self.session_id = Some(session_id);
-                }
-                TurnUpdate::Text(delta) => self.append_assistant(&delta),
-                TurnUpdate::Status(status) => self.status = status,
-                TurnUpdate::Tool(step) => self.apply_tool_step(step),
-                TurnUpdate::Approval(binding) => {
-                    awaiting = true;
-                    self.push(
-                        Role::Action,
-                        format!("approval required:\n{}", readable(&binding.summary)),
-                    );
-                    self.pending_approval = Some(binding);
-                }
-                TurnUpdate::ApprovalSettled(call_id) => {
-                    // Only the card that settled. The resumed turn parks on its
-                    // own approval before the resolver returns, so clearing
-                    // whatever is held here would swallow that newer binding
-                    // and leave a card `/approval` can only answer with "no
-                    // approval is pending".
-                    if self
-                        .pending_approval
-                        .as_ref()
-                        .is_some_and(|binding| binding.call_id == call_id)
-                    {
-                        self.pending_approval = None;
-                    }
-                }
-                TurnUpdate::Done { session_id, text } => {
-                    if !session_id.is_empty() {
-                        self.session_id = Some(session_id);
-                    }
-                    match kind {
-                        // Providers that never streamed settle their answer
-                        // here; ones that did already hold this text. Resolving
-                        // is a turn too — it finishes the one the approval
-                        // paused (ADR-0046) — so it settles the same way.
-                        WorkerKind::Turn | WorkerKind::Resolve => {
-                            if !self.answer_started && !text.is_empty() {
-                                self.append_assistant(&text);
-                            }
-                        }
-                        // This flow ends with a standalone settlement message.
-                        WorkerKind::Connect => self.push(Role::Assistant, text),
-                    }
-                }
-                TurnUpdate::Failed(error) => {
-                    if matches!(kind, WorkerKind::Turn | WorkerKind::Resolve) && awaiting {
-                        // Not a failure to the user: the effect is parked and
-                        // the decision card is the next step. A resumed turn
-                        // can park again on a second effect, and that is a
-                        // decision to make, not an error to report.
-                        parked = true;
-                    } else {
-                        self.push(Role::Error, error);
-                    }
-                }
-            }
-        }
-
-        if let Some(end) = finished {
-            if matches!(end, TurnEnd::WorkerGone) {
-                // The same failure #104 fixed for the main thread — a crash
-                // that reads as silence — arriving through a worker. Its
-                // panic payload went to the log (stderr is redirected for
-                // the whole run), so this row is the only thing standing
-                // between the user and "the spinner stopped and nothing
-                // came back".
-                // The path on its own line: transcript rows wrap at the pane
-                // width, and a pointer nobody can read back is no pointer.
-                self.push(
-                    Role::Error,
-                    format!(
-                        "the turn stopped unexpectedly before finishing. details:\n{}",
-                        crate::logging::log_path(&self.home).display()
-                    ),
-                );
-            }
-            self.active = None;
-            self.status.clear();
-            self.running_tool = None;
-            self.started = None;
-            if parked {
-                self.open_approval_picker();
-            } else if kind == WorkerKind::Resolve && self.pending_approval.is_some() {
-                // Still holding a binding here means the decision never
-                // settled, so the card is the way to try again. A decision that
-                // *did* settle cleared it on `ApprovalSettled`, which is what
-                // stops a failed continuation from leaving a prompt that can
-                // only ever answer "session has no approval-paused turn".
-                self.open_approval_picker();
-            }
-        } else if let Some(active) = self.active.as_mut() {
-            active.awaiting_approval = awaiting;
         }
     }
 
@@ -712,32 +341,6 @@ impl TuiSession {
         self.status = status.into();
         self.started = Some(Instant::now());
         self.running_tool = None;
-    }
-
-    /// Place a tool's progress, rewriting the row that call already owns.
-    fn apply_tool_step(&mut self, step: ToolStep) {
-        self.running_tool = step.running.then(|| step.name.clone());
-        let existing = self
-            .messages
-            .iter_mut()
-            .rev()
-            .find(|m| m.call_id.as_deref() == Some(step.call_id.as_str()));
-        match existing {
-            Some(message) => message.text = step.line,
-            None => self.messages.push(Message {
-                role: Role::Tool,
-                text: step.line,
-                call_id: Some(step.call_id),
-            }),
-        }
-    }
-
-    fn append_assistant(&mut self, delta: &str) {
-        self.answer_started = true;
-        match self.messages.last_mut() {
-            Some(message) if message.role == Role::Assistant => message.text.push_str(delta),
-            _ => self.push(Role::Assistant, delta.to_string()),
-        }
     }
 
     pub fn push(&mut self, role: Role, text: String) {
@@ -815,6 +418,7 @@ fn latest_session_id(home: &PathBuf) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::thread;
     use std::time::{Duration, Instant};
 
     use optimus_kernel::ToolLifecycleEvent;

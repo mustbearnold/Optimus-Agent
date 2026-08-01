@@ -20,10 +20,8 @@ use optimus_host::chat_approval_resolve_cancellable;
 use optimus_kernel::CancellationToken;
 use serde_json::json;
 
-use super::{
-    decision_line, latest_session_id, stream_sink, ActiveTurn, Role, TuiSession, TurnUpdate,
-    WorkerKind,
-};
+use super::event_adapter::stream_sink;
+use super::{latest_session_id, ActiveTurn, Role, TuiSession, TurnUpdate, WorkerKind};
 
 impl TuiSession {
     /// Resolve the pending approval with one explicit decision, on a worker.
@@ -148,6 +146,19 @@ impl TuiSession {
                 },
             ],
         ));
+    }
+}
+
+/// Marks the decision in the transcript, under the card it answers.
+///
+/// Written on the screen thread the moment the user decides, not when the host
+/// replies: resolving now resumes the paused turn (ADR-0046), so the reply is
+/// the agent's answer and arrives after. Recording the decision late would print
+/// it beneath the answer it led to.
+pub(super) fn decision_line(decision: &str) -> &'static str {
+    match decision {
+        "approve" => "approved — running the exact action…",
+        _ => "denied — it will not run",
     }
 }
 

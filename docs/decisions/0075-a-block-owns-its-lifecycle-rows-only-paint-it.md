@@ -10,6 +10,7 @@ review_by: 2026-11-02
 knowledge_type: decision
 covers:
   - apps/optimus-tui/src/session.rs
+  - apps/optimus-tui/src/session/event_adapter.rs
   - apps/optimus-tui/src/lib.rs
   - apps/optimus-tui/src/view.rs
   - apps/optimus-tui/src/transcript.rs
@@ -403,8 +404,9 @@ app, because both consume the same host surface.
 
 ## Relevant code
 
-- apps/optimus-tui/src/session.rs — `stream_sink`, `TurnUpdate`, `pump`,
-  `apply_tool_step`; the adapter seam and the split target.
+- apps/optimus-tui/src/session/event_adapter.rs — `stream_sink`, `TurnUpdate`,
+  `pump`, `apply_tool_step`; the adapter seam, split out of session.rs along
+  the seams this ADR prescribed.
 - apps/optimus-tui/src/lib.rs — the event loop this decision's animation
   contract replaces.
 - apps/optimus-tui/src/transcript.rs, view.rs — the row projection.

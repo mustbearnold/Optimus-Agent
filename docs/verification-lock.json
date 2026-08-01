@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "3911d3654637c832ab03b06a5ca88b63ab90867d0684d43cc53b20d72a598f73",
+      "binding_sha256": "3b29e4550b3a93865df0b674a831262a3bd8bbed093f0b243aad7ae13177fe39",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 338
+      "resolved_files": 340
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "5e4c95a61f1094b920d3342132e4cbaf2425441bfc58f5d228f09608b143a63e",
@@ -427,19 +427,19 @@
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "9c4bf85cd7bb5e9e785fdfcfde367bddd99639c2862941e33280f352a5bbdae4",
-      "document_sha256": "10874b0aef95122bf41c454d07f86254eb96b7b210c6d178f8d2b60ddc198ef9",
+      "binding_sha256": "03dca88d0c4b9149b849dc7d3e30f010dc52b242f3b97918d26f8a3bb8fe6a76",
+      "document_sha256": "2fbc37d6c738f10f4fb686b2c2ad7537c34cf1fb12c75de6a4147063ad40ea81",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
-      "resolved_files": 11
+      "resolved_files": 12
     },
     "decisions-0047-turn-step-budget": {
-      "binding_sha256": "59b9d2a71e99bc6a348f99bc7e37fd814318ccb396557046fd54b85290d68169",
+      "binding_sha256": "fcf8c7c50cf0532e01ca1d67b752df27e122fb889a08e3a90d2aaab006ee08e4",
       "document_sha256": "5dcfd7f80fc7f5a03d19a54bd0243c4ccd7162cf5c1644654955b0ba985e46b9",
       "path": "docs/decisions/0047-turn-step-budget.md",
       "resolved_files": 7
     },
     "decisions-0048-context-and-page-result-budgets": {
-      "binding_sha256": "89e046c6e203e7925735996e144f313fb35768b75c6af0bada07eb8ab4836dff",
+      "binding_sha256": "516522bda05ecd2f00a68fe9d2a9a712fbd4e09a8fc7dd64e24e3d93f613ad1d",
       "document_sha256": "f0b81707ec7d14f983816e1b61c01411d47cd30e358d2f63b1a9d5c10b6b6ffc",
       "path": "docs/decisions/0048-context-and-page-result-budgets.md",
       "resolved_files": 7
@@ -559,13 +559,13 @@
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "7d83ec30b75fb5e630f7f05fa4e8f3acd2b76bb9e1e4f59c8f1deeb5d16a64b1",
-      "document_sha256": "656a5cc0322c9a9ec30d22e9d07e2c7803f93f400b958190d95f618133cb976c",
+      "binding_sha256": "751419b7b7b9852a560781285d7ae9fa4a1a73d0742c889c4d5d751663e8491b",
+      "document_sha256": "f34deedf4abab63caead0550d3324b58885ee5ff3db41f4ad39b306810caa104",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
-      "resolved_files": 12
+      "resolved_files": 13
     },
     "decisions-readme": {
-      "binding_sha256": "6c388156e080c25e28a9b738f99fd1e0c7572256a27bf1117a97acb25e9a85eb",
+      "binding_sha256": "47ce3fd5df388941622261d17280cffb5dc937495f55e1eec901972d772237bf",
       "document_sha256": "8ab4bf0d45ed44cf07fb70a86582926a032af565f828570f6d91c3ce0246c05e",
       "path": "docs/decisions/README.md",
       "resolved_files": 80

@@ -13,7 +13,8 @@ covers:
   - crates/optimus-kernel/src/turn_loop.rs
   - crates/optimus-runtime/src/lib.rs
   - crates/optimus-host/src/chat.rs
-  - apps/optimus-tui/src/session.rs
+  - apps/optimus-tui/src/session/approval.rs
+  - apps/optimus-tui/src/session/event_adapter.rs
 depends_on:
   - docs/decisions/0007-kernel-turn-loop.md
   - docs/decisions/0012-kernel-effectors.md
@@ -206,7 +207,9 @@ provider-free and letting the caller resume preserves the split.
 - `crates/optimus-runtime/src/lib.rs` — `EffectOutcome`, `latest_effect_outcome`
 - `crates/optimus-store/src/lib.rs` — `effect_attempts.receipt_json`
 - `crates/optimus-host/src/chat.rs` — `chat_approval_resolve`
-- `apps/optimus-tui/src/session.rs` — the resolve worker
+- `apps/optimus-tui/src/session/approval.rs` — the resolve worker
+- `apps/optimus-tui/src/session/event_adapter.rs` — settlement and park
+  recognition in `pump`
 - `apps/optimus-ui/src/app/OptimusApp.tsx` — `resolveTranscriptApproval`
 
 ## Relevant tests
