@@ -27,6 +27,7 @@ calls itself a primary program.
 | [s-plus-trust-spine.md](s-plus-trust-spine.md) | Historical foundation phases |
 | [engineering-memory-phases.md](engineering-memory-phases.md) | Engineering Memory implementation history and residuals |
 | [workspace-redesign.md](workspace-redesign.md) | Historical workspace redesign plan |
+| [competitive-bottleneck-audit.md](competitive-bottleneck-audit.md) | 2026-08-01 bottleneck/barrier audit vs Hermes v0.19.0 and OpenClaw, with solution options per item |
 | [historical/](historical/) | Earlier long-form implementation plans |
 
 Plans explain sequence. Source, tests, current constitutions, current status,
