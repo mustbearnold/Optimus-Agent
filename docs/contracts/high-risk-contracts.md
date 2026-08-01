@@ -320,8 +320,19 @@ it does not replace executable enforcement.
   failures are marked `terminal_reason=external_send_failed…` and are **not**
   treated as ambiguous. Doctor surfaces `gateway_ambiguous_sends` without
   claiming external exactly-once.
+- **Evidence (ADR-0070):** the outbound half is now durable too. A successful
+  turn commits its owed send to `gateway_outbound` inside the same transaction
+  that makes the turn terminal, so a crash before the send no longer loses the
+  reply; each attempt is recorded before the network is touched, so a crash
+  during the send reads as attempted-outcome-unknown rather than never-tried.
+  An unknown outcome never retries automatically — only
+  `resolve_ambiguous_obligation` moves it — while a definite refusal retries to
+  a bound of five. `list_ambiguous_sends` remains the coarse per-turn view and
+  no longer counts a send that is still `pending` or `sending`.
 - **Boundary:** guarantees of an external channel broker remain unresolved.
-  Local SQLite is delivery authority; external EO is never ledger-parity.
+  Local SQLite is delivery authority; external EO is never ledger-parity. The
+  ledger's honest guarantee is at-least-once with a fenced ambiguity window that
+  an operator closes, not exactly-once.
 - **Owner:** `optimus-ops` gateway/telegram plus desktop messaging IPC.
 
 ### C-18 Session causality around durable effects

@@ -96,6 +96,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0067 | Managed cleanup fingerprints symlinks without following | Accepted | Symlinks inside a cleanup candidate are fingerprinted by their own metadata and target string and deleted as entries, never followed; a symlink candidate root still refuses. |
 | 0068 | A catalog row must dispatch or not exist | Accepted | Nine never-shipping scaffold tool rows leave the catalog, five committed lanes stay, and packs.breadth re-marks from parity to missing; refusing rows taught false affordances. |
 | 0069 | Release is measured against Optimus, not Hermes | Accepted | Re-scopes release to Optimus-native bars (ledger thesis axes, protected wins, no self-regression) and demotes the fail-closed Hermes gate to an informational scorecard; accepted by owner 2026-08-01. |
+| 0070 | An outbound send is a durable obligation | Accepted | A reply owed to an external channel is committed in the turn's own transaction and attempted only after the attempt is recorded; unknown outcomes never auto-retry, so the honest guarantee is at-least-once with a fenced ambiguity window an operator closes. |
 
 ## Known documentary debt
 

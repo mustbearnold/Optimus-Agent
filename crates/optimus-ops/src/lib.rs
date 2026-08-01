@@ -16,12 +16,20 @@ mod telegram;
 
 pub use channel_adapters::{discord_enqueue, slack_enqueue, AdapterError, ChannelInbound};
 pub use cron::{CronAttemptView, CronClaim, CronError, CronJob, CronStore};
+pub use gateway::outbound_ledger::{
+    claim_outbound, list_ambiguous_obligations, list_pending_obligations,
+    list_unsettled_obligations, outbound_ledger_status, resolve_ambiguous_obligation,
+    settle_outbound, sweep_stale_sends, AmbiguityResolution, OutboundClaim, OutboundLedgerStatus,
+    OutboundObligation, OutboundSettlement,
+};
+pub use gateway::outbound_receipts::{
+    acknowledge_delivery, delivery_state, list_ambiguous_sends, list_outbox, list_outbox_receipts,
+    mark_external_send_failed, OutboxReceipt,
+};
 pub use gateway::{
-    acknowledge_delivery, cancel_claim, claim_one, complete_claim, delivery_state, drain_one,
-    enqueue, fail_claim, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
-    list_outbox_receipts, mark_external_send_failed, reconcile, release_claim, renew_claim,
-    DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus, InboundMessage,
-    OutboundMessage, OutboxReceipt,
+    cancel_claim, claim_one, complete_claim, drain_one, enqueue, fail_claim, gateway_status,
+    list_inbox, reconcile, release_claim, renew_claim, DrainResult, GatewayClaim, GatewayError,
+    GatewayPaths, GatewayStatus, InboundMessage, OutboundMessage,
 };
 pub use hermes_import::{
     import_memory, import_sessions, import_skills, write_test_fixtures, HermesMemoryFixture,

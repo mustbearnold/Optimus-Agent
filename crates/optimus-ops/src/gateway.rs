@@ -3,6 +3,11 @@
 //! External channels may drop `<uuid>.json` messages into `gateway/inbox/`.
 //! SQLite owns ingestion identity, claims, attempts, and terminal outcomes. The
 //! outbox and processed/failed directories are reconciled materializations.
+//!
+//! This module owns the **inbound** half: ingestion, claims, leases, attempts,
+//! and the one terminal outcome each turn reaches. What the turn then owes to an
+//! external channel belongs to [`outbound_ledger`], which shares this database
+//! and settles independently of whether the turn itself succeeded.
 
 use std::fs::{self, OpenOptions};
 use std::io::Write;
@@ -13,6 +18,9 @@ use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
+
+pub(crate) mod outbound_ledger;
+pub(crate) mod outbound_receipts;
 
 #[derive(Debug, Error)]
 pub enum GatewayError {
@@ -175,6 +183,7 @@ fn open_database(paths: &GatewayPaths) -> Result<Connection> {
     )?;
     ensure_gateway_column(&connection, "terminal_reason", "TEXT")?;
     ensure_gateway_column(&connection, "delivered_unix", "INTEGER")?;
+    outbound_ledger::ensure_schema(&connection)?;
     Ok(connection)
 }
 
@@ -304,161 +313,6 @@ pub fn list_inbox(home: impl AsRef<Path>) -> Result<Vec<InboundMessage>> {
     Ok(messages)
 }
 
-pub fn list_outbox(home: impl AsRef<Path>, limit: usize) -> Result<Vec<OutboundMessage>> {
-    Ok(list_outbox_receipts(home, limit)?
-        .into_iter()
-        .map(|row| row.outbound)
-        .collect())
-}
-
-/// Outbox row with local delivery receipt fields (program P28).
-///
-/// `delivered_unix` is a **local** receipt that an adapter acknowledged handoff.
-/// It is not an external exactly-once proof.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct OutboxReceipt {
-    pub message_id: String,
-    pub outbound: OutboundMessage,
-    pub terminal_status: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub terminal_reason: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub delivered_unix: Option<u64>,
-    /// True when terminal succeeded but no local delivery receipt yet.
-    pub ambiguous_send: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub completed_unix: Option<u64>,
-}
-
-pub fn list_outbox_receipts(home: impl AsRef<Path>, limit: usize) -> Result<Vec<OutboxReceipt>> {
-    let paths = GatewayPaths::open(home)?;
-    let connection = open_database(&paths)?;
-    let mut statement = connection.prepare(
-        "SELECT id,status,outbound_json,terminal_reason,delivered_unix,completed_unix
-         FROM gateway_messages
-         WHERE status IN ('succeeded','failed') AND outbound_json IS NOT NULL
-         ORDER BY completed_unix DESC,id DESC LIMIT ?1",
-    )?;
-    let rows = statement.query_map(params![limit as i64], |row| {
-        Ok((
-            row.get::<_, String>(0)?,
-            row.get::<_, String>(1)?,
-            row.get::<_, String>(2)?,
-            row.get::<_, Option<String>>(3)?,
-            row.get::<_, Option<i64>>(4)?,
-            row.get::<_, Option<i64>>(5)?,
-        ))
-    })?;
-    let mut out = Vec::new();
-    for row in rows {
-        let (message_id, terminal_status, outbound_json, terminal_reason, delivered, completed) =
-            row?;
-        let outbound: OutboundMessage = serde_json::from_str(&outbound_json)?;
-        let delivered_unix = delivered.and_then(|value| u64::try_from(value).ok());
-        let completed_unix = completed.and_then(|value| u64::try_from(value).ok());
-        let ambiguous_send =
-            is_ambiguous_receipt(&terminal_status, delivered_unix, &terminal_reason);
-        out.push(OutboxReceipt {
-            message_id,
-            outbound,
-            terminal_status,
-            terminal_reason,
-            delivered_unix,
-            ambiguous_send,
-            completed_unix,
-        });
-    }
-    Ok(out)
-}
-
-fn is_ambiguous_receipt(
-    terminal_status: &str,
-    delivered_unix: Option<u64>,
-    terminal_reason: &Option<String>,
-) -> bool {
-    if terminal_status != "succeeded" || delivered_unix.is_some() {
-        return false;
-    }
-    !matches!(
-        terminal_reason.as_deref(),
-        Some(reason)
-            if reason == "external_send_failed"
-                || reason.starts_with("external_send_failed:")
-                || reason == "cancelled"
-                || reason == "dead_lettered"
-    )
-}
-
-/// Succeeded terminal turns without a local delivery receipt (operator recovery).
-///
-/// SQL-filters first so a flood of receipted rows cannot hide older ambiguous ones.
-pub fn list_ambiguous_sends(home: impl AsRef<Path>, limit: usize) -> Result<Vec<OutboxReceipt>> {
-    let limit = limit.clamp(1, 500);
-    let paths = GatewayPaths::open(home)?;
-    let connection = open_database(&paths)?;
-    let mut statement = connection.prepare(
-        "SELECT id,status,outbound_json,terminal_reason,delivered_unix,completed_unix
-         FROM gateway_messages
-         WHERE status='succeeded'
-           AND outbound_json IS NOT NULL
-           AND delivered_unix IS NULL
-           AND (terminal_reason IS NULL
-                OR (terminal_reason NOT IN ('external_send_failed','cancelled','dead_lettered')
-                    AND terminal_reason NOT LIKE 'external_send_failed:%'))
-         ORDER BY completed_unix DESC,id DESC LIMIT ?1",
-    )?;
-    let rows = statement.query_map(params![limit as i64], |row| {
-        Ok((
-            row.get::<_, String>(0)?,
-            row.get::<_, String>(1)?,
-            row.get::<_, String>(2)?,
-            row.get::<_, Option<String>>(3)?,
-            row.get::<_, Option<i64>>(4)?,
-            row.get::<_, Option<i64>>(5)?,
-        ))
-    })?;
-    let mut out = Vec::new();
-    for row in rows {
-        let (message_id, terminal_status, outbound_json, terminal_reason, delivered, completed) =
-            row?;
-        let outbound: OutboundMessage = serde_json::from_str(&outbound_json)?;
-        let delivered_unix = delivered.and_then(|value| u64::try_from(value).ok());
-        let completed_unix = completed.and_then(|value| u64::try_from(value).ok());
-        out.push(OutboxReceipt {
-            message_id,
-            outbound,
-            terminal_status,
-            terminal_reason,
-            delivered_unix,
-            ambiguous_send: true,
-            completed_unix,
-        });
-    }
-    Ok(out)
-}
-
-/// Mark a succeeded terminal as a definite external send failure (not ambiguous).
-pub fn mark_external_send_failed(
-    home: impl AsRef<Path>,
-    message_id: &str,
-    detail: &str,
-) -> Result<bool> {
-    let paths = GatewayPaths::open(home)?;
-    let connection = open_database(&paths)?;
-    let detail = if detail.is_empty() {
-        "external_send_failed".to_string()
-    } else {
-        format!("external_send_failed:{detail}")
-    };
-    let changed = connection.execute(
-        "UPDATE gateway_messages
-         SET terminal_reason=?1
-         WHERE id=?2 AND status='succeeded' AND delivered_unix IS NULL",
-        params![detail, message_id],
-    )?;
-    Ok(changed == 1)
-}
-
 /// Gateway summary for doctor / messaging UI.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct GatewayStatus {
@@ -495,7 +349,10 @@ pub fn gateway_status(home: impl AsRef<Path>) -> Result<GatewayStatus> {
            AND (terminal_reason IS NULL OR terminal_reason NOT IN (
                 'external_send_failed','cancelled','dead_lettered'
            ))
-           AND (terminal_reason IS NULL OR terminal_reason NOT LIKE 'external_send_failed:%')",
+           AND (terminal_reason IS NULL OR terminal_reason NOT LIKE 'external_send_failed:%')
+           AND NOT EXISTS (SELECT 1 FROM gateway_outbound o
+                           WHERE o.message_id=gateway_messages.id
+                             AND o.status IN ('pending','sending'))",
         [],
         |row| row.get(0),
     )?;
@@ -793,6 +650,13 @@ fn commit_claim(
             claim.attempt_id.to_string()
         ],
     )?;
+    // A reply the turn produced is owed to its channel whether or not this
+    // process survives to send it, so the obligation is written here rather than
+    // by whoever sends: after this transaction there is no window in which the
+    // turn is terminal but the debt is unrecorded. A failed turn owes nothing.
+    if terminal_status == "succeeded" {
+        outbound_ledger::record_obligation(&transaction, &outbound, now)?;
+    }
     transaction.commit()?;
     Ok(outbound)
 }
@@ -910,58 +774,6 @@ pub fn cancel_claim(home: impl AsRef<Path>, claim: &GatewayClaim, now: u64) -> R
     })
 }
 
-pub fn acknowledge_delivery(
-    home: impl AsRef<Path>,
-    message_id: &str,
-    outbound_id: &str,
-    now: u64,
-) -> Result<bool> {
-    let paths = GatewayPaths::open(home)?;
-    let connection = open_database(&paths)?;
-    let outbound_json: Option<String> = connection
-        .query_row(
-            "SELECT outbound_json FROM gateway_messages
-             WHERE id=?1 AND status IN ('succeeded','failed')",
-            params![message_id],
-            |row| row.get(0),
-        )
-        .optional()?;
-    let Some(outbound_json) = outbound_json else {
-        return Ok(false);
-    };
-    let outbound: OutboundMessage = serde_json::from_str(&outbound_json)?;
-    if outbound.id != outbound_id {
-        return Ok(false);
-    }
-    connection.execute(
-        "UPDATE gateway_messages SET delivered_unix=COALESCE(delivered_unix,?1) WHERE id=?2",
-        params![now as i64, message_id],
-    )?;
-    Ok(true)
-}
-
-pub fn delivery_state(
-    home: impl AsRef<Path>,
-    message_id: &str,
-) -> Result<Option<(Option<String>, Option<u64>)>> {
-    let paths = GatewayPaths::open(home)?;
-    let connection = open_database(&paths)?;
-    connection
-        .query_row(
-            "SELECT terminal_reason,delivered_unix FROM gateway_messages WHERE id=?1",
-            params![message_id],
-            |row| {
-                let delivered = row.get::<_, Option<i64>>(1)?;
-                Ok((
-                    row.get(0)?,
-                    delivered.and_then(|value| u64::try_from(value).ok()),
-                ))
-            },
-        )
-        .optional()
-        .map_err(GatewayError::Sqlite)
-}
-
 pub fn reconcile(home: impl AsRef<Path>) -> Result<usize> {
     let paths = GatewayPaths::open(home)?;
     let mut connection = open_database(&paths)?;
@@ -1006,6 +818,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::outbound_receipts::{
+        acknowledge_delivery, delivery_state, list_ambiguous_sends, list_outbox,
+        list_outbox_receipts, mark_external_send_failed,
+    };
     use super::*;
     use tempfile::tempdir;
 

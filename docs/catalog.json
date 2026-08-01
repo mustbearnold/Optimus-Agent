@@ -2638,7 +2638,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "a64b3833df7911651eb2ed39b5e465632853471f1a0bc4b20854033fa4dcf592",
+      "content_sha256": "67df91760420ec7b1ad65366d730d3ce8f6dbbbba145280cad0e3c06448790fd",
       "headings": [
         "Highest-risk behavioural contracts",
         "Priority 0",
@@ -4675,7 +4675,33 @@
     },
     {
       "authority": "record",
-      "content_sha256": "8f30b9d6e83b4f93f06762ab7bf3a9301e5fe06cf12ae3c63d3789d2360248a8",
+      "content_sha256": "8f0a554815593d64296a773a27dd561133b95308b90c2f76841e4d67a9188094",
+      "headings": [
+        "ADR-0070: An outbound send is a durable obligation",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0070-an-outbound-send-is-a-durable-obligation",
+      "path": "docs/decisions/0070-an-outbound-send-is-a-durable-obligation.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "A reply owed to an external channel is committed to a durable ledger in the same transaction that makes the turn terminal, attempted only after the attempt is recorded, and never retried when the outcome is unknown; the honest guarantee is at-least-once with a fenced ambiguity window, not exactly-once.",
+      "title": "ADR-0070: An outbound send is a durable obligation",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "dc1e368424afd13f154433f3fcf55577846f2b1a60b133a499009065ff03fac5",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5355,7 +5381,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "fc3fab9026380a596c51d4944687bc782fe0be7714227855324becaf551e5ef9",
+      "content_sha256": "2c2a10ef793c3dc23173a2d299d0ad195801f89194efe54b63a4478711674257",
       "headings": [
         "Memory and retrieval map",
         "Separation",
@@ -7003,7 +7029,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "dd3c9c65bf3077821547f36e81233117757f4b95b93fde2400a94f9ebed75f26",
+  "documents_sha256": "51059f301dcfc5b479b8ad60a71427f7a42018b5178f75d4c575b2d4f323deed",
   "routes": [
     {
       "id": "docs.navigation",

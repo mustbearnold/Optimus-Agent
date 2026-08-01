@@ -4,20 +4,36 @@
 //! this module never opens a public listen port. SQLite gateway remains the
 //! local delivery authority (ADR-0021). External exactly-once is not claimed.
 //!
-//! Flow: poll updates → enqueue inbound → claim/turn → send reply → local
-//! delivery receipt on confirmed handoff; leave ambiguous when the transport
-//! reports unknown outcome.
+//! Flow: poll updates → enqueue inbound → claim/turn → the turn commits the send
+//! it owes to [`crate::gateway::outbound_ledger`] → this adapter claims that
+//! obligation, sends, and settles what the platform said.
+//!
+//! The adapter never decides *whether* a reply is owed; the turn's commit does.
+//! That is what makes a crash between the two survivable: the debt is already
+//! durable, so the next poll picks it up instead of losing it.
 
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::gateway::outbound_ledger::{claim_outbound, settle_outbound, OutboundSettlement};
 use crate::gateway::{
-    acknowledge_delivery, claim_one, complete_claim, delivery_state, enqueue, fail_claim,
-    mark_external_send_failed, GatewayError, InboundMessage,
+    claim_one, complete_claim, enqueue, fail_claim, GatewayError, InboundMessage,
 };
 use uuid::Uuid;
+
+/// How long one outbound send may hold its obligation before the sweep calls it
+/// unknown. A Bot API call that has not returned in two minutes has already
+/// stopped being a question this process can answer.
+const SEND_LEASE_SECS: u64 = 120;
+
+fn now_unix() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
 
 #[derive(Debug, Error)]
 pub enum TelegramError {
@@ -253,10 +269,7 @@ where
     // Skip non-telegram FIFO head by claiming only when the head matches our id.
     // Release foreign claims by never claiming them: claim_one is FIFO, so if head
     // is not our message we stop (operator must drain non-telegram separately).
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
+    let now = now_unix();
     let Some(claim) = claim_one(home, Uuid::new_v4(), now, 900)? else {
         return Ok(None);
     };
@@ -276,69 +289,107 @@ where
         ambiguous: Vec::new(),
         failed_sends: Vec::new(),
     };
-    // Only external-send successful turns.
-    if drained.status != "ok" {
-        return Ok(Some(step));
-    }
-    let Some(session_id) = drained.session_id.as_deref() else {
-        return Ok(Some(step));
-    };
-    let Some(chat_id) = session_id.strip_prefix("telegram:") else {
-        return Ok(Some(step));
-    };
-    apply_send_outcome(
-        home,
-        transport,
-        chat_id,
-        &drained.id,
-        &drained.reply_preview,
-        &mut step,
-    )?;
+    // Whether this particular turn owes a reply was decided inside its commit.
+    // Draining the whole telegram backlog rather than just this turn's send is
+    // what makes an obligation stranded by an earlier crash recoverable.
+    deliver_owed_sends(home, transport, &mut step)?;
     Ok(Some(step))
 }
 
-fn apply_send_outcome<T: TelegramTransport>(
+/// Send every telegram reply the ledger says is owed, one attempt each.
+///
+/// Stops at the first send that is not confirmed. A transport that just refused
+/// or went dark will not answer differently a millisecond later, and the failed
+/// obligation is already back in the pending pool — the next poll cycle is the
+/// retry, which gives the bound in [`crate::gateway::outbound_ledger`] a real
+/// interval to count rather than five attempts inside one loop.
+fn deliver_owed_sends<T: TelegramTransport>(
     home: &Path,
     transport: &mut T,
-    chat_id: &str,
-    message_id: &str,
-    text: &str,
     step: &mut ProcessStep,
 ) -> Result<()> {
-    match transport.send_message(chat_id, text)? {
-        SendOutcome::Confirmed { .. } => {
-            if acknowledge_outbound_for_message(home, message_id)? {
-                step.receipts.push(message_id.into());
+    while let Some(claim) = claim_outbound(
+        home,
+        Some("telegram"),
+        Uuid::new_v4(),
+        now_unix(),
+        SEND_LEASE_SECS,
+    )? {
+        let owed = claim.obligation().clone();
+        let Some(chat_id) = owed.target.strip_prefix("telegram:") else {
+            // The ledger keeps routing addresses opaque, so an address this
+            // adapter cannot read is a definite failure to send, not an unknown.
+            let detail = format!("unroutable telegram target {}", owed.target);
+            settle(home, &claim, OutboundSettlement::Failed { detail }, step)?;
+            break;
+        };
+
+        let outcome = match transport.send_message(chat_id, &owed.body) {
+            Ok(outcome) => outcome,
+            Err(error) => {
+                // The adapter broke around the call, so whether the platform saw
+                // it is exactly the question this ledger refuses to guess at.
+                let detail = format!("transport error: {error}");
+                settle(home, &claim, OutboundSettlement::Ambiguous { detail }, step)?;
+                return Err(error);
             }
-        }
-        SendOutcome::Ambiguous { detail } => {
-            step.ambiguous.push(format!("{message_id}:{detail}"));
-        }
-        SendOutcome::Failed { detail } => {
-            let _ = mark_external_send_failed(home, message_id, &detail)?;
-            step.failed_sends.push(format!("{message_id}:{detail}"));
+        };
+
+        let confirmed = matches!(outcome, SendOutcome::Confirmed { .. });
+        settle(home, &claim, settlement_for(outcome), step)?;
+        if !confirmed {
+            break;
         }
     }
     Ok(())
 }
 
-fn acknowledge_outbound_for_message(home: &Path, message_id: &str) -> Result<bool> {
-    // Prefer delivery_state + outbound from exact message id.
-    use crate::gateway::list_outbox_receipts;
-    let rows = list_outbox_receipts(home, 200)?;
-    let Some(row) = rows.into_iter().find(|r| r.message_id == message_id) else {
-        return Ok(false);
+fn settlement_for(outcome: SendOutcome) -> OutboundSettlement {
+    match outcome {
+        SendOutcome::Confirmed {
+            provider_message_id,
+        } => OutboundSettlement::Delivered {
+            provider_message_id,
+        },
+        SendOutcome::Ambiguous { detail } => OutboundSettlement::Ambiguous { detail },
+        SendOutcome::Failed { detail } => OutboundSettlement::Failed { detail },
+    }
+}
+
+/// Record the settlement and report it in the adapter's per-cycle accounting.
+///
+/// A settlement whose lease is gone is not re-applied: the sweep already called
+/// that send unknown, and overwriting it with this worker's late opinion would
+/// erase the only honest thing the ledger knows about it.
+fn settle(
+    home: &Path,
+    claim: &crate::gateway::outbound_ledger::OutboundClaim,
+    settlement: OutboundSettlement,
+    step: &mut ProcessStep,
+) -> Result<()> {
+    let message_id = claim.obligation().message_id.clone();
+    let note = match &settlement {
+        OutboundSettlement::Delivered { .. } => None,
+        OutboundSettlement::Ambiguous { detail } | OutboundSettlement::Failed { detail } => {
+            Some(format!("{message_id}:{detail}"))
+        }
     };
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-    Ok(acknowledge_delivery(
-        home,
-        message_id,
-        &row.outbound.id,
-        now,
-    )?)
+    let bucket = match &settlement {
+        OutboundSettlement::Delivered { .. } => &mut step.receipts,
+        OutboundSettlement::Ambiguous { .. } => &mut step.ambiguous,
+        OutboundSettlement::Failed { .. } => &mut step.failed_sends,
+    };
+    match settle_outbound(home, claim, settlement, now_unix()) {
+        Ok(_) => {
+            bucket.push(note.unwrap_or(message_id));
+            Ok(())
+        }
+        Err(GatewayError::LeaseLost { message_id }) => {
+            step.ambiguous.push(format!("{message_id}:lease expired"));
+            Ok(())
+        }
+        Err(error) => Err(error.into()),
+    }
 }
 
 /// Process one inbound telegram message through claim→turn→send without polling.
@@ -370,14 +421,17 @@ where
         result.ambiguous = step.ambiguous;
         result.failed_sends = step.failed_sends;
     }
-    let _ = delivery_state(home, &inbound.id);
     Ok(result)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gateway::{gateway_status, list_ambiguous_sends};
+    use crate::gateway::gateway_status;
+    use crate::gateway::outbound_ledger::{
+        list_ambiguous_obligations, list_pending_obligations, outbound_ledger_status,
+    };
+    use crate::gateway::outbound_receipts::list_ambiguous_sends;
     use tempfile::tempdir;
 
     #[test]
@@ -447,6 +501,111 @@ mod tests {
         .unwrap();
         assert!(result.receipts.is_empty());
         assert!(transport.sent.is_empty());
+    }
+
+    /// Regression: the adapter used to send `drained.reply_preview`, which
+    /// `complete_claim` builds with `.take(200)`. Every reply longer than that
+    /// arrived at the chat silently cut off, with the gateway recording a
+    /// delivery receipt for a message the user never fully received.
+    #[test]
+    fn the_chat_receives_the_whole_reply_not_the_preview() {
+        let dir = tempdir().unwrap();
+        let mut transport = MockTelegramTransport::default();
+        let long_reply = "x".repeat(5_000);
+        let expected = long_reply.clone();
+
+        let result =
+            process_inbound_reply_path(dir.path(), &mut transport, "42", "ping", |inbound| {
+                Ok((expected.clone(), inbound.session_id.clone()))
+            })
+            .unwrap();
+
+        assert_eq!(result.receipts.len(), 1);
+        assert_eq!(transport.sent.len(), 1);
+        assert_eq!(transport.sent[0].0, "42");
+        assert_eq!(transport.sent[0].1, long_reply);
+    }
+
+    #[test]
+    fn a_send_stranded_by_a_crash_goes_out_on_the_next_cycle() {
+        let dir = tempdir().unwrap();
+        // A turn that commits its obligation, then a process that dies before
+        // any transport exists to send it.
+        let mut dead = MockTelegramTransport {
+            next_send_failed: true,
+            ..Default::default()
+        };
+        process_inbound_reply_path(dir.path(), &mut dead, "7", "ping", |inbound| {
+            Ok(("pong".into(), inbound.session_id.clone()))
+        })
+        .unwrap();
+        assert!(dead.sent.is_empty());
+        assert_eq!(list_pending_obligations(dir.path(), 10).unwrap().len(), 1);
+
+        // A later cycle finds the debt without needing the original turn.
+        let mut revived = MockTelegramTransport::default();
+        let mut step = ProcessStep {
+            drained_id: String::new(),
+            receipts: Vec::new(),
+            ambiguous: Vec::new(),
+            failed_sends: Vec::new(),
+        };
+        deliver_owed_sends(dir.path(), &mut revived, &mut step).unwrap();
+
+        assert_eq!(revived.sent.len(), 1);
+        assert_eq!(revived.sent[0], ("7".to_string(), "pong".to_string()));
+        assert_eq!(step.receipts.len(), 1);
+        assert!(list_pending_obligations(dir.path(), 10).unwrap().is_empty());
+        assert_eq!(outbound_ledger_status(dir.path()).unwrap().delivered, 1);
+    }
+
+    #[test]
+    fn a_refused_send_is_not_retried_inside_the_same_cycle() {
+        let dir = tempdir().unwrap();
+        // Only the first send is refused; a loop that retried immediately would
+        // succeed on the second call and hide the refusal entirely.
+        let mut transport = MockTelegramTransport {
+            next_send_failed: true,
+            ..Default::default()
+        };
+        let result =
+            process_inbound_reply_path(dir.path(), &mut transport, "7", "ping", |inbound| {
+                Ok(("pong".into(), inbound.session_id.clone()))
+            })
+            .unwrap();
+
+        assert_eq!(result.failed_sends.len(), 1);
+        assert!(transport.sent.is_empty());
+        let owed = list_pending_obligations(dir.path(), 10).unwrap();
+        assert_eq!(owed.len(), 1);
+        assert_eq!(owed[0].attempts, 1);
+    }
+
+    #[test]
+    fn an_unknown_send_is_never_re_sent_by_the_adapter() {
+        let dir = tempdir().unwrap();
+        let mut transport = MockTelegramTransport {
+            next_send_ambiguous: true,
+            ..Default::default()
+        };
+        process_inbound_reply_path(dir.path(), &mut transport, "99", "ping", |inbound| {
+            Ok(("pong".into(), inbound.session_id.clone()))
+        })
+        .unwrap();
+        assert_eq!(list_ambiguous_obligations(dir.path(), 10).unwrap().len(), 1);
+
+        // Every later cycle leaves it alone: only an operator resolution can
+        // decide whether the platform already has this message.
+        let mut later = MockTelegramTransport::default();
+        let mut step = ProcessStep {
+            drained_id: String::new(),
+            receipts: Vec::new(),
+            ambiguous: Vec::new(),
+            failed_sends: Vec::new(),
+        };
+        deliver_owed_sends(dir.path(), &mut later, &mut step).unwrap();
+        assert!(later.sent.is_empty());
+        assert_eq!(list_ambiguous_obligations(dir.path(), 10).unwrap().len(), 1);
     }
 
     #[test]

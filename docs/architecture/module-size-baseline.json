@@ -10,7 +10,7 @@
     "crates/optimus-kernel/src/execution.rs": 934,
     "crates/optimus-kernel/src/lib.rs": 854,
     "crates/optimus-memory/src/lib.rs": 1066,
-    "crates/optimus-ops/src/gateway.rs": 1006,
+    "crates/optimus-ops/src/gateway.rs": 816,
     "crates/optimus-packs/src/lib.rs": 1227,
     "crates/optimus-runtime/src/campaign.rs": 1497,
     "crates/optimus-runtime/src/lib.rs": 1346,
