@@ -483,15 +483,26 @@ def commit_message(
     )
 
 
-def next_attempt(task_dir: Path) -> int:
-    existing = []
+def next_attempt(repo: Repository, task_dir: Path, task_id: str) -> int:
+    existing = [0]
     if task_dir.is_dir():
         for path in task_dir.glob("attempt-*.json"):
             try:
                 existing.append(int(path.stem.split("-", 1)[1]))
             except ValueError:
                 continue
-    return max(existing, default=0) + 1
+    # A land killed mid-verify records no receipt but leaves its pre-land
+    # checkpoint. Counting receipts alone reuses that attempt's label, and a
+    # label that names different progress refuses every retry whose tree
+    # moved on (observed 2026-08-01). Counting a sibling task id that shares
+    # this prefix merely skips numbers, which is harmless.
+    prefix = checkpoint_ref(repo, f"pre-land-{task_id}-")
+    refs = repo.git(["for-each-ref", "--format=%(refname)", f"{prefix}*"], check=False)
+    for line in refs.stdout.splitlines():
+        suffix = line.strip().rsplit("-", 1)[-1]
+        if suffix.isdigit():
+            existing.append(int(suffix))
+    return max(existing) + 1
 
 
 def run_verify(repo: Repository, evidence_path: Path) -> tuple[int, str]:
@@ -594,7 +605,7 @@ def land(repo: Repository, task_id: str, model: str, effort: str) -> dict[str, o
         return prior
 
     task_dir = repo.state_dir / "tasks" / task_id
-    attempt = next_attempt(task_dir)
+    attempt = next_attempt(repo, task_dir, task_id)
     base = remote_main(repo)
     ensure_commit_present(repo, base)
     head = repo.git(["rev-parse", "HEAD"]).stdout.strip()

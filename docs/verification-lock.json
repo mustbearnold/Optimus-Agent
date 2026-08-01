@@ -109,7 +109,7 @@
       "resolved_files": 5
     },
     "contributing-managed-delivery": {
-      "binding_sha256": "cfb16382eac2f230edc0419d749aa2a62e3d58f4783675cabf08270d94d9b0ee",
+      "binding_sha256": "fb8fe1b5bd830e33dd1a5da4ec997b0b828dcd510433bba258d016f631c2ae37",
       "document_sha256": "2674455464f28c3bfd59f134b99ae8d95cc7bb4d1f237c32918c49dd2206782b",
       "path": "docs/contributing/managed-delivery.md",
       "resolved_files": 5
@@ -139,7 +139,7 @@
       "resolved_files": 341
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "67656a1fd61a8414e0dee62cb1ee9d5b55f388d8dee3218e77e211da934893e6",
+      "binding_sha256": "b3a77fc55a1737fedd76e4c1abb1d716347de2520941cab2d2f4587927a58143",
       "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9

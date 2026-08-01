@@ -255,6 +255,24 @@ class ManagedDeliveryTests(unittest.TestCase):
         with self.assertRaisesRegex(MD.Refusal, "different provenance"):
             MD.land(fixture.repo, "managed-delivery-smoke", "other-model", "xhigh")
 
+    def test_a_killed_land_does_not_wedge_its_task_id(self) -> None:
+        fixture = self.fixture
+        (fixture.worktree / "file.txt").write_text("first try\n", encoding="utf-8")
+        # A kill mid-verify leaves exactly this state: the automatic pre-land
+        # checkpoint exists, and no attempt receipt was ever written.
+        MD._create_checkpoint(
+            fixture.repo,
+            "pre-land-wedge-proof-1",
+            kind="automatic-before-land",
+            tree=fixture.repo.snapshot_tree(),
+        )
+        # The retry carries different progress, as any fixed-up tree does.
+        (fixture.worktree / "file.txt").write_text("second try\n", encoding="utf-8")
+
+        receipt = MD.land(fixture.repo, "wedge-proof", "fixture-model", "high")
+        self.assertEqual(receipt["state"], "landed")
+        self.assertEqual(int(str(receipt["attempt"])), 2)
+
     def test_remote_main_advance_refuses_instead_of_rebasing(self) -> None:
         fixture = self.fixture
         (fixture.worktree / "file.txt").write_text("candidate\n", encoding="utf-8")
