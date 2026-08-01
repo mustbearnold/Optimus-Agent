@@ -4008,7 +4008,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "f5af83921d6c8acd971827d65a3891dd4affe9858b50dd86bf53d92d00f62e05",
+      "content_sha256": "93c87bd93ef42d7f029555d3f895642fbc95ad0f2b4284a13ee78f19d4e2ab88",
       "headings": [
         "ADR-0045: Agent host and surface transports",
         "Context",
@@ -4038,7 +4038,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "2ec35c71109c2f6a2d8334d7389b4640a2ebc99b901a0b527ed8bdc2200e1743",
+      "content_sha256": "10874b0aef95122bf41c454d07f86254eb96b7b210c6d178f8d2b60ddc198ef9",
       "headings": [
         "ADR-0046: Approving an exact action resumes the turn",
         "Context",
@@ -4068,7 +4068,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "73715d15e7bfa7fc7ec0e2041916a87ab4e7b2d5cd4c6b86831bd306c6c3e6a1",
+      "content_sha256": "5dcfd7f80fc7f5a03d19a54bd0243c4ccd7162cf5c1644654955b0ba985e46b9",
       "headings": [
         "ADR-0047: A turn's step budget is 32 model round trips",
         "Context",
@@ -4099,7 +4099,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "b286a951cfd8883788c929239e76eb67b765ffb1b08770f928b48c6976aa7814",
+      "content_sha256": "f0b81707ec7d14f983816e1b61c01411d47cd30e358d2f63b1a9d5c10b6b6ffc",
       "headings": [
         "ADR-0048: Context and page-result budgets are sized for tools, not for chat",
         "Context",
@@ -4675,7 +4675,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "ed7e29d957fb9f8c6b94dd6c4254d7a59d98d8d8b16f64031cfea63248ad70a1",
+      "content_sha256": "8f30b9d6e83b4f93f06762ab7bf3a9301e5fe06cf12ae3c63d3789d2360248a8",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -7003,7 +7003,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "54976840d6165e44f5b909bd32cbcf260451ecc07b74b066a12f5733c8aa7c71",
+  "documents_sha256": "0566727b2cddf3097c535aa7c12a54081bde23c62fb4159cd43f68e2d562009e",
   "routes": [
     {
       "id": "docs.navigation",

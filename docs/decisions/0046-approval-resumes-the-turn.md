@@ -26,7 +26,8 @@ validated_by:
 
 # ADR-0046: Approving an exact action resumes the turn
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-01 — delivered: `chat_approval.rs` and the TUI resolution path implement resume-on-decision and cite this ADR at each seam
 - **Date:** 2026-07-27
 - **Program:** program P30+ (TUI + core foundation)
 

@@ -22,7 +22,8 @@ validated_by:
 
 # ADR-0047: A turn's step budget is 32 model round trips
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-01 — delivered: `KernelConfig::default().max_steps == 32`, pinned by `crates/optimus-kernel/tests/adr_budgets.rs`
 - **Date:** 2026-07-27
 - **Program:** program P30+ (TUI + core foundation)
 

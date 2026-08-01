@@ -22,7 +22,8 @@ validated_by:
 
 # ADR-0048: Context and page-result budgets are sized for tools, not for chat
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-01 — delivered: `CompressionConfig` carries 200k/24k with the convergence invariant and the run-time page split shipped in `page_extract`; pinned by `crates/optimus-kernel/tests/adr_budgets.rs`
 - **Date:** 2026-07-27
 
 ## Context

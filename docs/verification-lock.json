@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "250879c557d13537578e82a055e967fed9039546dd29a3f94e07bd1fa3dd28fd",
+      "binding_sha256": "75b5f965e58fba2159347e2993eede82832dc8889c0b9fc6553c51133e708265",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 343
+      "resolved_files": 344
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "de90a95ab34ee160f9e904e58cba5763510a59881493035ec326545a5ab6eac9",
@@ -422,25 +422,25 @@
     },
     "decisions-0045-agent-host-and-surface-transports": {
       "binding_sha256": "ed5ee97bd3d9fa161e3f41c7ddb4bc157b3ea7929cc1726975901fa3b86c7823",
-      "document_sha256": "f5af83921d6c8acd971827d65a3891dd4affe9858b50dd86bf53d92d00f62e05",
+      "document_sha256": "93c87bd93ef42d7f029555d3f895642fbc95ad0f2b4284a13ee78f19d4e2ab88",
       "path": "docs/decisions/0045-agent-host-and-surface-transports.md",
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "8bc3888e8503ac60bb56346f21fd6c55628ff2e5474ecccb4019cd6b41eb8393",
-      "document_sha256": "2ec35c71109c2f6a2d8334d7389b4640a2ebc99b901a0b527ed8bdc2200e1743",
+      "binding_sha256": "540ec01bca3ab6e53c527ae245f848b4e1897439d2badbcc5f4f1db47e25e30b",
+      "document_sha256": "10874b0aef95122bf41c454d07f86254eb96b7b210c6d178f8d2b60ddc198ef9",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 11
     },
     "decisions-0047-turn-step-budget": {
-      "binding_sha256": "bbc90ce355db04c64fcd4ee893dfed85a7228583c87c4b93314ea6f27e862882",
-      "document_sha256": "73715d15e7bfa7fc7ec0e2041916a87ab4e7b2d5cd4c6b86831bd306c6c3e6a1",
+      "binding_sha256": "fd5c03e19d0c6cdec528b3b4ab8036693d3af7e2072f19b467a0f5d02b62243b",
+      "document_sha256": "5dcfd7f80fc7f5a03d19a54bd0243c4ccd7162cf5c1644654955b0ba985e46b9",
       "path": "docs/decisions/0047-turn-step-budget.md",
       "resolved_files": 7
     },
     "decisions-0048-context-and-page-result-budgets": {
-      "binding_sha256": "9fa1570662ff5eb4f4016824e8b07ad5ddaa2c0d966c6c1778b282888d7e58ca",
-      "document_sha256": "b286a951cfd8883788c929239e76eb67b765ffb1b08770f928b48c6976aa7814",
+      "binding_sha256": "a1b3a3cbb5f95040699f857f77c1fe2bd68fe539fc1828ecefda3d387e35d773",
+      "document_sha256": "f0b81707ec7d14f983816e1b61c01411d47cd30e358d2f63b1a9d5c10b6b6ffc",
       "path": "docs/decisions/0048-context-and-page-result-budgets.md",
       "resolved_files": 7
     },
@@ -451,13 +451,13 @@
       "resolved_files": 5
     },
     "decisions-0050-shadcn-ui-in-the-react-surface": {
-      "binding_sha256": "e6ca72cede211c31ef96c601b4119093adcf2e46c967d750822d09d9b8edfff7",
+      "binding_sha256": "b0fa0fa367ad2eaa2042c19222f851409d54ac55dc1ce07b804d42a91830019e",
       "document_sha256": "330acf1907bde2bfa7dd9b46ff96c4312dbed7ca0290b26d7178c3af231c2698",
       "path": "docs/decisions/0050-shadcn-ui-in-the-react-surface.md",
       "resolved_files": 5
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "46297167bd97ab3471c2caa90dd32bb97035a46d95e76e19e3ba366ca009b280",
+      "binding_sha256": "21670bb3648dbd88ec97f9d41ab419031680cfb307f4755114a296c7ec7be8ed",
       "document_sha256": "59e42e6384ebae28e9f0a21609ca3c99506e7b6ba16be2b15bb1ab8aeab18e06",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 11
@@ -565,8 +565,8 @@
       "resolved_files": 7
     },
     "decisions-readme": {
-      "binding_sha256": "58b2924a33225c7033d1b71bee3a4571c43a0eca2fa71bc76256c1679a9c92ce",
-      "document_sha256": "ed7e29d957fb9f8c6b94dd6c4254d7a59d98d8d8b16f64031cfea63248ad70a1",
+      "binding_sha256": "63e6491bf8666ca2b5661cad35e710c10e626773ef780bda0c03bb3abdb69000",
+      "document_sha256": "8f30b9d6e83b4f93f06762ab7bf3a9301e5fe06cf12ae3c63d3789d2360248a8",
       "path": "docs/decisions/README.md",
       "resolved_files": 74
     },

@@ -26,7 +26,8 @@ validated_by:
 
 # ADR-0045: Agent host and surface transports
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-08-01 — delivered: the surface-command registry lives in `optimus-ops` (`builtin_surface_commands`) and every surface derives from it
 - **Date:** 2026-07-27
 - **Program:** program P30+ (TUI + core foundation)
 
