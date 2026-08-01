@@ -115,7 +115,7 @@
       "resolved_files": 7
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "c0e272b68f662e31844d3dc552ec712842686476db51ebde6a8e41c8e7dec39b",
+      "binding_sha256": "294310ef46b4f288aeb99d1dbc3cd1a4a64c2befd80c43c4181433078efaa8ea",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -139,7 +139,7 @@
       "resolved_files": 343
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "73ff665d31e0c222ca1b332270b5251935f27572b11b8fb838d4c9323b1fd56e",
+      "binding_sha256": "de90a95ab34ee160f9e904e58cba5763510a59881493035ec326545a5ab6eac9",
       "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9
@@ -295,7 +295,7 @@
       "resolved_files": 15
     },
     "decisions-0024-hermes-parity-version-gate": {
-      "binding_sha256": "222cd6bb7c8885adab8c0f73226847530d64adc08f59426a44fa2584aa7f4928",
+      "binding_sha256": "d4f35e8f91bf8586c349f80c544f630a11881bfb6e47e0c5d35ac0898245f799",
       "document_sha256": "4a6ff2ec4b58c8e2ecf900f110e77e8298db8ed6662b1f38f6a25c3cedaea292",
       "path": "docs/decisions/0024-hermes-parity-version-gate.md",
       "resolved_files": 13
@@ -475,7 +475,7 @@
       "resolved_files": 6
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "1d5a730ec68786490059b37236670af8725142f916ffbb13b75899b0a21ff55a",
+      "binding_sha256": "c72ef3f6053a17eccc5cb7ce2a6abc6433bdb0ad96b84afb8ce7a33f840644d8",
       "document_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -559,14 +559,14 @@
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "9662bab6ab6241c77b9d175b3bf499921e34bfaca8e35f62d7fe78548d0d351a",
-      "document_sha256": "9ea65b9cbcd13c1606858f711aa09d8483f80cd2c7935121ec4080ad3bf57499",
+      "binding_sha256": "42076df5b4121445fedf7cf1aeceaaa0ded89126fa39e18a834440013b791620",
+      "document_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
     },
     "decisions-readme": {
-      "binding_sha256": "571b2cbf38d7fcbe796f18cf15992188b9c5d7db80af33c8ad90bfcbab1c3327",
-      "document_sha256": "8f58d2701b50cf1c91e37b4ab5a4e63ccba735e6ad8c15d0726b00ca0688d948",
+      "binding_sha256": "58b2924a33225c7033d1b71bee3a4571c43a0eca2fa71bc76256c1679a9c92ce",
+      "document_sha256": "ed7e29d957fb9f8c6b94dd6c4254d7a59d98d8d8b16f64031cfea63248ad70a1",
       "path": "docs/decisions/README.md",
       "resolved_files": 74
     },
@@ -631,7 +631,7 @@
       "resolved_files": 23
     },
     "maps-observability-and-evaluations": {
-      "binding_sha256": "af15f3b89020269e9ae1f97519f5937fca415b7763a36d9e3cf477a4c23f230d",
+      "binding_sha256": "16f73fd64bb9784d986569c3030456efe094f45a853aa1a0a29b0a0b6a96142c",
       "document_sha256": "a22805e762c94c709fd7eca03e6c8e34a52057241329cc9462141c4f8d4a686b",
       "path": "docs/maps/observability-and-evaluations.md",
       "resolved_files": 26
@@ -649,7 +649,7 @@
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "ec5c0e671a8d74a4a99bfac06039987860e427675055ab629fd559b0509958e9",
+      "binding_sha256": "462a7a9abf93c2985912963e9801dbe5eb4043cc3a99e87a04ee3959021d4020",
       "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 23

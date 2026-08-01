@@ -29,7 +29,7 @@ The daily-use path includes:
 See [sota-scorecard.md](docs/architecture/sota-scorecard.md) for the broader capability scorecard and
 [desktop-shell-and-ipc-matrix.md](docs/contracts/desktop-shell-and-ipc-matrix.md) for shell/IPC authority.
 
-Optimus uses independent product SemVer plus a fail-closed Hermes parity version. It is currently Optimus `0.1.0`, tracking Hermes `0.19.0`, with parity unverified. Run `optimus version` or see [optimus-versioning.md](docs/architecture/optimus-versioning.md). Installers reject a numerical Hermes version match unless every feature and comparative performance gate passes.
+Optimus uses independent product SemVer. The release bar is Optimus-native (ADR-0069): `just release-gate` requires the parity capability ledger green and no performance regression against the committed same-machine baseline (`docs/architecture/perf-baseline.json`). The Hermes comparison remains available as an informational scorecard via `just parity`; the tracked Hermes target is `0.19.0`. Run `optimus version` or see [optimus-versioning.md](docs/architecture/optimus-versioning.md). Installers still reject a numerical Hermes version match unless a verified parity claim exists.
 
 ## Ubuntu prerequisites
 

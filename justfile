@@ -265,11 +265,15 @@ em-generate:
 em-context budget="3000":
     python3 scripts/engineering_memory.py context --budget {{budget}}
 
-# Hermes parity gate. Fail-closed by design — BLOCKED is the expected
-# answer until feature and performance evidence exists. Informational only;
-# deliberately excluded from `just verify`.
+# Hermes comparison scorecard — informational (ADR-0069); the release bar
+# is `just release-gate`.
 parity:
-    -python3 scripts/optimus_version.py gate
+    -python3 scripts/optimus_version.py hermes-scorecard
+
+# ADR-0069 native release bar: ledger green + no perf regression vs the
+# committed same-machine baseline. Not in `just verify`; run for releases.
+release-gate:
+    python3 scripts/optimus_version.py gate
 
 # Install for the current user, then relaunch.
 install:

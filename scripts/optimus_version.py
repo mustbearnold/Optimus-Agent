@@ -1126,13 +1126,125 @@ def promote(root: Path, reviewer: str) -> int:
     return 0
 
 
+def native_gate(root: Path) -> int:
+    """ADR-0069 release bar: version files valid, parity ledger green, and no
+    performance regression against the committed same-machine baseline.
+
+    The Hermes evaluation no longer gates anything; `hermes-scorecard` prints
+    it as information. Release claims need same-machine performance evidence,
+    so a fingerprint mismatch with the committed baseline blocks here even
+    though standalone `perf_harness.py compare` stays informational.
+    """
+    bars: list[tuple[str, bool, str]] = []
+
+    result = evaluate(root)
+    bars.append(
+        ("version-files-valid", not result.errors, "; ".join(result.errors) or "ok")
+    )
+
+    ledger = subprocess.run(
+        [sys.executable, str(root / "scripts" / "check-parity-ledger.py")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    ledger_text = (ledger.stdout or ledger.stderr).strip()
+    bars.append(
+        (
+            "parity-ledger",
+            ledger.returncode == 0,
+            ledger_text.splitlines()[-1] if ledger_text else "no output",
+        )
+    )
+
+    bars.append(("performance-no-regression",) + performance_bar(root))
+
+    print("NATIVE RELEASE GATE (ADR-0069)")
+    ready = True
+    for name, passed, detail in bars:
+        state = "pass" if passed else "BLOCKED"
+        print(f"  {name:<28}{state}  {detail}")
+        ready = ready and passed
+    print(f"  {'release':<28}{'READY' if ready else 'BLOCKED'}")
+    return 0 if ready else 1
+
+
+def performance_bar(root: Path) -> tuple[bool, str]:
+    """The ADR-0069 performance bar for one root, hermetically testable."""
+    baseline_path = root / "docs" / "architecture" / "perf-baseline.json"
+    if not baseline_path.is_file():
+        return (
+            False,
+            "no committed performance baseline; run `just perf-baseline` on the release machine",
+        )
+    sys.path.insert(0, str(root / "scripts"))
+    try:
+        import perf_harness
+    finally:
+        sys.path.pop(0)
+    baseline = read_json(baseline_path)
+    recorded = str(baseline.get("machine_fingerprint", ""))
+    current = perf_harness.machine_fingerprint()
+    if recorded != current:
+        return (
+            False,
+            f"baseline fingerprint {recorded[:16]} is not this machine "
+            f"({current[:16]}); release claims need same-machine evidence",
+        )
+    # Full protocol, not the quick mode: five samples against a thirty-sample
+    # baseline flagged one millisecond of scheduler noise as a regression.
+    # Release evidence pays the extra minute for stable percentiles.
+    with tempfile.TemporaryDirectory() as temp:
+        fresh = Path(temp) / "release-candidate.json"
+        measured = subprocess.run(
+            [
+                sys.executable,
+                str(root / "scripts" / "perf_harness.py"),
+                "run",
+                "--full",
+                "--out",
+                str(fresh),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if measured.returncode != 0:
+            detail = (measured.stderr or measured.stdout).strip()
+            return (False, detail.splitlines()[-1] if detail else "measurement failed")
+        compare = subprocess.run(
+            [
+                sys.executable,
+                str(root / "scripts" / "perf_harness.py"),
+                "compare",
+                "--input",
+                str(fresh),
+                "--enforce",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    compare_text = (compare.stdout or compare.stderr).strip()
+    summary = next(
+        (line for line in reversed(compare_text.splitlines()) if "regression" in line.lower()),
+        compare_text.splitlines()[-1] if compare_text else "no output",
+    )
+    return (compare.returncode == 0, summary)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     status = subparsers.add_parser("status", help="show Optimus and Hermes parity versions")
     status.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     subparsers.add_parser("validate", help="validate versioning files without requiring parity")
-    subparsers.add_parser("gate", help="require complete Hermes parity")
+    subparsers.add_parser(
+        "gate", help="ADR-0069 native release bar: ledger + no self-regression"
+    )
+    subparsers.add_parser(
+        "hermes-scorecard", help="informational Hermes comparison (never a gate)"
+    )
     subparsers.add_parser("release-check", help="block false parity claims and numeric version collisions")
     capture = subparsers.add_parser("capture-hermes", help="freeze a machine inventory of the tracked Hermes target")
     capture.add_argument("--hermes-bin", default="hermes")
@@ -1161,8 +1273,14 @@ def main(argv: list[str] | None = None, *, root: Path = ROOT) -> int:
             print_status(result)
             return 0 if not result.errors else 1
         if args.command == "gate":
+            return native_gate(root)
+        if args.command == "hermes-scorecard":
+            print(
+                "INFORMATIONAL (ADR-0069): Hermes comparison is a scorecard, "
+                "not the release bar."
+            )
             print_status(result)
-            return 0 if result.ready else 1
+            return 0
         if args.command == "release-check":
             failures = release_errors(result)
             print_status(result)

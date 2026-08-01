@@ -44,10 +44,21 @@ COST_REASON = (
     "offline scripted provider is credential-free and unbilled; "
     "cost-per-success requires a live-provider run"
 )
-GATING_NOTE = (
-    "informational: ADR-0069 is Proposed; these numbers gate nothing "
-    "until it is accepted"
-)
+def load_release_bar() -> dict:
+    return json.loads(MANIFEST.read_text(encoding="utf-8")).get("release_bar", {})
+
+
+def gating_note() -> str:
+    """What these numbers mean, derived from the manifest, never guessed."""
+    if load_release_bar().get("adr") == "ADR-0069":
+        return (
+            "release bar: ADR-0069 native — `just release-gate` enforces "
+            "compare against the committed same-machine baseline"
+        )
+    return (
+        "informational: ADR-0069 is Proposed; these numbers gate nothing "
+        "until it is accepted"
+    )
 
 
 class HarnessError(RuntimeError):
@@ -419,11 +430,11 @@ def build_result(scenarios: list[dict], samples: int, seeds: int, binary_info: d
             "samples_per_scenario": samples,
             "distinct_seeds": seeds,
             "protocol_compliant": compliant,
-            "note": GATING_NOTE
+            "note": gating_note()
             if compliant
             else f"quick mode ({samples} samples/{seeds} seeds) is below the "
             f"protocol minimum ({rules['minimum_paired_samples_per_scenario']}/"
-            f"{rules['minimum_distinct_seeds_per_scenario']}); {GATING_NOTE}",
+            f"{rules['minimum_distinct_seeds_per_scenario']}); {gating_note()}",
         },
         "scenarios": scenarios,
     }
@@ -501,7 +512,8 @@ def compare_results(current: dict, baseline: dict, rules: dict, enforce: bool) -
             if not cur_agg or not base_agg or not base_agg.get("p50"):
                 continue
             ratio = round(cur_agg["p50"] / base_agg["p50"], 4)
-            threshold = rules[threshold_key]
+            tolerance = float(load_release_bar().get("self_regression_tolerance", 1.0))
+            threshold = round(rules[threshold_key] * tolerance, 4)
             regressed = ratio > threshold
             verdict = "REGRESSION" if regressed else "ok"
             lines.append(
@@ -516,7 +528,7 @@ def compare_results(current: dict, baseline: dict, rules: dict, enforce: bool) -
         "enforced regression gate: "
         + ("FAILED" if (enforced and regressions) else "not triggered")
     )
-    lines.append(GATING_NOTE)
+    lines.append(gating_note())
     return lines, 1 if (enforced and regressions) else 0
 
 

@@ -22,9 +22,10 @@ validated_by:
 
 # ADR-0069: Release is measured against Optimus, not Hermes
 
-- **Status:** Proposed (owner acceptance required — this re-defines what
-  "release" means)
+- **Status:** Accepted
 - **Date:** 2026-08-01
+- **Accepted:** 2026-08-01 by owner instruction, recorded at the acceptance
+  land.
 
 ## Context
 

@@ -1172,7 +1172,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "35f55bf3e3f81efb1ad316b059ddd49bb48081c245ef7de0ae30af91e977720d",
+      "content_sha256": "50942dbef4bfed364fc1821da8337dba213ab9e98d46c741a89837e20a06ff46",
       "headings": [],
       "id": "repository-readme",
       "path": "README.md",
@@ -4654,7 +4654,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "9ea65b9cbcd13c1606858f711aa09d8483f80cd2c7935121ec4080ad3bf57499",
+      "content_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "headings": [
         "ADR-0069: Release is measured against Optimus, not Hermes",
         "Context",
@@ -4675,7 +4675,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "8f58d2701b50cf1c91e37b4ab5a4e63ccba735e6ad8c15d0726b00ca0688d948",
+      "content_sha256": "ed7e29d957fb9f8c6b94dd6c4254d7a59d98d8d8b16f64031cfea63248ad70a1",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -7003,7 +7003,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "2c6e58317fd46fd361486c72dc692b6074f136ffbf27cc51f029af6ebd9a0a4c",
+  "documents_sha256": "54976840d6165e44f5b909bd32cbcf260451ecc07b74b066a12f5733c8aa7c71",
   "routes": [
     {
       "id": "docs.navigation",

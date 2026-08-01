@@ -14,6 +14,58 @@ from unittest import mock
 import optimus_version as versioning
 
 
+class NativeGateTest(unittest.TestCase):
+    """ADR-0069: the release bar is Optimus-native; Hermes is a scorecard."""
+
+    def test_hermes_scorecard_is_informational_and_never_blocks(self) -> None:
+        result = subprocess.run(
+            ["python3", str(versioning.ROOT / "scripts" / "optimus_version.py"), "hermes-scorecard"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("INFORMATIONAL (ADR-0069)", result.stdout)
+
+    def test_native_gate_names_every_bar(self) -> None:
+        result = subprocess.run(
+            ["python3", str(versioning.ROOT / "scripts" / "optimus_version.py"), "gate"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertIn("NATIVE RELEASE GATE (ADR-0069)", result.stdout)
+        for bar in ("version-files-valid", "parity-ledger", "performance-no-regression"):
+            self.assertIn(bar, result.stdout)
+
+    def test_missing_baseline_is_a_named_blocker(self) -> None:
+        # Hermetic: a temp root without a committed baseline. Never touch the
+        # real tree — a deleted tracked file races every parallel gate that
+        # fingerprints the repository.
+        with tempfile.TemporaryDirectory() as temp:
+            passed, detail = versioning.performance_bar(Path(temp))
+        self.assertFalse(passed)
+        self.assertIn("no committed performance baseline", detail)
+
+    def test_foreign_fingerprint_blocks_release_claims(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            arch = root / "docs" / "architecture"
+            arch.mkdir(parents=True)
+            (arch / "perf-baseline.json").write_text(
+                '{"machine_fingerprint": "not-this-machine"}', encoding="utf-8"
+            )
+            scripts = root / "scripts"
+            scripts.mkdir()
+            real = versioning.ROOT / "scripts" / "perf_harness.py"
+            (scripts / "perf_harness.py").write_text(
+                real.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            passed, detail = versioning.performance_bar(root)
+        self.assertFalse(passed)
+        self.assertIn("not this machine", detail)
+
+
 class VersioningHelpersTest(unittest.TestCase):
     def test_short_and_long_options_never_share_an_id(self) -> None:
         self.assertEqual(versioning.option_id("-q"), "short-q")

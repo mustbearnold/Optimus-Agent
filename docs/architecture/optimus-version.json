@@ -135,5 +135,16 @@
         ]
       }
     ]
+  },
+  "release_bar": {
+    "adr": "ADR-0069",
+    "kind": "optimus-native",
+    "bars": [
+      "parity-ledger",
+      "performance-no-regression",
+      "version-files-valid"
+    ],
+    "self_regression_tolerance": 1.1,
+    "tolerance_note": "Sequential same-machine self-comparison carries scheduler and page-set noise the paired Hermes protocol was designed to cancel; ratios within 10% of baseline are not regressions."
   }
 }
