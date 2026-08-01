@@ -558,11 +558,17 @@
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
+    "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
+      "binding_sha256": "7d83ec30b75fb5e630f7f05fa4e8f3acd2b76bb9e1e4f59c8f1deeb5d16a64b1",
+      "document_sha256": "656a5cc0322c9a9ec30d22e9d07e2c7803f93f400b958190d95f618133cb976c",
+      "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
+      "resolved_files": 12
+    },
     "decisions-readme": {
-      "binding_sha256": "3176f2d59a14bed726821423af782c916c34a32a8c0668c7e6e10b36d7983ef2",
-      "document_sha256": "927053d31e0b2224e4a13b9a84fab3cb081008cb03154bba73b5a09f1b9b8175",
+      "binding_sha256": "6c388156e080c25e28a9b738f99fd1e0c7572256a27bf1117a97acb25e9a85eb",
+      "document_sha256": "8ab4bf0d45ed44cf07fb70a86582926a032af565f828570f6d91c3ce0246c05e",
       "path": "docs/decisions/README.md",
-      "resolved_files": 79
+      "resolved_files": 80
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "130f2ed7fa7565ed207b853a8a8ff50625af4df37face987a30549bb56fb5108",

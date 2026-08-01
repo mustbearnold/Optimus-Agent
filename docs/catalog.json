@@ -4794,7 +4794,41 @@
     },
     {
       "authority": "record",
-      "content_sha256": "927053d31e0b2224e4a13b9a84fab3cb081008cb03154bba73b5a09f1b9b8175",
+      "content_sha256": "656a5cc0322c9a9ec30d22e9d07e2c7803f93f400b958190d95f618133cb976c",
+      "headings": [
+        "ADR-0075: A block owns its lifecycle; rows only paint it",
+        "Context",
+        "What the terminal is today (Confirmed current behaviour)",
+        "Decision",
+        "1. The block contract",
+        "2. The event contract",
+        "3. The animation contract",
+        "4. Keyboard reconciliation",
+        "5. What is buildable now, honestly",
+        "6. Delivery phases and file impact",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests",
+        "Explicit non-claims"
+      ],
+      "id": "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it",
+      "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
+      "plane": "decision",
+      "review_by": "2026-11-02",
+      "reviewed_on": "2026-08-02",
+      "status": "current",
+      "summary": "The terminal becomes a structured workbench of typed blocks driven by typed domain events — a block carries identity and lifecycle, rendered rows are only its projection, one animation clock owns all motion, and every block kind that lacks a real event source is labelled planned rather than scaffolded as working.",
+      "title": "ADR-0075: A block owns its lifecycle; rows only paint it",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "8ab4bf0d45ed44cf07fb70a86582926a032af565f828570f6d91c3ce0246c05e",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -7162,7 +7196,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "66c03e48f1ace10ad10bf5edebb2ee9aa1c7521a02a5d7b060d65f257da42556",
+  "documents_sha256": "9b3df08a65b930d53235505af26b41fe6d30d17154301a8ede6bc5ede3d32b6c",
   "routes": [
     {
       "id": "docs.navigation",
