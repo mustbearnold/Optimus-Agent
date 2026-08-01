@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "649bb985796344c84203c5d87cc5c773e037249ba739ea8bc3b07bb84cd510b8",
+      "binding_sha256": "d7b8c0ddbd6d117186ca6b04d007be21903af366c60e8254ea29dcb4f9f26d89",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 350
+      "resolved_files": 354
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "de90a95ab34ee160f9e904e58cba5763510a59881493035ec326545a5ab6eac9",
@@ -655,13 +655,13 @@
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "462a7a9abf93c2985912963e9801dbe5eb4043cc3a99e87a04ee3959021d4020",
+      "binding_sha256": "c43eebb5254332a71b6438a4aae58e4b94e06b45588bb9960b39e82b2fd938b0",
       "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 23
     },
     "repository-components": {
-      "binding_sha256": "41cde0369f2b36f00f5669dc5483f2cbab8e3930ce86ad78f0453c7cb1dcb38c",
+      "binding_sha256": "3842249afa5293ec36925eeade8802bbb81e4b462be58f4c1e7b783b7977dd66",
       "document_sha256": "ada3df616a79be4853f6141a7f93e26ecb581adb6aeccbb64329cb421ce65c92",
       "path": "docs/repository-components.md",
       "resolved_files": 29

@@ -5185,6 +5185,26 @@
     },
     {
       "authority": "record",
+      "content_sha256": "af288d24f6645348ce53ba8c7bdcd055312385eee45a46859fd2be82078c24e5",
+      "headings": [
+        "Rust test-layer practice check — 2026-08-01",
+        "What was checked",
+        "Where this suite sits against that bar",
+        "Non-vacuity check",
+        "Result"
+      ],
+      "id": "evidence-rust-test-layer-practice-2026-08-01",
+      "path": "docs/evidence/rust-test-layer-practice-2026-08-01.md",
+      "plane": "evidence",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Dated check of current Rust integration-testing practice and dev-dependency maturity, made before building the first integration test layer for optimus-ops, with the reasons the layer follows house style rather than the tooling the wider ecosystem now recommends.",
+      "title": "Rust test-layer practice check — 2026-08-01",
+      "type": "evidence"
+    },
+    {
+      "authority": "record",
       "content_sha256": "d76ef6cc210d6e1cde1bb683e159396b0d5c18cb23ac91a12e673349ac306a16",
       "headings": [
         "S+++ all-marks review board — 2026-07-25",
@@ -7029,7 +7049,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "51059f301dcfc5b479b8ad60a71427f7a42018b5178f75d4c575b2d4f323deed",
+  "documents_sha256": "e5c75f4abb350344ffae8ed33d609bbe243b2b508e91b00babaeb99b43d837ab",
   "routes": [
     {
       "id": "docs.navigation",
