@@ -10,8 +10,12 @@ contract. This gate diffs the ledger against the registry source, so:
   * a new dispatchable tool that lands without joining the ledger (and so
     without a real dispatch test) turns the gates red;
   * a new scaffold that lands without a refusal check turns the gates red;
-  * the pinned counts move only together with the ledger, in one commit —
-    the counter cannot drift backwards silently.
+  * the dispatchable pin moves only together with the ledger, in one commit,
+    so the count cannot drift silently;
+  * the scaffold set is a real ratchet — it may only shrink. ADR-0068 §1
+    holds that a catalog row exists only when its tool dispatches, so a new
+    refusing row is refused here by name rather than waved through by an
+    integer bump.
 
 The suite itself re-asserts the same closure at runtime against
 `builtin_catalog()`; this script is the fast static face of the same law, so
@@ -29,9 +33,25 @@ INVOCATION_RS = ROOT / "crates" / "optimus-packs" / "src" / "invocation.rs"
 PACKS_LIB_RS = ROOT / "crates" / "optimus-packs" / "src" / "lib.rs"
 COVERAGE_RS = ROOT / "crates" / "optimus-kernel" / "tests" / "tool_coverage.rs"
 
-# Move these only together with the coverage ledger, in the same commit.
+# Dispatchable tools are meant to grow. The pin makes each arrival an explicit
+# act — move it together with the coverage ledger, in the same commit.
 PINNED_DISPATCHABLE = 18
-PINNED_UNAVAILABLE = 4
+
+# The declared scaffolds that remain. This set may only shrink — do NOT add
+# entries. ADR-0068 §1 holds that a catalog row exists only when its tool
+# dispatches: a refusing row is presented to the model as an affordance, spends
+# prompt budget on a schema that cannot execute, and turns intent into a refusal
+# instead of an honest absence. Shipping a tool for real deletes its line, which
+# is how `vision_analyze` left this set. Nothing here is permanent — the set is
+# empty once the last four ship.
+SCAFFOLDS_REMAINING = frozenset(
+    {
+        "clarify",
+        "desktop_click",
+        "desktop_screenshot",
+        "desktop_type",
+    }
+)
 
 
 def parse_dispatchable(invocation_source: str) -> set[str]:
@@ -61,6 +81,7 @@ def evaluate(
     unavailable: set[str],
     exercised: set[str],
     refused: set[str],
+    ceiling: frozenset[str] = SCAFFOLDS_REMAINING,
 ) -> list[str]:
     failures: list[str] = []
     for name in sorted(dispatchable - exercised):
@@ -89,11 +110,16 @@ def evaluate(
             f"{PINNED_DISPATCHABLE} — move PINNED_DISPATCHABLE together with the "
             "ledger and its tests, in this commit"
         )
-    if len(unavailable) != PINNED_UNAVAILABLE:
+    for name in sorted(unavailable - ceiling):
         failures.append(
-            f"registry declares {len(unavailable)} scaffolds but the pin says "
-            f"{PINNED_UNAVAILABLE} — move PINNED_UNAVAILABLE together with the "
-            "ledger, in this commit"
+            f"registry declares a new scaffold {name!r} — SCAFFOLDS_REMAINING may "
+            "only shrink. ADR-0068: a catalog row must dispatch or not exist, so "
+            "ship the tool with a dispatch test rather than declare a refusal"
+        )
+    for name in sorted(ceiling - unavailable):
+        failures.append(
+            f"stale pin: {name!r} is no longer a registry scaffold — delete its "
+            "line from SCAFFOLDS_REMAINING"
         )
     if not dispatchable:
         failures.append("parsed zero dispatchable tools — the parser lost the source")
@@ -116,7 +142,7 @@ def main() -> int:
         return 1
     print(
         f"tool-coverage: {len(dispatchable)} dispatchable exercised, "
-        f"{len(unavailable)} scaffolds refused, "
+        f"{len(unavailable)} scaffolds refused (shrink-only), "
         f"{len(dispatchable) + len(unavailable)} classified — OK"
     )
     return 0

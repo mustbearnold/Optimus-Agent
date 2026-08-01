@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "e50887431d58fb421f13ef3735dd77d87e7900aaf3786a82bfc0dfdb3a56ee20",
+      "binding_sha256": "589f394d8e229b14c48ecbcdefd8ab794cbd36d9be2415bb09364d82ece6bfd8",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 337
@@ -517,7 +517,7 @@
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "15d12453049b4e28440ab4bdb9f02bdd8f16c5e927b9e86e2e44551187ba434f",
+      "binding_sha256": "a7fe1c56f98de59fbf2fd0ecd283713f55d65237a441b533bd3e5d5dd24a8f53",
       "document_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
