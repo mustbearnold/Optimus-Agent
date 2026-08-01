@@ -87,6 +87,7 @@ const METHOD_DOMAINS: &[(&str, Domain, Option<ScopePolicy>)] = &[
     ("skills_deprecate", Domain::Consoles, None),
     ("memory_list", Domain::Consoles, None),
     ("memory_recall", Domain::Consoles, None),
+    ("memory_search", Domain::Consoles, Some(ScopePolicy::Host)),
     ("memory_correct", Domain::Consoles, None),
     ("memory_forget", Domain::Consoles, None),
     ("packs_state", Domain::Consoles, None),
@@ -232,6 +233,7 @@ mod tests {
         ("skills_deprecate", Domain::Consoles, None),
         ("memory_list", Domain::Consoles, None),
         ("memory_recall", Domain::Consoles, None),
+        ("memory_search", Domain::Consoles, Some(ScopePolicy::Host)),
         ("memory_correct", Domain::Consoles, None),
         ("memory_forget", Domain::Consoles, None),
         ("packs_state", Domain::Consoles, None),
@@ -296,5 +298,24 @@ mod tests {
                 }
             }
         }
+    }
+
+    // `memory_search` reads the claim ledger through the fixed console write
+    // context, which never consults `project_id`. Declaring Host keeps a
+    // caller from passing a project id that would be silently ignored — the
+    // console would answer from a different scope than the caller asked for.
+    #[test]
+    fn memory_search_is_host_scoped_and_refuses_a_project_id() {
+        let home = tempfile::tempdir().unwrap();
+        let err = handle_ipc(
+            &home.path().to_path_buf(),
+            "memory_search",
+            json!({ "query": "kettle", "project_id": "p1" }),
+        )
+        .unwrap_err();
+        assert_eq!(
+            err,
+            "method memory_search is host-scoped and does not accept project_id"
+        );
     }
 }

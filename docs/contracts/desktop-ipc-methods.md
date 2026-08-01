@@ -48,7 +48,7 @@ Artifacts: `artifacts_list`, `artifacts_put_text`, `artifacts_get`,
 `artifacts_export_zip`
 
 Consoles (program P26): `skills_list`, `skills_pin`, `skills_deprecate`,
-`memory_list`, `memory_recall`, `memory_correct`, `memory_forget`,
+`memory_list`, `memory_recall`, `memory_search`, `memory_correct`, `memory_forget`,
 `packs_state`, `packs_activate`, `packs_deactivate`, `logs_tail`,
 `commands_list`
 

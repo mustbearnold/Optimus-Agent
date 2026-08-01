@@ -10,6 +10,8 @@ review_by: 2026-10-31
 knowledge_type: memory-map
 owns:
   - crates/optimus-memory/src/lib.rs
+  - crates/optimus-memory/src/text_recall.rs
+  - crates/optimus-memory/src/redaction.rs
   - crates/optimus-kernel/src/session.rs
   - crates/optimus-ops/src/gateway.rs
   - crates/optimus-ops/src/cron.rs
@@ -20,6 +22,8 @@ watches:
   - crates/optimus-skills/src/**
 covers:
   - crates/optimus-memory/src/lib.rs
+  - crates/optimus-memory/src/text_recall.rs
+  - crates/optimus-memory/src/redaction.rs
   - crates/optimus-kernel/src/session.rs
   - crates/optimus-ops/src/gateway.rs
   - crates/optimus-ops/src/cron.rs
@@ -28,8 +32,10 @@ covers:
 depends_on:
   - docs/decisions/0002-memory-invariants.md
   - docs/decisions/0004-metamemory-mvp.md
+  - docs/decisions/0072-a-retrieval-index-narrows-but-never-authorizes.md
 validated_by:
   - crates/optimus-memory/tests/metamemory_mvp.rs
+  - crates/optimus-memory/tests/text_recall_contracts.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js
   - crates/optimus-skills/tests/skills_lifecycle.rs
@@ -50,7 +56,7 @@ last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 | Gateway state | Confirmed current behaviour | `gateway.db` plus JSON adapter directories | Authoritative leased message attempts, terminal outbox JSON, and the outbound send obligations owed by terminal turns (ADR-0070), with reconciled file materializations; not semantic memory. |
 | Engineering Memory | Confirmed current behaviour | repository `docs/`, `skills/`, `.engineering-memory/` | Development knowledge for building Optimus; never loaded as an authorization source (P13: no grant-from-EM API; domain gate forbids it). |
 | Project knowledge | Unknown or unresolved behaviour | no implemented owner | Source-backed Aipedia or other target-project knowledge is not implemented as a distinct subsystem. |
-| Retrieval indexes | Unknown or unresolved behaviour | no implemented owner | No vector, embedding, full-text, graph, reranking, or GPU index exists in the workspace. |
+| Retrieval indexes | Partial | `optimus-memory::text_recall` (`claims_fts`), `optimus-kernel::session` (`sessions_fts`) | Two SQLite FTS5 lexical indexes exist: claim text and session text. Neither authorizes — `claims_fts` yields candidates that are re-read and re-gated against `claims` (ADR-0072). No vector, embedding, graph, reranking, or GPU index exists in the workspace. |
 
 ## Runtime memory contract
 
@@ -72,6 +78,19 @@ and returns an evidence packet with citation IDs. Purpose and sensitivity are
 filtered before limiting/conflict recomputation. Action authorization is denied
 as an allowed use.
 
+**Confirmed current behaviour:** `recall_text` answers free text instead of an
+exact subject/predicate pair, over a `claims_fts` FTS5 index of
+`(subject, predicate, object)`. The index supplies candidate ids only; every
+candidate is re-read from `claims` and passed through the same scope, knowledge-
+start, tombstone, erasure, sensitivity, and allowed-use gates as exact recall, so
+a stale or edited index cannot surface a claim the store would refuse. Action
+authorization is denied here too. Unlike `recall`, knowledge-closed claims are
+returned rather than filtered: each hit carries a `standing` of `current`,
+`not_yet_valid`, `expired`, or `superseded`, plus a `retention_due` flag, and
+nothing stale can outrank anything current. The packet reports `truncated` but
+never a candidate count, which would disclose the existence of claims above the
+caller's clearance (ADR-0072).
+
 **Confirmed current behaviour:** correction closes the superseded claim's
 transaction-time interval and inserts a new claim linked to the old one while
 preserving sensitivity. Tombstone hides payloads from recall; privacy erase
@@ -81,15 +100,23 @@ Feedback records external outcomes; it does not silently rewrite the claim.
 
 ## Retrieval behavior
 
-**Confirmed current behaviour:** retrieval is SQLite query/filter/order logic.
-It is deterministic for a fixed database and query. The kernel's
-`memory_recall` tool passes subject and predicate and serializes the returned
-packet into tool text.
+**Confirmed current behaviour:** retrieval is SQLite query/filter/order logic,
+including the FTS5 lexical index. It is deterministic for a fixed database and
+query. The kernel's `memory_recall` tool passes subject and predicate and
+serializes the returned packet into tool text; the host's `memory_search` console
+method passes free text and returns hits carrying `standing` and
+`retention_due`.
 
-**Unknown or unresolved behaviour:** relevance ranking, fuzzy semantic search,
-query expansion, vector similarity, temporal scoring, deduplication across
-paraphrases, source ranking, context packing, stale-claim detection, and
-knowledge-graph traversal are not implemented.
+**Confirmed current behaviour:** lexical relevance ranking is BM25 over the
+claim text index, and stale-claim detection is bitemporal: `standing` is computed
+from knowledge time first and world time second, and sorts above the lexical
+score so a better-matching stale claim never displaces a current one. Free text
+is stripped to alphanumeric tokens and prefix-matched, so FTS5 operators in a
+search box reach the store as ordinary words.
+
+**Unknown or unresolved behaviour:** fuzzy semantic search, query expansion,
+vector similarity, temporal scoring, deduplication across paraphrases, source
+ranking, context packing, and knowledge-graph traversal are not implemented.
 
 **Planned behaviour:** add replaceable CPU-first adapters and optional GPU
 acceleration only after fixture-backed relevance/correctness evaluation. GPU and
@@ -107,7 +134,7 @@ CPU results need tolerance/equivalence tests and explicit fallback telemetry.
 | Retention | Confirmed: optional per-claim UTC deadline and explicit deterministic retention application; compaction, archival, and quota remain absent. |
 | Invalidation | Partial: corrections are bitemporal; source-driven invalidation is absent. |
 | Deduplication | Partial: exact claim identity/conflict grouping exists; semantic deduplication is absent. |
-| Deletion | Confirmed for memory claims: scoped idempotent tombstone and payload-overwriting privacy erase with sanitized audit events. Repository-wide deletion remains unresolved. |
+| Deletion | Confirmed for memory claims: scoped idempotent tombstone and payload-overwriting privacy erase with sanitized audit events. Tombstone, erase, and the retention sweep each delete the claim's `claims_fts` row inside the transaction that closes the claim, and the index backfill skips already-forgotten rows, so no derived copy of erased text survives. Repository-wide deletion remains unresolved. |
 | Evaluation | Partial: memory unit/integration tests exist; precision/recall/temporal benchmark suites do not. |
 
 ## Known risks and debt

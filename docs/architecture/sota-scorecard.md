@@ -66,6 +66,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - HTTP browser SSRF without CDP (program P23)
 - Thinking blocks separate from assistant text + timed tool lifecycle cards (program P24)
 - Session FTS, archive/unarchive, durable pins + sort (program P24)
+- Memory FTS: free-text claim recall (`memory_search`) with per-hit standing/provenance, no new dependency (ADR-0072)
 - Artifacts gallery, filters, export + bulk zip (program P25)
 - Cron create/pause/resume/remove/history workbench (program P25)
 - Skills/memory/packs consoles + redacted logs + command palette (program P26)
@@ -98,6 +99,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns: sequential WriteFile/RunCommand plus leased child-agent coordinator (S7)
 - Gateway: SQLite authority + config-gated live Telegram long-poll (`optimus gateway telegram run`) + Telegram mock + Discord/Slack mock enqueue (live Discord/Slack residual)
+- Retrieval: two SQLite FTS5 lexical indexes (`sessions_fts`, `claims_fts`); the claim index narrows only — every hit is re-authorized against `claims` and labelled with its bitemporal standing (ADR-0072). No vector, embedding, graph, reranking, or GPU index.
 - Capabilities: PRODUCT-COMPLETE + S7/Track Z scaffolds; Hermes gate not claimed
 - Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 

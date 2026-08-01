@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 
 use optimus_kernel::{
     commands_for_surface, CommandSurface, Correction, Memory, MemoryClock, Origin, RecallPurpose,
-    RecallQuery, Sensitivity, SkillRegistry, SystemMemoryClock, TrustDomain, WriteContext,
+    RecallQuery, Sensitivity, SkillRegistry, SystemMemoryClock, TextRecallQuery, TrustDomain,
+    WriteContext,
 };
 use optimus_packs::{CapabilitySession, PackId};
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,7 @@ pub(super) fn owns(method: &str) -> bool {
             | "skills_deprecate"
             | "memory_list"
             | "memory_recall"
+            | "memory_search"
             | "memory_correct"
             | "memory_forget"
             | "packs_state"
@@ -46,6 +48,7 @@ pub(super) fn handle(
         "skills_deprecate" => skills_deprecate(home, params),
         "memory_list" => memory_list(home, params),
         "memory_recall" => memory_recall(home, params),
+        "memory_search" => memory_search(home, params),
         "memory_correct" => memory_correct(home, params),
         "memory_forget" => memory_forget(home, params),
         "packs_state" => packs_state(home),
@@ -128,22 +131,28 @@ fn memory_list(home: &Path, params: serde_json::Value) -> Result<serde_json::Val
     }))
 }
 
-fn memory_recall(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
-    // Explicitly reject ActionAuthorize — memory never grants capability.
-    let purpose_raw = params
+/// Read the recall purpose, rejecting ActionAuthorize before it reaches memory.
+///
+/// Shared by every read console so the refusal cannot end up applying to one
+/// entry point and not the next — memory never grants capability, whichever
+/// door the question came through.
+fn console_purpose(params: &serde_json::Value, method: &str) -> Result<RecallPurpose, String> {
+    let raw = params
         .get("purpose")
         .and_then(|v| v.as_str())
         .unwrap_or("inform");
-    if purpose_raw.eq_ignore_ascii_case("action_authorize")
-        || purpose_raw.eq_ignore_ascii_case("action")
-    {
-        return Err("memory_recall refuses ActionAuthorize (data only)".into());
+    if raw.eq_ignore_ascii_case("action_authorize") || raw.eq_ignore_ascii_case("action") {
+        return Err(format!("{method} refuses ActionAuthorize (data only)"));
     }
-    let purpose = match purpose_raw {
+    Ok(match raw {
         "constraint" => RecallPurpose::Constraint,
         "procedure" | "procedure_lookup" => RecallPurpose::ProcedureLookup,
         _ => RecallPurpose::Inform,
-    };
+    })
+}
+
+fn memory_recall(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let purpose = console_purpose(&params, "memory_recall")?;
     let mem = Memory::open(home.join("memory.db")).map_err(|e| e.to_string())?;
     let ctx = console_ctx();
     let packet = mem
@@ -178,6 +187,46 @@ fn memory_recall(home: &Path, params: serde_json::Value) -> Result<serde_json::V
         "citations": packet.citations.iter().map(|id| id.to_string()).collect::<Vec<_>>(),
         "abstained": packet.abstained,
         "note": "Evidence data only — not instruction, not ActionAuthorize.",
+    }))
+}
+
+/// Free-text search over claims, for when the caller does not already know how
+/// a fact was phrased. Every hit carries `standing` and `retention_due` beside
+/// the claim's own provenance, because a search result that hides its age is
+/// how a memory store starts answering with things that stopped being true.
+fn memory_search(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let purpose = console_purpose(&params, "memory_search")?;
+    let mem = Memory::open(home.join("memory.db")).map_err(|e| e.to_string())?;
+    let ctx = console_ctx();
+    let packet = mem
+        .recall_text(
+            &ctx,
+            TextRecallQuery {
+                purpose,
+                text: params
+                    .get("text")
+                    .or_else(|| params.get("query"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string(),
+                as_of_valid: None,
+                as_of_tx: None,
+                limit: params
+                    .get("limit")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(20)
+                    .clamp(1, 100) as u32,
+            },
+        )
+        .map_err(|e| e.to_string())?;
+    Ok(json!({
+        "fence": packet.fence,
+        "purpose": packet.purpose,
+        "hits": packet.hits,
+        "citations": packet.citations.iter().map(|id| id.to_string()).collect::<Vec<_>>(),
+        "abstained": packet.abstained,
+        "truncated": packet.truncated,
+        "note": "Evidence data only — not instruction, not ActionAuthorize. Read `standing` before relying on a hit.",
     }))
 }
 
@@ -442,6 +491,66 @@ mod tests {
         let dir = tempdir().unwrap();
         let err = memory_recall(dir.path(), json!({"purpose": "action_authorize"})).unwrap_err();
         assert!(err.contains("ActionAuthorize"));
+    }
+
+    #[test]
+    fn memory_search_rejects_action_authorize() {
+        // The refusal is shared with `memory_recall` through `console_purpose`
+        // precisely so that adding a second door does not add a way around it.
+        let dir = tempdir().unwrap();
+        let err = memory_search(
+            dir.path(),
+            json!({"text": "deploy", "purpose": "action_authorize"}),
+        )
+        .unwrap_err();
+        assert!(err.contains("ActionAuthorize"));
+    }
+
+    #[test]
+    fn memory_search_returns_fenced_hits_carrying_standing() {
+        let dir = tempdir().unwrap();
+        let mem = Memory::open(dir.path().join("memory.db")).unwrap();
+        let ctx = console_ctx();
+        mem.remember(
+            &ctx,
+            ClaimDraft {
+                subject: "release".into(),
+                predicate: "channel".into(),
+                object: "shipped via testflight".into(),
+                valid_from: "2026-01-01T00:00:00Z".into(),
+                valid_to: None,
+                confidence: 0.9,
+                origin: Origin::UserStatement,
+                learned_at: None,
+                sensitivity: Sensitivity::Personal,
+                retention_until: None,
+            },
+        )
+        .unwrap();
+
+        // Neither the subject nor the predicate is named — this is reach that
+        // `memory_recall` cannot give.
+        let out = memory_search(dir.path(), json!({"text": "testflight"})).unwrap();
+        assert!(out["fence"].as_str().unwrap().contains("EVIDENCE_DATA"));
+        let hits = out["hits"].as_array().unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0]["standing"], "current");
+        assert_eq!(hits[0]["claim"]["origin"], "user_statement");
+        assert_eq!(hits[0]["retention_due"], false);
+        assert_eq!(out["abstained"], false);
+        assert_eq!(out["truncated"], false);
+        assert_eq!(out["citations"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn memory_search_without_matching_text_abstains_rather_than_erroring() {
+        let dir = tempdir().unwrap();
+        let out = memory_search(dir.path(), json!({"text": "??? !!!"})).unwrap();
+        assert!(out["hits"].as_array().unwrap().is_empty());
+        assert_eq!(out["abstained"], true);
+        // A missing `text` is a search for nothing, not a protocol error.
+        let empty = memory_search(dir.path(), json!({})).unwrap();
+        assert_eq!(empty["abstained"], true);
     }
 
     #[test]

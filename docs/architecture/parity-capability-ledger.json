@@ -27,7 +27,8 @@
    "thesis_axis": "project-integrity",
    "state": "win",
    "evidence": [
-    "crates/optimus-memory/tests/metamemory_mvp.rs"
+    "crates/optimus-memory/tests/metamemory_mvp.rs",
+    "crates/optimus-memory/tests/text_recall_contracts.rs"
    ],
    "trajectory": "cargo:optimus-memory/metamemory_mvp",
    "owner_ticket": "HOLD"

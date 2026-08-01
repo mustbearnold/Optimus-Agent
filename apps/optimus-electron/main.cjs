@@ -101,6 +101,7 @@ const DESKTOP_METHODS = new Set([
   'skills_deprecate',
   'memory_list',
   'memory_recall',
+  'memory_search',
   'memory_correct',
   'memory_forget',
   'packs_state',

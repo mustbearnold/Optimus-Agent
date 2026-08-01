@@ -236,7 +236,13 @@ cover all provider/OAuth adapter calls.
 
 **Confirmed current behaviour:** native desktop uses a custom origin and Wry IPC.
 A frozen method/domain table rejects unknown IPC methods. Worker pools and
-queues are bounded.
+queues are bounded. Each row also carries an optional project-scope declaration
+enforced before the handler runs: a `Host` method refuses a `project_id` rather
+than accepting one it would ignore, and a `Project` method refuses to run
+without one naming an authorized scope. `memory_search` is the first asserted
+row (`Host`); the remaining methods are still undeclared and pass through
+untouched, tracked by the shrink-only allowlist in
+`scripts/check-project-scope-assertions.py` (criterion C2).
 
 **Confirmed current behaviour:** desktop HTTP test mode and gateway HTTP bind to
 `127.0.0.1` only and require separate 32-character bearer tokens. Desktop HTTP

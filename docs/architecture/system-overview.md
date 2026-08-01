@@ -138,7 +138,7 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
 | `crates/optimus-graph` | Confirmed current behaviour | Job/node/effect domain and state-transition helpers. |
 | `crates/optimus-store` | Confirmed current behaviour | Versioned SQLite jobs, nodes, exact-action approval decisions, cancellation requests, effect attempts, atomic transitions, quarantine state, and ordered append-only events. |
-| `crates/optimus-memory` | Confirmed current behaviour | SQLite evidence-native claim ledger, bitemporal correction, scoped recall, conflict sets, injected monotonic clock, sensitivity/allowed-use gates, retention, tombstone/privacy erase, sanitized audit events, and evidence packets. |
+| `crates/optimus-memory` | Confirmed current behaviour | SQLite evidence-native claim ledger, bitemporal correction, scoped recall, non-authorizing FTS5 free-text recall with per-hit standing, conflict sets, injected monotonic clock, sensitivity/allowed-use gates, retention, tombstone/privacy erase, sanitized audit events, and evidence packets. |
 | `crates/optimus-skills` | Confirmed current behaviour | SQLite versioned procedural-skill registry with closed permissions, outcome counts, promotion, pinning, and deprecation. |
 
 ## Control plane and orchestration
@@ -389,8 +389,11 @@ views, detects conflicting objects, returns citations, and rejects
 
 **Confirmed current behaviour:** current recall is deterministic SQLite
 filtering and ordering by scope, optional exact subject/predicate, and temporal
-fields. There is no embedding, vector search, reranker, knowledge graph, or GPU
-retrieval implementation in the workspace.
+fields. Free-text recall adds a `claims_fts` FTS5 lexical index that supplies
+candidate ids only: every candidate is re-read from `claims` and re-gated, and
+each hit carries the bitemporal standing that ranks stale below current
+(ADR-0072). There is no embedding, vector search, reranker, knowledge graph, or
+GPU retrieval implementation in the workspace.
 
 **Confirmed current behaviour:** memory default transaction and event times use
 an injected UTC monotonic clock. Sensitivity and allowed-use filters apply before

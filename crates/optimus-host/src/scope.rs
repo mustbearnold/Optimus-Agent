@@ -5,7 +5,8 @@
 //! enforces the declaration before any handler runs, so an asserted method
 //! cannot silently operate outside (or ignore) a project scope. Methods with
 //! no declaration yet are unasserted — tracked by the shrinking allowlist in
-//! scripts/check-project-scope-assertions.py, which counts assertions 0→82.
+//! scripts/check-project-scope-assertions.py. A method born after the
+//! allowlist was seeded cannot be added to it, so it must declare at birth.
 
 use std::path::Path;
 
@@ -13,8 +14,9 @@ use optimus_kernel::ProjectAuthorityStore;
 
 /// A method's declared relationship to project scope. Declared in
 /// `router::METHOD_DOMAINS`; enforced by [`enforce`] at dispatch.
-// Variants are constructed by per-method conversions in METHOD_DOMAINS; until
-// the first assertion lands they appear only in tests. Drop the allow then.
+// Variants are constructed by per-method conversions in METHOD_DOMAINS.
+// `Host` is asserted there (`memory_search`); `Project` still appears only in
+// tests, so the allow stays until the first project-scoped conversion lands.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ScopePolicy {

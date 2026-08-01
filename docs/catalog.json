@@ -2468,7 +2468,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "d3463ead9b578cdeb562ba408a9d6ba19b79be63aca245ec2f8fbbdef77e7803",
+      "content_sha256": "d57ea71ab784ca9b3be933be16ff27b40b7decb811b1377e1c97a3ff431465b9",
       "headings": [
         "Optimus vs Hermes — evidence-backed SOTA scorecard",
         "Current ledger summary",
@@ -2492,7 +2492,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "c656d6c99449e66927b0615f810efc14e463b67dfa43245c9eb965ed342faf8a",
+      "content_sha256": "7d94685c3ac7aeacf1ca335bdbaabb6cacfe959feeaf837c57f4f74363901f5a",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
@@ -2589,7 +2589,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "38d8d10f18fe302d3c76fb98d7dc3f47edaef350a57a052ec2bc3d84e6c6a76b",
+      "content_sha256": "f722e3bfffa0f14e3c964d6c72b577d3c7d698412ed463ab677e4f27b4535be2",
       "headings": [
         "Desktop IPC method inventory (frozen for shell migration)",
         "Registry methods (`ipc/router.rs`)",
@@ -4727,7 +4727,33 @@
     },
     {
       "authority": "record",
-      "content_sha256": "bfa8903406308cfaea83a2356e25e6bea9bf334848be37a3c6d0321540183bdf",
+      "content_sha256": "08c075ea2b18380e4ad01bd9570589b043f3134c5876c2ee14692622da284ae2",
+      "headings": [
+        "ADR-0072: A retrieval index narrows, but never authorizes",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0072-a-retrieval-index-narrows-but-never-authorizes",
+      "path": "docs/decisions/0072-a-retrieval-index-narrows-but-never-authorizes.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Free-text memory recall is SQLite FTS5 over claim text, and the index is a candidate list only — every hit is re-read from claims and re-authorized, erasure deletes the index row in the same transaction that closes the claim, and a stale claim is returned labelled with its standing rather than silently dropped or silently trusted.",
+      "title": "ADR-0072: A retrieval index narrows, but never authorizes",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "95a97cedbc77051b1e3ab29303e8bee818ef63636c7fa664aceb6a3d25c92b87",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5447,7 +5473,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "2c2a10ef793c3dc23173a2d299d0ad195801f89194efe54b63a4478711674257",
+      "content_sha256": "513fc2f99b7973c9ac04bd58dd3a7f89f28810331a79f8f7e4cc765eae5d65f6",
       "headings": [
         "Memory and retrieval map",
         "Separation",
@@ -5540,7 +5566,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "f87e7ef6e020afea10cbac4bee6cbca53f79eeb3b44363f5d9f55c89cc5f781c",
+      "content_sha256": "5fd4ac70716f4b963ae158813d65dc07a3708c907fb9e98f7f0ef569ce8a928f",
       "headings": [
         "Security and approval boundaries",
         "Trust-boundary map",
@@ -7095,7 +7121,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "18c6562813edcad29157b6349998d7de8153cd2fba6ab6f6624eda7ab4cbf47d",
+  "documents_sha256": "7b4da329f5b3e26129fe85bf27f6845a3f81b7b627334951e8d74e38afeeb0fb",
   "routes": [
     {
       "id": "docs.navigation",

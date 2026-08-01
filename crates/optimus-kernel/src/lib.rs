@@ -52,7 +52,7 @@ use std::{cell::Cell, collections::BTreeSet};
 
 pub use optimus_memory::{
     ClaimDraft, ClaimView, Correction, EvidencePacket, Memory, MemoryClock, Origin, RecallPurpose,
-    RecallQuery, Sensitivity, SystemMemoryClock, TrustDomain, WriteContext,
+    RecallQuery, Sensitivity, SystemMemoryClock, TextRecallQuery, TrustDomain, WriteContext,
 };
 pub use optimus_skills::{SkillDraft, SkillRegistry, SkillView};
 use serde::{Deserialize, Serialize};

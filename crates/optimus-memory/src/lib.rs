@@ -10,6 +10,10 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
+mod redaction;
+mod text_recall;
+pub use text_recall::{ClaimStanding, TextRecallHit, TextRecallPacket, TextRecallQuery};
+
 #[derive(Debug, Error)]
 pub enum MemoryError {
     #[error("sqlite: {0}")]
@@ -218,8 +222,8 @@ pub struct AuditEvent {
 }
 
 pub struct Memory {
-    conn: Connection,
-    clock: Arc<dyn MemoryClock>,
+    pub(crate) conn: Connection,
+    pub(crate) clock: Arc<dyn MemoryClock>,
 }
 
 impl Memory {
@@ -296,6 +300,7 @@ impl Memory {
             "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', '2')",
             [],
         )?;
+        text_recall::ensure_text_index(&conn)?;
         Ok(Self { conn, clock })
     }
 
@@ -592,116 +597,6 @@ impl Memory {
         Ok(out)
     }
 
-    pub fn tombstone(&self, ctx: &WriteContext, id: Uuid) -> Result<bool> {
-        let prior = self.get_claim(id)?;
-        self.ensure_scope(ctx, &prior.scope)?;
-        self.ensure_sensitivity(ctx, prior.sensitivity)?;
-        if prior.tombstoned_at.is_some() || prior.erased {
-            return Ok(false);
-        }
-        let at = self.clock.now();
-        let transaction = self.conn.unchecked_transaction()?;
-        let changed = transaction.execute(
-            "UPDATE claims SET tombstoned_at=?1,in_conflict=0
-             WHERE id=?2 AND tombstoned_at IS NULL AND erased=0",
-            params![at, id.to_string()],
-        )?;
-        if changed == 1 {
-            append_ledger_on(
-                &transaction,
-                ctx,
-                "claim_tombstoned",
-                &serde_json::json!({"id": id}),
-                &self.clock.now(),
-            )?;
-        }
-        transaction.commit()?;
-        Ok(changed == 1)
-    }
-
-    pub fn privacy_erase(&self, ctx: &WriteContext, id: Uuid) -> Result<bool> {
-        let prior = self.get_claim(id)?;
-        self.ensure_scope(ctx, &prior.scope)?;
-        self.ensure_sensitivity(ctx, prior.sensitivity)?;
-        if prior.erased {
-            return Ok(false);
-        }
-        let at = self.clock.now();
-        let transaction = self.conn.unchecked_transaction()?;
-        let changed = transaction.execute(
-            "UPDATE claims SET
-                subject='[erased]',predicate='[erased]',object='[erased]',
-                valid_from='[erased]',valid_to=NULL,tx_to=NULL,
-                allowed_uses_json='[]',supersedes=NULL,in_conflict=0,
-                retention_until=NULL,tombstoned_at=?1,erased=1
-             WHERE id=?2 AND erased=0",
-            params![at, id.to_string()],
-        )?;
-        if changed == 1 {
-            append_ledger_on(
-                &transaction,
-                ctx,
-                "claim_erased",
-                &serde_json::json!({"id": id}),
-                &self.clock.now(),
-            )?;
-        }
-        transaction.commit()?;
-        Ok(changed == 1)
-    }
-
-    pub fn apply_retention(&self, ctx: &WriteContext, as_of: &str) -> Result<usize> {
-        if as_of.trim().is_empty() {
-            return Err(MemoryError::Invariant(
-                "retention evaluation time cannot be empty".into(),
-            ));
-        }
-        let mut statement = self.conn.prepare(
-            "SELECT id,sensitivity FROM claims
-             WHERE tenant=?1 AND user_id=?2 AND project=?3
-               AND retention_until IS NOT NULL AND retention_until <= ?4
-               AND tombstoned_at IS NULL AND erased=0
-             ORDER BY id",
-        )?;
-        let rows = statement
-            .query_map(params![ctx.tenant, ctx.user, ctx.project, as_of], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
-            })?;
-        let mut ids = Vec::new();
-        for row in rows {
-            let (id, sensitivity) = row?;
-            let sensitivity: Sensitivity =
-                serde_json::from_value(serde_json::Value::String(sensitivity))?;
-            if sensitivity <= ctx.max_sensitivity {
-                ids.push(id);
-            }
-        }
-        drop(statement);
-        if ids.is_empty() {
-            return Ok(0);
-        }
-        let transaction = self.conn.unchecked_transaction()?;
-        let mut changed = 0usize;
-        for id in &ids {
-            changed += transaction.execute(
-                "UPDATE claims SET tombstoned_at=?1,in_conflict=0
-                 WHERE id=?2 AND tombstoned_at IS NULL AND erased=0",
-                params![as_of, id],
-            )?;
-        }
-        if changed > 0 {
-            append_ledger_on(
-                &transaction,
-                ctx,
-                "retention_applied",
-                &serde_json::json!({"as_of": as_of, "claim_ids": ids, "count": changed}),
-                &self.clock.now(),
-            )?;
-        }
-        transaction.commit()?;
-        Ok(changed)
-    }
-
     pub fn audit_events(&self, ctx: &WriteContext, limit: u32) -> Result<Vec<AuditEvent>> {
         let mut statement = self.conn.prepare(
             "SELECT seq,event_id,kind,created_at FROM ledger
@@ -785,6 +680,9 @@ impl Memory {
                 retention_until,
             ],
         )?;
+        // Every path that adds a claim comes through here, so the index cannot
+        // fall behind the store by someone forgetting to update it.
+        text_recall::index_claim(&self.conn, id, subject, predicate, object)?;
         Ok(())
     }
 
@@ -836,7 +734,7 @@ impl Memory {
         append_ledger_on(&self.conn, ctx, kind, payload, &self.clock.now())
     }
 
-    fn ensure_scope(&self, ctx: &WriteContext, scope: &Scope) -> Result<()> {
+    pub(crate) fn ensure_scope(&self, ctx: &WriteContext, scope: &Scope) -> Result<()> {
         if scope.tenant != ctx.tenant || scope.user != ctx.user || scope.project != ctx.project {
             return Err(MemoryError::WriteDenied(
                 "cannot correct claim outside authenticated scope".into(),
@@ -845,7 +743,11 @@ impl Memory {
         Ok(())
     }
 
-    fn ensure_sensitivity(&self, ctx: &WriteContext, sensitivity: Sensitivity) -> Result<()> {
+    pub(crate) fn ensure_sensitivity(
+        &self,
+        ctx: &WriteContext,
+        sensitivity: Sensitivity,
+    ) -> Result<()> {
         if sensitivity > ctx.max_sensitivity {
             return Err(MemoryError::WriteDenied(
                 "claim sensitivity exceeds principal clearance".into(),
@@ -855,7 +757,7 @@ impl Memory {
     }
 }
 
-fn append_ledger_on(
+pub(crate) fn append_ledger_on(
     connection: &Connection,
     ctx: &WriteContext,
     kind: &str,
@@ -900,7 +802,7 @@ fn write_gate(ctx: &WriteContext, origin: Origin) -> Result<(TrustDomain, Vec<Al
     Ok((trust, allowed))
 }
 
-fn purpose_allowed_use(purpose: RecallPurpose) -> AllowedUse {
+pub(crate) fn purpose_allowed_use(purpose: RecallPurpose) -> AllowedUse {
     match purpose {
         RecallPurpose::Inform => AllowedUse::Inform,
         RecallPurpose::Constraint => AllowedUse::Constraint,
@@ -980,7 +882,7 @@ fn dedupe_latest(mut claims: Vec<ClaimView>) -> Vec<ClaimView> {
     best.into_values().collect()
 }
 
-fn row_to_claim(row: &rusqlite::Row<'_>) -> rusqlite::Result<ClaimView> {
+pub(crate) fn row_to_claim(row: &rusqlite::Row<'_>) -> rusqlite::Result<ClaimView> {
     let id = Uuid::parse_str(&row.get::<_, String>(0)?).map_err(|e| {
         rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
     })?;
