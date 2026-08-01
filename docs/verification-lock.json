@@ -73,7 +73,7 @@
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "5094be83fff321dc7f112530ca3b7ae7b6523f54baec940aab579e323db8062e",
+      "binding_sha256": "8d68830c78629e92d7467204b9e9bac587c7525bd5e62cabf024c2674f8a0d90",
       "document_sha256": "7d94685c3ac7aeacf1ca335bdbaabb6cacfe959feeaf837c57f4f74363901f5a",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "5b63e44619506d5fb5786ddf7749429e2e92c44c25693f2a10d53d9662bfff27",
+      "binding_sha256": "8281caf6f2d3cbc6e45c238ef88f5dc823ce2c8db82cbf37e677bbd5fc2a1ca1",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 362
@@ -253,7 +253,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "a426e2f3c782df8d49374cf096bf24defad402578f5c534e5765d127fd6a4f94",
+      "binding_sha256": "6a50235aa3df3ae93fa356804929dbaa1bbdaaf305de61cdba15396bf008b240",
       "document_sha256": "e707a52dbe8dad51c74781e1f4b4b14e8607951b5f173e9296fa3ffae6e07d04",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -265,19 +265,19 @@
       "resolved_files": 5
     },
     "decisions-0019-capability-files-and-unified-campaign-authority": {
-      "binding_sha256": "8200d0ae0884b42a25596128eb35547b344cf172e4cdfb02c8bbc3306fb9537e",
+      "binding_sha256": "4fb6ff84c336c41da727c68c1adb082427e994ea1a28846088d3be2b04b21ee7",
       "document_sha256": "2cf6d5179f5390d89728eccf8da4714cb89f407447e8e67312a5d983a590f8ce",
       "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "resolved_files": 12
     },
     "decisions-0020-work-graph-integrity-and-loopback-security": {
-      "binding_sha256": "8d3ad39b79a2cbc3419c40a3435266a5424ff1cee20eca61a62b597f85bff4c9",
+      "binding_sha256": "2f77414509f15bda6b1e68030d79cf3003c15c5cfcb477d998ce74214759e114",
       "document_sha256": "297f16ce48239f7230d0487b1a46a5076579e2e115581f018cf1f9259eacb09e",
       "path": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "resolved_files": 17
     },
     "decisions-0021-owned-execution-and-causal-delivery": {
-      "binding_sha256": "55e8cacb77717fa917be1fa841a4fde2a375f562cd4bce79da26f4a4d5c58802",
+      "binding_sha256": "6a047a73bf33be5daa62d077c28fa705e93e76bcf37794043624d2b9ac082c46",
       "document_sha256": "4e26f83257506fb9f260a6d0954680f186361d6114656a57b68bb8af7e4f26cc",
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "resolved_files": 26
@@ -355,7 +355,7 @@
       "resolved_files": 9
     },
     "decisions-0034-control-plane-crate-peels": {
-      "binding_sha256": "9b0e0edc4b639722d8d8d25ad4fa4253cd39ccc66efa96adef21693143ca6cd5",
+      "binding_sha256": "156bb1fa54e4b98be1672a8e0f89dfb3d2854bdd6f3134d1aff23f65c34d11e2",
       "document_sha256": "91511f1bee4a4365ddb706e9ba236e4a027ef12953f7dfe9473a7e308f8518b4",
       "path": "docs/decisions/0034-control-plane-crate-peels.md",
       "resolved_files": 23
@@ -529,7 +529,7 @@
       "resolved_files": 11
     },
     "decisions-0064-temporal-project-knowledge-is-derived-provenance": {
-      "binding_sha256": "2fd0093a0c9da294996213222543db5e5a060765188b88bedd79fd189ee41a2f",
+      "binding_sha256": "f1a6274114626341457284e57eb6209462ec21ed4aff3d179e981d525becbc73",
       "document_sha256": "e96e777722a9cd086113850b595d6c122df1ea5ef2868de52cb9599047d5bf28",
       "path": "docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md",
       "resolved_files": 8
@@ -607,7 +607,7 @@
       "resolved_files": 0
     },
     "engineering-memory-readme": {
-      "binding_sha256": "c3023b176750458096b6737d0d7dfa8dd42e75fb23d768da5439cd2c55901865",
+      "binding_sha256": "e628987d27867bdd06216326caa0bbd88cc18e8e4f6f543b608cf134d711e187",
       "document_sha256": "72035b3bd6cf80c521563788a82bcd345d283eec82b9e046ef8bc906ce4a5816",
       "path": "docs/engineering-memory/README.md",
       "resolved_files": 9
@@ -661,20 +661,20 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "5e9c2202f5eec81ddbaec668c888f916111ad26d30898a4f38f5a71345ef44f5",
+      "binding_sha256": "89a74650e49bc7d4d0aed8b2733512ca754254f9f0eae8c71eb3c7d19e4c8367",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "64c8f529c681d1e5da871fd4e7846bc152f37ec1c9d6a589f05f0710b1162efb",
+      "binding_sha256": "c4140668788e5c2698b07c6c4fbcec8fe9b22b9ba705f863c72825f6626ced03",
       "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 23
     },
     "repository-components": {
-      "binding_sha256": "297f4c6dce4750e4a6f6bcff84f6d057a2ff42388d74218c6baa57c71fc24678",
-      "document_sha256": "ada3df616a79be4853f6141a7f93e26ecb581adb6aeccbb64329cb421ce65c92",
+      "binding_sha256": "d7a96c0eb0fbc51c9ed04054dc1911614cc1052b4d8baa7d3fec178839a3cfb7",
+      "document_sha256": "e8b025e4a057c43a61cb7bd82aab025f8af94943fd621f5677d412208dbba5b4",
       "path": "docs/repository-components.md",
       "resolved_files": 29
     },

@@ -38,6 +38,13 @@ the meanings those manifests cannot express: storage location, concern,
 distribution, lifecycle, retention, common misconceptions, paired components,
 generated-output destination, and removal criteria.
 
+One manifest fact is mirrored rather than described: `default_member` states
+whether a workspace member belongs to `[workspace].default-members`. A row that
+narrates its own build participation in prose can drift from `Cargo.toml`
+silently; a declared boolean cannot. The field is omitted where the row claims
+default membership, and set to `false` on the three members a bare `cargo
+build` deliberately skips.
+
 ## Agent startup
 
 Run:
@@ -63,9 +70,10 @@ queryable.
 
 The documentation contract fails closed when a new top-level domain, app,
 crate, evaluation suite, or developer skill lacks classification. It also
-rejects manifest disagreement, broken component relationships, generated
-output aimed into Repository, expired rollback/incubation reviews, stale
-generated views, and failed fresh-agent orientation cases.
+rejects manifest disagreement, default-membership disagreement in either
+direction, broken component relationships, generated output aimed into
+Repository, expired rollback/incubation reviews, stale generated views, and
+failed fresh-agent orientation cases.
 
 Executable source outranks the database when they disagree. Such disagreement
 is a red gate to repair, not permission to silently trust either claim.

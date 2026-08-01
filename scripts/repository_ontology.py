@@ -98,6 +98,22 @@ def workspace_packages(root: Path = ROOT) -> dict[str, str]:
     return packages
 
 
+def workspace_default_members(root: Path, members: dict[str, str]) -> set[str]:
+    """Member paths a bare `cargo build` compiles.
+
+    Cargo reads an absent `default-members` as every member, so a workspace that
+    never narrows the set makes no exclusion claim for a component row to match.
+    """
+    try:
+        manifest = tomllib.loads((root / "Cargo.toml").read_text(encoding="utf-8"))
+    except OSError:
+        return set(members)
+    workspace = manifest.get("workspace", {})
+    if "default-members" not in workspace:
+        return set(members)
+    return {Path(member).as_posix() for member in workspace["default-members"]}
+
+
 def npm_packages(root: Path = ROOT) -> dict[str, str]:
     packages: dict[str, str] = {}
     for path in (root / "apps").glob("*/package.json"):
@@ -227,12 +243,33 @@ def validate_database(payload: dict[str, Any], root: Path = ROOT) -> list[dict[s
             errors.append(f"unclassified {parent} components: " + ", ".join(missing))
 
     rust_packages = workspace_packages(root)
+    default_members = workspace_default_members(root, rust_packages)
     for path, package in rust_packages.items():
         component = by_path.get(path)
         if component is None:
             errors.append(f"manifest package is not classified: {path}")
-        elif component.get("package") != package:
+            continue
+        component_id = str(component.get("id", ""))
+        if component.get("package") != package:
             errors.append(f"{path}: package claim does not match manifest ({package})")
+        declared = component.get("default_member", True)
+        if not isinstance(declared, bool):
+            errors.append(f"{component_id}: default_member must be boolean")
+        elif declared and path not in default_members:
+            errors.append(
+                f"{component_id}: Cargo.toml drops {path} from default-members "
+                "while the row still claims default membership"
+            )
+        elif not declared and path in default_members:
+            errors.append(
+                f"{component_id}: row declares default_member false "
+                f"while Cargo.toml default-members keeps {path}"
+            )
+    for component in components:
+        if "default_member" in component and str(component.get("path", "")) not in rust_packages:
+            errors.append(
+                f"{component.get('id')}: default_member belongs to workspace members only"
+            )
     for path, package in npm_packages(root).items():
         component = by_path.get(path)
         field = "npm_package" if path in rust_packages else "package"

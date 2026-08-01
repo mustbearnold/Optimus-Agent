@@ -34,7 +34,6 @@ default-members = [
     "crates/optimus-artifacts",
     "crates/optimus-agent",
     "crates/optimus-workflow",
-    "crates/optimus-engineering",
     "crates/optimus-kernel",
     "crates/optimus-eval",
     "apps/optimus-cli",

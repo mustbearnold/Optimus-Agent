@@ -173,6 +173,7 @@
     },
     {
       "concern": "product-interface",
+      "default_member": false,
       "distribution": "binary",
       "id": "optimus-desktop",
       "lifecycle": "primary",
@@ -436,6 +437,7 @@
     },
     {
       "concern": "product-runtime",
+      "default_member": false,
       "distribution": "transitive",
       "id": "optimus-browser",
       "lifecycle": "optional",
@@ -454,6 +456,7 @@
     },
     {
       "concern": "development-tooling",
+      "default_member": false,
       "distribution": "repository-only",
       "id": "optimus-engineering",
       "lifecycle": "incubating",
@@ -6229,7 +6232,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "ada3df616a79be4853f6141a7f93e26ecb581adb6aeccbb64329cb421ce65c92",
+      "content_sha256": "e8b025e4a057c43a61cb7bd82aab025f8af94943fd621f5677d412208dbba5b4",
       "headings": [
         "Repository component authority",
         "Agent startup",
@@ -7121,7 +7124,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "7b4da329f5b3e26129fe85bf27f6845a3f81b7b627334951e8d74e38afeeb0fb",
+  "documents_sha256": "fa2a660dbb98382f1005de544cb90223b559dc77d808f7257b35fe8bf52a9a87",
   "routes": [
     {
       "id": "docs.navigation",

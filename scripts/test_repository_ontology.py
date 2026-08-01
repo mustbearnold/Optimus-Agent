@@ -97,6 +97,90 @@ class RepositoryOntologyTests(unittest.TestCase):
                 with self.assertRaisesRegex(ontology.OntologyError, "does not match manifest"):
                     ontology.validate_database(payload, root)
 
+    def workspace(self, root: Path, default_members: str) -> None:
+        (root / "crates" / "example").mkdir(parents=True)
+        (root / "Cargo.toml").write_text(
+            '[workspace]\nmembers = ["crates/example"]\n'
+            f"default-members = [{default_members}]\n",
+            encoding="utf-8",
+        )
+
+    def validate_example(self, root: Path, payload: dict[str, object]) -> None:
+        with mock.patch.object(ontology, "git_files", return_value=[]), mock.patch.object(
+            ontology, "workspace_packages", return_value={"crates/example": "example"}
+        ), mock.patch.object(ontology, "npm_packages", return_value={}):
+            ontology.validate_database(payload, root)
+
+    def test_declared_exclusion_must_be_a_real_exclusion(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "components": [
+                component("root", "."),
+                component("crate", "crates/example", package="example", default_member=False),
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.workspace(root, '"crates/example"')
+            with self.assertRaisesRegex(ontology.OntologyError, "default-members keeps"):
+                self.validate_example(root, payload)
+
+    def test_silent_exclusion_from_default_members_is_rejected(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "components": [
+                component("root", "."),
+                component("crate", "crates/example", package="example"),
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.workspace(root, "")
+            with self.assertRaisesRegex(ontology.OntologyError, "still claims default membership"):
+                self.validate_example(root, payload)
+
+    def test_agreeing_default_membership_validates(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "components": [
+                component("root", "."),
+                component("crate", "crates/example", package="example", default_member=False),
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.workspace(root, "")
+            self.validate_example(root, payload)
+
+    def test_default_member_on_a_non_member_row_is_rejected(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "components": [component("root", ".", default_member=False)],
+        }
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            ontology, "git_files", return_value=[]
+        ), mock.patch.object(ontology, "workspace_packages", return_value={}), mock.patch.object(
+            ontology, "npm_packages", return_value={}
+        ):
+            with self.assertRaisesRegex(ontology.OntologyError, "workspace members only"):
+                ontology.validate_database(payload, Path(directory))
+
+    def test_absent_default_members_key_claims_no_exclusion(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "components": [
+                component("root", "."),
+                component("crate", "crates/example", package="example"),
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "crates" / "example").mkdir(parents=True)
+            (root / "Cargo.toml").write_text(
+                '[workspace]\nmembers = ["crates/example"]\n', encoding="utf-8"
+            )
+            self.validate_example(root, payload)
+
     def test_generated_wiki_is_deterministic(self) -> None:
         payload = {"schema_version": 1, "components": [component("root", ".")]}
         self.assertEqual(ontology.wiki(copy.deepcopy(payload)), ontology.wiki(payload))
