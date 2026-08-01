@@ -29,6 +29,7 @@ pub enum ToolInvocation {
     BrowserNavigate,
     BrowserSnapshot,
     BrowserClick,
+    VisionAnalyze,
     Unavailable,
 }
 
@@ -101,6 +102,7 @@ impl ToolInvocation {
         Self::BrowserNavigate,
         Self::BrowserSnapshot,
         Self::BrowserClick,
+        Self::VisionAnalyze,
     ];
 
     pub fn canonical_id(self) -> Option<&'static str> {
@@ -126,6 +128,7 @@ impl ToolInvocation {
             Self::BrowserNavigate => Some("browser_navigate"),
             Self::BrowserSnapshot => Some("browser_snapshot"),
             Self::BrowserClick => Some("browser_click"),
+            Self::VisionAnalyze => Some("vision_analyze"),
             Self::Unavailable => None,
         }
     }
@@ -153,6 +156,7 @@ impl ToolInvocation {
             Self::BrowserNavigate => Some(ToolPolicy::Browser),
             Self::BrowserSnapshot => Some(ToolPolicy::Browser),
             Self::BrowserClick => Some(ToolPolicy::Browser),
+            Self::VisionAnalyze => Some(ToolPolicy::Media),
             Self::Unavailable => None,
         }
     }
@@ -176,6 +180,9 @@ impl ToolInvocation {
             Self::Terminal | Self::WebSearch | Self::BrowserNavigate | Self::BrowserClick => {
                 ReplayClass::ExternalNondeterministic
             }
+            // A vision sub-call is a model completion: same inputs may phrase
+            // the analysis differently, and no external state is mutated.
+            Self::VisionAnalyze => ReplayClass::ModelNondeterministic,
         }
     }
 

@@ -39,6 +39,12 @@ cost, explicit fallback, readiness-based Auto selection, and durable decision
 records. Runtime provider health, measurement-driven cost/latency, and
 evaluation-driven selection are not implemented.
 
+**Confirmed current behaviour:** the `vision_analyze` tool makes its own
+bounded OpenAI-compatible sub-call (env-configured endpoint, public-egress
+enforced, fixture-overridable) outside the turn's route decision, and stamps
+the provider it actually used in its tool envelope. It is a tool effect, not
+a second router.
+
 ## Provider adapters
 
 | Provider | State | Configuration | Tool protocol | Fallback/retry |

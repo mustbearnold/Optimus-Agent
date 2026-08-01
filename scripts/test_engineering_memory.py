@@ -77,6 +77,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "search_content",
                 "skill_resolve",
                 "terminal",
+                "vision_analyze",
                 "web_search",
                 "write_file",
             },

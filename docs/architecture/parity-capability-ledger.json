@@ -559,11 +559,12 @@
    "thesis_axis": "one-core-many-faces",
    "state": "parity",
    "evidence": [
+    "crates/optimus-kernel/src/vision.rs",
     "crates/optimus-ops/src/media_fixtures.rs",
     "crates/optimus-packs/src/lib.rs",
     "docs/architecture/s7-track-z-verification.md"
    ],
-   "trajectory": null,
+   "trajectory": "cargo:optimus-kernel/vision",
    "owner_ticket": "E-01"
   },
   {

@@ -1,6 +1,6 @@
 //! Every advertised tool, executed through the real dispatch path.
 //!
-//! The registry classifies 22 tools; 17 dispatch and 5 are declared
+//! The registry classifies 22 tools; 18 dispatch and 4 are declared
 //! scaffolds. Before this suite, three dispatchable tools (`delete_path`,
 //! `rename_path`, `patch_file`) had no test anywhere that executed them, and
 //! nothing failed when a tool shipped untested — coverage was whatever the
@@ -27,7 +27,7 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 /// Dispatchable tools this suite executes through a real turn.
-const DISPATCHABLE_EXERCISED: [&str; 17] = [
+const DISPATCHABLE_EXERCISED: [&str; 18] = [
     "read_file",
     "search_content",
     "find_files",
@@ -45,15 +45,15 @@ const DISPATCHABLE_EXERCISED: [&str; 17] = [
     "browser_navigate",
     "browser_snapshot",
     "browser_click",
+    "vision_analyze",
 ];
 
 /// Declared scaffolds this suite holds to the typed-refusal contract.
-const UNAVAILABLE_REFUSED: [&str; 5] = [
+const UNAVAILABLE_REFUSED: [&str; 4] = [
     "clarify",
     "desktop_click",
     "desktop_screenshot",
     "desktop_type",
-    "vision_analyze",
 ];
 
 fn open_kernel(home: &std::path::Path) -> Kernel {
@@ -484,6 +484,76 @@ fn browser_chain_succeeds_against_a_public_page() {
             .map(|tail| &tail[..tail.len().min(600)])
             .unwrap_or("<no click outcome recorded at all>")
     );
+}
+
+// ---------------------------------------------------------------------------
+// Vision plane: real dispatch through the media pack. The effector consults
+// {home}/fixtures/vision_analyze.json before any provider, so the success
+// path is deterministic here; the live provider path needs a network tier.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn vision_analyze_dispatches_deterministically_and_types_its_refusals() {
+    let dir = tempdir().unwrap();
+    std::fs::create_dir_all(dir.path().join("fixtures")).unwrap();
+    std::fs::write(
+        dir.path().join("fixtures").join("vision_analyze.json"),
+        r#"{"analysis": "a fixture description of the probe image"}"#,
+    )
+    .unwrap();
+    let mut kernel = open_kernel(dir.path());
+    // A real image on disk: the effector verifies PNG magic, not extensions.
+    let workspace = dir.path().join("workspace");
+    let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+    png.extend_from_slice(&[0u8; 64]);
+    std::fs::write(workspace.join("probe.png"), &png).unwrap();
+
+    let mut model = scripted(vec![
+        tool_step("t1", "activate_pack", json!({"name": "media"})),
+        tool_step(
+            "t2",
+            "vision_analyze",
+            json!({"question": "what is in this image?", "path": "probe.png"}),
+        ),
+        // No image source at all: the refusal must arrive as a typed failed
+        // outcome the model can read — never a panic, never a silent success.
+        tool_step("t3", "vision_analyze", json!({"question": "and this one?"})),
+        done("vision exercised"),
+    ]);
+
+    let result = kernel
+        .turn(&mut model, "analyze the probe image")
+        .expect("vision calls are turn evidence, not turn aborts");
+
+    let invoked: Vec<&str> = result.invoked_tools.iter().map(|t| t.as_str()).collect();
+    assert_eq!(
+        invoked,
+        vec!["activate_pack", "vision_analyze", "vision_analyze"],
+        "vision_analyze must reach real dispatch through the media pack"
+    );
+
+    let evidence = evidence_shown_to_model(&model);
+    assert!(
+        evidence.contains("\"tool_id\":\"vision_analyze\",\"kind\":\"succeeded\""),
+        "the fixture-backed call must settle as a succeeded outcome"
+    );
+    assert!(
+        evidence.contains("a fixture description of the probe image"),
+        "the analysis text must be shown to the model as evidence"
+    );
+    assert!(
+        evidence.contains("\"provider\":\"fixture\""),
+        "a fixture answer must say it is a fixture, not impersonate a provider"
+    );
+    assert!(
+        evidence.contains("\"tool_id\":\"vision_analyze\",\"kind\":\"failed\""),
+        "the sourceless call must fail typed while the turn continues"
+    );
+    assert!(
+        evidence.contains("vision_invalid_arguments"),
+        "the refusal must carry its typed code so the model can repair the call"
+    );
+    assert_eq!(result.assistant_text, "vision exercised");
 }
 
 // ---------------------------------------------------------------------------

@@ -66,7 +66,6 @@ UNCLASSIFIED_TRAJECTORIES = frozenset(
         "gateway.telegram",
         "gateway.ui",
         "mcp.client",
-        "media.vision-image",
         "media.voice",
         "memory.ui",
         "migration.hermes",

@@ -38,6 +38,7 @@ mod tool_dispatch;
 mod tool_report;
 mod trace;
 mod turn_loop;
+mod vision;
 mod web_search;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};

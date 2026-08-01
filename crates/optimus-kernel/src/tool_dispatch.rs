@@ -485,6 +485,16 @@ impl Kernel {
                 }
                 result
             }
+            ToolInvocation::VisionAnalyze => {
+                // The transport carries no image blocks (Message.content is a
+                // plain String), so the effector makes its own bounded HTTP
+                // sub-call and returns the provider's text analysis. Image
+                // paths ride the same FsRoots confinement as read_file.
+                let roots = FsRoots::new(self.project_roots.clone())
+                    .map_err(|error| KernelError::Tool(format!("vision_analyze: {error}")))?;
+                crate::vision::vision_analyze_json(self.home(), &roots, &call.arguments)
+                    .map_err(|error| KernelError::Tool(error.to_string()))
+            }
             ToolInvocation::Unavailable => Err(KernelError::Tool(format!(
                 "tool is unavailable: {}",
                 call.name
