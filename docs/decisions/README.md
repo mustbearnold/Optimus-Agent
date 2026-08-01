@@ -93,6 +93,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0064 | Temporal project knowledge is derived provenance | Accepted | Git event history, semantic lifecycle, and local observations remain separate; generated graphs are disposable and age alone never authorizes deletion. |
 | 0065 | Temporal project knowledge is an embedded database | Accepted | The disposable projection is a transactional SQLite property graph with indexed temporal queries, bounded traversal, read-only SQL, migrations, and integrity gates. |
 | 0066 | Temporal project knowledge is a code-aware interval graph | Accepted | Schema 2 projects event time onto UTC over a topological walk, adds interval-valid package dependency edges, current-tree symbols, author identity, exact content digests, and three further closed cleanup conventions. |
+| 0067 | Managed cleanup fingerprints symlinks without following | Accepted | Symlinks inside a cleanup candidate are fingerprinted by their own metadata and target string and deleted as entries, never followed; a symlink candidate root still refuses. |
 
 ## Known documentary debt
 

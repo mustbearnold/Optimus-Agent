@@ -114,7 +114,9 @@ materialize or refresh the disposable database before reading it.
 - A path is removable only through explicit component policy or a closed,
   structurally verified generated-output convention.
 - Destructive generated-output cleanup requires an exact metadata fingerprint;
-  any change after planning refuses execution.
+  any change after planning refuses execution. Symlinks inside a candidate are
+  fingerprinted by their own metadata and target string and are deleted as
+  entries, never followed; a candidate whose root is a symlink is refused.
 - Worktrees are retired only through the recovery-aware managed retirement
   command; a physical orphan may still contain uncommitted work.
 - Historical paths remain graph nodes after deletion, so removing clutter does

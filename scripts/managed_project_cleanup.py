@@ -51,10 +51,14 @@ def fingerprint(path: Path) -> dict[str, Any]:
         base = Path(current)
         for name in sorted([*dirs, *files]):
             child = base / name
-            if child.is_symlink():
-                raise Refusal(f"cleanup candidate contains a symlink: {child}")
-            stat = child.stat()
             relative = child.relative_to(path).as_posix()
+            if child.is_symlink():
+                stat = child.lstat()
+                record = f"{relative}\0link\0{stat.st_mode}\0{stat.st_mtime_ns}\0{os.readlink(child)}\n"
+                digest.update(record.encode())
+                entries += 1
+                continue
+            stat = child.stat()
             record = f"{relative}\0{stat.st_mode}\0{stat.st_size}\0{stat.st_mtime_ns}\n"
             digest.update(record.encode())
             entries += 1

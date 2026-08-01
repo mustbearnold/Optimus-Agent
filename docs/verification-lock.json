@@ -529,28 +529,34 @@
       "resolved_files": 11
     },
     "decisions-0064-temporal-project-knowledge-is-derived-provenance": {
-      "binding_sha256": "c76e2fc4f68c1c7cc0f78556a5150055154098dc8a13784902a9fe5108edafa1",
+      "binding_sha256": "2fd0093a0c9da294996213222543db5e5a060765188b88bedd79fd189ee41a2f",
       "document_sha256": "e96e777722a9cd086113850b595d6c122df1ea5ef2868de52cb9599047d5bf28",
       "path": "docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md",
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "c78b9f86b73e6bb46c168ad023692abeb99d5e042534917409fcb3d27e2114f9",
+      "binding_sha256": "a5a3d69acc0bf26b4640712f411764306cd14003894fefd727c50ece4cf53d8b",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "bd70636468e788ab18f8f6afa1da22307bbdea357383cfac4056322b77b9ab77",
+      "binding_sha256": "75bb9ad6631b794484bb3406da8fc498c54afb472e09dd946246d780564dad06",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
+    "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
+      "binding_sha256": "aa0b18102b4b366a0a7285371937c5b3f61c69505d54e94bd1cdcd22e0ecebf8",
+      "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
+      "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
+      "resolved_files": 6
+    },
     "decisions-readme": {
-      "binding_sha256": "2b8599036304cbbb263bda781fc00f60a5da5483c91a02d3759bc67526d4f984",
-      "document_sha256": "e8bc49f38e8512aa89bba05422c3c1380a81dcea8713e39c68a3027776a5c387",
+      "binding_sha256": "9cd81e46c0f310848cea80277b4c3b100d4a50a63e1385d6894b83ba82c702c8",
+      "document_sha256": "1bf26ed7d2c8f00bb78cb6c20137dad888a0f1bf637244593d0e4a43e45ed59e",
       "path": "docs/decisions/README.md",
-      "resolved_files": 71
+      "resolved_files": 72
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "7b1a8df579a3a6b3554c9c62381b4cceff0eb2a60362c03cda68c968d7fb9e57",
@@ -625,8 +631,8 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "68e6cb10621997cd2e0e38b198fc41f42ef90c577a7fe84aea898c4299ed3ed6",
-      "document_sha256": "58ea5e706eaaeab41c98859cd4908c9ea26e6c9ced5414899f98fcb934e7634c",
+      "binding_sha256": "34371d0fcacb609b398c9d25df010564cc530ddae9f2279e569f9cb4cce893bf",
+      "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12
     },

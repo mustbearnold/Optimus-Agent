@@ -4611,7 +4611,28 @@
     },
     {
       "authority": "record",
-      "content_sha256": "e8bc49f38e8512aa89bba05422c3c1380a81dcea8713e39c68a3027776a5c387",
+      "content_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
+      "headings": [
+        "ADR-0067: Managed cleanup fingerprints symlinks without following",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Evaluation evidence",
+        "Reconsider when"
+      ],
+      "id": "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following",
+      "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Managed generated-output cleanup fingerprints symlinks by their own metadata and target string and deletes them as entries without following, replacing the blanket symlink refusal that made recommended candidates uncleanable.",
+      "title": "ADR-0067: Managed cleanup fingerprints symlinks without following",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "1bf26ed7d2c8f00bb78cb6c20137dad888a0f1bf637244593d0e4a43e45ed59e",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5951,7 +5972,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "58ea5e706eaaeab41c98859cd4908c9ea26e6c9ced5414899f98fcb934e7634c",
+      "content_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "headings": [
         "Temporal project knowledge",
         "Operator commands",
@@ -6862,7 +6883,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "1f95c41c50fb77b4129f1c37c8f81942a163669b3744a3f10f399224ffb09dd5",
+  "documents_sha256": "5074cde780eafe682313da86792fc8a1e436b826f59df74831d0ab0a8b72b87e",
   "routes": [
     {
       "id": "docs.navigation",
