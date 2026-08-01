@@ -43,6 +43,16 @@ if [ -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]; then
   done
 fi
 
+# Compile caching, shared across worktrees. A fresh checkout otherwise pays
+# the full cold build on its first land (E42.6). Missing sccache changes
+# nothing; OPTIMUS_VERIFY_NO_SCCACHE=1 opts a run out when the compiler
+# itself is under suspicion.
+if [ -z "${RUSTC_WRAPPER:-}" ] && [ -z "${OPTIMUS_VERIFY_NO_SCCACHE:-}" ]; then
+  if command -v sccache >/dev/null 2>&1; then
+    export RUSTC_WRAPPER=sccache
+  fi
+fi
+
 if ! command -v tmux >/dev/null 2>&1; then
   for tmux_bin_dir in \
     "$ROOT/local/tools/tmux-root/usr/bin" \
@@ -81,16 +91,23 @@ else
   R=""; G=""; Y=""; B=""; X=""
 fi
 
+# seconds_since <start> — EPOCHREALTIME delta with one decimal, for the
+# per-stage durations that make evidence logs answer "where does the wall
+# clock go" without a profiler.
+seconds_since() {
+  awk -v a="$1" -v b="$EPOCHREALTIME" 'BEGIN { printf "%.1f", b - a }'
+}
+
 # run <name> <command...>
 run() {
   local name="$1"; shift
   printf '%-46s' "  $name"
-  local out
+  local out started="$EPOCHREALTIME"
   if out=$("$@" 2>&1); then
-    printf '%s\n' "${G}ok${X}"
+    printf '%s (%ss)\n' "${G}ok${X}" "$(seconds_since "$started")"
     PASSED+=("$name")
   else
-    printf '%s\n' "${R}FAIL${X}"
+    printf '%s (%ss)\n' "${R}FAIL${X}" "$(seconds_since "$started")"
     FAILED+=("$name")
     printf '%s\n' "$out" | tail -15 | sed 's/^/      /'
     # Reported *and* returned, so a caller can decline to run the gate that
@@ -152,11 +169,13 @@ spawn() {
   [ -n "$JOBS_DIR" ] || JOBS_DIR="$(mktemp -d)"
   local slug="${#SPAWNED[@]}"
   (
+    started="$EPOCHREALTIME"
     if out=$("$@" 2>&1); then
       printf 'ok' > "$JOBS_DIR/$slug.status"
     else
       printf 'fail' > "$JOBS_DIR/$slug.status"
     fi
+    seconds_since "$started" > "$JOBS_DIR/$slug.duration"
     printf '%s' "$out" > "$JOBS_DIR/$slug.out"
   ) &
   SPAWNED+=("$PENDING_SECTION|$name")
@@ -179,18 +198,19 @@ spawn_dir() {
 reap() {
   [ "${#SPAWNED[@]}" -eq 0 ] && return 0
   wait
-  local slug=0 entry name title status
+  local slug=0 entry name title status duration
   for entry in "${SPAWNED[@]}"; do
     title="${entry%%|*}"
     name="${entry#*|}"
     [ -n "$title" ] && section "$title"
     status="$(cat "$JOBS_DIR/$slug.status" 2>/dev/null || printf 'fail')"
+    duration="$(cat "$JOBS_DIR/$slug.duration" 2>/dev/null || printf '?')"
     printf '%-46s' "  $name"
     if [ "$status" = "ok" ]; then
-      printf '%s\n' "${G}ok${X}"
+      printf '%s (%ss)\n' "${G}ok${X}" "$duration"
       PASSED+=("$name")
     else
-      printf '%s\n' "${R}FAIL${X}"
+      printf '%s (%ss)\n' "${R}FAIL${X}" "$duration"
       FAILED+=("$name")
       tail -15 "$JOBS_DIR/$slug.out" 2>/dev/null | sed 's/^/      /'
     fi

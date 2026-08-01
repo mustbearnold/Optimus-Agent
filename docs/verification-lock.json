@@ -103,7 +103,7 @@
       "resolved_files": 0
     },
     "contributing-artifact-naming": {
-      "binding_sha256": "601031236548c116f6a47bb80bb267e6facd60ce8e467fd13c6106588ba2506f",
+      "binding_sha256": "201de85224a5967662b0140624710c9581bc3663577d1077d256772f319db771",
       "document_sha256": "47cf278408caa091a47b6c23a2fdc48ced1708de81879e8be26e8fc8599d1ddd",
       "path": "docs/contributing/artifact-naming.md",
       "resolved_files": 5
@@ -463,43 +463,43 @@
       "resolved_files": 11
     },
     "decisions-0052-isolated-durable-engineering-runs": {
-      "binding_sha256": "8a3bd8507d991171ccac7dedd0411127aca7dd95ee4af64ce33c6adb89595e56",
+      "binding_sha256": "0137473fa4103e3101c13bb08c94d099dc0e4c123ceae037144dd524759797e8",
       "document_sha256": "93cc24322505a4dfa0a75808b2ab99c94628405a910e74e76fc7e8e904ec86b2",
       "path": "docs/decisions/0052-isolated-durable-engineering-runs.md",
       "resolved_files": 24
     },
     "decisions-0053-a-repository-is-asked-not-assumed": {
-      "binding_sha256": "ae8eb03fa6c57ee7f7e724dc05fbb90011a1eeb6cd5dd721dc31a75322d81eb2",
+      "binding_sha256": "c958a2a7c471b3ea65a840015257df662866475184f5e6b20f2d28340c1c30f5",
       "document_sha256": "8a827c4cf144d82da318d54772bf72f5b92ff5882ea7f28f445707a5a586460f",
       "path": "docs/decisions/0053-a-repository-is-asked-not-assumed.md",
       "resolved_files": 6
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "f700f1607876701b11b1eb4c986525de0632ed94f1e141e75a889e4106712e61",
+      "binding_sha256": "4d24c56b4d2d6aec616d2fd105b6da6346ec900cd0a0e72fa3629cbb3600cdf5",
       "document_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
     },
     "decisions-0055-a-fix-is-proven-at-the-commit-it-fixes": {
-      "binding_sha256": "d418cb3b158abe09bd03cca77dfeea56fe2678d88256fb00ae2ac2d9e52e6648",
+      "binding_sha256": "6f1cb45012f43ef63357a6ea5c4b44a7674bdf2e7fd7cd73c09b9d7d67a7e8aa",
       "document_sha256": "3980b14bc258c35b6d1d8f6bbf5d4a6251f314f2f8a317066dbd16243cc060a3",
       "path": "docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md",
       "resolved_files": 7
     },
     "decisions-0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer": {
-      "binding_sha256": "d6e24c73bb6c9092796a38812d57d312e3559aaded7b9e7e4a240194902e9298",
+      "binding_sha256": "dac0ce89df8d0e0a0b703fca45907dd56ce6040209d2c66ade2d534dc6296b18",
       "document_sha256": "85c311e164e751d11a6093a407caecb34920cedf85d77e9534e398603b941352",
       "path": "docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md",
       "resolved_files": 6
     },
     "decisions-0057-an-issue-earns-its-way-into-a-run": {
-      "binding_sha256": "eaac5e5e523991132d945d55e5a27b489e20aa1c1b94f8c5eccd26d190f44327",
+      "binding_sha256": "c7f4a21122c8b72dedadcdb8e4281c3e10f8fcb859350681f7de33c3a26211a2",
       "document_sha256": "43cbf6ef423489e1c9725fda1f1c10bf348c7d2d1b38a801cef339336e596db9",
       "path": "docs/decisions/0057-an-issue-earns-its-way-into-a-run.md",
       "resolved_files": 7
     },
     "decisions-0058-a-run-publishes-the-sentence-a-human-approved": {
-      "binding_sha256": "646ee3d703746310464397227339018e89ad3484c8c024cd8daf8cf96d73d611",
+      "binding_sha256": "81c8408330d0f97692201f32cdb4d3aea4170067fe8a10401fae17a255463692",
       "document_sha256": "cb324bafc947330c01a13f96a90c9b4fe8a4df6ae5d35560fcbd747e514d20ba",
       "path": "docs/decisions/0058-a-run-publishes-the-sentence-a-human-approved.md",
       "resolved_files": 8
@@ -535,19 +535,19 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "77acdc9c3b0584c1b56366799a75d0a594d2403277c16b572712d234e32e7529",
+      "binding_sha256": "2305cb959898b7f92529b4bc191eae3be4c22f3b34a1acd8c162d7c8e8fb5982",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "c376fefb1d16dc899b47e9261113c4e3c51c4a59a83d45735fd1318822f9666e",
+      "binding_sha256": "93edccf7efb529bb676dc227b5b0bd2b4456e30a47e86d11da23052f3b77f728",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "3072fb5487dbcd56bb2dee017381191062777e1bdea438bde51e39ffee1821c4",
+      "binding_sha256": "5d3eb4253173ba70635e6486819170a4da223ef0d21720c66bc4d484eeb511d2",
       "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
@@ -631,7 +631,7 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "b7bf679b0e86288705919eb4e422ac483195b7bb3d89275cea1e38dfbd6e6da7",
+      "binding_sha256": "2eee8d0aa83fdbab177c60945c052221cacdb8a3235b3f906c813325d96e0eed",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12

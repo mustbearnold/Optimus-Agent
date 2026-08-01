@@ -304,8 +304,8 @@ four rules are recorded in
 | E42.2 | **done** | `just test-changed` — impact-selected tests, non-zero when nothing is selected |
 | E42.3 | **done** | Impact engine (`scripts/impact_select.py`): changed path → package → reverse-dependency closure → packages and non-cargo suites |
 | E42.4 | **done** | Differential regression verification (`DifferentialProver`): the new test runs at the base SHA with only the test carried across, and only fail-then-pass proves the fix |
-| E42.5 | pending | Per-stage duration and failure-rate telemetry |
-| E42.6 | pending | Cache work: `sccache`, shared cargo/npm caches, reused Playwright browsers |
+| E42.5 | done (durations; failure rates stay in land receipts) | Per-stage duration and failure-rate telemetry |
+| E42.6 | done (sccache wrapper, opt-out env; browsers already shared) | Cache work: `sccache`, shared cargo/npm caches, reused Playwright browsers |
 
 **Over-selection is the only safe error (E42.3).** A selector that runs too
 much costs seconds. A selector that runs too little reports *success* from a
