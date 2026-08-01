@@ -28,6 +28,7 @@ use crate::composer::Composer;
 use crate::history::History;
 use crate::preferences::Preferences;
 use crate::transcript::Chrome;
+use crate::workbench::WorkbenchState;
 
 mod approval;
 mod event_adapter;
@@ -94,6 +95,10 @@ struct ActiveTurn {
 pub struct TuiSession {
     pub home: PathBuf,
     pub messages: Vec<Message>,
+    /// The block mirror of `messages`: `workbench.blocks()[i]` describes
+    /// `messages[i]` (ADR-0075 phase 1). Blocks own identity, lifecycle, and
+    /// provenance; the rows stay the compatibility projection that paints.
+    pub workbench: WorkbenchState,
     pub composer: Composer,
     /// Set by `/quit`; the event loop leaves on the next pass.
     pub quit: bool,
@@ -148,6 +153,7 @@ impl TuiSession {
         Self {
             home,
             messages: Vec::new(),
+            workbench: WorkbenchState::default(),
             composer: Composer::new(),
             quit: false,
             history,
@@ -344,11 +350,17 @@ impl TuiSession {
     }
 
     pub fn push(&mut self, role: Role, text: String) {
+        self.workbench.push_note(role, self.active.is_some());
         self.messages.push(Message {
             role,
             text,
             call_id: None,
         });
+        debug_assert_eq!(
+            self.workbench.len(),
+            self.messages.len(),
+            "every row has exactly one block (ADR-0075 phase 1)"
+        );
     }
 
     /// Scroll the transcript `delta` rows away from the tail, clamped to
@@ -1192,5 +1204,225 @@ mod tests {
             "the release must precede the sign-in banner, or the code scrolls \
              past before capture is dropped"
         );
+    }
+
+    // ADR-0075 phase 1: the block mirror.
+    use crate::workbench::{BlockLifecycle, WorkbenchBlockKind};
+
+    /// The phase-1 lockstep invariant: block `i` describes row `i`, shape for
+    /// shape. This is the differential check for the mirror — drop any one
+    /// mirror call from the session and a scripted turn below fails here.
+    fn assert_blocks_mirror_rows(session: &TuiSession) {
+        assert_eq!(session.workbench.len(), session.messages.len());
+        for (block, message) in session.workbench.blocks().iter().zip(&session.messages) {
+            assert_eq!(block.kind.role(), message.role);
+            if let WorkbenchBlockKind::ToolCall { call_id } = &block.kind {
+                assert_eq!(Some(call_id.as_str()), message.call_id.as_deref());
+            }
+        }
+    }
+
+    #[test]
+    fn every_row_has_exactly_one_block_of_the_same_shape() {
+        let (_dir, mut session) = session();
+        session.push(Role::User, "find the sources".into());
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Text("Looking".into())).unwrap();
+        tx.send(TurnUpdate::Tool(tool_step(&tool_event(
+            "started", "", None,
+        ))))
+        .unwrap();
+        session.pump();
+        assert_blocks_mirror_rows(&session);
+        tx.send(TurnUpdate::Tool(tool_step(&tool_event(
+            "succeeded",
+            "Found 3 sources",
+            Some(1200),
+        ))))
+        .unwrap();
+        tx.send(TurnUpdate::Done {
+            session_id: "s-1".into(),
+            text: String::new(),
+        })
+        .unwrap();
+        settle(&mut session);
+        assert_blocks_mirror_rows(&session);
+        let lifecycles: Vec<_> = session
+            .workbench
+            .blocks()
+            .iter()
+            .map(|block| block.lifecycle)
+            .collect();
+        assert_eq!(
+            lifecycles,
+            vec![
+                BlockLifecycle::Succeeded,
+                BlockLifecycle::Succeeded,
+                BlockLifecycle::Succeeded
+            ],
+            "prompt, answer, and tool all settled clean"
+        );
+    }
+
+    #[test]
+    fn a_tool_block_keeps_one_identity_through_its_lifecycle() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Tool(tool_step(&tool_event(
+            "started", "", None,
+        ))))
+        .unwrap();
+        session.pump();
+        let born = session.workbench.blocks()[0].id;
+        tx.send(TurnUpdate::Tool(tool_step(&tool_event(
+            "succeeded",
+            "Found 3 sources",
+            Some(1200),
+        ))))
+        .unwrap();
+        session.pump();
+        assert_eq!(session.workbench.len(), 1, "one call, one block");
+        let block = &session.workbench.blocks()[0];
+        assert_eq!(block.id, born, "identity survives streaming updates");
+        assert_eq!(block.lifecycle, BlockLifecycle::Succeeded);
+        assert_eq!(
+            block.provenance,
+            vec![
+                "run-1:call-1:started".to_string(),
+                "run-1:call-1:succeeded".to_string()
+            ],
+            "the block cites the kernel events that drove it"
+        );
+        tx.send(TurnUpdate::Done {
+            session_id: String::new(),
+            text: String::new(),
+        })
+        .unwrap();
+        settle(&mut session);
+    }
+
+    #[test]
+    fn selection_made_mid_stream_survives_the_rest_of_the_turn() {
+        let (_dir, mut session) = session();
+        session.push(Role::User, "hello".into());
+        let chosen = session.workbench.blocks()[0].id;
+        session.workbench.select(Some(chosen));
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        for delta in ["Hel", "lo ", "back"] {
+            tx.send(TurnUpdate::Text(delta.into())).unwrap();
+        }
+        tx.send(TurnUpdate::Tool(tool_step(&tool_event(
+            "started", "", None,
+        ))))
+        .unwrap();
+        tx.send(TurnUpdate::Done {
+            session_id: String::new(),
+            text: String::new(),
+        })
+        .unwrap();
+        settle(&mut session);
+        assert_eq!(session.workbench.selected(), Some(chosen));
+        assert_eq!(
+            session.workbench.index_of(chosen),
+            Some(0),
+            "selection is semantic identity, not a row index"
+        );
+        assert_blocks_mirror_rows(&session);
+    }
+
+    #[test]
+    fn a_failed_turn_cancels_the_answer_it_interrupted() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Text("half an answ".into())).unwrap();
+        tx.send(TurnUpdate::Failed("provider went away".into()))
+            .unwrap();
+        settle(&mut session);
+        assert_blocks_mirror_rows(&session);
+        assert_eq!(
+            session.workbench.blocks()[0].lifecycle,
+            BlockLifecycle::Cancelled,
+            "an interrupted stream is not blessed as a success"
+        );
+        assert_eq!(
+            session.workbench.blocks()[1].lifecycle,
+            BlockLifecycle::Failed,
+            "the error row is a settled failure"
+        );
+    }
+
+    /// The park, scripted the way production produces it: the call starts,
+    /// its exact binding arrives, the turn parks. The started event names the
+    /// fixture binding's call and carries a real run id, so this also proves
+    /// the owning turn is recorded.
+    #[test]
+    fn a_parked_call_stays_blocked_while_the_rest_settles() {
+        let (_dir, mut session) = session();
+        let held: ToolLifecycleEvent = serde_json::from_value(json!({
+            "schema_version": 1,
+            "event_id": "run:write-1:started",
+            "run_id": "11111111-1111-4111-8111-111111111111",
+            "call_id": "write-1",
+            "tool_id": "write_file",
+            "phase": "started",
+            "summary": "",
+        }))
+        .expect("fixture tool event deserializes");
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Text("writing the proof".into()))
+            .unwrap();
+        tx.send(TurnUpdate::Tool(tool_step(&held))).unwrap();
+        tx.send(TurnUpdate::Approval(approval_binding_fixture()))
+            .unwrap();
+        tx.send(TurnUpdate::Failed("needs approval".into()))
+            .unwrap();
+        settle(&mut session);
+        assert_blocks_mirror_rows(&session);
+        let call = &session.workbench.blocks()[1];
+        assert_eq!(
+            call.lifecycle,
+            BlockLifecycle::Blocked,
+            "the held binding outlives the worker, so the block keeps waiting"
+        );
+        assert_eq!(
+            call.turn_id.map(|id| id.to_string()).as_deref(),
+            Some("11111111-1111-4111-8111-111111111111"),
+            "a real run id is carried as the owning turn"
+        );
+        assert_eq!(
+            session.workbench.blocks()[0].lifecycle,
+            BlockLifecycle::Cancelled,
+            "the parked turn's stream was interrupted, not completed"
+        );
+        assert!(session.pending_approval.is_some());
+    }
+
+    #[test]
+    fn a_dead_worker_cancels_the_blocks_it_stranded() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Text("half".into())).unwrap();
+        session.pump();
+        drop(tx);
+        settle(&mut session);
+        assert_blocks_mirror_rows(&session);
+        assert_eq!(
+            session.workbench.blocks()[0].lifecycle,
+            BlockLifecycle::Cancelled,
+            "the stranded answer is not blessed"
+        );
+        let crash = session.workbench.blocks().last().unwrap();
+        assert_eq!(crash.kind.role(), Role::Error);
+        assert_eq!(crash.lifecycle, BlockLifecycle::Failed);
+    }
+
+    #[test]
+    fn a_fresh_session_clears_the_blocks_with_the_rows() {
+        let (_dir, mut session) = session();
+        session.push(Role::User, "hello".into());
+        assert!(!session.workbench.is_empty());
+        crate::commands::dispatch(&mut session, "/new");
+        assert_eq!(session.messages.len(), 1, "only the fresh-session note");
+        assert_blocks_mirror_rows(&session);
     }
 }

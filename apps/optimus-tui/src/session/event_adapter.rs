@@ -25,6 +25,12 @@ pub struct ToolStep {
     pub name: String,
     pub line: String,
     pub running: bool,
+    /// The typed facts the block mirror consumes (ADR-0075 phase 1). Carried
+    /// from the kernel event because deriving lifecycle from the rendered
+    /// `line` would be exactly the log parsing the contract prohibits.
+    pub run_id: String,
+    pub event_id: String,
+    pub phase: ToolLifecyclePhase,
 }
 
 /// One observable step of a turn. The wire shape for any transport.
@@ -149,6 +155,9 @@ impl TuiSession {
                 TurnUpdate::Tool(step) => self.apply_tool_step(step),
                 TurnUpdate::Approval(binding) => {
                     awaiting = true;
+                    // The bound call's block waits on the human; the card row
+                    // pushed below is the note that says so.
+                    self.workbench.hold_for_approval(&binding.call_id);
                     self.push(
                         Role::Action,
                         format!("approval required:\n{}", readable(&binding.summary)),
@@ -186,6 +195,7 @@ impl TuiSession {
                         // This flow ends with a standalone settlement message.
                         WorkerKind::Connect => self.push(Role::Assistant, text),
                     }
+                    self.workbench.settle_success();
                 }
                 TurnUpdate::Failed(error) => {
                     if matches!(kind, WorkerKind::Turn | WorkerKind::Resolve) && awaiting {
@@ -197,6 +207,9 @@ impl TuiSession {
                     } else {
                         self.push(Role::Error, error);
                     }
+                    // Whatever was still streaming was interrupted, park or
+                    // not; only a block waiting on a human survives settlement.
+                    self.workbench.settle_interrupted();
                 }
             }
         }
@@ -218,6 +231,9 @@ impl TuiSession {
                         crate::logging::log_path(&self.home).display()
                     ),
                 );
+                // The worker died without settling, so nothing above closed
+                // the blocks it stranded.
+                self.workbench.settle_interrupted();
             }
             self.active = None;
             self.status.clear();
@@ -240,6 +256,10 @@ impl TuiSession {
 
     /// Place a tool's progress, rewriting the row that call already owns.
     fn apply_tool_step(&mut self, step: ToolStep) {
+        // The block mirror first, from the typed phase the step carries; the
+        // row below stays the projection that paints. Both key on `call_id`
+        // with the same latest-match rule, so they upsert in lockstep.
+        self.workbench.apply_tool_step(&step);
         self.running_tool = step.running.then(|| step.name.clone());
         let existing = self
             .messages
@@ -254,12 +274,20 @@ impl TuiSession {
                 call_id: Some(step.call_id),
             }),
         }
+        debug_assert_eq!(
+            self.workbench.len(),
+            self.messages.len(),
+            "every row has exactly one block (ADR-0075 phase 1)"
+        );
     }
 
     fn append_assistant(&mut self, delta: &str) {
         self.answer_started = true;
         match self.messages.last_mut() {
-            Some(message) if message.role == Role::Assistant => message.text.push_str(delta),
+            Some(message) if message.role == Role::Assistant => {
+                message.text.push_str(delta);
+                self.workbench.extend_assistant();
+            }
             _ => self.push(Role::Assistant, delta.to_string()),
         }
     }

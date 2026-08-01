@@ -35,6 +35,7 @@ mod session;
 mod tool_line;
 mod transcript;
 mod view;
+pub mod workbench;
 
 pub use session::{Message, Role, TuiSession};
 

@@ -9,6 +9,7 @@ reviewed_on: 2026-08-02
 review_by: 2026-11-02
 knowledge_type: decision
 covers:
+  - apps/optimus-tui/src/workbench/mod.rs
   - apps/optimus-tui/src/session.rs
   - apps/optimus-tui/src/session/event_adapter.rs
   - apps/optimus-tui/src/lib.rs
@@ -24,6 +25,7 @@ depends_on:
   - docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md
 validated_by:
   - apps/optimus-tui/tests/pty.rs
+  - apps/optimus-tui/src/workbench/mod.rs
   - apps/optimus-tui/src/session.rs
   - apps/optimus-tui/src/keys.rs
   - apps/optimus-tui/src/mouse.rs
@@ -33,6 +35,14 @@ validated_by:
 
 - **Status:** Accepted
 - **Date:** 2026-08-02
+- **Phase 1 delivered:** 2026-08-02 — `workbench/mod.rs` lands the §1
+  contract as a 1:1 mirror of the `Message` vector (`blocks()[i]` describes
+  `messages[i]`), fed only by typed events at four mutation sites. One
+  deviation from the §1 sketch, forced by the kernel's actual types:
+  `ToolLifecycleEvent::event_id` and `run_id` are `String`, so provenance
+  carries the event ids verbatim and `turn_id` is parsed to a `Uuid` only
+  when the run id really is one — a fixture id like `run-1` stays `None`
+  rather than being invented.
 
 ## Context
 
@@ -404,9 +414,16 @@ app, because both consume the same host surface.
 
 ## Relevant code
 
+- apps/optimus-tui/src/workbench/mod.rs — the §1 contract implemented:
+  `BlockId`, `WorkbenchBlock`, `BlockLifecycle`, `BlockPresentation`,
+  `WorkbenchState` with semantic selection; lifecycle moves only on typed
+  events, and settlement spares a `Blocked` block because its truth is the
+  held approval binding, which outlives the worker.
 - apps/optimus-tui/src/session/event_adapter.rs — `stream_sink`, `TurnUpdate`,
   `pump`, `apply_tool_step`; the adapter seam, split out of session.rs along
-  the seams this ADR prescribed.
+  the seams this ADR prescribed. `ToolStep` now carries the typed
+  `run_id`/`event_id`/`phase` facts the block mirror consumes, and `pump`
+  drives the mirror's hold/settle transitions beside the row updates.
 - apps/optimus-tui/src/lib.rs — the event loop this decision's animation
   contract replaces.
 - apps/optimus-tui/src/transcript.rs, view.rs — the row projection.
@@ -426,6 +443,11 @@ app, because both consume the same host surface.
 - apps/optimus-tui/src/keys.rs, mouse.rs, session.rs, commands.rs,
   completion.rs unit suites — intent tables, regions, pump batching, catalog
   and suggestion behaviour.
+- apps/optimus-tui/src/workbench/mod.rs unit suite plus the session.rs
+  mirror tests — phase mapping honesty, provenance citation, identity across
+  streaming, mid-stream selection stability, park survival, and the row↔block
+  lockstep across scripted turns (the differential check: disabling
+  settlement fails the lockstep test).
 - Planned behaviour: property tests for event-order/resize permutations, the
   dirty-draw differential test, and the phase-4 frame bench do not exist yet
   and land with their phases.

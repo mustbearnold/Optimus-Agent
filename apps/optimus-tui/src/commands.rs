@@ -473,6 +473,7 @@ fn mouse(session: &mut TuiSession) {
 fn new_session(session: &mut TuiSession) {
     session.session_id = None;
     session.messages.clear();
+    session.workbench.clear();
     session.scroll_back = 0;
     // The parked job stays durable and resolvable runtime-side; this surface
     // just stops offering a card bound to the session it left.

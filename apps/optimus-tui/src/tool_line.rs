@@ -39,6 +39,9 @@ pub(crate) fn tool_step(tool: &ToolLifecycleEvent) -> ToolStep {
         name,
         line,
         running,
+        run_id: tool.run_id.clone(),
+        event_id: tool.event_id.clone(),
+        phase: tool.phase,
     }
 }
 
