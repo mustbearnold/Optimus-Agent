@@ -23,11 +23,10 @@ This is the generated human view of `docs/repository-components.json`.
 | `apps/optimus-ui/dist` | Generated React distribution consumed by packaging and local desktop runs. | `generated` | `generated-local` | yes |
 | `apps/optimus-ui/node_modules` | Ignored installed npm dependency cache for the React interface. | `generated` | `generated-local` | yes |
 | `assets` | Product icons and resources consumed by installers and installed surfaces. | `supporting` | `bundled` | no |
-| `crates` | Typed product-runtime libraries plus one explicitly incubating development substrate. | `primary` | `repository-only` | no |
+| `crates` | Typed product-runtime libraries, every one of them reached by a shipped binary. | `primary` | `repository-only` | no |
 | `crates/optimus-agent` | Typed specialist registry, invocation contracts, and durable invocation ledger. | `primary` | `transitive` | no |
 | `crates/optimus-artifacts` | Content-addressed product artifact storage and typed handoffs. | `primary` | `transitive` | no |
 | `crates/optimus-browser` | Optional CDP browser backend enabled by the kernel default feature. | `optional` | `transitive` | no |
-| `crates/optimus-engineering` | Unintegrated durable development-task substrate excluded from installed default members. | `incubating` | `repository-only` | no |
 | `crates/optimus-eval` | Offline integrity, trajectory, replay, and evaluation-report library used by the CLI. | `supporting` | `transitive` | no |
 | `crates/optimus-graph` | Job, node, effect, and transition domain contracts. | `primary` | `transitive` | no |
 | `crates/optimus-host` | Shared surface IPC method registry and domain dispatch authority. | `primary` | `transitive` | no |

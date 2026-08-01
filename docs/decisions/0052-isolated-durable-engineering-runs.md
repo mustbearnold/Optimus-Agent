@@ -2,23 +2,16 @@
 doc_id: decisions-0052-isolated-durable-engineering-runs
 doc_type: decision
 plane: decision
-status: current
+status: historical
 authority: record
-summary: - Date: 2026-07-29 - Program: program P40
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+summary: "Superseded by ADR-0073 (2026-08-01): the optimus-engineering crate was removed unintegrated. Records the original design for isolated durable development-task runs — a sixteen-phase state machine advanced by recorded evidence, one git worktree per run, and the kernel-enforced session boundary that is retained."
+reviewed_on: 2026-08-01
+review_by: never
 knowledge_type: decision
 covers:
-  - crates/optimus-engineering/src/lib.rs
-  - crates/optimus-engineering/src/catalogue.rs
-  - crates/optimus-engineering/src/roles.rs
-  - crates/optimus-engineering/src/command.rs
-  - crates/optimus-engineering/src/controller.rs
-  - crates/optimus-engineering/src/phase.rs
-  - crates/optimus-engineering/src/run.rs
-  - crates/optimus-engineering/src/worktree.rs
   - crates/optimus-kernel/src/project_authority.rs
 depends_on:
+  - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
   - docs/decisions/0009-durable-sessions.md
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - docs/decisions/0031-safe-project-work-loop.md
@@ -27,22 +20,20 @@ depends_on:
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
   - docs/plans/github-engineer-program.md
 validated_by:
-  - crates/optimus-engineering/src/phase.rs
-  - crates/optimus-engineering/tests/phase_catalogue.rs
-  - crates/optimus-engineering/tests/role_separation.rs
-  - crates/optimus-engineering/tests/phase_progression.rs
-  - crates/optimus-engineering/tests/worktree_lifecycle.rs
-  - crates/optimus-engineering/tests/resume_after_interrupt.rs
-  - crates/optimus-engineering/tests/driver_earns_evidence.rs
   - crates/optimus-kernel/tests/dev_run_containment.rs
-  - scripts/check-crate-layers.py
 ---
 
 # ADR-0052: Engineering runs are isolated, phased, and resumable
 
-- **Status:** Accepted
+- **Status:** Accepted 2026-07-29 — superseded 2026-08-01 by [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md)
 - **Date:** 2026-07-29
 - **Program:** program P40
+
+> **Superseded.** `crates/optimus-engineering` was removed from the workspace on
+> 2026-08-01, never having been integrated by any consumer. Nothing below is
+> rewritten: the reasoning is preserved because it, not the code, is what a
+> future attempt would need. §2's kernel-side containment — a session bound to a
+> worktree cannot reach outside it — was retained and re-anchored on ADR-0073.
 
 ## Context
 

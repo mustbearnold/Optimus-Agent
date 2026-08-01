@@ -2,28 +2,30 @@
 doc_id: decisions-0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer
 doc_type: decision
 plane: decision
-status: current
+status: historical
 authority: record
-summary: - Date: 2026-07-29 - Program: program P43
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+summary: "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records role separation: asserted evidence carries the role and the context that asserted it, so a model cannot review its own patch, while command outcomes are exempt because an exit status makes no claim."
+reviewed_on: 2026-08-01
+review_by: never
 knowledge_type: decision
-covers:
-  - crates/optimus-engineering/src/roles.rs
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
+  - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
   - docs/plans/github-engineer-program.md
-validated_by:
-  - crates/optimus-engineering/tests/role_separation.rs
 ---
 
 # ADR-0056: A reviewer that wrote the patch is not a reviewer
 
-- **Status:** Accepted
+- **Status:** Accepted 2026-07-29 — superseded 2026-08-01 by [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md)
 - **Date:** 2026-07-29
 - **Program:** program P43
+
+> **Superseded.** `crates/optimus-engineering` was removed from the workspace on
+> 2026-08-01, never having been integrated by any consumer. Nothing below is
+> rewritten: the reasoning is preserved because it, not the code, is what a
+> future attempt would need.
 
 ## Context
 

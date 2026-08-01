@@ -84,14 +84,15 @@
       }
     },
     {
-      "id": "engineering-is-incubating",
-      "question": "Is optimus-engineering already integrated and shipped?",
+      "id": "engineering-crate-is-archived",
+      "question": "Is optimus-engineering still a crate in this workspace?",
       "path": "crates/optimus-engineering",
-      "component": "optimus-engineering",
+      "component": "rust-crates",
       "facts": {
-        "lifecycle": "incubating",
-        "distribution": "repository-only"
-      }
+        "lifecycle": "primary",
+        "concern": "product-runtime"
+      },
+      "forbidden": ["optimus-engineering", "incubating"]
     },
     {
       "id": "development-is-local-state",

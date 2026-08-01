@@ -2,29 +2,31 @@
 doc_id: decisions-0057-an-issue-earns-its-way-into-a-run
 doc_type: decision
 plane: decision
-status: current
+status: historical
 authority: record
-summary: - Date: 2026-07-29 - Program: program P41
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+summary: "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records triage as a contract gate: an issue produces checkable acceptance criteria and a reproduction, or a grounded refusal held to the same evidentiary standard and written in the reporter's own words."
+reviewed_on: 2026-08-01
+review_by: never
 knowledge_type: decision
-covers:
-  - crates/optimus-engineering/src/triage.rs
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
+  - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
   - docs/plans/github-engineer-program.md
-validated_by:
-  - crates/optimus-engineering/tests/triage_contract.rs
 ---
 
 # ADR-0057: An issue earns its way into a run, or is refused in the reporter's own words
 
-- **Status:** Accepted
+- **Status:** Accepted 2026-07-29 — superseded 2026-08-01 by [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md)
 - **Date:** 2026-07-29
 - **Program:** program P41
+
+> **Superseded.** `crates/optimus-engineering` was removed from the workspace on
+> 2026-08-01, never having been integrated by any consumer. Nothing below is
+> rewritten: the reasoning is preserved because it, not the code, is what a
+> future attempt would need.
 
 ## Context
 

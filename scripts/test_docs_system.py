@@ -107,6 +107,52 @@ class DocsSystemTests(unittest.TestCase):
             finally:
                 docs.ROOT, docs.LOCK = old_root, old_lock
 
+    def test_a_superseded_document_can_be_named_out_of_the_lock(self) -> None:
+        # ADR-0063 §5 locks every current or planned document, so one that goes
+        # historical has to be able to leave. Before this was fixed `refresh`
+        # only ever wrote entries, so `validate_lock` reported the retired id as
+        # `extra` forever and the gate could never go green again. Retiring is
+        # still an explicit review act, and a document that is merely stale — a
+        # current one — cannot be pruned to dodge its binding.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            lock = root / "verification-lock.json"
+            lock.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "documents": {
+                            "retired": {"path": "retired.md"},
+                            "kept": {"path": "kept.md"},
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            historical = docs.Document(
+                root / "retired.md", "retired.md",
+                {"doc_id": "retired", "status": "historical"},
+                "Retired", ("Retired",), "11" * 32,
+            )
+            current = docs.Document(
+                root / "kept.md", "kept.md",
+                {"doc_id": "kept", "status": "current"},
+                "Kept", ("Kept",), "22" * 32,
+            )
+            old_root, old_lock = docs.ROOT, docs.LOCK
+            docs.ROOT, docs.LOCK = root, lock
+            try:
+                docs.refresh([historical, current], ["retired", "kept"])
+                held = json.loads(lock.read_text(encoding="utf-8"))["documents"]
+                self.assertEqual(sorted(held), ["kept"])
+                # The retired id is gone, so naming it again is a typo, not a
+                # second retirement.
+                with self.assertRaisesRegex(docs.DocsError, "unknown or non-source-bound"):
+                    docs.refresh([historical, current], ["retired"])
+                docs.validate_lock([historical, current])
+            finally:
+                docs.ROOT, docs.LOCK = old_root, old_lock
+
     def test_all_current_prose_is_held_by_content_hash(self) -> None:
         document = docs.Document(
             Path("guide.md"),
@@ -139,6 +185,44 @@ class DocsSystemTests(unittest.TestCase):
                 ),
             ):
                 self.assertEqual(docs.glob_files("apps/**"), [tracked])
+
+    def test_a_deleted_but_still_indexed_file_is_not_a_binding(self) -> None:
+        # `git ls-files --cached` reports index entries, and managed delivery
+        # never stages, so a file deleted in the worktree stays a candidate all
+        # the way through the land gate. Before this was fixed, deleting any
+        # glob-bound source file made `docs-check` — and therefore `just land`,
+        # which runs verify.sh in the worktree — die on FileNotFoundError
+        # instead of reporting the document whose bindings had changed.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            survivor = root / "crates" / "kept" / "Cargo.toml"
+            survivor.parent.mkdir(parents=True)
+            survivor.write_text("[package]\n", encoding="utf-8")
+            document = docs.Document(
+                Path("status.md"),
+                "docs/current/status.md",
+                {
+                    "doc_id": "current-status",
+                    "status": "current",
+                    "knowledge_type": "current-state",
+                    "covers": ["crates/**"],
+                },
+                "Status",
+                ("Status",),
+                "cd" * 32,
+            )
+            with (
+                mock.patch.object(docs, "ROOT", root),
+                mock.patch.object(
+                    docs,
+                    "candidate_repository_files",
+                    return_value=("crates/gone/Cargo.toml", "crates/kept/Cargo.toml"),
+                ),
+            ):
+                self.assertEqual(docs.glob_files("crates/**"), [survivor])
+                digest, resolved = docs.binding_digest(document)
+        self.assertEqual(resolved, 1)
+        self.assertEqual(len(digest), 64)
 
 
 if __name__ == "__main__":

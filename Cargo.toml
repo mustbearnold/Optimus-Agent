@@ -13,7 +13,6 @@ members = [
     "crates/optimus-artifacts",
     "crates/optimus-agent",
     "crates/optimus-workflow",
-    "crates/optimus-engineering",
     "crates/optimus-kernel",
     "crates/optimus-eval",
     "crates/optimus-browser",
@@ -62,7 +61,6 @@ optimus-ops = { path = "crates/optimus-ops" }
 optimus-artifacts = { path = "crates/optimus-artifacts" }
 optimus-agent = { path = "crates/optimus-agent" }
 optimus-workflow = { path = "crates/optimus-workflow" }
-optimus-engineering = { path = "crates/optimus-engineering" }
 optimus-kernel = { path = "crates/optimus-kernel" }
 optimus-eval = { path = "crates/optimus-eval" }
 

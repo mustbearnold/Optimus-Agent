@@ -2,29 +2,30 @@
 doc_id: decisions-0053-a-repository-is-asked-not-assumed
 doc_type: decision
 plane: decision
-status: current
+status: historical
 authority: record
-summary: - Date: 2026-07-29 - Program: program P41
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+summary: "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records why an engineering run resolves a repository's defaults, verification commands and sensitive-path floor from git and the tree rather than assuming them, and why a repository may raise but never weaken its own floor."
+reviewed_on: 2026-08-01
+review_by: never
 knowledge_type: decision
-covers:
-  - crates/optimus-engineering/src/repository.rs
 depends_on:
   - docs/decisions/0031-safe-project-work-loop.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
   - docs/decisions/0052-isolated-durable-engineering-runs.md
+  - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
   - docs/plans/github-engineer-program.md
-validated_by:
-  - crates/optimus-engineering/src/repository.rs
-  - crates/optimus-engineering/tests/repository_profile.rs
 ---
 
 # ADR-0053: A repository is asked, not assumed
 
-- **Status:** Accepted
+- **Status:** Accepted 2026-07-29 — superseded 2026-08-01 by [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md)
 - **Date:** 2026-07-29
 - **Program:** program P41
+
+> **Superseded.** `crates/optimus-engineering` was removed from the workspace on
+> 2026-08-01, never having been integrated by any consumer. Nothing below is
+> rewritten: the reasoning is preserved because it, not the code, is what a
+> future attempt would need.
 
 ## Context
 

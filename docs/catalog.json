@@ -390,7 +390,7 @@
       "retention": "essential",
       "safe_to_delete": false,
       "storage_plane": "repository",
-      "summary": "Typed product-runtime libraries plus one explicitly incubating development substrate."
+      "summary": "Typed product-runtime libraries, every one of them reached by a shipped binary."
     },
     {
       "concern": "product-runtime",
@@ -453,27 +453,6 @@
       "safe_to_delete": false,
       "storage_plane": "repository",
       "summary": "Optional CDP browser backend enabled by the kernel default feature."
-    },
-    {
-      "concern": "development-tooling",
-      "default_member": false,
-      "distribution": "repository-only",
-      "id": "optimus-engineering",
-      "lifecycle": "incubating",
-      "not": [
-        "The current Codex or Claude development orchestrator",
-        "A shipped Optimus runtime dependency"
-      ],
-      "package": "optimus-engineering",
-      "parent": "rust-crates",
-      "path": "crates/optimus-engineering",
-      "removal_when": "It is integrated through an approved product route or its ADR series is explicitly superseded.",
-      "repository_role": "required",
-      "retention": "conditional",
-      "review_by": "2026-10-31",
-      "safe_to_delete": false,
-      "storage_plane": "repository",
-      "summary": "Unintegrated durable development-task substrate excluded from installed default members."
     },
     {
       "concern": "product-runtime",
@@ -4206,7 +4185,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "93cc24322505a4dfa0a75808b2ab99c94628405a910e74e76fc7e8e904ec86b2",
+      "content_sha256": "1d8cf1470c07346fe3d662c6e65c8d43a4092c60b81f3efa2e19d99f4f012f15",
       "headings": [
         "ADR-0052: Engineering runs are isolated, phased, and resumable",
         "Context",
@@ -4231,16 +4210,16 @@
       "id": "decisions-0052-isolated-durable-engineering-runs",
       "path": "docs/decisions/0052-isolated-durable-engineering-runs.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "- Date: 2026-07-29 - Program: program P40",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Superseded by ADR-0073 (2026-08-01): the optimus-engineering crate was removed unintegrated. Records the original design for isolated durable development-task runs — a sixteen-phase state machine advanced by recorded evidence, one git worktree per run, and the kernel-enforced session boundary that is retained.",
       "title": "ADR-0052: Engineering runs are isolated, phased, and resumable",
       "type": "decision"
     },
     {
       "authority": "record",
-      "content_sha256": "8a827c4cf144d82da318d54772bf72f5b92ff5882ea7f28f445707a5a586460f",
+      "content_sha256": "1601de2ac3e51dd983043efeaa96e4d422b5ea762ef8a2b4afa33e012a2451a9",
       "headings": [
         "ADR-0053: A repository is asked, not assumed",
         "Context",
@@ -4257,16 +4236,16 @@
       "id": "decisions-0053-a-repository-is-asked-not-assumed",
       "path": "docs/decisions/0053-a-repository-is-asked-not-assumed.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "- Date: 2026-07-29 - Program: program P41",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records why an engineering run resolves a repository's defaults, verification commands and sensitive-path floor from git and the tree rather than assuming them, and why a repository may raise but never weaken its own floor.",
       "title": "ADR-0053: A repository is asked, not assumed",
       "type": "decision"
     },
     {
       "authority": "record",
-      "content_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
+      "content_sha256": "cf6db2ab6df65b98f95d10e6df35fe7d9ab89ff60584193d3d73a2083d2484b6",
       "headings": [
         "ADR-0054: A test selector may only ever over-select",
         "Context",
@@ -4292,7 +4271,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "3980b14bc258c35b6d1d8f6bbf5d4a6251f314f2f8a317066dbd16243cc060a3",
+      "content_sha256": "093f7f401323e8e0aea05a6e65c425481f592400f8d4ab9e69446e9f2b9d52a3",
       "headings": [
         "ADR-0055: A fix is proven at the commit it fixes, or it is not proven",
         "Context",
@@ -4309,16 +4288,16 @@
       "id": "decisions-0055-a-fix-is-proven-at-the-commit-it-fixes",
       "path": "docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "- Date: 2026-07-29 - Program: program P42",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records differential proof: a regression test is run at the base commit with only the test carried across, and a base run that never reached the test is inconclusive rather than not-fixed.",
       "title": "ADR-0055: A fix is proven at the commit it fixes, or it is not proven",
       "type": "decision"
     },
     {
       "authority": "record",
-      "content_sha256": "85c311e164e751d11a6093a407caecb34920cedf85d77e9534e398603b941352",
+      "content_sha256": "c94c407027d493f9239221a6d3d4e1b96e58755549da9f3f3b16b5a655b06100",
       "headings": [
         "ADR-0056: A reviewer that wrote the patch is not a reviewer",
         "Context",
@@ -4335,16 +4314,16 @@
       "id": "decisions-0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer",
       "path": "docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "- Date: 2026-07-29 - Program: program P43",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records role separation: asserted evidence carries the role and the context that asserted it, so a model cannot review its own patch, while command outcomes are exempt because an exit status makes no claim.",
       "title": "ADR-0056: A reviewer that wrote the patch is not a reviewer",
       "type": "decision"
     },
     {
       "authority": "record",
-      "content_sha256": "43cbf6ef423489e1c9725fda1f1c10bf348c7d2d1b38a801cef339336e596db9",
+      "content_sha256": "bb64b57b26e4d4bc22d0d56f9ae9b633d6367d2f2eb5a91a30dc119cd9d2be61",
       "headings": [
         "ADR-0057: An issue earns its way into a run, or is refused in the reporter's own words",
         "Context",
@@ -4361,16 +4340,16 @@
       "id": "decisions-0057-an-issue-earns-its-way-into-a-run",
       "path": "docs/decisions/0057-an-issue-earns-its-way-into-a-run.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "- Date: 2026-07-29 - Program: program P41",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records triage as a contract gate: an issue produces checkable acceptance criteria and a reproduction, or a grounded refusal held to the same evidentiary standard and written in the reporter's own words.",
       "title": "ADR-0057: An issue earns its way into a run, or is refused in the reporter's own words",
       "type": "decision"
     },
     {
       "authority": "record",
-      "content_sha256": "cb324bafc947330c01a13f96a90c9b4fe8a4df6ae5d35560fcbd747e514d20ba",
+      "content_sha256": "bfae7efbacf93989a3a377552e48b0a5b20ec4ff499d04e72b4603b04d6607b5",
       "headings": [
         "ADR-0058: A run publishes the sentence a human approved, and nothing else",
         "Context",
@@ -4388,10 +4367,10 @@
       "id": "decisions-0058-a-run-publishes-the-sentence-a-human-approved",
       "path": "docs/decisions/0058-a-run-publishes-the-sentence-a-human-approved.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "- Date: 2026-07-29 - Program: program P44",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records publication authority for a user's repository: the approval is the exact consequence sentence, the push publishes an explicit SHA rather than a branch tip, and delete, rename and force are unconstructible rather than filtered.",
       "title": "ADR-0058: A run publishes the sentence a human approved, and nothing else",
       "type": "decision"
     },
@@ -4756,7 +4735,39 @@
     },
     {
       "authority": "record",
-      "content_sha256": "95a97cedbc77051b1e3ab29303e8bee818ef63636c7fa664aceb6a3d25c92b87",
+      "content_sha256": "f2f8813b6b70d357281c44102c2f47708d581b52b686dd3f6cdd8d46b04fcb2c",
+      "headings": [
+        "ADR-0073: An unreachable vertical is archived, not carried",
+        "Context",
+        "Decision",
+        "1. The crate is removed from the tree",
+        "2. Six ADRs are superseded; one is not",
+        "3. Superseded ADRs are kept, not deleted",
+        "4. The kernel's containment primitive is retained on its own merit",
+        "5. What is retained is the reasoning, named",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests",
+        "Explicit non-claims"
+      ],
+      "id": "decisions-0073-an-unreachable-vertical-is-archived-not-carried",
+      "path": "docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "The optimus-engineering crate is removed from the tree because nothing in the workspace could reach it; ADRs 0052, 0053, 0055, 0056, 0057 and 0058 are superseded and kept in place rather than deleted, ADR-0054 stays current because its implementation was never in the crate, and the kernel's 50-line dev-run containment primitive is retained on its own security merit.",
+      "title": "ADR-0073: An unreachable vertical is archived, not carried",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "3616247d79f5241bb886e80d379b0ce84f6c4594168aeef0e509467e88065ba3",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5544,7 +5555,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
+      "content_sha256": "640ac221f8720c2d7d1e77199153e21d294dbe9bd2c937842d59833ca8145bd8",
       "headings": [
         "Repository and ownership map",
         "Audit basis and package ownership",
@@ -7124,7 +7135,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "fa2a660dbb98382f1005de544cb90223b559dc77d808f7257b35fe8bf52a9a87",
+  "documents_sha256": "57a22eb381363899e9d259b92bcb7fba06d5a033af7f57e4f7947d047228ca0b",
   "routes": [
     {
       "id": "docs.navigation",

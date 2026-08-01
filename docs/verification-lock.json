@@ -73,7 +73,7 @@
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "8d68830c78629e92d7467204b9e9bac587c7525bd5e62cabf024c2674f8a0d90",
+      "binding_sha256": "2a0e1f21e57fd810036825ceeb96b41eb363571c060bd3fc7c16e7e873da525b",
       "document_sha256": "7d94685c3ac7aeacf1ca335bdbaabb6cacfe959feeaf837c57f4f74363901f5a",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
@@ -127,19 +127,19 @@
       "resolved_files": 0
     },
     "current-roadmap": {
-      "binding_sha256": "a497b1bf85f3d63649846f6a14ed933ef54daf999437f1bd9d987007a688c0e2",
+      "binding_sha256": "012964ccaa582aec84355daf975ae929333a6ea2de7d07a31df005cd2210b9a6",
       "document_sha256": "85f52b88ab2d990a425086e736777d0307f28a5c730913a169cdbc9debddd216",
       "path": "docs/current/roadmap.md",
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "8281caf6f2d3cbc6e45c238ef88f5dc823ce2c8db82cbf37e677bbd5fc2a1ca1",
+      "binding_sha256": "e50887431d58fb421f13ef3735dd77d87e7900aaf3786a82bfc0dfdb3a56ee20",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 362
+      "resolved_files": 337
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "de90a95ab34ee160f9e904e58cba5763510a59881493035ec326545a5ab6eac9",
+      "binding_sha256": "5e4c95a61f1094b920d3342132e4cbaf2425441bfc58f5d228f09608b143a63e",
       "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9
@@ -253,7 +253,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "6a50235aa3df3ae93fa356804929dbaa1bbdaaf305de61cdba15396bf008b240",
+      "binding_sha256": "97948ec9fac053e8a8e27883f0d1c1e42c4807085fb7e08a82e836af08e22cc5",
       "document_sha256": "e707a52dbe8dad51c74781e1f4b4b14e8607951b5f173e9296fa3ffae6e07d04",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -265,19 +265,19 @@
       "resolved_files": 5
     },
     "decisions-0019-capability-files-and-unified-campaign-authority": {
-      "binding_sha256": "4fb6ff84c336c41da727c68c1adb082427e994ea1a28846088d3be2b04b21ee7",
+      "binding_sha256": "13309cddd462d8d133aa599f412f93162cbd64b1a65e3fe560021261b22d48fc",
       "document_sha256": "2cf6d5179f5390d89728eccf8da4714cb89f407447e8e67312a5d983a590f8ce",
       "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "resolved_files": 12
     },
     "decisions-0020-work-graph-integrity-and-loopback-security": {
-      "binding_sha256": "2f77414509f15bda6b1e68030d79cf3003c15c5cfcb477d998ce74214759e114",
+      "binding_sha256": "a45802ab624e697c629dee6d3a863957e0cd0d36d24232e0fbbbcbd069ebdbdc",
       "document_sha256": "297f16ce48239f7230d0487b1a46a5076579e2e115581f018cf1f9259eacb09e",
       "path": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "resolved_files": 17
     },
     "decisions-0021-owned-execution-and-causal-delivery": {
-      "binding_sha256": "6a047a73bf33be5daa62d077c28fa705e93e76bcf37794043624d2b9ac082c46",
+      "binding_sha256": "02dea6c6c04c526e0dc29315c0f676e0529cad03fbbd5d9131355cbb2c44021b",
       "document_sha256": "4e26f83257506fb9f260a6d0954680f186361d6114656a57b68bb8af7e4f26cc",
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "resolved_files": 26
@@ -343,7 +343,7 @@
       "resolved_files": 103
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "97500682182d9cb6f4a8d3fedb69cf1ae13502e798292950a9a27ff5e9456969",
+      "binding_sha256": "950053abd66aa531337636e78935977ae2795eca209010684e49a51132878376",
       "document_sha256": "8c361418e4d79c1d596de7e95f44385d86cae955fcee56d6c60792b61b7c4271",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 7
@@ -355,7 +355,7 @@
       "resolved_files": 9
     },
     "decisions-0034-control-plane-crate-peels": {
-      "binding_sha256": "156bb1fa54e4b98be1672a8e0f89dfb3d2854bdd6f3134d1aff23f65c34d11e2",
+      "binding_sha256": "67d5b3d70b31646abe0687f899d45d26baf274df56d0e60ee1717a833af5f098",
       "document_sha256": "91511f1bee4a4365ddb706e9ba236e4a027ef12953f7dfe9473a7e308f8518b4",
       "path": "docs/decisions/0034-control-plane-crate-peels.md",
       "resolved_files": 23
@@ -421,7 +421,7 @@
       "resolved_files": 19
     },
     "decisions-0045-agent-host-and-surface-transports": {
-      "binding_sha256": "a95463cc330b1b5ee736e7774884353514c9dde8c9e8c154e4165726f2da8d32",
+      "binding_sha256": "0811504746624276dddea6d686867a647d0be9d87550978c4f2262035e78cae3",
       "document_sha256": "93c87bd93ef42d7f029555d3f895642fbc95ad0f2b4284a13ee78f19d4e2ab88",
       "path": "docs/decisions/0045-agent-host-and-surface-transports.md",
       "resolved_files": 11
@@ -462,47 +462,11 @@
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 11
     },
-    "decisions-0052-isolated-durable-engineering-runs": {
-      "binding_sha256": "926d26b16bb79c1a963869d642c2643098cca6cc9b56bc5e2a64a5e6d3a1ed3f",
-      "document_sha256": "93cc24322505a4dfa0a75808b2ab99c94628405a910e74e76fc7e8e904ec86b2",
-      "path": "docs/decisions/0052-isolated-durable-engineering-runs.md",
-      "resolved_files": 24
-    },
-    "decisions-0053-a-repository-is-asked-not-assumed": {
-      "binding_sha256": "c958a2a7c471b3ea65a840015257df662866475184f5e6b20f2d28340c1c30f5",
-      "document_sha256": "8a827c4cf144d82da318d54772bf72f5b92ff5882ea7f28f445707a5a586460f",
-      "path": "docs/decisions/0053-a-repository-is-asked-not-assumed.md",
-      "resolved_files": 6
-    },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "c72ef3f6053a17eccc5cb7ce2a6abc6433bdb0ad96b84afb8ce7a33f840644d8",
-      "document_sha256": "40ba8b625fd2d4633658a5c3b1d8ec57efa0b1369793b643fd2462b7161c7b84",
+      "binding_sha256": "371fd99094b32684ff9520b6d753b896d85e51be7c6a5eeecc491888c414a967",
+      "document_sha256": "cf6db2ab6df65b98f95d10e6df35fe7d9ab89ff60584193d3d73a2083d2484b6",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
-    },
-    "decisions-0055-a-fix-is-proven-at-the-commit-it-fixes": {
-      "binding_sha256": "6f1cb45012f43ef63357a6ea5c4b44a7674bdf2e7fd7cd73c09b9d7d67a7e8aa",
-      "document_sha256": "3980b14bc258c35b6d1d8f6bbf5d4a6251f314f2f8a317066dbd16243cc060a3",
-      "path": "docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md",
-      "resolved_files": 7
-    },
-    "decisions-0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer": {
-      "binding_sha256": "dac0ce89df8d0e0a0b703fca45907dd56ce6040209d2c66ade2d534dc6296b18",
-      "document_sha256": "85c311e164e751d11a6093a407caecb34920cedf85d77e9534e398603b941352",
-      "path": "docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md",
-      "resolved_files": 6
-    },
-    "decisions-0057-an-issue-earns-its-way-into-a-run": {
-      "binding_sha256": "c7f4a21122c8b72dedadcdb8e4281c3e10f8fcb859350681f7de33c3a26211a2",
-      "document_sha256": "43cbf6ef423489e1c9725fda1f1c10bf348c7d2d1b38a801cef339336e596db9",
-      "path": "docs/decisions/0057-an-issue-earns-its-way-into-a-run.md",
-      "resolved_files": 7
-    },
-    "decisions-0058-a-run-publishes-the-sentence-a-human-approved": {
-      "binding_sha256": "81c8408330d0f97692201f32cdb4d3aea4170067fe8a10401fae17a255463692",
-      "document_sha256": "cb324bafc947330c01a13f96a90c9b4fe8a4df6ae5d35560fcbd747e514d20ba",
-      "path": "docs/decisions/0058-a-run-publishes-the-sentence-a-human-approved.md",
-      "resolved_files": 8
     },
     "decisions-0059-standard-autonomy-is-consequence-bounded": {
       "binding_sha256": "6c1d86751fe37cba940a31003b7479064739c00b3b03d37ff3127ba1434fcfb3",
@@ -517,19 +481,19 @@
       "resolved_files": 12
     },
     "decisions-0061-generated-engineering-memory-is-a-disposable-cache": {
-      "binding_sha256": "22dc8a51dca6364d19d6b3d8250bd160d700faeef6e07170a01a8186f04cc581",
+      "binding_sha256": "a5403e79f052f728f7d8e689762c57e8d2f8e9ceca1d6cf998030da8311eb5f1",
       "document_sha256": "ee80ffd15add51f53203901a513a41994b766b23ab7fdc335ad5b6ce866cf60d",
       "path": "docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md",
       "resolved_files": 7
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "133060a79e7b1cc6a09cf4636a81b9f497148236a7b79264374610fb91cd9556",
+      "binding_sha256": "879b1a3e9be5e0fb72133132a6ac2c2685db5df59b60c14e38f4257ae8c5b871",
       "document_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 11
     },
     "decisions-0064-temporal-project-knowledge-is-derived-provenance": {
-      "binding_sha256": "f1a6274114626341457284e57eb6209462ec21ed4aff3d179e981d525becbc73",
+      "binding_sha256": "60aefed125b138dd9904b5ce5baf21b69bbeb04582855eb3d29f303c1865ed77",
       "document_sha256": "e96e777722a9cd086113850b595d6c122df1ea5ef2868de52cb9599047d5bf28",
       "path": "docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md",
       "resolved_files": 8
@@ -582,11 +546,17 @@
       "path": "docs/decisions/0072-a-retrieval-index-narrows-but-never-authorizes.md",
       "resolved_files": 7
     },
+    "decisions-0073-an-unreachable-vertical-is-archived-not-carried": {
+      "binding_sha256": "47fc62536eed8850a8be0e30b6c66b1d5f42140ed83cd061e12997c38b3e8628",
+      "document_sha256": "f2f8813b6b70d357281c44102c2f47708d581b52b686dd3f6cdd8d46b04fcb2c",
+      "path": "docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md",
+      "resolved_files": 9
+    },
     "decisions-readme": {
-      "binding_sha256": "a8eca0684366abf7485f42ccf641f8abebaba460380354fdfdd1875eee8f7d91",
-      "document_sha256": "95a97cedbc77051b1e3ab29303e8bee818ef63636c7fa664aceb6a3d25c92b87",
+      "binding_sha256": "c437483bb388e4504cf4e39c8f55da4fb625cc70e5e580baa21a0166634d1c5d",
+      "document_sha256": "3616247d79f5241bb886e80d379b0ce84f6c4594168aeef0e509467e88065ba3",
       "path": "docs/decisions/README.md",
-      "resolved_files": 77
+      "resolved_files": 78
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "130f2ed7fa7565ed207b853a8a8ff50625af4df37face987a30549bb56fb5108",
@@ -607,7 +577,7 @@
       "resolved_files": 0
     },
     "engineering-memory-readme": {
-      "binding_sha256": "e628987d27867bdd06216326caa0bbd88cc18e8e4f6f543b608cf134d711e187",
+      "binding_sha256": "42e26ac0d675d65fd821b3a483a135d9cd731aaf3828b53f4fcbbb19551f6f23",
       "document_sha256": "72035b3bd6cf80c521563788a82bcd345d283eec82b9e046ef8bc906ce4a5816",
       "path": "docs/engineering-memory/README.md",
       "resolved_files": 9
@@ -625,7 +595,7 @@
       "resolved_files": 0
     },
     "lessons-ai-agent-mistakes": {
-      "binding_sha256": "81e36087b00fcc85a779f24c71b5c5b6cbed6294a54ae0053c4fb415dbc5c788",
+      "binding_sha256": "1cf2bd73b524c2fb6ff5c6a384af3aebf7d9dcfc4839ffd925969d5cd1f44810",
       "document_sha256": "21be856d4021e53b22ee1fa16614dbca606c1a088d15d44372db1b9ac45d3102",
       "path": "docs/lessons/ai-agent-mistakes.md",
       "resolved_files": 7
@@ -661,22 +631,22 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "89a74650e49bc7d4d0aed8b2733512ca754254f9f0eae8c71eb3c7d19e4c8367",
+      "binding_sha256": "45597b40ad799412b3914e01108cb06ccc812006cf073d3cbc00b2b6f79d75f9",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "c4140668788e5c2698b07c6c4fbcec8fe9b22b9ba705f863c72825f6626ced03",
-      "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
+      "binding_sha256": "7e0ef10bcebdbd2fd70261861fa2d5aad13f1552e634936995bb348f5c40152c",
+      "document_sha256": "640ac221f8720c2d7d1e77199153e21d294dbe9bd2c937842d59833ca8145bd8",
       "path": "docs/maps/repository-and-ownership.md",
-      "resolved_files": 23
+      "resolved_files": 22
     },
     "repository-components": {
-      "binding_sha256": "d7a96c0eb0fbc51c9ed04054dc1911614cc1052b4d8baa7d3fec178839a3cfb7",
+      "binding_sha256": "0635b485dc835ad942fd61c49088b09fc0daa204e5a380ea360538b8e0775a2b",
       "document_sha256": "e8b025e4a057c43a61cb7bd82aab025f8af94943fd621f5677d412208dbba5b4",
       "path": "docs/repository-components.md",
-      "resolved_files": 29
+      "resolved_files": 28
     },
     "specifications-electron-react-migration-slice-1": {
       "binding_sha256": null,

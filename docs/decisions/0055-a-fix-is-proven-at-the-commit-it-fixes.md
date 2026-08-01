@@ -2,29 +2,30 @@
 doc_id: decisions-0055-a-fix-is-proven-at-the-commit-it-fixes
 doc_type: decision
 plane: decision
-status: current
+status: historical
 authority: record
-summary: - Date: 2026-07-29 - Program: program P42
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+summary: "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records differential proof: a regression test is run at the base commit with only the test carried across, and a base run that never reached the test is inconclusive rather than not-fixed."
+reviewed_on: 2026-08-01
+review_by: never
 knowledge_type: decision
-covers:
-  - crates/optimus-engineering/src/differential.rs
-  - crates/optimus-engineering/src/command.rs
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
+  - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
   - docs/plans/github-engineer-program.md
-validated_by:
-  - crates/optimus-engineering/tests/differential_proof.rs
 ---
 
 # ADR-0055: A fix is proven at the commit it fixes, or it is not proven
 
-- **Status:** Accepted
+- **Status:** Accepted 2026-07-29 — superseded 2026-08-01 by [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md)
 - **Date:** 2026-07-29
 - **Program:** program P42
+
+> **Superseded.** `crates/optimus-engineering` was removed from the workspace on
+> 2026-08-01, never having been integrated by any consumer. Nothing below is
+> rewritten: the reasoning is preserved because it, not the code, is what a
+> future attempt would need.
 
 ## Context
 

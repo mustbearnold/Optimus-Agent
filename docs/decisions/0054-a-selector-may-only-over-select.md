@@ -159,7 +159,11 @@ heuristic trades the one place where completeness is worth its cost.
 
 Measured on this repository, warm cache: `cargo test -p optimus-engineering
 --all-targets` **0.67s** against `cargo test --workspace --all-targets`
-**24.9s**.
+**24.9s**. (That package was archived by
+[ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md) on
+2026-08-01; the ratio is what the measurement records, and any leaf crate
+reproduces it. This decision is unaffected — the selector lives in
+`scripts/impact_select.py`, not in the archived crate.)
 
 ## Conditions for reconsideration
 

@@ -437,11 +437,18 @@ def glob_files(pattern: str) -> list[Path]:
     if not any(char in pattern for char in "*?["):
         candidate = ROOT / pattern
         return [candidate] if candidate.is_file() else []
-    return [
+    matched = [
         ROOT / relative
         for relative in candidate_repository_files()
         if fnmatch.fnmatchcase(relative, pattern)
     ]
+    # `--cached` reports index entries, so a file deleted in the worktree is
+    # still offered as a candidate. Managed delivery deliberately never stages —
+    # it snapshots through a throwaway GIT_INDEX_FILE — so a deletion stays
+    # unstaged right through the land gate, and a glob that returned it would
+    # make `binding_digest` read a path that no longer exists. The literal
+    # branch above already checks this; the two must agree.
+    return [path for path in matched if path.is_file()]
 
 
 def binding_digest(document: Document) -> tuple[str, int] | None:
@@ -562,11 +569,21 @@ def generate(documents: list[Document], routes: dict[str, Any]) -> None:
 def refresh(documents: list[Document], doc_ids: list[str]) -> None:
     payload = load_lock()
     expected = expected_lock(documents)
-    unknown = sorted(set(doc_ids) - set(expected))
+    # ADR-0063 §5 records *every current or planned document*, so one that has
+    # been superseded, retired, or deleted must be able to leave the lock as
+    # well as enter it — otherwise `validate_lock` reports it as `extra`
+    # forever and nothing can go green again. Retiring stays an explicit review
+    # act: the id has to be named, exactly like a refresh, and a current or
+    # planned document is always in `expected`, so it can never take this path.
+    retired = {doc_id for doc_id in doc_ids if doc_id not in expected and doc_id in payload["documents"]}
+    unknown = sorted(set(doc_ids) - set(expected) - retired)
     if unknown:
         raise DocsError(f"cannot refresh unknown or non-source-bound doc ids: {unknown}")
     for doc_id in doc_ids:
-        payload["documents"][doc_id] = expected[doc_id]
+        if doc_id in retired:
+            del payload["documents"][doc_id]
+        else:
+            payload["documents"][doc_id] = expected[doc_id]
     LOCK.write_text(canonical_json(payload), encoding="utf-8")
 
 

@@ -2,30 +2,36 @@
 doc_id: decisions-0058-a-run-publishes-the-sentence-a-human-approved
 doc_type: decision
 plane: decision
-status: current
+status: historical
 authority: record
-summary: - Date: 2026-07-29 - Program: program P44
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+summary: "Superseded by ADR-0073 (2026-08-01) together with the optimus-engineering crate. Records publication authority for a user's repository: the approval is the exact consequence sentence, the push publishes an explicit SHA rather than a branch tip, and delete, rename and force are unconstructible rather than filtered."
+reviewed_on: 2026-08-01
+review_by: never
 knowledge_type: decision
-covers:
-  - crates/optimus-engineering/src/delivery.rs
-  - crates/optimus-engineering/src/publish_plan.rs
-  - crates/optimus-engineering/src/pr_body.rs
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
+  - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
   - docs/plans/github-engineer-program.md
-validated_by:
-  - crates/optimus-engineering/tests/delivery.rs
 ---
 
 # ADR-0058: A run publishes the sentence a human approved, and nothing else
 
-- **Status:** Accepted
+- **Status:** Accepted 2026-07-29 — superseded 2026-08-01 by [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md)
 - **Date:** 2026-07-29
 - **Program:** program P44
+
+> **Superseded.** `crates/optimus-engineering` was removed from the workspace on
+> 2026-08-01, never having been integrated by any consumer. Nothing below is
+> rewritten: the reasoning is preserved because it, not the code, is what a
+> future attempt would need.
+>
+> One clarification worth carrying, because the two planes look alike: the
+> forge operations described here are a *product* capability aimed at a user's
+> own repository. They never governed how a coding agent delivers changes to
+> **this** repository, which uses managed delivery and forbids `gh` and pull
+> requests outright (`AGENTS.md`).
 
 ## Context
 

@@ -1,11 +1,12 @@
-//! Program P40 exit gate (ADR-0052 §2): an engineering run's session reaches
-//! its own checkout and nothing else.
+//! A session bound to a checkout reaches that checkout and nothing else.
 //!
-//! `optimus-engineering` proves the worktree is created correctly. This proves
-//! the other half — that binding a session to that worktree actually narrows
-//! what the tools can touch, including the main checkout the human is using.
-//! The two halves are deliberately separate: the boundary is the kernel's job,
-//! not git's.
+//! Originally the kernel half of ADR-0052 §2's containment pair, where a
+//! separate crate proved the worktree was created correctly. That crate was
+//! archived unintegrated (ADR-0073), and this half was retained on its own
+//! merit: binding a session to a directory must actually narrow what the tools
+//! can touch, including the main checkout the human is using. The property is
+//! the kernel's job, not git's, and it holds for any caller that scopes a
+//! session — no development-run machinery required.
 
 use std::fs;
 use std::path::{Path, PathBuf};

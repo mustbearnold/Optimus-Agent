@@ -27,7 +27,6 @@ owns:
   - crates/optimus-artifacts/Cargo.toml
   - crates/optimus-agent/Cargo.toml
   - crates/optimus-workflow/Cargo.toml
-  - crates/optimus-engineering/Cargo.toml
   - crates/optimus-eval/Cargo.toml
   - docs/repository-components.json
 watches:
@@ -52,7 +51,6 @@ covers:
   - crates/optimus-artifacts/Cargo.toml
   - crates/optimus-agent/Cargo.toml
   - crates/optimus-workflow/Cargo.toml
-  - crates/optimus-engineering/Cargo.toml
   - crates/optimus-eval/Cargo.toml
   - docs/repository-components.json
 depends_on:

@@ -383,7 +383,7 @@
       "lifecycle": "primary",
       "repository_role": "required",
       "retention": "essential",
-      "summary": "Typed product-runtime libraries plus one explicitly incubating development substrate.",
+      "summary": "Typed product-runtime libraries, every one of them reached by a shipped binary.",
       "not": ["Generated Cargo dependencies", "Independent duplicate agents"],
       "safe_to_delete": false
     },
@@ -597,24 +597,6 @@
       "retention": "essential",
       "summary": "Optional CDP browser backend enabled by the kernel default feature.",
       "not": ["Electron Preview WebContentsView", "A development browser-testing harness"],
-      "safe_to_delete": false
-    },
-    {
-      "id": "optimus-engineering",
-      "path": "crates/optimus-engineering",
-      "parent": "rust-crates",
-      "package": "optimus-engineering",
-      "default_member": false,
-      "storage_plane": "repository",
-      "concern": "development-tooling",
-      "distribution": "repository-only",
-      "lifecycle": "incubating",
-      "repository_role": "required",
-      "retention": "conditional",
-      "summary": "Unintegrated durable development-task substrate excluded from installed default members.",
-      "not": ["The current Codex or Claude development orchestrator", "A shipped Optimus runtime dependency"],
-      "removal_when": "It is integrated through an approved product route or its ADR series is explicitly superseded.",
-      "review_by": "2026-10-31",
       "safe_to_delete": false
     },
     {

@@ -62,7 +62,7 @@ class EscalationTests(unittest.TestCase):
     def test_one_unclassified_path_escalates_the_whole_plan(self) -> None:
         # A patch that touches a known crate AND something unrecognised is not
         # half-safe. Mixing must not dilute the escalation.
-        plan = plan_for("crates/optimus-engineering/src/run.rs", "mystery.bin")
+        plan = plan_for("crates/optimus-policy/src/lib.rs", "mystery.bin")
         self.assertTrue(plan.escalated)
 
     def test_an_escalated_plan_is_never_reported_as_empty(self) -> None:
@@ -89,7 +89,7 @@ class NothingIsNotPassingTests(unittest.TestCase):
 
     def test_require_selection_passes_when_something_is_selected(self) -> None:
         code = self._exit_code(
-            ["--paths", "crates/optimus-engineering/src/run.rs", "--require-selection"]
+            ["--paths", "crates/optimus-policy/src/lib.rs", "--require-selection"]
         )
         self.assertEqual(code, 0)
 
@@ -113,13 +113,14 @@ class TransitiveImpactTests(unittest.TestCase):
         self.assertIn("optimus-cli", plan.packages)
 
     def test_a_leaf_crate_does_not_drag_in_the_workspace(self) -> None:
-        # optimus-engineering is a leaf by construction (check-crate-layers.py
-        # forbids kernel/runtime/host from depending on it). If this ever
-        # fails, either the layering changed or the closure is wrong — and a
-        # selector that quietly selects everything has stopped being useful.
-        plan = plan_for("crates/optimus-engineering/src/repository.rs")
+        # optimus-cli is a leaf of the reverse graph by construction: no crate
+        # may depend on an app (check-crate-layers.py's apps rule), so nothing
+        # can be built on top of it. If this ever fails, either the layering
+        # changed or the closure is wrong — and a selector that quietly selects
+        # everything has stopped being useful.
+        plan = plan_for("apps/optimus-cli/src/main.rs")
         self.assertFalse(plan.escalated)
-        self.assertEqual(plan.packages, {"optimus-engineering"})
+        self.assertEqual(plan.packages, {"optimus-cli"})
 
     def test_a_dev_dependency_still_counts_as_impact(self) -> None:
         # Every workspace crate must appear in the reverse map, including ones
@@ -135,8 +136,8 @@ class TransitiveImpactTests(unittest.TestCase):
 
 class PathClassificationTests(unittest.TestCase):
     def test_a_test_file_selects_its_own_package(self) -> None:
-        plan = plan_for("crates/optimus-engineering/tests/repository_profile.rs")
-        self.assertIn("optimus-engineering", plan.packages)
+        plan = plan_for("crates/optimus-kernel/tests/dev_run_containment.rs")
+        self.assertIn("optimus-kernel", plan.packages)
 
     def test_the_ui_selects_the_ui_suites(self) -> None:
         plan = plan_for("apps/optimus-ui/src/app/OptimusApp.tsx")
@@ -191,9 +192,9 @@ class SeededRegressionTests(unittest.TestCase):
     CASES: tuple[tuple[str, str, str], ...] = (
         ("crates/optimus-policy/src/command_class.rs", "package", "optimus-policy"),
         ("crates/optimus-kernel/src/project_trust.rs", "package", "optimus-kernel"),
-        ("crates/optimus-engineering/src/phase.rs", "package", "optimus-engineering"),
-        ("crates/optimus-engineering/src/worktree.rs", "package", "optimus-engineering"),
-        ("crates/optimus-engineering/src/repository.rs", "package", "optimus-engineering"),
+        ("crates/optimus-memory/src/redaction.rs", "package", "optimus-memory"),
+        ("crates/optimus-graph/src/lib.rs", "package", "optimus-graph"),
+        ("crates/optimus-workflow/src/lib.rs", "package", "optimus-workflow"),
         ("crates/optimus-runtime/src/lib.rs", "package", "optimus-runtime"),
         ("crates/optimus-store/src/lib.rs", "package", "optimus-store"),
         ("apps/optimus-cli/src/doctor.rs", "package", "optimus-cli"),
@@ -232,8 +233,8 @@ class OutputContractTests(unittest.TestCase):
         self.assertEqual(payload["status"], "escalated")
 
     def test_cargo_arguments_name_each_selected_package(self) -> None:
-        plan = plan_for("crates/optimus-engineering/src/run.rs")
-        self.assertEqual(IS.cargo_arguments(plan), ["-p", "optimus-engineering"])
+        plan = plan_for("apps/optimus-cli/src/main.rs")
+        self.assertEqual(IS.cargo_arguments(plan), ["-p", "optimus-cli"])
 
     def test_an_escalated_plan_asks_for_the_whole_workspace(self) -> None:
         self.assertEqual(IS.cargo_arguments(plan_for("justfile")), ["--workspace"])
