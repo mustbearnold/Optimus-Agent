@@ -5,6 +5,7 @@
 //! re-exported here for surface convenience without growing the turn-loop waist.
 
 mod browser;
+mod browser_budget;
 mod browser_coord;
 mod causal;
 mod chat_approval;

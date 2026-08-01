@@ -73,7 +73,7 @@
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "0c0d368547ed0614f4b50570b82d1eca96ab24d2fabec2a3404e65b3e107a209",
+      "binding_sha256": "9c2fd4ae202e088f5c815738910cd1246f6ffa160eacb9d8dd5c7e13bfeea453",
       "document_sha256": "a751c298a4835f088aff704876654661a150be63c2f71dd1d41e7afa2cc47c98",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
@@ -91,7 +91,7 @@
       "resolved_files": 9
     },
     "contracts-high-risk-contracts": {
-      "binding_sha256": "6d1e8a25a99d8710ba1c60754d8825a574791b74f7b1f5d266f95c3c7b010453",
+      "binding_sha256": "0c4cd2ac3ac80d24c7abe1319cf03c97117ff8d18721b234db0add5011a4ea4c",
       "document_sha256": "0ea9e9d120110cd666a8bc1159d59a3b67a0806ae209cb40d9919386366e332e",
       "path": "docs/contracts/high-risk-contracts.md",
       "resolved_files": 22
@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "082d8133de6045c4ed8c39b5c4637585df43e5179c2a3a50683a024c1c108c9e",
+      "binding_sha256": "9125cb7694e61f668d59e11dba0a3180e6e95cae8f4aa33595480cd710fd224f",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 340
+      "resolved_files": 341
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "67656a1fd61a8414e0dee62cb1ee9d5b55f388d8dee3218e77e211da934893e6",
@@ -277,7 +277,7 @@
       "resolved_files": 17
     },
     "decisions-0021-owned-execution-and-causal-delivery": {
-      "binding_sha256": "ca1145b5479fa1d3146ac5e4886f4cadfb1f5c5ffcb36b2e4f32ccf0a302ab66",
+      "binding_sha256": "560e56151e1ce18cbe8516e4f93d8892c7d0cd5ab41cdd4e3d8190c112397022",
       "document_sha256": "4e26f83257506fb9f260a6d0954680f186361d6114656a57b68bb8af7e4f26cc",
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "resolved_files": 26
@@ -307,7 +307,7 @@
       "resolved_files": 16
     },
     "decisions-0026-separate-development-and-runtime-agents": {
-      "binding_sha256": "1eeb25c40354ac209c1aa2651cede96268d576ce31bd666154f2270b7d575a31",
+      "binding_sha256": "65c508b083a6b62627f25c71bcb5abf7cff6055979afd7d8e44dad70264b58ef",
       "document_sha256": "48479242a324749b37582d686c2a8ffac4f5e958067d245161951f6408232331",
       "path": "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "resolved_files": 5
@@ -337,7 +337,7 @@
       "resolved_files": 107
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "99c6259a9affef2ed6e42da388959ea6a8e1cc4c9f61eec892855968e0f7f4e7",
+      "binding_sha256": "6418350a93bbec9ebb835e7359ecf673efb64b28b8876e4382d55d3f3398aa97",
       "document_sha256": "ed013ec8a70e7222ebd3080683e3dc25303922429d887ecf7606f928994ef797",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 102
@@ -355,7 +355,7 @@
       "resolved_files": 9
     },
     "decisions-0034-control-plane-crate-peels": {
-      "binding_sha256": "95188aef3d5cf077d85cbe529c18821fd07560f44276bfb96cca77af84aaec4f",
+      "binding_sha256": "1b48e1b003804383b4b6c26fca3ea2b55937361c7b4f866267c0c3c590c359fb",
       "document_sha256": "91511f1bee4a4365ddb706e9ba236e4a027ef12953f7dfe9473a7e308f8518b4",
       "path": "docs/decisions/0034-control-plane-crate-peels.md",
       "resolved_files": 23
@@ -367,7 +367,7 @@
       "resolved_files": 16
     },
     "decisions-0036-domain-modularity-single-catalog": {
-      "binding_sha256": "17d921bd30f4b38384d3d56daf0891bc91c8ae4a516ce30e8bb9656b7d422ce8",
+      "binding_sha256": "14dbb7f1fe42b83c6f8b9ff08395391cbd1c0d4184e90b5ce2d772a4478e654b",
       "document_sha256": "64049241147036fa34817da24a615204558f6e2d6d562a46a0418b99d8a2c2ea",
       "path": "docs/decisions/0036-domain-modularity-single-catalog.md",
       "resolved_files": 22
@@ -385,7 +385,7 @@
       "resolved_files": 13
     },
     "decisions-0039-files-mutate-effect-taxonomy": {
-      "binding_sha256": "24c2d1984120beb8c3efb4fe3ffe5c0721059791a219b26862e85dba958c64f8",
+      "binding_sha256": "a9bfc5509cc0d214e55b878a86178c3bb2fe79926b1878f1abd7ef6cc1e433c5",
       "document_sha256": "bc88ad6d4fb2fa1117f5c3aa7918ef012a9d5460ac4fb00aaddf13a71c3ad4de",
       "path": "docs/decisions/0039-files-mutate-effect-taxonomy.md",
       "resolved_files": 13
@@ -415,7 +415,7 @@
       "resolved_files": 6
     },
     "decisions-0044-bounded-project-trust-and-capability-broker": {
-      "binding_sha256": "eb678aabe559deb1e3fb08d77d9a3d2b090bc4a0e1852cb31dd0018cf116eeaa",
+      "binding_sha256": "2c1a72d1a206f1b5781552980b32b1b919e58a0707b2e7a0264d09aa6a57211c",
       "document_sha256": "161f96da0b3b89aa1b6e98197836ba0a7cd27d6be67467146a5184a914c46b0e",
       "path": "docs/decisions/0044-bounded-project-trust-and-capability-broker.md",
       "resolved_files": 19
@@ -433,13 +433,13 @@
       "resolved_files": 11
     },
     "decisions-0047-turn-step-budget": {
-      "binding_sha256": "797559a5300977b391d1b04e91f59cfbcca5bd795bb7978b78224b90f2c244cf",
+      "binding_sha256": "2a912e514b8e8651cfb4970d7c257564671104be040a35de5c4a46696b271cd1",
       "document_sha256": "73715d15e7bfa7fc7ec0e2041916a87ab4e7b2d5cd4c6b86831bd306c6c3e6a1",
       "path": "docs/decisions/0047-turn-step-budget.md",
       "resolved_files": 7
     },
     "decisions-0048-context-and-page-result-budgets": {
-      "binding_sha256": "adaa4b35f5b6e43ad24f67896dabab381ba0564580dc2e58a80172bf2d97deef",
+      "binding_sha256": "04653de9c49d1367a0422afa5189061ee3a595d9ea344d742355cdb845297d0e",
       "document_sha256": "b286a951cfd8883788c929239e76eb67b765ffb1b08770f928b48c6976aa7814",
       "path": "docs/decisions/0048-context-and-page-result-budgets.md",
       "resolved_files": 7
@@ -607,7 +607,7 @@
       "resolved_files": 12
     },
     "map-model-routing": {
-      "binding_sha256": "d7c4e4ae4e7867d3625a2f0c38078fd0f1493fa9585d3be837e71075a58bfd7e",
+      "binding_sha256": "24ec385fb458c707c12166677050a382d19f4958254f68e5d3003dee81516ac7",
       "document_sha256": "8029169ed9092349bf55c35900ae545351772f6ef0fffaa19e3a50eb65bc49e3",
       "path": "docs/maps/model-routing.md",
       "resolved_files": 14
@@ -619,7 +619,7 @@
       "resolved_files": 23
     },
     "maps-observability-and-evaluations": {
-      "binding_sha256": "5ac68f8335c43f8d7c75604bb9d9e3ddb4a0a74f9f17e25d39a99543c1116528",
+      "binding_sha256": "a1cef684daf566730fa0d639bdf1df319131ddf3f987188a0618035d20289dff",
       "document_sha256": "ecf4f13f0e85827fdfdc3484946091c139c00af918ee8c29e4c413f259cb0bca",
       "path": "docs/maps/observability-and-evaluations.md",
       "resolved_files": 24
@@ -655,7 +655,7 @@
       "resolved_files": 0
     },
     "specifications-in-transcript-approval-resolution": {
-      "binding_sha256": "6ccad43176cd5c45ced0519a97e8f7df20e4faaa28cf0bf1004ffe4efa141b98",
+      "binding_sha256": "423bab8a330504bc5de49fcacb37985b3fc038aeb80fe01de9f018f87be47a34",
       "document_sha256": "922011db9de79508c195994cd38c294f4754cb22c6760256d5544252baa354bd",
       "path": "docs/specifications/in-transcript-approval-resolution.md",
       "resolved_files": 115

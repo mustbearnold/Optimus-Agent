@@ -474,6 +474,10 @@ impl Kernel {
                     }
                     _ => unreachable!("outer match restricts browser invocations"),
                 };
+                // Bound before the canonical clamp: a CDP result carries its
+                // screenshot inline, and pixels never fit the outcome budget.
+                let result =
+                    result.map(|out| crate::browser_budget::bound_browser_tool_json(&home, out));
                 if result.is_err() {
                     if let Some(mut dead) = self.browser.take() {
                         let _ = dead.close();
