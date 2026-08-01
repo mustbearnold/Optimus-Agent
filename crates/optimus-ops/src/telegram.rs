@@ -23,6 +23,10 @@ use crate::gateway::{
 };
 use uuid::Uuid;
 
+mod live;
+
+pub use live::LiveTelegramTransport;
+
 /// How long one outbound send may hold its obligation before the sweep calls it
 /// unknown. A Bot API call that has not returned in two minutes has already
 /// stopped being a question this process can answer.
@@ -160,6 +164,23 @@ impl Default for TelegramConfig {
     }
 }
 
+impl TelegramConfig {
+    /// Build the live Bot API transport this config describes.
+    ///
+    /// Returned as an `impl Trait` deliberately. A caller that only wants to run
+    /// a poll cycle never has to name the concrete type, so adding a live
+    /// transport does not drag a new name through every re-export layer between
+    /// this crate and the command that runs it.
+    pub fn live_transport(&self, poll_hold_secs: u64) -> Result<impl TelegramTransport> {
+        if !self.enabled {
+            return Err(TelegramError::Msg(
+                "live telegram is disabled; set enabled in gateway/telegram.json".into(),
+            ));
+        }
+        LiveTelegramTransport::new(&self.bot_token_env, poll_hold_secs)
+    }
+}
+
 fn default_token_env() -> String {
     "OPTIMUS_TELEGRAM_BOT_TOKEN".into()
 }
@@ -215,6 +236,13 @@ where
     for update in updates {
         // Always advance offset so live long-poll does not redeliver forever.
         result.next_offset = result.next_offset.max(update.update_id.saturating_add(1));
+        // A photo, a sticker, or a join carries no text and no turn to run. It
+        // is skipped *after* the offset moves: dropping it before would leave
+        // Telegram handing back the same unreadable update on every cycle, and
+        // the adapter would never see anything behind it again.
+        if update.text.trim().is_empty() || update.chat_id.is_empty() {
+            continue;
+        }
         if !config.allowed_chat_ids.is_empty()
             && !config
                 .allowed_chat_ids
@@ -223,13 +251,18 @@ where
         {
             continue;
         }
-        // Encode chat_id into session so replies can address the same chat.
+        // The routing address, not a session id: `<channel>:<address>` is what the
+        // reply is sent back to, and the kernel session is derived from it (ADR-0071).
         let session = Some(format!("telegram:{}", update.chat_id));
         let text = match update.from_username.as_deref() {
             Some(user) => format!("@{user}: {}", update.text),
             None => update.text.clone(),
         };
-        let inbound = enqueue(home, "telegram", &text, "offline", session.as_deref())?;
+        // "auto" so a remote message reaches whatever provider this machine is
+        // configured for. Hard-coding "offline" pinned every inbound message to the
+        // scripted echo model, which emits no tool calls — a bot that can never do
+        // anything is also a bot whose approval spine can never fire.
+        let inbound = enqueue(home, "telegram", &text, "auto", session.as_deref())?;
         result.enqueued.push(inbound.id);
     }
 

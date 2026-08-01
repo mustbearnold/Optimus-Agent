@@ -97,7 +97,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available) is separate from the Electron sandboxed preview `WebContentsView`.
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns: sequential WriteFile/RunCommand plus leased child-agent coordinator (S7)
-- Gateway: SQLite authority + Telegram mock + Discord/Slack mock enqueue (live bots residual)
+- Gateway: SQLite authority + config-gated live Telegram long-poll (`optimus gateway telegram run`) + Telegram mock + Discord/Slack mock enqueue (live Discord/Slack residual)
 - Capabilities: PRODUCT-COMPLETE + S7/Track Z scaffolds; Hermes gate not claimed
 - Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
 

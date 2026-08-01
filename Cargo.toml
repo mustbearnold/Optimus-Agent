@@ -78,7 +78,10 @@ ignore = "0.4"
 globset = "0.4"
 sha2 = "0.10"
 thiserror = "2"
-uuid = { version = "1", features = ["v4", "serde"] }
+# `v5` is not a second id scheme: it is how a gateway routing address resolves
+# to the one session that address has always meant, without a table that could
+# disagree with the ledger (ADR-0071).
+uuid = { version = "1", features = ["v4", "v5", "serde"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
 # Terminal-level test tooling. A pty plus a vt100 parser is what lets a test

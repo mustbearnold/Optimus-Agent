@@ -46,8 +46,6 @@ BANNED_CONSTRUCTORS = (
 APPS_ALLOWLIST: dict[tuple[str, str], int] = {
     # chat-offline (main.rs)
     ("optimus-cli/src/main.rs", "Kernel::open_session"): 1,
-    # gateway HTTP server
-    ("optimus-cli/src/gateway_http.rs", "Kernel::open_session"): 1,
     # jobs / resume / resume-all
     ("optimus-cli/src/runtime_open.rs", "Runtime::open"): 1,
     ("optimus-cli/src/runtime_open.rs", "Runtime::open_with_config"): 1,

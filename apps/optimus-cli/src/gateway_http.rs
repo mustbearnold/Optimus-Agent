@@ -14,10 +14,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use optimus_kernel::{
-    drain_one, enqueue, list_inbox, list_outbox, CodexOAuthConfig, CodexOAuthModel,
-    CompletionResponse, Kernel, KernelConfig, ScriptedModel,
-};
+use optimus_kernel::{enqueue, list_inbox, list_outbox};
 use serde::Deserialize;
 use serde_json::json;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
@@ -131,35 +128,16 @@ fn default_provider() -> String {
     "offline".into()
 }
 
+/// Drain one queued message, using the same turn every other surface uses.
+///
+/// This endpoint used to run its own copy of the turn, and the copy had drifted:
+/// it parsed `session_id` as a UUID (silently dropping `telegram:42`), answered
+/// with the kernel's session id as the reply address, and knew only two
+/// providers. There is one gateway turn now and it lives in `optimus-host`
+/// (ADR-0071), so a webhook and a poller cannot disagree about what a message
+/// means.
 fn drain_once(home: &Path) -> Result<Option<serde_json::Value>, String> {
-    let home_buf = home.to_path_buf();
-    let out = drain_one(home, |msg| {
-        let sid = msg
-            .session_id
-            .as_ref()
-            .and_then(|s| uuid::Uuid::parse_str(s).ok());
-        let mut kernel = Kernel::open_session(&home_buf, KernelConfig::default(), sid)
-            .map_err(|e| e.to_string())?;
-        let result = if msg.provider == "offline" {
-            let mut model = ScriptedModel::new(vec![CompletionResponse {
-                text: Some(format!("[gateway:{}] {}", msg.channel, msg.text)),
-                tool_calls: vec![],
-            }]);
-            model.stream_chunks = false;
-            kernel.turn(&mut model, &msg.text)
-        } else if msg.provider == "codex" {
-            let mut model = CodexOAuthModel::new(CodexOAuthConfig::from_env(&home_buf))
-                .map_err(|e| e.to_string())?;
-            kernel.turn(&mut model, &msg.text)
-        } else {
-            return Err(format!("unsupported provider {}", msg.provider));
-        };
-        match result {
-            Ok(r) => Ok((r.assistant_text, Some(kernel.session_id().to_string()))),
-            Err(e) => Err(e.to_string()),
-        }
-    })
-    .map_err(|e| e.to_string())?;
+    let out = optimus_host::drain_gateway_once(&home.to_path_buf())?;
     Ok(out.map(|r| {
         json!({
             "id": r.id,

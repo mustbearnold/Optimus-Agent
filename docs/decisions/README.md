@@ -97,6 +97,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0068 | A catalog row must dispatch or not exist | Accepted | Nine never-shipping scaffold tool rows leave the catalog, five committed lanes stay, and packs.breadth re-marks from parity to missing; refusing rows taught false affordances. |
 | 0069 | Release is measured against Optimus, not Hermes | Accepted | Re-scopes release to Optimus-native bars (ledger thesis axes, protected wins, no self-regression) and demotes the fail-closed Hermes gate to an informational scorecard; accepted by owner 2026-08-01. |
 | 0070 | An outbound send is a durable obligation | Accepted | A reply owed to an external channel is committed in the turn's own transaction and attempted only after the attempt is recorded; unknown outcomes never auto-retry, so the honest guarantee is at-least-once with a fenced ambiguity window an operator closes. |
+| 0071 | A routing address is not a session identity | Accepted | The gateway's per-message session field is a routing address; a turn derives its kernel session deterministically from that address and returns the address unchanged as the reply target, and a remote-initiated turn that trips SmartDeny settles once as a paused reply only the local operator can resolve. |
 
 ## Known documentary debt
 

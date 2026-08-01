@@ -55,6 +55,6 @@ pub use surfaces::{
 };
 pub use telegram::{
     load_telegram_config, poll_once as telegram_poll_once, process_inbound_reply_path,
-    save_telegram_config, MockTelegramTransport, SendOutcome, TelegramConfig, TelegramError,
-    TelegramPollResult, TelegramTransport, TelegramUpdate,
+    save_telegram_config, LiveTelegramTransport, MockTelegramTransport, SendOutcome,
+    TelegramConfig, TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate,
 };

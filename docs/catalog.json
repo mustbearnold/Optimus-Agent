@@ -2468,7 +2468,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "1cdd101193eddab49fc52c5bc9aef682fe0e1808d2e1d64d33e819aecb0adb6a",
+      "content_sha256": "d3463ead9b578cdeb562ba408a9d6ba19b79be63aca245ec2f8fbbdef77e7803",
       "headings": [
         "Optimus vs Hermes — evidence-backed SOTA scorecard",
         "Current ledger summary",
@@ -4701,7 +4701,33 @@
     },
     {
       "authority": "record",
-      "content_sha256": "dc1e368424afd13f154433f3fcf55577846f2b1a60b133a499009065ff03fac5",
+      "content_sha256": "cf99032a0d90b266572c94e4463a11eee0f0cbe86229cc3ff0c48ccd22a3b4bc",
+      "headings": [
+        "ADR-0071: A routing address is not a session identity",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0071-a-routing-address-is-not-a-session-identity",
+      "path": "docs/decisions/0071-a-routing-address-is-not-a-session-identity.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "The gateway's per-message session field is a routing address, not a kernel session id; a turn derives its session deterministically from that address and returns the address unchanged as the reply target, and a remote-initiated turn that trips SmartDeny settles once as a paused reply that only the local operator can resolve.",
+      "title": "ADR-0071: A routing address is not a session identity",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "bfa8903406308cfaea83a2356e25e6bea9bf334848be37a3c6d0321540183bdf",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5288,6 +5314,26 @@
       "status": "historical",
       "summary": "- Base commit: 8e4f2dd1eef187603340d0af77d6faf25a3883a7 - Candidate binary SHA-256: e003055e9eec4fcfd25e7e5a58bc6c333e3d7a5d76799a4baa8a41111d5187d0 - Surface: native optimus terminal UI in isolated tmux ptys - Live provider/model:...",
       "title": "Synthetic User Lab evidence — 2026-07-31",
+      "type": "evidence"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "e1dba42556682928977e4b5fb2b8ff19cd63dce27da41e08eca9a3ee91b8cc71",
+      "headings": [
+        "Telegram transport practice check — 2026-08-01",
+        "What was checked",
+        "Where this suite sits against that bar",
+        "Why the new dependency is pinned to `ureq` 2",
+        "Result"
+      ],
+      "id": "evidence-telegram-transport-practice-2026-08-01",
+      "path": "docs/evidence/telegram-transport-practice-2026-08-01.md",
+      "plane": "evidence",
+      "review_by": "never",
+      "reviewed_on": "2026-08-01",
+      "status": "historical",
+      "summary": "Dated check of the Telegram Bot API contract and of the HTTP client this workspace would depend on to speak it, made before the first live messaging transport, with the reason the new dependency is pinned to ureq 2 rather than the current 3.x.",
+      "title": "Telegram transport practice check — 2026-08-01",
       "type": "evidence"
     },
     {
@@ -7049,7 +7095,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "e5c75f4abb350344ffae8ed33d609bbe243b2b508e91b00babaeb99b43d837ab",
+  "documents_sha256": "18c6562813edcad29157b6349998d7de8153cd2fba6ab6f6624eda7ab4cbf47d",
   "routes": [
     {
       "id": "docs.navigation",

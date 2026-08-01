@@ -8,6 +8,7 @@ mod gateway_http;
 mod parsers;
 mod read_only;
 mod runtime_open;
+mod telegram_cmd;
 
 use clap::{Parser, Subcommand};
 use optimus_eval::{
@@ -16,11 +17,11 @@ use optimus_eval::{
 };
 use optimus_kernel::{
     acknowledge_delivery, enqueue, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
-    list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn,
-    load_telegram_config, open_cron, open_seeded_agent_registry, open_seeded_workflow_registry,
-    parse_causal_query, run_read_file_handoff, run_write_file_handoff, run_write_then_read_handoff,
-    tick_cron, write_causal_export, BrowserSession, CodexAuthStore, CompletionResponse, Kernel,
-    KernelConfig, ReadFileHandoffRequest, ScriptedModel, ToolCall, WriteFileHandoffRequest,
+    list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn, open_cron,
+    open_seeded_agent_registry, open_seeded_workflow_registry, parse_causal_query,
+    run_read_file_handoff, run_write_file_handoff, run_write_then_read_handoff, tick_cron,
+    write_causal_export, BrowserSession, CodexAuthStore, CompletionResponse, Kernel, KernelConfig,
+    ReadFileHandoffRequest, ScriptedModel, ToolCall, WriteFileHandoffRequest,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
@@ -345,8 +346,11 @@ enum GatewayCmd {
     },
     /// Show gateway inbox/outbox/ambiguous counts (doctor-friendly)
     Status,
-    /// Telegram adapter status (config-gated; no secrets printed)
-    Telegram,
+    /// Telegram adapter (config-gated; no secrets printed)
+    Telegram {
+        #[command(subcommand)]
+        cmd: Option<telegram_cmd::TelegramCmd>,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -1111,28 +1115,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Ok(())
             }
-            GatewayCmd::Telegram => {
-                let cfg = load_telegram_config(&cli.home)?;
-                let token_present = std::env::var(&cfg.bot_token_env)
-                    .map(|v| !v.trim().is_empty())
-                    .unwrap_or(false);
-                println!(
-                    "telegram enabled={} token_env={} token_present={} mode={}",
-                    cfg.enabled,
-                    cfg.bot_token_env,
-                    token_present,
-                    if cfg.enabled {
-                        "config-gated-live"
-                    } else {
-                        "mock-or-disabled"
-                    }
-                );
-                println!(
-                    "allowed_chats={} note=no public listen port; local gateway is authority",
-                    cfg.allowed_chat_ids.len()
-                );
-                Ok(())
-            }
+            GatewayCmd::Telegram { cmd } => telegram_cmd::run(&cli.home, cmd.as_ref()),
         },
         Commands::Eval { cmd } => match cmd {
             EvalCmd::Run { json } => {

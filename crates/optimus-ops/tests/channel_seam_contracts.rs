@@ -65,6 +65,35 @@ fn a_slack_address_survives_the_turn_into_the_obligation() {
 }
 
 #[test]
+fn a_polled_message_is_routed_rather_than_pinned_to_the_scripted_model() {
+    let home = tempdir().unwrap();
+    let mut transport = MockTelegramTransport::default();
+    transport.push_text(1, "42", "do something real");
+    telegram_poll_once(home.path(), &mut transport, 0, |message| {
+        Ok((format!("saw {}", message.text), message.session_id.clone()))
+    })
+    .unwrap();
+
+    // The adapter used to stamp every polled update with `offline`, which pins the
+    // turn to the scripted echo model no matter how this machine is configured.
+    // A model that emits no tool calls is a bot that can never do anything — and
+    // a bot that can never do anything is one whose approval spine can never
+    // fire, so the safety path would have been untested in the only place it
+    // matters. Routing is the caller's to decide, not the adapter's to hard-code.
+    // Read it off the outbound row rather than the inbox: a poll answers what it
+    // enqueues in the same cycle, so by now there is nothing pending to inspect.
+    // The turn copies the inbound provider forward, so this is the same string
+    // the route was resolved from.
+    let answered = list_outbox_receipts(home.path(), 10).unwrap();
+    assert_eq!(answered.len(), 1);
+    assert_ne!(
+        answered[0].outbound.provider, "offline",
+        "a remote message must reach the configured route, not a fixed provider"
+    );
+    assert_eq!(answered[0].outbound.provider, "auto");
+}
+
+#[test]
 fn an_empty_adapter_message_leaves_no_durable_trace() {
     let home = tempdir().unwrap();
 

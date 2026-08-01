@@ -3,10 +3,10 @@
 use std::path::PathBuf;
 
 use optimus_kernel::{
-    drain_one, CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig,
-    CodexOAuthModel, CompletionResponse, DrainResult, ExecutionManifest, ExecutionStore, Kernel,
-    KernelConfig, OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface,
-    ScriptedModel, StreamControl, StreamEvent, ToolCall,
+    CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig, CodexOAuthModel,
+    CompletionResponse, ExecutionManifest, ExecutionStore, Kernel, KernelConfig,
+    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
+    StreamControl, StreamEvent, ToolCall,
 };
 use serde_json::json;
 
@@ -517,54 +517,7 @@ pub fn chat_turn_cancellable(
     }))
 }
 
-/// Drain one gateway message through the host-owned kernel and canonical route.
-pub fn drain_gateway_once(home: &PathBuf) -> Result<Option<DrainResult>, String> {
-    let home_buf = home.clone();
-    drain_one(home, |message| {
-        let session = message
-            .session_id
-            .as_deref()
-            .map(uuid::Uuid::parse_str)
-            .transpose()
-            .map_err(|error| error.to_string())?;
-        let mut kernel = Kernel::open_session(&home_buf, KernelConfig::default(), session)
-            .map_err(|error| error.to_string())?;
-        let route = optimus_kernel::resolve_route(
-            &home_buf,
-            &RouteRequest::standard(RouteSurface::Gateway, &message.provider, None),
-        )
-        .map_err(|error| error.to_string())?;
-        let result = match route.provider {
-            ProviderId::Offline => {
-                let mut model = ScriptedModel::new(vec![CompletionResponse {
-                    text: Some(format!("[gateway:{}] {}", message.channel, message.text)),
-                    tool_calls: vec![],
-                }]);
-                model.stream_chunks = false;
-                kernel.turn(&mut model, &message.text)
-            }
-            ProviderId::Codex => {
-                let mut config = CodexOAuthConfig::from_env(&home_buf);
-                config.model = route.model.as_str().into();
-                let mut model = CodexOAuthModel::new(config).map_err(|error| error.to_string())?;
-                kernel.turn(&mut model, &message.text)
-            }
-            ProviderId::OpenAiCompat => {
-                let config = apply_resolved_openai_model(
-                    OpenAiCompatConfig::from_env().map_err(|error| error.to_string())?,
-                    route.model.as_str(),
-                );
-                let mut model = OpenAiCompatModel::new(config);
-                kernel.turn(&mut model, &message.text)
-            }
-        }
-        .map_err(|error| error.to_string())?;
-        Ok((result.assistant_text, Some(kernel.session_id().to_string())))
-    })
-    .map_err(|error| error.to_string())
-}
-
-fn apply_resolved_openai_model(
+pub(crate) fn apply_resolved_openai_model(
     mut config: OpenAiCompatConfig,
     resolved_model: &str,
 ) -> OpenAiCompatConfig {

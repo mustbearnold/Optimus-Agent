@@ -12,9 +12,16 @@ rusqlite.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+# Matches the pin `optimus-kernel` already carries. First-party HTTP stays on
+# one client API and one TLS configuration; see
+# `docs/evidence/telegram-transport-practice-2026-08-01.md`.
+ureq = { version = "2", default-features = false, features = ["json", "tls"] }
 uuid.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true
 tempfile.workspace = true
+# A loopback Bot API stands in for Telegram so the request this transport
+# actually builds is asserted against a real socket rather than a mock of it.
+tiny_http.workspace = true
 uuid.workspace = true

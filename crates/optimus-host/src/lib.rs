@@ -10,6 +10,7 @@ mod consoles;
 mod contract;
 mod extensibility;
 mod files;
+mod gateway_turn;
 mod home;
 mod messaging;
 mod os;
@@ -22,9 +23,10 @@ mod system;
 
 pub use chat::{
     chat_approval_resolve, chat_approval_resolve_cancellable, chat_turn, chat_turn_cancellable,
-    drain_gateway_once, stream_delivery_control, stream_event_to_json,
+    stream_delivery_control, stream_event_to_json,
 };
 pub use contract::{IpcEnvelope, IpcReply};
+pub use gateway_turn::{drain_gateway_once, gateway_turn, session_for_address};
 pub use home::resolve_home;
 pub use os::pick_folder_dialog;
 pub use router::handle_ipc;
