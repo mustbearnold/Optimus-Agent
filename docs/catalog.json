@@ -4654,7 +4654,28 @@
     },
     {
       "authority": "record",
-      "content_sha256": "770d9d221c4382651f101f840958a4e71606226e56382c56f88b86e834edcaa9",
+      "content_sha256": "9ea65b9cbcd13c1606858f711aa09d8483f80cd2c7935121ec4080ad3bf57499",
+      "headings": [
+        "ADR-0069: Release is measured against Optimus, not Hermes",
+        "Context",
+        "Options",
+        "Decision (proposed)",
+        "Consequences",
+        "Reconsider when"
+      ],
+      "id": "decisions-0069-release-is-measured-against-optimus-not-hermes",
+      "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Proposed resolution of the yardstick contradiction — the north-star retired Hermes as a criterion while the release ratchet stays wired to the fail-closed 2,063-contract Hermes gate; this ADR re-scopes release to Optimus-native bars and demotes the Hermes gate to an informational scorecard.",
+      "title": "ADR-0069: Release is measured against Optimus, not Hermes",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "8f58d2701b50cf1c91e37b4ab5a4e63ccba735e6ad8c15d0726b00ca0688d948",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -6981,7 +7002,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "df326a742af1ba84750edf1f81203c4419e1586f8052ae69494d04268712be88",
+  "documents_sha256": "8daebc2ccaa19788789e4451a282af7433fea71a630ab3f070745c148ae36d99",
   "routes": [
     {
       "id": "docs.navigation",

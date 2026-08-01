@@ -558,11 +558,17 @@
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
+    "decisions-0069-release-is-measured-against-optimus-not-hermes": {
+      "binding_sha256": "bb70f3e936ca9538f500237cbb3c20c7606e7c39d838033a8c4c80a3629e4bf3",
+      "document_sha256": "9ea65b9cbcd13c1606858f711aa09d8483f80cd2c7935121ec4080ad3bf57499",
+      "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
+      "resolved_files": 7
+    },
     "decisions-readme": {
-      "binding_sha256": "24904f911a2eb025bef2f6b590585a9feb5c2206361580a53f8a7cb7e4cbea44",
-      "document_sha256": "770d9d221c4382651f101f840958a4e71606226e56382c56f88b86e834edcaa9",
+      "binding_sha256": "571b2cbf38d7fcbe796f18cf15992188b9c5d7db80af33c8ad90bfcbab1c3327",
+      "document_sha256": "8f58d2701b50cf1c91e37b4ab5a4e63ccba735e6ad8c15d0726b00ca0688d948",
       "path": "docs/decisions/README.md",
-      "resolved_files": 73
+      "resolved_files": 74
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "a5fabb97ddc7f62f1f90906337a980a916cef500b2d5f940c05462a4a168d7c4",

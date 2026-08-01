@@ -95,6 +95,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0066 | Temporal project knowledge is a code-aware interval graph | Accepted | Schema 2 projects event time onto UTC over a topological walk, adds interval-valid package dependency edges, current-tree symbols, author identity, exact content digests, and three further closed cleanup conventions. |
 | 0067 | Managed cleanup fingerprints symlinks without following | Accepted | Symlinks inside a cleanup candidate are fingerprinted by their own metadata and target string and deleted as entries, never followed; a symlink candidate root still refuses. |
 | 0068 | A catalog row must dispatch or not exist | Accepted | Nine never-shipping scaffold tool rows leave the catalog, five committed lanes stay, and packs.breadth re-marks from parity to missing; refusing rows taught false affordances. |
+| 0069 | Release is measured against Optimus, not Hermes | Proposed | Re-scopes release to Optimus-native bars (ledger thesis axes, protected wins, no self-regression) and demotes the fail-closed Hermes gate to an informational scorecard; owner acceptance required. |
 
 ## Known documentary debt
 
