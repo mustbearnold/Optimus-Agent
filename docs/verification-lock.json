@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "9125cb7694e61f668d59e11dba0a3180e6e95cae8f4aa33595480cd710fd224f",
+      "binding_sha256": "353d4aaa15c8f21da3f3b7b4778b21ff1dfe8c5875af1d9f310299b4c674ef70",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 341
@@ -319,25 +319,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "cf7b457802ef417ba40ac720466725e5c240447e06cb56c0781ab9b71d8f584f",
+      "binding_sha256": "38921289838fdc593ef5a2fd51256adcf81687171d84c6c58307d70a44dfcc26",
       "document_sha256": "de58fe424aee66fd31dadbb254c470c0a0bb0d57bf66fe722c4249f660abebca",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 121
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "979a96b3330e4d6ac2dae78ce74f382ac51b6cedf688ee6d40cbfd4f34d82999",
+      "binding_sha256": "731c0a80a8da61c5662720e480f1527df6436b82052afbbae00e94a4b6f19f63",
       "document_sha256": "9947d9bb090b59f83e953b336120a79b9b467acc3358fbb7b9ab9b936169f8f8",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 121
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "7de9156be79d41cb945295f27cafc467b057d409d35b05cb23509e644589ac9f",
+      "binding_sha256": "2f97fc1c43faa5a245776ef3b105fa73d7d694822f9e38b5fdfeab3f97a76f81",
       "document_sha256": "5454bddfb445341aa15389f08ffe6d6b9e2286eec7e54ad096ebd8864b0a0ad0",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 107
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "6418350a93bbec9ebb835e7359ecf673efb64b28b8876e4382d55d3f3398aa97",
+      "binding_sha256": "44321b99bdaa5882df5535afe3f987184524f5b2d9b1c817855bbe51e15ed526",
       "document_sha256": "ed013ec8a70e7222ebd3080683e3dc25303922429d887ecf7606f928994ef797",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 102
@@ -391,7 +391,7 @@
       "resolved_files": 13
     },
     "decisions-0040-shared-browser-contract": {
-      "binding_sha256": "db85c727468bd924c89ee2723732aea0b739ba0ade5473fc2f1668b639db9c0e",
+      "binding_sha256": "ab826cd001c2fcc4a132de1bb70a9a21a072a02040ad58f97f93fc67e6d18031",
       "document_sha256": "a3a0ea9785a0909c028c2557ccbd43b5d2088b7347a2acc5d689a2f80024d469",
       "path": "docs/decisions/0040-shared-browser-contract.md",
       "resolved_files": 28
@@ -559,13 +559,13 @@
       "resolved_files": 72
     },
     "design-codex-convergence-experience-contract": {
-      "binding_sha256": "7b1a8df579a3a6b3554c9c62381b4cceff0eb2a60362c03cda68c968d7fb9e57",
+      "binding_sha256": "33c2d85d4c6ef2dabcc210f576792d944a2470be386ec5d848bbf017d99c4c85",
       "document_sha256": "1df6d7f82e0ec8a0a18602ada10d71cc1f42168ec21c02cd57fe2e204d8a0e1c",
       "path": "docs/design/codex-convergence-experience-contract.md",
       "resolved_files": 104
     },
     "design-codex-convergence-state-matrix": {
-      "binding_sha256": "e2415ac7bb9f0a322108333772706e70af8add6c159b5ff70aa31bfdda6157e0",
+      "binding_sha256": "0251fcab5cf1eaf77d78c0a7481257ec1d62004eb57224d2e3f4ed0e4ddeda2b",
       "document_sha256": "f986075be9aec2905b191c44a4e54a633a6f54ac0d4eb76c8bc6330b1e876dae",
       "path": "docs/design/codex-convergence-state-matrix.md",
       "resolved_files": 103
@@ -655,7 +655,7 @@
       "resolved_files": 0
     },
     "specifications-in-transcript-approval-resolution": {
-      "binding_sha256": "423bab8a330504bc5de49fcacb37985b3fc038aeb80fe01de9f018f87be47a34",
+      "binding_sha256": "a697da8265e06cb6b5c7157fc56faa4c683f415883b51e2335494698e12b807c",
       "document_sha256": "922011db9de79508c195994cd38c294f4754cb22c6760256d5544252baa354bd",
       "path": "docs/specifications/in-transcript-approval-resolution.md",
       "resolved_files": 115

@@ -284,14 +284,21 @@ describe('Composer', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Access: Standard' }));
-    const options = within(screen.getByRole('listbox', { name: 'Access' })).getAllByRole('option');
-    options[0].focus();
+    // Re-query at every step: a slow run can re-render the listbox between
+    // interactions, and a held node from before the render is a different
+    // element than the one focus management is moving.
+    const option = (index: number) =>
+      within(screen.getByRole('listbox', { name: 'Access' })).getAllByRole('option')[index];
+    // Opening the menu focuses the selected option on the next animation
+    // frame. Let that land first — moving focus before it fires hands the
+    // frame a stale target to steal focus back to, mid-test.
+    await waitFor(() => expect(option(0)).toHaveFocus());
 
     await user.keyboard('{ArrowUp}');
-    expect(options[0]).toHaveFocus();
+    await waitFor(() => expect(option(0)).toHaveFocus());
 
-    options[4].focus();
+    option(4).focus();
     await user.keyboard('{ArrowDown}');
-    expect(options[4]).toHaveFocus();
+    await waitFor(() => expect(option(4)).toHaveFocus());
   });
 });

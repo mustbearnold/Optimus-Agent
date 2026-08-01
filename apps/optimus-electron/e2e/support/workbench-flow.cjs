@@ -140,7 +140,18 @@ async function offlineWorkbenchFlow(page, options) {
     .filter({ has: page.locator('.session-title', { hasText: detail.title || completedTitle }) })
     .first();
   await expect(completedRow).toBeVisible();
-  await completedRow.locator('.session-select').click();
+  // Retry the click-and-verify unit as one piece: on a cold run the sidebar
+  // can re-render as sessions hydrate, and a click that lands on the node
+  // being replaced selects nothing. A longer timeout on the text assertion
+  // cannot cure that — only clicking again can.
+  await expect(async () => {
+    await completedRow.locator('.session-select').click();
+    await expect(
+      page
+        .locator('.session-row.is-active')
+        .filter({ has: page.locator('.session-title', { hasText: detail.title || completedTitle }) })
+    ).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
   await expect(page.locator('.message-body').getByText(response, { exact: true })).toBeVisible();
 
   const record = {
