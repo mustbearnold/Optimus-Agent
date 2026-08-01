@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "a1e6e82af79ba9f5b7312d80b577a239cf35f66ce784feb50f3f6666f8ee8829",
+      "binding_sha256": "082d8133de6045c4ed8c39b5c4637585df43e5179c2a3a50683a024c1c108c9e",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 340
@@ -427,7 +427,7 @@
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "a54ab37a7c9e07aa7e2ff8dd8df2948bc1d59a4e94c3009212ebfe0374659af2",
+      "binding_sha256": "8bc3888e8503ac60bb56346f21fd6c55628ff2e5474ecccb4019cd6b41eb8393",
       "document_sha256": "2ec35c71109c2f6a2d8334d7389b4640a2ebc99b901a0b527ed8bdc2200e1743",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 11

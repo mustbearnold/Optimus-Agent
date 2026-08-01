@@ -33,6 +33,7 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
         "model" => set_model(session, &argument),
         "thinking" => set_thinking(session, &argument),
         "approval" => approval(session),
+        "access" => access(session, &argument),
         "yolo" => yolo(session),
         "frame" => frame(session),
         "mouse" => mouse(session),
@@ -51,6 +52,7 @@ pub fn menu() -> Picker {
     let items = [
         ("providers", "pick a provider"),
         ("approval", "decide the pending approval"),
+        ("access", "autonomy profile for new turns"),
         ("frame", "containers, or plain gutters"),
         ("yolo", "unrestricted access"),
         ("new", "start a fresh session"),
@@ -77,6 +79,7 @@ fn help(session: &mut TuiSession) {
             "/model <id>       override the model, or 'auto'",
             "/thinking <lvl>   minimal|low|medium|high|xhigh|max, or off",
             "/approval         decide the pending exact approval",
+            "/access <profile> standard|review_changes|read_only|full_project",
             "/yolo             unrestricted access, releases the open approval",
             "/frame            containers around turns, or plain gutters",
             "/mouse            hand the mouse back to the terminal, or take it",
@@ -250,6 +253,60 @@ fn set_thinking(session: &mut TuiSession, argument: &str) {
     }
 }
 
+/// Closed map from user words to canonical wire profiles. Mirrors the
+/// non-break-glass rows of the graph parser; /access deliberately cannot
+/// reach UnrestrictedHost — an ordinary-sounding word must not hand over the
+/// machine (#118), so break-glass stays /yolo alone.
+fn parse_access(raw: &str) -> Option<&'static str> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "standard" | "std" => Some("standard"),
+        "review_changes" | "review" | "ask" => Some("review_changes"),
+        "read_only" | "readonly" | "read" => Some("read_only"),
+        "full_project" | "full-project" | "project_full" => Some("full_project"),
+        _ => None,
+    }
+}
+
+const ACCESS_OPTIONS: &str = "standard, review_changes, read_only, full_project";
+
+fn access(session: &mut TuiSession, argument: &str) {
+    if argument.is_empty() {
+        let current = if session.yolo {
+            "unrestricted (via /yolo)"
+        } else {
+            session.access.unwrap_or("review_changes (default)")
+        };
+        session.push(
+            Role::Assistant,
+            format!("access is {current} — /access <{ACCESS_OPTIONS}> changes new turns"),
+        );
+        return;
+    }
+    if let Some(profile) = parse_access(argument) {
+        // Selecting a bounded profile always narrows out of break-glass; the
+        // reverse direction still requires the unmistakable /yolo word.
+        let dropped_yolo = std::mem::take(&mut session.yolo);
+        session.access = Some(profile);
+        let note = if dropped_yolo {
+            " (yolo no longer rides new turns)"
+        } else {
+            ""
+        };
+        session.push(Role::Assistant, format!("new turns run as {profile}{note}"));
+        return;
+    }
+    let lowered = argument.to_ascii_lowercase();
+    let text = if matches!(
+        lowered.as_str(),
+        "unrestricted" | "unrestricted_host" | "yolo" | "full" | "host"
+    ) {
+        format!("break-glass is /yolo only; /access offers {ACCESS_OPTIONS}")
+    } else {
+        format!("unknown profile '{argument}' — /access offers {ACCESS_OPTIONS}")
+    };
+    session.push(Role::Error, text);
+}
+
 fn yolo(session: &mut TuiSession) {
     // Reuse the runtime path the CLI flag uses, so the receipt story is identical.
     match handle_ipc(&session.home, "approvals_release_yolo", json!({})) {
@@ -337,9 +394,72 @@ mod tests {
         let (_dir, mut session) = session();
         assert!(dispatch(&mut session, "/help"));
         let text = &session.messages[0].text;
-        for expected in ["/providers", "/provider <id>", "/approval", "/yolo", "/new"] {
+        for expected in [
+            "/providers",
+            "/provider <id>",
+            "/approval",
+            "/access <profile>",
+            "/yolo",
+            "/new",
+        ] {
             assert!(text.contains(expected), "missing {expected}");
         }
+    }
+
+    #[test]
+    fn access_sets_a_bounded_profile_for_new_turns() {
+        let (_dir, mut session) = session();
+        assert!(dispatch(&mut session, "/access standard"));
+        assert_eq!(session.access, Some("standard"));
+        assert_eq!(session.messages[0].role, Role::Assistant);
+        assert!(session.messages[0].text.contains("standard"));
+    }
+
+    #[test]
+    fn access_falls_closed_on_unknown_words() {
+        let (_dir, mut session) = session();
+        assert!(dispatch(&mut session, "/access banana"));
+        assert_eq!(session.access, None, "an unknown word must change nothing");
+        assert_eq!(session.messages[0].role, Role::Error);
+    }
+
+    #[test]
+    fn access_cannot_reach_break_glass() {
+        let (_dir, mut session) = session();
+        for word in ["unrestricted", "unrestricted_host", "yolo", "full", "host"] {
+            assert!(dispatch(&mut session, &format!("/access {word}")));
+            assert_eq!(session.access, None, "{word} must not select a profile");
+            assert!(!session.yolo, "{word} must not enter break-glass");
+            let last = session.messages.last().expect("a refusal message");
+            assert_eq!(last.role, Role::Error);
+            assert!(
+                last.text.contains("/yolo"),
+                "refusal for {word} names /yolo"
+            );
+        }
+    }
+
+    #[test]
+    fn access_narrows_out_of_yolo() {
+        let (_dir, mut session) = session();
+        session.yolo = true;
+        assert!(dispatch(&mut session, "/access review"));
+        assert_eq!(session.access, Some("review_changes"));
+        assert!(
+            !session.yolo,
+            "choosing a bounded profile leaves break-glass"
+        );
+    }
+
+    #[test]
+    fn bare_access_reports_without_changing_anything() {
+        let (_dir, mut session) = session();
+        assert!(dispatch(&mut session, "/access"));
+        assert_eq!(session.access, None);
+        assert_eq!(session.messages[0].role, Role::Assistant);
+        assert!(session.messages[0]
+            .text
+            .contains("review_changes (default)"));
     }
 
     #[test]

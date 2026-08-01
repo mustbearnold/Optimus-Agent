@@ -198,6 +198,9 @@ pub struct TuiSession {
     pub session_id: Option<String>,
     pub status: String,
     pub yolo: bool,
+    /// Bounded ADR-0044 profile for new turns, chosen with /access. Canonical
+    /// wire strings only; never the break-glass profile — that stays /yolo.
+    pub access: Option<&'static str>,
     pub picker: Option<crate::picker::Picker>,
     /// The exact binding of a parked effect, held until a decision resolves it.
     pub pending_approval: Option<Box<ToolApprovalBinding>>,
@@ -243,6 +246,7 @@ impl TuiSession {
             session_id: None,
             status: String::new(),
             yolo: false,
+            access: None,
             picker: None,
             pending_approval: None,
             scroll_back: 0,
@@ -503,6 +507,8 @@ impl TuiSession {
         // /yolo applies to new effects too: the turn itself runs UnrestrictedHost.
         if self.yolo {
             params["access"] = json!("yolo");
+        } else if let Some(profile) = self.access {
+            params["access"] = json!(profile);
         }
         params
     }
@@ -968,6 +974,39 @@ mod tests {
             serde_json::json!("yolo"),
             "after /yolo, new effects must run under the unrestricted profile"
         );
+    }
+
+    #[test]
+    fn a_selected_access_profile_rides_the_turn_params() {
+        let (_dir, mut session) = session();
+        session.access = Some("standard");
+        assert_eq!(
+            session.turn_params("hi")["access"],
+            serde_json::json!("standard"),
+            "the chosen bounded profile must reach the host"
+        );
+    }
+
+    #[test]
+    fn yolo_outranks_a_selected_access_profile() {
+        let (_dir, mut session) = session();
+        session.access = Some("standard");
+        session.yolo = true;
+        assert_eq!(
+            session.turn_params("hi")["access"],
+            serde_json::json!("yolo"),
+            "break-glass, once released, is the wider explicit grant"
+        );
+    }
+
+    #[test]
+    fn a_selected_access_profile_rides_the_resumed_turn_too() {
+        let (_dir, mut session) = session();
+        session.session_id = Some("11111111-1111-4111-8111-111111111111".into());
+        session.pending_approval = Some(approval_binding_fixture());
+        session.access = Some("full_project");
+        let params = session.approval_params("approve").expect("resolves");
+        assert_eq!(params["access"], serde_json::json!("full_project"));
     }
 
     #[test]

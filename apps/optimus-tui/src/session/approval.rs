@@ -116,6 +116,8 @@ impl TuiSession {
         self.apply_model_choice(&mut params);
         if self.yolo {
             params["access"] = json!("yolo");
+        } else if let Some(profile) = self.access {
+            params["access"] = json!(profile);
         }
         Ok(params)
     }
