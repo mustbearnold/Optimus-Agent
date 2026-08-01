@@ -11,6 +11,8 @@ knowledge_type: decision
 covers:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/src/owned_localhost.rs
+  - crates/optimus-runtime/src/owned_localhost/serve.rs
+  - crates/optimus-runtime/src/owned_localhost/listener_proof.rs
   - crates/optimus-runtime/src/process_ownership.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-browser/src/lib.rs
@@ -22,6 +24,8 @@ depends_on:
 validated_by:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-runtime/src/owned_localhost.rs
+  - crates/optimus-runtime/src/owned_localhost/listener_proof.rs
+  - crates/optimus-runtime/tests/owned_localhost_serve.rs
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-browser/src/lib.rs
 ---
@@ -111,20 +115,32 @@ This decision lands in stages without weakening the default deny:
   generation, expiry, and retained-listener liveness on every use. Revocation
   fences new uses, waits boundedly for active use guards, then cleans the
   retained owner or quarantines a failed cleanup for retry, and records ordered
-  evidence. Neither the verified-listener proof nor the opaque execution context
-  has a production constructor yet, so the substrate cannot issue product
-  authority by itself.
-- **Still required for R30.7:** the structured serve effect, listener ownership
-  proof and atomic runtime-owned front listener, trusted kernel-to-runtime
-  issuance context, lifecycle hook wiring and active expiry supervision, HTTP
-  leased-origin connection, worker/service-worker and WebSocket egress coverage
-  below a single tab target, restart orphan-process recovery, and one end-to-end
-  serve/browse/revoke test. Generations are process-local until the retained
-  listener/store projection makes cross-process exclusivity authoritative.
+  evidence.
+- **Landed issuance (2026-08-01):** the structured `ProjectServe` effect is the
+  only production caller that mints a lease, and clause 3 is now enforced by
+  construction — the verified-listener proof and the execution context are
+  built inside `owned_localhost::serve`, which nothing else can reach. Listener
+  ownership is proven physically before issuance: the transient unit's cgroup is
+  read back, its member pids are enumerated, and the listening socket inode for
+  the exact port is matched against those pids' open descriptors. Ownership
+  proof that cannot be obtained fails closed, and every non-Linux host fails
+  closed outright. The lease is revoked when the owning run reaches a terminal
+  status, and expired leases are swept before each step. Both SmartDeny rounds —
+  the serve effect and the lease itself — run per exact origin, so a grant is
+  one decision per program/port/TTL rather than a standing localhost opening.
+- **Still required for R30.7:** a tool that emits the serve effect (no catalog
+  row constructs one, so no model-driven path reaches issuance yet), the HTTP
+  leased-origin connection path (the kernel-side consumer of an issued lease),
+  an atomic runtime-owned front listener, worker/service-worker and WebSocket
+  egress coverage below a single tab target, active expiry supervision
+  independent of stepping, and restart orphan-process recovery. Generations are
+  process-local until the retained listener/store projection makes
+  cross-process exclusivity authoritative. IPv4 and HTTP only.
 
-Until those remaining items land, no product path issues the new authority and
-localhost stays denied. Program P30 microtask R30.7 therefore remains in
-progress rather than done.
+A serve can now start and be leased, but the lease has no producer and no
+consumer on a product path: nothing emits the effect from a tool call, and
+nothing connects to a leased origin. Program P30 microtask R30.7 therefore
+remains in progress rather than done.
 
 ## Consequences
 
@@ -207,14 +223,23 @@ lease based on hostname convenience alone.
 - `crates/optimus-policy/src/lib.rs` — exact binding and broker constraints
 - `crates/optimus-runtime/src/owned_localhost.rs` — non-bearer live registry,
   use guards, expiry/generation fencing, revocation, cleanup, and audit evidence
+- `crates/optimus-runtime/src/owned_localhost/serve.rs` — the only production
+  issuer: workspace check, spawn, readiness wait, proof, lease, authorization
+- `crates/optimus-runtime/src/owned_localhost/listener_proof.rs` — cgroup → pid
+  → socket-inode ownership proof, failing closed off Linux
 - `crates/optimus-kernel/src/browser.rs` — pre-connect HTTP redirect validation
 - `crates/optimus-browser/src/lib.rs` — immutable CDP request authority
-- `crates/optimus-runtime/src/process_ownership.rs` — existing retained
-  process-tree containment on which issuance must build
+- `crates/optimus-runtime/src/process_ownership.rs` — retained process-tree
+  containment, including the detached serve mode issuance builds on
 
 ## Relevant tests
 
+- `crates/optimus-runtime/tests/owned_localhost_serve.rs` — end-to-end: denial
+  before any process starts, approval-gated issuance, a real leased listener
+  answering while its run is live, and revocation when the run settles
 - `crates/optimus-policy/src/lib.rs` — broker binding and compatibility tests
 - `crates/optimus-runtime/src/owned_localhost.rs` — registry and lifecycle tests
+- `crates/optimus-runtime/src/owned_localhost/listener_proof.rs` — proof-chain
+  parser tests over `/proc/net/tcp` and cgroup shapes
 - `crates/optimus-browser/src/lib.rs` — exact CDP origin/request tests
 - `crates/optimus-kernel/src/browser.rs` — manual redirect policy tests

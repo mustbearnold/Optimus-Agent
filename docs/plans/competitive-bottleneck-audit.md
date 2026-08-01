@@ -500,6 +500,17 @@ ADR-0060 issuance incomplete; IPv4/HTTP-only. Blocks local models
 **Solution:** finish the grant issuance path with per-origin durable grants
 under SmartDeny; this single unlock feeds three capability items.
 
+*Delivery note (2026-08-01, does not amend the finding above):* the issuance
+half landed — a structured `ProjectServe` effect mints a lease after proving
+the listening socket belongs to the retained process tree, and it is the only
+module that can. "Per-origin durable grants" is read as ADR-0060 intends: one
+SmartDeny decision per exact origin and lease, not a standing localhost
+opening, because that ADR makes the lease ephemeral and process-bound by
+decision. Neither end of the product path is landed: no tool emits the serve
+effect, and no kernel path connects to a leased origin. Localhost is therefore
+still effectively denied and the three downstream items stay blocked.
+B-SEC-04 is not closed.
+
 ### B-SEC-05 — SSRF residual named in the map
 Hostname-resolution edge documented. **Solution:** resolve-then-pin
 (connect to the vetted IP, not the re-resolved name); add the trajectory.

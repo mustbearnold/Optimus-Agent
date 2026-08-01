@@ -582,15 +582,63 @@ impl CapabilityBroker {
 }
 
 /// Map Work Graph effect kind names to capabilities (stringly to avoid a graph dep).
+///
+/// `ProjectServe` maps to `ProcessProjectExecute`, **not** `ProcessProjectServe`.
+/// The effect gate decides whether this process may start at all, and it runs
+/// before any listener exists, so it has no binding to present;
+/// [`build_effect_request_for`] always emits `owned_localhost: None` and the
+/// broker denies every binding-requiring capability without one. The lease
+/// authority is a separate decision over a proven binding — see
+/// [`build_owned_localhost_serve_request`].
 pub fn capability_for_effect_kind(kind: &str) -> Option<CapabilityId> {
     match kind {
         "WriteFile" | "ProjectWriteFile" | "Mkdir" | "ProjectMkdir" | "PatchFile"
         | "ProjectPatchFile" => Some(CapabilityId::FsProjectWrite),
         "RenamePath" | "ProjectRenamePath" => Some(CapabilityId::FsProjectRename),
         "DeletePath" | "ProjectDeletePath" => Some(CapabilityId::FsProjectDelete),
-        "RunCommand" | "ProjectRunCommand" => Some(CapabilityId::ProcessProjectExecute),
+        "RunCommand" | "ProjectRunCommand" | "ProjectServe" => {
+            Some(CapabilityId::ProcessProjectExecute)
+        }
         "AssertFileEquals" => Some(CapabilityId::FsProjectRead),
         _ => None,
+    }
+}
+
+/// Authority request for an Optimus-owned localhost lease over a listener whose
+/// ownership the runtime has already proven (ADR-0060).
+///
+/// Separate from [`build_effect_request_for`] because a `ProcessProjectServe`
+/// decision is only coherent with the exact binding attached. Passing the
+/// binding through the broker is what forces it past
+/// [`OwnedLocalhostBinding::is_valid_for`]: a lease whose project scope, root
+/// hash, run, or process-tree identity does not cohere is denied here rather
+/// than reaching a consumer.
+pub fn build_owned_localhost_serve_request(
+    effect_hash: &str,
+    project_scope_id: String,
+    summary: String,
+    binding: OwnedLocalhostBinding,
+) -> ActionRequest {
+    ActionRequest {
+        run_id: Some(binding.run_id),
+        actor: "runtime".into(),
+        tool_id: None,
+        project_scope_id: Some(project_scope_id),
+        capability: CapabilityId::ProcessProjectServe,
+        target: ActionTarget {
+            summary,
+            project_root_hash: Some(binding.project_root_hash.clone()),
+            relative_path: None,
+            owned_localhost: Some(binding),
+        },
+        effect_digest: EffectDigest {
+            sha256_hex: effect_hash.to_string(),
+        },
+        // Revoking the lease terminates the process tree that holds the
+        // listener, so the effect of granting one is undoable in full.
+        reversibility: Reversibility::Reversible,
+        sensitivity: Sensitivity::Ordinary,
+        externality: Externality::OwnedLocalhost,
     }
 }
 
@@ -910,6 +958,78 @@ mod tests {
             &owned_localhost_req(CapabilityId::ProcessProjectServe),
         );
         assert!(decision.is_ask());
+    }
+
+    /// The effect gate runs before a listener exists, so a serve effect cannot
+    /// present a binding there. Mapping it to `ProcessProjectServe` would make
+    /// every serve deny as `invalid_owned_localhost_binding` — a fail-closed
+    /// that looks like policy but is really a wiring bug.
+    #[test]
+    fn serve_effect_kind_gates_as_process_execute_not_as_a_lease() {
+        assert_eq!(
+            capability_for_effect_kind("ProjectServe"),
+            Some(CapabilityId::ProcessProjectExecute)
+        );
+
+        let request = build_effect_request_for(
+            "ProjectServe",
+            &"c".repeat(64),
+            Some("d".repeat(64)),
+            "project serve python3 -m http.server".into(),
+            None,
+            Some(("python3", &["-m".to_string(), "http.server".to_string()])),
+        )
+        .expect("serve effects map to a capability");
+        assert_eq!(request.capability, CapabilityId::ProcessProjectExecute);
+        assert_eq!(request.target.owned_localhost, None);
+        assert!(CapabilityBroker
+            .decide(AutonomyProfile::Standard, &request)
+            .is_allow());
+    }
+
+    #[test]
+    fn a_proven_lease_request_carries_its_binding_through_the_broker() {
+        let binding = owned_localhost_binding();
+        let request = build_owned_localhost_serve_request(
+            &"c".repeat(64),
+            binding.project_scope_id.clone(),
+            "serve on 127.0.0.1:4173".into(),
+            binding.clone(),
+        );
+
+        assert_eq!(request.capability, CapabilityId::ProcessProjectServe);
+        assert_eq!(request.externality, Externality::OwnedLocalhost);
+        assert_eq!(request.run_id, Some(binding.run_id));
+        assert_eq!(
+            request.target.project_root_hash.as_deref(),
+            Some(binding.project_root_hash.as_str())
+        );
+
+        match CapabilityBroker.decide(AutonomyProfile::Standard, &request) {
+            AuthorityDecision::Allow { constraints, .. } => {
+                assert_eq!(constraints.owned_localhost, Some(binding));
+            }
+            other => panic!("expected a lease allow, got {other:?}"),
+        }
+    }
+
+    /// A lease whose identity does not cohere with its own request is refused
+    /// here rather than reaching a consumer, so an incoherent binding can never
+    /// be handed out even if the runtime built one.
+    #[test]
+    fn an_incoherent_proven_lease_request_is_denied() {
+        let mut binding = owned_localhost_binding();
+        binding.project_root_hash = "not-a-root-hash".into();
+        let request = build_owned_localhost_serve_request(
+            &"c".repeat(64),
+            binding.project_scope_id.clone(),
+            "serve on 127.0.0.1:4173".into(),
+            binding,
+        );
+        assert!(matches!(
+            CapabilityBroker.decide(AutonomyProfile::Standard, &request),
+            AuthorityDecision::Deny { ref code, .. } if code == "invalid_owned_localhost_binding"
+        ));
     }
 
     #[test]

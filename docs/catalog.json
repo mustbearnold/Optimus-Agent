@@ -2243,7 +2243,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "c51e0e05c52bad2bc0efa2e932553c19779c2fc26789d9debc6978ef6bde32fc",
+      "content_sha256": "c4fe0de7ebb4a8bf9228135407d673935059d5ffbb18e460385e3d6fbccbbdf1",
       "headings": [
         "program P30 verification — bounded project trust",
         "Goal",
@@ -2492,7 +2492,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "a751c298a4835f088aff704876654661a150be63c2f71dd1d41e7afa2cc47c98",
+      "content_sha256": "c656d6c99449e66927b0615f810efc14e463b67dfa43245c9eb965ed342faf8a",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
@@ -2638,7 +2638,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "0ea9e9d120110cd666a8bc1159d59a3b67a0806ae209cb40d9919386366e332e",
+      "content_sha256": "a64b3833df7911651eb2ed39b5e465632853471f1a0bc4b20854033fa4dcf592",
       "headings": [
         "Highest-risk behavioural contracts",
         "Priority 0",
@@ -4420,7 +4420,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "f7ec27ba2882d1d4185fb70e5c6b3c242e0662457c1ebc98ac73c6db761a7ce3",
+      "content_sha256": "7dba745bd0e47dfb83df99fad7c986155227d81949fd6ff4e9955ca2fb03be14",
       "headings": [
         "ADR-0060: Owned localhost is a process-bound lease (program P30)",
         "Context",
@@ -5448,7 +5448,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "88da982bf5c907bda55a07987375c68da2dbf472bc4d6c01ef35a1b2a9819b0a",
+      "content_sha256": "f87e7ef6e020afea10cbac4bee6cbca53f79eeb3b44363f5d9f55c89cc5f781c",
       "headings": [
         "Security and approval boundaries",
         "Trust-boundary map",
@@ -5488,7 +5488,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "33657e915313799f1d54335538dcde6d6242d82726485d7e64cf4760044014a8",
+      "content_sha256": "49edc0f871f3d79e75d4e5fee1ff8fbd95071b2c5f73e59814e4f8f51a459c71",
       "headings": [
         "Competitive bottleneck & barrier audit — 2026-08-01",
         "0. Where Optimus already wins (the assets to build on)",
@@ -5932,7 +5932,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "26d087c6040710333076c03f3037b8dbf2f3f1d0ad0c4fea4a4402cc8157f283",
+      "content_sha256": "e854de5da493ed1b51913875abf6bb2c08b852cb461448a8342bdfe53777ac10",
       "headings": [
         "Reliability and autonomy program — program P30+",
         "Naming planes",
@@ -7003,7 +7003,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "0566727b2cddf3097c535aa7c12a54081bde23c62fb4159cd43f68e2d562009e",
+  "documents_sha256": "dd3c9c65bf3077821547f36e81233117757f4b95b93fde2400a94f9ebed75f26",
   "routes": [
     {
       "id": "docs.navigation",

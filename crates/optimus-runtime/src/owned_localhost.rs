@@ -20,6 +20,8 @@ use uuid::Uuid;
 use crate::{Result, Runtime, RuntimeError};
 
 mod global;
+mod listener_proof;
+mod serve;
 
 const MAX_LEASE_SECONDS: u64 = 300;
 const USE_DRAIN_TIMEOUT: Duration = Duration::from_secs(2);
@@ -673,9 +675,11 @@ fn refused(message: impl Into<String>) -> RuntimeError {
 impl Runtime {
     /// Activate authority from an opaque platform ownership proof.
     ///
-    /// No production constructor for [`VerifiedOwnedServer`] exists yet, so
-    /// this cannot widen product behavior until the structured serve effect
-    /// supplies a verified retained listener.
+    /// The only production caller is the structured serve effect in
+    /// [`serve`](self::serve), which builds its [`VerifiedOwnedServer`] from a
+    /// retained process tree it started and then proved holds the listener
+    /// (ADR-0060 clause 3). The proof type has no public constructor, so no
+    /// other crate can reach this with an unproven one.
     pub fn issue_verified_owned_localhost(
         &self,
         context: OwnedLocalhostExecutionContext,

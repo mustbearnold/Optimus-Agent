@@ -495,8 +495,8 @@ bound aggregate operations, omit home paths from health responses, and return
 stable redacted errors while retaining local stderr diagnostics.
 
 **Confirmed current behaviour:** SmartDeny treats `WriteFile`,
-`ProjectWriteFile`, `RunCommand`, and `ProjectRunCommand` as high-risk.
-`AssertFileEquals` does not require approval.
+`ProjectWriteFile`, `RunCommand`, `ProjectRunCommand`, and `ProjectServe` as
+high-risk. `AssertFileEquals` does not require approval.
 
 **Confirmed current behaviour (ADR-0059):** the Standard broker lane permits
 direct project work while recognised remote/network commands and command-string

@@ -38,6 +38,7 @@ impl Runtime {
                 workspace_sha256,
             ),
             owned_localhost_scope,
+            session_id: uuid::Uuid::new_v4(),
         })
     }
 

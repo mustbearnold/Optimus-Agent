@@ -177,11 +177,19 @@ not a row that verifies the surface feeding it, however similar the two sound.
 
 - Owned-localhost leases (R30.7): exact broker constraints, CDP request
   authority, click final-URL validation, and pre-connect HTTP redirect checks
-  are implemented. The runtime also has a default-inactive live registry with
-  exact context/generation/expiry/liveness checks and ordered revocation
-  primitives. The structured owned-server effect, atomic listener proof,
-  production proof constructor, lifecycle/supervisor wiring, non-tab-target CDP
-  egress coverage, and end-to-end issuance path remain.
+  are implemented. The runtime also has a live registry with exact
+  context/generation/expiry/liveness checks and ordered revocation primitives.
+  The structured `ProjectServe` effect now issues leases and is the only
+  production caller able to: the proof and execution context are constructed
+  inside `owned_localhost::serve`, which no other module can reach, so ADR-0060
+  clause 3 holds by construction rather than by review. Ownership is proven by
+  matching the port's listening socket inode against the pids in the retained
+  transient unit's cgroup, and fails closed when that proof is unavailable or
+  the host is not Linux. Leases are revoked when the owning run reaches a
+  terminal status. A tool that emits the serve effect, the kernel-side
+  leased-origin connection, an atomic front listener, non-tab-target CDP egress
+  coverage, active expiry supervision, and restart orphan recovery remain — so
+  a lease can be issued, but on no product path is one produced or used.
 - Same-run continuation (program P31)
 - Arbitrary project binaries and transparent scripts still share the Confined
   network and ambient credential environment. ADR-0059 therefore does not

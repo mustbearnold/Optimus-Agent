@@ -80,6 +80,22 @@ pub enum Effect {
         program: String,
         args: Vec<String>,
     },
+    /// Start a project server and take an owned-localhost lease on it (ADR-0060).
+    ///
+    /// Unlike [`Effect::ProjectRunCommand`] this does not wait for the process to
+    /// exit. It returns once the runtime has proven that the listener on
+    /// `127.0.0.1:port` belongs to the process tree it just started, and holds a
+    /// lease that expires after `ttl_seconds` or when the run settles.
+    ///
+    /// There is no unscoped `Serve`: a lease binds the project root hash, so a
+    /// serve that is not project-bound has nothing to bind to.
+    ProjectServe {
+        workspace_sha256: String,
+        program: String,
+        args: Vec<String>,
+        port: u16,
+        ttl_seconds: u64,
+    },
 }
 
 impl Effect {
@@ -101,6 +117,7 @@ impl Effect {
                 | Effect::ProjectPatchFile { .. }
                 | Effect::RunCommand { .. }
                 | Effect::ProjectRunCommand { .. }
+                | Effect::ProjectServe { .. }
         )
     }
 

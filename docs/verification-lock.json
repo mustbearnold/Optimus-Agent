@@ -7,7 +7,7 @@
       "resolved_files": 0
     },
     "architecture-architecture-marks": {
-      "binding_sha256": "23460a1154c9ed55d23459fc55777d2cf9988a3d4b6b54faad09cf0bc8501130",
+      "binding_sha256": "31280d49092f123207eeb5dff52b29ff0e4b6ad3cf80d974bec849fc6b8498fa",
       "document_sha256": "2c660858cb2b40d9c7fe011c849eb55d5699cbfcb76f7640788afa6070664896",
       "path": "docs/architecture/architecture-marks.md",
       "resolved_files": 8
@@ -73,8 +73,8 @@
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "4ae2325d99303d3fd57a0d23975db128ea223ce377616c395621ad37d16874b7",
-      "document_sha256": "a751c298a4835f088aff704876654661a150be63c2f71dd1d41e7afa2cc47c98",
+      "binding_sha256": "1403353ef504e151d2628e66cdef09a013849f043530bdef409849e3dc955597",
+      "document_sha256": "c656d6c99449e66927b0615f810efc14e463b67dfa43245c9eb965ed342faf8a",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
     },
@@ -91,8 +91,8 @@
       "resolved_files": 9
     },
     "contracts-high-risk-contracts": {
-      "binding_sha256": "5ae8c1d0a11a5fe97242113ab1a80e9d3c9ed81f6eeeabc5f6d8dcdcbd635162",
-      "document_sha256": "0ea9e9d120110cd666a8bc1159d59a3b67a0806ae209cb40d9919386366e332e",
+      "binding_sha256": "90721e7aa4c690d80748889a16e31cabdf340c596f469fe1ff19478ab85f7610",
+      "document_sha256": "a64b3833df7911651eb2ed39b5e465632853471f1a0bc4b20854033fa4dcf592",
       "path": "docs/contracts/high-risk-contracts.md",
       "resolved_files": 22
     },
@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "75b5f965e58fba2159347e2993eede82832dc8889c0b9fc6553c51133e708265",
+      "binding_sha256": "58152aad243bd28a7158b4e83dbaf07dc0987ae7abe195c2f4db2bc94344518b",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 344
+      "resolved_files": 348
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "de90a95ab34ee160f9e904e58cba5763510a59881493035ec326545a5ab6eac9",
@@ -259,25 +259,25 @@
       "resolved_files": 5
     },
     "decisions-0018-fail-closed-runtime-safety": {
-      "binding_sha256": "0ae2c06ef3b4702cd017e767ca9ad48b90d83708a8beb52f5f0122f97d715f34",
+      "binding_sha256": "3db343fab0fde6ef11cca8b9c00125bc8e0b4edd3d1e22ae014400bb037ad63f",
       "document_sha256": "d374f3f1fcc8bd6b72abb735ef2527342d47e00676e251a9fc6d2a03fbcf1df6",
       "path": "docs/decisions/0018-fail-closed-runtime-safety.md",
       "resolved_files": 5
     },
     "decisions-0019-capability-files-and-unified-campaign-authority": {
-      "binding_sha256": "b72157b259487bbe79163e0102c9966c5e055e35063dd16a7b705d117e1a00f5",
+      "binding_sha256": "f720cf875c7dc66445366ec5b610d0d21835f23290a5bfe9022b3ce024341c24",
       "document_sha256": "2cf6d5179f5390d89728eccf8da4714cb89f407447e8e67312a5d983a590f8ce",
       "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "resolved_files": 12
     },
     "decisions-0020-work-graph-integrity-and-loopback-security": {
-      "binding_sha256": "4a85ff3f38928554f5dbf5a1c572803f08fdfaa1ec4b49d77d62380b9566ae15",
+      "binding_sha256": "b4a1b38cf131556cbcf69f98c12060a14096d84b96c5b0bb9bc1f35692757be9",
       "document_sha256": "297f16ce48239f7230d0487b1a46a5076579e2e115581f018cf1f9259eacb09e",
       "path": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "resolved_files": 17
     },
     "decisions-0021-owned-execution-and-causal-delivery": {
-      "binding_sha256": "a158c71099fc1dccdffb19cc365706adcca302b53d86273be4fd150c9f232f1a",
+      "binding_sha256": "bb84584169cab08d33c6230b51557e26cb08a8d2ee37f6565c20bdb273c6d6a4",
       "document_sha256": "4e26f83257506fb9f260a6d0954680f186361d6114656a57b68bb8af7e4f26cc",
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "resolved_files": 26
@@ -289,7 +289,7 @@
       "resolved_files": 5
     },
     "decisions-0023-fixture-replay-trace-telemetry-evaluation": {
-      "binding_sha256": "d59d4705abc67dfcc3354a3fe8b3ec2817f295015edf9eceaa38930cf5054417",
+      "binding_sha256": "7b3dc6d7c67662a054635c3693c8175876655d934400583ea6741a48d21b7b33",
       "document_sha256": "8290e48606409a7f9dc8d10be30b4abe0f7be7362e453a7041da8c28ac699bec",
       "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "resolved_files": 15
@@ -313,7 +313,7 @@
       "resolved_files": 5
     },
     "decisions-0027-settings-driven-work-isolation": {
-      "binding_sha256": "71e0d25d12174a75a1c8383d2ff3a9d6bc690b7efa999d6e3a4c103804b012cc",
+      "binding_sha256": "94723e159ca691f25ad813ae487508e4ebc32fe65f1cacfe1e07d655fc032832",
       "document_sha256": "192261a5cd8384eafa5aade90315d7e5ae18050502ea6fdf1ad19e0e2a8569ca",
       "path": "docs/decisions/0027-settings-driven-work-isolation.md",
       "resolved_files": 6
@@ -337,7 +337,7 @@
       "resolved_files": 107
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "f8c371236ca67eda3c65524f7370ad9e79679f25be02b879c23299c60610833c",
+      "binding_sha256": "fea09bfe1134db97f57f1272b395f8bb6f2cba7f5faf536b4567afb19b56c76b",
       "document_sha256": "ed013ec8a70e7222ebd3080683e3dc25303922429d887ecf7606f928994ef797",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 102
@@ -355,13 +355,13 @@
       "resolved_files": 9
     },
     "decisions-0034-control-plane-crate-peels": {
-      "binding_sha256": "22b35ae5141c0ed80b9668ce3922e62436a2cb39b4b2ab05ff1810a5a115094f",
+      "binding_sha256": "04ff595d80440b05ae1ae0d951ab755760cddad533b9d77034c70a869f7a291b",
       "document_sha256": "91511f1bee4a4365ddb706e9ba236e4a027ef12953f7dfe9473a7e308f8518b4",
       "path": "docs/decisions/0034-control-plane-crate-peels.md",
       "resolved_files": 23
     },
     "decisions-0035-command-capability-envelope": {
-      "binding_sha256": "96da68fdf2554802bcd2c70bd075bdef620252c286098b8fb58d49f2b7ca5337",
+      "binding_sha256": "89220abcf1a4a344f39ce921b29394c8ca3a15023596132f1d4a28425ec721c7",
       "document_sha256": "dd26b79c5818e77e4165720c3320bedbac7ea2b30bbea9151110cce20eb227fc",
       "path": "docs/decisions/0035-command-capability-envelope.md",
       "resolved_files": 16
@@ -385,13 +385,13 @@
       "resolved_files": 13
     },
     "decisions-0039-files-mutate-effect-taxonomy": {
-      "binding_sha256": "5224d40d4c86363754683888374328023e9136bd75042c324a49035b79cd1ee0",
+      "binding_sha256": "18f7485316c1ff37bc03ba7669b3e8b5dbdda01d5a7715b0fb1794061a8a6d85",
       "document_sha256": "bc88ad6d4fb2fa1117f5c3aa7918ef012a9d5460ac4fb00aaddf13a71c3ad4de",
       "path": "docs/decisions/0039-files-mutate-effect-taxonomy.md",
       "resolved_files": 13
     },
     "decisions-0040-shared-browser-contract": {
-      "binding_sha256": "7e0d6b4fb314b99237dc28530ef45d7310fecb57a19de8dce5c032fa1f200862",
+      "binding_sha256": "5cb5f72d818d289759d50621000251dd4ae0e2591bc6d4e4ed3d38b99f23f98e",
       "document_sha256": "a3a0ea9785a0909c028c2557ccbd43b5d2088b7347a2acc5d689a2f80024d469",
       "path": "docs/decisions/0040-shared-browser-contract.md",
       "resolved_files": 28
@@ -415,7 +415,7 @@
       "resolved_files": 6
     },
     "decisions-0044-bounded-project-trust-and-capability-broker": {
-      "binding_sha256": "9eb4f53bd59ef55389bc084f3b496b07832c21e07a750fc3e9eb16fb3120769d",
+      "binding_sha256": "c02bb9274ccb6e7019d8a34ce7d7a875c65deb1aca5addb4427e9bae4baccc25",
       "document_sha256": "161f96da0b3b89aa1b6e98197836ba0a7cd27d6be67467146a5184a914c46b0e",
       "path": "docs/decisions/0044-bounded-project-trust-and-capability-broker.md",
       "resolved_files": 19
@@ -427,7 +427,7 @@
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "540ec01bca3ab6e53c527ae245f848b4e1897439d2badbcc5f4f1db47e25e30b",
+      "binding_sha256": "adc324aa1281d075a8508c5c56ec1aec27e857eb9ac61573cab3cec905cd2384",
       "document_sha256": "10874b0aef95122bf41c454d07f86254eb96b7b210c6d178f8d2b60ddc198ef9",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 11
@@ -445,7 +445,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "d9d37a0c8d6e86f4c0ab020a0c68da84129ae184851605a48a6e86684bcf728a",
+      "binding_sha256": "4d71d81acf9a2d5de3c84742795fb5e4d7fa4015e7af069cacd490dc47e5b83f",
       "document_sha256": "133cf880d4d8b44a176b9a2d5cf41ef7cae47df7b6ea66cca5de0f0c48550d21",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -505,16 +505,16 @@
       "resolved_files": 8
     },
     "decisions-0059-standard-autonomy-is-consequence-bounded": {
-      "binding_sha256": "c99ee9042ddfa5f4d87e7536486e0a0eef18215c19488fac0e5b14c15f6f6097",
+      "binding_sha256": "6c1d86751fe37cba940a31003b7479064739c00b3b03d37ff3127ba1434fcfb3",
       "document_sha256": "82335997ed968a9ea10ee1c021c461cbb41a87387b24674b7f4758175e48119c",
       "path": "docs/decisions/0059-standard-autonomy-is-consequence-bounded.md",
       "resolved_files": 7
     },
     "decisions-0060-owned-localhost-is-a-process-bound-lease": {
-      "binding_sha256": "8b53d4dd271485302db1fae65f31959bd4636463808f2f4a30225286afd93910",
-      "document_sha256": "f7ec27ba2882d1d4185fb70e5c6b3c242e0662457c1ebc98ac73c6db761a7ce3",
+      "binding_sha256": "7db51a9dcea026acc623bc68b8b12388463d101b5b8cace9d83ad36192639e7b",
+      "document_sha256": "7dba745bd0e47dfb83df99fad7c986155227d81949fd6ff4e9955ca2fb03be14",
       "path": "docs/decisions/0060-owned-localhost-is-a-process-bound-lease.md",
-      "resolved_files": 9
+      "resolved_files": 12
     },
     "decisions-0061-generated-engineering-memory-is-a-disposable-cache": {
       "binding_sha256": "22dc8a51dca6364d19d6b3d8250bd160d700faeef6e07170a01a8186f04cc581",
@@ -553,19 +553,19 @@
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "90c589b13c4e444c0c5f89dc115950811b4f802e8959d483150f34c35b810f4f",
+      "binding_sha256": "829c96aadba54700d6ddc7e0ea7ecea00398ed7c9731530561717c172af2a6a2",
       "document_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "42076df5b4121445fedf7cf1aeceaaa0ded89126fa39e18a834440013b791620",
+      "binding_sha256": "753038440f6cae27be75d59caf15b6ddf5c1f6d8015cd41b1ee3831156222e6b",
       "document_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
     },
     "decisions-readme": {
-      "binding_sha256": "63e6491bf8666ca2b5661cad35e710c10e626773ef780bda0c03bb3abdb69000",
+      "binding_sha256": "abcd8caf88a9b66f40c9579ed883a2267d42f305551abdd9fea16158cdec9d6b",
       "document_sha256": "8f30b9d6e83b4f93f06762ab7bf3a9301e5fe06cf12ae3c63d3789d2360248a8",
       "path": "docs/decisions/README.md",
       "resolved_files": 74
@@ -607,7 +607,7 @@
       "resolved_files": 0
     },
     "lessons-ai-agent-mistakes": {
-      "binding_sha256": "8af2a638394c28070357e85780cadad51327e5687d901fc44ef20521c92d36c2",
+      "binding_sha256": "16d52dccf2b0ae9d9f86cc9f0c3788ee0f1db0fbc4976c907b6f3cd244338d66",
       "document_sha256": "21be856d4021e53b22ee1fa16614dbca606c1a088d15d44372db1b9ac45d3102",
       "path": "docs/lessons/ai-agent-mistakes.md",
       "resolved_files": 7
@@ -625,13 +625,13 @@
       "resolved_files": 14
     },
     "map-security-and-approvals": {
-      "binding_sha256": "9765b6118fe769bcb65eda77698ebb33a0a141242c92d4a4ef0f7ac3a7eb27e7",
-      "document_sha256": "88da982bf5c907bda55a07987375c68da2dbf472bc4d6c01ef35a1b2a9819b0a",
+      "binding_sha256": "e4fc88fcab150ceafe7a7e12c8b6f27221c3032b3a4d7da80dcac77a0728490d",
+      "document_sha256": "f87e7ef6e020afea10cbac4bee6cbca53f79eeb3b44363f5d9f55c89cc5f781c",
       "path": "docs/maps/security-and-approvals.md",
       "resolved_files": 23
     },
     "maps-observability-and-evaluations": {
-      "binding_sha256": "16f73fd64bb9784d986569c3030456efe094f45a853aa1a0a29b0a0b6a96142c",
+      "binding_sha256": "af092fbe660a6693f86856493f4befeab8ed73e84c57baa3eb6ec6389514a21c",
       "document_sha256": "a22805e762c94c709fd7eca03e6c8e34a52057241329cc9462141c4f8d4a686b",
       "path": "docs/maps/observability-and-evaluations.md",
       "resolved_files": 26

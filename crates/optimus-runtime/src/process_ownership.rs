@@ -430,6 +430,20 @@ impl Drop for KillOnDrop {
 #[cfg(target_os = "linux")]
 static NEXT_LINUX_UNIT_ID: AtomicU64 = AtomicU64::new(1);
 
+/// Whether the caller waits out the contained process or outlives it.
+///
+/// [`LinuxRunMode::Detached`] exists for ADR-0060 project serves. A serve is
+/// still running when the runtime needs to talk to it, so `--wait` (which
+/// blocks until the unit exits) and `--pipe` (whose pipes deadlock once nobody
+/// drains them) are both wrong there. The unit still owns the process tree
+/// either way; only the runtime's relationship to it changes.
+#[cfg(target_os = "linux")]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum LinuxRunMode {
+    WaitPiped,
+    Detached,
+}
+
 #[cfg(target_os = "linux")]
 pub(crate) fn linux_contained_command(
     program: &str,
@@ -437,22 +451,57 @@ pub(crate) fn linux_contained_command(
     workspace: &Path,
     envelope: CommandFsEnvelope,
 ) -> (Command, String) {
+    linux_contained_command_in_mode(program, args, workspace, envelope, LinuxRunMode::WaitPiped)
+}
+
+/// Same containment as [`linux_contained_command`], for a process that keeps
+/// running after the spawn call returns (ADR-0060).
+///
+/// Output goes to the journal rather than to pipes: an undrained pipe stalls a
+/// serve at 64 KiB, and there is no reader here by construction.
+#[cfg(target_os = "linux")]
+pub(crate) fn linux_contained_serve_command(
+    program: &str,
+    args: &[String],
+    workspace: &Path,
+    envelope: CommandFsEnvelope,
+) -> (Command, String) {
+    linux_contained_command_in_mode(program, args, workspace, envelope, LinuxRunMode::Detached)
+}
+
+#[cfg(target_os = "linux")]
+fn linux_contained_command_in_mode(
+    program: &str,
+    args: &[String],
+    workspace: &Path,
+    envelope: CommandFsEnvelope,
+    mode: LinuxRunMode,
+) -> (Command, String) {
     let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, AtomicOrdering::Relaxed);
     let unit_base = format!("optimus-command-{}-{sequence}", std::process::id());
     let linux_unit = format!("{unit_base}.service");
     let mut command = Command::new("/usr/bin/systemd-run");
+    command.args([
+        "--user",
+        "--quiet",
+        "--collect",
+        "--service-type=exec",
+        "--property=KillMode=control-group",
+        "--property=NoNewPrivileges=yes",
+        "--property=RestrictSUIDSGID=yes",
+    ]);
+    match mode {
+        LinuxRunMode::WaitPiped => {
+            command.args(["--wait", "--pipe"]);
+        }
+        LinuxRunMode::Detached => {
+            command.args([
+                "--property=StandardOutput=journal",
+                "--property=StandardError=journal",
+            ]);
+        }
+    }
     command
-        .args([
-            "--user",
-            "--quiet",
-            "--collect",
-            "--wait",
-            "--pipe",
-            "--service-type=exec",
-            "--property=KillMode=control-group",
-            "--property=NoNewPrivileges=yes",
-            "--property=RestrictSUIDSGID=yes",
-        ])
         .arg(format!("--unit={unit_base}"))
         .arg("--")
         .arg("/usr/bin/bwrap");
@@ -477,8 +526,17 @@ pub(crate) fn linux_contained_command(
         .arg("--")
         .arg(program)
         .args(args)
-        .current_dir(workspace)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .current_dir(workspace);
+    match mode {
+        LinuxRunMode::WaitPiped => {
+            command.stdout(Stdio::piped()).stderr(Stdio::piped());
+        }
+        LinuxRunMode::Detached => {
+            command
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+        }
+    }
     (command, linux_unit)
 }

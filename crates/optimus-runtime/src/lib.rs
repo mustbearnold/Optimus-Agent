@@ -3,6 +3,7 @@
 mod campaign;
 mod command_envelope;
 mod effect_outcome;
+mod effect_preflight;
 mod owned_localhost;
 mod process_ownership;
 mod workspace_identity;
@@ -187,6 +188,12 @@ pub struct Runtime {
     config: RuntimeConfig,
     owned_localhost: std::sync::Arc<std::sync::Mutex<owned_localhost::OwnedLocalhostLeaseRegistry>>,
     owned_localhost_scope: String,
+    /// Identity of this process's runtime, minted per `open` and never stored.
+    ///
+    /// An owned-localhost lease is bound to it (ADR-0060), so a binding
+    /// serialized by one runtime is inert in the next one even against the same
+    /// workspace and store.
+    session_id: Uuid,
 }
 
 impl Runtime {
@@ -417,7 +424,13 @@ impl Runtime {
             let effect: Effect =
                 serde_json::from_str(&attempt.intent_json).map_err(GraphError::from)?;
             let (disposition, reason) = match effect {
-                Effect::RunCommand { .. } | Effect::ProjectRunCommand { .. } => (
+                // A serve is ambiguous for a stronger reason than a command: its
+                // lease died with the in-memory registry, but its process tree
+                // may well have outlived the runtime that was holding the
+                // kill-on-drop guard. Orphan reaping is a later seam (ADR-0060).
+                Effect::RunCommand { .. }
+                | Effect::ProjectRunCommand { .. }
+                | Effect::ProjectServe { .. } => (
                     PreparedAttemptDisposition::Ambiguous,
                     "process outcome is unknown after runtime interruption",
                 ),
@@ -553,6 +566,27 @@ impl Runtime {
     }
 
     pub fn run_next(&self, job_id: JobId) -> Result<StepOutcome> {
+        // Owned-localhost authority is time-bounded and run-bounded (ADR-0060),
+        // and nothing in this process wakes up on its own to enforce either. The
+        // step boundary is where both are enforced: expired leases die before
+        // the next effect runs, and the step that settles a job ends its run.
+        self.sweep_expired_owned_localhost()?;
+        let stepped = self.step_once(job_id);
+        if matches!(
+            self.job_status(job_id),
+            Ok(JobStatus::Succeeded | JobStatus::Failed | JobStatus::Cancelled)
+        ) {
+            // A revocation failure never masks the step's own error; it is
+            // reported only when the step itself had nothing to report.
+            let revoked = self.revoke_owned_localhost_run(job_id.0);
+            if stepped.is_ok() {
+                revoked?;
+            }
+        }
+        stepped
+    }
+
+    fn step_once(&self, job_id: JobId) -> Result<StepOutcome> {
         let job = self.store.get_job(job_id.0).map_err(GraphError::from)?;
         if self
             .store
@@ -1091,6 +1125,9 @@ impl Runtime {
                     job_id,
                 )
             }
+            Effect::ProjectServe { .. } => {
+                self.execute_project_serve(effect, timeout, attempt_id, job_id)
+            }
         }
     }
 
@@ -1250,65 +1287,6 @@ impl Runtime {
             receipt_hash: outcome.receipt_json.as_deref().map(Self::effect_hash),
             receipt_json: outcome.receipt_json,
         }))
-    }
-
-    /// Validate effect shape before SmartDeny wait or execution.
-    fn preflight_effect(&self, effect: &Effect) -> Result<()> {
-        match effect {
-            Effect::WriteFile { relative_path, .. }
-            | Effect::AssertFileEquals { relative_path, .. }
-            | Effect::ProjectWriteFile { relative_path, .. }
-            | Effect::Mkdir { relative_path, .. }
-            | Effect::ProjectMkdir { relative_path, .. }
-            | Effect::DeletePath { relative_path, .. }
-            | Effect::ProjectDeletePath { relative_path, .. }
-            | Effect::PatchFile { relative_path, .. }
-            | Effect::ProjectPatchFile { relative_path, .. } => {
-                self.safe_relative_path(relative_path)?;
-            }
-            Effect::RenamePath {
-                from_relative_path,
-                to_relative_path,
-                ..
-            }
-            | Effect::ProjectRenamePath {
-                from_relative_path,
-                to_relative_path,
-                ..
-            } => {
-                self.safe_relative_path(from_relative_path)?;
-                self.safe_relative_path(to_relative_path)?;
-            }
-            Effect::RunCommand { program, .. } | Effect::ProjectRunCommand { program, .. } => {
-                if program.trim().is_empty() {
-                    return Err(RuntimeError::Effector("empty command program".into()));
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn safe_relative_path(&self, relative: &str) -> Result<PathBuf> {
-        if relative.is_empty() {
-            return Err(RuntimeError::PathEscape("empty path".into()));
-        }
-        let rel = Path::new(relative);
-        if rel.is_absolute() {
-            return Err(RuntimeError::PathEscape(relative.into()));
-        }
-        for comp in rel.components() {
-            if !matches!(comp, std::path::Component::Normal(_)) {
-                return Err(RuntimeError::PathEscape(relative.into()));
-            }
-        }
-        if rel
-            .file_name()
-            .and_then(|name| name.to_str())
-            .is_some_and(is_secret_basename)
-        {
-            return Err(RuntimeError::PathEscape(relative.into()));
-        }
-        Ok(rel.to_path_buf())
     }
 }
 

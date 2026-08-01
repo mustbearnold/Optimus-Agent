@@ -5,8 +5,8 @@
 //! law (AGENTS.md law 21) instead of growing its grandfathered baseline.
 
 use optimus_policy::{
-    build_effect_request_for, AuthorityDecision, AutonomyProfile as PolicyAutonomy,
-    CapabilityBroker,
+    build_effect_request_for, build_owned_localhost_serve_request, AuthorityDecision,
+    AutonomyProfile as PolicyAutonomy, CapabilityBroker, OwnedLocalhostBinding,
 };
 
 use optimus_graph::GraphError;
@@ -14,7 +14,8 @@ use optimus_store::NewActionApproval;
 use uuid::Uuid;
 
 use crate::{
-    mark_node_awaiting_approval, AutonomyProfile, Effect, JobId, Result, Runtime, RuntimeError,
+    mark_node_awaiting_approval, AutonomyProfile, Effect, JobId, PolicyMode, Result, Runtime,
+    RuntimeError,
 };
 
 fn policy_autonomy(profile: AutonomyProfile) -> PolicyAutonomy {
@@ -152,6 +153,21 @@ fn effect_policy_view(effect: &Effect) -> (&'static str, Option<String>, Option<
             None,
             format!("project run {program} {}", args.join(" ")),
         ),
+        Effect::ProjectServe {
+            workspace_sha256,
+            program,
+            args,
+            port,
+            ttl_seconds,
+        } => (
+            "ProjectServe",
+            Some(workspace_sha256.clone()),
+            None,
+            format!(
+                "project serve {program} {} on 127.0.0.1:{port} for {ttl_seconds}s",
+                args.join(" ")
+            ),
+        ),
     }
 }
 
@@ -162,9 +178,9 @@ fn effect_policy_view(effect: &Effect) -> (&'static str, Option<String>, Option<
 /// different acts that were all `ProcessProjectExecute` before this.
 fn effect_command(effect: &Effect) -> Option<(&str, &[String])> {
     match effect {
-        Effect::RunCommand { program, args } | Effect::ProjectRunCommand { program, args, .. } => {
-            Some((program.as_str(), args.as_slice()))
-        }
+        Effect::RunCommand { program, args }
+        | Effect::ProjectRunCommand { program, args, .. }
+        | Effect::ProjectServe { program, args, .. } => Some((program.as_str(), args.as_slice())),
         _ => None,
     }
 }
@@ -190,6 +206,51 @@ impl Runtime {
             RuntimeError::Effector(format!("no capability mapping for effect kind {kind}"))
         })?;
         Ok(CapabilityBroker.decide(profile, &request))
+    }
+
+    /// Broker decision over an owned-localhost lease the runtime has already
+    /// proven (ADR-0060), returning the granting authority id.
+    ///
+    /// This is a second, separate decision from the effect gate above. The gate
+    /// decides whether the serve process may start, and it necessarily runs
+    /// before any listener exists, so it has no binding to present. This one
+    /// decides whether the *lease* may be handed out, and it is the only place
+    /// the proven binding is checked for internal coherence
+    /// (`OwnedLocalhostBinding::is_valid_for` inside the broker).
+    ///
+    /// `Ask` is treated as satisfied rather than as a second pause. Reaching
+    /// this point means the exact effect hash already carries a live approval,
+    /// and that hash covers the program, arguments, port and TTL — so the human
+    /// has already answered this exact question and asking again would only
+    /// stall a process that is running.
+    pub(crate) fn authorize_owned_localhost_lease(
+        &self,
+        effect_hash: &str,
+        summary: String,
+        binding: &OwnedLocalhostBinding,
+    ) -> Result<Option<String>> {
+        if self.config.policy != PolicyMode::SmartDeny {
+            return Ok(None);
+        }
+        let request = build_owned_localhost_serve_request(
+            effect_hash,
+            self.owned_localhost_scope.clone(),
+            summary,
+            binding.clone(),
+        );
+        match CapabilityBroker.decide(policy_autonomy(self.config.autonomy_profile), &request) {
+            AuthorityDecision::Allow { authority_id, .. } => Ok(Some(authority_id)),
+            AuthorityDecision::Ask { .. } => Ok(None),
+            AuthorityDecision::Deny { code, reason, .. } => {
+                Err(RuntimeError::PolicyDenied { code, reason })
+            }
+            AuthorityDecision::Unavailable {
+                capability, reason, ..
+            } => Err(RuntimeError::PolicyDenied {
+                code: "unavailable".into(),
+                reason: format!("{}: {reason}", capability.as_str()),
+            }),
+        }
     }
 
     /// Settle the broker decision for a high-risk effect: record a durable trust

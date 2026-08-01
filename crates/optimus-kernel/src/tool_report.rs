@@ -42,6 +42,20 @@ pub(crate) fn exact_action_summary(effect_json: &str) -> String {
             let args = serde_json::to_string(&args).unwrap_or_else(|_| "<invalid>".into());
             format!("Run {program} with args {args}")
         }
+        Ok(Effect::ProjectServe {
+            program,
+            args,
+            port,
+            ttl_seconds,
+            ..
+        }) => {
+            // The port and the TTL are named because they are what the approval
+            // actually buys: a lease letting this agent reach that listener for
+            // that long (ADR-0060), not merely a process starting.
+            let program = serde_json::to_string(&program).unwrap_or_else(|_| "<invalid>".into());
+            let args = serde_json::to_string(&args).unwrap_or_else(|_| "<invalid>".into());
+            format!("Serve {program} with args {args} on 127.0.0.1:{port} for up to {ttl_seconds}s")
+        }
         Ok(Effect::AssertFileEquals { relative_path, .. }) => {
             format!("Verify {relative_path}")
         }
