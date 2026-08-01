@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "589f394d8e229b14c48ecbcdefd8ab794cbd36d9be2415bb09364d82ece6bfd8",
+      "binding_sha256": "3911d3654637c832ab03b06a5ca88b63ab90867d0684d43cc53b20d72a598f73",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 337
+      "resolved_files": 338
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "5e4c95a61f1094b920d3342132e4cbaf2425441bfc58f5d228f09608b143a63e",
@@ -427,7 +427,7 @@
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "bbaea462b742b6ff73da58871e7b9d24f44f39f08d3d643f37c0e17227722ead",
+      "binding_sha256": "9c4bf85cd7bb5e9e785fdfcfde367bddd99639c2862941e33280f352a5bbdae4",
       "document_sha256": "10874b0aef95122bf41c454d07f86254eb96b7b210c6d178f8d2b60ddc198ef9",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 11
@@ -552,11 +552,17 @@
       "path": "docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md",
       "resolved_files": 9
     },
+    "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
+      "binding_sha256": "207c227f331a07faa93063732f3da58c785128201c323423a646b32a862f3efc",
+      "document_sha256": "00b03947b8af27162c3b4f750574b02095cca8b8faa53efad0353b72b54b7f12",
+      "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
+      "resolved_files": 7
+    },
     "decisions-readme": {
-      "binding_sha256": "c437483bb388e4504cf4e39c8f55da4fb625cc70e5e580baa21a0166634d1c5d",
-      "document_sha256": "3616247d79f5241bb886e80d379b0ce84f6c4594168aeef0e509467e88065ba3",
+      "binding_sha256": "3176f2d59a14bed726821423af782c916c34a32a8c0668c7e6e10b36d7983ef2",
+      "document_sha256": "927053d31e0b2224e4a13b9a84fab3cb081008cb03154bba73b5a09f1b9b8175",
       "path": "docs/decisions/README.md",
-      "resolved_files": 78
+      "resolved_files": 79
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "130f2ed7fa7565ed207b853a8a8ff50625af4df37face987a30549bb56fb5108",

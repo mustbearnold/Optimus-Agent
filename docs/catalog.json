@@ -4767,7 +4767,34 @@
     },
     {
       "authority": "record",
-      "content_sha256": "3616247d79f5241bb886e80d379b0ce84f6c4594168aeef0e509467e88065ba3",
+      "content_sha256": "00b03947b8af27162c3b4f750574b02095cca8b8faa53efad0353b72b54b7f12",
+      "headings": [
+        "ADR-0074: A surface owns the catalog it answers from",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests",
+        "Explicit non-claims"
+      ],
+      "id": "decisions-0074-a-surface-owns-the-catalog-it-answers-from",
+      "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "The terminal keeps one command catalog of its own that dispatch, the right-click menu, /help and predictive typing all derive from, and stops claiming to source names from the optimus-ops surface registry — a claim the code never honoured, and which the measured three-row overlap between the two lists shows it never could.",
+      "title": "ADR-0074: A surface owns the catalog it answers from",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "927053d31e0b2224e4a13b9a84fab3cb081008cb03154bba73b5a09f1b9b8175",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -7135,7 +7162,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "57a22eb381363899e9d259b92bcb7fba06d5a033af7f57e4f7947d047228ca0b",
+  "documents_sha256": "66c03e48f1ace10ad10bf5edebb2ee9aa1c7521a02a5d7b060d65f257da42556",
   "routes": [
     {
       "id": "docs.navigation",

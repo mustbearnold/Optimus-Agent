@@ -56,6 +56,10 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
         areas[2],
     );
 
+    // Suggestions first, so a picker the user opened on purpose covers a list
+    // that merely appeared because they typed a slash.
+    draw_suggestions(frame, session, areas[1]);
+
     if let Some(picker) = session.picker.as_ref() {
         draw_picker(frame, picker);
     }
@@ -143,6 +147,79 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
     frame.render_stateful_widget(
         List::new(rows)
             .block(bordered(&picker.title))
+            .highlight_symbol("> ")
+            .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
+        rect,
+        &mut state,
+    );
+}
+
+/// Commands the half-typed draft could still become, floating just above it.
+///
+/// An overlay rather than a fourth row in the layout. `composer_height` is
+/// load-bearing in the mouse hit-test and both scroll spans, so a list that
+/// took height from the frame would shift the prompt out from under the cursor
+/// the moment a `/` was typed, and shift it back on the next keystroke.
+///
+/// It grows upward from the composer's top edge for the same reason: the row
+/// nearest the text being typed stays put as the list gets shorter, so the eye
+/// tracks one edge instead of following the whole box.
+fn draw_suggestions(frame: &mut Frame, session: &TuiSession, composer: Rect) {
+    let found = crate::completion::suggestions(session.composer.text());
+    if found.is_empty() {
+        return;
+    }
+
+    // Columns measured from the rows actually on screen, so a filter down to
+    // one short name does not leave a box sized for the ones it ruled out.
+    let name_width = found
+        .iter()
+        .map(|command| command.typed_form().chars().count())
+        .max()
+        .unwrap_or(0);
+    let summary_width = found
+        .iter()
+        .map(|command| command.summary.chars().count())
+        .max()
+        .unwrap_or(0);
+
+    // Two columns of border, two for the selection marker, one between columns.
+    let width = (name_width + summary_width + 5) as u16;
+    // Borders included, capped by the room left above the composer. A cap that
+    // bites just shows fewer rows; the `List` keeps the selected one in view.
+    let height = (found.len() as u16 + 2).min(composer.y);
+    if height < 3 || width < 3 {
+        return;
+    }
+    let rect = Rect {
+        x: composer.x,
+        y: composer.y - height,
+        width: width.min(composer.width),
+        height,
+    };
+
+    let rows: Vec<ListItem> = found
+        .iter()
+        .map(|command| {
+            ListItem::new(Line::from(vec![
+                Span::raw(format!("{:<name_width$} ", command.typed_form())),
+                Span::styled(
+                    command.summary,
+                    Style::default().add_modifier(Modifier::DIM),
+                ),
+            ]))
+        })
+        .collect();
+
+    let mut state = ListState::default();
+    state.select(Some(session.completion.selected(found.len())));
+
+    frame.render_widget(Clear, rect);
+    frame.render_stateful_widget(
+        List::new(rows)
+            // The title carries the key, because a list that appears on its own
+            // has to say how to take a row from it.
+            .block(bordered("Tab to complete"))
             .highlight_symbol("> ")
             .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
         rect,
@@ -343,6 +420,103 @@ mod tests {
         session.running_tool = Some("web_search".into());
         let screen = render(&session, 60, 8).join("\n");
         assert!(screen.contains("Optimus — web_search"), "{screen}");
+    }
+
+    #[test]
+    fn a_half_typed_command_offers_the_names_it_could_still_become() {
+        let (_dir, mut session) = session_with(&[(Role::Assistant, "hello")]);
+        session.composer.set("/pro");
+        let screen = render(&session, 60, 12);
+        let joined = screen.join("\n");
+        assert!(
+            joined.contains("/providers") && joined.contains("/provider <id>"),
+            "both names the draft could still become must be offered:\n{joined}"
+        );
+        assert!(
+            joined.contains("Tab to complete"),
+            "a list that appears on its own has to say how to take a row:\n{joined}"
+        );
+        // The list floats. If it took height from the layout instead, the draft
+        // would drop a row the moment a `/` was typed and rise again on Enter.
+        assert!(
+            screen.iter().any(|row| row.contains("› /pro")),
+            "the draft must stay put underneath the list:\n{joined}"
+        );
+    }
+
+    #[test]
+    fn ordinary_typing_is_never_covered_by_a_list() {
+        let (_dir, mut session) = session_with(&[(Role::Assistant, "hello")]);
+        session.composer.set("what is a slash for");
+        let screen = render(&session, 60, 12).join("\n");
+        assert!(
+            !screen.contains("Tab to complete"),
+            "a list over an ordinary prompt is just in the way:\n{screen}"
+        );
+    }
+
+    /// What is highlighted on screen and what `Tab` would take are two separate
+    /// reads of the same selection, and a user trusts the first to predict the
+    /// second.
+    #[test]
+    fn the_highlighted_row_is_the_one_tab_would_take() {
+        let (_dir, mut session) = session_with(&[(Role::Assistant, "hello")]);
+        session.composer.set("/pro");
+        let count = crate::completion::suggestions(session.composer.text()).len();
+        session.completion.down(count);
+
+        let screen = render(&session, 60, 12);
+        let marked: Vec<&String> = screen.iter().filter(|row| row.contains("> /")).collect();
+        assert_eq!(marked.len(), 1, "exactly one row is marked: {screen:?}");
+        assert!(
+            marked[0].contains("/provider <id>"),
+            "the marker sits on the second row: {:?}",
+            marked[0]
+        );
+        assert_eq!(
+            session
+                .completion
+                .completed(session.composer.text())
+                .as_deref(),
+            Some("/provider "),
+            "and Tab takes the row the marker is on"
+        );
+    }
+
+    /// Nothing stops an overlay painting over the prompt except the arithmetic
+    /// that places it, and the list is at its tallest exactly when the terminal
+    /// has least room — so every small height gets checked, not one convenient
+    /// one.
+    #[test]
+    fn the_list_stops_above_the_composer_at_every_height() {
+        let (_dir, mut session) = session_with(&[(Role::Assistant, "hello")]);
+        // The whole catalog, taller than most of these terminals.
+        session.composer.set("/");
+        for height in 6..16 {
+            let screen = render(&session, 60, height);
+            let composer = screen
+                .iter()
+                .position(|row| row.contains("Message"))
+                .unwrap_or_else(|| panic!("no composer at {height} rows: {screen:?}"));
+            // Below some height there is no room for a bordered list at all,
+            // and standing down is the right answer rather than a squeeze.
+            let Some(top) = screen
+                .iter()
+                .position(|row| row.contains("Tab to complete"))
+            else {
+                continue;
+            };
+            let bottom = top
+                + screen[top..composer]
+                    .iter()
+                    .rposition(|row| row.starts_with('└'))
+                    .unwrap_or_else(|| panic!("the list is open-bottomed at {height}: {screen:?}"));
+            assert_eq!(
+                bottom,
+                composer - 1,
+                "the list must close on the row above the composer at {height}: {screen:?}"
+            );
+        }
     }
 
     /// The rightmost column of each row, which is where the track is drawn.

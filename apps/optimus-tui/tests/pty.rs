@@ -249,6 +249,80 @@ fn arrow_keys_move_the_terminal_cursor_not_only_the_model() {
     );
 }
 
+/// The row the draft is painted on, borders included, as the terminal shows it.
+fn draft_row(term: &Term) -> String {
+    term.screen()
+        .lines()
+        .nth(CURSOR_ROW as usize)
+        .unwrap_or_default()
+        .trim_end()
+        .to_string()
+}
+
+#[test]
+fn a_half_typed_command_offers_its_matches_and_tab_takes_one() {
+    let mut term = Term::launch();
+    term.send(b"/pro");
+    let screen = term.wait_for(
+        |s| s.contains("Tab to complete"),
+        "typing a slash never opened the suggestions",
+    );
+    assert!(
+        screen.contains("/providers") && screen.contains("/provider <id>"),
+        "both names the draft could become must be offered:\n{screen}"
+    );
+
+    term.send(b"\t");
+    term.wait_for(
+        |s| !s.contains("Tab to complete"),
+        "the list stayed open after the name was settled",
+    );
+    let row = draft_row(&term);
+    assert!(
+        row.contains("› /providers"),
+        "Tab must complete the highlighted row into the draft: {row:?}"
+    );
+    assert_eq!(
+        term.cursor(),
+        (CURSOR_ROW, 13),
+        "border (1) + gutter (2) + the ten graphemes of /providers"
+    );
+}
+
+#[test]
+fn the_arrows_pick_a_suggestion_before_they_recall_a_prompt() {
+    let mut term = Term::launch();
+    term.send(b"/pro");
+    term.wait_for(
+        |s| s.contains("Tab to complete"),
+        "typing a slash never opened the suggestions",
+    );
+
+    // Down would otherwise be history's key. Over a half-typed command it moves
+    // the highlight instead, and the draft underneath must not change.
+    term.send(b"\x1b[B");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !term.screen().contains("> /provider <id>") && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(20));
+    }
+    let screen = term.screen();
+    assert!(
+        screen.contains("> /provider <id>"),
+        "Down must move the highlight, not recall a prompt over the draft:\n{screen}"
+    );
+
+    term.send(b"\t");
+    term.wait_for(
+        |s| !s.contains("Tab to complete"),
+        "the list stayed open after the name was settled",
+    );
+    let row = draft_row(&term);
+    assert!(
+        row.contains("› /provider ") && !row.contains("› /providers"),
+        "Tab must take the highlighted row, not the top one: {row:?}"
+    );
+}
+
 /// Enough of a pause between chunks that a test can act between two of them
 /// without racing, and short enough that three tests using it stay quick.
 const PACE_MS: u64 = 1000;

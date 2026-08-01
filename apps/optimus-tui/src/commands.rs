@@ -1,9 +1,16 @@
 //! Slash commands for the terminal face.
 //!
 //! Anything typed starting with `/` is handled here instead of being sent to the
-//! model. Names come from the shared registry in `optimus-ops`
-//! (`builtin_surface_commands`), so the terminal cannot invent a command the
-//! other surfaces do not have — the registry stays the single catalog.
+//! model. [`COMMANDS`] is the catalog, and it is load-bearing: `dispatch`
+//! refuses a name the catalog does not hold, while `help`, `menu`, and the live
+//! suggestions in [`crate::completion`] all render from it. Offering and running
+//! therefore cannot drift apart — a row on screen is a command that works.
+//!
+//! The catalog is the terminal's own, deliberately not `optimus-ops`'
+//! `builtin_surface_commands` (ADR-0074). The shared registry addresses
+//! surfaces that dispatch work through the host; these address the session this
+//! process is holding open. Sixteen rows there, twelve here, and three names in
+//! both — sourcing one from the other would discard most of its input.
 //!
 //! Commands answer locally and synchronously. Nothing here starts a turn, so the
 //! screen thread is never blocked by one.
@@ -15,6 +22,114 @@ use crate::picker::{Picker, PickerItem, PickerKind};
 use crate::session::{Role, TuiSession};
 use crate::transcript::Chrome;
 
+/// One slash command, as it is offered and as it is run.
+pub struct Command {
+    pub name: &'static str,
+    /// Placeholder for the argument, for the commands that read one.
+    pub argument: Option<&'static str>,
+    /// One line, short enough to sit beside the name in a narrow terminal.
+    pub summary: &'static str,
+    /// Offered by the right-click menu. See [`offered`] for what earns a row.
+    pub menu: bool,
+    /// Other spellings that reach the same arm. Never offered, so `/exit` does
+    /// not take a second row beside the `/quit` that does the same thing.
+    pub aliases: &'static [&'static str],
+}
+
+impl Command {
+    /// The command as it is typed, argument placeholder included.
+    pub fn typed_form(&self) -> String {
+        match self.argument {
+            Some(argument) => format!("/{} {argument}", self.name),
+            None => format!("/{}", self.name),
+        }
+    }
+}
+
+/// A command the right-click menu offers.
+///
+/// It has to be worth clicking: the bare form must do something, so a row that
+/// then demanded typing is never a worse path than typing the command was. That
+/// rules out `/model` and friends, and two that are bare but still excluded —
+/// `/mouse` would take away the very menu that ran it, and `/quit` is not a
+/// thing a stray click should reach.
+const fn offered(name: &'static str, summary: &'static str) -> Command {
+    Command {
+        name,
+        argument: None,
+        summary,
+        menu: true,
+        aliases: &[],
+    }
+}
+
+/// A command you reach by typing it, with the suggestions to help.
+const fn typed(
+    name: &'static str,
+    argument: Option<&'static str>,
+    summary: &'static str,
+) -> Command {
+    Command {
+        name,
+        argument,
+        summary,
+        menu: false,
+        aliases: &[],
+    }
+}
+
+/// Every command the terminal answers.
+///
+/// Ordered by how often a session reaches for one rather than alphabetically:
+/// the menu and the suggestion list are both shortcuts, and alphabetical order
+/// serves a name you already know — in which case you would have typed it.
+pub const COMMANDS: &[Command] = &[
+    offered("providers", "pick a provider from a list"),
+    typed(
+        "provider",
+        Some("<id>"),
+        "switch provider, remembered next launch",
+    ),
+    typed("model", Some("<id>"), "override the model, or 'auto'"),
+    typed(
+        "thinking",
+        Some("<lvl>"),
+        "minimal|low|medium|high|xhigh|max, or off",
+    ),
+    offered("approval", "decide the pending exact approval"),
+    // Takes a profile but reads back the current one bare, so it earns a row.
+    Command {
+        name: "access",
+        argument: Some("<profile>"),
+        summary: "standard|review_changes|read_only|full_project",
+        menu: true,
+        aliases: &[],
+    },
+    offered("yolo", "unrestricted access, releases the open approval"),
+    offered("frame", "containers around turns, or plain gutters"),
+    typed(
+        "mouse",
+        None,
+        "hand the mouse back to the terminal, or take it",
+    ),
+    offered("new", "start a fresh session"),
+    Command {
+        name: "quit",
+        argument: None,
+        summary: "leave Optimus",
+        menu: false,
+        aliases: &["exit"],
+    },
+    offered("help", "list every command"),
+];
+
+/// The catalog entry for `name`, by its own spelling or one of its aliases.
+pub fn lookup(name: &str) -> Option<&'static Command> {
+    COMMANDS
+        .iter()
+        .find(|command| command.name == name || command.aliases.contains(&name))
+}
+
 /// Handle `input` if it is a slash command. Returns false for ordinary prompts.
 pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
     let trimmed = input.trim();
@@ -25,8 +140,18 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
     let name = parts.next().unwrap_or("").to_ascii_lowercase();
     let argument = parts.next().unwrap_or("").to_string();
 
-    match name.as_str() {
-        "" => session.push(Role::Error, "type /help for commands".into()),
+    if name.is_empty() {
+        session.push(Role::Error, "type /help for commands".into());
+        return true;
+    }
+    // The catalog decides what exists; the match below decides what it does. A
+    // name the catalog does not hold never reaches the match, so a command
+    // added to one and forgotten in the other cannot half-work.
+    let Some(command) = lookup(&name) else {
+        session.push(Role::Error, format!("unknown command /{name} — try /help"));
+        return true;
+    };
+    match command.name {
         "help" => help(session),
         "providers" => providers(session),
         "provider" => set_provider(session, &argument),
@@ -38,62 +163,47 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
         "frame" => frame(session),
         "mouse" => mouse(session),
         "new" => new_session(session),
-        "quit" | "exit" => session.quit = true,
-        other => session.push(Role::Error, format!("unknown command /{other} — try /help")),
+        "quit" => session.quit = true,
+        // Unreachable while the catalog and the arms above agree, which
+        // `every_catalogued_command_dispatches` is what holds.
+        other => session.push(Role::Error, format!("/{other} is listed but not wired")),
     }
     true
 }
 
-/// Commands offered by the right-click menu.
-///
-/// Only the ones that need no argument: a menu row that then demands typing
-/// would be a worse path than typing the command in the first place.
+/// Commands offered by the right-click menu, in catalog order.
 pub fn menu() -> Picker {
-    let items = [
-        ("providers", "pick a provider"),
-        ("approval", "decide the pending approval"),
-        ("access", "autonomy profile for new turns"),
-        ("frame", "containers, or plain gutters"),
-        ("yolo", "unrestricted access"),
-        ("new", "start a fresh session"),
-        ("help", "list every command"),
-    ]
-    .iter()
-    .map(|(id, detail)| PickerItem {
-        id: (*id).to_string(),
-        label: format!("/{id}"),
-        detail: (*detail).to_string(),
-        current: false,
-        connected: true,
-    })
-    .collect();
+    let items = COMMANDS
+        .iter()
+        .filter(|command| command.menu)
+        .map(|command| PickerItem {
+            id: command.name.to_string(),
+            label: format!("/{}", command.name),
+            detail: command.summary.to_string(),
+            current: false,
+            connected: true,
+        })
+        .collect();
     Picker::new(PickerKind::Command, "Commands", items)
 }
 
 fn help(session: &mut TuiSession) {
-    session.push(
-        Role::Assistant,
+    let mut lines: Vec<String> = COMMANDS
+        .iter()
+        .map(|command| format!("{:<17} {}", command.typed_form(), command.summary))
+        .collect();
+    lines.extend(
         [
-            "/providers        pick a provider from a list",
-            "/provider <id>    switch provider, remembered next launch",
-            "/model <id>       override the model, or 'auto'",
-            "/thinking <lvl>   minimal|low|medium|high|xhigh|max, or off",
-            "/approval         decide the pending exact approval",
-            "/access <profile> standard|review_changes|read_only|full_project",
-            "/yolo             unrestricted access, releases the open approval",
-            "/frame            containers around turns, or plain gutters",
-            "/mouse            hand the mouse back to the terminal, or take it",
-            "/new              start a fresh session",
-            "/quit             leave Optimus",
-            "/help             this list",
+            "Tab completes a half-typed command; Up/Down pick from the suggestions.",
             "Ctrl-C stops a run, or exits when idle; Ctrl-D exits on an empty prompt.",
             "Esc clears the prompt. Shift-Enter (or Ctrl-J) adds a line; Enter sends.",
             "Up/Down recall past prompts; Ctrl-A/E, Alt-arrows, Ctrl-K/U/W edit the line.",
             "PageUp/PageDown scroll the transcript; End follows the tail.",
             "Wheel scrolls, the right border drags, right-click opens this menu.",
         ]
-        .join("\n"),
+        .map(str::to_string),
     );
+    session.push(Role::Assistant, lines.join("\n"));
 }
 
 fn approval(session: &mut TuiSession) {
@@ -487,18 +597,43 @@ mod tests {
     }
 
     #[test]
-    fn the_menu_only_offers_commands_that_need_no_argument() {
+    fn every_catalogued_command_dispatches() {
+        // The catalog is what `help`, the menu, and the live suggestions all
+        // offer. An entry with no arm behind it would be a name the terminal
+        // advertises and then refuses — the one failure this design exists to
+        // make impossible, so it is asserted rather than assumed.
+        for command in COMMANDS {
+            for spelling in std::iter::once(&command.name).chain(command.aliases) {
+                let (_dir, mut session) = session();
+                assert!(dispatch(&mut session, &format!("/{spelling}")));
+                let refused = session
+                    .messages
+                    .iter()
+                    .any(|m| m.text.contains("not wired") || m.text.contains("unknown command"));
+                assert!(!refused, "/{spelling} is offered but does not reach an arm");
+            }
+        }
+    }
+
+    #[test]
+    fn the_menu_only_offers_commands_that_work_from_a_click() {
+        assert!(!menu().items.is_empty(), "the menu must offer something");
         for item in &menu().items {
-            assert!(
-                dispatch(&mut session().1, &format!("/{}", item.id)),
-                "/{} must be a real command",
-                item.id
-            );
-            assert!(
-                !item.label.contains('<'),
-                "/{} would demand typing after the click",
-                item.id
-            );
+            let command = lookup(&item.id).expect("a menu row names a real command");
+            let (_dir, mut session) = session();
+            assert!(dispatch(&mut session, &format!("/{}", item.id)));
+            // A row that reads an argument still has to do something useful
+            // without one, or clicking it is a worse path than typing was.
+            if command.argument.is_some() {
+                assert!(
+                    !session
+                        .messages
+                        .first()
+                        .is_some_and(|m| m.role == Role::Error),
+                    "/{} demands typing after the click",
+                    item.id
+                );
+            }
         }
     }
 

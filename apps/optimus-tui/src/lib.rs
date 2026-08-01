@@ -23,6 +23,7 @@ use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
 mod activity;
 mod commands;
+mod completion;
 mod composer;
 mod history;
 mod keys;
@@ -192,6 +193,7 @@ fn event_loop(
             picker: session.picker.is_some(),
             busy: session.busy(),
             drafting: !session.composer.is_empty(),
+            suggesting: !completion::suggestions(session.composer.text()).is_empty(),
         };
         if on_key(terminal, &mut session, keys::intent(&key, mode))? {
             return Ok(());
@@ -209,14 +211,17 @@ fn on_key(
     session: &mut TuiSession,
     intent: keys::Intent,
 ) -> io::Result<bool> {
-    use keys::{Edit, HistoryStep, Intent, Motion, PickerStep, ScrollStep};
+    use keys::{Edit, HistoryStep, Intent, Motion, PickerStep, ScrollStep, SuggestStep};
     // Any edit to the draft ends history browsing, so a recalled prompt the
-    // human changed stays changed.
+    // human changed stays changed — and it changes which commands still match,
+    // so a highlight three rows down the old list starts over rather than
+    // pointing at whatever has since moved under it.
     if matches!(
         intent,
         Intent::Insert(_) | Intent::Edit(_) | Intent::Newline | Intent::ClearDraft
     ) {
         session.history.release();
+        session.completion.reset();
     }
     match intent {
         Intent::Quit => return Ok(true),
@@ -276,6 +281,22 @@ fn on_key(
             PickerStep::Confirm => session.confirm_picker(),
             PickerStep::Close => session.picker = None,
         },
+        Intent::Suggest(step) => {
+            let count = completion::suggestions(session.composer.text()).len();
+            match step {
+                SuggestStep::Next => session.completion.down(count),
+                SuggestStep::Previous => session.completion.up(count),
+            }
+        }
+        // Reset after taking the row, never before: resetting first would
+        // complete the top of the list instead of the row that is highlighted.
+        Intent::Complete => {
+            if let Some(text) = session.completion.completed(session.composer.text()) {
+                session.history.release();
+                session.composer.set(text);
+                session.completion.reset();
+            }
+        }
         Intent::Redraw => terminal.clear()?,
         Intent::Ignore => {}
     }

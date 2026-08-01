@@ -202,6 +202,8 @@ pub struct TuiSession {
     /// wire strings only; never the break-glass profile — that stays /yolo.
     pub access: Option<&'static str>,
     pub picker: Option<crate::picker::Picker>,
+    /// Which command suggestion is highlighted; the list itself is derived.
+    pub completion: crate::completion::Completion,
     /// The exact binding of a parked effect, held until a decision resolves it.
     pub pending_approval: Option<Box<ToolApprovalBinding>>,
     /// Rows scrolled up from the tail of the transcript; 0 follows new text.
@@ -248,6 +250,7 @@ impl TuiSession {
             yolo: false,
             access: None,
             picker: None,
+            completion: crate::completion::Completion::default(),
             pending_approval: None,
             scroll_back: 0,
             running_tool: None,

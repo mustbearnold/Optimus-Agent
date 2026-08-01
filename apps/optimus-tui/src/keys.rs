@@ -9,6 +9,10 @@
 //! means end-of-line while the draft is non-empty and follow-the-tail
 //! otherwise, and `Esc` clears a draft before it closes anything. The
 //! [`Mode`] passed in is exactly the state those rules need.
+//!
+//! Open suggestions are the one non-modal claim on the keyboard. A picker
+//! returns early and answers every key; suggestions take three and let the rest
+//! fall through, because the composer underneath them is still being typed into.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -21,6 +25,8 @@ pub struct Mode {
     pub busy: bool,
     /// The composer holds text.
     pub drafting: bool,
+    /// Command suggestions are showing over a half-typed slash command.
+    pub suggesting: bool,
 }
 
 /// What the event loop should do about a key.
@@ -43,6 +49,10 @@ pub enum Intent {
     /// Drop the draft without sending it.
     ClearDraft,
     Picker(PickerStep),
+    /// Move the highlight through the open suggestions.
+    Suggest(SuggestStep),
+    /// Take the highlighted suggestion into the draft.
+    Complete,
     /// Redraw from scratch (Ctrl-L), for a frame corrupted by another writer.
     Redraw,
 }
@@ -88,6 +98,12 @@ pub enum PickerStep {
     Close,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SuggestStep {
+    Next,
+    Previous,
+}
+
 pub fn intent(key: &KeyEvent, mode: Mode) -> Intent {
     if mode.picker {
         return picker_intent(key);
@@ -95,6 +111,20 @@ pub fn intent(key: &KeyEvent, mode: Mode) -> Intent {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
     let alt = key.modifiers.contains(KeyModifiers::ALT);
     let shift = key.modifiers.contains(KeyModifiers::SHIFT);
+    // Only three keys, and each is one the draft has a better use for while a
+    // command is half-typed: `Tab` means nothing anywhere else, and `Up`/`Down`
+    // would recall an old prompt over the top of the one being written. Enter
+    // still sends and Esc still clears — a list that hijacked either would be
+    // deciding something the user was in the middle of saying. Esc needs no
+    // dismissal of its own: clearing the draft takes the `/` with it.
+    if mode.suggesting && !ctrl && !alt {
+        match key.code {
+            KeyCode::Tab => return Intent::Complete,
+            KeyCode::Down => return Intent::Suggest(SuggestStep::Next),
+            KeyCode::Up => return Intent::Suggest(SuggestStep::Previous),
+            _ => {}
+        }
+    }
     match key.code {
         // Ctrl-C stops a run in flight; with nothing running it exits. Pinned
         // by scripts/tui_e2e.py and advertised in /help.
@@ -186,6 +216,7 @@ mod tests {
         picker: false,
         busy: false,
         drafting: false,
+        suggesting: false,
     };
     const DRAFTING: Mode = Mode {
         drafting: true,
@@ -194,6 +225,12 @@ mod tests {
     const BUSY: Mode = Mode { busy: true, ..IDLE };
     const PICKING: Mode = Mode {
         picker: true,
+        ..IDLE
+    };
+    /// A slash command is half-typed, so the suggestions are on screen.
+    const SUGGESTING: Mode = Mode {
+        drafting: true,
+        suggesting: true,
         ..IDLE
     };
 
@@ -326,6 +363,77 @@ mod tests {
         assert_eq!(
             intent(&chord(KeyCode::Backspace, KeyModifiers::ALT), DRAFTING),
             Intent::Edit(Edit::KillWord)
+        );
+    }
+
+    #[test]
+    fn open_suggestions_take_the_arrows_before_history_does() {
+        assert_eq!(
+            intent(&key(KeyCode::Down), SUGGESTING),
+            Intent::Suggest(SuggestStep::Next)
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Up), SUGGESTING),
+            Intent::Suggest(SuggestStep::Previous)
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Up), DRAFTING),
+            Intent::History(HistoryStep::Older),
+            "and give them straight back when nothing is being suggested"
+        );
+    }
+
+    #[test]
+    fn tab_completes_only_while_something_is_being_suggested() {
+        assert_eq!(intent(&key(KeyCode::Tab), SUGGESTING), Intent::Complete);
+        assert_eq!(
+            intent(&key(KeyCode::Tab), DRAFTING),
+            Intent::Ignore,
+            "Tab is unbound otherwise, which is why it was free to take"
+        );
+    }
+
+    #[test]
+    fn a_picker_still_outranks_the_suggestions() {
+        // Both cannot be on screen, but precedence should not depend on that
+        // staying true: the modal list is the one the user opened on purpose.
+        let both = Mode {
+            picker: true,
+            ..SUGGESTING
+        };
+        assert_eq!(
+            intent(&key(KeyCode::Down), both),
+            Intent::Picker(PickerStep::Next)
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Tab), both),
+            Intent::Picker(PickerStep::Next)
+        );
+    }
+
+    #[test]
+    fn suggestions_never_take_the_keys_that_end_a_thought() {
+        // Enter sends and Esc clears, exactly as they do without a list up.
+        // Hijacking either would decide something mid-sentence, and Esc taking
+        // the draft with it is what dismisses the suggestions anyway.
+        assert_eq!(intent(&key(KeyCode::Enter), SUGGESTING), Intent::Submit);
+        assert_eq!(intent(&key(KeyCode::Esc), SUGGESTING), Intent::ClearDraft);
+        assert_eq!(
+            intent(&key(KeyCode::Char('p')), SUGGESTING),
+            Intent::Insert('p'),
+            "and typing carries on underneath, which a picker would not allow"
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Backspace), SUGGESTING),
+            Intent::Edit(Edit::Backspace)
+        );
+        assert_eq!(
+            intent(
+                &chord(KeyCode::Char('c'), KeyModifiers::CONTROL),
+                SUGGESTING
+            ),
+            Intent::Quit,
+            "and the chords keep their meanings"
         );
     }
 }
