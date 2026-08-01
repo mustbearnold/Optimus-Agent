@@ -237,6 +237,7 @@ tier_gates() {
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
   spawn "test_worktree_retirement"   python3 scripts/test_managed_worktree_retirement.py
+  spawn "test_worktree_provision"    python3 scripts/test_managed_worktree_provision.py
   spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_workspace_layout"      python3 scripts/test_workspace_layout.py
@@ -448,6 +449,7 @@ tier_all() {
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
   spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
   spawn "test_worktree_retirement"   python3 scripts/test_managed_worktree_retirement.py
+  spawn "test_worktree_provision"    python3 scripts/test_managed_worktree_provision.py
   spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
   spawn "test_workspace_layout"      python3 scripts/test_workspace_layout.py

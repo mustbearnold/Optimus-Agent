@@ -71,6 +71,15 @@ workspace-layout-apply:
 workspace-repository-sync:
     @python3 scripts/workspace_layout.py sync
 
+# Create an assigned worktree that answers plain git and can land: branch,
+# per-worktree config, npm deps, and a readiness table.
+worktree-new name:
+    @python3 scripts/managed_worktree_provision.py new {{quote(name)}}
+
+# Repair and report this worktree's land readiness (config, deps, host tools).
+setup-worktree:
+    @python3 scripts/managed_worktree_provision.py ready
+
 # Produce an exact, recovery-aware plan for every stale worktree except this one.
 worktree-retirement-plan:
     @python3 scripts/managed_worktree_retirement.py plan

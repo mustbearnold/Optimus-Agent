@@ -2734,7 +2734,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "2674455464f28c3bfd59f134b99ae8d95cc7bb4d1f237c32918c49dd2206782b",
+      "content_sha256": "b77329ee5e9075fd9ef02a735011428e4603665566af0f7aa441e5ef5405a208",
       "headings": [
         "Managed delivery",
         "Public commands",
@@ -2743,6 +2743,7 @@
         "Land",
         "Records and refusal",
         "Remote branch retirement",
+        "Worktree creation and provisioning",
         "Worktree retirement",
         "Trust boundary and prerequisites"
       ],
@@ -6959,7 +6960,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "4c1eeb443971838d36d4d75f034b336c9ac1253a73a47d60487892c7ce023bdd",
+  "documents_sha256": "2765ed69e0c92023476b3b8a3d7cac1dbe014cd09d2676d2a44ad688e39c8d96",
   "routes": [
     {
       "id": "docs.navigation",

@@ -39,8 +39,12 @@ function electronLaunchArgs(...args) {
 }
 
 async function workbenchWindow(application) {
+  // A compiled shell's first window sits on about:blank until the Rust host
+  // finishes booting, and a cold start can outlast the default poll budget.
+  // Timing out here reads as "no workbench" when the honest answer was
+  // "not yet" — give startup its own explicit budget.
   await expect
-    .poll(() => application.windows().map((candidate) => candidate.url()))
+    .poll(() => application.windows().map((candidate) => candidate.url()), { timeout: 30_000 })
     .toContain('optimus-app://ui/index.html');
   const page = application
     .windows()

@@ -13,6 +13,8 @@ owns:
   - scripts/test_managed_delivery.py
   - scripts/managed_branch_retirement.py
   - scripts/test_managed_branch_retirement.py
+  - scripts/managed_worktree_provision.py
+  - scripts/test_managed_worktree_provision.py
   - docs/contributing/managed-delivery.md
 watches:
   - justfile
@@ -33,6 +35,8 @@ runtime permissions, approval policy, prompts, or product behaviour.
 Coding agents use exactly:
 
 ```text
+just worktree-new <name>
+just setup-worktree
 just checkpoint <label>
 just undo <label>
 just land <task-id> --model <model> --effort <level>
@@ -138,6 +142,18 @@ movement cannot be silently discarded.
 A successful operation writes an immutable receipt under
 `local/land/branch-retirements/`. Agents do not replace this command with raw
 `git push --delete`, non-atomic loops, or `gh`.
+
+## Worktree creation and provisioning
+
+`worktree-new` creates the assigned checkout on a fresh `claude/<name>` branch
+from `main` and finishes what `git worktree add` alone does not: the bare
+store runs `extensions.worktreeConfig`, so every checkout needs a
+per-worktree `config.worktree` with `bare = false` before plain `git status`
+answers, and the land gate forbids UI-suite skips, so `node_modules` must
+exist in each app before the first land. `setup-worktree` repairs and reports
+an existing checkout the same way — config, npm dependencies, and the host
+tools (tmux, clippy, a display, Chromium) that decide whether `just verify`
+can run without a skip.
 
 ## Worktree retirement
 
