@@ -94,6 +94,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0065 | Temporal project knowledge is an embedded database | Accepted | The disposable projection is a transactional SQLite property graph with indexed temporal queries, bounded traversal, read-only SQL, migrations, and integrity gates. |
 | 0066 | Temporal project knowledge is a code-aware interval graph | Accepted | Schema 2 projects event time onto UTC over a topological walk, adds interval-valid package dependency edges, current-tree symbols, author identity, exact content digests, and three further closed cleanup conventions. |
 | 0067 | Managed cleanup fingerprints symlinks without following | Accepted | Symlinks inside a cleanup candidate are fingerprinted by their own metadata and target string and deleted as entries, never followed; a symlink candidate root still refuses. |
+| 0068 | A catalog row must dispatch or not exist | Accepted | Nine never-shipping scaffold tool rows leave the catalog, five committed lanes stay, and packs.breadth re-marks from parity to missing; refusing rows taught false affordances. |
 
 ## Known documentary debt
 

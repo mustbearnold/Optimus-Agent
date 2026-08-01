@@ -31,7 +31,7 @@ COVERAGE_RS = ROOT / "crates" / "optimus-kernel" / "tests" / "tool_coverage.rs"
 
 # Move these only together with the coverage ledger, in the same commit.
 PINNED_DISPATCHABLE = 17
-PINNED_UNAVAILABLE = 14
+PINNED_UNAVAILABLE = 5
 
 
 def parse_dispatchable(invocation_source: str) -> set[str]:

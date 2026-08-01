@@ -557,10 +557,17 @@ fn unavailable_catalog_entries_retain_honest_future_policy_identity() {
         .tools
         .iter()
         .all(|tool| tool.policy == ToolPolicy::Media));
-    assert_eq!(
-        catalog[&PackId::Social].tools[1].policy,
-        ToolPolicy::NetworkWrite
-    );
+    let clarify = catalog[&PackId::Core]
+        .tools
+        .iter()
+        .find(|tool| tool.id.as_str() == "clarify")
+        .expect("clarify keeps its committed lane (ADR-0068)");
+    assert_eq!(clarify.policy, ToolPolicy::UserInteraction);
+    // Emptied packs keep their identity so activation and policy vocabulary
+    // stay stable while their tools wait for real implementation lands.
+    assert!(catalog[&PackId::Social].tools.is_empty());
+    assert!(catalog[&PackId::Home].tools.is_empty());
+    assert!(catalog[&PackId::Office].tools.is_empty());
 }
 
 #[test]

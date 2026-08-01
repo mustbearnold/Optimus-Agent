@@ -781,11 +781,6 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                         &["name"],
                     ),
                 ),
-                unavailable(
-                    "job_run",
-                    "Advance durable job",
-                    ToolPolicy::WorkspaceWrite,
-                ),
                 unavailable("clarify", "Ask the user", ToolPolicy::UserInteraction),
             ],
         },
@@ -833,62 +828,44 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
         PackId::Media,
         PackDesc {
             id: PackId::Media,
-            summary: "Vision, imagegen, TTS/STT".into(),
-            tools: vec![
-                unavailable("vision_analyze", "Analyze image", ToolPolicy::Media),
-                unavailable("image_generate", "Generate image", ToolPolicy::Media),
-                unavailable("tts", "Text to speech", ToolPolicy::Media),
-            ],
+            summary: "Vision (imagegen/TTS return with their lane; ADR-0068)".into(),
+            tools: vec![unavailable(
+                "vision_analyze",
+                "Analyze image",
+                ToolPolicy::Media,
+            )],
         },
     );
     m.insert(
         PackId::Devex,
         PackDesc {
             id: PackId::Devex,
-            summary: "Git/GH/deep dev workflows".into(),
-            tools: vec![
-                unavailable("gh_pr", "GitHub PR operations", ToolPolicy::NetworkWrite),
-                unavailable("git_deep", "Structured git ops", ToolPolicy::WorkspaceWrite),
-            ],
+            summary: "Git/GH/deep dev workflows (no tools until designed; ADR-0068)".into(),
+            tools: vec![],
         },
     );
     m.insert(
         PackId::Social,
         PackDesc {
             id: PackId::Social,
-            summary: "Messaging send / X search".into(),
-            tools: vec![
-                unavailable("x_search", "Search X", ToolPolicy::NetworkRead),
-                unavailable(
-                    "message_send",
-                    "Send platform message",
-                    ToolPolicy::NetworkWrite,
-                ),
-            ],
+            summary: "Messaging (returns with a live gateway transport; ADR-0068)".into(),
+            tools: vec![],
         },
     );
     m.insert(
         PackId::Home,
         PackDesc {
             id: PackId::Home,
-            summary: "Home automation breadth (scaffold)".into(),
-            tools: vec![unavailable(
-                "home_device_status",
-                "Read home device status",
-                ToolPolicy::NetworkRead,
-            )],
+            summary: "Home automation (no tools until integrated; ADR-0068)".into(),
+            tools: vec![],
         },
     );
     m.insert(
         PackId::Office,
         PackDesc {
             id: PackId::Office,
-            summary: "Office document breadth (scaffold)".into(),
-            tools: vec![unavailable(
-                "office_doc_summary",
-                "Summarize office document",
-                ToolPolicy::WorkspaceRead,
-            )],
+            summary: "Office documents (no tools until integrated; ADR-0068)".into(),
+            tools: vec![],
         },
     );
     m

@@ -32,9 +32,9 @@ install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 42 | A bounded Hermes-equivalent capability has current executable evidence |
+| **parity** | 41 | A bounded Hermes-equivalent capability has current executable evidence |
 | **partial** | 4 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
-| **missing** | 0 | No complete executable path exists yet |
+| **missing** | 1 | No complete executable path exists yet |
 | **total** | 50 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
@@ -121,4 +121,4 @@ a tracked path (not gitignored `local/`) to restore the parity claim.
 
 ## Honest statement
 
-Optimus has evidence-backed architectural wins and broad product/ecosystem scaffolds. It is **not yet Hermes-strict-parity**: the ledger currently contains 4 partial and 0 missing capability rows, but Hermes feature-contract and performance gates remain unverified (optimus-native claims only for a small first batch). The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until the full inventory, comparative, security, cost, durability, packaging, and native-platform gates pass.
+Optimus has evidence-backed architectural wins and broad product/ecosystem scaffolds. It is **not yet Hermes-strict-parity**: the ledger currently contains 4 partial and 1 missing capability row (packs.breadth re-marked by ADR-0068: breadth claimed through refusing scaffolds was cosmetics, and the scaffolds are gone), but Hermes feature-contract and performance gates remain unverified (optimus-native claims only for a small first batch). The Hermes parity version therefore remains `null`; it cannot become `0.19.0` until the full inventory, comparative, security, cost, durability, packaging, and native-platform gates pass.

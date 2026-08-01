@@ -1,670 +1,669 @@
 {
-  "schema_version": 1,
-  "updated_at": "2026-07-28",
-  "scorecard_marker": "thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
-  "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
-  "states": [
-    "missing",
-    "partial",
-    "parity",
-    "win"
-  ],
-  "capabilities": [
-    {
-      "id": "core.work-durability",
-      "capability": "Crash-resumable jobs and effects",
-      "thesis_axis": "one-core-many-faces",
-      "state": "win",
-      "evidence": [
-        "crates/optimus-runtime/tests/crash_resume.rs"
-      ],
-      "trajectory": "cargo:optimus-runtime/crash_resume",
-      "owner_ticket": "HOLD"
-    },
-    {
-      "id": "core.memory-integrity",
-      "capability": "Evidence-fenced bitemporal memory",
-      "thesis_axis": "project-integrity",
-      "state": "win",
-      "evidence": [
-        "crates/optimus-memory/tests/metamemory_mvp.rs"
-      ],
-      "trajectory": "cargo:optimus-memory/metamemory_mvp",
-      "owner_ticket": "HOLD"
-    },
-    {
-      "id": "core.skills-lifecycle",
-      "capability": "Versioned skills with outcome-gated promotion",
-      "thesis_axis": "one-core-many-faces",
-      "state": "win",
-      "evidence": [
-        "crates/optimus-skills/tests/skills_lifecycle.rs"
-      ],
-      "trajectory": "cargo:optimus-skills/skills_lifecycle",
-      "owner_ticket": "HOLD"
-    },
-    {
-      "id": "core.smartdeny",
-      "capability": "Durable approval-gated effects",
-      "thesis_axis": "project-integrity",
-      "state": "win",
-      "evidence": [
-        "crates/optimus-runtime/tests/approvals_surface.rs",
-        "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"
-      ],
-      "trajectory": "cargo:optimus-runtime/approvals_surface",
-      "owner_ticket": "A-05"
-    },
-    {
-      "id": "core.pack-budget",
-      "capability": "Progressive tool packs and schema budget",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-packs/tests/packs_budget.rs",
-        "docs/decisions/0016-canonical-tool-contract.md",
-        "crates/optimus-kernel/tests/kernel_turn.rs",
-        "docs/architecture/product-complete-p21-verification.md",
-        "docs/plans/product-complete-program.md",
-        "docs/evidence/product-complete-p21-hold-2026-07-25.md",
-        "crates/optimus-host/src/consoles.rs",
-        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-        "docs/architecture/product-complete-p26-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-01,D-02"
-    },
-    {
-      "id": "core.tool-loop",
-      "capability": "Model-to-tool dispatch loop",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/tests/kernel_turn.rs",
-        "crates/optimus-kernel/src/openai_compat.rs",
-        "crates/optimus-kernel/src/codex_oauth.rs",
-        "docs/decisions/0016-canonical-tool-contract.md",
-        "crates/optimus-packs/tests/packs_budget.rs",
-        "crates/optimus-kernel/tests/domain_modularity.rs",
-        "docs/architecture/product-complete-p21-verification.md",
-        "docs/plans/product-complete-program.md",
-        "docs/evidence/product-complete-p21-hold-2026-07-25.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-02,A-03,A-04,D-01"
-    },
-    {
-      "id": "provider.openai-compat",
-      "capability": "OpenAI-compatible provider client",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/tests/openai_http.rs"
-      ],
-      "trajectory": "cargo:optimus-kernel/openai_http",
-      "owner_ticket": "A-01"
-    },
-    {
-      "id": "provider.codex-oauth",
-      "capability": "Codex OAuth Responses provider",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/tests/codex_oauth.rs",
-        "docs/decisions/0011-codex-oauth.md"
-      ],
-      "trajectory": "cargo:optimus-kernel/codex_oauth",
-      "owner_ticket": "A-01"
-    },
-    {
-      "id": "provider.catalog",
-      "capability": "Canonical multi-provider/model catalog and connect state",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/routing.rs",
-        "crates/optimus-host/src/extensibility.rs",
-        "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-        "docs/architecture/product-complete-p27-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-01"
-    },
-    {
-      "id": "provider.failover",
-      "capability": "Capability-aware provider failover",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/routing.rs",
-        "crates/optimus-host/src/extensibility.rs",
-        "docs/architecture/product-complete-p27-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-08"
-    },
-    {
-      "id": "chat.streaming",
-      "capability": "Streaming desktop chat",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"
-      ],
-      "trajectory": "playwright:Enter streams offline reply progressively",
-      "owner_ticket": "A-07"
-    },
-    {
-      "id": "chat.thinking-tools",
-      "capability": "Separate thinking and timed tool lifecycle cards",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/lib.rs",
-        "apps/optimus-ui/src/state/conversationStore.ts",
-        "apps/optimus-ui/src/components/workbench/Transcript.tsx",
-        "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
-        "crates/optimus-host/src/sessions.rs",
-        "docs/architecture/product-complete-p24-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-07"
-    },
-    {
-      "id": "session.durable",
-      "capability": "Durable session reopen",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/tests/session_resume.rs"
-      ],
-      "trajectory": "cargo:optimus-kernel/session_resume",
-      "owner_ticket": "HOLD"
-    },
-    {
-      "id": "session.search-hygiene",
-      "capability": "FTS, archive, active sort, durable pins",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/session.rs",
-        "crates/optimus-host/src/sessions.rs",
-        "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-        "docs/architecture/product-complete-p24-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-06,A-10"
-    },
-    {
-      "id": "desktop.shell",
-      "capability": "Conversation-first Windows desktop shell",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
-        "docs/decisions/0014-native-webview-ipc-mode.md",
-        "docs/architecture/desktop-install-relaunch.md",
-        "scripts/rebuild-install-relaunch.sh",
-        "docs/decisions/0038-ui-ipc-architecture.md"
-      ],
-      "trajectory": "playwright:shell multi-pane IA; program P29 install default Electron+React",
-      "owner_ticket": "PF-02"
-    },
-    {
-      "id": "desktop.native-cua",
-      "capability": "Installed native paint and accessibility",
-      "thesis_axis": "one-core-many-faces",
-      "state": "partial",
-      "evidence": [],
-      "trajectory": null,
-      "owner_ticket": "P-06"
-    },
-    {
-      "id": "desktop.logs",
-      "capability": "Bounded redacted logs drawer",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-host/src/consoles.rs",
-        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-        "docs/architecture/product-complete-p26-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-09"
-    },
-    {
-      "id": "files.read",
-      "capability": "Sandboxed project file list/read",
-      "thesis_axis": "project-integrity",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/fs_sandbox.rs",
-        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
-      ],
-      "trajectory": "playwright:Files pane",
-      "owner_ticket": "B-04"
-    },
-    {
-      "id": "files.mutate",
-      "capability": "Write/patch/mkdir/rename/delete with SmartDeny",
-      "thesis_axis": "project-integrity",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/fs_sandbox.rs",
-        "crates/optimus-graph/src/lib.rs",
-        "crates/optimus-runtime/src/lib.rs",
-        "crates/optimus-runtime/tests/path_confinement.rs",
-        "crates/optimus-packs/src/lib.rs",
-        "docs/decisions/0039-files-mutate-effect-taxonomy.md",
-        "docs/architecture/product-complete-p22-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-02,B-04"
-    },
-    {
-      "id": "terminal.job",
-      "capability": "Bounded command stream",
-      "thesis_axis": "project-integrity",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-runtime/tests/command_capture.rs",
-        "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
-      ],
-      "trajectory": "playwright:term_run IPC requires explicit approval before command effect",
-      "owner_ticket": "A-03"
-    },
-    {
-      "id": "terminal.pty",
-      "capability": "Interactive multi-tab ConPTY terminal",
-      "thesis_axis": "project-integrity",
-      "state": "partial",
-      "evidence": [
-        "crates/optimus-ops/src/pty_session.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "B-05"
-    },
-    {
-      "id": "web.search",
-      "capability": "Web search in model tool loop",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/web_search.rs",
-        "crates/optimus-kernel/tests/web_search_live.rs",
-        "docs/architecture/product-complete-p23-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "A-04"
-    },
-    {
-      "id": "browser.http",
-      "capability": "SSRF-safe HTTP navigate/snapshot/click",
-      "thesis_axis": "project-integrity",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/browser.rs",
-        "crates/optimus-kernel/src/network_policy.rs",
-        "crates/optimus-kernel/tests/browser_live.rs",
-        "docs/architecture/product-complete-p23-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "B-01"
-    },
-    {
-      "id": "browser.cdp",
-      "capability": "Coordinated preview + agent browser (host protocol; not shared CDP session)",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "docs/decisions/0040-shared-browser-contract.md",
-        "crates/optimus-kernel/src/browser_coord.rs",
-        "crates/optimus-kernel/src/browser.rs",
-        "crates/optimus-browser/src/lib.rs",
-        "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-        "apps/optimus-electron/test/preview-security.test.cjs",
-        "docs/architecture/product-complete-p23-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "B-01,B-02"
-    },
-    {
-      "id": "browser.annotations",
-      "capability": "Page annotations as structured agent instructions",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-        "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-        "docs/contracts/high-risk-contracts.md",
-        "docs/architecture/product-complete-p23-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "B-03"
-    },
-    {
-      "id": "desktop.cua",
-      "capability": "Background computer-use pack",
-      "thesis_axis": "project-integrity",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-packs/src/lib.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "B-06"
-    },
-    {
-      "id": "cron.lifecycle",
-      "capability": "Schedules, pause/resume/remove, create and history",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/cron.rs",
-        "crates/optimus-host/src/scheduling.rs",
-        "apps/optimus-ui/src/components/cron/CronWorkbench.tsx",
-        "docs/architecture/product-complete-p25-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "C-01,C-04"
-    },
-    {
-      "id": "gateway.queue",
-      "capability": "Durable inbox/outbox and local webhook",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/gateway.rs",
-        "apps/optimus-cli/tests/gateway_http.rs",
-        "crates/optimus-host/src/messaging.rs",
-        "docs/architecture/product-complete-p28-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "C-02"
-    },
-    {
-      "id": "gateway.telegram",
-      "capability": "Telegram home-channel adapter",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/telegram.rs",
-        "crates/optimus-host/src/messaging.rs",
-        "docs/architecture/product-complete-p28-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "C-03"
-    },
-    {
-      "id": "gateway.discord-slack",
-      "capability": "Discord and Slack adapters",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/channel_adapters.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "C-05"
-    },
-    {
-      "id": "gateway.ui",
-      "capability": "Messaging connection/inbox/outbox UI",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "apps/optimus-ui/src/components/mail/MailPage.tsx",
-        "crates/optimus-host/src/messaging.rs",
-        "docs/architecture/product-complete-p28-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "C-04"
-    },
-    {
-      "id": "mcp.client",
-      "capability": "Pack-gated stdio/HTTP MCP client",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/mcp.rs",
-        "docs/decisions/0041-mcp-ingress-pack-gated.md",
-        "crates/optimus-host/src/extensibility.rs",
-        "docs/architecture/product-complete-p27-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-01"
-    },
-    {
-      "id": "plugins.signed",
-      "capability": "Signed permission-declared plugins/packs",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-packs/src/signed.rs",
-        "docs/decisions/0042-signed-pack-manifests.md",
-        "crates/optimus-host/src/extensibility.rs",
-        "docs/architecture/product-complete-p27-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-02"
-    },
-    {
-      "id": "skills.ui",
-      "capability": "Skills lifecycle desktop console",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-skills/src/lib.rs",
-        "crates/optimus-host/src/consoles.rs",
-        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-        "docs/architecture/product-complete-p26-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-03"
-    },
-    {
-      "id": "artifacts.store-ui",
-      "capability": "Provenance-aware artifact publication and gallery",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-artifacts/src/lib.rs",
-        "crates/optimus-host/src/files.rs",
-        "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
-        "docs/architecture/product-complete-p25-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-04"
-    },
-    {
-      "id": "memory.ui",
-      "capability": "Evidence explorer, feedback, correction and forget",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-memory/src/lib.rs",
-        "crates/optimus-host/src/consoles.rs",
-        "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-        "docs/architecture/product-complete-p26-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-05"
-    },
-    {
-      "id": "projects.scope",
-      "capability": "Durable project roots and policy scope",
-      "thesis_axis": "project-integrity",
-      "state": "partial",
-      "evidence": [
-        "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
-        "crates/optimus-kernel/src/product_settings.rs",
-        "docs/architecture/product-complete-p22-verification.md",
-        "docs/decisions/0027-settings-driven-work-isolation.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-06"
-    },
-    {
-      "id": "profiles.isolation",
-      "capability": "Profile-isolated homes and cross-profile links",
-      "thesis_axis": "project-integrity",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-kernel/src/profile.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-06"
-    },
-    {
-      "id": "campaign.sequential",
-      "capability": "Durable sequential write/command campaigns",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-runtime/src/campaign.rs",
-        "crates/optimus-runtime/tests/approvals_surface.rs"
-      ],
-      "trajectory": "cargo:optimus-runtime/campaign",
-      "owner_ticket": "D-07"
-    },
-    {
-      "id": "campaign.subagents",
-      "capability": "Durable child-agent DAGs, leases and handoffs",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-workflow/src/child_lease.rs",
-        "crates/optimus-workflow/src/specialist_vertical.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "D-07,E-08"
-    },
-    {
-      "id": "eval.offline",
-      "capability": "Deterministic offline trajectory suite",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-eval/src/eval.rs"
-      ],
-      "trajectory": "cargo:optimus-eval/evaluation_contracts",
-      "owner_ticket": "P-02"
-    },
-    {
-      "id": "media.vision-image",
-      "capability": "Vision and image generation pack",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/media_fixtures.rs",
-        "crates/optimus-packs/src/lib.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-01"
-    },
-    {
-      "id": "media.voice",
-      "capability": "STT/TTS and voice composer",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/media_fixtures.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-02"
-    },
-    {
-      "id": "surface.proxy",
-      "capability": "OpenAI-compatible server/proxy",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/surfaces.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-03"
-    },
-    {
-      "id": "surface.acp",
-      "capability": "ACP/IDE bridge",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/surfaces.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-04"
-    },
-    {
-      "id": "surface.tui",
-      "capability": "Headless TUI operator surface",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/surfaces.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-05"
-    },
-    {
-      "id": "surface.commands",
-      "capability": "Canonical slash commands and command palette",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/surface_commands.rs",
-        "crates/optimus-host/src/consoles.rs",
-        "apps/optimus-ui/src/components/chrome/CommandPalette.tsx",
-        "docs/architecture/product-complete-p26-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-06"
-    },
-    {
-      "id": "migration.hermes",
-      "capability": "Hermes session/skill/memory importer",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-ops/src/hermes_import.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-07"
-    },
-    {
-      "id": "release.updater",
-      "capability": "Signed updater and rollback",
-      "thesis_axis": "one-core-many-faces",
-      "state": "partial",
-      "evidence": [
-        "docs/decisions/0043-no-auto-updater-channel.md",
-        "crates/optimus-host/src/system.rs",
-        "scripts/rebuild-install-relaunch.sh",
-        "docs/architecture/product-complete-p29-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-09"
-    },
-    {
-      "id": "packs.breadth",
-      "capability": "Office/devex/social/home capability breadth",
-      "thesis_axis": "one-core-many-faces",
-      "state": "parity",
-      "evidence": [
-        "crates/optimus-packs/src/lib.rs",
-        "docs/architecture/s7-track-z-verification.md"
-      ],
-      "trajectory": null,
-      "owner_ticket": "E-11"
-    }
-  ]
+ "schema_version": 1,
+ "updated_at": "2026-07-28",
+ "scorecard_marker": "thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
+ "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
+ "states": [
+  "missing",
+  "partial",
+  "parity",
+  "win"
+ ],
+ "capabilities": [
+  {
+   "id": "core.work-durability",
+   "capability": "Crash-resumable jobs and effects",
+   "thesis_axis": "one-core-many-faces",
+   "state": "win",
+   "evidence": [
+    "crates/optimus-runtime/tests/crash_resume.rs"
+   ],
+   "trajectory": "cargo:optimus-runtime/crash_resume",
+   "owner_ticket": "HOLD"
+  },
+  {
+   "id": "core.memory-integrity",
+   "capability": "Evidence-fenced bitemporal memory",
+   "thesis_axis": "project-integrity",
+   "state": "win",
+   "evidence": [
+    "crates/optimus-memory/tests/metamemory_mvp.rs"
+   ],
+   "trajectory": "cargo:optimus-memory/metamemory_mvp",
+   "owner_ticket": "HOLD"
+  },
+  {
+   "id": "core.skills-lifecycle",
+   "capability": "Versioned skills with outcome-gated promotion",
+   "thesis_axis": "one-core-many-faces",
+   "state": "win",
+   "evidence": [
+    "crates/optimus-skills/tests/skills_lifecycle.rs"
+   ],
+   "trajectory": "cargo:optimus-skills/skills_lifecycle",
+   "owner_ticket": "HOLD"
+  },
+  {
+   "id": "core.smartdeny",
+   "capability": "Durable approval-gated effects",
+   "thesis_axis": "project-integrity",
+   "state": "win",
+   "evidence": [
+    "crates/optimus-runtime/tests/approvals_surface.rs",
+    "apps/optimus-desktop/e2e/03-runtime-and-sessions.spec.js"
+   ],
+   "trajectory": "cargo:optimus-runtime/approvals_surface",
+   "owner_ticket": "A-05"
+  },
+  {
+   "id": "core.pack-budget",
+   "capability": "Progressive tool packs and schema budget",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-packs/tests/packs_budget.rs",
+    "docs/decisions/0016-canonical-tool-contract.md",
+    "crates/optimus-kernel/tests/kernel_turn.rs",
+    "docs/architecture/product-complete-p21-verification.md",
+    "docs/plans/product-complete-program.md",
+    "docs/evidence/product-complete-p21-hold-2026-07-25.md",
+    "crates/optimus-host/src/consoles.rs",
+    "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+    "docs/architecture/product-complete-p26-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-01,D-02"
+  },
+  {
+   "id": "core.tool-loop",
+   "capability": "Model-to-tool dispatch loop",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/tests/kernel_turn.rs",
+    "crates/optimus-kernel/src/openai_compat.rs",
+    "crates/optimus-kernel/src/codex_oauth.rs",
+    "docs/decisions/0016-canonical-tool-contract.md",
+    "crates/optimus-packs/tests/packs_budget.rs",
+    "crates/optimus-kernel/tests/domain_modularity.rs",
+    "docs/architecture/product-complete-p21-verification.md",
+    "docs/plans/product-complete-program.md",
+    "docs/evidence/product-complete-p21-hold-2026-07-25.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-02,A-03,A-04,D-01"
+  },
+  {
+   "id": "provider.openai-compat",
+   "capability": "OpenAI-compatible provider client",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/tests/openai_http.rs"
+   ],
+   "trajectory": "cargo:optimus-kernel/openai_http",
+   "owner_ticket": "A-01"
+  },
+  {
+   "id": "provider.codex-oauth",
+   "capability": "Codex OAuth Responses provider",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/tests/codex_oauth.rs",
+    "docs/decisions/0011-codex-oauth.md"
+   ],
+   "trajectory": "cargo:optimus-kernel/codex_oauth",
+   "owner_ticket": "A-01"
+  },
+  {
+   "id": "provider.catalog",
+   "capability": "Canonical multi-provider/model catalog and connect state",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/routing.rs",
+    "crates/optimus-host/src/extensibility.rs",
+    "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
+    "docs/architecture/product-complete-p27-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-01"
+  },
+  {
+   "id": "provider.failover",
+   "capability": "Capability-aware provider failover",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/routing.rs",
+    "crates/optimus-host/src/extensibility.rs",
+    "docs/architecture/product-complete-p27-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-08"
+  },
+  {
+   "id": "chat.streaming",
+   "capability": "Streaming desktop chat",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"
+   ],
+   "trajectory": "playwright:Enter streams offline reply progressively",
+   "owner_ticket": "A-07"
+  },
+  {
+   "id": "chat.thinking-tools",
+   "capability": "Separate thinking and timed tool lifecycle cards",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/lib.rs",
+    "apps/optimus-ui/src/state/conversationStore.ts",
+    "apps/optimus-ui/src/components/workbench/Transcript.tsx",
+    "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
+    "crates/optimus-host/src/sessions.rs",
+    "docs/architecture/product-complete-p24-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-07"
+  },
+  {
+   "id": "session.durable",
+   "capability": "Durable session reopen",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/tests/session_resume.rs"
+   ],
+   "trajectory": "cargo:optimus-kernel/session_resume",
+   "owner_ticket": "HOLD"
+  },
+  {
+   "id": "session.search-hygiene",
+   "capability": "FTS, archive, active sort, durable pins",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/session.rs",
+    "crates/optimus-host/src/sessions.rs",
+    "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
+    "docs/architecture/product-complete-p24-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-06,A-10"
+  },
+  {
+   "id": "desktop.shell",
+   "capability": "Conversation-first Windows desktop shell",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
+    "docs/decisions/0014-native-webview-ipc-mode.md",
+    "docs/architecture/desktop-install-relaunch.md",
+    "scripts/rebuild-install-relaunch.sh",
+    "docs/decisions/0038-ui-ipc-architecture.md"
+   ],
+   "trajectory": "playwright:shell multi-pane IA; program P29 install default Electron+React",
+   "owner_ticket": "PF-02"
+  },
+  {
+   "id": "desktop.native-cua",
+   "capability": "Installed native paint and accessibility",
+   "thesis_axis": "one-core-many-faces",
+   "state": "partial",
+   "evidence": [],
+   "trajectory": null,
+   "owner_ticket": "P-06"
+  },
+  {
+   "id": "desktop.logs",
+   "capability": "Bounded redacted logs drawer",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-host/src/consoles.rs",
+    "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+    "docs/architecture/product-complete-p26-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-09"
+  },
+  {
+   "id": "files.read",
+   "capability": "Sandboxed project file list/read",
+   "thesis_axis": "project-integrity",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/fs_sandbox.rs",
+    "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
+   ],
+   "trajectory": "playwright:Files pane",
+   "owner_ticket": "B-04"
+  },
+  {
+   "id": "files.mutate",
+   "capability": "Write/patch/mkdir/rename/delete with SmartDeny",
+   "thesis_axis": "project-integrity",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/fs_sandbox.rs",
+    "crates/optimus-graph/src/lib.rs",
+    "crates/optimus-runtime/src/lib.rs",
+    "crates/optimus-runtime/tests/path_confinement.rs",
+    "crates/optimus-packs/src/lib.rs",
+    "docs/decisions/0039-files-mutate-effect-taxonomy.md",
+    "docs/architecture/product-complete-p22-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-02,B-04"
+  },
+  {
+   "id": "terminal.job",
+   "capability": "Bounded command stream",
+   "thesis_axis": "project-integrity",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-runtime/tests/command_capture.rs",
+    "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
+   ],
+   "trajectory": "playwright:term_run IPC requires explicit approval before command effect",
+   "owner_ticket": "A-03"
+  },
+  {
+   "id": "terminal.pty",
+   "capability": "Interactive multi-tab ConPTY terminal",
+   "thesis_axis": "project-integrity",
+   "state": "partial",
+   "evidence": [
+    "crates/optimus-ops/src/pty_session.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "B-05"
+  },
+  {
+   "id": "web.search",
+   "capability": "Web search in model tool loop",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/web_search.rs",
+    "crates/optimus-kernel/tests/web_search_live.rs",
+    "docs/architecture/product-complete-p23-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "A-04"
+  },
+  {
+   "id": "browser.http",
+   "capability": "SSRF-safe HTTP navigate/snapshot/click",
+   "thesis_axis": "project-integrity",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/browser.rs",
+    "crates/optimus-kernel/src/network_policy.rs",
+    "crates/optimus-kernel/tests/browser_live.rs",
+    "docs/architecture/product-complete-p23-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "B-01"
+  },
+  {
+   "id": "browser.cdp",
+   "capability": "Coordinated preview + agent browser (host protocol; not shared CDP session)",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "docs/decisions/0040-shared-browser-contract.md",
+    "crates/optimus-kernel/src/browser_coord.rs",
+    "crates/optimus-kernel/src/browser.rs",
+    "crates/optimus-browser/src/lib.rs",
+    "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
+    "apps/optimus-electron/test/preview-security.test.cjs",
+    "docs/architecture/product-complete-p23-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "B-01,B-02"
+  },
+  {
+   "id": "browser.annotations",
+   "capability": "Page annotations as structured agent instructions",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
+    "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
+    "docs/contracts/high-risk-contracts.md",
+    "docs/architecture/product-complete-p23-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "B-03"
+  },
+  {
+   "id": "desktop.cua",
+   "capability": "Background computer-use pack",
+   "thesis_axis": "project-integrity",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-packs/src/lib.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "B-06"
+  },
+  {
+   "id": "cron.lifecycle",
+   "capability": "Schedules, pause/resume/remove, create and history",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/cron.rs",
+    "crates/optimus-host/src/scheduling.rs",
+    "apps/optimus-ui/src/components/cron/CronWorkbench.tsx",
+    "docs/architecture/product-complete-p25-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "C-01,C-04"
+  },
+  {
+   "id": "gateway.queue",
+   "capability": "Durable inbox/outbox and local webhook",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/gateway.rs",
+    "apps/optimus-cli/tests/gateway_http.rs",
+    "crates/optimus-host/src/messaging.rs",
+    "docs/architecture/product-complete-p28-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "C-02"
+  },
+  {
+   "id": "gateway.telegram",
+   "capability": "Telegram home-channel adapter",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/telegram.rs",
+    "crates/optimus-host/src/messaging.rs",
+    "docs/architecture/product-complete-p28-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "C-03"
+  },
+  {
+   "id": "gateway.discord-slack",
+   "capability": "Discord and Slack adapters",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/channel_adapters.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "C-05"
+  },
+  {
+   "id": "gateway.ui",
+   "capability": "Messaging connection/inbox/outbox UI",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "apps/optimus-ui/src/components/mail/MailPage.tsx",
+    "crates/optimus-host/src/messaging.rs",
+    "docs/architecture/product-complete-p28-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "C-04"
+  },
+  {
+   "id": "mcp.client",
+   "capability": "Pack-gated stdio/HTTP MCP client",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/mcp.rs",
+    "docs/decisions/0041-mcp-ingress-pack-gated.md",
+    "crates/optimus-host/src/extensibility.rs",
+    "docs/architecture/product-complete-p27-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-01"
+  },
+  {
+   "id": "plugins.signed",
+   "capability": "Signed permission-declared plugins/packs",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-packs/src/signed.rs",
+    "docs/decisions/0042-signed-pack-manifests.md",
+    "crates/optimus-host/src/extensibility.rs",
+    "docs/architecture/product-complete-p27-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-02"
+  },
+  {
+   "id": "skills.ui",
+   "capability": "Skills lifecycle desktop console",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-skills/src/lib.rs",
+    "crates/optimus-host/src/consoles.rs",
+    "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+    "docs/architecture/product-complete-p26-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-03"
+  },
+  {
+   "id": "artifacts.store-ui",
+   "capability": "Provenance-aware artifact publication and gallery",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-artifacts/src/lib.rs",
+    "crates/optimus-host/src/files.rs",
+    "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
+    "docs/architecture/product-complete-p25-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-04"
+  },
+  {
+   "id": "memory.ui",
+   "capability": "Evidence explorer, feedback, correction and forget",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-memory/src/lib.rs",
+    "crates/optimus-host/src/consoles.rs",
+    "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
+    "docs/architecture/product-complete-p26-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-05"
+  },
+  {
+   "id": "projects.scope",
+   "capability": "Durable project roots and policy scope",
+   "thesis_axis": "project-integrity",
+   "state": "partial",
+   "evidence": [
+    "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
+    "crates/optimus-kernel/src/product_settings.rs",
+    "docs/architecture/product-complete-p22-verification.md",
+    "docs/decisions/0027-settings-driven-work-isolation.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-06"
+  },
+  {
+   "id": "profiles.isolation",
+   "capability": "Profile-isolated homes and cross-profile links",
+   "thesis_axis": "project-integrity",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-kernel/src/profile.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-06"
+  },
+  {
+   "id": "campaign.sequential",
+   "capability": "Durable sequential write/command campaigns",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-runtime/src/campaign.rs",
+    "crates/optimus-runtime/tests/approvals_surface.rs"
+   ],
+   "trajectory": "cargo:optimus-runtime/campaign",
+   "owner_ticket": "D-07"
+  },
+  {
+   "id": "campaign.subagents",
+   "capability": "Durable child-agent DAGs, leases and handoffs",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-workflow/src/child_lease.rs",
+    "crates/optimus-workflow/src/specialist_vertical.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "D-07,E-08"
+  },
+  {
+   "id": "eval.offline",
+   "capability": "Deterministic offline trajectory suite",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-eval/src/eval.rs"
+   ],
+   "trajectory": "cargo:optimus-eval/evaluation_contracts",
+   "owner_ticket": "P-02"
+  },
+  {
+   "id": "media.vision-image",
+   "capability": "Vision and image generation pack",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/media_fixtures.rs",
+    "crates/optimus-packs/src/lib.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-01"
+  },
+  {
+   "id": "media.voice",
+   "capability": "STT/TTS and voice composer",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/media_fixtures.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-02"
+  },
+  {
+   "id": "surface.proxy",
+   "capability": "OpenAI-compatible server/proxy",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/surfaces.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-03"
+  },
+  {
+   "id": "surface.acp",
+   "capability": "ACP/IDE bridge",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/surfaces.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-04"
+  },
+  {
+   "id": "surface.tui",
+   "capability": "Headless TUI operator surface",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/surfaces.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-05"
+  },
+  {
+   "id": "surface.commands",
+   "capability": "Canonical slash commands and command palette",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/surface_commands.rs",
+    "crates/optimus-host/src/consoles.rs",
+    "apps/optimus-ui/src/components/chrome/CommandPalette.tsx",
+    "docs/architecture/product-complete-p26-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-06"
+  },
+  {
+   "id": "migration.hermes",
+   "capability": "Hermes session/skill/memory importer",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/hermes_import.rs",
+    "docs/architecture/s7-track-z-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-07"
+  },
+  {
+   "id": "release.updater",
+   "capability": "Signed updater and rollback",
+   "thesis_axis": "one-core-many-faces",
+   "state": "partial",
+   "evidence": [
+    "docs/decisions/0043-no-auto-updater-channel.md",
+    "crates/optimus-host/src/system.rs",
+    "scripts/rebuild-install-relaunch.sh",
+    "docs/architecture/product-complete-p29-verification.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-09"
+  },
+  {
+   "id": "packs.breadth",
+   "capability": "Office/devex/social/home capability breadth",
+   "thesis_axis": "one-core-many-faces",
+   "state": "missing",
+   "evidence": [
+    "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md"
+   ],
+   "trajectory": null,
+   "owner_ticket": "E-11"
+  }
+ ]
 }

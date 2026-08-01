@@ -2468,7 +2468,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "2e9dad0527230b6ea74f306a2ad61adb97fa0fe5b6ec5eb24b168e0792b2b271",
+      "content_sha256": "1cdd101193eddab49fc52c5bc9aef682fe0e1808d2e1d64d33e819aecb0adb6a",
       "headings": [
         "Optimus vs Hermes — evidence-backed SOTA scorecard",
         "Current ledger summary",
@@ -4633,7 +4633,28 @@
     },
     {
       "authority": "record",
-      "content_sha256": "1bf26ed7d2c8f00bb78cb6c20137dad888a0f1bf637244593d0e4a43e45ed59e",
+      "content_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
+      "headings": [
+        "ADR-0068: A catalog row must dispatch or not exist",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Evaluation evidence",
+        "Reconsider when"
+      ],
+      "id": "decisions-0068-a-catalog-row-must-dispatch-or-not-exist",
+      "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
+      "plane": "decision",
+      "review_by": "2026-11-01",
+      "reviewed_on": "2026-08-01",
+      "status": "current",
+      "summary": "Removes the nine scaffold tool rows that cannot honestly ship within one quarter, keeps the five with committed implementation lanes, and re-marks packs.breadth from parity to missing; a refusing catalog row teaches the model false affordances and costs prompt budget for nothing.",
+      "title": "ADR-0068: A catalog row must dispatch or not exist",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "770d9d221c4382651f101f840958a4e71606226e56382c56f88b86e834edcaa9",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -6960,7 +6981,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "1a7b0459dd8c651751e0c4f2b6ecb6b0f17dc6c376d478acc9e2c1e3c5cf0324",
+  "documents_sha256": "def7080b2914e1845230e21b20e97613cebeb20abd525e50d3f390e43b68ad32",
   "routes": [
     {
       "id": "docs.navigation",

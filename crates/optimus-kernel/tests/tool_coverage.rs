@@ -1,6 +1,6 @@
 //! Every advertised tool, executed through the real dispatch path.
 //!
-//! The registry classifies 31 tools; 17 dispatch and 14 are declared
+//! The registry classifies 22 tools; 17 dispatch and 5 are declared
 //! scaffolds. Before this suite, three dispatchable tools (`delete_path`,
 //! `rename_path`, `patch_file`) had no test anywhere that executed them, and
 //! nothing failed when a tool shipped untested — coverage was whatever the
@@ -48,21 +48,12 @@ const DISPATCHABLE_EXERCISED: [&str; 17] = [
 ];
 
 /// Declared scaffolds this suite holds to the typed-refusal contract.
-const UNAVAILABLE_REFUSED: [&str; 14] = [
-    "job_run",
+const UNAVAILABLE_REFUSED: [&str; 5] = [
     "clarify",
-    "desktop_screenshot",
     "desktop_click",
+    "desktop_screenshot",
     "desktop_type",
     "vision_analyze",
-    "image_generate",
-    "tts",
-    "gh_pr",
-    "git_deep",
-    "x_search",
-    "message_send",
-    "home_device_status",
-    "office_doc_summary",
 ];
 
 fn open_kernel(home: &std::path::Path) -> Kernel {

@@ -56,8 +56,8 @@ class EngineeringMemoryTests(unittest.TestCase):
     def test_canonical_tool_catalog_is_reconciled(self) -> None:
         registry = EM.parse_tool_catalog()
         tools = registry["tools"]
-        self.assertEqual(len(tools), 31)
-        self.assertEqual(len({row["id"] for row in tools}), 31)
+        self.assertEqual(len(tools), 22)
+        self.assertEqual(len({row["id"] for row in tools}), 22)
         available = {row["id"] for row in tools if row["available"]}
         self.assertEqual(
             available,

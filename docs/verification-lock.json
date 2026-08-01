@@ -68,12 +68,12 @@
     },
     "architecture-sota-scorecard": {
       "binding_sha256": null,
-      "document_sha256": "2e9dad0527230b6ea74f306a2ad61adb97fa0fe5b6ec5eb24b168e0792b2b271",
+      "document_sha256": "1cdd101193eddab49fc52c5bc9aef682fe0e1808d2e1d64d33e819aecb0adb6a",
       "path": "docs/architecture/sota-scorecard.md",
       "resolved_files": 0
     },
     "architecture-system-overview": {
-      "binding_sha256": "9c2fd4ae202e088f5c815738910cd1246f6ffa160eacb9d8dd5c7e13bfeea453",
+      "binding_sha256": "02a86d97a3a157da7401e6f08481fc6358692c7bdec085d038adb89817cccaef",
       "document_sha256": "a751c298a4835f088aff704876654661a150be63c2f71dd1d41e7afa2cc47c98",
       "path": "docs/architecture/system-overview.md",
       "resolved_files": 24
@@ -91,7 +91,7 @@
       "resolved_files": 9
     },
     "contracts-high-risk-contracts": {
-      "binding_sha256": "0c4cd2ac3ac80d24c7abe1319cf03c97117ff8d18721b234db0add5011a4ea4c",
+      "binding_sha256": "6fe834aacc883b78ee28e90ff0d36f83c0d5527f6d02a3eb7f75c500ea71aff2",
       "document_sha256": "0ea9e9d120110cd666a8bc1159d59a3b67a0806ae209cb40d9919386366e332e",
       "path": "docs/contracts/high-risk-contracts.md",
       "resolved_files": 22
@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "e4044a1659c0ebfa51d0416c2f35afca7877f892f392d9e8b99bebbb9eaa6bcf",
+      "binding_sha256": "6e7b0ae672b9aa6b76e7cba8978996b122b5432f71ec3acb828255b2bbda77e3",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 341
@@ -253,7 +253,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "500f82da87ee24d148e2bab7a96cdb06b8cf4d46cc586ec56140a1e6ea915c79",
+      "binding_sha256": "682fe928d445e9c9275b4b7336f20432c78d73c27ff1112582984291e14abf03",
       "document_sha256": "e707a52dbe8dad51c74781e1f4b4b14e8607951b5f173e9296fa3ffae6e07d04",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -265,7 +265,7 @@
       "resolved_files": 5
     },
     "decisions-0019-capability-files-and-unified-campaign-authority": {
-      "binding_sha256": "ad30ebd8c738a6367bf105510726062b2f90ab12377c2e94220e740a938c105d",
+      "binding_sha256": "e27bc7dbac6314918f57b5fe1c03af3c2cfd4811fcc5964e6bc553abab27ea97",
       "document_sha256": "2cf6d5179f5390d89728eccf8da4714cb89f407447e8e67312a5d983a590f8ce",
       "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "resolved_files": 12
@@ -289,13 +289,13 @@
       "resolved_files": 5
     },
     "decisions-0023-fixture-replay-trace-telemetry-evaluation": {
-      "binding_sha256": "27d87a89a7622e4336bc3a5870a4c2f4f1ee5e0f839af88f19e1ebd743eac0ea",
+      "binding_sha256": "18a84f434c136785e3e4ff331fe7f9ff70ece37e2df7ce2c74d2141ad683b60c",
       "document_sha256": "8290e48606409a7f9dc8d10be30b4abe0f7be7362e453a7041da8c28ac699bec",
       "path": "docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md",
       "resolved_files": 15
     },
     "decisions-0024-hermes-parity-version-gate": {
-      "binding_sha256": "c7a0e7f592f9c5be0d5114ca4884f008c42e1165e7830897df53a22782c720c9",
+      "binding_sha256": "149c5d01964e3c8bd9e8fce575c9e193069d10cdad30ad0d7844bc5a397a9632",
       "document_sha256": "4a6ff2ec4b58c8e2ecf900f110e77e8298db8ed6662b1f38f6a25c3cedaea292",
       "path": "docs/decisions/0024-hermes-parity-version-gate.md",
       "resolved_files": 13
@@ -343,7 +343,7 @@
       "resolved_files": 102
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "1ef89522c94945dbb2a6966be85c4cfa67278af0a620ad8545d8e7c31dbc2063",
+      "binding_sha256": "962a28be89db99a4c5046365f19d56a11fa5ffe61467bdaa28bf3c96c6027c01",
       "document_sha256": "8c361418e4d79c1d596de7e95f44385d86cae955fcee56d6c60792b61b7c4271",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 7
@@ -367,7 +367,7 @@
       "resolved_files": 16
     },
     "decisions-0036-domain-modularity-single-catalog": {
-      "binding_sha256": "14dbb7f1fe42b83c6f8b9ff08395391cbd1c0d4184e90b5ce2d772a4478e654b",
+      "binding_sha256": "c0ffabf698f7394ab32c3c44a767a8136646648765f0bd2408ce56ac0ef442ac",
       "document_sha256": "64049241147036fa34817da24a615204558f6e2d6d562a46a0418b99d8a2c2ea",
       "path": "docs/decisions/0036-domain-modularity-single-catalog.md",
       "resolved_files": 22
@@ -385,7 +385,7 @@
       "resolved_files": 13
     },
     "decisions-0039-files-mutate-effect-taxonomy": {
-      "binding_sha256": "a9bfc5509cc0d214e55b878a86178c3bb2fe79926b1878f1abd7ef6cc1e433c5",
+      "binding_sha256": "5062ba8d7a6f9b124760b9fb68e6aa46c0ef11afae4cd6d44205ea3abdee6d17",
       "document_sha256": "bc88ad6d4fb2fa1117f5c3aa7918ef012a9d5460ac4fb00aaddf13a71c3ad4de",
       "path": "docs/decisions/0039-files-mutate-effect-taxonomy.md",
       "resolved_files": 13
@@ -445,7 +445,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "5a2c8493c5f9e154522081b9bc62bba418a00e2a0283192f488bb553d8b241de",
+      "binding_sha256": "cf005102d2d3260d18b8371215532c5beb2287392fd060ba856d7a699637b13e",
       "document_sha256": "133cf880d4d8b44a176b9a2d5cf41ef7cae47df7b6ea66cca5de0f0c48550d21",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -517,7 +517,7 @@
       "resolved_files": 9
     },
     "decisions-0061-generated-engineering-memory-is-a-disposable-cache": {
-      "binding_sha256": "9e65aac0c5b6702c409856e437eec9eaa5b99a0691809c4bcb9353f1b86a6346",
+      "binding_sha256": "d5c56551b6e4710e476205e1039cdf9f52febf3189c04596ba6dfd38e4967e3b",
       "document_sha256": "ee80ffd15add51f53203901a513a41994b766b23ab7fdc335ad5b6ce866cf60d",
       "path": "docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md",
       "resolved_files": 7
@@ -552,11 +552,17 @@
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
+    "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
+      "binding_sha256": "576d446ab777715fb12bf02e9769c26baab81a9386581bfbee2c58f5d0ee0332",
+      "document_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
+      "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
+      "resolved_files": 7
+    },
     "decisions-readme": {
-      "binding_sha256": "9cd81e46c0f310848cea80277b4c3b100d4a50a63e1385d6894b83ba82c702c8",
-      "document_sha256": "1bf26ed7d2c8f00bb78cb6c20137dad888a0f1bf637244593d0e4a43e45ed59e",
+      "binding_sha256": "ca5dbe8fc90aa8e61f4ecf3bdf7e24bad9fdbfbef24fe31429604ad2e41e4c85",
+      "document_sha256": "770d9d221c4382651f101f840958a4e71606226e56382c56f88b86e834edcaa9",
       "path": "docs/decisions/README.md",
-      "resolved_files": 72
+      "resolved_files": 73
     },
     "design-codex-convergence-experience-contract": {
       "binding_sha256": "a5fabb97ddc7f62f1f90906337a980a916cef500b2d5f940c05462a4a168d7c4",
@@ -577,7 +583,7 @@
       "resolved_files": 0
     },
     "engineering-memory-readme": {
-      "binding_sha256": "4ac3787a8299bb986c0298567a6614715e0559fbc679ee27942a7302e6569f83",
+      "binding_sha256": "2c55ea2679a2b90caaed5f7d70c70d17622479d488ced4f46467d109a0ab8af8",
       "document_sha256": "72035b3bd6cf80c521563788a82bcd345d283eec82b9e046ef8bc906ce4a5816",
       "path": "docs/engineering-memory/README.md",
       "resolved_files": 9
@@ -595,7 +601,7 @@
       "resolved_files": 0
     },
     "lessons-ai-agent-mistakes": {
-      "binding_sha256": "53f11765f97f8dade5abdad65f41599ae670b156a118d69ace4603ebe37b1213",
+      "binding_sha256": "064f65f8819754512a1217fbd03530bc64a0191ee73ecda7833bdabe063af9a0",
       "document_sha256": "21be856d4021e53b22ee1fa16614dbca606c1a088d15d44372db1b9ac45d3102",
       "path": "docs/lessons/ai-agent-mistakes.md",
       "resolved_files": 7
@@ -613,7 +619,7 @@
       "resolved_files": 14
     },
     "map-security-and-approvals": {
-      "binding_sha256": "22e7b3214fa444ac68be44ba3a181f6d957a3a2e221625635de554535df8d892",
+      "binding_sha256": "8335b2241befed01b66f7c4a288c620cdb12338303463a10993d971e23c9699c",
       "document_sha256": "88da982bf5c907bda55a07987375c68da2dbf472bc4d6c01ef35a1b2a9819b0a",
       "path": "docs/maps/security-and-approvals.md",
       "resolved_files": 23
@@ -637,7 +643,7 @@
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "bc0ae54884242fb59aec5c8affbe15b7e2b9c57f490b2a296460a213920cb219",
+      "binding_sha256": "9eb1a806a1b9b1a7ed0fbb5b263a0557f04686687e415f4bc589bff7ad223a4f",
       "document_sha256": "104d2e6994c43c9e8840c33aa81f1d2820e22f6a5c667788abf2c86808707b9d",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 23
