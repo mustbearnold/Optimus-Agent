@@ -13,6 +13,7 @@ mod composer;
 use crate::mouse;
 use crate::overlay;
 use crate::session::{Role, TuiSession};
+use crate::sidebar::{self, Section};
 use crate::transcript::{self, Row};
 use crate::width;
 
@@ -21,29 +22,41 @@ const HAIRLINE: Color = Color::Rgb(42, 42, 42);
 const TEXT: Color = Color::Rgb(228, 228, 228);
 const MUTED: Color = Color::Rgb(126, 126, 126);
 const ACCENT: Color = Color::Rgb(132, 164, 255);
+const SIDEBAR_BACKGROUND: Color = Color::Rgb(17, 17, 17);
+const SIDEBAR_ACTION: Color = Color::Rgb(24, 27, 36);
 
 /// Rows the composer block occupies for this draft, borders included. One
 /// arithmetic, shared by the layout below and by every caller that has to
 /// subtract the composer from the frame.
 pub fn composer_height(session: &TuiSession, width: u16) -> u16 {
-    composer::height(
-        session.composer.text(),
-        width.saturating_sub(mouse::HORIZONTAL_GUTTER.saturating_mul(2)),
-    )
+    let content_width = mouse::content_width(width, session.sidebar.open, session.sidebar.width);
+    composer::height(session.composer.text(), content_width)
 }
 
-/// Text columns available to transcript rows after the workbench gutter and
-/// the scrollbar track have been reserved.
-pub fn transcript_width(width: u16) -> u16 {
-    width.saturating_sub(mouse::HORIZONTAL_GUTTER.saturating_mul(2) + 1)
+/// Text columns available to transcript rows for this session's responsive
+/// rail state.
+pub fn transcript_width_for(session: &TuiSession, width: u16) -> u16 {
+    mouse::content_width(width, session.sidebar.open, session.sidebar.width).saturating_sub(1)
 }
 
 pub fn draw(frame: &mut Frame, session: &TuiSession) {
-    let areas = mouse::layout(frame.area(), composer_height(session, frame.area().width));
+    let areas = mouse::layout_with_sidebar(
+        frame.area(),
+        composer_height(session, frame.area().width),
+        session.sidebar.open,
+        session.sidebar.width,
+    );
     frame.render_widget(
         Block::default().style(Style::default().bg(BACKGROUND)),
         frame.area(),
     );
+
+    if areas.sidebar.width > 0 {
+        draw_sidebar(frame, areas.sidebar, session);
+        draw_sidebar_divider(frame, areas.sidebar_divider);
+    } else {
+        draw_collapsed_sidebar_tab(frame, frame.area());
+    }
 
     draw_context(frame, areas.context, session);
 
@@ -83,6 +96,171 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     if let Some(picker) = session.picker.as_ref() {
         draw_picker(frame, picker);
     }
+}
+
+/// The persistent workspace rail. It is deliberately made from short rows
+/// instead of a generic list widget so every visible label has a stable mouse
+/// target and every string is cell-truncated before Ratatui sees it.
+fn draw_sidebar(frame: &mut Frame, area: Rect, session: &TuiSession) {
+    if area.width == 0 || area.height == 0 {
+        return;
+    }
+    frame.render_widget(
+        Block::default().style(Style::default().bg(SIDEBAR_BACKGROUND)),
+        area,
+    );
+
+    let text_width = area.width;
+    if text_width == 0 {
+        return;
+    }
+    let text_area = Rect {
+        x: area.x,
+        y: area.y,
+        width: text_width,
+        height: area.height,
+    };
+    if sidebar::NEW_SESSION_ROW < area.height {
+        frame.render_widget(
+            Block::default().style(Style::default().bg(SIDEBAR_ACTION)),
+            Rect {
+                x: text_area.x,
+                y: text_area.y + sidebar::NEW_SESSION_ROW,
+                width: text_area.width,
+                height: 1,
+            },
+        );
+    }
+
+    let lines = (0..area.height)
+        .map(|row| sidebar_line(text_width, row, session))
+        .collect::<Vec<_>>();
+    frame.render_widget(Paragraph::new(lines), text_area);
+}
+
+fn sidebar_line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
+    let (marker, label, style) = match row {
+        0 => (
+            "",
+            "WORKSPACE".to_owned(),
+            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+        ),
+        sidebar::CLOSE_ROW => (
+            "‹  ",
+            "close sidebar".to_owned(),
+            Style::default().fg(MUTED),
+        ),
+        sidebar::NEW_SESSION_ROW => (
+            "+  ",
+            "New session".to_owned(),
+            Style::default().fg(TEXT).add_modifier(Modifier::BOLD),
+        ),
+        sidebar::SESSIONS_ROW => (
+            "",
+            "SESSIONS".to_owned(),
+            section_style(session.sidebar.section == Section::Sessions),
+        ),
+        6 => (
+            if session.sidebar.section == Section::Sessions {
+                "▸  "
+            } else {
+                "·  "
+            },
+            session_label(session),
+            Style::default().fg(TEXT),
+        ),
+        sidebar::PROJECTS_ROW => (
+            "",
+            "PROJECTS".to_owned(),
+            section_style(session.sidebar.section == Section::Projects),
+        ),
+        10 => (
+            "⌂  ",
+            sidebar::project_name(&session.home),
+            Style::default().fg(TEXT),
+        ),
+        sidebar::PINNED_ROW => (
+            "",
+            "PINNED".to_owned(),
+            section_style(session.sidebar.section == Section::Pinned),
+        ),
+        13 => ("·  ", pinned_label(session), Style::default().fg(MUTED)),
+        _ => ("", String::new(), Style::default()),
+    };
+
+    let marker = width::take(marker, usize::from(width));
+    let label_budget = usize::from(width).saturating_sub(width::cells(&marker));
+    let label = width::truncate(&label, label_budget);
+    Line::from(vec![
+        Span::styled(marker, style),
+        Span::styled(label, style),
+    ])
+}
+
+fn section_style(selected: bool) -> Style {
+    let style = Style::default().fg(MUTED).add_modifier(Modifier::BOLD);
+    if selected {
+        style.fg(ACCENT)
+    } else {
+        style
+    }
+}
+
+fn session_label(session: &TuiSession) -> String {
+    session
+        .session_id
+        .as_deref()
+        .map(|id| format!("Session {}", width::truncate(id, 8)))
+        .unwrap_or_else(|| "Current session".into())
+}
+
+fn pinned_label(session: &TuiSession) -> String {
+    let count = session
+        .workbench
+        .blocks()
+        .iter()
+        .filter(|block| block.presentation.pinned)
+        .count();
+    match count {
+        0 => "No pinned items".into(),
+        1 => "1 pinned item".into(),
+        count => format!("{count} pinned items"),
+    }
+}
+
+fn draw_sidebar_divider(frame: &mut Frame, area: Rect) {
+    if area.width == 0 || area.height == 0 {
+        return;
+    }
+    let middle = area.height / 2;
+    let lines = (0..area.height)
+        .map(|row| {
+            let glyph = if row == middle { "╋" } else { "│" };
+            Line::from(Span::styled(glyph, Style::default().fg(HAIRLINE)))
+        })
+        .collect::<Vec<_>>();
+    frame.render_widget(Paragraph::new(lines), area);
+}
+
+fn draw_collapsed_sidebar_tab(frame: &mut Frame, area: Rect) {
+    let width = mouse::HORIZONTAL_GUTTER.min(area.width);
+    if width == 0 || area.height == 0 {
+        return;
+    }
+    let tab = Rect {
+        x: area.x,
+        y: area.y,
+        width,
+        height: 1,
+    };
+    frame.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            "›",
+            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+        )))
+        .style(Style::default().bg(BACKGROUND)),
+        tab,
+    );
 }
 
 /// Compact project/provider context, deliberately quieter than the work area.
@@ -615,6 +793,43 @@ mod tests {
             help.contains("↵:send") && help.contains("Tab:inspect") && help.contains("Esc:clear"),
             "compact labels must remain complete: {screen:?}"
         );
+    }
+
+    #[test]
+    fn a_wide_frame_paints_the_workspace_rail_without_widening_any_cell_row() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 80, 24);
+        let joined = screen.join("\n");
+        for label in ["WORKSPACE", "New session", "SESSIONS", "PROJECTS", "PINNED"] {
+            assert!(
+                joined.contains(label),
+                "sidebar label {label} is missing:\n{joined}"
+            );
+        }
+        assert!(
+            screen.iter().all(|line| crate::width::cells(line) <= 80),
+            "sidebar must keep every painted row inside the terminal: {screen:?}"
+        );
+        assert!(
+            screen.iter().any(|line| line.contains('╋')),
+            "the divider needs a visible drag handle: {screen:?}"
+        );
+    }
+
+    #[test]
+    fn a_narrow_frame_collapses_the_rail_but_keeps_the_reopen_tab() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 60, 20);
+        let joined = screen.join("\n");
+        assert!(
+            !joined.contains("WORKSPACE"),
+            "rail should collapse at 60 columns: {joined}"
+        );
+        assert!(
+            screen[0].starts_with('›'),
+            "collapsed rail needs a reopen tab: {screen:?}"
+        );
+        assert!(screen.iter().all(|line| crate::width::cells(line) <= 60));
     }
 
     #[test]

@@ -12,7 +12,7 @@ use std::time::Instant;
 use crossterm::cursor::Show;
 use crossterm::event::{
     self, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-    Event, KeyEventKind, MouseEvent,
+    Event, KeyCode, KeyEventKind, KeyModifiers, MouseEvent,
 };
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -35,6 +35,7 @@ mod overlay;
 mod picker;
 mod preferences;
 mod session;
+mod sidebar;
 mod tool_line;
 mod transcript;
 mod view;
@@ -207,6 +208,11 @@ fn event_loop(
                 {
                     panic!("OPTIMUS_TUI_PANIC_ON_KEY");
                 }
+                if key.code == KeyCode::Char('b') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                    session.sidebar.toggle();
+                    repaint.mark();
+                    continue;
+                }
                 let mode = keys::Mode {
                     picker: session.picker.is_some(),
                     busy: session.busy(),
@@ -377,7 +383,7 @@ fn anchor(
     let size = terminal.size()?;
     let chrome = view::composer_height(session, size.width) + 3;
     let height = usize::from(size.height.saturating_sub(chrome));
-    let rows = view::visible_rows(session, view::transcript_width(size.width));
+    let rows = view::visible_rows(session, view::transcript_width_for(session, size.width));
     session.scroll_back = view::anchored(&rows, height, session.scroll_back);
     Ok(())
 }
@@ -399,16 +405,28 @@ fn on_mouse(
     };
     let max_back = scroll_span(terminal, session)?;
     let composer_height = view::composer_height(session, area.width);
-    match mouse::intent(
+    match mouse::intent_with_sidebar(
         event,
         area,
         composer_height,
         session.picker.as_ref(),
-        session.dragging,
+        mouse::Interaction {
+            scrollbar_dragging: session.dragging,
+            sidebar_open: session.sidebar.open,
+            sidebar_width: session.sidebar.width,
+            sidebar_dragging: session.sidebar.dragging,
+        },
     ) {
         mouse::Intent::Scroll(rows) => session.scroll(rows, max_back),
         mouse::Intent::GrabTrack => session.dragging = true,
         mouse::Intent::Release => session.dragging = false,
+        mouse::Intent::ToggleSidebar => session.sidebar.toggle(),
+        mouse::Intent::SidebarResizeStart => session.sidebar.dragging = true,
+        mouse::Intent::SidebarResizeTo(width) => session.sidebar.resize_to(width),
+        mouse::Intent::SidebarResizeEnd => session.sidebar.dragging = false,
+        mouse::Intent::SidebarClose => session.sidebar.close(),
+        mouse::Intent::NewSession => commands::new_session(session),
+        mouse::Intent::SidebarSection(section) => session.sidebar.select(section),
         mouse::Intent::ScrollTo(fraction) => session.scroll_to(fraction, max_back),
         mouse::Intent::Choose(index) => {
             if let Some(picker) = session.picker.as_mut() {
@@ -420,8 +438,17 @@ fn on_mouse(
         // Keyboard and pointer reach the same two moves: select the block, and
         // open or close it when the row clicked is the one that heads it.
         mouse::Intent::Inspect(row) => {
-            let height = usize::from(mouse::regions(area, composer_height).transcript.height);
-            let rows = view::visible_rows(session, view::transcript_width(area.width));
+            let height = usize::from(
+                mouse::regions_with_sidebar(
+                    area,
+                    composer_height,
+                    session.sidebar.open,
+                    session.sidebar.width,
+                )
+                .transcript
+                .height,
+            );
+            let rows = view::visible_rows(session, view::transcript_width_for(session, area.width));
             let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
             if let Some(hit) = view::hit(&rows, offset + row) {
                 session.hovered_block = Some(hit.block);
@@ -432,8 +459,17 @@ fn on_mouse(
             }
         }
         mouse::Intent::Hover(row) => {
-            let height = usize::from(mouse::regions(area, composer_height).transcript.height);
-            let rows = view::visible_rows(session, view::transcript_width(area.width));
+            let height = usize::from(
+                mouse::regions_with_sidebar(
+                    area,
+                    composer_height,
+                    session.sidebar.open,
+                    session.sidebar.width,
+                )
+                .transcript
+                .height,
+            );
+            let rows = view::visible_rows(session, view::transcript_width_for(session, area.width));
             let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
             session.hovered_block =
                 row.and_then(|row| view::hit(&rows, offset + row).map(|hit| hit.block));
@@ -453,7 +489,8 @@ fn scroll_span(
     // multiline draft), context/status/help rails (3), and horizontal inset.
     let chrome = view::composer_height(session, size.width) + 3;
     let height = usize::from(size.height.saturating_sub(chrome));
-    let rows = view::transcript_text(session, view::transcript_width(size.width)).len();
+    let rows =
+        view::transcript_text(session, view::transcript_width_for(session, size.width)).len();
     Ok(view::max_scroll_back(rows, height))
 }
 

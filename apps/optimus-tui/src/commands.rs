@@ -470,7 +470,7 @@ fn mouse(session: &mut TuiSession) {
     );
 }
 
-fn new_session(session: &mut TuiSession) {
+pub(crate) fn new_session(session: &mut TuiSession) {
     session.session_id = None;
     session.messages.clear();
     session.workbench.clear();

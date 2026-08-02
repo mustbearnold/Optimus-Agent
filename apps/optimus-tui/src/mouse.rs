@@ -12,6 +12,7 @@ use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Position, Rect};
 
 use crate::picker::Picker;
+use crate::sidebar;
 use crate::width;
 
 /// Rows the wheel moves per notch.
@@ -32,6 +33,8 @@ pub struct Regions {
 /// from the cell the mouse thinks it is pointing at.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LayoutAreas {
+    pub sidebar: Rect,
+    pub sidebar_divider: Rect,
     pub context: Rect,
     pub transcript: Rect,
     pub composer: Rect,
@@ -39,13 +42,34 @@ pub struct LayoutAreas {
     pub help: Rect,
 }
 
+/// Pointer-owned presentation state passed to the pure hit-test function.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Interaction {
+    pub scrollbar_dragging: bool,
+    pub sidebar_open: bool,
+    pub sidebar_width: u16,
+    pub sidebar_dragging: bool,
+}
+
 /// Split the frame into the workbench's five visual bands.
+#[cfg(test)]
 pub fn layout(area: Rect, composer_height: u16) -> LayoutAreas {
+    layout_with_sidebar(area, composer_height, false, sidebar::DEFAULT_WIDTH)
+}
+
+/// Split the frame into the optional workspace rail and the workbench's five
+/// visual bands. The same rectangles drive rendering and pointer hit-testing.
+pub fn layout_with_sidebar(
+    area: Rect,
+    composer_height: u16,
+    sidebar_open: bool,
+    sidebar_width: u16,
+) -> LayoutAreas {
     // A narrow horizontal gutter keeps the workbench from becoming a wall of
     // edge-to-edge glyphs. It also gives the command bar the breathing room
     // visible in the reference terminal while preserving one shared geometry
     // contract for drawing and hit-testing.
-    let workbench = area.inner(Margin::new(HORIZONTAL_GUTTER, 0));
+    let (sidebar, sidebar_divider, content) = horizontal_areas(area, sidebar_open, sidebar_width);
     let areas = Layout::vertical([
         Constraint::Length(1),
         Constraint::Min(3),
@@ -53,8 +77,10 @@ pub fn layout(area: Rect, composer_height: u16) -> LayoutAreas {
         Constraint::Length(1),
         Constraint::Length(1),
     ])
-    .split(workbench);
+    .split(content);
     LayoutAreas {
+        sidebar,
+        sidebar_divider,
         context: areas[0],
         transcript: areas[1],
         composer: areas[2],
@@ -63,13 +89,71 @@ pub fn layout(area: Rect, composer_height: u16) -> LayoutAreas {
     }
 }
 
+/// The content width after the outer gutter and optional rail have been
+/// reserved. It is the width of the rectangle handed to the five-band layout,
+/// not the width of the composer text inside its border.
+pub fn content_width(area_width: u16, sidebar_open: bool, sidebar_width: u16) -> u16 {
+    horizontal_areas(
+        Rect {
+            x: 0,
+            y: 0,
+            width: area_width,
+            height: 1,
+        },
+        sidebar_open,
+        sidebar_width,
+    )
+    .2
+    .width
+}
+
+/// Whether the rail has enough room to leave a readable main workbench beside
+/// it. At smaller sizes the requested open state is retained, but the visual
+/// rail collapses so the prompt never becomes a postage stamp.
+pub fn sidebar_visible(area_width: u16, sidebar_open: bool, sidebar_width: u16) -> bool {
+    if !sidebar_open {
+        return false;
+    }
+    let workbench_width = area_width.saturating_sub(HORIZONTAL_GUTTER.saturating_mul(2));
+    let width = sidebar_width.clamp(sidebar::MIN_WIDTH, sidebar::MAX_WIDTH);
+    workbench_width >= width + sidebar::DIVIDER_WIDTH + sidebar::MIN_CONTENT_WIDTH
+}
+
+fn horizontal_areas(area: Rect, sidebar_open: bool, sidebar_width: u16) -> (Rect, Rect, Rect) {
+    let workbench = area.inner(Margin::new(HORIZONTAL_GUTTER, 0));
+    if !sidebar_visible(area.width, sidebar_open, sidebar_width) {
+        return (Rect::default(), Rect::default(), workbench);
+    }
+
+    let width = sidebar_width.clamp(sidebar::MIN_WIDTH, sidebar::MAX_WIDTH);
+    let areas = Layout::horizontal([
+        Constraint::Length(width),
+        Constraint::Length(sidebar::DIVIDER_WIDTH),
+        Constraint::Min(0),
+    ])
+    .split(workbench);
+    (areas[0], areas[1], areas[2])
+}
+
 /// Split the frame the same way [`crate::view::draw`] does.
 ///
 /// `composer_height` is the composer block's total height for the current
 /// draft — it grows with a multiline prompt, so hit-testing cannot assume a
 /// fixed bottom strip. See [`crate::view::composer_height`].
+#[cfg(test)]
 pub fn regions(area: Rect, composer_height: u16) -> Regions {
-    let transcript = layout(area, composer_height).transcript;
+    regions_with_sidebar(area, composer_height, false, sidebar::DEFAULT_WIDTH)
+}
+
+/// Split the hit-test regions using the same optional rail as the renderer.
+pub fn regions_with_sidebar(
+    area: Rect,
+    composer_height: u16,
+    sidebar_open: bool,
+    sidebar_width: u16,
+) -> Regions {
+    let transcript =
+        layout_with_sidebar(area, composer_height, sidebar_open, sidebar_width).transcript;
     let track = Rect {
         x: transcript.x + transcript.width.saturating_sub(1),
         y: transcript.y,
@@ -122,6 +206,19 @@ pub enum Intent {
     /// The pointer moved to a transcript row, or left the hit-map entirely.
     /// The caller resolves the row to a durable block id for presentation.
     Hover(Option<usize>),
+    /// Toggle the workspace rail, including the small reopen tab when it is
+    /// collapsed.
+    ToggleSidebar,
+    /// Start, continue, or finish a horizontal rail resize.
+    SidebarResizeStart,
+    SidebarResizeTo(u16),
+    SidebarResizeEnd,
+    /// The pointer crossed the left-dismiss threshold while resizing.
+    SidebarClose,
+    /// A first-class action in the workspace rail.
+    NewSession,
+    /// A section heading in the workspace rail was selected.
+    SidebarSection(sidebar::Section),
     Nothing,
 }
 
@@ -130,6 +227,7 @@ pub enum Intent {
 /// `dragging` is held by the caller: once the thumb is grabbed, motion keeps
 /// scrolling even when the pointer wanders off the one-column track, which is
 /// what makes a drag usable at all.
+#[cfg(test)]
 pub fn intent(
     event: &MouseEvent,
     area: Rect,
@@ -137,7 +235,34 @@ pub fn intent(
     picker: Option<&Picker>,
     dragging: bool,
 ) -> Intent {
-    let regions = regions(area, composer_height);
+    intent_with_sidebar(
+        event,
+        area,
+        composer_height,
+        picker,
+        Interaction {
+            scrollbar_dragging: dragging,
+            sidebar_open: false,
+            sidebar_width: sidebar::DEFAULT_WIDTH,
+            sidebar_dragging: false,
+        },
+    )
+}
+
+/// Read one mouse event with the optional workspace rail present.
+pub fn intent_with_sidebar(
+    event: &MouseEvent,
+    area: Rect,
+    composer_height: u16,
+    picker: Option<&Picker>,
+    interaction: Interaction,
+) -> Intent {
+    let regions = regions_with_sidebar(
+        area,
+        composer_height,
+        interaction.sidebar_open,
+        interaction.sidebar_width,
+    );
     let at = Position::new(event.column, event.row);
 
     match event.kind {
@@ -145,8 +270,23 @@ pub fn intent(
         // before it responds would just feel broken.
         MouseEventKind::ScrollUp => return Intent::Scroll(WHEEL),
         MouseEventKind::ScrollDown => return Intent::Scroll(-WHEEL),
-        MouseEventKind::Up(MouseButton::Left) if dragging => return Intent::Release,
-        MouseEventKind::Drag(MouseButton::Left) if dragging => {
+        MouseEventKind::Up(MouseButton::Left) if interaction.sidebar_dragging => {
+            return Intent::SidebarResizeEnd
+        }
+        MouseEventKind::Drag(MouseButton::Left) | MouseEventKind::Moved
+            if interaction.sidebar_dragging =>
+        {
+            let workbench = area.inner(Margin::new(HORIZONTAL_GUTTER, 0));
+            let requested = event.column.saturating_sub(workbench.x);
+            if requested <= sidebar::CLOSE_DRAG_WIDTH {
+                return Intent::SidebarClose;
+            }
+            return Intent::SidebarResizeTo(requested);
+        }
+        MouseEventKind::Up(MouseButton::Left) if interaction.scrollbar_dragging => {
+            return Intent::Release;
+        }
+        MouseEventKind::Drag(MouseButton::Left) if interaction.scrollbar_dragging => {
             return Intent::ScrollTo(fraction(regions.track, event.row));
         }
         _ => {}
@@ -163,6 +303,43 @@ pub fn intent(
             MouseEventKind::Moved => Intent::Hover(None),
             _ => Intent::Nothing,
         };
+    }
+
+    let layout = layout_with_sidebar(
+        area,
+        composer_height,
+        interaction.sidebar_open,
+        interaction.sidebar_width,
+    );
+    if layout.sidebar.width > 0 {
+        if matches!(event.kind, MouseEventKind::Down(MouseButton::Left))
+            && layout.sidebar_divider.contains(at)
+        {
+            return Intent::SidebarResizeStart;
+        }
+        if matches!(event.kind, MouseEventKind::Down(MouseButton::Left))
+            && layout.sidebar.contains(at)
+        {
+            return match at.y.saturating_sub(layout.sidebar.y) {
+                sidebar::CLOSE_ROW => Intent::ToggleSidebar,
+                sidebar::NEW_SESSION_ROW => Intent::NewSession,
+                sidebar::SESSIONS_ROW => Intent::SidebarSection(sidebar::Section::Sessions),
+                sidebar::PROJECTS_ROW => Intent::SidebarSection(sidebar::Section::Projects),
+                sidebar::PINNED_ROW => Intent::SidebarSection(sidebar::Section::Pinned),
+                _ => Intent::Nothing,
+            };
+        }
+        if matches!(event.kind, MouseEventKind::Moved)
+            && (layout.sidebar.contains(at) || layout.sidebar_divider.contains(at))
+        {
+            return Intent::Hover(None);
+        }
+    } else if matches!(event.kind, MouseEventKind::Down(MouseButton::Left))
+        && event.column < area.x.saturating_add(HORIZONTAL_GUTTER)
+    {
+        // The collapsed tab lives in the outer gutter, which is otherwise
+        // empty. It is the mouse equivalent of Ctrl-B.
+        return Intent::ToggleSidebar;
     }
 
     match event.kind {
@@ -236,6 +413,15 @@ mod tests {
             })
             .collect();
         Picker::new(PickerKind::Provider, "Pick", items)
+    }
+
+    fn sidebar_interaction(open: bool, dragging: bool) -> Interaction {
+        Interaction {
+            scrollbar_dragging: false,
+            sidebar_open: open,
+            sidebar_width: 28,
+            sidebar_dragging: dragging,
+        }
     }
 
     #[test]
@@ -402,5 +588,87 @@ mod tests {
         };
         let event = at(MouseEventKind::Drag(MouseButton::Left), 19, 1);
         assert_eq!(intent(&event, tiny, 3, None, true), Intent::ScrollTo(0.0));
+    }
+
+    #[test]
+    fn the_open_sidebar_owns_the_left_columns_and_keeps_the_main_track_aligned() {
+        let areas = layout_with_sidebar(AREA, 3, true, sidebar::DEFAULT_WIDTH);
+        assert_eq!(areas.sidebar, Rect::new(2, 0, 28, 24));
+        assert_eq!(areas.sidebar_divider, Rect::new(30, 0, 1, 24));
+        assert_eq!(areas.context.x, 31);
+        assert_eq!(areas.context.width, 47);
+        assert_eq!(regions_with_sidebar(AREA, 3, true, 28).track.x, 77);
+    }
+
+    #[test]
+    fn the_sidebar_click_targets_cover_close_new_session_and_sections() {
+        let areas = layout_with_sidebar(AREA, 3, true, sidebar::DEFAULT_WIDTH);
+        for (row, expected) in [
+            (sidebar::CLOSE_ROW, Intent::ToggleSidebar),
+            (sidebar::NEW_SESSION_ROW, Intent::NewSession),
+            (
+                sidebar::SESSIONS_ROW,
+                Intent::SidebarSection(sidebar::Section::Sessions),
+            ),
+            (
+                sidebar::PROJECTS_ROW,
+                Intent::SidebarSection(sidebar::Section::Projects),
+            ),
+            (
+                sidebar::PINNED_ROW,
+                Intent::SidebarSection(sidebar::Section::Pinned),
+            ),
+        ] {
+            let event = at(
+                MouseEventKind::Down(MouseButton::Left),
+                areas.sidebar.x + 2,
+                row,
+            );
+            assert_eq!(
+                intent_with_sidebar(&event, AREA, 3, None, sidebar_interaction(true, false)),
+                expected,
+                "row {row}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_divider_resizes_until_a_far_left_drag_closes_the_sidebar() {
+        let areas = layout_with_sidebar(AREA, 3, true, sidebar::DEFAULT_WIDTH);
+        let start = at(
+            MouseEventKind::Down(MouseButton::Left),
+            areas.sidebar_divider.x,
+            10,
+        );
+        assert_eq!(
+            intent_with_sidebar(&start, AREA, 3, None, sidebar_interaction(true, false)),
+            Intent::SidebarResizeStart
+        );
+
+        let resize = at(MouseEventKind::Drag(MouseButton::Left), 36, 10);
+        assert_eq!(
+            intent_with_sidebar(&resize, AREA, 3, None, sidebar_interaction(true, true)),
+            Intent::SidebarResizeTo(34)
+        );
+
+        let close = at(MouseEventKind::Moved, 6, 10);
+        assert_eq!(
+            intent_with_sidebar(&close, AREA, 3, None, sidebar_interaction(true, true)),
+            Intent::SidebarClose
+        );
+        let release = at(MouseEventKind::Up(MouseButton::Left), 6, 10);
+        assert_eq!(
+            intent_with_sidebar(&release, AREA, 3, None, sidebar_interaction(true, true)),
+            Intent::SidebarResizeEnd
+        );
+    }
+
+    #[test]
+    fn the_collapsed_gutter_tab_reopens_the_rail() {
+        let event = at(MouseEventKind::Down(MouseButton::Left), 0, 0);
+        assert_eq!(
+            intent_with_sidebar(&event, AREA, 3, None, sidebar_interaction(false, false)),
+            Intent::ToggleSidebar
+        );
     }
 }

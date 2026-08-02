@@ -83,6 +83,16 @@ function composerGeometry(lines, cols) {
   return { top, bottom, left, right, status: bottom + 1, help: bottom + 2 };
 }
 
+function sidebarGeometry(lines) {
+  const header = lines.findIndex((line) => line.includes("WORKSPACE"));
+  if (header < 0) return { open: false, divider: -1 };
+  const dividerRow = lines.findIndex((line) => line.includes("╋"));
+  return {
+    open: true,
+    divider: dividerRow < 0 ? -1 : lines[dividerRow].indexOf("╋"),
+  };
+}
+
 function normalizeCells(lines, cols) {
   return lines.map((line) => {
     const cells = terminalCells(line);
@@ -161,6 +171,7 @@ function escapeAttribute(value) {
 
 function domForFrame(frame, cols, rows, geometry) {
   const cells = normalizeCells(frame, cols);
+  const sidebar = sidebarGeometry(frame);
   const rowMarkup = cells
     .map((row, rowIndex) => {
       const cellMarkup = row
@@ -184,11 +195,11 @@ function domForFrame(frame, cols, rows, geometry) {
           .cell { display: inline-block; width: 1ch; height: 1em; }
         </style>
       </head>
-      <body><main id="terminal" data-cols="${cols}" data-rows="${rows}">${rowMarkup}</main></body>
+      <body><main id="terminal" data-cols="${cols}" data-rows="${rows}" data-sidebar-open="${sidebar.open}" data-sidebar-divider="${sidebar.divider}">${rowMarkup}</main></body>
     </html>`;
 }
 
-async function assertDom(page, frame, cols, rows, geometry) {
+async function assertDom(page, frame, cols, rows, geometry, expectedSidebar = cols >= 67) {
   await page.setContent(domForFrame(frame, cols, rows, geometry));
   const rowLocator = page.locator("#terminal > .row");
   assert.equal(await rowLocator.count(), rows, `${cols}x${rows}: DOM row count`);
@@ -205,6 +216,15 @@ async function assertDom(page, frame, cols, rows, geometry) {
   assert(measurements.every(({ bottom, top }) => bottom > top), `${cols}x${rows}: every row must have visible height`);
   assert.equal(measurements[geometry.top].region, "composer", `${cols}x${rows}: composer region marker`);
   assert.equal(measurements[geometry.help].region, "help", `${cols}x${rows}: help region marker`);
+
+  const sidebarState = await page.locator("#terminal").evaluate((terminal) => ({
+    open: terminal.dataset.sidebarOpen === "true",
+    divider: Number(terminal.dataset.sidebarDivider),
+  }));
+  assert.equal(sidebarState.open, expectedSidebar, `${cols}x${rows}: DOM sidebar state`);
+  if (expectedSidebar) {
+    assert.equal(sidebarState.divider, geometry.left - 1, `${cols}x${rows}: DOM divider must touch the composer rail`);
+  }
 
   const geometryInBrowser = await page.evaluate(() => {
     const terminal = document.querySelector("#terminal");
@@ -227,16 +247,29 @@ async function assertDom(page, frame, cols, rows, geometry) {
 function assertFrame(frame, cols, rows, geometry, label) {
   const [context] = frame;
   const joined = frame.join(" ").replace(/\s+/g, " ");
+  const readable = frame.map((line) => line.slice(geometry.left)).join(" ").replace(/\s+/g, " ");
+  const sidebar = sidebarGeometry(frame);
   assert(geometry.left >= 2, `${label}: workbench needs a left breathing gutter`);
   assert(geometry.right <= cols - 3, `${label}: composer must leave a right breathing gutter`);
   assert(geometry.right - geometry.left >= 20, `${label}: composer is too cramped to read`);
   assert.equal(geometry.status, rows - 2, `${label}: status rail must stay anchored above the help rail`);
   assert.equal(geometry.help, rows - 1, `${label}: help rail must stay on the last row`);
+  if (cols >= 67) {
+    assert(sidebar.open, `${label}: workspace sidebar should be visible at this width`);
+    for (const item of ["WORKSPACE", "New session", "SESSIONS", "PROJECTS", "PINNED"]) {
+      assert(joined.includes(item), `${label}: sidebar item ${item} is missing\n${renderFrame(frame)}`);
+    }
+    assert.equal(sidebar.divider, geometry.left - 1, `${label}: sidebar divider must meet the main workbench`);
+  } else {
+    assert(!sidebar.open, `${label}: sidebar should collapse before the main workbench becomes cramped`);
+    assert(frame[0].startsWith("›"), `${label}: collapsed sidebar needs its reopen tab`);
+  }
   assert(context.includes("auto"), `${label}: provider must remain visible in the context rail`);
   assert(context.includes("  auto"), `${label}: context and provider need a readable separator`);
-  assert(joined.includes("What should Optimus do?"), `${label}: greeting title was clipped\n${renderFrame(frame)}`);
+  assert(readable.includes("What should Optimus do?"), `${label}: greeting title was clipped\n${renderFrame(frame)}`);
   assert(
-    joined.includes("Describe a task and press Enter. Ctrl-C stops a run; Esc clears a draft."),
+    readable.includes("Describe a task and press Enter.") &&
+      readable.includes("Ctrl-C stops a run; Esc clears a draft."),
     `${label}: greeting help was clipped instead of wrapping\n${renderFrame(frame)}`,
   );
 
@@ -296,16 +329,82 @@ function launch(binary, home, session, cols, rows, environment = {}) {
   if (result.status !== 0) throw new Error(result.stderr || "tmux could not start the TUI");
 }
 
+function sendMouse(session, kind, column, row) {
+  const code = kind === "drag" ? 32 : 0;
+  const suffix = kind === "up" ? "m" : "M";
+  const sequence = `\u001b[<${code};${column + 1};${row + 1}${suffix}`;
+  const result = tmux("send-keys", "-t", session, "-l", sequence);
+  if (result.status !== 0) throw new Error(result.stderr || `tmux could not send ${kind} mouse event`);
+}
+
 async function checkViewport(browser, binary, cols, rows) {
   const session = `optimus-tui-layout-${process.pid}-${cols}-${rows}`;
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "optimus-tui-layout-"));
   const page = await browser.newPage({ viewport: { width: cols * 10, height: rows * 18 } });
   try {
     launch(binary, home, session, cols, rows, { OPTIMUS_OFFLINE_LATENCY_MS: "250" });
-    const idle = await waitFor(session, rows, (frame) => frame.join("\n").includes("ready"), `${cols}x${rows}: launch never reached ready`);
-    const idleGeometry = composerGeometry(idle, cols);
+    let idle = await waitFor(session, rows, (frame) => frame.join("\n").includes("ready"), `${cols}x${rows}: launch never reached ready`);
+    let idleGeometry = composerGeometry(idle, cols);
     assertFrame(idle, cols, rows, idleGeometry, `${cols}x${rows} idle`);
     await assertDom(page, idle, cols, rows, idleGeometry);
+
+    if (cols >= 80) {
+      const initialSidebar = sidebarGeometry(idle);
+      assert(initialSidebar.open, `${cols}x${rows}: sidebar interaction needs an open rail`);
+      sendMouse(session, "down", initialSidebar.divider, Math.floor(rows / 2));
+      sendMouse(session, "drag", initialSidebar.divider + 6, Math.floor(rows / 2));
+      const resized = await waitFor(
+        session,
+        rows,
+        (frame) => sidebarGeometry(frame).divider === initialSidebar.divider + 6,
+        `${cols}x${rows}: divider drag never resized the sidebar`,
+      );
+      const resizedGeometry = composerGeometry(resized, cols);
+      assert.equal(
+        resizedGeometry.left,
+        initialSidebar.divider + 7,
+        `${cols}x${rows}: main workbench must move with the divider`,
+      );
+      await assertDom(page, resized, cols, rows, resizedGeometry);
+      sendMouse(session, "up", initialSidebar.divider + 6, Math.floor(rows / 2));
+
+      sendMouse(session, "down", initialSidebar.divider + 6, Math.floor(rows / 2));
+      sendMouse(session, "drag", 6, Math.floor(rows / 2));
+      const closed = await waitFor(
+        session,
+        rows,
+        (frame) => !sidebarGeometry(frame).open,
+        `${cols}x${rows}: far-left drag never closed the sidebar`,
+      );
+      const closedGeometry = composerGeometry(closed, cols);
+      assert(closed[0].startsWith("›"), `${cols}x${rows}: closed sidebar tab is missing`);
+      await assertDom(page, closed, cols, rows, closedGeometry, false);
+      sendMouse(session, "up", 6, Math.floor(rows / 2));
+
+      sendMouse(session, "down", 0, 0);
+      idle = await waitFor(
+        session,
+        rows,
+        (frame) => sidebarGeometry(frame).open,
+        `${cols}x${rows}: collapsed tab never reopened the sidebar`,
+      );
+      idleGeometry = composerGeometry(idle, cols);
+      assertFrame(idle, cols, rows, idleGeometry, `${cols}x${rows} reopened`);
+      await assertDom(page, idle, cols, rows, idleGeometry);
+
+      sendMouse(session, "down", 4, 3);
+      const freshSession = await waitFor(
+        session,
+        rows,
+        (frame) => frame.join("\n").includes("started a fresh session"),
+        `${cols}x${rows}: New session click did not reset the workbench`,
+      );
+      assert(
+        freshSession.join(" ").includes("New session"),
+        `${cols}x${rows}: New session affordance disappeared after activation`,
+      );
+      sendMouse(session, "up", 4, 3);
+    }
 
     const draft = `layout${"x".repeat(Math.max(10, cols))}`;
     const buffered = tmux("set-buffer", draft);

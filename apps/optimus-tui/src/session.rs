@@ -137,6 +137,8 @@ pub struct TuiSession {
     /// the menus, and costs the terminal's own click-and-drag text selection,
     /// so it has to be surrenderable.
     pub mouse: bool,
+    /// Presentation state for the optional workspace rail.
+    pub(crate) sidebar: crate::sidebar::State,
     /// Animation ticks since start, driving the spinner animation.
     frame: usize,
     /// Animation ticks between visible spinner glyphs.
@@ -182,6 +184,7 @@ impl TuiSession {
             dragging: false,
             hovered_block: None,
             mouse: true,
+            sidebar: crate::sidebar::State::default(),
             frame: 0,
             spinner_every: DEFAULT_SPINNER_EVERY,
             started: None,
