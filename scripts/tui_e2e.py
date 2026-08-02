@@ -98,7 +98,7 @@ def main() -> int:
             # /new clears the transcript.
             send("/new", "Enter")
             wait_for(
-                lambda t: "offline echo: e2e ping" not in t and "fresh session" in t,
+                lambda t: "offline echo: e2e ping" not in t and "new session ready" in t,
                 10,
                 "/new did not clear the transcript",
             )
