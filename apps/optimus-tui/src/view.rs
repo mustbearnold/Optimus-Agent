@@ -5,13 +5,14 @@
 
 use ratatui::prelude::*;
 use ratatui::widgets::{
-    Clear, List, ListItem, ListState, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
+    List, ListItem, ListState, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
 
 mod composer;
 
 use crate::bordered;
 use crate::mouse;
+use crate::overlay;
 use crate::session::{Role, TuiSession};
 use crate::transcript::{self, Row};
 
@@ -37,7 +38,10 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     let height = areas[0].height.saturating_sub(2) as usize;
     let offset = scroll_offset(rows.len(), height, session.scroll_back) as u16;
 
-    let lines: Vec<Line> = rows.iter().map(paint).collect();
+    let lines: Vec<Line> = rows
+        .iter()
+        .map(|row| paint_with_hover(row, session.hovered_block))
+        .collect();
     let title = session.running_tool.as_ref().map_or_else(
         || "OPTIMUS · WORKBENCH".to_string(),
         |tool| format!("OPTIMUS · {tool}"),
@@ -77,7 +81,7 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
 /// The selected item is reversed rather than tinted: reverse video is the one
 /// emphasis every terminal has, including the monochrome and `NO_COLOR` ones,
 /// so which block the keyboard is pointed at never depends on a palette.
-fn paint(row: &Row) -> Line<'static> {
+fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Line<'static> {
     let mut base = match row.role {
         Role::User => Style::default()
             .fg(Color::LightCyan)
@@ -91,6 +95,8 @@ fn paint(row: &Row) -> Line<'static> {
         base = base
             .add_modifier(Modifier::REVERSED)
             .add_modifier(Modifier::BOLD);
+    } else if row.block.is_some() && row.block == hovered {
+        base = base.add_modifier(Modifier::UNDERLINED);
     }
     Line::from(
         row.segments
@@ -182,10 +188,10 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
     let mut state = ListState::default();
     state.select(Some(picker.selected()));
 
-    frame.render_widget(Clear, rect);
+    overlay::prepare(frame, rect, overlay::Kind::Modal);
     frame.render_stateful_widget(
         List::new(rows)
-            .block(bordered(&picker.title))
+            .block(overlay::panel(&picker.title, overlay::Kind::Modal))
             .highlight_symbol("> ")
             .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
         rect,
@@ -253,12 +259,15 @@ fn draw_suggestions(frame: &mut Frame, session: &TuiSession, composer: Rect) {
     let mut state = ListState::default();
     state.select(Some(session.completion.selected(found.len())));
 
-    frame.render_widget(Clear, rect);
+    overlay::prepare(frame, rect, overlay::Kind::Suggestions);
     frame.render_stateful_widget(
         List::new(rows)
             // The title carries the key, because a list that appears on its own
             // has to say how to take a row from it.
-            .block(bordered("Tab to complete"))
+            .block(overlay::panel(
+                "Tab to complete",
+                overlay::Kind::Suggestions,
+            ))
             .highlight_symbol("> ")
             .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
         rect,
@@ -396,7 +405,7 @@ mod tests {
             Role::Error,
         ] {
             let row = Row::chrome(role, vec![crate::transcript::Segment::plain("x")]);
-            seen.push(paint(&row).spans[0].style.fg);
+            seen.push(paint_with_hover(&row, None).spans[0].style.fg);
         }
         let unique: std::collections::HashSet<_> = seen.iter().collect();
         assert_eq!(
@@ -419,9 +428,51 @@ mod tests {
                 },
             ],
         );
-        let line = paint(&row);
+        let line = paint_with_hover(&row, None);
         assert!(!line.spans[0].style.add_modifier.contains(Modifier::BOLD));
         assert!(line.spans[1].style.add_modifier.contains(Modifier::BOLD));
+    }
+
+    #[test]
+    fn hovering_a_block_adds_a_non_destructive_pointer_affordance() {
+        let id = crate::workbench::BlockId(uuid::Uuid::nil());
+        let mut row = Row::chrome(
+            Role::Assistant,
+            vec![crate::transcript::Segment::plain("answer")],
+        );
+        row.block = Some(id);
+        let line = paint_with_hover(&row, Some(id));
+        assert!(
+            line.spans[0]
+                .style
+                .add_modifier
+                .contains(Modifier::UNDERLINED),
+            "hover should be visible without stealing semantic selection"
+        );
+        assert!(!row.selected, "hover must not mutate selection");
+    }
+
+    #[test]
+    fn a_modal_picker_dims_the_frame_but_not_its_own_panel() {
+        let (_dir, mut session) = session_with(&[]);
+        session.picker = Some(crate::commands::menu());
+        let backend = ratatui::backend::TestBackend::new(60, 12);
+        let mut terminal = Terminal::new(backend).expect("test terminal");
+        terminal.draw(|f| draw(f, &session)).expect("draw");
+        let area = Rect::new(0, 0, 60, 12);
+        let rect = crate::mouse::picker_rect(area, session.picker.as_ref().unwrap());
+        let buffer = terminal.backend().buffer();
+        assert!(
+            buffer[(0, 0)].style().add_modifier.contains(Modifier::DIM),
+            "the frame behind a modal should recede"
+        );
+        assert!(
+            !buffer[(rect.x + 1, rect.y + 1)]
+                .style()
+                .add_modifier
+                .contains(Modifier::DIM),
+            "the active panel should remain at full emphasis"
+        );
     }
 
     /// Render a real frame and read it back as text, so layout is asserted the

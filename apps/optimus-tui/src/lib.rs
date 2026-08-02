@@ -31,6 +31,7 @@ mod history;
 mod keys;
 mod logging;
 mod mouse;
+mod overlay;
 mod picker;
 mod preferences;
 mod session;
@@ -422,11 +423,19 @@ fn on_mouse(
             let rows = view::visible_rows(session, area.width.saturating_sub(2));
             let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
             if let Some(hit) = view::hit(&rows, offset + row) {
+                session.hovered_block = Some(hit.block);
                 session.workbench.select_item(hit.block);
                 if hit.head {
                     session.workbench.toggle_fold_of(hit.block);
                 }
             }
+        }
+        mouse::Intent::Hover(row) => {
+            let height = usize::from(mouse::regions(area, composer_height).transcript.height);
+            let rows = view::visible_rows(session, area.width.saturating_sub(2));
+            let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
+            session.hovered_block =
+                row.and_then(|row| view::hit(&rows, offset + row).map(|hit| hit.block));
         }
         mouse::Intent::Nothing => {}
     }

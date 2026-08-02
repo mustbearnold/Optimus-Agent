@@ -91,6 +91,9 @@ pub enum Intent {
     /// underneath is resolved by the caller against the laid-out rows, because
     /// only the projection knows which block a screen row paints.
     Inspect(usize),
+    /// The pointer moved to a transcript row, or left the hit-map entirely.
+    /// The caller resolves the row to a durable block id for presentation.
+    Hover(Option<usize>),
     Nothing,
 }
 
@@ -129,11 +132,19 @@ pub fn intent(
                 Some(index) => Intent::Choose(index),
                 None => Intent::Nothing,
             },
+            MouseEventKind::Moved => Intent::Hover(None),
             _ => Intent::Nothing,
         };
     }
 
     match event.kind {
+        MouseEventKind::Moved => {
+            if regions.transcript.contains(at) {
+                Intent::Hover(Some(usize::from(at.y - regions.transcript.y)))
+            } else {
+                Intent::Hover(None)
+            }
+        }
         MouseEventKind::Down(MouseButton::Right) => Intent::OpenMenu,
         // The track first: it is one column wide and sits on the transcript's
         // border, so a press there is a grab rather than a selection.
@@ -291,6 +302,19 @@ mod tests {
     fn the_right_button_opens_the_command_menu() {
         let event = at(MouseEventKind::Down(MouseButton::Right), 40, 9);
         assert_eq!(intent(&event, AREA, 3, None, false), Intent::OpenMenu);
+    }
+
+    #[test]
+    fn moving_over_the_transcript_reports_a_row_without_selecting_it() {
+        let regions = regions(AREA, 3);
+        let inside = at(MouseEventKind::Moved, 40, regions.transcript.y + 4);
+        assert_eq!(
+            intent(&inside, AREA, 3, None, false),
+            Intent::Hover(Some(4))
+        );
+
+        let outside = at(MouseEventKind::Moved, 40, 22);
+        assert_eq!(intent(&outside, AREA, 3, None, false), Intent::Hover(None));
     }
 
     #[test]

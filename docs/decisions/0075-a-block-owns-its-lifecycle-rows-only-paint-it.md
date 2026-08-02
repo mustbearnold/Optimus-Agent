@@ -19,6 +19,7 @@ covers:
   - apps/optimus-tui/src/session/event_adapter.rs
   - apps/optimus-tui/src/lib.rs
   - apps/optimus-tui/src/view.rs
+  - apps/optimus-tui/src/overlay.rs
   - apps/optimus-tui/src/transcript.rs
   - apps/optimus-tui/src/keys.rs
   - apps/optimus-tui/src/mouse.rs
@@ -39,6 +40,7 @@ validated_by:
   - apps/optimus-tui/src/session.rs
   - apps/optimus-tui/src/transcript.rs
   - apps/optimus-tui/src/view.rs
+  - apps/optimus-tui/src/overlay.rs
   - apps/optimus-tui/src/keys.rs
   - apps/optimus-tui/src/mouse.rs
 ---
@@ -91,6 +93,12 @@ validated_by:
   `YOU`/`OPTIMUS` conversation cards. This is the first visible polish slice,
   not a claim that the later overlay, accessibility, and full polish work is
   complete.
+- **Overlay/hover slice delivered:** 2026-08-02 — picker overlays now dim the
+  frame behind their shared accented panel, live suggestions use the same panel
+  vocabulary without blocking the draft, and pointer movement underlines the
+  durable block under the cursor without changing semantic selection. This is a
+  first phase-6 seam; it does not claim a complete viewer stack or tooltip
+  system.
 
 ## Context
 

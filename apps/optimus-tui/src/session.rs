@@ -130,6 +130,9 @@ pub struct TuiSession {
     /// True while the scrollbar thumb is held, so motion keeps scrolling even
     /// once the pointer wanders off the one-column track.
     pub dragging: bool,
+    /// The block under the pointer, if any. Hover is presentation-only: it
+    /// never changes semantic selection or executes an action.
+    pub hovered_block: Option<crate::workbench::BlockId>,
     /// Whether the terminal's mouse is captured. Capture buys the scrollbar and
     /// the menus, and costs the terminal's own click-and-drag text selection,
     /// so it has to be surrenderable.
@@ -174,6 +177,7 @@ impl TuiSession {
             running_tool: None,
             chrome: Chrome::Boxed,
             dragging: false,
+            hovered_block: None,
             mouse: true,
             frame: 0,
             spinner_every: DEFAULT_SPINNER_EVERY,

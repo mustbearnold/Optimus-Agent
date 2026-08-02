@@ -4794,7 +4794,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "56636729d6a6fe12c669044c7c5999c2e46b12461ba4ff7bfc6406172d23b5ff",
+      "content_sha256": "295419d3384cb997e990a45d86a07a7ea6497ae94fe010eeccf4915c6e466d44",
       "headings": [
         "ADR-0075: A block owns its lifecycle; rows only paint it",
         "Context",
@@ -7196,7 +7196,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "d1bb19971aabbfe4378b9369343c77314a8d28b63e21bd34455b3e4469c970df",
+  "documents_sha256": "498ab6ae4e04c0969d3b609aa678c663ba63edd64c92a20475d35e5513a6928e",
   "routes": [
     {
       "id": "docs.navigation",
