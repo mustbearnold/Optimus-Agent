@@ -77,8 +77,11 @@ pub(crate) struct HitState {
     pub(crate) section: Section,
     pub(crate) current_unsaved: bool,
     pub(crate) sessions: usize,
+    pub(crate) session_offset: usize,
     pub(crate) projects: usize,
+    pub(crate) project_offset: usize,
     pub(crate) pinned: usize,
+    pub(crate) pinned_offset: usize,
 }
 
 impl Default for HitState {
@@ -87,8 +90,11 @@ impl Default for HitState {
             section: Section::Sessions,
             current_unsaved: true,
             sessions: 1,
+            session_offset: 0,
             projects: 1,
+            project_offset: 0,
             pinned: 0,
+            pinned_offset: 0,
         }
     }
 }
@@ -105,6 +111,9 @@ pub(crate) struct State {
     pub(crate) projects: Vec<ProjectEntry>,
     pub(crate) current_unsaved: bool,
     pub(crate) project_filter: ProjectFilter,
+    session_offset: usize,
+    project_offset: usize,
+    pinned_offset: usize,
 }
 
 impl Default for State {
@@ -118,6 +127,9 @@ impl Default for State {
             projects: Vec::new(),
             current_unsaved: true,
             project_filter: ProjectFilter::All,
+            session_offset: 0,
+            project_offset: 0,
+            pinned_offset: 0,
         }
     }
 }
@@ -144,14 +156,45 @@ impl State {
 
     pub(crate) fn select(&mut self, section: Section) {
         self.section = section;
+        if section == Section::Sessions {
+            self.project_filter = ProjectFilter::All;
+            self.session_offset = 0;
+        }
+    }
+
+    /// Move the expanded section's small viewport. The headings stay put, so
+    /// every section remains one click away while wheel users can still reach
+    /// every session, project and pin rather than only the first few rows.
+    pub(crate) fn scroll(&mut self, rows: isize) {
+        let (count, slots, offset) = match self.section {
+            Section::Sessions => (self.session_count(), SESSION_SLOTS, self.session_offset),
+            Section::Projects => (self.projects.len(), PROJECT_SLOTS, self.project_offset),
+            Section::Pinned => (self.pinned_count(), PINNED_SLOTS, self.pinned_offset),
+        };
+        let maximum = count.saturating_sub(slots);
+        let next = if rows >= 0 {
+            offset.saturating_sub(rows as usize)
+        } else {
+            offset.saturating_add(rows.unsigned_abs()).min(maximum)
+        };
+        match self.section {
+            Section::Sessions => self.session_offset = next,
+            Section::Projects => self.project_offset = next,
+            Section::Pinned => self.pinned_offset = next,
+        }
     }
 
     pub(crate) fn replace_data(
         &mut self,
         sessions: Vec<SessionMeta>,
-        projects: Vec<ProjectEntry>,
+        mut projects: Vec<ProjectEntry>,
         current_unsaved: bool,
     ) {
+        projects.sort_by(|a, b| {
+            a.id.is_some()
+                .cmp(&b.id.is_some())
+                .then(a.label.cmp(&b.label))
+        });
         self.sessions = sessions;
         self.projects = projects;
         self.current_unsaved = current_unsaved;
@@ -159,6 +202,50 @@ impl State {
         {
             self.project_filter = ProjectFilter::All;
         }
+        self.clamp_offsets();
+    }
+
+    /// Keep the active row visible after refreshes that reorder the durable
+    /// list (notably pinning), while leaving wheel-driven browsing alone until
+    /// the underlying data actually changes.
+    pub(crate) fn reveal_session(&mut self, current: Option<&str>) {
+        let (session_index, pinned_index) = {
+            let sessions = self.filtered_sessions();
+            let session_index = match current {
+                None if self.current_unsaved => Some(0),
+                Some(id) => sessions
+                    .iter()
+                    .position(|session| session.id.to_string() == id)
+                    .map(|index| index + usize::from(self.current_unsaved)),
+                _ => None,
+            };
+            let pinned_index = current.and_then(|id| {
+                sessions
+                    .iter()
+                    .filter(|session| session.pinned)
+                    .position(|session| session.id.to_string() == id)
+            });
+            (session_index, pinned_index)
+        };
+        if let Some(index) = session_index {
+            self.session_offset = reveal(self.session_offset, index, SESSION_SLOTS);
+        }
+        if let Some(index) = pinned_index {
+            self.pinned_offset = reveal(self.pinned_offset, index, PINNED_SLOTS);
+        }
+        if let Some(index) = self.projects.iter().position(|project| project.current) {
+            self.project_offset = reveal(self.project_offset, index, PROJECT_SLOTS);
+        }
+        self.clamp_offsets();
+    }
+
+    pub(crate) fn visible_window(&self, section: Section) -> (usize, usize, usize) {
+        let (offset, count, slots) = match section {
+            Section::Sessions => (self.session_offset, self.session_count(), SESSION_SLOTS),
+            Section::Projects => (self.project_offset, self.projects.len(), PROJECT_SLOTS),
+            Section::Pinned => (self.pinned_offset, self.pinned_count(), PINNED_SLOTS),
+        };
+        (offset, (offset + slots).min(count), count)
     }
 
     pub(crate) fn hit_state(&self) -> HitState {
@@ -166,8 +253,11 @@ impl State {
             section: self.section,
             current_unsaved: self.current_unsaved,
             sessions: self.session_count(),
+            session_offset: self.session_offset,
             projects: self.projects.len(),
+            project_offset: self.project_offset,
             pinned: self.pinned_count(),
+            pinned_offset: self.pinned_offset,
         }
     }
 
@@ -212,7 +302,20 @@ impl State {
             None => ProjectFilter::Workspace,
         };
         self.section = Section::Sessions;
+        self.session_offset = 0;
         Some(project.id)
+    }
+
+    fn clamp_offsets(&mut self) {
+        self.session_offset = self
+            .session_offset
+            .min(self.session_count().saturating_sub(SESSION_SLOTS));
+        self.project_offset = self
+            .project_offset
+            .min(self.projects.len().saturating_sub(PROJECT_SLOTS));
+        self.pinned_offset = self
+            .pinned_offset
+            .min(self.pinned_count().saturating_sub(PINNED_SLOTS));
     }
 
     fn filtered_sessions(&self) -> Vec<&SessionMeta> {
@@ -241,32 +344,41 @@ pub(crate) fn rows(state: HitState, height: u16) -> Vec<Row> {
 
     match state.section {
         Section::Sessions => {
-            let count = display_slots(state.sessions, SESSION_SLOTS);
-            for index in 0..count {
+            let count = display_slots(
+                state.sessions.saturating_sub(state.session_offset),
+                SESSION_SLOTS,
+            );
+            for slot in 0..count {
                 put(
                     &mut rows,
-                    SESSIONS_ROW + 1 + index as u16,
-                    Row::Session(index),
+                    SESSIONS_ROW + 1 + slot as u16,
+                    Row::Session(state.session_offset + slot),
                 );
             }
         }
         Section::Projects => {
-            let count = display_slots(state.projects, PROJECT_SLOTS);
-            for index in 0..count {
+            let count = display_slots(
+                state.projects.saturating_sub(state.project_offset),
+                PROJECT_SLOTS,
+            );
+            for slot in 0..count {
                 put(
                     &mut rows,
-                    PROJECTS_ROW + 1 + index as u16,
-                    Row::Project(index),
+                    PROJECTS_ROW + 1 + slot as u16,
+                    Row::Project(state.project_offset + slot),
                 );
             }
         }
         Section::Pinned => {
-            let count = display_slots(state.pinned, PINNED_SLOTS);
-            for index in 0..count {
+            let count = display_slots(
+                state.pinned.saturating_sub(state.pinned_offset),
+                PINNED_SLOTS,
+            );
+            for slot in 0..count {
                 put(
                     &mut rows,
-                    PINNED_ROW + 1 + index as u16,
-                    Row::PinnedSession(index),
+                    PINNED_ROW + 1 + slot as u16,
+                    Row::PinnedSession(state.pinned_offset + slot),
                 );
             }
         }
@@ -297,6 +409,16 @@ pub(crate) fn row_at(state: HitState, row: u16) -> Row {
 
 fn display_slots(count: usize, slots: usize) -> usize {
     count.min(slots)
+}
+
+fn reveal(offset: usize, index: usize, slots: usize) -> usize {
+    if index < offset {
+        index
+    } else if index >= offset + slots {
+        index + 1 - slots
+    } else {
+        offset
+    }
 }
 
 fn put(rows: &mut [Row], row: u16, value: Row) {
@@ -344,5 +466,90 @@ mod tests {
         assert_eq!(row_at(hit, PROJECTS_ROW), Row::ProjectsHeading);
         assert_eq!(row_at(hit, PINNED_ROW), Row::PinnedHeading);
         assert_eq!(row_at(hit, 6), Row::Session(0));
+    }
+
+    #[test]
+    fn overflowing_sections_scroll_without_moving_their_headings() {
+        let mut state = State {
+            current_unsaved: false,
+            sessions: (0..6)
+                .map(|index| SessionMeta {
+                    id: uuid::Uuid::new_v4(),
+                    title: format!("session-{index}"),
+                    created_at: format!("ts:{index}"),
+                    updated_at: format!("ts:{index}"),
+                    message_count: 1,
+                    packs: Vec::new(),
+                    pinned: false,
+                    archived: false,
+                    project: None,
+                })
+                .collect(),
+            ..State::default()
+        };
+
+        state.scroll(-3);
+        let hit = state.hit_state();
+        assert_eq!(row_at(hit, SESSIONS_ROW), Row::SessionsHeading);
+        assert_eq!(row_at(hit, SESSIONS_ROW + 1), Row::Session(3));
+        assert_eq!(row_at(hit, SESSIONS_ROW + 3), Row::Session(5));
+        assert_eq!(state.visible_window(Section::Sessions), (3, 6, 6));
+
+        state.scroll(3);
+        assert_eq!(row_at(state.hit_state(), SESSIONS_ROW + 1), Row::Session(0));
+    }
+
+    #[test]
+    fn selecting_the_sessions_heading_clears_a_project_filter() {
+        let mut state = State::default();
+        state.projects.push(ProjectEntry {
+            id: Some("project-a".into()),
+            label: "project-a".into(),
+            session_count: 1,
+            current: false,
+        });
+        state.sessions = [Some("project-a"), None]
+            .into_iter()
+            .map(|project| SessionMeta {
+                id: uuid::Uuid::new_v4(),
+                title: "session".into(),
+                created_at: "ts:1".into(),
+                updated_at: "ts:1".into(),
+                message_count: 1,
+                packs: Vec::new(),
+                pinned: false,
+                archived: false,
+                project: project.map(str::to_owned),
+            })
+            .collect();
+        state.select_project(0);
+        assert_eq!(state.session_count(), 2, "project row plus current draft");
+
+        state.select(Section::Sessions);
+        assert!(matches!(state.project_filter, ProjectFilter::All));
+        assert_eq!(state.session_count(), 3);
+    }
+
+    #[test]
+    fn project_rows_keep_workspace_first_and_named_scopes_stable() {
+        let entry = |id: Option<&str>, label: &str| ProjectEntry {
+            id: id.map(str::to_owned),
+            label: label.into(),
+            session_count: 0,
+            current: false,
+        };
+        let mut state = State::default();
+        state.replace_data(
+            Vec::new(),
+            vec![
+                entry(Some("project-4"), "project-4"),
+                entry(None, "workspace"),
+                entry(Some("project-1"), "project-1"),
+            ],
+            true,
+        );
+        assert_eq!(state.project_at(0).unwrap().label, "workspace");
+        assert_eq!(state.project_at(1).unwrap().label, "project-1");
+        assert_eq!(state.project_at(2).unwrap().label, "project-4");
     }
 }

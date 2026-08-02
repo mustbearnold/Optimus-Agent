@@ -244,6 +244,28 @@ async function assertDom(page, frame, cols, rows, geometry, expectedSidebar = co
   );
 }
 
+async function assertNoDomOverflow(page, frame, cols, rows) {
+  const geometry = { top: -2, bottom: -2, left: 0, right: 0, status: rows - 2, help: rows - 1 };
+  normalizeCells(frame, cols);
+  await page.setContent(domForFrame(frame, cols, rows, geometry));
+  const overflow = await page.locator("#terminal").evaluate((terminal) => ({
+    horizontal: terminal.scrollWidth - terminal.clientWidth,
+    vertical: Math.max(
+      0,
+      ...Array.from(terminal.querySelectorAll(".row"), (row) =>
+        row.getBoundingClientRect().bottom - terminal.getBoundingClientRect().bottom,
+      ),
+    ),
+    widestRow: Math.max(
+      0,
+      ...Array.from(terminal.querySelectorAll(".row"), (row) => row.scrollWidth - terminal.clientWidth),
+    ),
+  }));
+  assert(overflow.horizontal <= 1, `${cols}x${rows}: DOM grid overflowed horizontally by ${overflow.horizontal}px`);
+  assert(overflow.vertical <= 1, `${cols}x${rows}: DOM grid overflowed vertically by ${overflow.vertical}px`);
+  assert(overflow.widestRow <= 1, `${cols}x${rows}: a DOM row overflowed by ${overflow.widestRow}px`);
+}
+
 function assertFrame(frame, cols, rows, geometry, label) {
   const [context] = frame;
   const joined = frame.join(" ").replace(/\s+/g, " ");
@@ -490,6 +512,51 @@ async function checkViewport(browser, binary, cols, rows) {
   }
 }
 
+async function checkResizeSweep(browser, binary) {
+  const session = `optimus-tui-layout-sweep-${process.pid}`;
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "optimus-tui-layout-sweep-"));
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  const widths = Array.from({ length: 121 }, (_, index) => index + 20);
+  const heights = Array.from({ length: 31 }, (_, index) => index + 10);
+  try {
+    launch(binary, home, session, 110, 32);
+    await waitFor(session, 32, (frame) => frame.join("\n").includes("ready"), "resize sweep launch never reached ready");
+
+    for (const cols of widths) {
+      const resized = tmux("resize-window", "-t", session, "-x", String(cols), "-y", "24");
+      if (resized.status !== 0) throw new Error(resized.stderr || `${cols}x24 resize failed`);
+      await sleep(45);
+      const frame = await waitFor(
+        session,
+        24,
+        (lines) => cols < 32 || (lines.some((line) => line.includes("╭")) && lines.some((line) => line.includes("╰"))),
+        `${cols}x24 did not repaint after resize`,
+      );
+      await assertNoDomOverflow(page, frame, cols, 24);
+      assert(tmux("has-session", "-t", session).status === 0, `${cols}x24: TUI exited during width sweep`);
+    }
+
+    for (const rows of heights) {
+      const resized = tmux("resize-window", "-t", session, "-x", "80", "-y", String(rows));
+      if (resized.status !== 0) throw new Error(resized.stderr || `80x${rows} resize failed`);
+      await sleep(45);
+      const frame = await waitFor(
+        session,
+        rows,
+        (lines) => rows < 16 || (lines.some((line) => line.includes("╭")) && lines.some((line) => line.includes("╰"))),
+        `80x${rows} did not repaint after resize`,
+      );
+      await assertNoDomOverflow(page, frame, 80, rows);
+      assert(tmux("has-session", "-t", session).status === 0, `80x${rows}: TUI exited during height sweep`);
+    }
+    console.log(`TUI_LAYOUT_SWEEP_OK widths=${widths[0]}..${widths.at(-1)} heights=${heights[0]}..${heights.at(-1)}`);
+  } finally {
+    tmux("kill-session", "-t", session);
+    await page.close();
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+}
+
 async function main() {
   const binaryIndex = process.argv.indexOf("--binary");
   const binary = path.resolve(binaryIndex >= 0 ? process.argv[binaryIndex + 1] : DEFAULT_BINARY);
@@ -510,6 +577,7 @@ async function main() {
   }
   try {
     for (const [cols, rows] of VIEWPORTS) await checkViewport(browser, binary, cols, rows);
+    await checkResizeSweep(browser, binary);
   } finally {
     await browser.close();
   }

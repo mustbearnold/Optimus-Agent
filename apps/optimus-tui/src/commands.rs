@@ -9,7 +9,7 @@
 //! The catalog is the terminal's own, deliberately not `optimus-ops`'
 //! `builtin_surface_commands` (ADR-0074). The shared registry addresses
 //! surfaces that dispatch work through the host; these address the session this
-//! process is holding open. Sixteen rows there, twelve here, and three names in
+//! process is holding open. Sixteen rows there, thirteen here, and three names in
 //! both — sourcing one from the other would discard most of its input.
 //!
 //! Commands answer locally and synchronously. Nothing here starts a turn, so the
@@ -94,7 +94,7 @@ pub const COMMANDS: &[Command] = &[
     typed(
         "thinking",
         Some("<lvl>"),
-        "minimal|low|medium|high|xhigh|max, or off",
+        "minimal|low|medium|high|xhigh|max|ultra, or off",
     ),
     offered("approval", "decide the pending exact approval"),
     // Takes a profile but reads back the current one bare, so it earns a row.
@@ -363,7 +363,7 @@ fn set_model(session: &mut TuiSession, argument: &str) {
 /// Levels are the backend's, normalised kernel-side; this only rejects what is
 /// certainly not one, so a new level added upstream keeps working here.
 fn set_thinking(session: &mut TuiSession, argument: &str) {
-    const LEVELS: &[&str] = &["minimal", "low", "medium", "high", "xhigh", "max"];
+    const LEVELS: &[&str] = &["minimal", "low", "medium", "high", "xhigh", "max", "ultra"];
     match argument {
         "" => session.push(
             Role::Error,
@@ -980,5 +980,13 @@ mod tests {
         dispatch(&mut session, "/thinking off");
         assert_eq!(session.thinking, None);
         assert_eq!(session.messages.last().unwrap().role, Role::Assistant);
+    }
+
+    #[test]
+    fn thinking_ultra_matches_the_documented_cli_alias() {
+        let (_dir, mut session) = session();
+        dispatch(&mut session, "/thinking ultra");
+        assert_eq!(session.thinking.as_deref(), Some("ultra"));
+        assert!(session.messages.last().unwrap().text.contains("ultra"));
     }
 }

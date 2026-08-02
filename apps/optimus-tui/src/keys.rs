@@ -67,6 +67,8 @@ pub enum Intent {
     Block(BlockStep),
     /// Redraw from scratch (Ctrl-L), for a frame corrupted by another writer.
     Redraw,
+    /// Open or close the workspace sidebar (Ctrl-B).
+    ToggleSidebar,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -223,6 +225,7 @@ pub fn intent(key: &KeyEvent, mode: Mode) -> Intent {
         KeyCode::PageUp => Intent::Scroll(ScrollStep::PageUp),
         KeyCode::PageDown => Intent::Scroll(ScrollStep::PageDown),
         KeyCode::Char('l') if ctrl => Intent::Redraw,
+        KeyCode::Char('b') if ctrl => Intent::ToggleSidebar,
         // Tab is unbound while nothing is being suggested, which is what makes
         // it free to mean "hand the keyboard to the transcript" (ADR-0075 §4).
         KeyCode::Tab => Intent::Focus(FocusStep::Inspect),
@@ -253,6 +256,7 @@ fn inspect_intent(key: &KeyEvent, mode: Mode) -> Intent {
             }
         }
         KeyCode::Char('l') if ctrl => Intent::Redraw,
+        KeyCode::Char('b') if ctrl => Intent::ToggleSidebar,
         _ if ctrl || alt => Intent::Ignore,
         KeyCode::Tab | KeyCode::Esc => Intent::Focus(FocusStep::Composer),
         KeyCode::Down | KeyCode::Char('j') => Intent::Block(BlockStep::Next),
@@ -583,6 +587,14 @@ mod tests {
             intent(&key(KeyCode::Down), both),
             Intent::Picker(PickerStep::Next)
         );
+    }
+
+    #[test]
+    fn ctrl_b_toggles_the_sidebar_except_behind_a_modal_picker() {
+        let ctrl_b = chord(KeyCode::Char('b'), KeyModifiers::CONTROL);
+        assert_eq!(intent(&ctrl_b, IDLE), Intent::ToggleSidebar);
+        assert_eq!(intent(&ctrl_b, INSPECTING), Intent::ToggleSidebar);
+        assert_eq!(intent(&ctrl_b, PICKING), Intent::Ignore);
     }
 
     #[test]

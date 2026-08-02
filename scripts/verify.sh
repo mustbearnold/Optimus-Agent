@@ -351,9 +351,10 @@ electron_e2e_command() {
 }
 
 tier_ui() {
-  # The two node unit suites and the two Playwright suites are independent of
-  # each other; only the Playwright suites need the built host binary and UI
-  # bundle, so that build is the one serial step.
+  # Unit, terminal, DOM, and browser suites can share a phase. Native Electron
+  # gets its own phase: running it beside another Chromium stack can starve the
+  # renderer event loop long enough for a click to sit unconsumed even though
+  # the identical flow is consistently sub-three-seconds on an idle host.
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
@@ -363,6 +364,7 @@ tier_ui() {
   if command -v tmux >/dev/null 2>&1; then
     run "build optimus cli" cargo build -p optimus-cli
     spawn "tui e2e" python3 scripts/tui_e2e.py
+    spawn "tui feature matrix" python3 scripts/tui_feature_matrix.py
     if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
       spawn "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
     else
@@ -370,6 +372,7 @@ tier_ui() {
     fi
   else
     skip "tui e2e" "tmux not installed"
+    skip "tui feature matrix" "tmux not installed"
     skip "tui layout (playwright)" "tmux not installed"
   fi
 
@@ -403,6 +406,9 @@ tier_ui() {
   if [ "$playwright_ready" = 1 ] || [ "$electron_ready" = 1 ]; then
     run "build desktop host" cargo build -p optimus-desktop
   fi
+  [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
+  reap
+
   # The bundle is gitignored, so it is never checked out, never updated by a
   # merge, and never invalidated by a rebase -- the gate would otherwise test
   # whichever JavaScript happened to be sitting on disk (#107). That reads both
@@ -417,16 +423,17 @@ tier_ui() {
       electron_ready=0
     fi
   fi
-  [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
   [ "$electron_ready" = 1 ] && spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
   reap
 }
 
 # --- tier: all ---------------------------------------------------------------
-# Running the tiers back to back leaves most cores idle: the Python gates never
-# touch cargo, the node unit suites never touch cargo, and Playwright only needs
-# the host binary. So build that binary first, then run everything else at once
-# and reap in a stable order.
+# Running every gate serially leaves most cores idle, while launching the Rust,
+# browser, Electron, DOM, and real-terminal suites all at once can starve their
+# event loops badly enough to manufacture input and timeout failures. Build the
+# host first, run static/compile/Rust work as one parallel phase, run the UI
+# suites as a second parallel phase, then give native Electron a final isolated
+# phase. Each phase still reaps in stable order.
 #
 # Concurrent cargo invocations serialise on the target-dir lock by themselves, so
 # fmt/check/clippy/nextest queue rather than corrupt anything — they simply stop
@@ -507,6 +514,11 @@ tier_all() {
     spawn "cargo test" cargo test --workspace --all-targets -- --test-threads=1
   fi
 
+  # Keep interactive/event-loop suites out of the CPU-heavy compile phase.
+  # This is a synchronization boundary, not a reduced gate: PASSED/FAILED and
+  # skip evidence accumulate across both reaps into the same final summary.
+  reap
+
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
@@ -515,6 +527,7 @@ tier_all() {
   if command -v tmux >/dev/null 2>&1; then
     run "build optimus cli" cargo build -p optimus-cli
     spawn "tui e2e" python3 scripts/tui_e2e.py
+    spawn "tui feature matrix" python3 scripts/tui_feature_matrix.py
     if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
       spawn "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
     else
@@ -522,6 +535,7 @@ tier_all() {
     fi
   else
     skip "tui e2e" "tmux not installed"
+    skip "tui feature matrix" "tmux not installed"
     skip "tui layout (playwright)" "tmux not installed"
   fi
 
@@ -530,6 +544,11 @@ tier_all() {
   else
     skip "playwright" "npm ci + npx playwright install chromium in apps/optimus-desktop"
   fi
+
+  # Electron embeds a full Chromium renderer. Reap the other browser and DOM
+  # drivers before launching it so the acceptance test measures application
+  # behavior, not scheduler starvation from competing browser processes.
+  reap
 
   if [ "$host_built" != 1 ]; then
     skip "electron e2e" "npm ci in apps/optimus-electron"

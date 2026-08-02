@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::{KernelError, Message, Result, Role};
 
+mod latest;
 mod project;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -564,7 +565,7 @@ impl SessionStore {
              FROM sessions
              ORDER BY COALESCE(pinned, 0) DESC,
                       COALESCE(archived, 0) ASC,
-                      updated_at DESC",
+                      updated_at DESC, rowid DESC",
         )?;
         let rows = stmt.query_map([], |row| self.meta_from_row(row))?;
         let mut out = Vec::new();
@@ -598,7 +599,7 @@ impl SessionStore {
              WHERE sessions_fts MATCH ?1
              ORDER BY COALESCE(s.pinned, 0) DESC,
                       COALESCE(s.archived, 0) ASC,
-                      s.updated_at DESC
+                      s.updated_at DESC, s.rowid DESC
              LIMIT 100",
         )?;
         let rows = stmt.query_map(params![match_q], |row| self.meta_from_row(row))?;
@@ -781,11 +782,11 @@ fn turn_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<TurnRecord> {
 
 fn chrono_stamp() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let secs = SystemTime::now()
+    let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
+        .map(|d| d.as_nanos())
         .unwrap_or(0);
-    format!("ts:{secs}")
+    format!("ts:{nanos}")
 }
 
 #[cfg(test)]
@@ -832,6 +833,22 @@ mod hygiene_tests {
             .unwrap();
         assert_eq!(all.len(), 3);
         assert!(all.iter().any(|s| s.id == b && s.archived));
+    }
+
+    #[test]
+    fn equally_timed_sessions_still_list_newest_first() {
+        let dir = tempdir().unwrap();
+        let store = SessionStore::open(dir.path().join("s.db")).unwrap();
+        let older = store.create("older").unwrap();
+        let newer = store.create("newer").unwrap();
+        store
+            .conn
+            .execute("UPDATE sessions SET updated_at = 'ts:1'", [])
+            .unwrap();
+
+        let listed = store.list().unwrap();
+        assert_eq!(listed[0].id, newer);
+        assert_eq!(listed[1].id, older);
     }
 
     #[test]

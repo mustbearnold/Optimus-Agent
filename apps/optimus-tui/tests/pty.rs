@@ -148,7 +148,17 @@ impl Term {
         loop {
             let screen = self.screen();
             if predicate(&screen) {
-                return screen;
+                // Ratatui clears and repaints a frame. The parser can expose
+                // the narrow interval between those writes, especially while
+                // the full repository gate is competing for CPU. Treat a
+                // condition as settled only when it survives one render
+                // interval; otherwise a transient half-frame can make the
+                // following cursor/screen assertion observe unrelated state.
+                thread::sleep(Duration::from_millis(30));
+                let settled = self.screen();
+                if predicate(&settled) {
+                    return settled;
+                }
             }
             assert!(
                 Instant::now() < deadline,

@@ -214,6 +214,8 @@ pub enum Intent {
     SidebarResizeStart,
     SidebarResizeTo(u16),
     SidebarResizeEnd,
+    /// Move the expanded sidebar section through rows that do not all fit.
+    SidebarScroll(isize),
     /// The pointer crossed the left-dismiss threshold while resizing.
     SidebarClose,
     /// A first-class action in the workspace rail.
@@ -272,10 +274,22 @@ pub fn intent_with_sidebar(
         interaction.sidebar_width,
     );
     let at = Position::new(event.column, event.row);
+    let layout = layout_with_sidebar(
+        area,
+        composer_height,
+        interaction.sidebar_open,
+        interaction.sidebar_width,
+    );
 
     match event.kind {
         // The wheel scrolls wherever the pointer is; hunting for the transcript
         // before it responds would just feel broken.
+        MouseEventKind::ScrollUp if picker.is_none() && layout.sidebar.contains(at) => {
+            return Intent::SidebarScroll(WHEEL)
+        }
+        MouseEventKind::ScrollDown if picker.is_none() && layout.sidebar.contains(at) => {
+            return Intent::SidebarScroll(-WHEEL)
+        }
         MouseEventKind::ScrollUp => return Intent::Scroll(WHEEL),
         MouseEventKind::ScrollDown => return Intent::Scroll(-WHEEL),
         MouseEventKind::Up(MouseButton::Left) if interaction.sidebar_dragging => {
@@ -313,12 +327,6 @@ pub fn intent_with_sidebar(
         };
     }
 
-    let layout = layout_with_sidebar(
-        area,
-        composer_height,
-        interaction.sidebar_open,
-        interaction.sidebar_width,
-    );
     if layout.sidebar.width > 0 {
         if matches!(event.kind, MouseEventKind::Down(MouseButton::Left))
             && layout.sidebar_divider.contains(at)
@@ -613,6 +621,30 @@ mod tests {
         assert_eq!(areas.context.x, 31);
         assert_eq!(areas.context.width, 47);
         assert_eq!(regions_with_sidebar(AREA, 3, true, 28).track.x, 77);
+    }
+
+    #[test]
+    fn the_wheel_pages_the_open_sidebar_only_when_the_pointer_is_over_it() {
+        assert_eq!(
+            intent_with_sidebar(
+                &at(MouseEventKind::ScrollDown, 4, 6),
+                AREA,
+                3,
+                None,
+                sidebar_interaction(true, false),
+            ),
+            Intent::SidebarScroll(-WHEEL)
+        );
+        assert_eq!(
+            intent_with_sidebar(
+                &at(MouseEventKind::ScrollDown, 60, 6),
+                AREA,
+                3,
+                None,
+                sidebar_interaction(true, false),
+            ),
+            Intent::Scroll(-WHEEL)
+        );
     }
 
     #[test]

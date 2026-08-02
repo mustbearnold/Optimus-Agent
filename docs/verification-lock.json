@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "0bde9a96de1bd52f880aff7fbed9b9d9560d200cf56ea9fbe6ba73fcf313b5c6",
+      "binding_sha256": "82116b13617b1ec0f33df8adcc75d8f3f494234668ae349e163fb7804f4fcd04",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 350
+      "resolved_files": 351
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "9d7bb2390275e354ac0774166c57f368763ee6d198d80d4d6e66a739d4f2a0e5",
@@ -277,7 +277,7 @@
       "resolved_files": 17
     },
     "decisions-0021-owned-execution-and-causal-delivery": {
-      "binding_sha256": "02dea6c6c04c526e0dc29315c0f676e0529cad03fbbd5d9131355cbb2c44021b",
+      "binding_sha256": "e9991b06a4e11564b5650ed2ce057655fcda0537cebf8410b5100ab6dd84c9ec",
       "document_sha256": "4e26f83257506fb9f260a6d0954680f186361d6114656a57b68bb8af7e4f26cc",
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "resolved_files": 26
@@ -499,31 +499,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "27a47c96a60350fd1a2e987290ea5de9929e130dace5809bdaa9dce16c130bbe",
+      "binding_sha256": "d7f82d30e3fd2880d85e3c4486c92fc74388dd2e5ea213810696cf5abdd45d48",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "386b5d25e2345cdd94d71aaa55c971317988314ce5e742c06f26c83a8ff403ee",
+      "binding_sha256": "d2e6fa4d9b700f6135f2ca3a382acdc5e223058822ad107f0784ec6299e22850",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "ba958c9d65b608d8b0ec90b704ac4d218a9c46dbb39a091dc883e89566800751",
+      "binding_sha256": "104701aad7f4544cf58cb42dc825f884e2ac8ad3c54645a78b115a9ea675fcb4",
       "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "1bd457e0e9a97e7601805db2c2189741efb165d5b321def4a61dfa57719cd676",
+      "binding_sha256": "006b4fad2b5e15ddad5463afb60f80eda83da3833c4919829b691e9100e3ef63",
       "document_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "1f6eb61c361d926388058aaaa3ae329eacfc8bbb65e5c53da4d157a10bc390ea",
+      "binding_sha256": "5bfe2f4ecced695f88c0330f3cbb5c53bf1122acc75b9b753e73082132c7cc79",
       "document_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
@@ -553,13 +553,13 @@
       "resolved_files": 9
     },
     "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
-      "binding_sha256": "fb825b1ef189b1d29cc5e603913125ec4b9665412a9fde22ec8ba53ffb5c9f90",
+      "binding_sha256": "e8d11d7cbe11a1b8ddf7e7ad7af86836758902c0961171c141461d95ef32dc40",
       "document_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "52cc05c7088151935ad9cbab3c0ed58f3a02020a0c4ae9905b34a049e7bff5b9",
+      "binding_sha256": "af4bc98979428e1599567688003ae89b55551292eb09da1f8550b452620fc3cf",
       "document_sha256": "51c5a6e335e3ead46ff3f2361b127a80614060fde3a01252bb44500d4db47b6c",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21
@@ -613,7 +613,7 @@
       "resolved_files": 7
     },
     "map-memory-and-retrieval": {
-      "binding_sha256": "eb70302778495b6278ea6b4585bae79ab6d11967889356965b89da8022ca9be9",
+      "binding_sha256": "b7f0f2d9606bc5eda3f6b92a6a2991d5f9fad8e9f5f65aae67b26fc6b63f8611",
       "document_sha256": "513fc2f99b7973c9ac04bd58dd3a7f89f28810331a79f8f7e4cc765eae5d65f6",
       "path": "docs/maps/memory-and-retrieval.md",
       "resolved_files": 16
@@ -643,7 +643,7 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "319dc099b07fab252749dcadfeb4603df7d0353fa4a534d1e2323d473bd473f1",
+      "binding_sha256": "30d1718e0baa5cd42e0d5511342537d68bb70c6054fb4896681c52cfa36d04c3",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12

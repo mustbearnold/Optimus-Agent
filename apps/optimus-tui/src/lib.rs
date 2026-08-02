@@ -12,7 +12,7 @@ use std::time::Instant;
 use crossterm::cursor::Show;
 use crossterm::event::{
     self, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-    Event, KeyCode, KeyEventKind, KeyModifiers, MouseEvent,
+    Event, KeyEventKind, MouseEvent,
 };
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -208,11 +208,6 @@ fn event_loop(
                 {
                     panic!("OPTIMUS_TUI_PANIC_ON_KEY");
                 }
-                if key.code == KeyCode::Char('b') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                    session.sidebar.toggle();
-                    repaint.mark();
-                    continue;
-                }
                 let mode = keys::Mode {
                     picker: session.picker.is_some(),
                     busy: session.busy(),
@@ -364,6 +359,7 @@ fn on_key(
             anchor(terminal, session)?;
         }
         Intent::Redraw => terminal.clear()?,
+        Intent::ToggleSidebar => session.sidebar.toggle(),
         Intent::Ignore => {}
     }
     Ok(false)
@@ -425,6 +421,7 @@ fn on_mouse(
         mouse::Intent::SidebarResizeStart => session.sidebar.dragging = true,
         mouse::Intent::SidebarResizeTo(width) => session.sidebar.resize_to(width),
         mouse::Intent::SidebarResizeEnd => session.sidebar.dragging = false,
+        mouse::Intent::SidebarScroll(rows) => session.sidebar.scroll(rows),
         mouse::Intent::SidebarClose => session.sidebar.close(),
         mouse::Intent::NewSession => commands::new_session(session),
         mouse::Intent::SidebarSection(section) => session.sidebar.select(section),

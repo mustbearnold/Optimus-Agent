@@ -13,7 +13,7 @@
 //! connect workers; [`approval`] decides parked effects; [`reservation`]
 //! secures durable identity before a provider is contacted.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 #[cfg(test)]
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
@@ -199,12 +199,10 @@ impl TuiSession {
             active: None,
         };
         session.refresh_sidebar();
-        let latest = session
-            .sidebar
-            .sessions
-            .iter()
-            .max_by_key(|meta| meta.updated_at.clone())
-            .cloned();
+        let latest = SessionStore::open(session.home.join("sessions.db"))
+            .and_then(|store| store.latest())
+            .ok()
+            .flatten();
         if let Some(meta) = latest {
             if let Err(error) = session.load_session_meta(&meta) {
                 session.push(
@@ -289,6 +287,7 @@ impl TuiSession {
 
         self.sidebar
             .replace_data(sessions, projects, self.session_id.is_none());
+        self.sidebar.reveal_session(self.session_id.as_deref());
     }
 
     /// Load one durable row into the compatibility transcript and its
@@ -675,18 +674,12 @@ impl TuiSession {
 /// A turn that parks on an approval settles as an error, which carries no
 /// session id — but resolution needs one. The turn that just parked is by
 /// construction the newest session, so recover the id from the durable list.
-fn latest_session_id(home: &PathBuf) -> Option<String> {
-    let value = handle_ipc(home, "sessions", json!({})).ok()?;
-    let sessions = value.get("sessions")?.as_array()?.clone();
-    sessions
-        .iter()
-        .max_by_key(|row| {
-            row.get("updated_at")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string()
-        })
-        .and_then(|row| row.get("id").and_then(|v| v.as_str()).map(str::to_string))
+fn latest_session_id(home: &Path) -> Option<String> {
+    let latest = SessionStore::open(home.join("sessions.db"))
+        .ok()?
+        .latest()
+        .ok()??;
+    Some(latest.id.to_string())
 }
 
 #[cfg(test)]

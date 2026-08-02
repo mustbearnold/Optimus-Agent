@@ -82,7 +82,7 @@ fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
             } else {
                 "›  "
             },
-            "SESSIONS".to_owned(),
+            section_label("SESSIONS", session, Section::Sessions),
             section_style(session.sidebar.section == Section::Sessions),
         ),
         sidebar::Row::Session(index) => session_row(session, index),
@@ -105,7 +105,7 @@ fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
             } else {
                 "›  "
             },
-            "PROJECTS".to_owned(),
+            section_label("PROJECTS", session, Section::Projects),
             section_style(session.sidebar.section == Section::Projects),
         ),
         sidebar::Row::Project(index) => project_row(session, index),
@@ -128,7 +128,7 @@ fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
             } else {
                 "›  "
             },
-            "PINNED".to_owned(),
+            section_label("PINNED", session, Section::Pinned),
             section_style(session.sidebar.section == Section::Pinned),
         ),
         sidebar::Row::PinnedSession(index) => pinned_session_row(session, index),
@@ -163,6 +163,15 @@ fn section_style(selected: bool) -> Style {
         style.fg(ACCENT)
     } else {
         style
+    }
+}
+
+fn section_label(name: &str, session: &TuiSession, section: Section) -> String {
+    let (start, end, total) = session.sidebar.visible_window(section);
+    if total > end.saturating_sub(start) && total > 0 {
+        format!("{name} {}–{end}/{total}", start + 1)
+    } else {
+        name.to_owned()
     }
 }
 
