@@ -49,9 +49,10 @@ use approval::{decision_line, resolved_update};
 /// Braille frames, the conventional terminal spinner.
 const SPINNER: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
-/// Render frames per spinner step. The loop polls at 40ms, so this animates at
-/// roughly 12 steps a second — visible motion without strobing.
-const SPINNER_EVERY: usize = 2;
+/// Default animation ticks per spinner step. The animation clock adjusts this
+/// for an explicit 60 Hz ceiling while keeping the glyph family near 15 steps
+/// per second.
+const DEFAULT_SPINNER_EVERY: usize = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Role {
@@ -133,8 +134,10 @@ pub struct TuiSession {
     /// the menus, and costs the terminal's own click-and-drag text selection,
     /// so it has to be surrenderable.
     pub mouse: bool,
-    /// Render frames since start, driving the spinner animation.
+    /// Animation ticks since start, driving the spinner animation.
     frame: usize,
+    /// Animation ticks between visible spinner glyphs.
+    spinner_every: usize,
     /// When the active worker began, for the elapsed counter.
     started: Option<Instant>,
     /// Whether this turn has produced any answer text yet, which decides
@@ -173,6 +176,7 @@ impl TuiSession {
             dragging: false,
             mouse: true,
             frame: 0,
+            spinner_every: DEFAULT_SPINNER_EVERY,
             started: None,
             answer_started: false,
             active: None,
@@ -183,9 +187,13 @@ impl TuiSession {
         self.active.is_some()
     }
 
-    /// Advance the spinner. Called once per render frame.
+    /// Advance the spinner. Called only when the shared animation clock ticks.
     pub fn tick(&mut self) {
         self.frame = self.frame.wrapping_add(1);
+    }
+
+    pub(crate) fn set_spinner_ticks(&mut self, ticks: usize) {
+        self.spinner_every = ticks.max(1);
     }
 
     /// The activity line shown under the transcript while a worker runs.
@@ -196,7 +204,7 @@ impl TuiSession {
         if !self.busy() {
             return None;
         }
-        let spinner = SPINNER[(self.frame / SPINNER_EVERY) % SPINNER.len()];
+        let spinner = SPINNER[(self.frame / self.spinner_every) % SPINNER.len()];
         let what = match (&self.running_tool, self.status.as_str()) {
             (Some(tool), _) => tool.as_str(),
             (None, "") => "working",
@@ -1121,6 +1129,17 @@ mod tests {
 
         session.running_tool = Some("web_search".into());
         assert!(session.activity_line(80).unwrap().contains("web_search"));
+    }
+
+    #[test]
+    fn pump_reports_domain_changes_once_for_dirty_frame_scheduling() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        assert!(!session.pump(), "an empty worker queue needs no repaint");
+
+        tx.send(TurnUpdate::Status("still working".into())).unwrap();
+        assert!(session.pump(), "a typed update changes the painted state");
+        assert!(!session.pump(), "the same update must not repaint forever");
     }
 
     #[test]

@@ -112,10 +112,11 @@ pub(super) fn stream_sink(
 }
 
 impl TuiSession {
-    /// Drain whatever the worker has produced. Called every frame; never blocks.
-    pub fn pump(&mut self) {
+    /// Drain whatever the worker has produced. Never blocks. Returns whether
+    /// the screen state changed and therefore needs a repaint.
+    pub fn pump(&mut self) -> bool {
         let Some(active) = &self.active else {
-            return;
+            return false;
         };
         let kind = active.kind;
         let mut awaiting = active.awaiting_approval;
@@ -148,6 +149,7 @@ impl TuiSession {
             }
         }
 
+        let changed = !batch.is_empty() || finished.is_some();
         let mut parked = false;
         for update in batch {
             match update {
@@ -256,6 +258,7 @@ impl TuiSession {
         } else if let Some(active) = self.active.as_mut() {
             active.awaiting_approval = awaiting;
         }
+        changed
     }
 
     /// Place a tool's progress, rewriting the row that call already owns.

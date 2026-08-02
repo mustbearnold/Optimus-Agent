@@ -7,7 +7,7 @@
 
 use std::io::{self, Write};
 use std::path::PathBuf;
-use std::time::Duration;
+use std::time::Instant;
 
 use crossterm::cursor::Show;
 use crossterm::event::{
@@ -20,6 +20,8 @@ use crossterm::terminal::{
 use crossterm::ExecutableCommand;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+
+pub mod animation;
 
 mod activity;
 mod commands;
@@ -140,9 +142,12 @@ fn event_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     mut session: TuiSession,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Poll rather than block: a running turn must be able to paint streamed text
-    // and accept Ctrl-C while the worker is still talking to the model.
-    let frame = Duration::from_millis(40);
+    // The clock owns motion; this loop owns no per-widget timers. A running
+    // turn gets a bounded wake for event draining, while an idle terminal can
+    // block on input without repainting or waking every 40ms.
+    let mut animation = animation::AnimationClock::from_environment();
+    session.set_spinner_ticks(animation.spinner_ticks());
+    let mut repaint = animation::FrameInvalidation::initial();
     let mut captured = true;
     // Proving the panic hook works needs a panic that happens while the screen
     // is taken, and the only honest way to get one is to ask. Read once, and
@@ -153,15 +158,21 @@ fn event_loop(
         .ok()
         .and_then(|value| value.chars().next());
     loop {
-        session.pump();
-        session.tick();
-        // Arriving output lengthens the transcript underneath a selection the
-        // human is reading, so the anchor is recomputed with it rather than
-        // only when a key moves. Only while a worker is running: nothing else
-        // can lengthen the transcript, and re-laying it out every frame of an
-        // idle session would pay for a move that cannot happen.
-        if session.busy() {
-            anchor(terminal, &mut session)?;
+        let now = Instant::now();
+        let domain_changed = session.pump();
+        if domain_changed {
+            repaint.mark();
+            // Arriving output lengthens the transcript underneath a selection
+            // the human is reading, so the anchor is recomputed with it rather
+            // than only when a key moves.
+            if session.busy() {
+                anchor(terminal, &mut session)?;
+            }
+        }
+        animation.set_active(session.busy(), now);
+        if animation.tick_if_due(now) {
+            session.tick();
+            repaint.mark();
         }
         if session.mouse != captured {
             captured = session.mouse;
@@ -171,42 +182,54 @@ fn event_loop(
                 terminal.backend_mut().execute(DisableMouseCapture)?;
             }
         }
-        terminal.draw(|f| view::draw(f, &session))?;
-
-        if !event::poll(frame)? {
+        if repaint.take_for_draw() {
+            terminal.draw(|f| view::draw(f, &session))?;
+        }
+        let ready = match animation.next_wake(Instant::now()) {
+            Some(wake) => event::poll(wake.saturating_duration_since(Instant::now()))?,
+            // No animation and no running worker: the terminal has no reason to
+            // wake itself. `read` blocks until a human event arrives.
+            None => true,
+        };
+        if !ready {
             continue;
         }
-        let key = match event::read()? {
-            Event::Key(key) => key,
+        match event::read()? {
+            Event::Key(key) => {
+                if key.kind != KeyEventKind::Press {
+                    continue;
+                }
+                #[cfg(debug_assertions)]
+                if panic_key
+                    .is_some_and(|wanted| key.code == crossterm::event::KeyCode::Char(wanted))
+                {
+                    panic!("OPTIMUS_TUI_PANIC_ON_KEY");
+                }
+                let mode = keys::Mode {
+                    picker: session.picker.is_some(),
+                    busy: session.busy(),
+                    drafting: !session.composer.is_empty(),
+                    suggesting: !completion::suggestions(session.composer.text()).is_empty(),
+                    inspecting: session.workbench.inspecting(),
+                };
+                if on_key(terminal, &mut session, keys::intent(&key, mode))? {
+                    return Ok(());
+                }
+                repaint.mark();
+            }
             Event::Mouse(mouse) => {
                 on_mouse(terminal, &mut session, &mouse)?;
-                continue;
+                repaint.mark();
             }
             // A paste is text, never a submit — the whole point of turning
             // bracketed paste on.
             Event::Paste(text) => {
                 session.history.release();
                 session.composer.insert_str(&text);
-                continue;
+                repaint.mark();
             }
-            _ => continue,
-        };
-        if key.kind != KeyEventKind::Press {
-            continue;
-        }
-        #[cfg(debug_assertions)]
-        if panic_key.is_some_and(|wanted| key.code == crossterm::event::KeyCode::Char(wanted)) {
-            panic!("OPTIMUS_TUI_PANIC_ON_KEY");
-        }
-        let mode = keys::Mode {
-            picker: session.picker.is_some(),
-            busy: session.busy(),
-            drafting: !session.composer.is_empty(),
-            suggesting: !completion::suggestions(session.composer.text()).is_empty(),
-            inspecting: session.workbench.inspecting(),
-        };
-        if on_key(terminal, &mut session, keys::intent(&key, mode))? {
-            return Ok(());
+            Event::Resize(_, _) => repaint.mark(),
+            _ => {}
         }
     }
 }

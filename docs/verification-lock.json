@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "678192877c450f9715941a0e60e9dc5f4ec444c24334783fd3aeb0d72d0afd71",
+      "binding_sha256": "845e025f0f259340dd558737875d7ffc7046ed1f685883283843cc102a21b01e",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 345
+      "resolved_files": 346
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "5e4c95a61f1094b920d3342132e4cbaf2425441bfc58f5d228f09608b143a63e",
@@ -427,7 +427,7 @@
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "329d43f106512eeb735fe03c374ca61905903fefb0475236d327fceec01499c5",
+      "binding_sha256": "4f558c77016ae447b92cc409339e017e3f7ee762ec3f4f4e2d5a9b6384079ba0",
       "document_sha256": "2fbc37d6c738f10f4fb686b2c2ad7537c34cf1fb12c75de6a4147063ad40ea81",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 12
@@ -559,13 +559,13 @@
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "c85c5f6328ff535be4b1893b860665e2b94371a03fd8f8e6a622cc882953a479",
-      "document_sha256": "3dacd75e9da78b81d4be149644e42b887d8ed8d6cdb0d9f75a339f128eeb6826",
+      "binding_sha256": "6a88829062bf9ecaaefee5cc8dfcb508b8a114c252d184e42b6cc022af3f3dec",
+      "document_sha256": "5ba016c2bf93dd9d81d4fbd2fde078707829d704fa904fafe3b9630d7cb42bde",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
-      "resolved_files": 18
+      "resolved_files": 19
     },
     "decisions-readme": {
-      "binding_sha256": "cf1fbcf410eabcddbdc320fa0144c767a8c82041a66e29cfe5070737638ca91c",
+      "binding_sha256": "353b57b36c3d6a50734cd791ff5073df59a0c4a77c54e0e6d37497912a89bca5",
       "document_sha256": "8ab4bf0d45ed44cf07fb70a86582926a032af565f828570f6d91c3ce0246c05e",
       "path": "docs/decisions/README.md",
       "resolved_files": 80

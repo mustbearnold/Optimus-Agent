@@ -9,6 +9,7 @@ reviewed_on: 2026-08-02
 review_by: 2026-11-02
 knowledge_type: decision
 covers:
+  - apps/optimus-tui/src/animation.rs
   - apps/optimus-tui/src/workbench/mod.rs
   - apps/optimus-tui/src/workbench/detail.rs
   - apps/optimus-tui/src/workbench/grouping.rs
@@ -28,6 +29,7 @@ depends_on:
   - docs/decisions/0049-module-size-is-measured-honestly.md
   - docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md
 validated_by:
+  - apps/optimus-tui/src/animation.rs
   - apps/optimus-tui/tests/pty.rs
   - apps/optimus-tui/src/workbench/mod.rs
   - apps/optimus-tui/src/workbench/detail.rs
@@ -74,6 +76,14 @@ validated_by:
   deliver, and why, is recorded under Consequences: file-edit detail and
   syntax-highlighted diffs have no event source yet, and `Timing` stays
   unconsumed because per-call durations already arrive on the lifecycle event.
+- **Phase 4 delivered (animation foundation):** 2026-08-02 — the terminal now
+  has one timestamp-injected `AnimationClock` with `Off`, `Fps30`, `Fps60`, and
+  `Adaptive` modes plus an explicit reduced-motion setting. The event loop
+  drains worker events on bounded live-work wakes, blocks indefinitely while
+  idle, and draws only after a domain event, input/resize, or due animation
+  tick marks the coalescing repaint flag. The default keeps the existing
+  readable spinner cadence; static modes retain live event draining without
+  animating.
 
 ## Context
 
@@ -111,22 +121,23 @@ ApprovalRequired, Succeeded, Failed, Cancelled, Suppressed, Ambiguous }`
 (apps/optimus-tui/src/session.rs:56) maps this onto `TurnUpdate {
 SessionReserved, Text, Status, Tool(ToolStep), Approval(Box<
 ToolApprovalBinding>), ApprovalSettled, Done, Failed }` over an `mpsc`
-channel; `pump()` drains it in per-frame batches into `Vec<Message>` where
+channel; `pump()` drains it in per-wake batches into `Vec<Message>` where
 `Message { role, text, call_id }` and `apply_tool_step` rev-finds the row by
 `call_id` and rewrites it in place. Two events are dropped on the floor today:
 `ThinkingDelta` and `Timing` (session.rs's match arm discards them with a
 comment that they "belong in a dock"). A vanished worker channel without a
 terminal update is detected and reported as a worker panic with the log path.
 
-**Render loop.** `event_loop` (apps/optimus-tui/src/lib.rs) runs a fixed
-40 ms cadence: every iteration pumps, ticks, syncs mouse capture, then calls
-`terminal.draw` unconditionally before polling input with a 40 ms timeout —
-roughly 25 full draws per second while completely idle. There is no dirty
-tracking and no notion of animation modes; the single braille spinner advances
-every second frame (`SPINNER_EVERY = 2`, ~12 steps/s). Terminal restoration is
-already complete and correct: raw mode, bracketed paste, mouse capture,
-alternate screen, and cursor are restored on exit and from a panic hook that
-checks the owning thread so a worker panic cannot tear down a live screen.
+**Render loop.** `event_loop` (apps/optimus-tui/src/lib.rs) uses the phase-4
+`AnimationClock`: worker events are drained on a bounded live-work wake,
+animation ticks are scheduled from one deadline, and `terminal.draw` runs only
+when the `FrameInvalidation` flag is dirty. An idle session blocks on input with
+no self-wake and no redraw. The default adaptive clock keeps the prior roughly
+12.5 spinner steps per second; `Off` and reduced motion leave a static
+indicator while still draining a live worker. Terminal restoration is already
+complete and correct: raw mode, bracketed paste, mouse capture, alternate
+screen, and cursor are restored on exit and from a panic hook that checks the
+owning thread so a worker panic cannot tear down a live screen.
 
 **Input.** Key handling is pure intent functions: `keys::Mode { picker, busy,
 drafting, suggesting }` maps events to a typed `Intent`. The picker owns the
@@ -423,6 +434,9 @@ app, because both consume the same host surface.
   turn-relative timing rather than being wired up for appearances.
 - The idle terminal stops drawing ~25 frames a second; dirty-tracking bugs
   become the new risk, mitigated as recorded under Risks.
+- Animation configuration is explicit and bounded: `OPTIMUS_TUI_ANIMATION`
+  selects the mode and `OPTIMUS_TUI_REDUCED_MOTION` disables motion. Neither
+  setting changes domain lifecycle truth or suppresses worker event draining.
 - Every future block kind inherits an honesty bar: no plan/agent/job/browser
   block may appear to work before its event source exists, and stall warnings
   stay warnings.
@@ -435,10 +449,11 @@ app, because both consume the same host surface.
 ## Risks
 
 - **Under-drawing.** A dirty-frame loop can miss a repaint and show stale
-  state. Mitigation: every state mutation sets the dirty bit at one choke
-  point (the adapter), a property test asserts any valid event sequence ends
-  drawn-when-changed, and the differential rule applies — disable the dirty
-  check and prove the test fails.
+  state. Mitigation: domain pumps return an explicit changed bit, input and
+  resize events mark the same coalescing invalidation, and focused clock/
+  invalidation tests pin the first-paint, clear, and re-mark transitions. A
+  property-level event-order/draw differential remains planned for a later
+  hardening slice.
 - **Split regressions.** Splitting session.rs can disturb approval
   continuity, the most safety-critical path in the terminal. Mitigation: the
   PTY suite and the approval unit tests pin behaviour before the split; the
@@ -457,13 +472,11 @@ app, because both consume the same host surface.
   40×20 PTY, cursor row 17) drives the shipped binary and pins composer,
   transcript, picker, and suggestion behaviour — the behavioural baseline
   phase 1 must preserve.
-- **Confirmed current behaviour.** The render loop draws unconditionally on
-  a fixed 40 ms cadence (~25 draws/s idle; spinner ~12 steps/s;
-  `pump()` batches stream updates per frame) — read directly from
-  apps/optimus-tui/src/lib.rs. No measured input-to-render latency baseline
-  exists; the frame bench layer is deferred to phase 4 and must begin with a
-  current best-practice search on the date of that work (AGENTS.md workflow
-  step 6).
+- **Confirmed current behaviour.** The phase-4 render loop uses one
+  `AnimationClock`, coalesces `pump()` batches, suppresses idle redraws, and
+  keeps the default spinner near its prior cadence. No measured
+  input-to-render latency or physical-display frame baseline exists; the
+  deterministic scheduling tests are not a 240 Hz performance claim.
 - **Confirmed current behaviour.** `stream_sink`
   (apps/optimus-tui/src/session.rs:56) discards `ThinkingDelta` and `Timing`
   today; every other kernel event reaches the transcript typed.
@@ -478,8 +491,9 @@ app, because both consume the same host surface.
 - **Confirmed current behaviour.** scripts/perf_harness.py and
   docs/architecture/perf-baseline.json (`optimus-perf/1`) baseline the eight
   CLI turn scenarios; they do not measure terminal frames.
-- Phase 0 is docs-only: no source file changes, so the existing suites stand
-  unchanged as the baseline the next phase diffs against.
+- Phase 4 source and test changes are covered by the focused TUI unit and PTY
+  suites; physical-display frame measurements remain outside the current
+  evidence.
 
 ## Conditions for reconsideration
 
@@ -521,9 +535,11 @@ app, because both consume the same host surface.
   items rather than blocks, and the fold toggle that records a human touched
   it.
 - apps/optimus-tui/src/lib.rs — the event loop this decision's animation
-  contract replaces; `anchor` keeps the selected block on screen while the
+  contract implements; `anchor` keeps the selected block on screen while the
   transcript has the keyboard, and the mouse path reaches the same two moves
   the keyboard does.
+- apps/optimus-tui/src/animation.rs — the timestamp-injected animation modes,
+  live-work wake policy, spinner cadence, and coalescing repaint flag.
 - apps/optimus-tui/src/transcript.rs, view.rs — the row projection: rows are
   painted from items, each names its block, and `view::hit` reads a screen row
   back to the block it paints without parsing what the row says.
@@ -566,9 +582,13 @@ app, because both consume the same host surface.
 - apps/optimus-tui/tests/pty.rs — Tab handing the keyboard to the transcript
   and back through the shipped binary, letters typed while inspecting never
   reaching the draft, and an SGR click selecting a block.
-- Planned behaviour: property tests for event-order/resize permutations, the
-  dirty-draw differential test, and the phase-4 frame bench do not exist yet
-  and land with their phases.
+- apps/optimus-tui/src/animation.rs — idle no-wake behaviour, configured frame
+  deadlines, missed-tick coalescing, static-mode worker draining, mode parsing,
+  and one-paint invalidation semantics.
+- Planned behaviour: property tests for event-order/resize permutations, a
+  dirty-draw differential test, and physical-display frame measurements remain
+  future hardening work; this phase supplies the deterministic clock and
+  invalidation seams they will exercise.
 
 ## Explicit non-claims
 
