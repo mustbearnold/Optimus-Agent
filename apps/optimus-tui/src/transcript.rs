@@ -22,6 +22,11 @@ use unicode_segmentation::UnicodeSegmentation;
 /// Longest line the transcript will lay out, however wide the terminal is.
 pub const READABLE_WIDTH: usize = 96;
 
+/// A provenance URL is useful as an identity, not as a paragraph. The
+/// transcript keeps its beginning and uses a dim ellipsis for the query/path
+/// tail so Google-style search URLs cannot take over the answer.
+const MAX_SOURCE_URL_CELLS: usize = 64;
+
 /// Fold markers: the run is open, and the run is closed.
 const OPEN: char = '▾';
 const SHUT: char = '▸';
@@ -44,6 +49,15 @@ pub struct Segment {
     pub bold: bool,
     /// Supporting runs can recede without losing their terminal cells.
     pub dim: bool,
+}
+
+/// A grapheme carrying the small amount of markdown emphasis the terminal
+/// understands, plus whether a long source URL should recede into its fade.
+#[derive(Debug, Clone)]
+struct Marked {
+    text: String,
+    bold: bool,
+    dim: bool,
 }
 
 impl Segment {
@@ -192,6 +206,7 @@ pub fn rows(
                 id,
                 tool,
                 members,
+                member_bodies,
                 expanded,
             } => {
                 let mut header = header_rows(tool, members.len(), *expanded, width);
@@ -200,7 +215,7 @@ pub fn rows(
                 if !*expanded {
                     continue;
                 }
-                for at in members {
+                for (member_index, at) in members.iter().enumerate() {
                     let Some(message) = messages.get(*at) else {
                         continue;
                     };
@@ -209,6 +224,17 @@ pub fn rows(
                     let mut laid = laid_rows(message.role, &message.text, width, "  ⏺ ", "    ");
                     owned_by(&mut laid, *id, chosen);
                     rows.extend(laid);
+                    if let Some(body) = member_bodies
+                        .get(member_index)
+                        .and_then(|body| body.as_ref())
+                    {
+                        for line in &body.lines {
+                            let mut detail =
+                                laid_rows(message.role, line, width, "    │ ", "    │ ");
+                            owned_by(&mut detail, *id, chosen);
+                            rows.extend(detail);
+                        }
+                    }
                 }
             }
         }
@@ -272,11 +298,14 @@ fn greeting(width: u16) -> Vec<Row> {
 ///
 /// Shared by both framings: the task surface and the bare gutter differ only
 /// in what they put beside these lines.
-fn laid_out(text: &str, content: usize) -> Vec<Vec<(String, bool)>> {
-    let mut lines: Vec<Vec<(String, bool)>> = Vec::new();
+fn laid_out(text: &str, content: usize, compact_urls: bool) -> Vec<Vec<Marked>> {
+    let mut lines: Vec<Vec<Marked>> = Vec::new();
     let mut after_bullet = false;
     for line in text.split('\n') {
-        let parsed = parse_inline(line);
+        let mut parsed = parse_inline(line);
+        if compact_urls {
+            parsed.marked = compact_long_urls(parsed.marked);
+        }
         // Bullets in a run get a blank line between them. A dense list is the
         // hardest thing to read back in a terminal, where there is no leading.
         if parsed.bullet && after_bullet && !lines.is_empty() {
@@ -329,7 +358,7 @@ fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> V
     }
     let content = usable.saturating_sub(chrome).max(1);
 
-    laid_out(text, content)
+    laid_out(text, content, matches!(role, Role::Assistant | Role::Tool))
         .iter()
         .enumerate()
         .map(|(index, line)| {
@@ -384,7 +413,7 @@ fn operation_rows(
         .saturating_sub(first_width + status_width + 2)
         .min(READABLE_WIDTH.saturating_sub(first_width))
         .max(1);
-    let lines = laid_out(&content, room);
+    let lines = laid_out(&content, room, true);
     lines
         .iter()
         .enumerate()
@@ -460,7 +489,7 @@ fn prompt_rows(message: &Message, width: u16) -> Vec<Row> {
     let content = outer
         .saturating_sub(6)
         .min(READABLE_WIDTH.saturating_sub(6));
-    let lines = laid_out(&message.text, content.max(1));
+    let lines = laid_out(&message.text, content.max(1), false);
     let surface = || Row {
         role: Role::User,
         segments: Vec::new(),
@@ -486,7 +515,7 @@ fn prompt_rows(message: &Message, width: u16) -> Vec<Row> {
 
 /// One logical line resolved into styled characters, plus how it lays out.
 struct Parsed {
-    marked: Vec<(String, bool)>,
+    marked: Vec<Marked>,
     bullet: bool,
     /// Columns to indent continuation lines by, so a wrapped bullet's later
     /// lines sit under its text rather than under the glyph.
@@ -522,9 +551,13 @@ fn parse_inline(line: &str) -> Parsed {
     }
     let hang = if bullet { width::cells(&prefix) } else { 0 };
 
-    let mut marked: Vec<(String, bool)> = prefix
+    let mut marked: Vec<Marked> = prefix
         .graphemes(true)
-        .map(|grapheme| (grapheme.to_owned(), heading))
+        .map(|grapheme| Marked {
+            text: grapheme.to_owned(),
+            bold: heading,
+            dim: false,
+        })
         .collect();
     let graphemes: Vec<&str> = rest.graphemes(true).collect();
     let mut bold = false;
@@ -536,7 +569,11 @@ fn parse_inline(line: &str) -> Parsed {
             index += 2;
             continue;
         }
-        marked.push((graphemes[index].to_owned(), bold || heading));
+        marked.push(Marked {
+            text: graphemes[index].to_owned(),
+            bold: bold || heading,
+            dim: false,
+        });
         index += 1;
     }
     Parsed {
@@ -546,11 +583,61 @@ fn parse_inline(line: &str) -> Parsed {
     }
 }
 
+/// Replace an overlong URL token before wrapping. Doing this before the word
+/// wrapper matters: otherwise a Google query is already split across several
+/// rows and there is no honest way to tell the layout that the tail belongs to
+/// one source identity.
+fn compact_long_urls(marked: Vec<Marked>) -> Vec<Marked> {
+    let mut compacted = Vec::with_capacity(marked.len());
+    let mut at = 0;
+    while at < marked.len() {
+        if !starts_with_url(&marked, at) {
+            compacted.push(marked[at].clone());
+            at += 1;
+            continue;
+        }
+        let mut end = at;
+        while end < marked.len() && !marked[end].text.chars().any(char::is_whitespace) {
+            end += 1;
+        }
+        let url = marked[at..end]
+            .iter()
+            .map(|grapheme| grapheme.text.as_str())
+            .collect::<String>();
+        if width::cells(&url) <= MAX_SOURCE_URL_CELLS {
+            compacted.extend(marked[at..end].iter().cloned());
+        } else {
+            compacted.push(Marked {
+                text: width::take(&url, MAX_SOURCE_URL_CELLS - 1),
+                bold: marked[at].bold,
+                dim: false,
+            });
+            compacted.push(Marked {
+                text: "…".into(),
+                bold: false,
+                dim: true,
+            });
+        }
+        at = end;
+    }
+    compacted
+}
+
+fn starts_with_url(marked: &[Marked], at: usize) -> bool {
+    let prefix = marked
+        .iter()
+        .skip(at)
+        .take(8)
+        .map(|grapheme| grapheme.text.as_str())
+        .collect::<String>();
+    prefix.starts_with("https://") || prefix.starts_with("http://")
+}
+
 /// Greedy word wrap that keeps each grapheme's emphasis attached to it.
 ///
 /// `hang` indents every line after the first, which is what makes a wrapped
 /// bullet read as one item rather than as two.
-fn wrap_marked(marked: &[(String, bool)], width: usize, hang: usize) -> Vec<Vec<(String, bool)>> {
+fn wrap_marked(marked: &[Marked], width: usize, hang: usize) -> Vec<Vec<Marked>> {
     if marked.is_empty() {
         return vec![Vec::new()];
     }
@@ -568,7 +655,7 @@ fn wrap_marked(marked: &[(String, bool)], width: usize, hang: usize) -> Vec<Vec<
         let mut end = start;
         let mut used = 0;
         while end < marked.len() {
-            let item_width = width::grapheme_cells(&marked[end].0);
+            let item_width = width::grapheme_cells(&marked[end].text);
             if item_width > room {
                 if used == 0 {
                     end += 1;
@@ -589,17 +676,17 @@ fn wrap_marked(marked: &[(String, bool)], width: usize, hang: usize) -> Vec<Vec<
             break;
         }
         // A space just beyond the measured edge is still a useful break point.
-        if end < marked.len() && marked[end].0 == " " {
+        if end < marked.len() && marked[end].text == " " {
             end += 1;
         }
         let take = (start..end)
             .rev()
-            .find(|index| *index > start && marked[*index].0 == " ")
+            .find(|index| *index > start && marked[*index].text == " ")
             .unwrap_or(end);
         let take = take.max(start + 1).min(marked.len());
         rows.push(indented(&marked[start..take], indent, room));
         start = take;
-        while start < marked.len() && marked[start].0 == " " {
+        while start < marked.len() && marked[start].text == " " {
             start += 1;
         }
         if start == marked.len() {
@@ -609,31 +696,44 @@ fn wrap_marked(marked: &[(String, bool)], width: usize, hang: usize) -> Vec<Vec<
     rows
 }
 
-fn indented(chunk: &[(String, bool)], indent: usize, room: usize) -> Vec<(String, bool)> {
-    let mut row = vec![(" ".to_owned(), false); indent];
+fn indented(chunk: &[Marked], indent: usize, room: usize) -> Vec<Marked> {
+    let mut row = vec![
+        Marked {
+            text: " ".to_owned(),
+            bold: false,
+            dim: false,
+        };
+        indent
+    ];
     let mut used = 0;
-    for (text, bold) in chunk {
+    for marked in chunk {
         let remaining = room.saturating_sub(used);
-        let fitted = width::fit_grapheme(text, remaining);
-        if fitted.is_empty() && !text.is_empty() {
+        let fitted = width::fit_grapheme(&marked.text, remaining);
+        if fitted.is_empty() && !marked.text.is_empty() {
             continue;
         }
         used += width::cells(&fitted);
-        row.push((fitted, *bold));
+        row.push(Marked {
+            text: fitted,
+            bold: marked.bold,
+            dim: marked.dim,
+        });
     }
     row
 }
 
 /// Collapse tagged graphemes back into the fewest segments that preserve style.
-fn runs(marked: &[(String, bool)]) -> Vec<Segment> {
+fn runs(marked: &[Marked]) -> Vec<Segment> {
     let mut segments: Vec<Segment> = Vec::new();
-    for (grapheme, bold) in marked {
+    for grapheme in marked {
         match segments.last_mut() {
-            Some(last) if last.bold == *bold => last.text.push_str(grapheme),
+            Some(last) if last.bold == grapheme.bold && last.dim == grapheme.dim => {
+                last.text.push_str(&grapheme.text)
+            }
             _ => segments.push(Segment {
-                text: grapheme.clone(),
-                bold: *bold,
-                dim: false,
+                text: grapheme.text.clone(),
+                bold: grapheme.bold,
+                dim: grapheme.dim,
             }),
         }
     }
@@ -708,6 +808,28 @@ mod tests {
             "a 400-column terminal must still wrap for readability"
         );
         assert!(rows.len() > 1);
+    }
+
+    #[test]
+    fn a_long_source_url_fades_after_its_identity_without_wrapping_the_query() {
+        let url = "https://www.google.com/search?q=latest+ai+news+today&source=web&client=optimus&hl=en-NZ&safe=active";
+        let rows = message_rows(&message(Role::Assistant, url), 100);
+        let shown = plain(&rows).join("\n");
+        assert!(shown.contains("https://www.google.com/search"), "{shown}");
+        assert!(
+            shown.contains('…'),
+            "the source needs a visible fade cue: {shown}"
+        );
+        assert!(
+            !shown.contains("client=optimus&hl=en-NZ&safe=active"),
+            "the query tail should recede: {shown}"
+        );
+        assert!(
+            rows.iter()
+                .flat_map(|row| row.segments.iter())
+                .any(|segment| segment.dim && segment.text.contains('…')),
+            "the fade cue should use the transcript's supporting style"
+        );
     }
 
     #[test]
@@ -972,6 +1094,7 @@ mod tests {
             id,
             tool: "read_file".into(),
             members: vec![0, 1, 2],
+            member_bodies: vec![None, None, None],
             expanded: false,
         };
         (messages, vec![item], id)
@@ -982,11 +1105,16 @@ mod tests {
             .iter()
             .map(|item| match item {
                 Item::Group {
-                    id, tool, members, ..
+                    id,
+                    tool,
+                    members,
+                    member_bodies,
+                    ..
                 } => Item::Group {
                     id: *id,
                     tool: tool.clone(),
                     members: members.clone(),
+                    member_bodies: member_bodies.clone(),
                     expanded: true,
                 },
                 other => other.clone(),
@@ -1014,6 +1142,44 @@ mod tests {
                 "  ⏺ read_file  src/2.rs",
             ],
             "the marker turns and the members appear underneath it"
+        );
+    }
+
+    #[test]
+    fn opening_a_search_group_keeps_its_sources_inside_the_group() {
+        let messages = vec![
+            message(Role::Tool, "web_search  2 results"),
+            message(Role::Tool, "web_search  2 results"),
+            message(Role::Tool, "web_search  2 results"),
+        ];
+        let id = BlockId::mint();
+        let items = vec![Item::Group {
+            id,
+            tool: "web_search".into(),
+            members: vec![0, 1, 2],
+            member_bodies: vec![
+                Some(Body {
+                    lines: vec![
+                        "1. First headline".into(),
+                        "   https://example.com/first".into(),
+                    ],
+                    expanded: false,
+                }),
+                None,
+                None,
+            ],
+            expanded: true,
+        }];
+        let painted = plain(&rows(&messages, &items, None, 100, Chrome::Plain));
+        assert_eq!(painted[0], "▾ web_search · 3 calls");
+        assert_eq!(painted[1], "  ⏺ web_search  2 results");
+        assert_eq!(painted[2], "    │ 1. First headline");
+        assert_eq!(painted[3], "    │    https://example.com/first");
+        assert!(
+            painted
+                .iter()
+                .all(|row| row.starts_with('▾') || row.starts_with("  ")),
+            "search source rows must remain children of the group: {painted:?}"
         );
     }
 

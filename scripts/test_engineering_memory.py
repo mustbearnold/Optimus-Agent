@@ -488,9 +488,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertEqual(rendered, '{"a":[2,3],"b":1}\n')
 
     def test_file_record_hash_cache_round_trip(self) -> None:
-        with tempfile.TemporaryDirectory(
-            prefix="engineering-memory-cache-", dir=ROOT
-        ) as directory:
+        with tempfile.TemporaryDirectory(prefix="engineering-memory-cache-") as directory:
             path = Path(directory) / "cached.txt"
             path.write_text("alpha\n", encoding="utf-8")
             first = EM.file_record(path)
@@ -574,9 +572,7 @@ class EngineeringMemoryTests(unittest.TestCase):
             self.assertIn(ignored, EM.EXCLUDED_PARTS)
 
     def test_file_records_canonicalize_text_eol_and_preserve_binary_bytes(self) -> None:
-        with tempfile.TemporaryDirectory(
-            prefix="engineering-memory-test-", dir=ROOT
-        ) as directory:
+        with tempfile.TemporaryDirectory(prefix="engineering-memory-test-") as directory:
             text_path = Path(directory) / "fixture.html"
             text_path.write_bytes(b"a\r\nb\r\n")
             text_record = EM.file_record(text_path)
@@ -592,9 +588,7 @@ class EngineeringMemoryTests(unittest.TestCase):
             self.assertIsNone(binary_record["lines"])
 
     def test_validation_computes_truth_without_generated_cache_files(self) -> None:
-        with tempfile.TemporaryDirectory(
-            prefix="engineering-memory-disposable-", dir=ROOT
-        ) as directory:
+        with tempfile.TemporaryDirectory(prefix="engineering-memory-disposable-") as directory:
             cache = Path(directory) / ".engineering-memory"
             old_cache = EM._HASH_CACHE
             old_dirty = EM._HASH_CACHE_DIRTY
@@ -615,9 +609,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 EM._HASH_CACHE_DIRTY = old_dirty
 
     def test_bounded_lens_materializes_missing_disposable_cache(self) -> None:
-        with tempfile.TemporaryDirectory(
-            prefix="engineering-memory-lens-", dir=ROOT
-        ) as directory:
+        with tempfile.TemporaryDirectory(prefix="engineering-memory-lens-") as directory:
             cache = Path(directory) / ".engineering-memory"
             old_cache = EM._HASH_CACHE
             old_dirty = EM._HASH_CACHE_DIRTY
@@ -640,9 +632,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 EM._HASH_CACHE_DIRTY = old_dirty
 
     def test_check_uses_missing_cache_as_read_only_cold_baseline(self) -> None:
-        with tempfile.TemporaryDirectory(
-            prefix="engineering-memory-check-", dir=ROOT
-        ) as directory:
+        with tempfile.TemporaryDirectory(prefix="engineering-memory-check-") as directory:
             cache = Path(directory) / ".engineering-memory"
             old_cache = EM._HASH_CACHE
             old_dirty = EM._HASH_CACHE_DIRTY

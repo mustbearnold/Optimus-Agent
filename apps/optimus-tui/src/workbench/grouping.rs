@@ -58,6 +58,10 @@ pub enum Item {
         /// Transcript indices of every member, in order. Never shorter than
         /// [`MIN_GROUP`].
         members: Vec<usize>,
+        /// Bodies produced by the members, kept in the same order as
+        /// `members` so search sources and other readable results paint under
+        /// the call that produced them rather than beside the group.
+        member_bodies: Vec<Option<Body>>,
         /// Whether the human opened it. Runs arrive closed.
         expanded: bool,
     },
@@ -123,10 +127,15 @@ pub fn project(blocks: &[WorkbenchBlock]) -> Vec<Item> {
         let head = &blocks[at];
         let run = run_length(blocks, at);
         if run >= MIN_GROUP {
+            let members: Vec<usize> = (at..at + run).collect();
             items.push(Item::Group {
                 id: head.id,
                 tool: foldable_tool(head).unwrap_or_default().to_string(),
-                members: (at..at + run).collect(),
+                member_bodies: members
+                    .iter()
+                    .map(|index| body_of(&blocks[*index]))
+                    .collect(),
+                members,
                 expanded: opened_by_hand(head),
             });
             at += run;
@@ -443,6 +452,29 @@ mod tests {
         );
     }
 
+    fn searched(state: &mut WorkbenchState, call: &str, title: &str) {
+        state.push_body_for_test(
+            "web_search",
+            call,
+            crate::workbench::ToolDetail::read(Some(&optimus_packs::ToolOutcome::succeeded(
+                call,
+                "web_search",
+                "Found 1 source",
+                serde_json::json!({
+                    "ok": true,
+                    "query": "AI news today",
+                    "count": 1,
+                    "results": [{
+                        "title": title,
+                        "url": "https://example.com/article",
+                        "provenance_url": "https://example.com/article"
+                    }]
+                }),
+                optimus_packs::ReplayClass::ExternalNondeterministic,
+            ))),
+        );
+    }
+
     #[test]
     fn a_command_that_printed_something_can_be_opened() {
         let mut state = state();
@@ -454,6 +486,26 @@ mod tests {
 
         state.toggle_fold_of(items[0].id());
         assert!(project(state.blocks())[0].expanded());
+    }
+
+    #[test]
+    fn grouped_search_calls_carry_each_source_body_into_the_group() {
+        let mut state = state();
+        searched(&mut state, "search-0", "First headline");
+        searched(&mut state, "search-1", "Second headline");
+        searched(&mut state, "search-2", "Third headline");
+        let projected = project(state.blocks());
+        let [Item::Group { member_bodies, .. }] = projected.as_slice() else {
+            panic!("three searches should project to one group");
+        };
+        assert_eq!(member_bodies.len(), 3);
+        assert!(member_bodies.iter().all(Option::is_some));
+        assert!(member_bodies[1]
+            .as_ref()
+            .unwrap()
+            .lines
+            .iter()
+            .any(|line| line.contains("Second headline")));
     }
 
     #[test]

@@ -28,8 +28,7 @@ const WARNING: Color = Color::Rgb(226, 190, 112);
 const DANGER: Color = Color::Rgb(235, 116, 116);
 const PROMPT_BACKGROUND: Color = Color::Rgb(27, 27, 29);
 const HOVER_BACKGROUND: Color = Color::Rgb(34, 35, 40);
-const SELECTED_BACKGROUND: Color = Color::Rgb(38, 46, 68);
-const SELECTED_TEXT: Color = Color::Rgb(242, 244, 250);
+const SELECTED_MARKER: Color = Color::Rgb(164, 184, 255);
 const COMPOSER_BACKGROUND: Color = Color::Rgb(25, 25, 27);
 const SIDEBAR_BACKGROUND: Color = Color::Rgb(17, 17, 17);
 const SIDEBAR_ACTION: Color = Color::Rgb(24, 27, 36);
@@ -181,10 +180,10 @@ fn compact_path(path: &std::path::Path, width: u16) -> String {
 /// Colour a row by whose turn it is. Distinct hues per role are what make the
 /// transcript scannable rather than one undifferentiated block of text.
 ///
-/// The selected item gets a restrained slate surface rather than reverse video.
-/// Reverse video turns a long semantic block into a wall of white in most
-/// terminals; a deliberate dark surface keeps the inspect state obvious while
-/// preserving the workbench's visual hierarchy.
+/// Inspect is a focus state, not a text-selection state. Keep the transcript
+/// on its normal surfaces and put the focus colour on the item's gutter marker;
+/// painting every row in a selected semantic block makes a long answer look
+/// like it has been reverse-selected by the terminal.
 fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Line<'static> {
     let is_hovered = !row.selected && row.block.is_some() && row.block == hovered;
     let mut base = match row.role {
@@ -197,32 +196,30 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
     if row.surface_width.is_some() {
         base = base.bg(PROMPT_BACKGROUND);
     }
-    if row.selected {
-        base = base
-            .fg(SELECTED_TEXT)
-            .bg(SELECTED_BACKGROUND)
-            .add_modifier(Modifier::BOLD);
-    }
     let mut spans = row
         .segments
         .iter()
         .enumerate()
         .map(|(index, segment)| {
             let mut style = base;
-            if index == 0 && !row.selected {
+            if index == 0 {
                 let marker = segment.text.trim_start().chars().next();
                 let semantic_marker =
-                    matches!(marker, Some('›' | '✦' | '│' | '◇' | '×' | '▸' | '▾'));
-                style = match (row.role, marker) {
-                    (Role::User, Some('›')) | (Role::Assistant, Some('✦')) => {
-                        style.fg(ACCENT).add_modifier(Modifier::BOLD)
+                    matches!(marker, Some('›' | '✦' | '│' | '◇' | '×' | '▸' | '▾' | '⏺'));
+                if row.selected && row.role == Role::Tool && semantic_marker {
+                    style = style.fg(SELECTED_MARKER).add_modifier(Modifier::BOLD);
+                } else if !row.selected {
+                    style = match (row.role, marker) {
+                        (Role::User, Some('›')) | (Role::Assistant, Some('✦')) => {
+                            style.fg(ACCENT).add_modifier(Modifier::BOLD)
+                        }
+                        (Role::Tool, Some('│')) => style.fg(SUCCESS),
+                        (Role::Tool, Some('▸' | '▾')) => style.fg(ACCENT),
+                        _ => style,
+                    };
+                    if is_hovered && semantic_marker {
+                        style = style.bg(HOVER_BACKGROUND).add_modifier(Modifier::BOLD);
                     }
-                    (Role::Tool, Some('│')) => style.fg(SUCCESS),
-                    (Role::Tool, Some('▸' | '▾')) => style.fg(ACCENT),
-                    _ => style,
-                };
-                if is_hovered && semantic_marker {
-                    style = style.bg(HOVER_BACKGROUND).add_modifier(Modifier::BOLD);
                 }
             }
             if row.role == Role::Tool {
@@ -1233,7 +1230,7 @@ mod tests {
     }
 
     #[test]
-    fn the_selected_block_is_visibly_marked_on_screen() {
+    fn inspect_focus_uses_a_quiet_marker_not_a_terminal_selection_fill() {
         let (_dir, mut session) = with_a_run();
         let transcript = |session: &TuiSession| {
             render(session, 60, 14)
@@ -1256,13 +1253,21 @@ mod tests {
         let mut terminal = Terminal::new(backend).expect("test terminal");
         terminal.draw(|f| draw(f, &session)).expect("draw");
         let buffer = terminal.backend().buffer();
-        let selected_background = (0..buffer.area.height)
+        let selected_marker = (0..buffer.area.height)
             .flat_map(|y| (0..buffer.area.width).map(move |x| (x, y)))
-            .filter(|(x, y)| buffer[(*x, *y)].style().bg == Some(SELECTED_BACKGROUND))
+            .filter(|(x, y)| buffer[(*x, *y)].style().fg == Some(SELECTED_MARKER))
             .count();
         assert!(
-            selected_background > 0,
-            "the block the keyboard is pointed at has to be visible"
+            selected_marker > 0,
+            "the block the keyboard is pointed at needs a small focus marker"
+        );
+        let selected_fill = (0..buffer.area.height)
+            .flat_map(|y| (0..buffer.area.width).map(move |x| (x, y)))
+            .filter(|(x, y)| buffer[(*x, *y)].style().bg == Some(SELECTED_MARKER))
+            .count();
+        assert_eq!(
+            selected_fill, 0,
+            "focus must not paint a block-sized surface"
         );
         let reversed = (0..buffer.area.height)
             .flat_map(|y| (0..buffer.area.width).map(move |x| (x, y)))

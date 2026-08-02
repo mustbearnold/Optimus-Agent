@@ -19,6 +19,9 @@ use optimus_packs::ToolOutcome;
 /// lines must not become a hundred thousand rows of transcript to lay out on
 /// every frame; what is dropped is said so, out loud, in [`CommandDetail`].
 const MAX_KEPT_LINES: usize = 200;
+/// A search result is evidence, not a browser dump. Keep enough titles to
+/// identify what the call found while leaving the rest behind the fold.
+const MAX_SEARCH_RESULTS: usize = 8;
 
 /// The typed body a block can open, when its tool produced one.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -28,6 +31,7 @@ pub enum ToolDetail {
     #[default]
     None,
     Command(CommandDetail),
+    WebSearch(SearchDetail),
 }
 
 impl ToolDetail {
@@ -42,7 +46,9 @@ impl ToolDetail {
         };
         match CommandDetail::read(outcome) {
             Some(command) => Self::Command(command),
-            None => Self::None,
+            None => SearchDetail::read(outcome)
+                .map(Self::WebSearch)
+                .unwrap_or(Self::None),
         }
     }
 
@@ -51,6 +57,7 @@ impl ToolDetail {
         match self {
             Self::None => false,
             Self::Command(command) => !command.body().is_empty(),
+            Self::WebSearch(search) => !search.body().is_empty(),
         }
     }
 
@@ -59,7 +66,93 @@ impl ToolDetail {
         match self {
             Self::None => Vec::new(),
             Self::Command(command) => command.body(),
+            Self::WebSearch(search) => search.body(),
         }
+    }
+}
+
+/// The useful part of a `web_search` outcome once it is opened: source titles
+/// and provenance URLs, kept under the call that produced them. Snippets are
+/// deliberately not copied into the TUI body; they turn an expandable tool
+/// call into a second answer and are where raw search noise starts to win.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchDetail {
+    pub query: String,
+    pub results: Vec<SearchResult>,
+    pub omitted: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchResult {
+    pub title: String,
+    pub url: String,
+}
+
+impl SearchDetail {
+    fn read(outcome: &ToolOutcome) -> Option<Self> {
+        if outcome.tool_id.as_str() != "web_search" {
+            return None;
+        }
+        let data = outcome.data.as_object()?;
+        let raw_results = data.get("results")?.as_array()?;
+        let mut results = Vec::new();
+        for result in raw_results {
+            let Some(result) = result.as_object() else {
+                continue;
+            };
+            let title = result
+                .get("title")
+                .and_then(|value| value.as_str())
+                .unwrap_or_default()
+                .trim();
+            let url = result
+                .get("provenance_url")
+                .or_else(|| result.get("url"))
+                .and_then(|value| value.as_str())
+                .unwrap_or_default()
+                .trim();
+            if title.is_empty() && url.is_empty() {
+                continue;
+            }
+            results.push(SearchResult {
+                title: title.to_string(),
+                url: url.to_string(),
+            });
+            if results.len() == MAX_SEARCH_RESULTS {
+                break;
+            }
+        }
+        if results.is_empty() {
+            return None;
+        }
+        Some(Self {
+            query: data
+                .get("query")
+                .and_then(|value| value.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            omitted: raw_results.len().saturating_sub(results.len()),
+            results,
+        })
+    }
+
+    fn body(&self) -> Vec<String> {
+        let mut rows = Vec::new();
+        if !self.query.is_empty() {
+            rows.push(format!("query: {}", self.query));
+        }
+        for (index, result) in self.results.iter().enumerate() {
+            if !result.title.is_empty() {
+                rows.push(format!("{}. {}", index + 1, result.title));
+            }
+            if !result.url.is_empty() {
+                rows.push(format!("   {}", result.url));
+            }
+        }
+        if self.omitted > 0 {
+            rows.push(format!("… {} more sources", self.omitted));
+        }
+        rows
     }
 }
 
@@ -236,6 +329,76 @@ mod tests {
         assert_eq!(read, ToolDetail::None);
         assert!(!read.has_body());
         assert!(ToolDetail::read(None).body().is_empty());
+    }
+
+    #[test]
+    fn a_web_search_opens_onto_compact_sources_under_its_call() {
+        let read = ToolDetail::read(Some(&ToolOutcome::succeeded(
+            "call-1",
+            "web_search",
+            "Found 2 sources",
+            json!({
+                "ok": true,
+                "query": "AI news today",
+                "count": 2,
+                "results": [
+                    {
+                        "title": "A useful headline",
+                        "url": "https://example.com/article",
+                        "provenance_url": "https://example.com/article",
+                        "snippet": "not copied into the TUI body"
+                    },
+                    {
+                        "title": "Another headline",
+                        "url": "https://example.com/another"
+                    }
+                ]
+            }),
+            ReplayClass::ExternalNondeterministic,
+        )));
+        let ToolDetail::WebSearch(search) = read else {
+            panic!("expected search detail: {read:?}");
+        };
+        assert_eq!(search.query, "AI news today");
+        assert_eq!(
+            search.body(),
+            vec![
+                "query: AI news today",
+                "1. A useful headline",
+                "   https://example.com/article",
+                "2. Another headline",
+                "   https://example.com/another",
+            ]
+        );
+        assert!(!search.body().join("\n").contains("not copied"));
+    }
+
+    #[test]
+    fn a_search_body_caps_the_number_of_sources_it_opens() {
+        let results = (0..MAX_SEARCH_RESULTS + 2)
+            .map(|index| {
+                json!({
+                    "title": format!("Headline {index}"),
+                    "url": format!("https://example.com/{index}"),
+                })
+            })
+            .collect::<Vec<_>>();
+        let read = ToolDetail::read(Some(&ToolOutcome::succeeded(
+            "call-1",
+            "web_search",
+            "Found sources",
+            json!({"ok": true, "results": results}),
+            ReplayClass::ExternalNondeterministic,
+        )));
+        let ToolDetail::WebSearch(search) = read else {
+            panic!("expected search detail: {read:?}");
+        };
+        assert_eq!(search.results.len(), MAX_SEARCH_RESULTS);
+        assert_eq!(search.omitted, 2);
+        assert!(search
+            .body()
+            .last()
+            .is_some_and(|line| line.contains("2 more")));
     }
 
     #[test]
