@@ -837,17 +837,25 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
     seed_projects(case.home)
     case.launch()
     try:
+        def sidebar_window(heading: str, item: str | None = None) -> list[str]:
+            return case.wait(
+                lambda lines: heading in normalized(lines)
+                and (item is None or item in normalized(lines)),
+                12,
+                f"sidebar window {heading!r} {item!r}",
+            )
+
         initial = case.capture()
         for label in ("WORKSPACE", "New session", "SESSIONS", "PROJECTS", "PINNED"):
             audit.check(label in normalized(initial), f"sidebar omitted {label}", case)
         audit.check("5 projects" in normalized(initial), "project count omitted scopes", case)
 
         case.click_text("PROJECTS", sidebar_only=True)
-        projects = case.wait_text("PROJECTS 1–2/5")
+        projects = sidebar_window("PROJECTS 1–2/5", "project-1")
         audit.check(case.home.name in normalized(projects), "workspace project missing", case)
         audit.check("project-1" in normalized(projects), "first named project missing", case)
         case.mouse("wheel-down", 4, 10)
-        overflow = case.wait_text("PROJECTS 4–5/5")
+        overflow = sidebar_window("PROJECTS 4–5/5", "project-4")
         audit.check("project-4" in normalized(overflow), "last project inaccessible", case)
         case.click_text("project-4", sidebar_only=True)
         case.wait_text("project scope: project-4")
@@ -857,7 +865,7 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.command("/new", "new session ready")
         case.click_text("PROJECTS", sidebar_only=True)
         case.mouse("wheel-up", 4, 10)
-        case.wait_text("PROJECTS 1–2/5")
+        sidebar_window("PROJECTS 1–2/5", case.home.name)
         case.click_text(case.home.name, sidebar_only=True)
         case.wait_text(f"project scope: {case.home.name}")
         case.prompt("workspace-session-one")
@@ -872,14 +880,14 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         sessions = case.capture()
         audit.check("matrix-session-6" in normalized(sessions), "active session hidden", case)
         case.click_text("SESSIONS", sidebar_only=True)
-        case.wait_text("SESSIONS 1–3/7")
+        sidebar_window("SESSIONS 1–3/7", "matrix-session-3")
         for _ in range(4):
             case.mouse("wheel-up", 4, 6)
-        head = case.wait_text("SESSIONS 1–3/7")
+        head = sidebar_window("SESSIONS 1–3/7", "matrix-session-3")
         audit.check("matrix-session-3" in normalized(head), "newest pin missing", case)
         for _ in range(4):
             case.mouse("wheel-down", 4, 6)
-        tail = case.wait_text("SESSIONS 5–7/7")
+        tail = sidebar_window("SESSIONS 5–7/7", "matrix-session-4")
         audit.check("matrix-session-4" in normalized(tail), "oldest window inaccessible", case)
         case.click_text("matrix-session-4", sidebar_only=True)
         case.wait_text("offline echo: matrix-session-4")
@@ -887,10 +895,10 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.click_text("New session", sidebar_only=True)
         case.wait_text("new session ready")
         case.click_text("PINNED", sidebar_only=True)
-        pinned = case.wait_text("PINNED 1–3/4")
+        pinned = sidebar_window("PINNED 1–3/4", "matrix-session-3")
         audit.check("matrix-session-3" in normalized(pinned), "newest pin missing", case)
         case.mouse("wheel-down", 4, 13)
-        last_pins = case.wait_text("PINNED 2–4/4")
+        last_pins = sidebar_window("PINNED 2–4/4", "project-four-session")
         audit.check("project-four-session" in normalized(last_pins), "oldest pin inaccessible", case)
         case.click_text("project-four-session", sidebar_only=True)
         case.wait_text("offline echo: project-four-session")
@@ -899,7 +907,7 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
 
         case.click_text("PROJECTS", sidebar_only=True)
         case.mouse("wheel-up", 4, 10)
-        case.wait_text("PROJECTS 1–2/5")
+        sidebar_window("PROJECTS 1–2/5", case.home.name)
         case.click_text(case.home.name, sidebar_only=True)
         refused = case.wait_text("start a new session before changing its project scope")
         audit.check("project-four-session" in normalized(refused), "scope refusal lost session", case)
@@ -909,7 +917,7 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.click_text("PROJECTS", sidebar_only=True)
         for _ in range(2):
             case.mouse("wheel-down", 4, 10)
-        case.wait_text("PROJECTS 4–5/5")
+        sidebar_window("PROJECTS 4–5/5", "project-4")
         case.click_text("project-4", sidebar_only=True)
         filtered = case.wait_text("project scope: project-4")
         audit.check("matrix-session-6" not in normalized(filtered), "project filter leaked sessions", case)
@@ -960,7 +968,7 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.wait_text("new session ready")
         case.click_text("PROJECTS", sidebar_only=True)
         case.mouse("wheel-up", 4, 10)
-        case.wait_text("PROJECTS 1–2/5")
+        sidebar_window("PROJECTS 1–2/5", case.home.name)
         case.click_text(case.home.name, sidebar_only=True)
         case.wait_text(f"project scope: {case.home.name}")
 
@@ -986,6 +994,47 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
             "persisted prompt history",
         )
         case.keys("Escape")
+    finally:
+        case.close()
+
+
+def responsive_sidebar_reopen(audit: Audit, case: Case) -> None:
+    audit.begin("responsive-sidebar-reopen-at-width-threshold")
+    case.launch()
+    try:
+        narrow = case.capture()
+        audit.check(
+            "WORKSPACE" not in normalized(narrow),
+            "narrow rail should collapse into its gutter tab",
+            case,
+        )
+
+        # The rail is still logically open at this width. Clicking the visible
+        # tab must not turn that preference off before the user widens the
+        # terminal again.
+        case.click(0, 0)
+        resized = tmux(
+            "resize-window",
+            "-t",
+            case.session,
+            "-x",
+            "80",
+            "-y",
+            str(case.rows),
+        )
+        audit.check(resized.returncode == 0, "responsive resize failed", case)
+        reopened = case.wait_text("WORKSPACE")
+        audit.check("WORKSPACE" in normalized(reopened), "hidden rail did not reappear", case)
+
+        case.click_text("collapse", sidebar_only=True)
+        closed = case.wait_absent("WORKSPACE")
+        audit.check(closed[0].startswith("›"), "closed rail left no reopen tab", case)
+        case.click(0, 0)
+        audit.check(
+            "WORKSPACE" in normalized(case.wait_text("WORKSPACE")),
+            "closed rail tab did not reopen the rail",
+            case,
+        )
     finally:
         case.close()
 
@@ -1056,6 +1105,10 @@ def main() -> int:
             )
             scroll_and_inspect(audit, Case(binary, fresh("scroll"), rows=24))
             sidebar_and_persistence(audit, Case(binary, fresh("sidebar")))
+            responsive_sidebar_reopen(
+                audit,
+                Case(binary, fresh("responsive-sidebar"), cols=60, rows=20),
+            )
             exit_routes(audit, binary, root)
     except (FeatureFailure, StopIteration) as error:
         print(f"TUI_FEATURE_MATRIX_FAIL: {error}", file=os.sys.stderr)

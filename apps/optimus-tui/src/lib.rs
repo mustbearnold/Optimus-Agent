@@ -418,6 +418,7 @@ fn on_mouse(
         mouse::Intent::GrabTrack => session.dragging = true,
         mouse::Intent::Release => session.dragging = false,
         mouse::Intent::ToggleSidebar => session.sidebar.toggle(),
+        mouse::Intent::OpenSidebar => session.sidebar.open = true,
         mouse::Intent::SidebarResizeStart => session.sidebar.dragging = true,
         mouse::Intent::SidebarResizeTo(width) => session.sidebar.resize_to(width),
         mouse::Intent::SidebarResizeEnd => session.sidebar.dragging = false,

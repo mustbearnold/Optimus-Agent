@@ -210,6 +210,9 @@ pub enum Intent {
     /// Toggle the workspace rail, including the small reopen tab when it is
     /// collapsed.
     ToggleSidebar,
+    /// Open the collapsed tab without toggling a rail that is only hidden by
+    /// the responsive width rule.
+    OpenSidebar,
     /// Start, continue, or finish a horizontal rail resize.
     SidebarResizeStart,
     SidebarResizeTo(u16),
@@ -360,8 +363,9 @@ pub fn intent_with_sidebar(
         && event.column < area.x.saturating_add(HORIZONTAL_GUTTER)
     {
         // The collapsed tab lives in the outer gutter, which is otherwise
-        // empty. It is the mouse equivalent of Ctrl-B.
-        return Intent::ToggleSidebar;
+        // empty. It is an open action, not a toggle: a rail can be logically
+        // open while temporarily hidden because the terminal is too narrow.
+        return Intent::OpenSidebar;
     }
 
     match event.kind {
@@ -715,7 +719,17 @@ mod tests {
         let event = at(MouseEventKind::Down(MouseButton::Left), 0, 0);
         assert_eq!(
             intent_with_sidebar(&event, AREA, 3, None, sidebar_interaction(false, false)),
-            Intent::ToggleSidebar
+            Intent::OpenSidebar
+        );
+    }
+
+    #[test]
+    fn a_responsive_collapsed_tab_does_not_close_a_rail_hidden_by_width() {
+        let narrow = Rect { width: 60, ..AREA };
+        let event = at(MouseEventKind::Down(MouseButton::Left), 0, 0);
+        assert_eq!(
+            intent_with_sidebar(&event, narrow, 3, None, sidebar_interaction(true, false),),
+            Intent::OpenSidebar
         );
     }
 }
