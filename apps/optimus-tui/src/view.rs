@@ -297,15 +297,31 @@ fn draw_status(frame: &mut Frame, area: Rect, session: &TuiSession) {
     } else {
         format!("{policy}  ")
     };
-    let right_budget = width::cells(&right_full).min(total.saturating_sub(4));
-    let right = width::truncate(&right_full, right_budget);
-    let gap = if total >= width::cells(&prefix) + width::cells(&right) + 2 {
-        2
+    let prefix_width = width::cells(&prefix);
+    let compact_label = compact_turn_label(session);
+    let compact_label_width = width::cells(&compact_label);
+    let available = total.saturating_sub(prefix_width);
+    let policy_width = width::cells(&right_full);
+    // On a narrow terminal, preserving the state is more useful than showing
+    // a clipped policy badge. The old calculation reserved the right side
+    // first, which could turn the only actionable state into `turn · re…`.
+    let keep_policy = policy_width > 0
+        && available
+            >= compact_label_width
+                .saturating_add(2)
+                .saturating_add(policy_width);
+    let right = if keep_policy {
+        right_full
     } else {
-        0
+        String::new()
     };
-    let label_budget = total.saturating_sub(width::cells(&prefix) + width::cells(&right) + gap);
-    let left_label = width::truncate(&label, label_budget);
+    let gap = if !right.is_empty() { 2 } else { 0 };
+    let label_budget = total.saturating_sub(prefix_width + width::cells(&right) + gap);
+    let left_label = if width::cells(&label) <= label_budget {
+        label
+    } else {
+        width::truncate(&compact_label, label_budget)
+    };
     let mut spans = vec![Span::raw(width::take(&prefix, total))];
     spans.push(Span::styled(left_label, Style::default().fg(MUTED)));
     let used = spans
@@ -328,6 +344,22 @@ fn draw_status(frame: &mut Frame, area: Rect, session: &TuiSession) {
         );
     }
     frame.render_widget(Paragraph::new(line), area);
+}
+
+/// The smallest useful state label. It is the fallback when the full status
+/// sentence and policy badge cannot share a narrow status rail.
+fn compact_turn_label(session: &TuiSession) -> String {
+    if session.busy() {
+        if session.status.trim().is_empty() {
+            "working".into()
+        } else {
+            session.status.clone()
+        }
+    } else if session.pending_approval.is_some() {
+        "approval".into()
+    } else {
+        "ready".into()
+    }
 }
 
 /// Only policy belongs opposite the turn state. Provider/model already lives
@@ -361,6 +393,7 @@ fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
             ],
             &[("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")],
             &[("^C", "stop"), ("Tab", "inspect"), ("Esc", "clear")],
+            &[("^C", "stop"), ("Esc", "clear")],
             &[("Esc", "clear")],
         ]
     } else {
@@ -373,6 +406,7 @@ fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
             ],
             &[("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")],
             &[("↵", "send"), ("Tab", "inspect"), ("Esc", "clear")],
+            &[("↵", "send"), ("Esc", "clear")],
             &[("Esc", "clear")],
         ]
     };
@@ -694,6 +728,32 @@ mod tests {
             help.contains("↵:send") && help.contains("Tab:inspect") && help.contains("Esc:clear"),
             "compact labels must remain complete: {screen:?}"
         );
+    }
+
+    #[test]
+    fn a_tiny_status_keeps_the_ready_state_before_policy_metadata() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 20, 12);
+        let status = screen
+            .iter()
+            .find(|row| row.contains('●'))
+            .expect("status rail");
+        assert!(status.contains("ready"), "state was clipped: {screen:?}");
+    }
+
+    #[test]
+    fn a_tiny_idle_help_keeps_the_exit_affordance_visible() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 20, 12);
+        assert!(screen.last().is_some_and(|row| row.contains("Esc:clear")));
+    }
+
+    #[test]
+    fn a_small_idle_help_keeps_send_and_clear_together_when_they_fit() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 32, 12);
+        let help = screen.last().expect("help rail");
+        assert!(help.contains("↵:send") && help.contains("Esc:clear"));
     }
 
     #[test]
