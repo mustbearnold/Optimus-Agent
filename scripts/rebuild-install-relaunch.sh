@@ -313,7 +313,7 @@ validate_electron_sources() {
     || fail "Electron runtime source already contains an application payload"
   [[ -d "$UI_DIST_SOURCE" && ! -L "$UI_DIST_SOURCE" && -f "$UI_DIST_SOURCE/index.html" ]] \
     || fail "React production assets missing: $UI_DIST_SOURCE"
-  for required in package.json main.cjs preload.cjs browser-policy.cjs runtime-paths.cjs; do
+  for required in package.json main.cjs preload.cjs browser-policy.cjs runtime-paths.cjs host-discovery.cjs; do
     [[ -f "$ELECTRON_APP_SOURCE/$required" && ! -L "$ELECTRON_APP_SOURCE/$required" ]] \
       || fail "Electron application file missing or symlinked: $ELECTRON_APP_SOURCE/$required"
   done
@@ -422,7 +422,7 @@ stage_electron_bundle() {
     || fail "staged Electron runtime is missing its executable"
   mv -- "$electron_destination/electron" "$electron_destination/optimus-agent"
   mkdir -p "$app_destination/ui-dist"
-  for file in package.json main.cjs preload.cjs browser-policy.cjs runtime-paths.cjs; do
+  for file in package.json main.cjs preload.cjs browser-policy.cjs runtime-paths.cjs host-discovery.cjs; do
     install -m 0644 -- "$ELECTRON_APP_SOURCE/$file" "$app_destination/$file"
   done
   cp -a -- "$UI_DIST_SOURCE/." "$app_destination/ui-dist/"
@@ -694,7 +694,7 @@ esac
 
 case "\${OPTIMUS_DESKTOP_SHELL:-electron}" in
   electron)
-    [[ -x "\$ELECTRON_BINARY" && -f "\$ELECTRON_APP/main.cjs" && -f "\$UI_DIST/index.html" ]] || {
+    [[ -x "\$ELECTRON_BINARY" && -f "\$ELECTRON_APP/main.cjs" && -f "\$ELECTRON_APP/host-discovery.cjs" && -f "\$UI_DIST/index.html" ]] || {
       printf 'Installed Optimus Electron application is incomplete: %s\\n' "\$INSTALL_ROOT" >&2
       exit 1
     }

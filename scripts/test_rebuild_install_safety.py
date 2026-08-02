@@ -68,7 +68,13 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        for name in ("main.cjs", "preload.cjs", "browser-policy.cjs", "runtime-paths.cjs"):
+        for name in (
+            "main.cjs",
+            "preload.cjs",
+            "browser-policy.cjs",
+            "runtime-paths.cjs",
+            "host-discovery.cjs",
+        ):
             (electron_app / name).write_text(
                 f"// installer fixture: {name}\n",
                 encoding="utf-8",
@@ -251,6 +257,7 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertTrue(host.is_file())
             self.assertTrue(electron.is_file())
             self.assertTrue((packaged_app / "main.cjs").is_file())
+            self.assertTrue((packaged_app / "host-discovery.cjs").is_file())
             self.assertTrue((packaged_app / "ui-dist" / "index.html").is_file())
             self.assertEqual(
                 subprocess.check_output(
