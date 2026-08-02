@@ -49,6 +49,7 @@ pub struct Interaction {
     pub sidebar_open: bool,
     pub sidebar_width: u16,
     pub sidebar_dragging: bool,
+    pub sidebar_state: sidebar::HitState,
 }
 
 /// Split the frame into the workbench's five visual bands.
@@ -219,6 +220,12 @@ pub enum Intent {
     NewSession,
     /// A section heading in the workspace rail was selected.
     SidebarSection(sidebar::Section),
+    /// Open one of the durable sessions shown in the rail.
+    SidebarSession(usize),
+    /// Open one of the durable pinned sessions shown in the rail.
+    SidebarPinnedSession(usize),
+    /// Select a project scope for the session list and subsequent turns.
+    SidebarProject(usize),
     Nothing,
 }
 
@@ -245,6 +252,7 @@ pub fn intent(
             sidebar_open: false,
             sidebar_width: sidebar::DEFAULT_WIDTH,
             sidebar_dragging: false,
+            sidebar_state: sidebar::HitState::default(),
         },
     )
 }
@@ -320,12 +328,18 @@ pub fn intent_with_sidebar(
         if matches!(event.kind, MouseEventKind::Down(MouseButton::Left))
             && layout.sidebar.contains(at)
         {
-            return match at.y.saturating_sub(layout.sidebar.y) {
-                sidebar::CLOSE_ROW => Intent::ToggleSidebar,
-                sidebar::NEW_SESSION_ROW => Intent::NewSession,
-                sidebar::SESSIONS_ROW => Intent::SidebarSection(sidebar::Section::Sessions),
-                sidebar::PROJECTS_ROW => Intent::SidebarSection(sidebar::Section::Projects),
-                sidebar::PINNED_ROW => Intent::SidebarSection(sidebar::Section::Pinned),
+            return match sidebar::row_at(
+                interaction.sidebar_state,
+                at.y.saturating_sub(layout.sidebar.y),
+            ) {
+                sidebar::Row::Close => Intent::ToggleSidebar,
+                sidebar::Row::NewSession => Intent::NewSession,
+                sidebar::Row::SessionsHeading => Intent::SidebarSection(sidebar::Section::Sessions),
+                sidebar::Row::ProjectsHeading => Intent::SidebarSection(sidebar::Section::Projects),
+                sidebar::Row::PinnedHeading => Intent::SidebarSection(sidebar::Section::Pinned),
+                sidebar::Row::Session(index) => Intent::SidebarSession(index),
+                sidebar::Row::PinnedSession(index) => Intent::SidebarPinnedSession(index),
+                sidebar::Row::Project(index) => Intent::SidebarProject(index),
                 _ => Intent::Nothing,
             };
         }
@@ -421,6 +435,7 @@ mod tests {
             sidebar_open: open,
             sidebar_width: 28,
             sidebar_dragging: dragging,
+            sidebar_state: sidebar::HitState::default(),
         }
     }
 

@@ -106,6 +106,7 @@ pub const COMMANDS: &[Command] = &[
         aliases: &[],
     },
     offered("yolo", "unrestricted access, releases the open approval"),
+    offered("pin", "pin or unpin the current session"),
     offered("frame", "containers around turns, or plain gutters"),
     typed(
         "mouse",
@@ -160,6 +161,7 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
         "approval" => approval(session),
         "access" => access(session, &argument),
         "yolo" => yolo(session),
+        "pin" => pin(session),
         "frame" => frame(session),
         "mouse" => mouse(session),
         "new" => new_session(session),
@@ -200,6 +202,7 @@ fn help(session: &mut TuiSession) {
             "Up/Down recall past prompts; Ctrl-A/E, Alt-arrows, Ctrl-K/U/W edit the line.",
             "PageUp/PageDown scroll the transcript; End follows the tail.",
             "Wheel scrolls, the right border drags, right-click opens this menu.",
+            "Ctrl-B toggles the workspace sidebar; drag its divider to resize or close it.",
         ]
         .map(str::to_string),
     );
@@ -263,10 +266,11 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
         session.push(Role::Error, "usage: /provider <id> — see /providers".into());
         return;
     }
-    let mut known: Vec<String> = handle_ipc(&session.home, "providers_catalog", json!({}))
+    let catalog = handle_ipc(&session.home, "providers_catalog", json!({}))
         .ok()
         .and_then(|value| value.get("providers").and_then(|v| v.as_array()).cloned())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    let mut known: Vec<String> = catalog
         .iter()
         .filter_map(|row| row.get("id").and_then(|v| v.as_str()).map(str::to_string))
         .collect();
@@ -285,6 +289,28 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
             format!("unknown provider {argument} — have: {}", known.join(", ")),
         );
         return;
+    }
+    if let Some(row) = catalog
+        .iter()
+        .find(|row| row.get("id").and_then(|value| value.as_str()) == Some(argument))
+    {
+        let connected = row
+            .get("connect")
+            .and_then(|value| value.as_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("connected"));
+        if !connected {
+            let detail = row
+                .get("connect")
+                .and_then(|value| value.as_str())
+                .unwrap_or("connect it first");
+            session.push(
+                Role::Error,
+                format!(
+                    "{argument} is not connected — {detail}. The active provider was kept; use /providers to connect it."
+                ),
+            );
+            return;
+        }
     }
     session.provider = argument.to_string();
     session.remember_model_choice();
@@ -418,6 +444,33 @@ fn access(session: &mut TuiSession, argument: &str) {
 }
 
 fn yolo(session: &mut TuiSession) {
+    if session.yolo {
+        session.push(Role::Action, "unrestricted access is already on".into());
+        return;
+    }
+    session.picker = Some(Picker::new(
+        PickerKind::Yolo,
+        "Confirm unrestricted access",
+        vec![
+            PickerItem {
+                id: "cancel".into(),
+                label: "Cancel".into(),
+                detail: "keep the current access policy".into(),
+                current: true,
+                connected: true,
+            },
+            PickerItem {
+                id: "enable".into(),
+                label: "Enable YOLO".into(),
+                detail: "allow unrestricted host effects and record receipts".into(),
+                current: false,
+                connected: true,
+            },
+        ],
+    ));
+}
+
+pub(crate) fn enable_yolo(session: &mut TuiSession) {
     // Reuse the runtime path the CLI flag uses, so the receipt story is identical.
     match handle_ipc(&session.home, "approvals_release_yolo", json!({})) {
         Ok(value) => {
@@ -438,6 +491,44 @@ fn yolo(session: &mut TuiSession) {
                 format!("yolo could not reach the runtime: {error}"),
             );
         }
+    }
+}
+
+fn pin(session: &mut TuiSession) {
+    let Some(id) = session.session_id.clone() else {
+        session.push(Role::Error, "send a prompt before pinning a session".into());
+        return;
+    };
+    let current = session
+        .sidebar
+        .sessions
+        .iter()
+        .find(|meta| meta.id.to_string() == id);
+    let Some(current) = current else {
+        session.push(Role::Error, "the current session is not durable yet".into());
+        return;
+    };
+    let pinned = !current.pinned;
+    match handle_ipc(
+        &session.home,
+        "pin_session",
+        json!({ "id": id, "pinned": pinned }),
+    ) {
+        Ok(_) => {
+            session.refresh_sidebar();
+            session.push(
+                Role::Action,
+                if pinned {
+                    "session pinned".into()
+                } else {
+                    "session unpinned".into()
+                },
+            );
+        }
+        Err(error) => session.push(
+            Role::Error,
+            format!("could not update session pin: {error}"),
+        ),
     }
 }
 
@@ -471,6 +562,13 @@ fn mouse(session: &mut TuiSession) {
 }
 
 pub(crate) fn new_session(session: &mut TuiSession) {
+    if session.busy() {
+        session.push(
+            Role::Error,
+            "stop the current turn before starting a new session".into(),
+        );
+        return;
+    }
     session.session_id = None;
     session.messages.clear();
     session.workbench.clear();
@@ -478,7 +576,8 @@ pub(crate) fn new_session(session: &mut TuiSession) {
     // The parked job stays durable and resolvable runtime-side; this surface
     // just stops offering a card bound to the session it left.
     session.pending_approval = None;
-    session.push(Role::Assistant, "started a fresh session".into());
+    session.push(Role::Action, "new session ready".into());
+    session.refresh_sidebar();
 }
 
 #[cfg(test)]
@@ -645,7 +744,7 @@ mod tests {
         let index = menu().items.iter().position(|i| i.id == "frame").unwrap();
         session.picker.as_mut().unwrap().select(index);
         session.confirm_picker();
-        assert_eq!(session.chrome, Chrome::Boxed, "the click took effect");
+        assert_eq!(session.chrome, Chrome::Plain, "the click took effect");
         assert!(session.picker.is_none(), "choosing closes the menu");
     }
 
@@ -753,13 +852,24 @@ mod tests {
             "selecting must not imply a working provider: {}",
             last.text
         );
+        assert_eq!(session.provider, "auto", "the active provider must be kept");
     }
 
     #[test]
     fn switching_provider_changes_the_next_turn() {
         let (_dir, mut session) = session();
-        dispatch(&mut session, "/provider codex");
-        assert_eq!(session.provider, "codex");
+        dispatch(&mut session, "/provider offline");
+        assert_eq!(session.provider, "offline");
+    }
+
+    #[test]
+    fn typed_disconnected_provider_selection_is_refused_too() {
+        let (_dir, mut session) = session();
+        dispatch(&mut session, "/provider open-ai-compat");
+        assert_eq!(session.provider, "auto");
+        assert!(session.messages[0]
+            .text
+            .contains("active provider was kept"));
     }
 
     #[test]
@@ -801,7 +911,7 @@ mod tests {
     fn a_model_choice_outlives_the_process() {
         let (_dir, mut session) = session();
         let home = session.home.clone();
-        dispatch(&mut session, "/provider codex");
+        dispatch(&mut session, "/provider offline");
         dispatch(&mut session, "/model gpt-5");
         dispatch(&mut session, "/thinking high");
 
@@ -816,7 +926,7 @@ mod tests {
         // set case would resurrect a model the user just dismissed.
         let (_dir, mut session) = session();
         let home = session.home.clone();
-        dispatch(&mut session, "/provider codex");
+        dispatch(&mut session, "/provider offline");
         dispatch(&mut session, "/model gpt-5");
         dispatch(&mut session, "/model default");
 
@@ -827,7 +937,7 @@ mod tests {
     fn model_auto_clears_and_persists_the_override() {
         let (_dir, mut session) = session();
         let home = session.home.clone();
-        dispatch(&mut session, "/provider codex");
+        dispatch(&mut session, "/provider offline");
         dispatch(&mut session, "/model gpt-5");
         dispatch(&mut session, "/model Auto");
 
@@ -838,11 +948,11 @@ mod tests {
     #[test]
     fn auto_provider_does_not_silently_discard_an_explicit_model() {
         let (_dir, mut session) = session();
-        dispatch(&mut session, "/provider codex");
+        dispatch(&mut session, "/provider offline");
         dispatch(&mut session, "/model gpt-5");
         dispatch(&mut session, "/provider auto");
 
-        assert_eq!(session.provider, "codex");
+        assert_eq!(session.provider, "offline");
         assert_eq!(session.model.as_deref(), Some("gpt-5"));
         assert_eq!(session.messages.last().unwrap().role, Role::Error);
     }

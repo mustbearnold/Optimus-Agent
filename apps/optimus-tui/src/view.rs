@@ -9,11 +9,12 @@ use ratatui::widgets::{
 };
 
 mod composer;
+#[path = "view/sidebar.rs"]
+mod rail;
 
 use crate::mouse;
 use crate::overlay;
 use crate::session::{Role, TuiSession};
-use crate::sidebar::{self, Section};
 use crate::transcript::{self, Row};
 use crate::width;
 
@@ -52,10 +53,10 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     );
 
     if areas.sidebar.width > 0 {
-        draw_sidebar(frame, areas.sidebar, session);
-        draw_sidebar_divider(frame, areas.sidebar_divider);
+        rail::draw(frame, areas.sidebar, session);
+        rail::draw_divider(frame, areas.sidebar_divider);
     } else {
-        draw_collapsed_sidebar_tab(frame, frame.area());
+        rail::draw_collapsed_tab(frame, frame.area());
     }
 
     draw_context(frame, areas.context, session);
@@ -96,171 +97,6 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     if let Some(picker) = session.picker.as_ref() {
         draw_picker(frame, picker);
     }
-}
-
-/// The persistent workspace rail. It is deliberately made from short rows
-/// instead of a generic list widget so every visible label has a stable mouse
-/// target and every string is cell-truncated before Ratatui sees it.
-fn draw_sidebar(frame: &mut Frame, area: Rect, session: &TuiSession) {
-    if area.width == 0 || area.height == 0 {
-        return;
-    }
-    frame.render_widget(
-        Block::default().style(Style::default().bg(SIDEBAR_BACKGROUND)),
-        area,
-    );
-
-    let text_width = area.width;
-    if text_width == 0 {
-        return;
-    }
-    let text_area = Rect {
-        x: area.x,
-        y: area.y,
-        width: text_width,
-        height: area.height,
-    };
-    if sidebar::NEW_SESSION_ROW < area.height {
-        frame.render_widget(
-            Block::default().style(Style::default().bg(SIDEBAR_ACTION)),
-            Rect {
-                x: text_area.x,
-                y: text_area.y + sidebar::NEW_SESSION_ROW,
-                width: text_area.width,
-                height: 1,
-            },
-        );
-    }
-
-    let lines = (0..area.height)
-        .map(|row| sidebar_line(text_width, row, session))
-        .collect::<Vec<_>>();
-    frame.render_widget(Paragraph::new(lines), text_area);
-}
-
-fn sidebar_line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
-    let (marker, label, style) = match row {
-        0 => (
-            "",
-            "WORKSPACE".to_owned(),
-            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
-        ),
-        sidebar::CLOSE_ROW => (
-            "‹  ",
-            "close sidebar".to_owned(),
-            Style::default().fg(MUTED),
-        ),
-        sidebar::NEW_SESSION_ROW => (
-            "+  ",
-            "New session".to_owned(),
-            Style::default().fg(TEXT).add_modifier(Modifier::BOLD),
-        ),
-        sidebar::SESSIONS_ROW => (
-            "",
-            "SESSIONS".to_owned(),
-            section_style(session.sidebar.section == Section::Sessions),
-        ),
-        6 => (
-            if session.sidebar.section == Section::Sessions {
-                "▸  "
-            } else {
-                "·  "
-            },
-            session_label(session),
-            Style::default().fg(TEXT),
-        ),
-        sidebar::PROJECTS_ROW => (
-            "",
-            "PROJECTS".to_owned(),
-            section_style(session.sidebar.section == Section::Projects),
-        ),
-        10 => (
-            "⌂  ",
-            sidebar::project_name(&session.home),
-            Style::default().fg(TEXT),
-        ),
-        sidebar::PINNED_ROW => (
-            "",
-            "PINNED".to_owned(),
-            section_style(session.sidebar.section == Section::Pinned),
-        ),
-        13 => ("·  ", pinned_label(session), Style::default().fg(MUTED)),
-        _ => ("", String::new(), Style::default()),
-    };
-
-    let marker = width::take(marker, usize::from(width));
-    let label_budget = usize::from(width).saturating_sub(width::cells(&marker));
-    let label = width::truncate(&label, label_budget);
-    Line::from(vec![
-        Span::styled(marker, style),
-        Span::styled(label, style),
-    ])
-}
-
-fn section_style(selected: bool) -> Style {
-    let style = Style::default().fg(MUTED).add_modifier(Modifier::BOLD);
-    if selected {
-        style.fg(ACCENT)
-    } else {
-        style
-    }
-}
-
-fn session_label(session: &TuiSession) -> String {
-    session
-        .session_id
-        .as_deref()
-        .map(|id| format!("Session {}", width::truncate(id, 8)))
-        .unwrap_or_else(|| "Current session".into())
-}
-
-fn pinned_label(session: &TuiSession) -> String {
-    let count = session
-        .workbench
-        .blocks()
-        .iter()
-        .filter(|block| block.presentation.pinned)
-        .count();
-    match count {
-        0 => "No pinned items".into(),
-        1 => "1 pinned item".into(),
-        count => format!("{count} pinned items"),
-    }
-}
-
-fn draw_sidebar_divider(frame: &mut Frame, area: Rect) {
-    if area.width == 0 || area.height == 0 {
-        return;
-    }
-    let middle = area.height / 2;
-    let lines = (0..area.height)
-        .map(|row| {
-            let glyph = if row == middle { "╋" } else { "│" };
-            Line::from(Span::styled(glyph, Style::default().fg(HAIRLINE)))
-        })
-        .collect::<Vec<_>>();
-    frame.render_widget(Paragraph::new(lines), area);
-}
-
-fn draw_collapsed_sidebar_tab(frame: &mut Frame, area: Rect) {
-    let width = mouse::HORIZONTAL_GUTTER.min(area.width);
-    if width == 0 || area.height == 0 {
-        return;
-    }
-    let tab = Rect {
-        x: area.x,
-        y: area.y,
-        width,
-        height: 1,
-    };
-    frame.render_widget(
-        Paragraph::new(Line::from(Span::styled(
-            "›",
-            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
-        )))
-        .style(Style::default().bg(BACKGROUND)),
-        tab,
-    );
 }
 
 /// Compact project/provider context, deliberately quieter than the work area.
@@ -465,19 +301,49 @@ fn compact_status(session: &TuiSession) -> String {
     } else {
         "ready"
     };
-    format!("{} · {state}", session.provider)
+    let mut parts = Vec::new();
+    if session.yolo {
+        parts.push("YOLO".to_owned());
+    }
+    let provider = match &session.model {
+        Some(model) => format!("{}/{}", session.provider, model),
+        None => session.provider.clone(),
+    };
+    parts.push(provider);
+    if let Some(thinking) = &session.thinking {
+        parts.push(format!("think:{thinking}"));
+    }
+    if !session.yolo {
+        if let Some(access) = session.access {
+            parts.push(format!("access:{access}"));
+        }
+    }
+    parts.push(state.to_owned());
+    parts.join(" · ")
 }
 
 fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
     let separator = if area.width < 44 { " │ " } else { "  │  " };
     let candidates: &[&[(&str, &str)]] = if session.busy() {
         &[
+            &[
+                ("Ctrl-C", "stop"),
+                ("Ctrl-B", "sidebar"),
+                ("Tab", "inspect"),
+                ("Esc", "clear"),
+            ],
             &[("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")],
             &[("^C", "stop"), ("Tab", "inspect"), ("Esc", "clear")],
             &[("Esc", "clear")],
         ]
     } else {
         &[
+            &[
+                ("Enter", "send"),
+                ("Ctrl-B", "sidebar"),
+                ("Tab", "inspect"),
+                ("Esc", "clear"),
+            ],
             &[("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")],
             &[("↵", "send"), ("Tab", "inspect"), ("Esc", "clear")],
             &[("Esc", "clear")],
@@ -559,12 +425,20 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
         .iter()
         .map(|item| {
             let mark = if item.current { "● " } else { "  " };
-            let detail = format!("  {}", item.detail);
-            let detail = width::truncate(&detail, inner_width.saturating_sub(width::cells(mark)));
-            let label = width::truncate(
-                &item.label,
-                inner_width.saturating_sub(width::cells(mark) + width::cells(&detail)),
-            );
+            // Labels identify the action; details are supporting context. At
+            // narrow widths the old order preserved details and erased the
+            // command name, turning a picker into a list of mysterious dots.
+            let label_budget = inner_width
+                .saturating_sub(width::cells(mark))
+                .saturating_sub(1);
+            let label = width::truncate(&item.label, label_budget);
+            let detail_budget =
+                inner_width.saturating_sub(width::cells(mark) + width::cells(&label));
+            let detail = if detail_budget >= 2 {
+                width::truncate(&format!("  {}", item.detail), detail_budget)
+            } else {
+                String::new()
+            };
             ListItem::new(Line::from(vec![
                 Span::raw(format!("{mark}{label}")),
                 Span::styled(detail, Style::default().add_modifier(Modifier::DIM)),
@@ -975,7 +849,7 @@ mod tests {
         let (_dir, mut session) = session_with(&[(Role::User, "whats the ai news today")]);
         let _worker = session.busy_for_test("working");
         let screen = render(&session, 60, 12).join("\n");
-        assert!(screen.contains("› whats the ai news today"), "{screen}");
+        assert!(screen.contains("whats the ai news today"), "{screen}");
         assert!(
             screen.contains("Ctrl-C to interrupt"),
             "the spinner must be on screen while a turn runs:\n{screen}"

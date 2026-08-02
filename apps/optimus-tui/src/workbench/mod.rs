@@ -265,6 +265,24 @@ impl WorkbenchState {
             .push(WorkbenchBlock::born(kind, lifecycle, None));
     }
 
+    /// Mirror a message loaded from the durable session store. Tool messages
+    /// do not have a live lifecycle event to adapt, so they reopen as settled
+    /// calls with the provenance fields the store retained.
+    pub(crate) fn push_loaded(&mut self, role: Role, call_id: Option<&str>, tool: Option<&str>) {
+        if role == Role::Tool {
+            self.blocks.push(WorkbenchBlock::born(
+                WorkbenchBlockKind::ToolCall {
+                    call_id: call_id.unwrap_or_default().to_string(),
+                    tool: tool.unwrap_or("tool").to_string(),
+                },
+                BlockLifecycle::Succeeded,
+                None,
+            ));
+        } else {
+            self.push_note(role, false);
+        }
+    }
+
     /// A delta reached the last assistant bubble. A settled bubble reopens:
     /// the delta is a typed event, and more text arriving is the stream saying
     /// the answer was not finished after all.

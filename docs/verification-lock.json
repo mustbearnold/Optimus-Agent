@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "c13e7f4e83518c88daed7a9ffb14156978cb511e74ac3471b1141e6bac58284e",
+      "binding_sha256": "7d1d692850c055d43a8486fc840ef713d17b791424b7cfd278b5c767d6c6dd94",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 349
+      "resolved_files": 350
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "9d7bb2390275e354ac0774166c57f368763ee6d198d80d4d6e66a739d4f2a0e5",
@@ -427,7 +427,7 @@
       "resolved_files": 11
     },
     "decisions-0046-approval-resumes-the-turn": {
-      "binding_sha256": "4f558c77016ae447b92cc409339e017e3f7ee762ec3f4f4e2d5a9b6384079ba0",
+      "binding_sha256": "bc14d89e58d5533406406ec2e37d6b11b23177278086e6a26eb5bc6fa9367452",
       "document_sha256": "2fbc37d6c738f10f4fb686b2c2ad7537c34cf1fb12c75de6a4147063ad40ea81",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 12
@@ -553,13 +553,13 @@
       "resolved_files": 9
     },
     "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
-      "binding_sha256": "c6c8de106e990b2cce484ebbb2404128f9516ba5aa6666ade94ea72584b0ef1a",
+      "binding_sha256": "de9daad08c19e1647a2af9bcfc62e2661ecc598048071bf3e30062a303f191f3",
       "document_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "1d672b5e5a958d6322330b606ae1730c2b09f5a79d0bb814916dc87331a64e03",
+      "binding_sha256": "2455d13264dc63f797640486dd6ba3eb686623725b144442d76afe147a5366fc",
       "document_sha256": "51c5a6e335e3ead46ff3f2361b127a80614060fde3a01252bb44500d4db47b6c",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21

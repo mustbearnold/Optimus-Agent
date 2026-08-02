@@ -25,6 +25,8 @@ pub enum PickerKind {
     Provider,
     /// Approve-and-continue / deny for the pending exact approval.
     Approval,
+    /// Confirm the break-glass access transition before it reaches the host.
+    Yolo,
     /// Slash commands, reachable with the right mouse button.
     Command,
 }

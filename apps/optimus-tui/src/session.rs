@@ -21,7 +21,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use optimus_host::handle_ipc;
-use optimus_kernel::{CancellationToken, ToolApprovalBinding};
+use optimus_kernel::{CancellationToken, SessionMeta, SessionStore, ToolApprovalBinding};
 use serde_json::json;
 
 use crate::composer::Composer;
@@ -111,6 +111,9 @@ pub struct TuiSession {
     /// Reasoning effort, or None for the backend's own default.
     pub thinking: Option<String>,
     pub session_id: Option<String>,
+    /// Project scope selected in the workspace rail. The host validates the
+    /// scope when the first turn is sent; it is never inferred from a path.
+    pub project_id: Option<String>,
     pub status: String,
     pub yolo: bool,
     /// Bounded ADR-0044 profile for new turns, chosen with /access. Canonical
@@ -139,6 +142,9 @@ pub struct TuiSession {
     pub mouse: bool,
     /// Presentation state for the optional workspace rail.
     pub(crate) sidebar: crate::sidebar::State,
+    /// Provider being connected, held aside until the worker proves login
+    /// succeeded. A failed sign-in must not relabel the active session.
+    connecting_provider: Option<String>,
     /// Animation ticks since start, driving the spinner animation.
     frame: usize,
     /// Animation ticks between visible spinner glyphs.
@@ -158,7 +164,7 @@ impl TuiSession {
         // the latter.
         let remembered = Preferences::load(&home);
         let history = History::load(&home);
-        Self {
+        let mut session = Self {
             home,
             messages: Vec::new(),
             workbench: WorkbenchState::default(),
@@ -169,6 +175,7 @@ impl TuiSession {
             model: remembered.model,
             thinking: remembered.thinking,
             session_id: None,
+            project_id: None,
             status: String::new(),
             yolo: false,
             access: None,
@@ -177,20 +184,213 @@ impl TuiSession {
             pending_approval: None,
             scroll_back: 0,
             running_tool: None,
-            // The workbench is intentionally flat by default. `/frame` keeps
-            // the boxed conversation treatment available for users who prefer
-            // it, but the primary face stays dense and task-oriented.
-            chrome: Chrome::Plain,
+            // A terminal app should have a visual hierarchy on first launch.
+            // `/frame` remains the escape hatch for clean copy/paste gutters.
+            chrome: Chrome::Boxed,
             dragging: false,
             hovered_block: None,
             mouse: true,
             sidebar: crate::sidebar::State::default(),
+            connecting_provider: None,
             frame: 0,
             spinner_every: DEFAULT_SPINNER_EVERY,
             started: None,
             answer_started: false,
             active: None,
+        };
+        session.refresh_sidebar();
+        let latest = session
+            .sidebar
+            .sessions
+            .iter()
+            .max_by_key(|meta| meta.updated_at.clone())
+            .cloned();
+        if let Some(meta) = latest {
+            if let Err(error) = session.load_session_meta(&meta) {
+                session.push(
+                    Role::Error,
+                    format!("could not restore the last session: {error}"),
+                );
+            }
         }
+        session
+    }
+
+    /// Refresh the rail from the durable stores. A failed refresh is treated as
+    /// an empty projection so a broken optional catalog cannot prevent the
+    /// composer from opening; the next successful turn will surface the real
+    /// storage error.
+    pub(crate) fn refresh_sidebar(&mut self) {
+        let sessions = SessionStore::open(self.home.join("sessions.db"))
+            .and_then(|store| store.list())
+            .unwrap_or_default();
+        let workspace_count = sessions
+            .iter()
+            .filter(|session| session.project.is_none())
+            .count();
+        let mut projects = vec![crate::sidebar::ProjectEntry {
+            id: None,
+            label: crate::sidebar::project_name(&self.home),
+            session_count: workspace_count,
+            current: self.project_id.is_none(),
+        }];
+
+        for session in &sessions {
+            let Some(id) = session.project.as_deref() else {
+                continue;
+            };
+            if let Some(project) = projects
+                .iter_mut()
+                .find(|project| project.id.as_deref() == Some(id))
+            {
+                project.session_count += 1;
+            } else {
+                projects.push(crate::sidebar::ProjectEntry {
+                    id: Some(id.to_string()),
+                    label: id.to_string(),
+                    session_count: 1,
+                    current: self.project_id.as_deref() == Some(id),
+                });
+            }
+        }
+
+        // Authorized scopes can exist before their first session. They still
+        // belong in Projects, otherwise the rail makes an available scope look
+        // like it does not exist.
+        if let Ok(value) = handle_ipc(&self.home, "project_scopes_list", json!({})) {
+            if let Some(rows) = value.get("projects").and_then(|value| value.as_array()) {
+                for row in rows {
+                    let Some(id) = row.get("project_id").and_then(|value| value.as_str()) else {
+                        continue;
+                    };
+                    if projects
+                        .iter()
+                        .any(|project| project.id.as_deref() == Some(id))
+                    {
+                        continue;
+                    }
+                    let label = row
+                        .get("primary_root")
+                        .and_then(|value| value.as_str())
+                        .and_then(|path| std::path::Path::new(path).file_name())
+                        .and_then(|name| name.to_str())
+                        .filter(|name| !name.is_empty())
+                        .unwrap_or(id)
+                        .to_string();
+                    projects.push(crate::sidebar::ProjectEntry {
+                        id: Some(id.to_string()),
+                        label,
+                        session_count: 0,
+                        current: self.project_id.as_deref() == Some(id),
+                    });
+                }
+            }
+        }
+
+        self.sidebar
+            .replace_data(sessions, projects, self.session_id.is_none());
+    }
+
+    /// Load one durable row into the compatibility transcript and its
+    /// workbench mirror. This is used both at launch and by sidebar clicks, so
+    /// reopening a session has exactly the same projection as a live turn.
+    fn load_session_meta(&mut self, meta: &SessionMeta) -> Result<(), String> {
+        let store =
+            SessionStore::open(self.home.join("sessions.db")).map_err(|error| error.to_string())?;
+        let (_, messages, _, _) = store
+            .load_bound_transcript(meta.id, meta.project.as_deref())
+            .map_err(|error| error.to_string())?;
+
+        self.messages.clear();
+        self.workbench.clear();
+        for message in messages {
+            let optimus_kernel::Message {
+                role: stored_role,
+                content,
+                tool_call_id,
+                name,
+            } = message;
+            // The kernel's system prompt is runtime context, not conversation
+            // history. Reopening it would dump internal instructions into the
+            // user's transcript and make a clean session look enormous.
+            if stored_role == optimus_kernel::Role::System {
+                continue;
+            }
+            let (role, text) = match stored_role {
+                optimus_kernel::Role::User => (Role::User, content),
+                optimus_kernel::Role::System => continue,
+                optimus_kernel::Role::Assistant => (Role::Assistant, content),
+                optimus_kernel::Role::Tool => {
+                    let text = name
+                        .as_deref()
+                        .map(|name| format!("{name}  {content}"))
+                        .unwrap_or(content);
+                    (Role::Tool, text)
+                }
+            };
+            self.workbench
+                .push_loaded(role, tool_call_id.as_deref(), name.as_deref());
+            self.messages.push(Message {
+                role,
+                text,
+                call_id: tool_call_id,
+            });
+        }
+        self.session_id = Some(meta.id.to_string());
+        self.project_id = meta.project.clone();
+        self.pending_approval = None;
+        self.picker = None;
+        self.completion.reset();
+        self.scroll_back = 0;
+        self.status.clear();
+        self.running_tool = None;
+        self.answer_started = false;
+        self.refresh_sidebar();
+        Ok(())
+    }
+
+    pub(crate) fn open_sidebar_session(&mut self, index: usize, pinned: bool) {
+        if self.busy() {
+            self.push(
+                Role::Error,
+                "stop the current turn before opening another session".into(),
+            );
+            return;
+        }
+        let meta = if pinned {
+            self.sidebar.pinned_session_at(index)
+        } else {
+            self.sidebar.session_at(index)
+        };
+        let Some(meta) = meta else {
+            // The synthetic current row is already the active draft.
+            return;
+        };
+        let meta_id = meta.id.to_string();
+        if self.session_id.as_deref() == Some(meta_id.as_str()) {
+            return;
+        }
+        if let Err(error) = self.load_session_meta(&meta) {
+            self.push(Role::Error, format!("could not open session: {error}"));
+        }
+    }
+
+    pub(crate) fn select_sidebar_project(&mut self, index: usize) {
+        let Some(project) = self.sidebar.project_at(index) else {
+            return;
+        };
+        let project_id = project.id.clone();
+        if self.session_id.is_some() && self.project_id != project_id && !self.messages.is_empty() {
+            self.push(
+                Role::Error,
+                "start a new session before changing its project scope".into(),
+            );
+            return;
+        }
+        self.sidebar.select_project(index);
+        self.project_id = project_id;
+        self.push(Role::Action, format!("project scope: {}", project.label));
+        self.refresh_sidebar();
     }
 
     pub fn busy(&self) -> bool {
@@ -270,6 +470,29 @@ impl TuiSession {
                     );
                     return;
                 }
+                // A disconnected provider is not a provider choice. Keep the
+                // working provider and make the missing prerequisite explicit;
+                // remembering an unusable id turns every later launch into a
+                // confusing failure loop.
+                if !item.connected && item.id != "codex" {
+                    self.push(
+                        Role::Error,
+                        format!(
+                            "{} is not connected — {}. The active provider was kept.",
+                            item.id, item.detail
+                        ),
+                    );
+                    return;
+                }
+                if !item.connected && item.id == "codex" {
+                    self.connecting_provider = Some(item.id.clone());
+                    self.push(
+                        Role::Action,
+                        "Codex is not connected — sign-in is required before switching".into(),
+                    );
+                    self.connect_codex();
+                    return;
+                }
                 let changed = item.id != self.provider;
                 if changed {
                     self.provider = item.id.clone();
@@ -279,17 +502,13 @@ impl TuiSession {
                         format!("provider is now {} — remembered for next launch", item.id),
                     );
                 }
-                // Picking a provider that is not connected should connect it.
-                if !item.connected && item.id == "codex" {
-                    self.connect_codex();
-                } else if !item.connected && changed {
-                    self.push(
-                        Role::Error,
-                        format!("{} is not connected — {}", item.id, item.detail),
-                    );
-                }
             }
             crate::picker::PickerKind::Approval => self.resolve_approval(&item.id),
+            crate::picker::PickerKind::Yolo => {
+                if item.id == "enable" {
+                    crate::commands::enable_yolo(self);
+                }
+            }
             // Route back through dispatch so a menu row and the typed command
             // cannot drift apart.
             crate::picker::PickerKind::Command => {
@@ -432,6 +651,13 @@ impl TuiSession {
             .as_ref()
             .map(|level| format!(" · think:{level}"))
             .unwrap_or_default();
+        let access = if self.yolo {
+            " · YOLO".to_string()
+        } else {
+            self.access
+                .map(|profile| format!(" · access:{profile}"))
+                .unwrap_or_default()
+        };
         format!(
             "{}{}{} · {} · {}{}",
             self.provider,
@@ -439,7 +665,7 @@ impl TuiSession {
             thinking,
             self.session_id.as_deref().unwrap_or("new session"),
             state,
-            if self.yolo { " · YOLO" } else { "" }
+            access
         )
     }
 }
@@ -517,6 +743,71 @@ mod tests {
         assert_eq!(
             session.status_line(),
             "codex/gpt-5-codex · think:high · new session · ready"
+        );
+    }
+
+    #[test]
+    fn a_new_session_cannot_clear_a_live_turn_and_leak_its_worker() {
+        let (_dir, mut session) = session();
+        session.push(Role::User, "old turn".into());
+        let _worker = session.busy_for_test("working");
+        crate::commands::new_session(&mut session);
+
+        assert!(
+            session.busy(),
+            "the old worker must still own the transcript"
+        );
+        assert!(
+            !session
+                .messages
+                .iter()
+                .any(|message| message.text == "new session ready"),
+            "a live turn must not be cleared underneath its worker"
+        );
+        assert!(
+            session
+                .messages
+                .iter()
+                .any(|message| message.text.contains("stop the current turn")),
+            "the refused action needs an actionable explanation"
+        );
+    }
+
+    #[test]
+    fn a_relaunched_tui_restores_the_latest_durable_transcript() {
+        let (_dir, mut session) = session();
+        session.provider = "offline".into();
+        session.composer.set("remember this conversation");
+        session.submit();
+        settle(&mut session);
+        let home = session.home.clone();
+        drop(session);
+
+        let restored = TuiSession::new(home);
+        assert!(
+            restored.session_id.is_some(),
+            "the durable row should reopen"
+        );
+        assert!(
+            restored
+                .messages
+                .iter()
+                .any(|message| message.text == "remember this conversation"),
+            "the user prompt should survive a relaunch"
+        );
+        assert!(
+            restored
+                .messages
+                .iter()
+                .any(|message| message.text.contains("offline echo")),
+            "the assistant answer should survive a relaunch"
+        );
+        assert!(
+            restored
+                .messages
+                .iter()
+                .all(|message| !message.text.contains("system instructions")),
+            "runtime system context must not be painted as conversation history"
         );
     }
 

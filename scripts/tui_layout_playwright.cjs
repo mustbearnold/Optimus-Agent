@@ -285,7 +285,7 @@ function assertFrame(frame, cols, rows, geometry, label) {
 
 function assertBusyFrame(frame, cols, rows, geometry, label) {
   const joined = frame.join(" ").replace(/\s+/g, " ");
-  assert(joined.includes("› layout ping"), `${label}: busy turn prompt is missing\n${renderFrame(frame)}`);
+  assert(joined.includes("layout ping"), `${label}: busy turn prompt is missing\n${renderFrame(frame)}`);
   assert(joined.includes("Ctrl-C"), `${label}: busy interrupt affordance is missing\n${renderFrame(frame)}`);
   assert(frame[geometry.status].includes("working"), `${label}: busy status is missing\n${renderFrame(frame)}`);
   if (cols >= 47) {
@@ -301,12 +301,23 @@ function assertBusyFrame(frame, cols, rows, geometry, label) {
 }
 
 function assertActiveFrame(frame, rows, geometry, label, prompt = "layout ping") {
-  const joined = frame.join(" ").replace(/\s+/g, " ");
-  assert(joined.includes(`› ${prompt}`), `${label}: user turn is missing\n${renderFrame(frame)}`);
+  const joined = textProjection(frame);
+  assert(joined.includes(prompt), `${label}: user turn is missing\n${renderFrame(frame)}`);
   assert(joined.includes(`offline echo: ${prompt}`), `${label}: assistant turn is missing\n${renderFrame(frame)}`);
-  assert(frame[geometry.status].includes("ready"), `${label}: settled status is missing`);
+  assert(frame[geometry.status].includes("ready"), `${label}: settled status is missing\n${renderFrame(frame)}`);
   assert.equal(geometry.status, rows - 2, `${label}: status rail drifted after a turn`);
   assert.equal(geometry.help, rows - 1, `${label}: help rail drifted after a turn`);
+}
+
+function textProjection(frame) {
+  return frame
+    .join(" ")
+    .replace(/[╭╮╰╯│─]/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function settled(frame) {
+  return frame.some((line) => line.includes("turn · ready") || line.includes("· ready"));
 }
 
 function launch(binary, home, session, cols, rows, environment = {}) {
@@ -396,7 +407,7 @@ async function checkViewport(browser, binary, cols, rows) {
       const freshSession = await waitFor(
         session,
         rows,
-        (frame) => frame.join("\n").includes("started a fresh session"),
+        (frame) => frame.join("\n").includes("new session ready"),
         `${cols}x${rows}: New session click did not reset the workbench`,
       );
       assert(
@@ -440,7 +451,7 @@ async function checkViewport(browser, binary, cols, rows) {
     const answered = await waitFor(
       session,
       rows,
-      (frame) => frame.join("\n").includes("offline echo: layout ping") && frame.join("\n").includes("ready"),
+      (frame) => textProjection(frame).includes("offline echo: layout ping") && settled(frame),
       `${cols}x${rows}: offline turn never settled`,
     );
     const activeGeometry = composerGeometry(answered, cols);
@@ -463,7 +474,7 @@ async function checkViewport(browser, binary, cols, rows) {
     const unicodeAnswered = await waitFor(
       session,
       rows,
-      (frame) => frame.join("\n").includes(`offline echo: ${unicodePrompt}`) && frame.join("\n").includes("ready"),
+      (frame) => textProjection(frame).includes(`offline echo: ${unicodePrompt}`) && settled(frame),
       `${cols}x${rows}: Unicode offline turn never settled`,
     );
     const unicodeGeometry = composerGeometry(unicodeAnswered, cols);

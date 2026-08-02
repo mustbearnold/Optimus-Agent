@@ -159,6 +159,9 @@ impl TuiSession {
         if let Some(id) = &self.session_id {
             params["session"] = json!(id);
         }
+        if let Some(project_id) = &self.project_id {
+            params["project_id"] = json!(project_id);
+        }
         // /yolo applies to new effects too: the turn itself runs UnrestrictedHost.
         if self.yolo {
             params["access"] = json!("yolo");

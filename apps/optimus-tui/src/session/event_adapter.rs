@@ -155,6 +155,7 @@ impl TuiSession {
             match update {
                 TurnUpdate::SessionReserved(session_id) => {
                     self.session_id = Some(session_id);
+                    self.refresh_sidebar();
                 }
                 TurnUpdate::Text(delta) => self.append_assistant(&delta),
                 TurnUpdate::Status(status) => self.status = status,
@@ -199,11 +200,27 @@ impl TuiSession {
                             }
                         }
                         // This flow ends with a standalone settlement message.
-                        WorkerKind::Connect => self.push(Role::Assistant, text),
+                        WorkerKind::Connect => {
+                            if let Some(provider) = self.connecting_provider.take() {
+                                self.provider = provider;
+                                self.remember_model_choice();
+                                self.push(
+                                    Role::Action,
+                                    format!(
+                                        "provider is now {} — remembered for next launch",
+                                        self.provider
+                                    ),
+                                );
+                            }
+                            self.push(Role::Assistant, text);
+                        }
                     }
                     self.workbench.settle_success();
                 }
                 TurnUpdate::Failed(error) => {
+                    if kind == WorkerKind::Connect {
+                        self.connecting_provider = None;
+                    }
                     if matches!(kind, WorkerKind::Turn | WorkerKind::Resolve) && awaiting {
                         // Not a failure to the user: the effect is parked and
                         // the decision card is the next step. A resumed turn
@@ -245,6 +262,7 @@ impl TuiSession {
             self.status.clear();
             self.running_tool = None;
             self.started = None;
+            self.refresh_sidebar();
             if parked {
                 self.open_approval_picker();
             } else if kind == WorkerKind::Resolve && self.pending_approval.is_some() {

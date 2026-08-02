@@ -415,6 +415,7 @@ fn on_mouse(
             sidebar_open: session.sidebar.open,
             sidebar_width: session.sidebar.width,
             sidebar_dragging: session.sidebar.dragging,
+            sidebar_state: session.sidebar.hit_state(),
         },
     ) {
         mouse::Intent::Scroll(rows) => session.scroll(rows, max_back),
@@ -427,6 +428,9 @@ fn on_mouse(
         mouse::Intent::SidebarClose => session.sidebar.close(),
         mouse::Intent::NewSession => commands::new_session(session),
         mouse::Intent::SidebarSection(section) => session.sidebar.select(section),
+        mouse::Intent::SidebarSession(index) => session.open_sidebar_session(index, false),
+        mouse::Intent::SidebarPinnedSession(index) => session.open_sidebar_session(index, true),
+        mouse::Intent::SidebarProject(index) => session.select_sidebar_project(index),
         mouse::Intent::ScrollTo(fraction) => session.scroll_to(fraction, max_back),
         mouse::Intent::Choose(index) => {
             if let Some(picker) = session.picker.as_mut() {
