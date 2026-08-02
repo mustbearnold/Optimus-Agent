@@ -35,18 +35,19 @@ use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 /// a slightly longer one is forced to wrap where the test can predict it.
 const COLS: u16 = 40;
 const ROWS: u16 = 20;
+const WORKBENCH_LEFT: u16 = 2;
 
 /// Usable text columns inside the composer: the two border columns, the
 /// two-column prompt gutter, and the column kept free so a cursor sitting after
 /// a full row still paints inside the border. Duplicated from
 /// `view::composer::text_width` on purpose — a test that imports the constant it
 /// is checking proves only that the constant equals itself.
-const TEXT_WIDTH: usize = COLS as usize - 5;
+const TEXT_WIDTH: usize = COLS as usize - 5 - (WORKBENCH_LEFT as usize * 2);
 
-/// The composer is bottom-anchored above a one-row status line, and it grows
-/// *upward* as the draft wraps. The row the cursor sits on while typing the
-/// last line of a draft is therefore fixed, whatever the draft's height.
-const CURSOR_ROW: u16 = ROWS - 3;
+/// The composer is bottom-anchored above the status and keyboard-help rails,
+/// and it grows *upward* as the draft wraps. The row the cursor sits on while
+/// typing the last line of a draft is therefore fixed, whatever its height.
+const CURSOR_ROW: u16 = ROWS - 4;
 
 struct Term {
     home: tempfile::TempDir,
@@ -202,8 +203,8 @@ fn the_cursor_lands_where_the_next_character_will_be_typed() {
 
     assert_eq!(
         term.cursor(),
-        (CURSOR_ROW, 8),
-        "left border (1) + gutter (2) + five graphemes"
+        (CURSOR_ROW, WORKBENCH_LEFT + 1 + 2 + 5),
+        "left workbench gutter (2) + border (1) + prompt gutter (2) + five graphemes"
     );
 }
 
@@ -226,8 +227,8 @@ fn the_cursor_follows_a_wrapped_draft_and_the_first_row_stays_visible() {
     );
     assert_eq!(
         term.cursor(),
-        (CURSOR_ROW, 4),
-        "border (1) + gutter (2) + the single grapheme on the second row"
+        (CURSOR_ROW, WORKBENCH_LEFT + 1 + 2 + 1),
+        "left workbench gutter (2) + border (1) + prompt gutter (2) + the single grapheme on the second row"
     );
 }
 
@@ -244,7 +245,7 @@ fn arrow_keys_move_the_terminal_cursor_not_only_the_model() {
     }
     assert_eq!(
         term.cursor(),
-        (CURSOR_ROW, 6),
+        (CURSOR_ROW, WORKBENCH_LEFT + 1 + 2 + 3),
         "two Left presses must move the painted caret, not just the buffer"
     );
 }
@@ -284,8 +285,8 @@ fn a_half_typed_command_offers_its_matches_and_tab_takes_one() {
     );
     assert_eq!(
         term.cursor(),
-        (CURSOR_ROW, 13),
-        "border (1) + gutter (2) + the ten graphemes of /providers"
+        (CURSOR_ROW, WORKBENCH_LEFT + 1 + 2 + 10),
+        "left workbench gutter (2) + border (1) + prompt gutter (2) + the ten graphemes of /providers"
     );
 }
 
@@ -382,9 +383,8 @@ fn typing_while_inspecting_never_reaches_the_draft() {
         "Tab never handed the keyboard back",
     );
     let row = draft_row(&term);
-    assert_eq!(
-        row.trim_matches(['│', ' ']),
-        "›",
+    assert!(
+        row.trim_matches(['│', ' ']).starts_with('›') && !row.contains('j') && !row.contains('k'),
         "keys meant for the transcript must not land in the prompt: {row:?}"
     );
 }
@@ -623,10 +623,10 @@ fn a_worker_panic_lands_in_the_transcript() {
         "the worker crash never reached the transcript: the spinner just \
          stopped and the turn read as complete",
     );
-    // The row names the log. On its own line because the pane wraps at forty
-    // columns; the temp home's path fits a line, so the name stays whole.
+    // The row names the log. The inset workbench may wrap the temporary-home
+    // path, so assert both durable pieces rather than assuming one line.
     let screen = term.wait_for(
-        |s| s.contains("tui.log"),
+        |s| s.contains("tui") && s.contains(".log"),
         "the error row does not say where the details went",
     );
     assert!(

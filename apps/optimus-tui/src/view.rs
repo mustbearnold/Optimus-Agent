@@ -5,74 +5,130 @@
 
 use ratatui::prelude::*;
 use ratatui::widgets::{
-    List, ListItem, ListState, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
+    Block, List, ListItem, ListState, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
 
 mod composer;
 
-use crate::bordered;
 use crate::mouse;
 use crate::overlay;
 use crate::session::{Role, TuiSession};
 use crate::transcript::{self, Row};
 
+const BACKGROUND: Color = Color::Rgb(12, 12, 12);
+const HAIRLINE: Color = Color::Rgb(42, 42, 42);
+const TEXT: Color = Color::Rgb(228, 228, 228);
+const MUTED: Color = Color::Rgb(126, 126, 126);
+const ACCENT: Color = Color::Rgb(132, 164, 255);
+
 /// Rows the composer block occupies for this draft, borders included. One
 /// arithmetic, shared by the layout below and by every caller that has to
 /// subtract the composer from the frame.
 pub fn composer_height(session: &TuiSession, width: u16) -> u16 {
-    composer::height(session.composer.text(), width)
+    composer::height(
+        session.composer.text(),
+        width.saturating_sub(mouse::HORIZONTAL_GUTTER.saturating_mul(2)),
+    )
+}
+
+/// Text columns available to transcript rows after the workbench gutter and
+/// the scrollbar track have been reserved.
+pub fn transcript_width(width: u16) -> u16 {
+    width.saturating_sub(mouse::HORIZONTAL_GUTTER.saturating_mul(2) + 1)
 }
 
 pub fn draw(frame: &mut Frame, session: &TuiSession) {
-    let areas = Layout::vertical([
-        Constraint::Min(3),
-        Constraint::Length(composer_height(session, frame.area().width)),
-        Constraint::Length(1),
-    ])
-    .split(frame.area());
+    let areas = mouse::layout(frame.area(), composer_height(session, frame.area().width));
+    frame.render_widget(
+        Block::default().style(Style::default().bg(BACKGROUND)),
+        frame.area(),
+    );
+
+    draw_context(frame, areas.context, session);
 
     // Rows are pre-wrapped to the inner width, so scrolling is exact and the
     // tail stays visible as text streams in.
-    let inner_width = areas[0].width.saturating_sub(2);
+    let inner_width = areas.transcript.width.saturating_sub(1);
     let rows = visible_rows(session, inner_width);
-    let height = areas[0].height.saturating_sub(2) as usize;
+    let height = areas.transcript.height as usize;
     let offset = scroll_offset(rows.len(), height, session.scroll_back) as u16;
 
     let lines: Vec<Line> = rows
         .iter()
         .map(|row| paint_with_hover(row, session.hovered_block))
         .collect();
-    let title = session.running_tool.as_ref().map_or_else(
-        || "OPTIMUS · WORKBENCH".to_string(),
-        |tool| format!("OPTIMUS · {tool}"),
-    );
-    frame.render_widget(
-        Paragraph::new(lines)
-            .scroll((offset, 0))
-            .block(bordered(&title)),
-        areas[0],
-    );
-    draw_scrollbar(frame, areas[0], rows.len(), height, offset as usize);
+    frame.render_widget(Paragraph::new(lines).scroll((offset, 0)), areas.transcript);
+    draw_scrollbar(frame, areas.transcript, rows.len(), height, offset as usize);
 
-    // The title carries the mode, because the transcript having the keyboard
-    // is otherwise only visible as a highlight somewhere up the pane, and a
-    // prompt that has stopped accepting letters has to say why.
-    let title = if session.workbench.inspecting() {
-        "Inspect — ↑↓ move · Space fold · Tab back"
-    } else {
-        "Message · Enter send"
-    };
-    composer::render(frame, areas[1], &session.composer, title);
+    let composer_title = session
+        .workbench
+        .inspecting()
+        .then_some("Inspect · ↑↓ move · Space fold · Tab back");
+    composer::render(
+        frame,
+        areas.composer,
+        &session.composer,
+        composer_title,
+        &session.provider,
+    );
 
-    frame.render_widget(Paragraph::new(status_line(session)), areas[2]);
+    draw_status(frame, areas.status, session);
+    draw_help(frame, areas.help, session);
 
     // Suggestions first, so a picker the user opened on purpose covers a list
     // that merely appeared because they typed a slash.
-    draw_suggestions(frame, session, areas[1]);
+    draw_suggestions(frame, session, areas.composer);
 
     if let Some(picker) = session.picker.as_ref() {
         draw_picker(frame, picker);
     }
+}
+
+/// Compact project/provider context, deliberately quieter than the work area.
+fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
+    let right = format!("{}  ", session.provider);
+    let path_width = area
+        .width
+        .saturating_sub(right.chars().count().min(usize::from(u16::MAX)) as u16 + 2);
+    let left = format!("  {}", compact_path(&session.home, path_width));
+    let gap = usize::from(area.width).saturating_sub(left.chars().count() + right.chars().count());
+    frame.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(left, Style::default().fg(MUTED)),
+            Span::raw(" ".repeat(gap)),
+            Span::styled(right, Style::default().fg(TEXT)),
+        ])),
+        area,
+    );
+}
+
+fn compact_path(path: &std::path::Path, width: u16) -> String {
+    let value = path.to_string_lossy();
+    let display = if let Some(home) = std::env::var_os("HOME") {
+        let home = std::path::Path::new(&home).to_string_lossy();
+        if let Some(rest) = value.strip_prefix(home.as_ref()) {
+            format!("~{rest}")
+        } else {
+            value.into_owned()
+        }
+    } else {
+        value.into_owned()
+    };
+    let width = usize::from(width);
+    let chars: Vec<char> = display.chars().collect();
+    if chars.len() <= width {
+        return display;
+    }
+    if width <= 1 {
+        return "…".chars().take(width).collect();
+    }
+    if width < 8 {
+        return chars.into_iter().take(width).collect();
+    }
+    let suffix_len = width - 7;
+    let prefix: String = chars.iter().take(6).collect();
+    let suffix: String = chars[chars.len() - suffix_len..].iter().collect();
+    format!("{prefix}…{suffix}")
 }
 
 /// Colour a row by whose turn it is. Distinct hues per role are what make the
@@ -83,11 +139,9 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
 /// so which block the keyboard is pointed at never depends on a palette.
 fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Line<'static> {
     let mut base = match row.role {
-        Role::User => Style::default()
-            .fg(Color::LightCyan)
-            .add_modifier(Modifier::BOLD),
-        Role::Assistant => Style::default().fg(Color::LightBlue),
-        Role::Tool => Style::default().fg(Color::LightMagenta),
+        Role::User => Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+        Role::Assistant => Style::default().fg(TEXT),
+        Role::Tool => Style::default().fg(MUTED),
         Role::Action => Style::default().fg(Color::LightYellow),
         Role::Error => Style::default().fg(Color::LightRed),
     };
@@ -101,8 +155,20 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
     Line::from(
         row.segments
             .iter()
-            .map(|segment| {
+            .enumerate()
+            .map(|(index, segment)| {
                 let mut style = base;
+                if index == 0
+                    && row.role == Role::Tool
+                    && segment
+                        .text
+                        .trim_start()
+                        .chars()
+                        .next()
+                        .is_some_and(|character| matches!(character, '⏺' | '▸' | '▾'))
+                {
+                    style = style.fg(ACCENT);
+                }
                 if segment.bold {
                     style = style.add_modifier(Modifier::BOLD);
                 }
@@ -132,11 +198,75 @@ fn status_line(session: &TuiSession) -> Line<'static> {
             format!("{marker} "),
             marker_style.add_modifier(Modifier::BOLD),
         ),
-        Span::styled(
-            session.status_line(),
-            Style::default().fg(Color::Gray).add_modifier(Modifier::DIM),
-        ),
+        Span::styled(status_label(session), Style::default().fg(MUTED)),
     ])
+}
+
+fn status_label(session: &TuiSession) -> String {
+    if session.busy() {
+        format!(
+            "turn · {}",
+            if session.status.is_empty() {
+                "working"
+            } else {
+                &session.status
+            }
+        )
+    } else if session.pending_approval.is_some() {
+        "approval required · /approval to decide".into()
+    } else {
+        "turn · ready".into()
+    }
+}
+
+fn draw_status(frame: &mut Frame, area: Rect, session: &TuiSession) {
+    let right = format!("{}  ", compact_status(session));
+    frame.render_widget(Paragraph::new(status_line(session)), area);
+    frame.render_widget(
+        Paragraph::new(Span::styled(right, Style::default().fg(MUTED))).alignment(Alignment::Right),
+        area,
+    );
+}
+
+/// The durable session id belongs in logs and state, not in the primary visual
+/// rail. Keep this side compact enough to read as a metric beside the semantic
+/// status marker on the left.
+fn compact_status(session: &TuiSession) -> String {
+    let state = if session.busy() {
+        if session.status.is_empty() {
+            "working"
+        } else {
+            session.status.as_str()
+        }
+    } else if session.pending_approval.is_some() {
+        "approval required"
+    } else {
+        "ready"
+    };
+    format!("{} · {state}", session.provider)
+}
+
+fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
+    let items = if session.busy() {
+        [("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")]
+    } else {
+        [("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")]
+    };
+    let mut spans = vec![Span::raw("  ")];
+    for (index, (key, action)) in items.into_iter().enumerate() {
+        if index > 0 {
+            spans.push(Span::styled("  │  ", Style::default().fg(HAIRLINE)));
+        }
+        spans.push(Span::styled(
+            key,
+            Style::default().fg(TEXT).add_modifier(Modifier::BOLD),
+        ));
+        spans.push(Span::styled(
+            format!(":{action}"),
+            Style::default().fg(MUTED),
+        ));
+    }
+    frame.render_widget(Paragraph::new(Line::from(spans)), area);
 }
 
 /// The track on the transcript's right border.
@@ -154,12 +284,9 @@ fn draw_scrollbar(frame: &mut Frame, block: Rect, rows: usize, height: usize, of
             .end_symbol(None)
             .track_symbol(Some("│"))
             .thumb_symbol("█"),
-        // Inset vertically so the track runs beside the viewport and leaves the
-        // block's corners intact; the same rows `mouse::regions` hit-tests.
-        block.inner(Margin {
-            vertical: 1,
-            horizontal: 0,
-        }),
+        // The track runs through the flat viewport; the same rows
+        // `mouse::regions` hit-tests.
+        block,
         &mut state,
     );
 }
@@ -498,7 +625,7 @@ mod tests {
         let (_dir, mut session) = session_with(&[(Role::User, "whats the ai news today")]);
         let _worker = session.busy_for_test("working");
         let screen = render(&session, 60, 12).join("\n");
-        assert!(screen.contains("│ whats the ai news today │"), "{screen}");
+        assert!(screen.contains("› whats the ai news today"), "{screen}");
         assert!(
             screen.contains("Ctrl-C to interrupt"),
             "the spinner must be on screen while a turn runs:\n{screen}"
@@ -516,7 +643,7 @@ mod tests {
             "the actionable hint must survive intact at 40 columns:\n{forty_columns}"
         );
         assert!(
-            forty_columns.contains("model step…"),
+            forty_columns.contains("model st…"),
             "status should be deliberately elided rather than hard-cut:\n{forty_columns}"
         );
 
@@ -547,24 +674,24 @@ mod tests {
     }
 
     #[test]
-    fn the_running_tool_is_named_in_the_pane_title() {
+    fn the_running_tool_is_named_in_the_activity_line() {
         let (_dir, mut session) = session_with(&[(Role::User, "search")]);
         let _worker = session.busy_for_test("working");
         session.running_tool = Some("web_search".into());
         let screen = render(&session, 60, 8).join("\n");
-        assert!(screen.contains("OPTIMUS · web_search"), "{screen}");
+        assert!(screen.contains("web_search"), "{screen}");
     }
 
     #[test]
     fn the_footer_uses_a_semantic_marker_for_ready_and_busy_states() {
         let (_dir, session) = session_with(&[]);
         let ready = render(&session, 60, 8).join("\n");
-        assert!(ready.contains("● auto"), "{ready}");
+        assert!(ready.contains("● turn · ready"), "{ready}");
 
         let (_dir, mut session) = session_with(&[]);
         let _worker = session.busy_for_test("working");
         let busy = render(&session, 60, 8).join("\n");
-        assert!(busy.contains("◌ auto"), "{busy}");
+        assert!(busy.contains("◌ turn · working"), "{busy}");
     }
 
     #[test]
@@ -639,10 +766,9 @@ mod tests {
         session.composer.set("/");
         for height in 6..16 {
             let screen = render(&session, 60, height);
-            let composer = screen
-                .iter()
-                .position(|row| row.contains("Message"))
-                .unwrap_or_else(|| panic!("no composer at {height} rows: {screen:?}"));
+            let composer = mouse::layout(Rect::new(0, 0, 60, height), composer_height(&session, 60))
+                .composer
+                .y as usize;
             // Below some height there is no room for a bordered list at all,
             // and standing down is the right answer rather than a squeeze.
             let Some(top) = screen
@@ -654,7 +780,7 @@ mod tests {
             let bottom = top
                 + screen[top..composer]
                     .iter()
-                    .rposition(|row| row.starts_with('└'))
+                    .rposition(|row| row.trim_start().starts_with('└'))
                     .unwrap_or_else(|| panic!("the list is open-bottomed at {height}: {screen:?}"));
             assert_eq!(
                 bottom,
@@ -665,10 +791,10 @@ mod tests {
     }
 
     /// The rightmost column of each row, which is where the track is drawn.
-    fn right_edge(screen: &[String]) -> Vec<char> {
+    fn track_edge(screen: &[String], column: u16) -> Vec<char> {
         screen
             .iter()
-            .map(|row| row.chars().last().unwrap_or(' '))
+            .map(|row| row.chars().nth(usize::from(column)).unwrap_or(' '))
             .collect()
     }
 
@@ -676,14 +802,16 @@ mod tests {
     fn a_transcript_taller_than_the_pane_grows_a_scrollbar() {
         let lines: Vec<(Role, &str)> = (0..30).map(|_| (Role::Assistant, "row")).collect();
         let (_dir, session) = session_with(&lines);
-        let edge = right_edge(&render(&session, 40, 14));
+        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
+        let edge = track_edge(&render(&session, 40, 14), track.x);
         assert!(edge.contains(&'█'), "no thumb was painted: {edge:?}");
     }
 
     #[test]
     fn a_short_transcript_gets_no_scrollbar_at_all() {
         let (_dir, session) = session_with(&[(Role::Assistant, "just one")]);
-        let edge = right_edge(&render(&session, 40, 14));
+        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
+        let edge = track_edge(&render(&session, 40, 14), track.x);
         assert!(
             !edge.contains(&'█'),
             "a thumb would imply history that is not there: {edge:?}"
@@ -691,25 +819,31 @@ mod tests {
     }
 
     #[test]
-    fn the_scrollbar_leaves_the_panes_corners_intact() {
+    fn the_flat_scrollbar_has_no_pane_corners_to_compete_with_content() {
         let lines: Vec<(Role, &str)> = (0..30).map(|_| (Role::Assistant, "row")).collect();
         let (_dir, session) = session_with(&lines);
         let screen = render(&session, 40, 14);
-        let edge = right_edge(&screen);
-        assert_eq!(edge[0], '┐', "top-right corner: {}", screen[0]);
-        assert_eq!(edge[9], '┘', "bottom-right corner: {}", screen[9]);
+        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
+        let edge = track_edge(&screen, track.x);
+        assert_ne!(edge[0], '┐', "the context rail is flat: {}", screen[0]);
+        assert_ne!(edge[9], '┘', "the transcript is flat: {}", screen[9]);
+        assert!(
+            edge.contains(&'█'),
+            "the track still needs a visible thumb: {edge:?}"
+        );
     }
 
     #[test]
     fn the_thumb_rides_up_the_track_as_the_transcript_scrolls_back() {
         let lines: Vec<(Role, &str)> = (0..40).map(|_| (Role::Assistant, "row")).collect();
         let (_dir, mut session) = session_with(&lines);
-        let at_tail = right_edge(&render(&session, 40, 14))
+        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
+        let at_tail = track_edge(&render(&session, 40, 14), track.x)
             .iter()
             .position(|c| *c == '█')
             .expect("thumb at the tail");
         session.scroll_back = 30;
-        let scrolled = right_edge(&render(&session, 40, 14))
+        let scrolled = track_edge(&render(&session, 40, 14), track.x)
             .iter()
             .position(|c| *c == '█')
             .expect("thumb after scrolling");
@@ -730,7 +864,7 @@ mod tests {
         let painted: Vec<usize> = screen
             .iter()
             .enumerate()
-            .filter(|(_, row)| row.ends_with('█'))
+            .filter(|(_, row)| row.chars().nth(usize::from(track.x)) == Some('█'))
             .map(|(y, _)| y)
             .collect();
         for y in painted {
@@ -801,7 +935,7 @@ mod tests {
         let transcript = |session: &TuiSession| {
             render(session, 60, 14)
                 .into_iter()
-                .take_while(|row| !row.starts_with('└'))
+                .take_while(|row| !row.trim_start().starts_with('┌'))
                 .collect::<Vec<_>>()
         };
         let quiet = transcript(&session);
@@ -945,7 +1079,7 @@ mod tests {
     #[test]
     fn inspect_mode_says_so_where_the_typing_would_have_gone() {
         let (_dir, mut session) = with_a_run();
-        assert!(render(&session, 60, 14).join("\n").contains("Message"));
+        assert!(render(&session, 60, 14).join("\n").contains("›"));
         session.workbench.inspect();
         let screen = render(&session, 60, 14).join("\n");
         assert!(

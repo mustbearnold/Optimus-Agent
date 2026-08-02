@@ -645,7 +645,7 @@ mod tests {
         let index = menu().items.iter().position(|i| i.id == "frame").unwrap();
         session.picker.as_mut().unwrap().select(index);
         session.confirm_picker();
-        assert_eq!(session.chrome, Chrome::Plain, "the click took effect");
+        assert_eq!(session.chrome, Chrome::Boxed, "the click took effect");
         assert!(session.picker.is_none(), "choosing closes the menu");
     }
 

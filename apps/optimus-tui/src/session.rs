@@ -175,7 +175,10 @@ impl TuiSession {
             pending_approval: None,
             scroll_back: 0,
             running_tool: None,
-            chrome: Chrome::Boxed,
+            // The workbench is intentionally flat by default. `/frame` keeps
+            // the boxed conversation treatment available for users who prefer
+            // it, but the primary face stays dense and task-oriented.
+            chrome: Chrome::Plain,
             dragging: false,
             hovered_block: None,
             mouse: true,

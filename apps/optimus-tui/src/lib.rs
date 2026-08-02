@@ -376,7 +376,7 @@ fn anchor(
     let size = terminal.size()?;
     let chrome = view::composer_height(session, size.width) + 3;
     let height = usize::from(size.height.saturating_sub(chrome));
-    let rows = view::visible_rows(session, size.width.saturating_sub(2));
+    let rows = view::visible_rows(session, view::transcript_width(size.width));
     session.scroll_back = view::anchored(&rows, height, session.scroll_back);
     Ok(())
 }
@@ -420,7 +420,7 @@ fn on_mouse(
         // open or close it when the row clicked is the one that heads it.
         mouse::Intent::Inspect(row) => {
             let height = usize::from(mouse::regions(area, composer_height).transcript.height);
-            let rows = view::visible_rows(session, area.width.saturating_sub(2));
+            let rows = view::visible_rows(session, view::transcript_width(area.width));
             let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
             if let Some(hit) = view::hit(&rows, offset + row) {
                 session.hovered_block = Some(hit.block);
@@ -432,7 +432,7 @@ fn on_mouse(
         }
         mouse::Intent::Hover(row) => {
             let height = usize::from(mouse::regions(area, composer_height).transcript.height);
-            let rows = view::visible_rows(session, area.width.saturating_sub(2));
+            let rows = view::visible_rows(session, view::transcript_width(area.width));
             let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
             session.hovered_block =
                 row.and_then(|row| view::hit(&rows, offset + row).map(|hit| hit.block));
@@ -449,10 +449,10 @@ fn scroll_span(
 ) -> io::Result<usize> {
     let size = terminal.size()?;
     // Transcript viewport: full frame minus the composer (which grows with a
-    // multiline draft), status (1), and the transcript's own borders (2).
+    // multiline draft), context/status/help rails (3), and horizontal inset.
     let chrome = view::composer_height(session, size.width) + 3;
     let height = usize::from(size.height.saturating_sub(chrome));
-    let rows = view::transcript_text(session, size.width.saturating_sub(2)).len();
+    let rows = view::transcript_text(session, view::transcript_width(size.width)).len();
     Ok(view::max_scroll_back(rows, height))
 }
 

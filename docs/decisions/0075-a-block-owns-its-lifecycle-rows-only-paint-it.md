@@ -19,6 +19,7 @@ covers:
   - apps/optimus-tui/src/session/event_adapter.rs
   - apps/optimus-tui/src/lib.rs
   - apps/optimus-tui/src/view.rs
+  - apps/optimus-tui/src/view/composer.rs
   - apps/optimus-tui/src/overlay.rs
   - apps/optimus-tui/src/transcript.rs
   - apps/optimus-tui/src/keys.rs
@@ -40,6 +41,7 @@ validated_by:
   - apps/optimus-tui/src/session.rs
   - apps/optimus-tui/src/transcript.rs
   - apps/optimus-tui/src/view.rs
+  - apps/optimus-tui/src/view/composer.rs
   - apps/optimus-tui/src/overlay.rs
   - apps/optimus-tui/src/keys.rs
   - apps/optimus-tui/src/mouse.rs
@@ -99,6 +101,14 @@ validated_by:
   durable block under the cursor without changing semantic selection. This is a
   first phase-6 seam; it does not claim a complete viewer stack or tooltip
   system.
+- **Reference-led workbench face delivered:** 2026-08-02 — the default surface
+  now uses a flat, inset five-band workbench: compact project context, an
+  unboxed transcript, a filled command bar with the active provider, semantic
+  status, and keyboard help. The palette is deliberately quiet with blue
+  activity markers and green ready state, and the visual status rail omits raw
+  session UUIDs. This is a real layout change toward the supplied terminal
+  reference; it does not invent plan/task data that the current event spine
+  cannot provide.
 
 ## Context
 

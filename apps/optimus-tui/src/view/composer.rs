@@ -8,10 +8,11 @@
 //! terminal.
 
 use ratatui::prelude::*;
+use ratatui::widgets::{Block, Borders, Paragraph};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::composer::Composer;
-use crate::{bordered, wrapped};
+use crate::wrapped;
 
 /// Columns reserved for the prompt gutter, on every visual row so wrapped
 /// text stays aligned under the first character.
@@ -44,7 +45,13 @@ pub fn height(draft: &str, width: u16) -> u16 {
     rows as u16 + 2
 }
 
-pub fn render(frame: &mut Frame, area: Rect, composer: &Composer, title: &str) {
+pub fn render(
+    frame: &mut Frame,
+    area: Rect,
+    composer: &Composer,
+    title: Option<&str>,
+    provider: &str,
+) {
     let inner_height = usize::from(area.height.saturating_sub(2));
     let layout = layout(composer.text(), composer.cursor(), area.width);
 
@@ -61,7 +68,32 @@ pub fn render(frame: &mut Frame, area: Rect, composer: &Composer, title: &str) {
         .cloned()
         .collect();
 
-    frame.render_widget(wrapped(visible.join("\n")).block(bordered(title)), area);
+    let mut block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Rgb(42, 42, 42)))
+        .style(Style::default().bg(Color::Rgb(25, 25, 25)));
+    if let Some(title) = title {
+        block = block
+            .title(title)
+            .title_style(Style::default().fg(Color::Rgb(132, 164, 255)));
+    }
+    block = block.title_bottom(
+        Line::from(format!(" {provider} "))
+            .right_aligned()
+            .style(Style::default().fg(Color::Rgb(126, 126, 126))),
+    );
+    let paragraph = if composer.text().is_empty() && title.is_none() {
+        Paragraph::new(Line::from(vec![
+            Span::styled("› ", Style::default().fg(Color::Rgb(132, 164, 255))),
+            Span::styled(
+                "Type a command...",
+                Style::default().fg(Color::Rgb(100, 100, 100)),
+            ),
+        ]))
+    } else {
+        wrapped(visible.join("\n"))
+    };
+    frame.render_widget(paragraph.block(block), area);
     frame.set_cursor_position(Position::new(
         area.x + 1 + layout.cursor_col as u16,
         area.y + 1 + (layout.cursor_row - first) as u16,

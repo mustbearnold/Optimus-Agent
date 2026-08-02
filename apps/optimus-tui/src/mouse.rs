@@ -9,20 +9,57 @@
 //! below is assertable without standing up a terminal.
 
 use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
-use ratatui::layout::{Position, Rect};
+use ratatui::layout::{Constraint, Layout, Margin, Position, Rect};
 
 use crate::picker::Picker;
 
 /// Rows the wheel moves per notch.
 const WHEEL: isize = 3;
+pub const HORIZONTAL_GUTTER: u16 = 2;
 
 /// The panes of the terminal face, in screen coordinates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Regions {
-    /// Transcript viewport, inside the block border.
+    /// Flat transcript viewport inside the workbench's horizontal gutter.
     pub transcript: Rect,
-    /// The scrollbar track: the transcript block's right border column.
+    /// The scrollbar track at the transcript viewport's right edge.
     pub track: Rect,
+}
+
+/// The stable workbench frame. Rendering and hit-testing both consume this
+/// geometry so adding the context rail or key rail cannot move the cursor away
+/// from the cell the mouse thinks it is pointing at.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LayoutAreas {
+    pub context: Rect,
+    pub transcript: Rect,
+    pub composer: Rect,
+    pub status: Rect,
+    pub help: Rect,
+}
+
+/// Split the frame into the workbench's five visual bands.
+pub fn layout(area: Rect, composer_height: u16) -> LayoutAreas {
+    // A narrow horizontal gutter keeps the workbench from becoming a wall of
+    // edge-to-edge glyphs. It also gives the command bar the breathing room
+    // visible in the reference terminal while preserving one shared geometry
+    // contract for drawing and hit-testing.
+    let workbench = area.inner(Margin::new(HORIZONTAL_GUTTER, 0));
+    let areas = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Min(3),
+        Constraint::Length(composer_height),
+        Constraint::Length(1),
+        Constraint::Length(1),
+    ])
+    .split(workbench);
+    LayoutAreas {
+        context: areas[0],
+        transcript: areas[1],
+        composer: areas[2],
+        status: areas[3],
+        help: areas[4],
+    }
 }
 
 /// Split the frame the same way [`crate::view::draw`] does.
@@ -31,20 +68,9 @@ pub struct Regions {
 /// draft — it grows with a multiline prompt, so hit-testing cannot assume a
 /// fixed bottom strip. See [`crate::view::composer_height`].
 pub fn regions(area: Rect, composer_height: u16) -> Regions {
-    // The composer and status (1) are pinned to the bottom; the transcript
-    // takes the rest.
-    let block = Rect {
-        height: area.height.saturating_sub(composer_height + 1),
-        ..area
-    };
-    let transcript = Rect {
-        x: block.x + 1,
-        y: block.y + 1,
-        width: block.width.saturating_sub(2),
-        height: block.height.saturating_sub(2),
-    };
+    let transcript = layout(area, composer_height).transcript;
     let track = Rect {
-        x: block.x + block.width.saturating_sub(1),
+        x: transcript.x + transcript.width.saturating_sub(1),
         y: transcript.y,
         width: 1,
         height: transcript.height,
@@ -213,7 +239,7 @@ mod tests {
     #[test]
     fn the_track_sits_on_the_transcript_border_beside_the_viewport() {
         let regions = regions(AREA, 3);
-        assert_eq!(regions.track.x, 79, "right border column");
+        assert_eq!(regions.track.x, 77, "right workbench column");
         assert_eq!(regions.track.y, regions.transcript.y);
         assert_eq!(regions.track.height, regions.transcript.height);
         assert_eq!(
@@ -240,7 +266,7 @@ mod tests {
 
     #[test]
     fn pressing_on_the_track_grabs_the_thumb() {
-        let event = at(MouseEventKind::Down(MouseButton::Left), 79, 5);
+        let event = at(MouseEventKind::Down(MouseButton::Left), 77, 5);
         assert_eq!(intent(&event, AREA, 3, None, false), Intent::GrabTrack);
     }
 
@@ -288,7 +314,7 @@ mod tests {
 
     #[test]
     fn dragging_without_a_grab_is_ignored() {
-        let event = at(MouseEventKind::Drag(MouseButton::Left), 79, 9);
+        let event = at(MouseEventKind::Drag(MouseButton::Left), 77, 9);
         assert_eq!(intent(&event, AREA, 3, None, false), Intent::Nothing);
     }
 
@@ -373,6 +399,6 @@ mod tests {
             ..AREA
         };
         let event = at(MouseEventKind::Drag(MouseButton::Left), 19, 1);
-        assert_eq!(intent(&event, tiny, 3, None, true), Intent::ScrollTo(1.0));
+        assert_eq!(intent(&event, tiny, 3, None, true), Intent::ScrollTo(0.0));
     }
 }
