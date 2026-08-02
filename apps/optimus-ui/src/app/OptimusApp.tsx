@@ -143,21 +143,35 @@ export function OptimusApp() {
 
   const alive = useAlive();
 
+  const refreshCapabilityState = useCallback(async () => {
+    try {
+      const [doctorResult, campaignResult] = await Promise.all([
+        transport.invoke<Doctor>('doctor'),
+        transport.invoke<{ campaigns?: Campaign[] }>('campaign_list'),
+      ]);
+      if (!alive()) return;
+      setDoctor(doctorResult);
+      setCampaigns(campaignResult.campaigns || []);
+    } catch (error) {
+      if (!alive()) return;
+      setBootError(error instanceof Error ? error.message : String(error));
+    }
+  }, [alive]);
+
   const refreshRuntime = useCallback(async () => {
     try {
       const creationsAtRequest = sessionCreations.current;
-      const [doctorResult, sessionsResult, approvalResult, campaignResult, scopeResult] = await Promise.all([
-        transport.invoke<Doctor>('doctor'),
+      // The host serves IPC requests in order. Keep the initial workbench
+      // refresh to the small, interactive set so New thread is not queued
+      // behind diagnostics and campaign inventory on a busy machine.
+      const [sessionsResult, approvalResult, scopeResult] = await Promise.all([
         transport.invoke<{ sessions?: SessionMeta[] } | SessionMeta[]>('sessions'),
         transport.invoke<{ pending?: Approval[] }>('approvals_list'),
-        transport.invoke<{ campaigns?: Campaign[] }>('campaign_list'),
         transport.invoke<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list'),
       ]);
       if (!alive()) return;
       const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
-      setDoctor(doctorResult);
       setApprovals(approvalResult.pending || []);
-      setCampaigns(campaignResult.campaigns || []);
       setProjectScopes(scopeResult.projects || []);
       setAuthorizedProjects(new Set((scopeResult.projects || []).map((project) => project.project_id)));
       // A thread created while this refresh was in flight is newer than the
@@ -189,6 +203,10 @@ export function OptimusApp() {
   useEffect(() => {
     void refreshRuntime();
   }, [refreshRuntime]);
+
+  useEffect(() => {
+    if (state.layout.route === 'capabilities') void refreshCapabilityState();
+  }, [refreshCapabilityState, state.layout.route]);
 
   useEffect(() => {
     const id = state.selectedSessionId;
@@ -728,7 +746,7 @@ export function OptimusApp() {
             } else if (commandId === 'new') {
               void newSession();
             } else if (commandId === 'doctor') {
-              void refreshRuntime();
+              void refreshCapabilityState();
             }
           }}
         />

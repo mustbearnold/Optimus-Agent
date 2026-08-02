@@ -28,6 +28,8 @@ const WARNING: Color = Color::Rgb(226, 190, 112);
 const DANGER: Color = Color::Rgb(235, 116, 116);
 const PROMPT_BACKGROUND: Color = Color::Rgb(27, 27, 29);
 const HOVER_BACKGROUND: Color = Color::Rgb(34, 35, 40);
+const SELECTED_BACKGROUND: Color = Color::Rgb(38, 46, 68);
+const SELECTED_TEXT: Color = Color::Rgb(242, 244, 250);
 const COMPOSER_BACKGROUND: Color = Color::Rgb(25, 25, 27);
 const SIDEBAR_BACKGROUND: Color = Color::Rgb(17, 17, 17);
 const SIDEBAR_ACTION: Color = Color::Rgb(24, 27, 36);
@@ -179,9 +181,10 @@ fn compact_path(path: &std::path::Path, width: u16) -> String {
 /// Colour a row by whose turn it is. Distinct hues per role are what make the
 /// transcript scannable rather than one undifferentiated block of text.
 ///
-/// The selected item is reversed rather than tinted: reverse video is the one
-/// emphasis every terminal has, including the monochrome and `NO_COLOR` ones,
-/// so which block the keyboard is pointed at never depends on a palette.
+/// The selected item gets a restrained slate surface rather than reverse video.
+/// Reverse video turns a long semantic block into a wall of white in most
+/// terminals; a deliberate dark surface keeps the inspect state obvious while
+/// preserving the workbench's visual hierarchy.
 fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Line<'static> {
     let is_hovered = !row.selected && row.block.is_some() && row.block == hovered;
     let mut base = match row.role {
@@ -196,7 +199,8 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
     }
     if row.selected {
         base = base
-            .add_modifier(Modifier::REVERSED)
+            .fg(SELECTED_TEXT)
+            .bg(SELECTED_BACKGROUND)
             .add_modifier(Modifier::BOLD);
     }
     let mut spans = row
@@ -1252,6 +1256,14 @@ mod tests {
         let mut terminal = Terminal::new(backend).expect("test terminal");
         terminal.draw(|f| draw(f, &session)).expect("draw");
         let buffer = terminal.backend().buffer();
+        let selected_background = (0..buffer.area.height)
+            .flat_map(|y| (0..buffer.area.width).map(move |x| (x, y)))
+            .filter(|(x, y)| buffer[(*x, *y)].style().bg == Some(SELECTED_BACKGROUND))
+            .count();
+        assert!(
+            selected_background > 0,
+            "the block the keyboard is pointed at has to be visible"
+        );
         let reversed = (0..buffer.area.height)
             .flat_map(|y| (0..buffer.area.width).map(move |x| (x, y)))
             .filter(|(x, y)| {
@@ -1261,9 +1273,9 @@ mod tests {
                     .contains(Modifier::REVERSED)
             })
             .count();
-        assert!(
-            reversed > 0,
-            "the block the keyboard is pointed at has to be visible"
+        assert_eq!(
+            reversed, 0,
+            "transcript inspection must not become a terminal-wide white reverse selection"
         );
     }
 

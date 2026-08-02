@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "82116b13617b1ec0f33df8adcc75d8f3f494234668ae349e163fb7804f4fcd04",
+      "binding_sha256": "0f99c416e92154abf086cb5be11cc7ca168fa6b3e787ed913b6c9b2234b99fef",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 351
@@ -319,25 +319,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "4363d959ce9b18460b53585c6256c6c5cf18b39041e2dfa5381b540417851a31",
+      "binding_sha256": "f4553076c6ef2863b86c029e3257a3d9a806665cc069db66eba2aee0ae753f60",
       "document_sha256": "de58fe424aee66fd31dadbb254c470c0a0bb0d57bf66fe722c4249f660abebca",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 122
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "6fe6b5904e350e4fd355dd1383aab9294abb47013924d15183a902120e8fb182",
+      "binding_sha256": "3522fd5bbb0744e51125bcb5af47e62790036bcd931785e8994e56eae2e1388d",
       "document_sha256": "9947d9bb090b59f83e953b336120a79b9b467acc3358fbb7b9ab9b936169f8f8",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 122
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "092ed694144704ffee81ec1352d833e85ceebac74da211524d496291ac78cd01",
+      "binding_sha256": "416244a7c67077ad30195b595b6ec9ed1381b13990c53b0de0f620a87831408d",
       "document_sha256": "5454bddfb445341aa15389f08ffe6d6b9e2286eec7e54ad096ebd8864b0a0ad0",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 107
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "0c43429a3f2c3bb47eda1b9c972ae59d9354aec82f8b5bedd4ba2778bce493c2",
+      "binding_sha256": "654f535644941297a9465ed0cb215cca65b199d1430cee70aceedde805759ccf",
       "document_sha256": "ed013ec8a70e7222ebd3080683e3dc25303922429d887ecf7606f928994ef797",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 103
@@ -457,7 +457,7 @@
       "resolved_files": 5
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "3c98257b04549cc4f26d1048bad979b5fd48693179343c9a24c4e8fab9d560d8",
+      "binding_sha256": "9a6c0a9de57ceefc5ce1d98de1af7dec7db7b02b050f8696241ce8ed4a367061",
       "document_sha256": "59e42e6384ebae28e9f0a21609ca3c99506e7b6ba16be2b15bb1ab8aeab18e06",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 11
@@ -553,13 +553,13 @@
       "resolved_files": 9
     },
     "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
-      "binding_sha256": "e8d11d7cbe11a1b8ddf7e7ad7af86836758902c0961171c141461d95ef32dc40",
+      "binding_sha256": "9ab374a0a275bea122cc6cc1200bba45a062026113d703ef3f1063446fe1af95",
       "document_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "af4bc98979428e1599567688003ae89b55551292eb09da1f8550b452620fc3cf",
+      "binding_sha256": "918328d96f3cce322254e663c2e63216c117247cbc8bb8336e8dba8a8aed1c8d",
       "document_sha256": "51c5a6e335e3ead46ff3f2361b127a80614060fde3a01252bb44500d4db47b6c",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21
@@ -571,13 +571,13 @@
       "resolved_files": 80
     },
     "design-codex-convergence-experience-contract": {
-      "binding_sha256": "130f2ed7fa7565ed207b853a8a8ff50625af4df37face987a30549bb56fb5108",
+      "binding_sha256": "c6c627a5a8c58a63933372e83393ffab02bcb2f1b9907cae504f23d31ee5e1bb",
       "document_sha256": "1df6d7f82e0ec8a0a18602ada10d71cc1f42168ec21c02cd57fe2e204d8a0e1c",
       "path": "docs/design/codex-convergence-experience-contract.md",
       "resolved_files": 104
     },
     "design-codex-convergence-state-matrix": {
-      "binding_sha256": "c19da9a6622ee4fa949d264c60891ab271e7ca558da9d74e15c5ad6e79ec51a3",
+      "binding_sha256": "234eb0033a0354b99f1ca851e6fad38148a22a8d9730241a294460b0a22cd300",
       "document_sha256": "f986075be9aec2905b191c44a4e54a633a6f54ac0d4eb76c8bc6330b1e876dae",
       "path": "docs/design/codex-convergence-state-matrix.md",
       "resolved_files": 103
@@ -667,7 +667,7 @@
       "resolved_files": 0
     },
     "specifications-in-transcript-approval-resolution": {
-      "binding_sha256": "a309bceb47044a4552386ed915f3631edcad0da89255df7ab75692c60d7f974c",
+      "binding_sha256": "472effd42c810c5f8f687f04c36ecf9675d803366d3e419897a15c47659a7c83",
       "document_sha256": "922011db9de79508c195994cd38c294f4754cb22c6760256d5544252baa354bd",
       "path": "docs/specifications/in-transcript-approval-resolution.md",
       "resolved_files": 116
