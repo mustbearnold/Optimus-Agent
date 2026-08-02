@@ -469,7 +469,15 @@ pub fn transcript_lines(session: &TuiSession, width: u16) -> Vec<String> {
 }
 
 pub(crate) fn bordered(title: &str) -> Block<'_> {
-    Block::default().borders(Borders::ALL).title(title)
+    Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::DarkGray))
+        .title_style(
+            Style::default()
+                .fg(Color::LightCyan)
+                .add_modifier(Modifier::BOLD),
+        )
+        .title(title)
 }
 
 pub(crate) fn wrapped(text: String) -> Paragraph<'static> {

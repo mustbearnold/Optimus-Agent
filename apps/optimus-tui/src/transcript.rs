@@ -319,9 +319,9 @@ fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> V
 /// reads as a small card instead of a full-width bar.
 fn boxed_rows(message: &Message, width: u16) -> Vec<Row> {
     let title = if message.role == Role::User {
-        " you "
+        " YOU "
     } else {
-        " optimus "
+        " OPTIMUS "
     };
     // Two columns of border and one of padding on each side.
     let outer = usize::from(width).clamp(MIN_BOX, READABLE_WIDTH);
@@ -671,7 +671,7 @@ mod tests {
     #[test]
     fn a_turn_is_drawn_in_a_titled_container() {
         let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Boxed);
-        assert_eq!(plain(&rows), vec!["╭─ you ──╮", "│ hello  │", "╰────────╯"]);
+        assert_eq!(plain(&rows), vec!["╭─ YOU ──╮", "│ hello  │", "╰────────╯"]);
     }
 
     #[test]

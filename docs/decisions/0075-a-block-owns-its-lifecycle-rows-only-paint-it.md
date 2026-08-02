@@ -84,6 +84,13 @@ validated_by:
   tick marks the coalescing repaint flag. The default keeps the existing
   readable spinner cadence; static modes retain live event draining without
   animating.
+- **Visible chrome slice delivered:** 2026-08-02 — the workbench face now has
+  an explicit visual hierarchy without changing its layout or input contract:
+  branded transcript/composer titles, semantic ready/busy/approval markers in
+  the footer, light role accents, stronger selected-row emphasis, and named
+  `YOU`/`OPTIMUS` conversation cards. This is the first visible polish slice,
+  not a claim that the later overlay, accessibility, and full polish work is
+  complete.
 
 ## Context
 

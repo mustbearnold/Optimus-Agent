@@ -10,10 +10,10 @@ use ratatui::widgets::{
 
 mod composer;
 
+use crate::bordered;
 use crate::mouse;
 use crate::session::{Role, TuiSession};
 use crate::transcript::{self, Row};
-use crate::{bordered, wrapped};
 
 /// Rows the composer block occupies for this draft, borders included. One
 /// arithmetic, shared by the layout below and by every caller that has to
@@ -38,13 +38,14 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     let offset = scroll_offset(rows.len(), height, session.scroll_back) as u16;
 
     let lines: Vec<Line> = rows.iter().map(paint).collect();
+    let title = session.running_tool.as_ref().map_or_else(
+        || "OPTIMUS · WORKBENCH".to_string(),
+        |tool| format!("OPTIMUS · {tool}"),
+    );
     frame.render_widget(
-        Paragraph::new(lines).scroll((offset, 0)).block(bordered(
-            &session
-                .running_tool
-                .as_ref()
-                .map_or_else(|| "Optimus".to_string(), |tool| format!("Optimus — {tool}")),
-        )),
+        Paragraph::new(lines)
+            .scroll((offset, 0))
+            .block(bordered(&title)),
         areas[0],
     );
     draw_scrollbar(frame, areas[0], rows.len(), height, offset as usize);
@@ -55,14 +56,11 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     let title = if session.workbench.inspecting() {
         "Inspect — ↑↓ move · Space fold · Tab back"
     } else {
-        "Message"
+        "Message · Enter send"
     };
     composer::render(frame, areas[1], &session.composer, title);
 
-    frame.render_widget(
-        wrapped(session.status_line()).style(Style::default().add_modifier(Modifier::DIM)),
-        areas[2],
-    );
+    frame.render_widget(Paragraph::new(status_line(session)), areas[2]);
 
     // Suggestions first, so a picker the user opened on purpose covers a list
     // that merely appeared because they typed a slash.
@@ -82,15 +80,17 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
 fn paint(row: &Row) -> Line<'static> {
     let mut base = match row.role {
         Role::User => Style::default()
-            .fg(Color::Cyan)
+            .fg(Color::LightCyan)
             .add_modifier(Modifier::BOLD),
-        Role::Assistant => Style::default(),
-        Role::Tool => Style::default().fg(Color::Magenta),
-        Role::Action => Style::default().fg(Color::Yellow),
-        Role::Error => Style::default().fg(Color::Red),
+        Role::Assistant => Style::default().fg(Color::LightBlue),
+        Role::Tool => Style::default().fg(Color::LightMagenta),
+        Role::Action => Style::default().fg(Color::LightYellow),
+        Role::Error => Style::default().fg(Color::LightRed),
     };
     if row.selected {
-        base = base.add_modifier(Modifier::REVERSED);
+        base = base
+            .add_modifier(Modifier::REVERSED)
+            .add_modifier(Modifier::BOLD);
     }
     Line::from(
         row.segments
@@ -107,6 +107,30 @@ fn paint(row: &Row) -> Line<'static> {
             })
             .collect::<Vec<_>>(),
     )
+}
+
+/// The footer is the workbench's compact state rail. The text remains the
+/// durable session summary, while the leading marker gives the eye a semantic
+/// colour and shape to find before reading the details.
+fn status_line(session: &TuiSession) -> Line<'static> {
+    let (marker, marker_style) = if session.busy() {
+        ("◌", Style::default().fg(Color::LightYellow))
+    } else if session.pending_approval.is_some() {
+        ("!", Style::default().fg(Color::LightRed))
+    } else {
+        ("●", Style::default().fg(Color::LightGreen))
+    };
+    Line::from(vec![
+        Span::styled("  ", Style::default()),
+        Span::styled(
+            format!("{marker} "),
+            marker_style.add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            session.status_line(),
+            Style::default().fg(Color::Gray).add_modifier(Modifier::DIM),
+        ),
+    ])
 }
 
 /// The track on the transcript's right border.
@@ -477,7 +501,19 @@ mod tests {
         let _worker = session.busy_for_test("working");
         session.running_tool = Some("web_search".into());
         let screen = render(&session, 60, 8).join("\n");
-        assert!(screen.contains("Optimus — web_search"), "{screen}");
+        assert!(screen.contains("OPTIMUS · web_search"), "{screen}");
+    }
+
+    #[test]
+    fn the_footer_uses_a_semantic_marker_for_ready_and_busy_states() {
+        let (_dir, session) = session_with(&[]);
+        let ready = render(&session, 60, 8).join("\n");
+        assert!(ready.contains("● auto"), "{ready}");
+
+        let (_dir, mut session) = session_with(&[]);
+        let _worker = session.busy_for_test("working");
+        let busy = render(&session, 60, 8).join("\n");
+        assert!(busy.contains("◌ auto"), "{busy}");
     }
 
     #[test]
