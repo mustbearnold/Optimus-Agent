@@ -25,12 +25,29 @@ use super::{BlockId, BlockLifecycle, WorkbenchBlock, WorkbenchBlockKind};
 /// call summaries; three is where the summary starts paying for what it hides.
 const MIN_GROUP: usize = 3;
 
+/// Rows a block hides behind its own summary line, and whether they are shown.
+///
+/// Carried on the item rather than looked up while painting, so the transcript
+/// keeps knowing nothing about block internals: it is handed the lines and the
+/// state, and paints them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Body {
+    pub lines: Vec<String>,
+    pub expanded: bool,
+}
+
 /// One unit of the transcript: a block painted on its own, or a run of
 /// repeated observations behind a header the reader can open.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Item {
-    /// The block at `index` in the transcript, painted as itself.
-    Single { index: usize, id: BlockId },
+    /// The block at `index` in the transcript, painted as itself. `body` is
+    /// what the block produced beyond its one-line summary — a command's
+    /// output — or `None` when the line is the whole truth.
+    Single {
+        index: usize,
+        id: BlockId,
+        body: Option<Body>,
+    },
     /// A run of adjacent calls to one tool, all settled clean.
     Group {
         /// Identity of the run: the first member's, so it survives the run
@@ -65,11 +82,23 @@ impl Item {
         }
     }
 
-    /// Whether opening and closing this item means anything. Phase 2 folds
-    /// groups; the block kinds that carry a body of their own fold from the
-    /// phase that gives them one.
+    /// Whether opening and closing this item means anything: a run has members
+    /// to show, and a block with a body has that body. A call that produced
+    /// nothing this surface can read stays a plain row rather than a fold that
+    /// opens onto nothing.
     pub fn foldable(&self) -> bool {
-        matches!(self, Self::Group { .. })
+        match self {
+            Self::Group { .. } => true,
+            Self::Single { body, .. } => body.is_some(),
+        }
+    }
+
+    /// Whether this item is currently open.
+    pub fn expanded(&self) -> bool {
+        match self {
+            Self::Group { expanded, .. } => *expanded,
+            Self::Single { body, .. } => body.as_ref().is_some_and(|body| body.expanded),
+        }
     }
 
     /// Transcript indices this item paints, in order.
@@ -105,10 +134,24 @@ pub fn project(blocks: &[WorkbenchBlock]) -> Vec<Item> {
         items.push(Item::Single {
             index: at,
             id: head.id,
+            body: body_of(head),
         });
         at += 1;
     }
     items
+}
+
+/// The rows a block hides behind its summary line, or `None` when it hides
+/// nothing. A body arrives closed, like a run does, and stays however the
+/// human left it.
+fn body_of(block: &WorkbenchBlock) -> Option<Body> {
+    if !block.detail.has_body() {
+        return None;
+    }
+    Some(Body {
+        lines: block.detail.body(),
+        expanded: opened_by_hand(block),
+    })
 }
 
 /// How many blocks the foldable run starting at `at` covers — one when the
@@ -161,6 +204,7 @@ pub(crate) fn ungrouped(count: usize) -> Vec<Item> {
         .map(|index| Item::Single {
             index,
             id: BlockId::mint(),
+            body: None,
         })
         .collect()
 }
@@ -365,6 +409,57 @@ mod tests {
             matches!(project(state.blocks())[0], Item::Group { expanded, .. } if expanded),
             "arriving output must never close a fold a human opened"
         );
+    }
+
+    // ADR-0075 phase 3: a call that produced a body folds like a run does.
+
+    fn ran(state: &mut WorkbenchState, call: &str, stdout: &str) {
+        state.push_body_for_test(
+            "terminal",
+            call,
+            crate::workbench::ToolDetail::read(Some(&optimus_packs::ToolOutcome::succeeded(
+                call,
+                "terminal",
+                "ran",
+                serde_json::json!({ "stdout": stdout, "stderr": "", "exit_code": 0 }),
+                optimus_packs::ReplayClass::Ambiguous,
+            ))),
+        );
+    }
+
+    #[test]
+    fn a_command_that_printed_something_can_be_opened() {
+        let mut state = state();
+        ran(&mut state, "cmd-1", "47 passed\n");
+        let items = project(state.blocks());
+        assert_eq!(items.len(), 1);
+        assert!(items[0].foldable(), "there is output behind the line");
+        assert!(!items[0].expanded(), "and it arrives closed");
+
+        state.toggle_fold_of(items[0].id());
+        assert!(project(state.blocks())[0].expanded());
+    }
+
+    #[test]
+    fn a_call_with_nothing_to_show_is_not_a_fold_that_opens_onto_nothing() {
+        let mut state = state();
+        read(&mut state, "r0");
+        let items = project(state.blocks());
+        assert!(!items[0].foldable());
+        assert!(!state.toggle_fold_of(items[0].id()));
+    }
+
+    /// Commands run under the `Process` policy, so they never join a run —
+    /// and two commands beside each other stay two openable blocks.
+    #[test]
+    fn commands_are_never_folded_into_each_other() {
+        let mut state = state();
+        for n in 0..3 {
+            ran(&mut state, &format!("cmd-{n}"), "ok\n");
+        }
+        let items = project(state.blocks());
+        assert_eq!(items.len(), 3, "each command keeps its own block");
+        assert!(items.iter().all(Item::foldable));
     }
 
     #[test]

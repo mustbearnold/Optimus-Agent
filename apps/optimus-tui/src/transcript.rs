@@ -149,15 +149,31 @@ pub fn rows(
         }
         let chosen = selected == Some(item.id());
         match item {
-            Item::Single { index, id } => {
+            Item::Single { index, id, body } => {
                 let Some(message) = messages.get(*index) else {
                     continue;
                 };
-                let mut laid = if chrome == Chrome::Boxed && contained(message.role) {
-                    boxed_rows(message, width)
-                } else {
-                    message_rows(message, width)
+                let mut laid = match body {
+                    // A block with a body wears the fold marker in place of
+                    // its role's, so one glyph answers "is there more here"
+                    // for a run and for a command alike.
+                    Some(body) => laid_rows(
+                        message.role,
+                        &message.text,
+                        width,
+                        &format!("{} ", marker(body.expanded)),
+                        "  ",
+                    ),
+                    None if chrome == Chrome::Boxed && contained(message.role) => {
+                        boxed_rows(message, width)
+                    }
+                    None => message_rows(message, width),
                 };
+                if let Some(body) = body.as_ref().filter(|body| body.expanded) {
+                    for line in &body.lines {
+                        laid.extend(laid_rows(message.role, line, width, "  │ ", "  │ "));
+                    }
+                }
                 owned_by(&mut laid, *id, chosen);
                 rows.extend(laid);
             }
@@ -196,9 +212,23 @@ pub fn rows(
 /// number that reads precise and is not; durations arrive with the typed
 /// `Timing` events in the phase that consumes them.
 fn header_rows(tool: &str, count: usize, expanded: bool, width: u16) -> Vec<Row> {
-    let marker = if expanded { OPEN } else { SHUT };
     let text = format!("{tool} · {count} calls");
-    laid_rows(Role::Tool, &text, width, &format!("{marker} "), "  ")
+    laid_rows(
+        Role::Tool,
+        &text,
+        width,
+        &format!("{} ", marker(expanded)),
+        "  ",
+    )
+}
+
+/// The glyph that says whether something can be opened, and whether it is.
+fn marker(expanded: bool) -> char {
+    if expanded {
+        OPEN
+    } else {
+        SHUT
+    }
 }
 
 /// Only conversational turns get a container. Tool, action, and error rows are
@@ -454,7 +484,7 @@ fn runs(marked: &[(char, bool)]) -> Vec<Segment> {
 mod tests {
     use super::*;
 
-    use crate::workbench::ungrouped;
+    use crate::workbench::{ungrouped, Body};
 
     fn message(role: Role, text: &str) -> Message {
         Message {
@@ -825,6 +855,57 @@ mod tests {
         let painted = rows(&messages, &items, None, 24, Chrome::Plain);
         assert_eq!(painted.len(), 1, "{painted:?}");
         assert!(painted[0].plain().starts_with('▸'));
+    }
+
+    // ADR-0075 phase 3: a block with a body wears the same fold marker a run
+    // does, and its output is set in from the summary line above it.
+
+    fn with_body(expanded: bool) -> (Vec<Message>, Vec<Item>) {
+        let messages = vec![message(Role::Tool, "terminal  47 passed  (8.3s)")];
+        let items = vec![Item::Single {
+            index: 0,
+            id: BlockId::mint(),
+            body: Some(Body {
+                lines: vec!["running 47 tests".into(), "test result: ok".into()],
+                expanded,
+            }),
+        }];
+        (messages, items)
+    }
+
+    #[test]
+    fn a_closed_command_is_the_summary_line_and_a_marker() {
+        let (messages, items) = with_body(false);
+        assert_eq!(
+            plain(&rows(&messages, &items, None, 80, Chrome::Plain)),
+            vec!["▸ terminal  47 passed  (8.3s)"]
+        );
+    }
+
+    #[test]
+    fn an_open_command_sets_its_output_in_under_the_line_it_belongs_to() {
+        let (messages, items) = with_body(true);
+        assert_eq!(
+            plain(&rows(&messages, &items, None, 80, Chrome::Plain)),
+            vec![
+                "▾ terminal  47 passed  (8.3s)",
+                "  │ running 47 tests",
+                "  │ test result: ok",
+            ],
+            "the rule marks where the output starts and stops"
+        );
+    }
+
+    #[test]
+    fn every_row_of_an_open_command_belongs_to_the_command() {
+        let (messages, items) = with_body(true);
+        let painted = rows(&messages, &items, None, 80, Chrome::Plain);
+        let owner = items[0].id();
+        assert!(painted.iter().all(|row| row.block == Some(owner)));
+        assert!(
+            painted[1..].iter().all(|row| row.role == Role::Tool),
+            "output keeps the call's own colour rather than reading as prose"
+        );
     }
 
     /// An item naming a message that is not there must not panic or shift

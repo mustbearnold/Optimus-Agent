@@ -21,11 +21,13 @@ use uuid::Uuid;
 
 use crate::session::{Role, ToolStep};
 
+mod detail;
 mod effects;
 mod grouping;
 mod selection;
 
-pub use grouping::Item;
+pub use detail::{CommandDetail, ToolDetail};
+pub use grouping::{Body, Item};
 pub use selection::{FocusRegion, SelectionStep};
 
 #[cfg(test)]
@@ -157,6 +159,10 @@ pub struct WorkbenchBlock {
     /// sketch's `Vec<Uuid>` would force an invented parse; the honest type
     /// carries the ids verbatim.
     pub provenance: Vec<String>,
+    /// What the call produced, read from its typed outcome — the body opening
+    /// this block shows (ADR-0075 phase 3). Empty until an outcome arrives,
+    /// which is why a running call has nothing to open.
+    pub detail: ToolDetail,
 }
 
 impl WorkbenchBlock {
@@ -172,6 +178,7 @@ impl WorkbenchBlock {
             started_at: Some(now),
             settled_at: lifecycle.is_settled().then_some(now),
             provenance: Vec::new(),
+            detail: ToolDetail::None,
         }
     }
 }
@@ -297,6 +304,12 @@ impl WorkbenchState {
                 if !block.provenance.contains(&step.event_id) {
                     block.provenance.push(step.event_id.clone());
                 }
+                // A later phase carries the outcome the earlier ones had
+                // nothing to say about. An arriving event never erases a body
+                // the call already reported.
+                if step.detail.has_body() {
+                    block.detail = step.detail.clone();
+                }
             }
             None => {
                 let mut block = WorkbenchBlock::born(
@@ -308,6 +321,7 @@ impl WorkbenchState {
                     Uuid::parse_str(&step.run_id).ok(),
                 );
                 block.provenance.push(step.event_id.clone());
+                block.detail = step.detail.clone();
                 self.blocks.push(block);
             }
         }
@@ -346,6 +360,16 @@ impl WorkbenchState {
             lifecycle,
             turn_id,
         ));
+    }
+
+    /// Append a settled call that produced a body, for tests about folding
+    /// rather than about the stream that filled it.
+    #[cfg(test)]
+    pub(crate) fn push_body_for_test(&mut self, tool: &str, call_id: &str, detail: ToolDetail) {
+        self.push_call_for_test(tool, call_id, BlockLifecycle::Succeeded, None);
+        if let Some(block) = self.blocks.last_mut() {
+            block.detail = detail;
+        }
     }
 
     /// The turn settled cleanly: its streaming answer succeeded.
@@ -408,6 +432,7 @@ mod tests {
             run_id: run_id.into(),
             event_id: event_id.into(),
             phase,
+            detail: ToolDetail::None,
         }
     }
 

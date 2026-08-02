@@ -121,7 +121,7 @@ impl WorkbenchState {
         if !item.foldable() {
             return false;
         }
-        let open = matches!(item, Item::Group { expanded, .. } if *expanded);
+        let open = item.expanded();
         let head = item.id();
         let Some(block) = self.blocks.iter_mut().find(|block| block.id == head) else {
             return false;

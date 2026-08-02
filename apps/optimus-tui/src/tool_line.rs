@@ -9,6 +9,7 @@
 use optimus_kernel::{ToolLifecycleEvent, ToolLifecyclePhase};
 
 use crate::session::ToolStep;
+use crate::workbench::ToolDetail;
 
 /// Longest detail a row shows before it is cut, so the row stays one line even
 /// once the gutter, tool name, and duration are added.
@@ -42,6 +43,8 @@ pub(crate) fn tool_step(tool: &ToolLifecycleEvent) -> ToolStep {
         run_id: tool.run_id.clone(),
         event_id: tool.event_id.clone(),
         phase: tool.phase,
+        // The whole result, not the preview this row was cut from.
+        detail: ToolDetail::read(tool.outcome.as_ref()),
     }
 }
 

@@ -31,6 +31,10 @@ pub struct ToolStep {
     pub run_id: String,
     pub event_id: String,
     pub phase: ToolLifecyclePhase,
+    /// What the call produced, read from the typed outcome the kernel carries
+    /// (ADR-0075 phase 3). The `line` above is a one-line summary; this is the
+    /// body a reader opens the block to see.
+    pub detail: crate::workbench::ToolDetail,
 }
 
 /// One observable step of a turn. The wire shape for any transport.

@@ -1599,6 +1599,161 @@ mod tests {
         );
     }
 
+    // ADR-0075 phase 3: a command's output reaches the screen.
+
+    /// A terminal lifecycle event carrying the outcome the kernel really
+    /// sends: the tool's own structured result, parsed (`turn_loop.rs`).
+    fn command_event(
+        phase: optimus_kernel::ToolLifecyclePhase,
+        data: Option<serde_json::Value>,
+    ) -> ToolLifecycleEvent {
+        ToolLifecycleEvent {
+            schema_version: 1,
+            event_id: format!("run-1:cmd-1:{phase:?}"),
+            run_id: "run-1".into(),
+            call_id: "cmd-1".into(),
+            tool_id: optimus_packs::ToolId::new("terminal"),
+            phase,
+            summary: "terminal: ran".into(),
+            duration_ms: Some(8300),
+            outcome: data.map(|data| {
+                optimus_packs::ToolOutcome::succeeded(
+                    "cmd-1",
+                    "terminal",
+                    "ran",
+                    data,
+                    optimus_packs::ReplayClass::Ambiguous,
+                )
+            }),
+            approval: None,
+        }
+    }
+
+    #[test]
+    fn a_command_arrives_as_one_block_whose_output_the_reader_can_open() {
+        let (_dir, mut session) = session();
+        session.push(Role::User, "run the tests".into());
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Tool(tool_step(&command_event(
+            optimus_kernel::ToolLifecyclePhase::Started,
+            None,
+        ))))
+        .unwrap();
+        session.pump();
+
+        // Still running: there is no outcome yet, so there is nothing to open.
+        let running = session.workbench.items();
+        assert_eq!(running.len(), 2);
+        assert!(
+            !running[1].foldable(),
+            "a call in flight has reported no body to show"
+        );
+
+        tx.send(TurnUpdate::Tool(tool_step(&command_event(
+            optimus_kernel::ToolLifecyclePhase::Succeeded,
+            Some(json!({
+                "stdout": "running 47 tests\ntest result: ok. 47 passed\n",
+                "stderr": "",
+                "exit_code": 0,
+                "truncated_stdout": false,
+                "timed_out": false,
+            })),
+        ))))
+        .unwrap();
+        tx.send(TurnUpdate::Done {
+            session_id: String::new(),
+            text: String::new(),
+        })
+        .unwrap();
+        settle(&mut session);
+        assert_blocks_mirror_rows(&session);
+
+        assert_eq!(
+            session.messages.len(),
+            2,
+            "the finished command rewrote its own row rather than appending a second"
+        );
+        let items = session.workbench.items();
+        assert!(items[1].foldable(), "the output arrived with the outcome");
+
+        // Closed: the summary line only.
+        let closed = crate::view::transcript_text(&session, 60).join("\n");
+        assert!(closed.contains("▸ terminal"), "{closed}");
+        assert!(
+            !closed.contains("47 passed"),
+            "output stays out of the way until asked for:\n{closed}"
+        );
+
+        session.workbench.select_item(items[1].id());
+        assert!(session.workbench.toggle_fold());
+        let open = crate::view::transcript_text(&session, 60).join("\n");
+        assert!(open.contains("▾ terminal"), "{open}");
+        assert!(
+            open.contains("test result: ok. 47 passed"),
+            "opening the block must show what the command printed:\n{open}"
+        );
+    }
+
+    #[test]
+    fn a_failed_command_keeps_its_output_reachable() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Tool(tool_step(&command_event(
+            optimus_kernel::ToolLifecyclePhase::Failed,
+            Some(json!({
+                "stdout": "",
+                "stderr": "error: could not compile `optimus-tui`\n",
+                "exit_code": 101,
+            })),
+        ))))
+        .unwrap();
+        session.pump();
+
+        let items = session.workbench.items();
+        assert_eq!(
+            session.workbench.blocks()[0].lifecycle,
+            crate::workbench::BlockLifecycle::Failed
+        );
+        session.workbench.select_item(items[0].id());
+        assert!(session.workbench.toggle_fold(), "a failure still opens");
+        let open = crate::view::transcript_text(&session, 60).join("\n");
+        assert!(
+            open.contains("could not compile"),
+            "a failed command has to stay inspectable:\n{open}"
+        );
+        tx.send(TurnUpdate::Failed("tool failed".into())).unwrap();
+        settle(&mut session);
+    }
+
+    /// The body arrives with the outcome and must not be lost when a later
+    /// typed event for the same call carries none.
+    #[test]
+    fn a_later_event_never_erases_a_body_the_call_already_reported() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        tx.send(TurnUpdate::Tool(tool_step(&command_event(
+            optimus_kernel::ToolLifecyclePhase::Succeeded,
+            Some(json!({ "stdout": "done\n", "stderr": "", "exit_code": 0 })),
+        ))))
+        .unwrap();
+        tx.send(TurnUpdate::Tool(tool_step(&command_event(
+            optimus_kernel::ToolLifecyclePhase::Succeeded,
+            None,
+        ))))
+        .unwrap();
+        session.pump();
+        assert!(
+            session.workbench.items()[0].foldable(),
+            "the reported output survives an event that carried none"
+        );
+        tx.send(TurnUpdate::Done {
+            session_id: String::new(),
+            text: String::new(),
+        })
+        .unwrap();
+        settle(&mut session);
+    }
+
     #[test]
     fn a_fresh_session_clears_the_blocks_with_the_rows() {
         let (_dir, mut session) = session();

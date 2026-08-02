@@ -10,6 +10,7 @@ review_by: 2026-11-02
 knowledge_type: decision
 covers:
   - apps/optimus-tui/src/workbench/mod.rs
+  - apps/optimus-tui/src/workbench/detail.rs
   - apps/optimus-tui/src/workbench/grouping.rs
   - apps/optimus-tui/src/workbench/effects.rs
   - apps/optimus-tui/src/workbench/selection.rs
@@ -29,6 +30,7 @@ depends_on:
 validated_by:
   - apps/optimus-tui/tests/pty.rs
   - apps/optimus-tui/src/workbench/mod.rs
+  - apps/optimus-tui/src/workbench/detail.rs
   - apps/optimus-tui/src/workbench/grouping.rs
   - apps/optimus-tui/src/workbench/effects.rs
   - apps/optimus-tui/src/workbench/selection.rs
@@ -61,6 +63,17 @@ validated_by:
   is three calls before it folds, and the fullscreen viewer and copy action
   the program lists under this phase move to the phases that give them
   something worth viewing and copying.
+- **Phase 3 delivered (command blocks):** 2026-08-02 — a command's real output
+  reaches the screen. `ToolLifecycleEvent::outcome` already carries the tool's
+  own structured result parsed back into JSON (`turn_loop.rs` builds
+  `ToolOutcome::succeeded` from it), so `terminal`'s `stdout`, `stderr`,
+  `exit_code`, `truncated_stdout`, `truncated_stderr` and `timed_out` are
+  typed facts the surface reads rather than prose it parses. A command becomes
+  one evolving block whose summary line folds open onto its bounded output;
+  every place something was left out says so. What this slice does **not**
+  deliver, and why, is recorded under Consequences: file-edit detail and
+  syntax-highlighted diffs have no event source yet, and `Timing` stays
+  unconsumed because per-call durations already arrive on the lifecycle event.
 
 ## Context
 
@@ -384,6 +397,30 @@ app, because both consume the same host surface.
   terminal has: which block the keyboard is pointed at never depends on a
   colour a `NO_COLOR` or monochrome session will not render. Phase 14 may
   refine the treatment; it may not make it colour-only.
+- **A command result is recognised by its shape, not its tool id** (phase 3).
+  `exit_code` is the field only a command outcome carries, so a pack that runs
+  commands through a differently named tool gets the same block, and a tool
+  merely named like one does not. An outcome this surface has no reader for
+  stays bodyless and its block does not pretend to open.
+- **Output is bounded twice and both bounds are stated** (phase 3). The runtime
+  cuts a stream at its own capture limit and says so in `truncated_*`; this
+  surface keeps at most 200 lines so a hundred-thousand-line build does not
+  become a transcript to re-lay-out every frame. The *tail* is kept, because
+  that is where a failed command says why, and both cuts print a line. A tail
+  shown without a notice reads as the whole output.
+- **File-edit detail and diffs are not in this slice, and cannot be yet.**
+  `patch_file` takes `old_string`/`new_string` as call *arguments*, and
+  `ToolOutcome` carries only the result — no path, no before/after, no diff
+  (`tool_dispatch.rs`; `enrich_workspace_tool_data` adds `relative_path` for
+  `write_file` alone). A diff block therefore needs a kernel-side change to
+  the edit result first, exactly as phases 7–13 need theirs; inventing one
+  from the summary preview is the log parsing this decision prohibits. The
+  next phase-3 slice makes that kernel change and then grows the block.
+- **`Timing` stays unconsumed** (phase 3). §2 anticipated durations arriving
+  with it, but `ToolLifecycleEvent::duration_ms` already carries the per-call
+  duration the rows show, so consuming `TimingEvent` now would add a second
+  path to the same number. It lands with the first block that needs
+  turn-relative timing rather than being wired up for appearances.
 - The idle terminal stops drawing ~25 frames a second; dirty-tracking bugs
   become the new risk, mitigated as recorded under Risks.
 - Every future block kind inherits an honesty bar: no plan/agent/job/browser
@@ -474,6 +511,9 @@ app, because both consume the same host surface.
 - apps/optimus-tui/src/workbench/grouping.rs — the derived projection: what a
   run is, what breaks one, and the honesty rule that a call still running,
   waiting on a human, failed, or cancelled is never folded away.
+- apps/optimus-tui/src/workbench/detail.rs — the typed body read from
+  `ToolOutcome::data`: a command's streams, exit code, timeout, and both
+  truncation bounds, with the tail kept and every cut stated.
 - apps/optimus-tui/src/workbench/effects.rs — the fold rule read from
   `optimus-packs::builtin_catalog`, with `Browser` excluded and unknown ids
   treated as unfoldable.
@@ -517,7 +557,12 @@ app, because both consume the same host surface.
   wrapping.
 - apps/optimus-tui/src/session.rs — a fold a human opened surviving the rest of
   the turn streaming into it; the pointer and the keyboard leaving one screen;
-  ten thousand blocks still projecting and navigating.
+  ten thousand blocks still projecting and navigating; a command arriving as
+  one block whose output opens, a failed command staying inspectable, and a
+  later event never erasing a body the call already reported.
+- apps/optimus-tui/src/workbench/detail.rs — an exit code that never arrived
+  not reading as success, both truncation bounds stated, the tail kept, and an
+  outcome with no reader opening onto nothing.
 - apps/optimus-tui/tests/pty.rs — Tab handing the keyboard to the transcript
   and back through the shipped binary, letters typed while inspecting never
   reaching the draft, and an SGR click selecting a block.
