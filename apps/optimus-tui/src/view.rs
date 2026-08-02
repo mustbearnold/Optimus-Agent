@@ -27,6 +27,7 @@ const SUCCESS: Color = Color::Rgb(137, 201, 112);
 const WARNING: Color = Color::Rgb(226, 190, 112);
 const DANGER: Color = Color::Rgb(235, 116, 116);
 const PROMPT_BACKGROUND: Color = Color::Rgb(27, 27, 29);
+const HOVER_BACKGROUND: Color = Color::Rgb(34, 35, 40);
 const COMPOSER_BACKGROUND: Color = Color::Rgb(25, 25, 27);
 const SIDEBAR_BACKGROUND: Color = Color::Rgb(17, 17, 17);
 const SIDEBAR_ACTION: Color = Color::Rgb(24, 27, 36);
@@ -182,6 +183,7 @@ fn compact_path(path: &std::path::Path, width: u16) -> String {
 /// emphasis every terminal has, including the monochrome and `NO_COLOR` ones,
 /// so which block the keyboard is pointed at never depends on a palette.
 fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Line<'static> {
+    let is_hovered = !row.selected && row.block.is_some() && row.block == hovered;
     let mut base = match row.role {
         Role::User => Style::default().fg(TEXT),
         Role::Assistant => Style::default().fg(TEXT),
@@ -196,8 +198,6 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
         base = base
             .add_modifier(Modifier::REVERSED)
             .add_modifier(Modifier::BOLD);
-    } else if row.block.is_some() && row.block == hovered {
-        base = base.add_modifier(Modifier::UNDERLINED);
     }
     let mut spans = row
         .segments
@@ -207,6 +207,8 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
             let mut style = base;
             if index == 0 && !row.selected {
                 let marker = segment.text.trim_start().chars().next();
+                let semantic_marker =
+                    matches!(marker, Some('›' | '✦' | '│' | '◇' | '×' | '▸' | '▾'));
                 style = match (row.role, marker) {
                     (Role::User, Some('›')) | (Role::Assistant, Some('✦')) => {
                         style.fg(ACCENT).add_modifier(Modifier::BOLD)
@@ -215,6 +217,9 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
                     (Role::Tool, Some('▸' | '▾')) => style.fg(ACCENT),
                     _ => style,
                 };
+                if is_hovered && semantic_marker {
+                    style = style.bg(HOVER_BACKGROUND).add_modifier(Modifier::BOLD);
+                }
             }
             if row.role == Role::Tool {
                 style = match segment.text.trim() {
@@ -833,18 +838,44 @@ mod tests {
         let id = crate::workbench::BlockId(uuid::Uuid::nil());
         let mut row = Row::chrome(
             Role::Assistant,
-            vec![crate::transcript::Segment::plain("answer")],
+            vec![
+                crate::transcript::Segment::plain("  ✦ "),
+                crate::transcript::Segment::plain("answer"),
+            ],
         );
         row.block = Some(id);
         let line = paint_with_hover(&row, Some(id));
-        assert!(
-            line.spans[0]
-                .style
-                .add_modifier
-                .contains(Modifier::UNDERLINED),
-            "hover should be visible without stealing semantic selection"
-        );
+        assert_eq!(line.spans[0].style.bg, Some(HOVER_BACKGROUND));
+        assert_eq!(line.spans[1].style.bg, None);
+        assert!(line
+            .spans
+            .iter()
+            .all(|span| !span.style.add_modifier.contains(Modifier::UNDERLINED)));
         assert!(!row.selected, "hover must not mutate selection");
+    }
+
+    #[test]
+    fn hovering_wrapped_prose_never_draws_rules_through_text() {
+        let id = crate::workbench::BlockId(uuid::Uuid::nil());
+        for text in ["wrapped prose", "• nested list item"] {
+            let mut row = Row::chrome(
+                Role::Assistant,
+                vec![
+                    crate::transcript::Segment::plain("    "),
+                    crate::transcript::Segment::plain(text),
+                ],
+            );
+            row.block = Some(id);
+            let line = paint_with_hover(&row, Some(id));
+            assert!(line
+                .spans
+                .iter()
+                .all(|span| !span.style.add_modifier.contains(Modifier::UNDERLINED)));
+            assert!(line
+                .spans
+                .iter()
+                .all(|span| span.style.bg != Some(HOVER_BACKGROUND)));
+        }
     }
 
     #[test]

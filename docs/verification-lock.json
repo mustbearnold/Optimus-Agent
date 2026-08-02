@@ -133,7 +133,7 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "545a5ef1c7128707ac2f44643954b39e86f75b6a8dd6a6bfe190299fda7e2b4e",
+      "binding_sha256": "0bde9a96de1bd52f880aff7fbed9b9d9560d200cf56ea9fbe6ba73fcf313b5c6",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 350
@@ -553,13 +553,13 @@
       "resolved_files": 9
     },
     "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
-      "binding_sha256": "e8f689478b4deb5960cc7c528b0a2d1be7adfce6dfa44ee9c85d28b79e6536f7",
+      "binding_sha256": "fb825b1ef189b1d29cc5e603913125ec4b9665412a9fde22ec8ba53ffb5c9f90",
       "document_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "f1f31bac4d19d5b7a9375609192ed46ad5011d60dfcde150ec8ad72eaeadddd4",
+      "binding_sha256": "52cc05c7088151935ad9cbab3c0ed58f3a02020a0c4ae9905b34a049e7bff5b9",
       "document_sha256": "51c5a6e335e3ead46ff3f2361b127a80614060fde3a01252bb44500d4db47b6c",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21
