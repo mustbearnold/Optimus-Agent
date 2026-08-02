@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "abee5c636496ac5ece3a33e7a0b3e3004f20ffecdd3fae99608923d3da90d5df",
+      "binding_sha256": "c122fc8e65054f56fbc1019e3bf6538ca5c19c4507f24d90b893077876720b25",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 341
+      "resolved_files": 344
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "5e4c95a61f1094b920d3342132e4cbaf2425441bfc58f5d228f09608b143a63e",
@@ -553,19 +553,19 @@
       "resolved_files": 9
     },
     "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
-      "binding_sha256": "f3d4437d5cee1af1b67157110860622cc0e640707c436dee0ea6bb5342a5618c",
-      "document_sha256": "00b03947b8af27162c3b4f750574b02095cca8b8faa53efad0353b72b54b7f12",
+      "binding_sha256": "457164c4bce5a05600f1d9f210d0d8fb1c6f38e047c27f8f6d1facd1035ec8a9",
+      "document_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "ddfa3da1a5866c3b79ca8f0dfd0fa6eaa6aef281f03bcbf295a85fc81fc6dee9",
-      "document_sha256": "077273205c7643c651d5ce70407db27bf2912240b0afadf70b75f8f53c4a5fb4",
+      "binding_sha256": "96a17e23da9b445d63d1409d47cfa5338f3216b8aae23872caff985ff1ea6639",
+      "document_sha256": "5e1311d5709b3aac913d48cbb8dfd1ec2cd2f829dfb4a2ce1a8b49a92f6c5687",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
-      "resolved_files": 14
+      "resolved_files": 17
     },
     "decisions-readme": {
-      "binding_sha256": "d8f0d33447a8376dcfc8f99b63deaf94f850fc0dbb4eedc4bb0fbe674894aa8f",
+      "binding_sha256": "f380a2da30b8b23db7a11a76a890e4d61961c6ca8cdc8e76de74154a178a061f",
       "document_sha256": "8ab4bf0d45ed44cf07fb70a86582926a032af565f828570f6d91c3ce0246c05e",
       "path": "docs/decisions/README.md",
       "resolved_files": 80
@@ -649,13 +649,13 @@
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "b66aeac53c4e58d115bcb6a6016fdf95d5f827e6dde22c457b72291fd2020749",
+      "binding_sha256": "55aad3a22d99d90a29112e8ccf1233c5bc20f0a21198ec780d719f349727ca15",
       "document_sha256": "640ac221f8720c2d7d1e77199153e21d294dbe9bd2c937842d59833ca8145bd8",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 22
     },
     "repository-components": {
-      "binding_sha256": "1fb3fe2acf81212200b3355b53a07f7502a8593050bc0a86415036e5d7db5a58",
+      "binding_sha256": "05d6fc41e4eb749ab678a97d9027339cd312e68dba1d70ae98c9c32f1cd487de",
       "document_sha256": "e8b025e4a057c43a61cb7bd82aab025f8af94943fd621f5677d412208dbba5b4",
       "path": "docs/repository-components.md",
       "resolved_files": 28

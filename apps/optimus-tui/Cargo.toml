@@ -9,6 +9,10 @@ rust-version.workspace = true
 [dependencies]
 optimus-host.workspace = true
 optimus-kernel.workspace = true
+# The canonical tool contract. Grouping folds repeated calls away, so what may
+# be folded has to come from each tool's declared `ToolPolicy` rather than from
+# a list of names this surface keeps in its head (ADR-0075 phase 2).
+optimus-packs.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true

@@ -4767,7 +4767,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "00b03947b8af27162c3b4f750574b02095cca8b8faa53efad0353b72b54b7f12",
+      "content_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "headings": [
         "ADR-0074: A surface owns the catalog it answers from",
         "Context",
@@ -4794,7 +4794,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "077273205c7643c651d5ce70407db27bf2912240b0afadf70b75f8f53c4a5fb4",
+      "content_sha256": "5e1311d5709b3aac913d48cbb8dfd1ec2cd2f829dfb4a2ce1a8b49a92f6c5687",
       "headings": [
         "ADR-0075: A block owns its lifecycle; rows only paint it",
         "Context",
@@ -7196,7 +7196,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "2253246afa81808239b5487ae7ee9493a4397037f4ce5b5b755b79124445a539",
+  "documents_sha256": "22f996fa0f4c1ce4c0f0607c591c61da57e7ee0f14e60be153b78c5412b199b5",
   "routes": [
     {
       "id": "docs.navigation",

@@ -10,6 +10,9 @@ review_by: 2026-11-02
 knowledge_type: decision
 covers:
   - apps/optimus-tui/src/workbench/mod.rs
+  - apps/optimus-tui/src/workbench/grouping.rs
+  - apps/optimus-tui/src/workbench/effects.rs
+  - apps/optimus-tui/src/workbench/selection.rs
   - apps/optimus-tui/src/session.rs
   - apps/optimus-tui/src/session/event_adapter.rs
   - apps/optimus-tui/src/lib.rs
@@ -26,7 +29,12 @@ depends_on:
 validated_by:
   - apps/optimus-tui/tests/pty.rs
   - apps/optimus-tui/src/workbench/mod.rs
+  - apps/optimus-tui/src/workbench/grouping.rs
+  - apps/optimus-tui/src/workbench/effects.rs
+  - apps/optimus-tui/src/workbench/selection.rs
   - apps/optimus-tui/src/session.rs
+  - apps/optimus-tui/src/transcript.rs
+  - apps/optimus-tui/src/view.rs
   - apps/optimus-tui/src/keys.rs
   - apps/optimus-tui/src/mouse.rs
 ---
@@ -43,6 +51,16 @@ validated_by:
   carries the event ids verbatim and `turn_id` is parsed to a `Uuid` only
   when the run id really is one — a fixture id like `run-1` stays `None`
   rather than being invented.
+- **Phase 2 delivered:** 2026-08-02 — the row projection becomes total. Rows
+  are painted from the workbench's *items* rather than from the `Message`
+  vector, every row names the block it paints, folding and semantic selection
+  land, and Tab moves the keyboard between the composer and the transcript
+  (§4). Four deviations from the phase sketch, each recorded below in
+  Consequences: grouping is derived rather than parented, what may be folded
+  is read from `optimus-packs::ToolPolicy` rather than from a name list, a run
+  is three calls before it folds, and the fullscreen viewer and copy action
+  the program lists under this phase move to the phases that give them
+  something worth viewing and copying.
 
 ## Context
 
@@ -254,7 +272,7 @@ recorded here so no phase scaffolds a lie:
 |---|---|---|
 | UserPrompt, AssistantAnswer | `TextDelta`, `Done` | Confirmed current behaviour — adapt in phase 1 |
 | StatusNote | `Status` | Confirmed — phase 1 |
-| ToolCall (incl. grouping) | `ToolLifecycleEvent` (stable `call_id`, phases, outcome) | Confirmed — phases 2–3 |
+| ToolCall (incl. grouping) | `ToolLifecycleEvent` (stable `call_id`, `tool_id`, phases, outcome) + `optimus-packs` `ToolPolicy` | Confirmed current behaviour — grouping delivered in phase 2; command/edit/diff detail in phase 3 |
 | ApprovalRequest | `ApprovalRequired` + binding, `ApprovalSettled` | Confirmed — phase 9 restyles what exists |
 | ThinkingActivity, timing detail | `ThinkingDelta`, `Timing` (currently dropped) | Confirmed events, unconsumed — phases 3–4 |
 | Plan, AgentRun, BackgroundJob, BrowserRun, GatewayActivity | request/response IPC only (`jobs_list`, `campaign_status`, `gateway_inbox`, …) | Planned behaviour — needs typed pollers or new kernel/host emission in phases 7, 8, 11, 13 |
@@ -337,6 +355,35 @@ app, because both consume the same host surface.
 - Selection, folds, and approvals survive streaming and reflow because they
   key on domain identity; `apply_tool_step`'s call_id rewrite generalizes
   from one special case into the rule.
+- **Grouping is derived, not stored** (phase 2). A run of repeated calls is
+  recomputed from the block list on every projection, so a run growing as more
+  calls arrive re-keys nothing and `parent_id` stays unused by grouping. The
+  one thing a human owns — whether the run is open — lives on the run's first
+  block, which is the block a growing run cannot move.
+- **What may be folded comes from the tool contract, not from a list of
+  names** (phase 2). Folding hides work, so the rule for what may be hidden
+  reads each tool's declared `ToolPolicy` from `optimus-packs::builtin_catalog`
+  and folds only `WorkspaceRead`, `MemoryRead`, `SkillRead`, and `NetworkRead`.
+  Anything the catalog does not carry is unknown rather than assumed harmless,
+  and `Browser` is excluded because navigate, snapshot, and click share one
+  policy — the contract cannot tell the observation from the effect. This
+  costs `optimus-tui` a direct `optimus-packs` dependency, which is the
+  canonical tool contract this repository already names as authoritative; the
+  alternative was a name list in the terminal that drifts silently in the
+  direction of hiding an effect.
+- **A run is three calls before it folds** (phase 2). Two rows becoming one
+  header saves a single row and costs the reader both call summaries.
+- **The fullscreen viewer and the copy action move to their own phases.** In
+  phase 2 nothing has a body that does not already fit: tool rows are one
+  clipped line each, so a viewer would open onto the row it was opened from
+  and a copy would yield that same line. Both become worth having in phase 3,
+  when command output and diffs arrive, and a viewer is an overlay — building
+  one before phase 6's overlay stack is exactly the widget-specific hack that
+  phase forbids. Recorded here rather than dropped.
+- Reverse video marks the selected item, because it is the one emphasis every
+  terminal has: which block the keyboard is pointed at never depends on a
+  colour a `NO_COLOR` or monochrome session will not render. Phase 14 may
+  refine the treatment; it may not make it colour-only.
 - The idle terminal stops drawing ~25 frames a second; dirty-tracking bugs
   become the new risk, mitigated as recorded under Risks.
 - Every future block kind inherits an honesty bar: no plan/agent/job/browser
@@ -424,11 +471,25 @@ app, because both consume the same host surface.
   the seams this ADR prescribed. `ToolStep` now carries the typed
   `run_id`/`event_id`/`phase` facts the block mirror consumes, and `pump`
   drives the mirror's hold/settle transitions beside the row updates.
+- apps/optimus-tui/src/workbench/grouping.rs — the derived projection: what a
+  run is, what breaks one, and the honesty rule that a call still running,
+  waiting on a human, failed, or cancelled is never folded away.
+- apps/optimus-tui/src/workbench/effects.rs — the fold rule read from
+  `optimus-packs::builtin_catalog`, with `Browser` excluded and unknown ids
+  treated as unfoldable.
+- apps/optimus-tui/src/workbench/selection.rs — `FocusRegion`, movement over
+  items rather than blocks, and the fold toggle that records a human touched
+  it.
 - apps/optimus-tui/src/lib.rs — the event loop this decision's animation
-  contract replaces.
-- apps/optimus-tui/src/transcript.rs, view.rs — the row projection.
+  contract replaces; `anchor` keeps the selected block on screen while the
+  transcript has the keyboard, and the mouse path reaches the same two moves
+  the keyboard does.
+- apps/optimus-tui/src/transcript.rs, view.rs — the row projection: rows are
+  painted from items, each names its block, and `view::hit` reads a screen row
+  back to the block it paints without parsing what the row says.
 - apps/optimus-tui/src/keys.rs, mouse.rs — intent functions, region
-  hit-testing, the Tab reconciliation.
+  hit-testing, the Tab reconciliation, and inspect focus as the second
+  whole-keyboard claim after the picker.
 - apps/optimus-tui/src/session/approval.rs — exact-binding resolution the
   workbench must not disturb.
 - crates/optimus-kernel/src/lib.rs — `StreamEvent`, `ToolLifecycleEvent`,
@@ -448,6 +509,18 @@ app, because both consume the same host surface.
   streaming, mid-stream selection stability, park survival, and the row↔block
   lockstep across scripted turns (the differential check: disabling
   settlement fails the lockstep test).
+- apps/optimus-tui/src/workbench/{grouping,effects,selection}.rs unit suites —
+  every block painted exactly once however it is grouped, a write or a failure
+  breaking a run, a call still running or waiting on a human never folded, no
+  run crossing a turn, the classification checked against the catalog's own
+  declared policies, movement over items, and both ends stopping rather than
+  wrapping.
+- apps/optimus-tui/src/session.rs — a fold a human opened surviving the rest of
+  the turn streaming into it; the pointer and the keyboard leaving one screen;
+  ten thousand blocks still projecting and navigating.
+- apps/optimus-tui/tests/pty.rs — Tab handing the keyboard to the transcript
+  and back through the shipped binary, letters typed while inspecting never
+  reaching the draft, and an SGR click selecting a block.
 - Planned behaviour: property tests for event-order/resize permutations, the
   dirty-draw differential test, and the phase-4 frame bench do not exist yet
   and land with their phases.

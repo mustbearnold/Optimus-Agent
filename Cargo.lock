@@ -3351,6 +3351,7 @@ dependencies = [
  "libc",
  "optimus-host",
  "optimus-kernel",
+ "optimus-packs",
  "portable-pty",
  "proptest",
  "ratatui",

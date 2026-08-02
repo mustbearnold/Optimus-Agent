@@ -44,7 +44,7 @@ pub fn height(draft: &str, width: u16) -> u16 {
     rows as u16 + 2
 }
 
-pub fn render(frame: &mut Frame, area: Rect, composer: &Composer) {
+pub fn render(frame: &mut Frame, area: Rect, composer: &Composer, title: &str) {
     let inner_height = usize::from(area.height.saturating_sub(2));
     let layout = layout(composer.text(), composer.cursor(), area.width);
 
@@ -61,7 +61,7 @@ pub fn render(frame: &mut Frame, area: Rect, composer: &Composer) {
         .cloned()
         .collect();
 
-    frame.render_widget(wrapped(visible.join("\n")).block(bordered("Message")), area);
+    frame.render_widget(wrapped(visible.join("\n")).block(bordered(title)), area);
     frame.set_cursor_position(Position::new(
         area.x + 1 + layout.cursor_col as u16,
         area.y + 1 + (layout.cursor_row - first) as u16,

@@ -363,6 +363,24 @@ impl TuiSession {
         );
     }
 
+    /// Record a settled tool call as both a row and its block, for render
+    /// tests that need a transcript shape rather than a live worker. Keeps the
+    /// mirror, which a bare `messages.push` would break.
+    #[cfg(test)]
+    pub(crate) fn push_call_for_test(&mut self, tool: &str, call_id: &str, line: &str) {
+        self.workbench.push_call_for_test(
+            tool,
+            call_id,
+            crate::workbench::BlockLifecycle::Succeeded,
+            None,
+        );
+        self.messages.push(Message {
+            role: Role::Tool,
+            text: line.into(),
+            call_id: Some(call_id.into()),
+        });
+    }
+
     /// Scroll the transcript `delta` rows away from the tail, clamped to
     /// `max_back` so PageUp cannot run past the top. Negative moves toward the
     /// tail; reaching it re-enables follow.
@@ -1216,7 +1234,7 @@ mod tests {
         assert_eq!(session.workbench.len(), session.messages.len());
         for (block, message) in session.workbench.blocks().iter().zip(&session.messages) {
             assert_eq!(block.kind.role(), message.role);
-            if let WorkbenchBlockKind::ToolCall { call_id } = &block.kind {
+            if let WorkbenchBlockKind::ToolCall { call_id, .. } = &block.kind {
                 assert_eq!(Some(call_id.as_str()), message.call_id.as_deref());
             }
         }
@@ -1414,6 +1432,171 @@ mod tests {
         let crash = session.workbench.blocks().last().unwrap();
         assert_eq!(crash.kind.role(), Role::Error);
         assert_eq!(crash.lifecycle, BlockLifecycle::Failed);
+    }
+
+    // ADR-0075 phase 2: folding survives the stream that fills the transcript.
+
+    fn read_event(call: &str) -> ToolLifecycleEvent {
+        serde_json::from_value(json!({
+            "schema_version": 1,
+            "event_id": format!("run-1:{call}:succeeded"),
+            "run_id": "11111111-1111-4111-8111-111111111111",
+            "call_id": call,
+            "tool_id": "read_file",
+            "phase": "succeeded",
+            "summary": format!("read_file: {{\"path\":\"src/{call}.rs\"}}"),
+        }))
+        .expect("fixture tool event deserializes")
+    }
+
+    /// The acceptance the whole fold model exists for: a run a human opened
+    /// mid-turn stays open as the rest of the turn streams into it.
+    #[test]
+    fn a_fold_a_human_opened_is_never_closed_by_what_arrives_next() {
+        let (_dir, mut session) = session();
+        session.push(Role::User, "audit the auth code".into());
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        for call in ["a", "b", "c"] {
+            tx.send(TurnUpdate::Tool(tool_step(&read_event(call))))
+                .unwrap();
+        }
+        session.pump();
+
+        let items = session.workbench.items();
+        assert_eq!(items.len(), 2, "the prompt and one run: {items:?}");
+        let run = items[1].id();
+        session.workbench.select_item(run);
+        assert!(session.workbench.toggle_fold(), "the human opens the run");
+
+        for call in ["d", "e", "f"] {
+            tx.send(TurnUpdate::Tool(tool_step(&read_event(call))))
+                .unwrap();
+        }
+        tx.send(TurnUpdate::Text("all four files check out".into()))
+            .unwrap();
+        tx.send(TurnUpdate::Done {
+            session_id: String::new(),
+            text: String::new(),
+        })
+        .unwrap();
+        settle(&mut session);
+
+        assert_blocks_mirror_rows(&session);
+        let after = session.workbench.items();
+        let opened = after
+            .iter()
+            .find(|item| item.id() == run)
+            .expect("the run survived the rest of the turn");
+        assert!(
+            matches!(opened, crate::workbench::Item::Group { expanded, .. } if *expanded),
+            "arriving output must never close a fold a human opened: {opened:?}"
+        );
+        assert_eq!(
+            opened.span().len(),
+            6,
+            "and the later calls joined the run they belong to"
+        );
+        assert_eq!(
+            session.workbench.selected(),
+            Some(run),
+            "selection made mid-stream survives the rest of the turn"
+        );
+    }
+
+    #[test]
+    fn a_run_still_streaming_is_never_folded_away_under_the_reader() {
+        let (_dir, mut session) = session();
+        let tx = install_worker(&mut session, WorkerKind::Turn);
+        for call in ["a", "b", "c"] {
+            tx.send(TurnUpdate::Tool(tool_step(&read_event(call))))
+                .unwrap();
+        }
+        // A fourth call that has started but not finished.
+        let mut live = read_event("d");
+        live.phase = optimus_kernel::ToolLifecyclePhase::Started;
+        tx.send(TurnUpdate::Tool(tool_step(&live))).unwrap();
+        session.pump();
+
+        let items = session.workbench.items();
+        assert_eq!(
+            items.len(),
+            2,
+            "three settled reads fold; the one in flight keeps its own row"
+        );
+        assert_eq!(items[0].span().len(), 3);
+        assert_eq!(items[1].span(), vec![3]);
+        assert!(!items[1].foldable());
+    }
+
+    /// Both hands reach the same state: what the pointer does to a run and what
+    /// the keyboard does to it have to be the same thing, or one of them is
+    /// lying about what it did.
+    #[test]
+    fn the_pointer_and_the_keyboard_leave_the_same_fold_state() {
+        let build = || {
+            let (dir, mut session) = session();
+            session.push(Role::User, "audit".into());
+            for n in 0..3 {
+                session.push_call_for_test(
+                    "read_file",
+                    &format!("r{n}"),
+                    &format!("read_file  src/{n}.rs"),
+                );
+            }
+            (dir, session)
+        };
+
+        let (_a, mut by_key) = build();
+        by_key.workbench.inspect();
+        by_key.workbench.toggle_fold();
+
+        let (_b, mut by_mouse) = build();
+        let rows = crate::view::visible_rows(&by_mouse, 58);
+        let at = rows
+            .iter()
+            .position(|row| row.plain().contains("read_file · 3 calls"))
+            .expect("the run header");
+        let hit = crate::view::hit(&rows, at).expect("a block under the header");
+        by_mouse.workbench.select_item(hit.block);
+        assert!(hit.head);
+        by_mouse.workbench.toggle_fold_of(hit.block);
+
+        assert_eq!(
+            crate::view::transcript_text(&by_key, 58),
+            crate::view::transcript_text(&by_mouse, 58),
+            "opening a run by hand and by pointer must land on one screen"
+        );
+        assert!(by_mouse.workbench.inspecting(), "clicking inspects too");
+    }
+
+    /// Ten thousand blocks: projection, selection, and folding all stay usable.
+    /// Row layout for a transcript that long is a later phase's problem; this
+    /// pins that the semantic layer does not become the bottleneck first.
+    #[test]
+    fn a_very_long_session_still_projects_and_navigates() {
+        let (_dir, mut session) = session();
+        for n in 0..10_000 {
+            session.push_call_for_test(
+                "read_file",
+                &format!("r{n}"),
+                &format!("read_file  src/{n}.rs"),
+            );
+        }
+        let started = Instant::now();
+        let items = session.workbench.items();
+        assert_eq!(items.len(), 1, "one enormous run");
+        assert_eq!(items[0].span().len(), 10_000);
+
+        session.workbench.inspect();
+        session
+            .workbench
+            .step(crate::workbench::SelectionStep::First);
+        assert!(session.workbench.toggle_fold());
+        assert!(
+            started.elapsed() < Duration::from_secs(2),
+            "projection and navigation must not become the bottleneck: {:?}",
+            started.elapsed()
+        );
     }
 
     #[test]

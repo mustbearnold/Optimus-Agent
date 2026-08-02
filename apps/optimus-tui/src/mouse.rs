@@ -87,6 +87,10 @@ pub enum Intent {
     Choose(usize),
     /// Open the command menu.
     OpenMenu,
+    /// A click landed this many rows into the transcript viewport. The block
+    /// underneath is resolved by the caller against the laid-out rows, because
+    /// only the projection knows which block a screen row paints.
+    Inspect(usize),
     Nothing,
 }
 
@@ -131,7 +135,12 @@ pub fn intent(
 
     match event.kind {
         MouseEventKind::Down(MouseButton::Right) => Intent::OpenMenu,
+        // The track first: it is one column wide and sits on the transcript's
+        // border, so a press there is a grab rather than a selection.
         MouseEventKind::Down(MouseButton::Left) if regions.track.contains(at) => Intent::GrabTrack,
+        MouseEventKind::Down(MouseButton::Left) if regions.transcript.contains(at) => {
+            Intent::Inspect(usize::from(at.y - regions.transcript.y))
+        }
         _ => Intent::Nothing,
     }
 }
@@ -225,9 +234,29 @@ mod tests {
     }
 
     #[test]
-    fn pressing_inside_the_transcript_does_not_grab_the_thumb() {
-        let event = at(MouseEventKind::Down(MouseButton::Left), 40, 5);
-        assert_eq!(intent(&event, AREA, 3, None, false), Intent::Nothing);
+    fn pressing_inside_the_transcript_inspects_the_row_rather_than_grabbing_the_thumb() {
+        let regions = regions(AREA, 3);
+        let event = at(
+            MouseEventKind::Down(MouseButton::Left),
+            40,
+            regions.transcript.y,
+        );
+        assert_eq!(intent(&event, AREA, 3, None, false), Intent::Inspect(0));
+        let lower = at(
+            MouseEventKind::Down(MouseButton::Left),
+            40,
+            regions.transcript.y + 6,
+        );
+        assert_eq!(intent(&lower, AREA, 3, None, false), Intent::Inspect(6));
+    }
+
+    #[test]
+    fn a_press_on_the_border_or_the_composer_inspects_nothing() {
+        // The transcript block's own border is chrome; below it is the draft.
+        let top_border = at(MouseEventKind::Down(MouseButton::Left), 40, 0);
+        assert_eq!(intent(&top_border, AREA, 3, None, false), Intent::Nothing);
+        let composer = at(MouseEventKind::Down(MouseButton::Left), 40, 22);
+        assert_eq!(intent(&composer, AREA, 3, None, false), Intent::Nothing);
     }
 
     #[test]

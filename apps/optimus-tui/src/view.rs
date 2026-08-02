@@ -49,7 +49,15 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
     );
     draw_scrollbar(frame, areas[0], rows.len(), height, offset as usize);
 
-    composer::render(frame, areas[1], &session.composer);
+    // The title carries the mode, because the transcript having the keyboard
+    // is otherwise only visible as a highlight somewhere up the pane, and a
+    // prompt that has stopped accepting letters has to say why.
+    let title = if session.workbench.inspecting() {
+        "Inspect — ↑↓ move · Space fold · Tab back"
+    } else {
+        "Message"
+    };
+    composer::render(frame, areas[1], &session.composer, title);
 
     frame.render_widget(
         wrapped(session.status_line()).style(Style::default().add_modifier(Modifier::DIM)),
@@ -67,8 +75,12 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
 
 /// Colour a row by whose turn it is. Distinct hues per role are what make the
 /// transcript scannable rather than one undifferentiated block of text.
+///
+/// The selected item is reversed rather than tinted: reverse video is the one
+/// emphasis every terminal has, including the monochrome and `NO_COLOR` ones,
+/// so which block the keyboard is pointed at never depends on a palette.
 fn paint(row: &Row) -> Line<'static> {
-    let base = match row.role {
+    let mut base = match row.role {
         Role::User => Style::default()
             .fg(Color::Cyan)
             .add_modifier(Modifier::BOLD),
@@ -77,6 +89,9 @@ fn paint(row: &Row) -> Line<'static> {
         Role::Action => Style::default().fg(Color::Yellow),
         Role::Error => Style::default().fg(Color::Red),
     };
+    if row.selected {
+        base = base.add_modifier(Modifier::REVERSED);
+    }
     Line::from(
         row.segments
             .iter()
@@ -232,19 +247,48 @@ fn draw_suggestions(frame: &mut Frame, session: &TuiSession, composer: Rect) {
 /// The spinner is part of the scrollable content rather than fixed chrome, so
 /// it sits directly under the last message where the eye already is.
 pub fn visible_rows(session: &TuiSession, width: u16) -> Vec<Row> {
-    let mut rows = transcript::rows(&session.messages, width, session.chrome);
+    let items = session.workbench.items();
+    let mut rows = transcript::rows(
+        &session.messages,
+        &items,
+        session.workbench.selected(),
+        width,
+        session.chrome,
+    );
     // Two columns are reserved for the transcript gutter below.
     if let Some(activity) = session.activity_line(width.saturating_sub(2)) {
-        rows.push(Row {
-            role: Role::Assistant,
-            segments: Vec::new(),
-        });
-        rows.push(Row {
-            role: Role::Tool,
-            segments: vec![crate::transcript::Segment::plain(format!("  {activity}"))],
-        });
+        rows.push(Row::blank());
+        rows.push(Row::chrome(
+            Role::Tool,
+            vec![crate::transcript::Segment::plain(format!("  {activity}"))],
+        ));
     }
     rows
+}
+
+/// Scroll-back that keeps the selected item on screen, moving as little as it
+/// can.
+///
+/// Called while the transcript has the keyboard. Inside the range where the
+/// selection is already fully visible the current position is kept exactly, so
+/// arriving output does not jitter the view; outside it, the view moves only
+/// as far as it must. An item taller than the viewport parks its first row at
+/// the top, because that is the row the reader is looking for.
+pub fn anchored(rows: &[Row], height: usize, scroll_back: usize) -> usize {
+    let first = rows.iter().position(|row| row.selected);
+    let (Some(first), Some(last)) = (first, rows.iter().rposition(|row| row.selected)) else {
+        return scroll_back;
+    };
+    let max_back = max_scroll_back(rows.len(), height);
+    // offset = rows - height - scroll_back, and the selection has to sit
+    // inside [offset, offset + height).
+    let low = rows
+        .len()
+        .saturating_sub(height)
+        .saturating_sub(first)
+        .min(max_back);
+    let high = rows.len().saturating_sub(last + 1).min(max_back).max(low);
+    scroll_back.clamp(low, high)
 }
 
 /// Transcript as plain lines. Separated from rendering so it can be asserted in
@@ -254,6 +298,23 @@ pub fn transcript_text(session: &TuiSession, width: u16) -> Vec<String> {
         .iter()
         .map(Row::plain)
         .collect()
+}
+
+/// What a click landed on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Hit {
+    pub block: crate::workbench::BlockId,
+    /// Whether this is the item's first row — its header. Derived from where
+    /// the row sits in its item's run, never from what the row says, so a
+    /// header stays a header whatever it is captioned.
+    pub head: bool,
+}
+
+/// The block painted at row `at` of the laid-out transcript, if any.
+pub fn hit(rows: &[Row], at: usize) -> Option<Hit> {
+    let block = rows.get(at)?.block?;
+    let head = at == 0 || rows[at - 1].block != Some(block);
+    Some(Hit { block, head })
 }
 
 /// First row hidden above the viewport, keeping the tail visible by default
@@ -310,10 +371,7 @@ mod tests {
             Role::Action,
             Role::Error,
         ] {
-            let row = Row {
-                role,
-                segments: vec![crate::transcript::Segment::plain("x")],
-            };
+            let row = Row::chrome(role, vec![crate::transcript::Segment::plain("x")]);
             seen.push(paint(&row).spans[0].style.fg);
         }
         let unique: std::collections::HashSet<_> = seen.iter().collect();
@@ -326,9 +384,9 @@ mod tests {
 
     #[test]
     fn bold_segments_survive_painting() {
-        let row = Row {
-            role: Role::Assistant,
-            segments: vec![
+        let row = Row::chrome(
+            Role::Assistant,
+            vec![
                 crate::transcript::Segment::plain("plain"),
                 crate::transcript::Segment {
                     text: "loud".into(),
@@ -336,7 +394,7 @@ mod tests {
                     dim: false,
                 },
             ],
-        };
+        );
         let line = paint(&row);
         assert!(!line.spans[0].style.add_modifier.contains(Modifier::BOLD));
         assert!(line.spans[1].style.add_modifier.contains(Modifier::BOLD));
@@ -401,11 +459,11 @@ mod tests {
     #[test]
     fn a_tool_call_is_painted_in_the_transcript_not_hidden_in_the_footer() {
         let (_dir, mut session) = session_with(&[(Role::User, "search the web")]);
-        session.messages.push(crate::session::Message {
-            role: Role::Tool,
-            text: "web_search  Found 3 sources  (1.2s)".into(),
-            call_id: Some("call-1".into()),
-        });
+        session.push_call_for_test(
+            "web_search",
+            "call-1",
+            "web_search  Found 3 sources  (1.2s)",
+        );
         let screen = render(&session, 60, 12).join("\n");
         assert!(
             screen.contains("⏺ web_search  Found 3 sources  (1.2s)"),
@@ -608,5 +666,204 @@ mod tests {
     fn max_scroll_back_is_the_rows_above_the_viewport() {
         assert_eq!(max_scroll_back(10, 4), 6);
         assert_eq!(max_scroll_back(3, 10), 0);
+    }
+
+    // ADR-0075 phase 2: folding, selection, and keeping the selection on screen.
+
+    /// A prompt followed by four reads — one run, folded by default.
+    fn with_a_run() -> (tempfile::TempDir, TuiSession) {
+        let (dir, mut session) = session_with(&[(Role::User, "audit the auth code")]);
+        for n in 0..4 {
+            session.push_call_for_test(
+                "read_file",
+                &format!("r{n}"),
+                &format!("read_file  src/auth/{n}.rs"),
+            );
+        }
+        (dir, session)
+    }
+
+    #[test]
+    fn repeated_reads_collapse_to_one_row_the_reader_can_open() {
+        let (_dir, mut session) = with_a_run();
+        let folded = render(&session, 60, 14).join("\n");
+        assert!(
+            folded.contains("▸ read_file · 4 calls"),
+            "four reads should arrive as one row:\n{folded}"
+        );
+        assert!(
+            !folded.contains("src/auth/2.rs"),
+            "and the individual calls should be out of the way:\n{folded}"
+        );
+
+        session
+            .workbench
+            .step(crate::workbench::SelectionStep::Last);
+        assert!(session.workbench.toggle_fold(), "the run opens");
+        let open = render(&session, 60, 14).join("\n");
+        assert!(open.contains("▾ read_file · 4 calls"), "{open}");
+        assert!(
+            open.contains("src/auth/2.rs"),
+            "opening it must show what it was hiding:\n{open}"
+        );
+    }
+
+    #[test]
+    fn the_selected_block_is_visibly_marked_on_screen() {
+        let (_dir, mut session) = with_a_run();
+        let transcript = |session: &TuiSession| {
+            render(session, 60, 14)
+                .into_iter()
+                .take_while(|row| !row.starts_with('└'))
+                .collect::<Vec<_>>()
+        };
+        let quiet = transcript(&session);
+        session.workbench.inspect();
+        assert_eq!(
+            quiet,
+            transcript(&session),
+            "selection changes emphasis, not the characters"
+        );
+
+        let backend = ratatui::backend::TestBackend::new(60, 14);
+        let mut terminal = Terminal::new(backend).expect("test terminal");
+        terminal.draw(|f| draw(f, &session)).expect("draw");
+        let buffer = terminal.backend().buffer();
+        let reversed = (0..buffer.area.height)
+            .flat_map(|y| (0..buffer.area.width).map(move |x| (x, y)))
+            .filter(|(x, y)| {
+                buffer[(*x, *y)]
+                    .style()
+                    .add_modifier
+                    .contains(Modifier::REVERSED)
+            })
+            .count();
+        assert!(
+            reversed > 0,
+            "the block the keyboard is pointed at has to be visible"
+        );
+    }
+
+    /// The projection is what a click reads back, so both directions of the
+    /// mapping have to agree: the row a run paints belongs to that run.
+    #[test]
+    fn a_click_on_a_run_header_finds_the_run_and_knows_it_is_the_header() {
+        let (_dir, session) = with_a_run();
+        let rows = visible_rows(&session, 58);
+        let at = rows
+            .iter()
+            .position(|row| row.plain().contains("read_file · 4 calls"))
+            .expect("the run header");
+        let found = hit(&rows, at).expect("a block under the header");
+        assert!(found.head, "the header row heads its item");
+        assert_eq!(
+            found.block,
+            session.workbench.items().last().unwrap().id(),
+            "and names the run, not one of its members"
+        );
+        assert_eq!(hit(&rows, rows.len() + 5), None, "past the end is nothing");
+    }
+
+    #[test]
+    fn a_click_inside_an_open_run_selects_the_run_without_closing_it() {
+        let (_dir, mut session) = with_a_run();
+        session
+            .workbench
+            .step(crate::workbench::SelectionStep::Last);
+        session.workbench.toggle_fold();
+        let rows = visible_rows(&session, 58);
+        let member = rows
+            .iter()
+            .position(|row| row.plain().contains("src/auth/2.rs"))
+            .expect("an opened member");
+        let found = hit(&rows, member).expect("a block under the member");
+        assert!(
+            !found.head,
+            "a member row is not the header, so clicking it must not fold"
+        );
+    }
+
+    #[test]
+    fn anchoring_leaves_a_selection_that_is_already_on_screen_exactly_where_it_is() {
+        let mut rows: Vec<Row> = (0..20)
+            .map(|_| {
+                Row::chrome(
+                    Role::Assistant,
+                    vec![crate::transcript::Segment::plain("x")],
+                )
+            })
+            .collect();
+        rows[15].selected = true;
+        // Viewport of 10 with 20 rows: scroll_back 0 shows rows 10..20.
+        assert_eq!(anchored(&rows, 10, 0), 0, "row 15 is already visible");
+        assert_eq!(anchored(&rows, 10, 3), 3, "and still visible three back");
+    }
+
+    #[test]
+    fn anchoring_brings_a_selection_that_scrolled_away_back_into_view() {
+        let mut rows: Vec<Row> = (0..40)
+            .map(|_| {
+                Row::chrome(
+                    Role::Assistant,
+                    vec![crate::transcript::Segment::plain("x")],
+                )
+            })
+            .collect();
+        rows[5].selected = true;
+        // Following the tail shows 30..40; the selection is far above it.
+        let back = anchored(&rows, 10, 0);
+        assert!(back > 0, "the view must move to the selection");
+        let offset = scroll_offset(rows.len(), 10, back);
+        assert!(
+            (offset..offset + 10).contains(&5),
+            "row 5 must land inside the viewport, not near it"
+        );
+    }
+
+    #[test]
+    fn an_item_taller_than_the_viewport_parks_its_first_row_at_the_top() {
+        let mut rows: Vec<Row> = (0..40)
+            .map(|_| {
+                Row::chrome(
+                    Role::Assistant,
+                    vec![crate::transcript::Segment::plain("x")],
+                )
+            })
+            .collect();
+        for row in &mut rows[10..30] {
+            row.selected = true;
+        }
+        let back = anchored(&rows, 6, 0);
+        assert_eq!(
+            scroll_offset(rows.len(), 6, back),
+            10,
+            "the row the reader is looking for is the first one"
+        );
+    }
+
+    #[test]
+    fn anchoring_does_nothing_when_nothing_is_selected() {
+        let rows: Vec<Row> = (0..40)
+            .map(|_| {
+                Row::chrome(
+                    Role::Assistant,
+                    vec![crate::transcript::Segment::plain("x")],
+                )
+            })
+            .collect();
+        assert_eq!(anchored(&rows, 10, 7), 7);
+        assert_eq!(anchored(&[], 10, 4), 4);
+    }
+
+    #[test]
+    fn inspect_mode_says_so_where_the_typing_would_have_gone() {
+        let (_dir, mut session) = with_a_run();
+        assert!(render(&session, 60, 14).join("\n").contains("Message"));
+        session.workbench.inspect();
+        let screen = render(&session, 60, 14).join("\n");
+        assert!(
+            screen.contains("Inspect"),
+            "a prompt that stopped taking letters has to say why:\n{screen}"
+        );
     }
 }

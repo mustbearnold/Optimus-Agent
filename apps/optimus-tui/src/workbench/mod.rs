@@ -21,13 +21,23 @@ use uuid::Uuid;
 
 use crate::session::{Role, ToolStep};
 
+mod effects;
+mod grouping;
+mod selection;
+
+pub use grouping::Item;
+pub use selection::{FocusRegion, SelectionStep};
+
+#[cfg(test)]
+pub(crate) use grouping::ungrouped;
+
 /// Durable identity of one block: minted at adaptation time, stable for the
 /// block's life across streaming, folding, resize, and redraw (ADR-0075 §1).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BlockId(pub Uuid);
 
 impl BlockId {
-    fn mint() -> Self {
+    pub(crate) fn mint() -> Self {
         Self(Uuid::new_v4())
     }
 }
@@ -72,6 +82,10 @@ pub enum WorkbenchBlockKind {
     /// phase lands on the block that call already owns.
     ToolCall {
         call_id: String,
+        /// The kernel's `tool_id`, carried because grouping has to ask the
+        /// canonical contract what this call was allowed to do before it may
+        /// fold the call away (ADR-0075 phase 2).
+        tool: String,
     },
     /// An action note: an approval card, a recorded decision.
     StatusNote,
@@ -93,9 +107,8 @@ impl WorkbenchBlockKind {
 }
 
 /// How a block is shown, owned by the human rather than the event stream.
-/// Phase 1 records the defaults; folding (phase 2) starts honouring
-/// `user_changed_expansion` — a fold a human touched is never overridden by
-/// arriving output.
+/// `user_changed_expansion` is what makes a fold a human touched immune to
+/// arriving output: nothing in the event path ever writes these fields.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockPresentation {
     pub expanded: bool,
@@ -131,7 +144,10 @@ pub struct WorkbenchBlock {
     /// invented. Turn-level notes stay `None` in phase 1 — no typed event
     /// hands the screen thread a run id for them yet.
     pub turn_id: Option<Uuid>,
-    /// Grouping and nesting, unused until phase 2.
+    /// Nesting, for the block kinds that own children directly. Grouping does
+    /// not use it: a run of repeated calls is derived from the block list on
+    /// every projection ([`grouping`]), so no block has to be re-parented as
+    /// the run it belongs to grows.
     pub parent_id: Option<BlockId>,
     pub presentation: BlockPresentation,
     pub started_at: Option<Instant>,
@@ -170,6 +186,8 @@ impl WorkbenchBlock {
 pub struct WorkbenchState {
     blocks: Vec<WorkbenchBlock>,
     selected_block: Option<BlockId>,
+    /// Which region the keyboard is talking to; see [`selection`].
+    focus: FocusRegion,
 }
 
 impl WorkbenchState {
@@ -201,6 +219,7 @@ impl WorkbenchState {
     pub(crate) fn clear(&mut self) {
         self.blocks.clear();
         self.selected_block = None;
+        self.focus = FocusRegion::Composer;
     }
 
     /// Mirror one non-tool row as it is pushed. Birth states follow what the
@@ -230,6 +249,7 @@ impl WorkbenchState {
             Role::Tool => (
                 WorkbenchBlockKind::ToolCall {
                     call_id: String::new(),
+                    tool: String::new(),
                 },
                 BlockLifecycle::Succeeded,
             ),
@@ -263,7 +283,7 @@ impl WorkbenchState {
     pub(crate) fn apply_tool_step(&mut self, step: &ToolStep) {
         let lifecycle = lifecycle_for(step.phase);
         let existing = self.blocks.iter_mut().rev().find(|block| {
-            matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id } if *call_id == step.call_id)
+            matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id, .. } if *call_id == step.call_id)
         });
         match existing {
             Some(block) => {
@@ -282,6 +302,7 @@ impl WorkbenchState {
                 let mut block = WorkbenchBlock::born(
                     WorkbenchBlockKind::ToolCall {
                         call_id: step.call_id.clone(),
+                        tool: step.name.clone(),
                     },
                     lifecycle,
                     Uuid::parse_str(&step.run_id).ok(),
@@ -299,11 +320,32 @@ impl WorkbenchState {
     pub(crate) fn hold_for_approval(&mut self, call_id: &str) {
         let held = self.blocks.iter_mut().rev().find(|block| {
             !block.lifecycle.is_settled()
-                && matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id: own } if own == call_id)
+                && matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id: own, .. } if own == call_id)
         });
         if let Some(block) = held {
             block.lifecycle = BlockLifecycle::Blocked;
         }
+    }
+
+    /// Append a settled tool-call block directly, for tests that script a
+    /// transcript shape rather than a stream. Production code reaches every
+    /// tool block through [`Self::apply_tool_step`] and its typed phase.
+    #[cfg(test)]
+    pub(crate) fn push_call_for_test(
+        &mut self,
+        tool: &str,
+        call_id: &str,
+        lifecycle: BlockLifecycle,
+        turn_id: Option<Uuid>,
+    ) {
+        self.blocks.push(WorkbenchBlock::born(
+            WorkbenchBlockKind::ToolCall {
+                call_id: call_id.into(),
+                tool: tool.into(),
+            },
+            lifecycle,
+            turn_id,
+        ));
     }
 
     /// The turn settled cleanly: its streaming answer succeeded.
@@ -373,6 +415,7 @@ mod tests {
     fn every_kind_names_the_role_it_mirrors() {
         let call = WorkbenchBlockKind::ToolCall {
             call_id: "call-1".into(),
+            tool: "web_search".into(),
         };
         assert_eq!(WorkbenchBlockKind::UserPrompt.role(), Role::User);
         assert_eq!(WorkbenchBlockKind::AssistantAnswer.role(), Role::Assistant);
@@ -436,6 +479,25 @@ mod tests {
                 "run-1:call-1:started".to_string(),
                 "run-1:call-1:succeeded".to_string()
             ]
+        );
+    }
+
+    #[test]
+    fn a_call_carries_the_tool_it_ran_so_grouping_can_ask_what_it_did() {
+        let mut state = WorkbenchState::default();
+        state.apply_tool_step(&step(
+            ToolLifecyclePhase::Started,
+            "call-1",
+            "run-1:call-1:started",
+            "run-1",
+        ));
+        assert_eq!(
+            state.blocks()[0].kind,
+            WorkbenchBlockKind::ToolCall {
+                call_id: "call-1".into(),
+                tool: "web_search".into(),
+            },
+            "the kernel's tool_id is carried, not re-derived from the row"
         );
     }
 

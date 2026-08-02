@@ -323,6 +323,95 @@ fn the_arrows_pick_a_suggestion_before_they_recall_a_prompt() {
     );
 }
 
+// ADR-0075 phase 2: the transcript can take the keyboard, and give it back.
+
+/// The composer's title while the transcript has the keyboard. It is how a
+/// terminal shows which region is focused, and the only thing on screen that
+/// explains why letters have stopped appearing in the draft.
+const INSPECTING: &str = "Inspect";
+
+/// Answer one turn so there is a block to inspect. The greeting is chrome and
+/// owns no block, exactly as `transcript` records.
+fn with_a_turn() -> Term {
+    let mut term = Term::launch();
+    term.send(b"hello\r");
+    term.wait_for(
+        |s| s.contains("offline echo: hello"),
+        "the turn never answered",
+    );
+    term
+}
+
+#[test]
+fn tab_hands_the_keyboard_to_the_transcript_and_gives_it_back() {
+    let mut term = with_a_turn();
+    assert!(
+        !term.screen().contains(INSPECTING),
+        "the composer starts with the keyboard"
+    );
+
+    term.send(b"\t");
+    term.wait_for(
+        |s| s.contains(INSPECTING),
+        "Tab never moved the keyboard to the transcript",
+    );
+
+    term.send(b"\x1b");
+    term.wait_for(
+        |s| !s.contains(INSPECTING),
+        "Esc never handed the keyboard back",
+    );
+
+    // And the composer is a composer again.
+    term.send(b"back");
+    term.wait_for(|s| s.contains("› back"), "typing never resumed");
+}
+
+#[test]
+fn typing_while_inspecting_never_reaches_the_draft() {
+    let mut term = with_a_turn();
+    term.send(b"\t");
+    term.wait_for(|s| s.contains(INSPECTING), "Tab never moved the keyboard");
+
+    // `j` and `k` move the selection; neither may appear in the draft. The
+    // Tab that follows is the synchronisation point: once the composer has the
+    // keyboard again, everything typed before it has already been decided.
+    term.send(b"jkjk\t");
+    term.wait_for(
+        |s| !s.contains(INSPECTING),
+        "Tab never handed the keyboard back",
+    );
+    let row = draft_row(&term);
+    assert_eq!(
+        row.trim_matches(['│', ' ']),
+        "›",
+        "keys meant for the transcript must not land in the prompt: {row:?}"
+    );
+}
+
+/// SGR mouse press at a zero-based screen cell, the encoding crossterm reads
+/// back under `EnableMouseCapture`.
+fn click(term: &mut Term, column: u16, row: u16) {
+    term.send(format!("\x1b[<0;{};{}M", column + 1, row + 1).as_bytes());
+    term.send(format!("\x1b[<0;{};{}m", column + 1, row + 1).as_bytes());
+}
+
+#[test]
+fn clicking_a_block_selects_it_the_same_way_the_keyboard_would() {
+    let mut term = with_a_turn();
+    let screen = term.screen();
+    let at = screen
+        .lines()
+        .position(|line| line.contains("hello") && !line.contains('›'))
+        .expect("the prompt's own row inside its container") as u16;
+
+    click(&mut term, 4, at);
+    term.wait_for(
+        |s| s.contains(INSPECTING),
+        "clicking a block never pointed the keyboard at the transcript",
+    );
+}
+
 /// Enough of a pause between chunks that a test can act between two of them
 /// without racing, and short enough that three tests using it stay quick.
 const PACE_MS: u64 = 1000;

@@ -13,6 +13,12 @@
 //! Open suggestions are the one non-modal claim on the keyboard. A picker
 //! returns early and answers every key; suggestions take three and let the rest
 //! fall through, because the composer underneath them is still being typed into.
+//!
+//! Inspect focus (ADR-0075 §4) is the second whole-keyboard claim after the
+//! picker: while the transcript has the keyboard, letters move and open blocks
+//! rather than typing. `Tab` hands the keyboard over and `Tab` or `Esc` hands
+//! it back, so the draft underneath is never lost and never typed into by
+//! accident.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -27,6 +33,8 @@ pub struct Mode {
     pub drafting: bool,
     /// Command suggestions are showing over a half-typed slash command.
     pub suggesting: bool,
+    /// The transcript has the keyboard.
+    pub inspecting: bool,
 }
 
 /// What the event loop should do about a key.
@@ -53,8 +61,30 @@ pub enum Intent {
     Suggest(SuggestStep),
     /// Take the highlighted suggestion into the draft.
     Complete,
+    /// Move the keyboard between the composer and the transcript.
+    Focus(FocusStep),
+    /// Act on the selected block.
+    Block(BlockStep),
     /// Redraw from scratch (Ctrl-L), for a frame corrupted by another writer.
     Redraw,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FocusStep {
+    /// Hand the keyboard to the transcript.
+    Inspect,
+    /// Hand it back to the composer.
+    Composer,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BlockStep {
+    Next,
+    Previous,
+    First,
+    Last,
+    /// Open or close the selected block.
+    Fold,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -107,6 +137,11 @@ pub enum SuggestStep {
 pub fn intent(key: &KeyEvent, mode: Mode) -> Intent {
     if mode.picker {
         return picker_intent(key);
+    }
+    // Before the suggestions: a half-typed command left in the draft must not
+    // claim keys from a transcript the human has deliberately stepped into.
+    if mode.inspecting {
+        return inspect_intent(key, mode);
     }
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
     let alt = key.modifiers.contains(KeyModifiers::ALT);
@@ -188,10 +223,45 @@ pub fn intent(key: &KeyEvent, mode: Mode) -> Intent {
         KeyCode::PageUp => Intent::Scroll(ScrollStep::PageUp),
         KeyCode::PageDown => Intent::Scroll(ScrollStep::PageDown),
         KeyCode::Char('l') if ctrl => Intent::Redraw,
+        // Tab is unbound while nothing is being suggested, which is what makes
+        // it free to mean "hand the keyboard to the transcript" (ADR-0075 §4).
+        KeyCode::Tab => Intent::Focus(FocusStep::Inspect),
         // Control chords that reach here are unbound; typing their letter is
         // never what the human meant. Only unmodified (or shifted) characters
         // are text.
         KeyCode::Char(c) if !ctrl && !alt => Intent::Insert(c),
+        _ => Intent::Ignore,
+    }
+}
+
+/// What a key means while the transcript has the keyboard.
+///
+/// A whole-keyboard claim like the picker's, so nothing here can type into the
+/// draft waiting underneath. Two ways out — `Tab` back the way in, and `Esc`
+/// because that is what unwinds every other layer. The chords that stop and
+/// repair a run keep working, since needing to inspect something is no reason
+/// to lose the ability to interrupt it.
+fn inspect_intent(key: &KeyEvent, mode: Mode) -> Intent {
+    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+    let alt = key.modifiers.contains(KeyModifiers::ALT);
+    match key.code {
+        KeyCode::Char('c') if ctrl => {
+            if mode.busy {
+                Intent::Cancel
+            } else {
+                Intent::Quit
+            }
+        }
+        KeyCode::Char('l') if ctrl => Intent::Redraw,
+        _ if ctrl || alt => Intent::Ignore,
+        KeyCode::Tab | KeyCode::Esc => Intent::Focus(FocusStep::Composer),
+        KeyCode::Down | KeyCode::Char('j') => Intent::Block(BlockStep::Next),
+        KeyCode::Up | KeyCode::Char('k') => Intent::Block(BlockStep::Previous),
+        KeyCode::Home | KeyCode::Char('g') => Intent::Block(BlockStep::First),
+        KeyCode::End | KeyCode::Char('G') => Intent::Block(BlockStep::Last),
+        KeyCode::Char(' ') | KeyCode::Enter => Intent::Block(BlockStep::Fold),
+        KeyCode::PageUp => Intent::Scroll(ScrollStep::PageUp),
+        KeyCode::PageDown => Intent::Scroll(ScrollStep::PageDown),
         _ => Intent::Ignore,
     }
 }
@@ -217,6 +287,7 @@ mod tests {
         busy: false,
         drafting: false,
         suggesting: false,
+        inspecting: false,
     };
     const DRAFTING: Mode = Mode {
         drafting: true,
@@ -231,6 +302,11 @@ mod tests {
     const SUGGESTING: Mode = Mode {
         drafting: true,
         suggesting: true,
+        ..IDLE
+    };
+    /// The transcript has the keyboard.
+    const INSPECTING: Mode = Mode {
+        inspecting: true,
         ..IDLE
     };
 
@@ -383,13 +459,129 @@ mod tests {
         );
     }
 
+    /// ADR-0075 §4: Tab completes while a list is open, and otherwise moves the
+    /// keyboard between the composer and the transcript.
     #[test]
-    fn tab_completes_only_while_something_is_being_suggested() {
+    fn tab_completes_while_suggesting_and_otherwise_moves_the_keyboard() {
         assert_eq!(intent(&key(KeyCode::Tab), SUGGESTING), Intent::Complete);
         assert_eq!(
             intent(&key(KeyCode::Tab), DRAFTING),
+            Intent::Focus(FocusStep::Inspect)
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Tab), IDLE),
+            Intent::Focus(FocusStep::Inspect)
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Tab), INSPECTING),
+            Intent::Focus(FocusStep::Composer),
+            "and back again"
+        );
+    }
+
+    #[test]
+    fn inspecting_moves_and_opens_blocks_instead_of_typing() {
+        for (code, step) in [
+            (KeyCode::Down, BlockStep::Next),
+            (KeyCode::Char('j'), BlockStep::Next),
+            (KeyCode::Up, BlockStep::Previous),
+            (KeyCode::Char('k'), BlockStep::Previous),
+            (KeyCode::Home, BlockStep::First),
+            (KeyCode::Char('g'), BlockStep::First),
+            (KeyCode::End, BlockStep::Last),
+            (KeyCode::Char('G'), BlockStep::Last),
+            (KeyCode::Char(' '), BlockStep::Fold),
+            (KeyCode::Enter, BlockStep::Fold),
+        ] {
+            assert_eq!(
+                intent(&key(code), INSPECTING),
+                Intent::Block(step),
+                "{code:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn inspecting_never_types_into_the_draft_underneath() {
+        for c in ['a', 'q', 'z', '/', '1'] {
+            assert_ne!(
+                intent(&key(KeyCode::Char(c)), INSPECTING),
+                Intent::Insert(c),
+                "'{c}' must not reach a composer that does not have the keyboard"
+            );
+        }
+        assert_eq!(intent(&key(KeyCode::Backspace), INSPECTING), Intent::Ignore);
+    }
+
+    #[test]
+    fn escape_hands_the_keyboard_back_before_it_touches_the_draft() {
+        let drafting_and_inspecting = Mode {
+            drafting: true,
+            ..INSPECTING
+        };
+        assert_eq!(
+            intent(&key(KeyCode::Esc), drafting_and_inspecting),
+            Intent::Focus(FocusStep::Composer),
+            "unwind the outer layer first; the draft survives to be cleared next"
+        );
+    }
+
+    #[test]
+    fn inspecting_keeps_the_chords_that_stop_and_repair_a_run() {
+        let ctrl_c = chord(KeyCode::Char('c'), KeyModifiers::CONTROL);
+        assert_eq!(
+            intent(
+                &ctrl_c,
+                Mode {
+                    busy: true,
+                    ..INSPECTING
+                }
+            ),
+            Intent::Cancel
+        );
+        assert_eq!(intent(&ctrl_c, INSPECTING), Intent::Quit);
+        assert_eq!(
+            intent(
+                &chord(KeyCode::Char('l'), KeyModifiers::CONTROL),
+                INSPECTING
+            ),
+            Intent::Redraw
+        );
+        assert_eq!(
+            intent(
+                &chord(KeyCode::Char('k'), KeyModifiers::CONTROL),
+                INSPECTING
+            ),
             Intent::Ignore,
-            "Tab is unbound otherwise, which is why it was free to take"
+            "a chord that means an edit must not be read as a move"
+        );
+    }
+
+    #[test]
+    fn the_transcript_outranks_a_half_typed_command_left_in_the_draft() {
+        let both = Mode {
+            inspecting: true,
+            ..SUGGESTING
+        };
+        assert_eq!(
+            intent(&key(KeyCode::Down), both),
+            Intent::Block(BlockStep::Next)
+        );
+        assert_eq!(
+            intent(&key(KeyCode::Tab), both),
+            Intent::Focus(FocusStep::Composer)
+        );
+    }
+
+    #[test]
+    fn a_picker_still_outranks_the_transcript() {
+        let both = Mode {
+            picker: true,
+            ..INSPECTING
+        };
+        assert_eq!(
+            intent(&key(KeyCode::Down), both),
+            Intent::Picker(PickerStep::Next)
         );
     }
 

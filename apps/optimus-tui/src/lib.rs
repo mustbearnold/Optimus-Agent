@@ -155,6 +155,14 @@ fn event_loop(
     loop {
         session.pump();
         session.tick();
+        // Arriving output lengthens the transcript underneath a selection the
+        // human is reading, so the anchor is recomputed with it rather than
+        // only when a key moves. Only while a worker is running: nothing else
+        // can lengthen the transcript, and re-laying it out every frame of an
+        // idle session would pay for a move that cannot happen.
+        if session.busy() {
+            anchor(terminal, &mut session)?;
+        }
         if session.mouse != captured {
             captured = session.mouse;
             if captured {
@@ -195,6 +203,7 @@ fn event_loop(
             busy: session.busy(),
             drafting: !session.composer.is_empty(),
             suggesting: !completion::suggestions(session.composer.text()).is_empty(),
+            inspecting: session.workbench.inspecting(),
         };
         if on_key(terminal, &mut session, keys::intent(&key, mode))? {
             return Ok(());
@@ -212,7 +221,11 @@ fn on_key(
     session: &mut TuiSession,
     intent: keys::Intent,
 ) -> io::Result<bool> {
-    use keys::{Edit, HistoryStep, Intent, Motion, PickerStep, ScrollStep, SuggestStep};
+    use keys::{
+        BlockStep, Edit, FocusStep, HistoryStep, Intent, Motion, PickerStep, ScrollStep,
+        SuggestStep,
+    };
+    use workbench::SelectionStep;
     // Any edit to the draft ends history browsing, so a recalled prompt the
     // human changed stays changed — and it changes which commands still match,
     // so a highlight three rows down the old list starts over rather than
@@ -298,10 +311,50 @@ fn on_key(
                 session.completion.reset();
             }
         }
+        Intent::Focus(step) => {
+            match step {
+                FocusStep::Inspect => session.workbench.inspect(),
+                FocusStep::Composer => session.workbench.leave_inspect(),
+            }
+            anchor(terminal, session)?;
+        }
+        Intent::Block(step) => {
+            match step {
+                BlockStep::Next => session.workbench.step(SelectionStep::Next),
+                BlockStep::Previous => session.workbench.step(SelectionStep::Previous),
+                BlockStep::First => session.workbench.step(SelectionStep::First),
+                BlockStep::Last => session.workbench.step(SelectionStep::Last),
+                // Nothing to report when the selected block has no body: the
+                // absence of movement is the answer.
+                BlockStep::Fold => {
+                    session.workbench.toggle_fold();
+                }
+            }
+            anchor(terminal, session)?;
+        }
         Intent::Redraw => terminal.clear()?,
         Intent::Ignore => {}
     }
     Ok(false)
+}
+
+/// Keep the selected block on screen while the transcript has the keyboard.
+///
+/// Does nothing otherwise, so a session nobody is inspecting scrolls exactly
+/// as it always did — following the tail unless the human scrolled back.
+fn anchor(
+    terminal: &Terminal<CrosstermBackend<io::Stdout>>,
+    session: &mut TuiSession,
+) -> io::Result<()> {
+    if !session.workbench.inspecting() {
+        return Ok(());
+    }
+    let size = terminal.size()?;
+    let chrome = view::composer_height(session, size.width) + 3;
+    let height = usize::from(size.height.saturating_sub(chrome));
+    let rows = view::visible_rows(session, size.width.saturating_sub(2));
+    session.scroll_back = view::anchored(&rows, height, session.scroll_back);
+    Ok(())
 }
 
 /// Apply one mouse event.
@@ -339,6 +392,19 @@ fn on_mouse(
             session.confirm_picker();
         }
         mouse::Intent::OpenMenu => session.picker = Some(commands::menu()),
+        // Keyboard and pointer reach the same two moves: select the block, and
+        // open or close it when the row clicked is the one that heads it.
+        mouse::Intent::Inspect(row) => {
+            let height = usize::from(mouse::regions(area, composer_height).transcript.height);
+            let rows = view::visible_rows(session, area.width.saturating_sub(2));
+            let offset = view::scroll_offset(rows.len(), height, session.scroll_back);
+            if let Some(hit) = view::hit(&rows, offset + row) {
+                session.workbench.select_item(hit.block);
+                if hit.head {
+                    session.workbench.toggle_fold_of(hit.block);
+                }
+            }
+        }
         mouse::Intent::Nothing => {}
     }
     Ok(())

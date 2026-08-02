@@ -1,4 +1,4 @@
-//! Transcript rows: message text turned into the exact screen lines to paint.
+//! Transcript rows: the workbench turned into the exact screen lines to paint.
 //!
 //! Deliberately free of ratatui types. Wrapping, gutters, and inline markdown
 //! are the part most likely to be wrong, so they stay unit-testable without
@@ -7,14 +7,25 @@
 //! Two readability rules live here. Text wraps on word boundaries rather than
 //! mid-word, and it wraps at [`READABLE_WIDTH`] even when the terminal is much
 //! wider, because a 200-column paragraph is hard to track back to the next line.
+//!
+//! Rows are a *projection* (ADR-0075 §1): [`rows`] is handed the workbench's
+//! items and paints them, and every row it produces names the block it paints
+//! so a click can find its way back to semantic state. Nothing here decides
+//! what is grouped, what is open, or what is selected — those live in
+//! [`crate::workbench`], and a row index is never read back into any of them.
 
 use crate::session::{Message, Role};
+use crate::workbench::{BlockId, Item};
 
 /// Longest line the transcript will lay out, however wide the terminal is.
 pub const READABLE_WIDTH: usize = 96;
 
 /// Narrowest a container may be, so a one-word turn still looks deliberate.
 const MIN_BOX: usize = 22;
+
+/// Fold markers: the run is open, and the run is closed.
+const OPEN: char = '▾';
+const SHUT: char = '▸';
 
 /// How conversational turns are framed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,19 +70,44 @@ impl Segment {
 pub struct Row {
     pub role: Role,
     pub segments: Vec<Segment>,
+    /// The block this row paints. Chrome — blank separators, the greeting, the
+    /// activity line — carries `None`, because clicking it means nothing.
+    pub block: Option<BlockId>,
+    /// Whether this row belongs to the item the keyboard is pointed at.
+    pub selected: bool,
 }
 
 impl Row {
-    fn blank() -> Self {
+    pub(crate) fn blank() -> Self {
         Self {
             role: Role::Assistant,
             segments: Vec::new(),
+            block: None,
+            selected: false,
+        }
+    }
+
+    /// Chrome that is not a block: the greeting, the activity line.
+    pub(crate) fn chrome(role: Role, segments: Vec<Segment>) -> Self {
+        Self {
+            role,
+            segments,
+            block: None,
+            selected: false,
         }
     }
 
     /// The row as plain text — what scroll maths and tests measure.
     pub fn plain(&self) -> String {
         self.segments.iter().map(|s| s.text.as_str()).collect()
+    }
+}
+
+/// Stamp a freshly laid-out run of rows with the block they paint.
+fn owned_by(rows: &mut [Row], block: BlockId, selected: bool) {
+    for row in rows {
+        row.block = Some(block);
+        row.selected = selected;
     }
 }
 
@@ -88,23 +124,81 @@ fn gutter(role: Role) -> (&'static str, &'static str) {
 }
 
 /// Lay the whole transcript out for `width` columns.
-pub fn rows(messages: &[Message], width: u16, chrome: Chrome) -> Vec<Row> {
+///
+/// `items` is the workbench's projection: what to paint, in order, with each
+/// run of folded calls already resolved to its members and its open state.
+/// `selected` is the block the keyboard is pointed at, or the one a click
+/// landed on; a run highlights whole, members included, because the run is the
+/// thing that is selected.
+pub fn rows(
+    messages: &[Message],
+    items: &[Item],
+    selected: Option<BlockId>,
+    width: u16,
+    chrome: Chrome,
+) -> Vec<Row> {
     if messages.is_empty() {
         return greeting();
     }
     let mut rows = Vec::new();
-    for (index, message) in messages.iter().enumerate() {
-        // One blank line between messages, so turns are visually separable.
+    for (index, item) in items.iter().enumerate() {
+        // One blank line between items, so turns are visually separable. A
+        // run's members are one item and keep no blank between them.
         if index > 0 {
             rows.push(Row::blank());
         }
-        if chrome == Chrome::Boxed && contained(message.role) {
-            rows.extend(boxed_rows(message, width));
-        } else {
-            rows.extend(message_rows(message, width));
+        let chosen = selected == Some(item.id());
+        match item {
+            Item::Single { index, id } => {
+                let Some(message) = messages.get(*index) else {
+                    continue;
+                };
+                let mut laid = if chrome == Chrome::Boxed && contained(message.role) {
+                    boxed_rows(message, width)
+                } else {
+                    message_rows(message, width)
+                };
+                owned_by(&mut laid, *id, chosen);
+                rows.extend(laid);
+            }
+            Item::Group {
+                id,
+                tool,
+                members,
+                expanded,
+            } => {
+                let mut header = header_rows(tool, members.len(), *expanded, width);
+                owned_by(&mut header, *id, chosen);
+                rows.extend(header);
+                if !*expanded {
+                    continue;
+                }
+                for at in members {
+                    let Some(message) = messages.get(*at) else {
+                        continue;
+                    };
+                    // Indented under the header, so an open run reads as the
+                    // header's contents rather than as loose rows beside it.
+                    let mut laid = laid_rows(message.role, &message.text, width, "  ⏺ ", "    ");
+                    owned_by(&mut laid, *id, chosen);
+                    rows.extend(laid);
+                }
+            }
         }
     }
     rows
+}
+
+/// The one row a folded run shows: the marker, the tool, and how many calls.
+///
+/// Deliberately a count and nothing else. A run's wall time spans the model's
+/// thinking between its calls, so presenting it as the tools' cost would be a
+/// number that reads precise and is not; durations arrive with the typed
+/// `Timing` events in the phase that consumes them.
+fn header_rows(tool: &str, count: usize, expanded: bool, width: u16) -> Vec<Row> {
+    let marker = if expanded { OPEN } else { SHUT };
+    let text = format!("{tool} · {count} calls");
+    laid_rows(Role::Tool, &text, width, &format!("{marker} "), "  ")
 }
 
 /// Only conversational turns get a container. Tool, action, and error rows are
@@ -115,21 +209,21 @@ fn contained(role: Role) -> bool {
 
 fn greeting() -> Vec<Row> {
     vec![
-        Row {
-            role: Role::Assistant,
-            segments: vec![Segment {
+        Row::chrome(
+            Role::Assistant,
+            vec![Segment {
                 text: "  What should Optimus do?".into(),
                 bold: true,
                 dim: false,
             }],
-        },
+        ),
         Row::blank(),
-        Row {
-            role: Role::Assistant,
-            segments: vec![Segment::plain(
+        Row::chrome(
+            Role::Assistant,
+            vec![Segment::plain(
                 "  Describe a task and press Enter. Ctrl-C stops a run; Esc clears a draft.",
             )],
-        },
+        ),
     ]
 }
 
@@ -158,11 +252,21 @@ fn laid_out(text: &str, content: usize) -> Vec<Vec<(char, bool)>> {
 
 fn message_rows(message: &Message, width: u16) -> Vec<Row> {
     let (first, indent) = gutter(message.role);
+    laid_rows(message.role, &message.text, width, first, indent)
+}
+
+/// Wrap `text` for `width` columns behind an explicit gutter.
+///
+/// The gutter is a parameter rather than a lookup because a row's marker is not
+/// always its role's: a folded run's header carries the fold marker, and its
+/// members are indented under it while keeping the tool marker they had when
+/// they stood alone.
+fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> Vec<Row> {
     let usable = usize::from(width).min(READABLE_WIDTH);
     // Never let a narrow pane drive the content width to zero.
     let content = usable.saturating_sub(first.chars().count()).max(8);
 
-    laid_out(&message.text, content)
+    laid_out(text, content)
         .iter()
         .enumerate()
         .map(|(index, line)| {
@@ -170,8 +274,10 @@ fn message_rows(message: &Message, width: u16) -> Vec<Row> {
             let mut segments = vec![Segment::plain(lead)];
             segments.extend(runs(line));
             Row {
-                role: message.role,
+                role,
                 segments,
+                block: None,
+                selected: false,
             }
         })
         .collect()
@@ -204,6 +310,8 @@ fn boxed_rows(message: &Message, width: u16) -> Vec<Row> {
         Row {
             role: message.role,
             segments,
+            block: None,
+            selected: false,
         }
     }));
     rows.push(edge_row(message.role, "", inner, false));
@@ -218,6 +326,8 @@ fn edge_row(role: Role, title: &str, inner: usize, top: bool) -> Row {
     Row {
         role,
         segments: vec![Segment::edge(format!("{left}─{title}{fill}{right}"))],
+        block: None,
+        selected: false,
     }
 }
 
@@ -344,6 +454,8 @@ fn runs(marked: &[(char, bool)]) -> Vec<Segment> {
 mod tests {
     use super::*;
 
+    use crate::workbench::ungrouped;
+
     fn message(role: Role, text: &str) -> Message {
         Message {
             role,
@@ -352,20 +464,26 @@ mod tests {
         }
     }
 
+    /// Lay out messages with nothing grouped and nothing selected — the shape
+    /// every wrapping and framing rule below is about.
+    fn painted(messages: &[Message], width: u16, chrome: Chrome) -> Vec<Row> {
+        rows(messages, &ungrouped(messages.len()), None, width, chrome)
+    }
+
     fn plain(rows: &[Row]) -> Vec<String> {
         rows.iter().map(Row::plain).collect()
     }
 
     #[test]
     fn greeting_describes_escape_as_draft_clear_not_exit() {
-        let greeting = plain(&rows(&[], 80, Chrome::Plain)).join("\n");
+        let greeting = plain(&painted(&[], 80, Chrome::Plain)).join("\n");
         assert!(greeting.contains("Esc clears a draft"));
         assert!(!greeting.contains("Esc exits"));
     }
 
     #[test]
     fn a_user_line_gets_a_marker_and_the_assistant_is_indented_under_it() {
-        let rows = rows(
+        let rows = painted(
             &[
                 message(Role::User, "hello"),
                 message(Role::Assistant, "hi back"),
@@ -522,14 +640,14 @@ mod tests {
 
     #[test]
     fn a_turn_is_drawn_in_a_titled_container() {
-        let rows = rows(&[message(Role::User, "hello")], 40, Chrome::Boxed);
+        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Boxed);
         assert_eq!(plain(&rows), vec!["╭─ you ──╮", "│ hello  │", "╰────────╯"]);
     }
 
     #[test]
     fn every_edge_of_a_container_is_the_same_width() {
         for text in ["hi", "a much longer message that has to wrap somewhere", ""] {
-            let rows = rows(&[message(Role::Assistant, text)], 40, Chrome::Boxed);
+            let rows = painted(&[message(Role::Assistant, text)], 40, Chrome::Boxed);
             let widths: Vec<usize> = rows.iter().map(|r| r.plain().chars().count()).collect();
             assert!(
                 widths.iter().all(|w| *w == widths[0]),
@@ -540,7 +658,7 @@ mod tests {
 
     #[test]
     fn a_container_hugs_its_content_rather_than_spanning_the_pane() {
-        let rows = rows(&[message(Role::User, "hi")], 90, Chrome::Boxed);
+        let rows = painted(&[message(Role::User, "hi")], 90, Chrome::Boxed);
         assert!(
             rows[0].plain().chars().count() < 20,
             "a two-word turn must not stretch a full-width bar: {}",
@@ -551,7 +669,7 @@ mod tests {
     #[test]
     fn a_container_never_outgrows_the_readable_width() {
         let text = "word ".repeat(80);
-        let rows = rows(&[message(Role::Assistant, text.trim())], 400, Chrome::Boxed);
+        let rows = painted(&[message(Role::Assistant, text.trim())], 400, Chrome::Boxed);
         assert!(rows
             .iter()
             .all(|r| r.plain().chars().count() <= READABLE_WIDTH));
@@ -559,7 +677,7 @@ mod tests {
 
     #[test]
     fn tool_rows_are_never_boxed_even_in_boxed_mode() {
-        let rows = rows(
+        let rows = painted(
             &[message(Role::Tool, "web_search  8 results")],
             40,
             Chrome::Boxed,
@@ -569,13 +687,13 @@ mod tests {
 
     #[test]
     fn plain_chrome_draws_no_border_characters() {
-        let rows = rows(&[message(Role::User, "hello")], 40, Chrome::Plain);
+        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Plain);
         assert_eq!(plain(&rows), vec!["› hello"]);
     }
 
     #[test]
     fn container_edges_are_dim_so_the_frame_never_shouts() {
-        let rows = rows(&[message(Role::User, "hello")], 40, Chrome::Boxed);
+        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Boxed);
         assert!(rows[0].segments.iter().all(|s| s.dim), "top edge");
         assert!(
             rows[1].segments.first().is_some_and(|s| s.dim)
@@ -587,7 +705,7 @@ mod tests {
     #[test]
     fn the_empty_transcript_greets() {
         assert_eq!(
-            rows(&[], 80, Chrome::Boxed)[0].plain(),
+            painted(&[], 80, Chrome::Boxed)[0].plain(),
             "  What should Optimus do?"
         );
     }
@@ -596,5 +714,126 @@ mod tests {
     fn a_narrow_pane_still_lays_out_without_panicking() {
         let rows = message_rows(&message(Role::Assistant, "some words here"), 1);
         assert!(!rows.is_empty());
+    }
+
+    // ADR-0075 phase 2: rows project items, and each names the block it paints.
+
+    /// Three reads, folded into one run whose head is the first of them.
+    fn run() -> (Vec<Message>, Vec<Item>, BlockId) {
+        let messages: Vec<Message> = (0..3)
+            .map(|n| message(Role::Tool, &format!("read_file  src/{n}.rs")))
+            .collect();
+        let id = BlockId::mint();
+        let item = Item::Group {
+            id,
+            tool: "read_file".into(),
+            members: vec![0, 1, 2],
+            expanded: false,
+        };
+        (messages, vec![item], id)
+    }
+
+    fn opened(items: &[Item]) -> Vec<Item> {
+        items
+            .iter()
+            .map(|item| match item {
+                Item::Group {
+                    id, tool, members, ..
+                } => Item::Group {
+                    id: *id,
+                    tool: tool.clone(),
+                    members: members.clone(),
+                    expanded: true,
+                },
+                other => other.clone(),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_closed_run_is_one_row_that_says_what_it_is_hiding() {
+        let (messages, items, _) = run();
+        let painted = plain(&rows(&messages, &items, None, 80, Chrome::Plain));
+        assert_eq!(painted, vec!["▸ read_file · 3 calls"]);
+    }
+
+    #[test]
+    fn opening_a_run_shows_every_call_it_was_hiding() {
+        let (messages, items, _) = run();
+        let painted = plain(&rows(&messages, &opened(&items), None, 80, Chrome::Plain));
+        assert_eq!(
+            painted,
+            vec![
+                "▾ read_file · 3 calls",
+                "  ⏺ read_file  src/0.rs",
+                "  ⏺ read_file  src/1.rs",
+                "  ⏺ read_file  src/2.rs",
+            ],
+            "the marker turns and the members appear underneath it"
+        );
+    }
+
+    #[test]
+    fn every_row_of_a_run_belongs_to_the_run_so_a_click_anywhere_finds_it() {
+        let (messages, items, head) = run();
+        for rows in [
+            rows(&messages, &items, None, 80, Chrome::Plain),
+            rows(&messages, &opened(&items), None, 80, Chrome::Plain),
+        ] {
+            assert!(
+                rows.iter().all(|row| row.block == Some(head)),
+                "a run's rows all name the run: {rows:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_selected_item_marks_all_of_its_rows_and_nothing_elses() {
+        let messages = vec![message(Role::User, "hello"), message(Role::Assistant, "hi")];
+        let items = ungrouped(2);
+        let chosen = items[0].id();
+        let rows = rows(&messages, &items, Some(chosen), 40, Chrome::Boxed);
+        let marked: Vec<bool> = rows.iter().map(|row| row.selected).collect();
+        assert!(
+            marked.iter().filter(|m| **m).count() >= 3,
+            "the whole container is selected, not one of its edges: {marked:?}"
+        );
+        assert!(
+            rows.iter()
+                .all(|row| !row.selected || row.block == Some(chosen)),
+            "nothing outside the selected item may be marked"
+        );
+    }
+
+    #[test]
+    fn chrome_belongs_to_no_block_so_it_can_never_be_clicked_into_one() {
+        let messages = vec![message(Role::User, "a"), message(Role::User, "b")];
+        let rows = rows(&messages, &ungrouped(2), None, 40, Chrome::Plain);
+        let blank = rows
+            .iter()
+            .find(|row| row.plain().is_empty())
+            .expect("a separator between the two turns");
+        assert_eq!(blank.block, None);
+        assert!(painted(&[], 80, Chrome::Plain)
+            .iter()
+            .all(|row| row.block.is_none()));
+    }
+
+    #[test]
+    fn a_run_header_stays_one_row_on_a_narrow_pane() {
+        let (messages, items, _) = run();
+        let painted = rows(&messages, &items, None, 24, Chrome::Plain);
+        assert_eq!(painted.len(), 1, "{painted:?}");
+        assert!(painted[0].plain().starts_with('▸'));
+    }
+
+    /// An item naming a message that is not there must not panic or shift
+    /// everything after it; it simply paints nothing.
+    #[test]
+    fn an_item_pointing_past_the_transcript_paints_nothing() {
+        let messages = vec![message(Role::User, "only one")];
+        let items = ungrouped(3);
+        let rows = rows(&messages, &items, None, 40, Chrome::Plain);
+        assert_eq!(plain(&rows), vec!["› only one", "", ""]);
     }
 }

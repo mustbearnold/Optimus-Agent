@@ -150,6 +150,11 @@ surface's private vocabulary is how single catalogs stop being single.
 - The terminal still has no `optimus-ops` dependency, and now no comment implying it.
 - Tab, Up and Down are contextual in the composer. Up/Down recall history except
   over a lone `/word`; Tab does nothing except over a lone `/word`.
+  **Superseded 2026-08-02 by ADR-0075 phase 2** for the second half only: Tab
+  still completes over a lone `/word`, and otherwise now hands the keyboard to
+  the transcript rather than doing nothing. The precedence recorded here is
+  unchanged — the suggestion overlay still borrows exactly Tab, Up and Down,
+  and a picker still outranks it.
 - `apps/optimus-tui/src/session.rs` sits at 796 of 800 production lines. This change
   added three. The next feature to touch it must split it first; that is a known
   debt recorded here, not a surprise for whoever hits it.
