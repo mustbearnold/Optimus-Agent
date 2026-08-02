@@ -717,7 +717,14 @@ case "\${OPTIMUS_DESKTOP_SHELL:-electron}" in
     exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
     # Do not pass --class: with RUN_AS_NODE or Node-first argv parsing it is rejected.
     # WM class comes from the binary name (optimus-agent) and StartupWMClass.
-    exec "\$ELECTRON_BINARY" "\$@"
+    electron_args=("\$@")
+    # Electron 43 can spin before creating a renderer on this Wayland/Vulkan
+    # combination. Prefer the available Xwayland path with software compositing;
+    # pure-Wayland systems without DISPLAY retain the native default.
+    if [[ -n "\${WAYLAND_DISPLAY:-}" && -n "\${DISPLAY:-}" ]]; then
+      electron_args+=(--ozone-platform=x11 --disable-gpu)
+    fi
+    exec "\$ELECTRON_BINARY" "\${electron_args[@]}"
     ;;
   wry)
     exec "\$HOST_BINARY" "\$@"

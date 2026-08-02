@@ -295,7 +295,7 @@
       "resolved_files": 15
     },
     "decisions-0024-hermes-parity-version-gate": {
-      "binding_sha256": "3df282c89c9d41f1ad873a750e4c43abb2f21de6d3bbc6e449bdbf132f8be0a7",
+      "binding_sha256": "b34c5cc13105823e63ffa7f6f97c9815145ce40ba96050e68ebd5e61e5be0518",
       "document_sha256": "4a6ff2ec4b58c8e2ecf900f110e77e8298db8ed6662b1f38f6a25c3cedaea292",
       "path": "docs/decisions/0024-hermes-parity-version-gate.md",
       "resolved_files": 13
@@ -379,7 +379,7 @@
       "resolved_files": 7
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "0f182aeaa1318cd306261c27438dce8be25efd2bad75702288899e00453d2bdf",
+      "binding_sha256": "54fce5dba3eca0f770ac1552298c9a9d54dd37154d9b2da1b5468a139247b667",
       "document_sha256": "2dddb01099233d01788be84e8c56b94907fdeb14aaba4e218043fc99c189e2a6",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 13
@@ -409,7 +409,7 @@
       "resolved_files": 4
     },
     "decisions-0043-no-auto-updater-channel": {
-      "binding_sha256": "ef5236cd83e4872c6a3c06dbc97d51d0ee8e4bc9fdfeaf7ff5d28983a2b324ec",
+      "binding_sha256": "6b1f7aba8d6adb76174fa3ec1905e2e2b18688a87cfa191e7906235ff24f0b69",
       "document_sha256": "a0932fe9817d5a4f04455725de0f5cf60c3f3975087205f7786bb39d8874efc7",
       "path": "docs/decisions/0043-no-auto-updater-channel.md",
       "resolved_files": 6

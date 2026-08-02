@@ -259,6 +259,9 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertTrue((packaged_app / "main.cjs").is_file())
             self.assertTrue((packaged_app / "host-discovery.cjs").is_file())
             self.assertTrue((packaged_app / "ui-dist" / "index.html").is_file())
+            launcher_source = launcher.read_text(encoding="utf-8")
+            self.assertIn("ozone-platform=x11", launcher_source)
+            self.assertIn("disable-gpu", launcher_source)
             self.assertEqual(
                 subprocess.check_output(
                     [str(launcher), "--version"],
