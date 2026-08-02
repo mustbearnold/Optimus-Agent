@@ -12,6 +12,7 @@ use crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Position, Rect};
 
 use crate::picker::Picker;
+use crate::width;
 
 /// Rows the wheel moves per notch.
 const WHEEL: isize = 3;
@@ -84,10 +85,11 @@ pub fn picker_rect(area: Rect, picker: &Picker) -> Rect {
     let width = picker
         .items
         .iter()
-        .map(|item| item.label.chars().count() + item.detail.chars().count() + 8)
+        .map(|item| width::cells(&item.label) + width::cells(&item.detail) + 8)
         .max()
         .unwrap_or(40)
-        .clamp(34, 72) as u16;
+        .clamp(34, 72)
+        .min(usize::from(area.width)) as u16;
     let height = (picker.items.len() as u16).saturating_add(2).min(14);
     Rect {
         x: area.x + (area.width.saturating_sub(width)) / 2,

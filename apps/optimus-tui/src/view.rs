@@ -14,6 +14,7 @@ use crate::mouse;
 use crate::overlay;
 use crate::session::{Role, TuiSession};
 use crate::transcript::{self, Row};
+use crate::width;
 
 const BACKGROUND: Color = Color::Rgb(12, 12, 12);
 const HAIRLINE: Color = Color::Rgb(42, 42, 42);
@@ -86,14 +87,34 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
 
 /// Compact project/provider context, deliberately quieter than the work area.
 fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
-    let right = format!("{}  ", session.provider);
-    let prefix = 2_u16;
-    let gap = 2_u16.min(area.width.saturating_sub(prefix + right.len() as u16));
-    let path_width = area
-        .width
-        .saturating_sub(prefix + gap + right.chars().count().min(usize::from(u16::MAX)) as u16);
-    let left = format!("  {}", compact_path(&session.home, path_width));
-    let gap = usize::from(area.width).saturating_sub(left.chars().count() + right.chars().count());
+    let total = usize::from(area.width);
+    if total == 0 {
+        return;
+    }
+    let prefix = width::take("  ", total);
+    let available_right = total.saturating_sub(width::cells(&prefix));
+    let suffix = if available_right >= 2 {
+        "  "
+    } else if available_right == 1 {
+        " "
+    } else {
+        ""
+    };
+    let provider_limit = available_right.saturating_sub(width::cells(suffix));
+    let provider = width::truncate(&session.provider, provider_limit);
+    let right = format!("{provider}{suffix}");
+    let right_width = width::cells(&right);
+    let gap = if total.saturating_sub(width::cells(&prefix) + right_width) >= 2 {
+        2
+    } else if total > width::cells(&prefix) + right_width {
+        1
+    } else {
+        0
+    };
+    let path_width = total.saturating_sub(width::cells(&prefix) + gap + right_width);
+    let path = compact_path(&session.home, path_width as u16);
+    let left = format!("{prefix}{path}");
+    let gap = total.saturating_sub(width::cells(&left) + right_width);
     frame.render_widget(
         Paragraph::new(Line::from(vec![
             Span::styled(left, Style::default().fg(MUTED)),
@@ -117,19 +138,15 @@ fn compact_path(path: &std::path::Path, width: u16) -> String {
         value.into_owned()
     };
     let width = usize::from(width);
-    let chars: Vec<char> = display.chars().collect();
-    if chars.len() <= width {
+    if width::cells(&display) <= width {
         return display;
     }
-    if width <= 1 {
-        return "…".chars().take(width).collect();
-    }
-    if width < 8 {
-        return chars.into_iter().take(width).collect();
+    if width <= 7 {
+        return width::take(&display, width);
     }
     let suffix_len = width - 7;
-    let prefix: String = chars.iter().take(6).collect();
-    let suffix: String = chars[chars.len() - suffix_len..].iter().collect();
+    let prefix = width::take(&display, 6);
+    let suffix = width::take_end(&display, suffix_len);
     format!("{prefix}…{suffix}")
 }
 
@@ -186,7 +203,7 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
 /// The footer is the workbench's compact state rail. The text remains the
 /// durable session summary, while the leading marker gives the eye a semantic
 /// colour and shape to find before reading the details.
-fn status_line(session: &TuiSession) -> Line<'static> {
+fn status_parts(session: &TuiSession) -> (&'static str, Style, String) {
     let (marker, marker_style) = if session.busy() {
         ("◌", Style::default().fg(Color::LightYellow))
     } else if session.pending_approval.is_some() {
@@ -194,14 +211,7 @@ fn status_line(session: &TuiSession) -> Line<'static> {
     } else {
         ("●", Style::default().fg(Color::LightGreen))
     };
-    Line::from(vec![
-        Span::styled("  ", Style::default()),
-        Span::styled(
-            format!("{marker} "),
-            marker_style.add_modifier(Modifier::BOLD),
-        ),
-        Span::styled(status_label(session), Style::default().fg(MUTED)),
-    ])
+    (marker, marker_style, status_label(session))
 }
 
 fn status_label(session: &TuiSession) -> String {
@@ -222,12 +232,44 @@ fn status_label(session: &TuiSession) -> String {
 }
 
 fn draw_status(frame: &mut Frame, area: Rect, session: &TuiSession) {
-    let right = format!("{}  ", compact_status(session));
-    frame.render_widget(Paragraph::new(status_line(session)), area);
-    frame.render_widget(
-        Paragraph::new(Span::styled(right, Style::default().fg(MUTED))).alignment(Alignment::Right),
-        area,
-    );
+    let total = usize::from(area.width);
+    if total == 0 {
+        return;
+    }
+    let (marker, marker_style, label) = status_parts(session);
+    let prefix = format!("  {marker} ");
+    let right_full = format!("{}  ", compact_status(session));
+    let right_budget = width::cells(&right_full).min(total.saturating_sub(4));
+    let right = width::truncate(&right_full, right_budget);
+    let gap = if total >= width::cells(&prefix) + width::cells(&right) + 2 {
+        2
+    } else {
+        0
+    };
+    let label_budget = total.saturating_sub(width::cells(&prefix) + width::cells(&right) + gap);
+    let left_label = width::truncate(&label, label_budget);
+    let mut spans = vec![Span::raw(width::take(&prefix, total))];
+    spans.push(Span::styled(left_label, Style::default().fg(MUTED)));
+    let used = spans
+        .iter()
+        .map(|span| width::cells(span.content.as_ref()))
+        .sum::<usize>();
+    let fill = total.saturating_sub(used + width::cells(&right));
+    if fill > 0 {
+        spans.push(Span::raw(" ".repeat(fill)));
+    }
+    spans.push(Span::styled(right, Style::default().fg(MUTED)));
+    // Rebuild the marker span separately so truncating the label never loses
+    // the state colour and shape at the left edge.
+    let marker_width = width::cells(&prefix);
+    let mut line = Line::from(spans);
+    if marker_width <= total {
+        line.spans[0] = Span::styled(
+            width::take(&prefix, total),
+            marker_style.add_modifier(Modifier::BOLD),
+        );
+    }
+    frame.render_widget(Paragraph::new(line), area);
 }
 
 /// The durable session id belongs in logs and state, not in the primary visual
@@ -249,23 +291,48 @@ fn compact_status(session: &TuiSession) -> String {
 }
 
 fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
-    let compact = if area.width < 32 {
-        vec![("Esc", "clear")]
-    } else if area.width < 44 {
-        if session.busy() {
-            vec![("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")]
-        } else {
-            vec![("↵", "send"), ("Tab", "inspect"), ("Esc", "clear")]
-        }
-    } else if session.busy() {
-        vec![("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")]
+    let separator = if area.width < 44 { " │ " } else { "  │  " };
+    let candidates: &[&[(&str, &str)]] = if session.busy() {
+        &[
+            &[("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")],
+            &[("^C", "stop"), ("Tab", "inspect"), ("Esc", "clear")],
+            &[("Esc", "clear")],
+        ]
     } else {
-        vec![("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")]
+        &[
+            &[("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")],
+            &[("↵", "send"), ("Tab", "inspect"), ("Esc", "clear")],
+            &[("Esc", "clear")],
+        ]
     };
-    let mut spans = vec![Span::raw("  ")];
-    for (index, (key, action)) in compact.into_iter().enumerate() {
+    let required = |items: &[(&str, &str)]| {
+        width::cells("  ")
+            + items
+                .iter()
+                .map(|(key, action)| width::cells(key) + 1 + width::cells(action))
+                .sum::<usize>()
+            + width::cells(separator) * items.len().saturating_sub(1)
+    };
+    let compact = candidates
+        .iter()
+        .copied()
+        .find(|items| required(items) <= usize::from(area.width));
+    let prefix = width::take("  ", usize::from(area.width));
+    let Some(compact) = compact else {
+        let available = usize::from(area.width).saturating_sub(width::cells(&prefix));
+        let text = width::truncate("Esc:clear", available);
+        frame.render_widget(
+            Paragraph::new(Line::from(vec![
+                Span::raw(prefix),
+                Span::styled(text, Style::default().fg(MUTED)),
+            ])),
+            area,
+        );
+        return;
+    };
+    let mut spans = vec![Span::raw(prefix)];
+    for (index, (key, action)) in compact.iter().copied().enumerate() {
         if index > 0 {
-            let separator = if area.width < 44 { " │ " } else { "  │  " };
             spans.push(Span::styled(separator, Style::default().fg(HAIRLINE)));
         }
         spans.push(Span::styled(
@@ -307,18 +374,22 @@ fn draw_scrollbar(frame: &mut Frame, block: Rect, rows: usize, height: usize, of
 fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
     // Same rectangle the hit-test uses, so a click lands on the row shown.
     let rect = mouse::picker_rect(frame.area(), picker);
+    let inner_width = usize::from(rect.width.saturating_sub(2));
 
     let rows: Vec<ListItem> = picker
         .items
         .iter()
         .map(|item| {
             let mark = if item.current { "● " } else { "  " };
+            let detail = format!("  {}", item.detail);
+            let detail = width::truncate(&detail, inner_width.saturating_sub(width::cells(mark)));
+            let label = width::truncate(
+                &item.label,
+                inner_width.saturating_sub(width::cells(mark) + width::cells(&detail)),
+            );
             ListItem::new(Line::from(vec![
-                Span::raw(format!("{mark}{}", item.label)),
-                Span::styled(
-                    format!("  {}", item.detail),
-                    Style::default().add_modifier(Modifier::DIM),
-                ),
+                Span::raw(format!("{mark}{label}")),
+                Span::styled(detail, Style::default().add_modifier(Modifier::DIM)),
             ]))
         })
         .collect();
@@ -327,9 +398,10 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
     state.select(Some(picker.selected()));
 
     overlay::prepare(frame, rect, overlay::Kind::Modal);
+    let title = width::truncate(&picker.title, inner_width);
     frame.render_stateful_widget(
         List::new(rows)
-            .block(overlay::panel(&picker.title, overlay::Kind::Modal))
+            .block(overlay::panel(&title, overlay::Kind::Modal))
             .highlight_symbol("> ")
             .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
         rect,
@@ -355,19 +427,22 @@ fn draw_suggestions(frame: &mut Frame, session: &TuiSession, composer: Rect) {
 
     // Columns measured from the rows actually on screen, so a filter down to
     // one short name does not leave a box sized for the ones it ruled out.
-    let name_width = found
+    let natural_name_width = found
         .iter()
-        .map(|command| command.typed_form().chars().count())
+        .map(|command| width::cells(&command.typed_form()))
         .max()
         .unwrap_or(0);
-    let summary_width = found
+    let natural_summary_width = found
         .iter()
-        .map(|command| command.summary.chars().count())
+        .map(|command| width::cells(command.summary))
         .max()
         .unwrap_or(0);
 
     // Two columns of border, two for the selection marker, one between columns.
-    let width = (name_width + summary_width + 5) as u16;
+    let natural_width = natural_name_width
+        .saturating_add(natural_summary_width)
+        .saturating_add(5);
+    let width = natural_width.min(usize::from(composer.width)) as u16;
     // Borders included, capped by the room left above the composer. A cap that
     // bites just shows fewer rows; the `List` keeps the selected one in view.
     let height = (found.len() as u16 + 2).min(composer.y);
@@ -380,16 +455,21 @@ fn draw_suggestions(frame: &mut Frame, session: &TuiSession, composer: Rect) {
         width: width.min(composer.width),
         height,
     };
+    let inner_width = usize::from(rect.width.saturating_sub(2));
+    let name_width = natural_name_width.min(inner_width);
 
     let rows: Vec<ListItem> = found
         .iter()
         .map(|command| {
+            let name = width::truncate(&command.typed_form(), name_width);
+            let name_used = width::cells(&name);
+            let summary_start = name_used.saturating_add(1);
+            let summary =
+                width::truncate(command.summary, inner_width.saturating_sub(summary_start));
+            let padding = " ".repeat(name_width.saturating_sub(name_used) + 1);
             ListItem::new(Line::from(vec![
-                Span::raw(format!("{:<name_width$} ", command.typed_form())),
-                Span::styled(
-                    command.summary,
-                    Style::default().add_modifier(Modifier::DIM),
-                ),
+                Span::raw(format!("{name}{padding}")),
+                Span::styled(summary, Style::default().add_modifier(Modifier::DIM)),
             ]))
         })
         .collect();
@@ -535,6 +615,35 @@ mod tests {
             help.contains("↵:send") && help.contains("Tab:inspect") && help.contains("Esc:clear"),
             "compact labels must remain complete: {screen:?}"
         );
+    }
+
+    #[test]
+    fn busy_narrow_chrome_switches_to_a_complete_short_interrupt_label() {
+        let (_dir, mut session) = session_with(&[]);
+        let _worker = session.busy_for_test("working");
+        let screen = render(&session, 40, 12);
+        let help = screen.last().expect("help rail");
+        assert!(help.contains("^C:stop"), "{screen:?}");
+        assert!(
+            !help.contains("Ctrl-C:stop"),
+            "a narrow rail must not clip labels: {screen:?}"
+        );
+    }
+
+    #[test]
+    fn a_long_provider_is_truncated_at_a_cell_boundary_in_the_context_and_status_rails() {
+        let (_dir, mut session) = session_with(&[]);
+        session.provider = "provider界👍e\u{301}with-a-very-long-name".into();
+        let screen = render(&session, 32, 12);
+        assert!(
+            screen[0].contains('…'),
+            "context needs an explicit elision: {screen:?}"
+        );
+        assert!(
+            screen[screen.len() - 2].contains('…'),
+            "status needs an explicit elision: {screen:?}"
+        );
+        assert!(screen.iter().all(|line| crate::width::cells(line) <= 32));
     }
 
     #[test]

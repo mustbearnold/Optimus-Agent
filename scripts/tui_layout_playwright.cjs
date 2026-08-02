@@ -30,7 +30,9 @@ const VIEWPORTS = [
   [110, 32],
   [80, 24],
   [60, 20],
+  [52, 16],
   [40, 20],
+  [32, 16],
 ];
 
 function tmux(...args) {
@@ -83,10 +85,58 @@ function composerGeometry(lines, cols) {
 
 function normalizeCells(lines, cols) {
   return lines.map((line) => {
-    const cells = Array.from(line);
+    const cells = terminalCells(line);
+    assert(cells.length <= cols, `captured terminal row exceeded ${cols} cells: ${line}`);
     while (cells.length < cols) cells.push(" ");
     return cells.slice(0, cols);
   });
+}
+
+// tmux capture-pane gives us glyphs, while the TUI reasons in terminal cells.
+// Keep the projection honest for the same families that the Rust oracle tests:
+// combining marks stay attached to the previous cell, and wide CJK/emoji/full-
+// width glyphs consume two cells.
+function codePointWidth(character) {
+  const codePoint = character.codePointAt(0);
+  if (
+    codePoint === 0 ||
+    (codePoint >= 0x300 && codePoint <= 0x36f) ||
+    (codePoint >= 0x1ab0 && codePoint <= 0x1aff) ||
+    (codePoint >= 0x1dc0 && codePoint <= 0x1dff) ||
+    (codePoint >= 0x20d0 && codePoint <= 0x20ff) ||
+    (codePoint >= 0xfe00 && codePoint <= 0xfe0f) ||
+    (codePoint >= 0x200d && codePoint <= 0x200d)
+  ) {
+    return 0;
+  }
+  if (
+    (codePoint >= 0x1100 && codePoint <= 0x115f) ||
+    (codePoint >= 0x2329 && codePoint <= 0x232a) ||
+    (codePoint >= 0x2e80 && codePoint <= 0xa4cf) ||
+    (codePoint >= 0xac00 && codePoint <= 0xd7a3) ||
+    (codePoint >= 0xf900 && codePoint <= 0xfaff) ||
+    (codePoint >= 0xfe10 && codePoint <= 0xfe6f) ||
+    (codePoint >= 0xff01 && codePoint <= 0xff60) ||
+    (codePoint >= 0xffe0 && codePoint <= 0xffe6) ||
+    (codePoint >= 0x1f300 && codePoint <= 0x1faff)
+  ) {
+    return 2;
+  }
+  return 1;
+}
+
+function terminalCells(line) {
+  const cells = [];
+  for (const character of Array.from(line)) {
+    const width = codePointWidth(character);
+    if (width === 0) {
+      if (cells.length > 0) cells[cells.length - 1] += character;
+      continue;
+    }
+    cells.push(character);
+    if (width === 2) cells.push("");
+  }
+  return cells;
 }
 
 function regionFor(row, geometry) {
@@ -200,17 +250,37 @@ function assertFrame(frame, cols, rows, geometry, label) {
   }
 }
 
-function assertActiveFrame(frame, rows, geometry, label) {
+function assertBusyFrame(frame, cols, rows, geometry, label) {
   const joined = frame.join(" ").replace(/\s+/g, " ");
-  assert(joined.includes("› layout ping"), `${label}: user turn is missing\n${renderFrame(frame)}`);
-  assert(joined.includes("offline echo: layout ping"), `${label}: assistant turn is missing\n${renderFrame(frame)}`);
+  assert(joined.includes("› layout ping"), `${label}: busy turn prompt is missing\n${renderFrame(frame)}`);
+  assert(joined.includes("Ctrl-C"), `${label}: busy interrupt affordance is missing\n${renderFrame(frame)}`);
+  assert(frame[geometry.status].includes("working"), `${label}: busy status is missing\n${renderFrame(frame)}`);
+  if (cols >= 47) {
+    assert(frame[geometry.help].includes("Ctrl-C:stop"), `${label}: full busy help rail`);
+  } else if (cols >= 39) {
+    assert(frame[geometry.help].includes("^C:stop"), `${label}: compact busy help rail`);
+    assert(!frame[geometry.help].includes("Ctrl-C:stop"), `${label}: compact rail must not clip Ctrl-C`);
+  } else {
+    assert(frame[geometry.help].includes("Esc:clear"), `${label}: smallest busy help rail`);
+  }
+  assert.equal(geometry.status, rows - 2, `${label}: busy status rail drifted`);
+  assert.equal(geometry.help, rows - 1, `${label}: busy help rail drifted`);
+}
+
+function assertActiveFrame(frame, rows, geometry, label, prompt = "layout ping") {
+  const joined = frame.join(" ").replace(/\s+/g, " ");
+  assert(joined.includes(`› ${prompt}`), `${label}: user turn is missing\n${renderFrame(frame)}`);
+  assert(joined.includes(`offline echo: ${prompt}`), `${label}: assistant turn is missing\n${renderFrame(frame)}`);
   assert(frame[geometry.status].includes("ready"), `${label}: settled status is missing`);
   assert.equal(geometry.status, rows - 2, `${label}: status rail drifted after a turn`);
   assert.equal(geometry.help, rows - 1, `${label}: help rail drifted after a turn`);
 }
 
-function launch(binary, home, session, cols, rows) {
-  const command = `${shellQuote(binary)} --home ${shellQuote(home)}`;
+function launch(binary, home, session, cols, rows, environment = {}) {
+  const prefix = Object.entries(environment)
+    .map(([key, value]) => `${key}=${shellQuote(value)}`)
+    .join(" ");
+  const command = `${prefix}${prefix ? " " : ""}${shellQuote(binary)} --home ${shellQuote(home)}`;
   const result = tmux(
     "new-session",
     "-d",
@@ -231,7 +301,7 @@ async function checkViewport(browser, binary, cols, rows) {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "optimus-tui-layout-"));
   const page = await browser.newPage({ viewport: { width: cols * 10, height: rows * 18 } });
   try {
-    launch(binary, home, session, cols, rows);
+    launch(binary, home, session, cols, rows, { OPTIMUS_OFFLINE_LATENCY_MS: "250" });
     const idle = await waitFor(session, rows, (frame) => frame.join("\n").includes("ready"), `${cols}x${rows}: launch never reached ready`);
     const idleGeometry = composerGeometry(idle, cols);
     assertFrame(idle, cols, rows, idleGeometry, `${cols}x${rows} idle`);
@@ -258,6 +328,16 @@ async function checkViewport(browser, binary, cols, rows) {
     if (prompt.status !== 0) throw new Error(prompt.stderr || "tmux could not type a prompt");
     const submitted = tmux("send-keys", "-t", session, "Enter");
     if (submitted.status !== 0) throw new Error(submitted.stderr || "tmux could not submit a prompt");
+    const busy = await waitFor(
+      session,
+      rows,
+      (frame) => frame.join("\n").includes("Ctrl-C to interrupt") && frame.join("\n").includes("working"),
+      `${cols}x${rows}: busy turn never became visible`,
+    );
+    const busyGeometry = composerGeometry(busy, cols);
+    assertBusyFrame(busy, cols, rows, busyGeometry, `${cols}x${rows} busy`);
+    await assertDom(page, busy, cols, rows, busyGeometry);
+
     const answered = await waitFor(
       session,
       rows,
@@ -268,7 +348,31 @@ async function checkViewport(browser, binary, cols, rows) {
     assertActiveFrame(answered, rows, activeGeometry, `${cols}x${rows} active`);
     await assertDom(page, answered, cols, rows, activeGeometry);
 
-    console.log(`TUI_LAYOUT_PLAYWRIGHT_OK ${cols}x${rows} idle+wrapped-draft+active-turn`);
+    const unicodePrompt = "界👍e\u0301ｶ";
+    const unicodeBuffer = tmux("set-buffer", unicodePrompt);
+    if (unicodeBuffer.status !== 0) throw new Error(unicodeBuffer.stderr || "tmux could not prepare the Unicode prompt");
+    const unicodeTyped = tmux("paste-buffer", "-t", session, "-p");
+    if (unicodeTyped.status !== 0) throw new Error(unicodeTyped.stderr || "tmux could not paste the Unicode prompt");
+    await waitFor(
+      session,
+      rows,
+      (frame) => frame.join("\n").includes("界") && frame.join("\n").includes("ｶ"),
+      `${cols}x${rows}: Unicode draft never painted`,
+    );
+    const unicodeEnter = tmux("send-keys", "-t", session, "Enter");
+    if (unicodeEnter.status !== 0) throw new Error(unicodeEnter.stderr || "tmux could not submit the Unicode prompt");
+    const unicodeAnswered = await waitFor(
+      session,
+      rows,
+      (frame) => frame.join("\n").includes(`offline echo: ${unicodePrompt}`) && frame.join("\n").includes("ready"),
+      `${cols}x${rows}: Unicode offline turn never settled`,
+    );
+    const unicodeGeometry = composerGeometry(unicodeAnswered, cols);
+    assertActiveFrame(unicodeAnswered, rows, unicodeGeometry, `${cols}x${rows} Unicode`, unicodePrompt);
+    assert(unicodeAnswered.join(" ").includes(`offline echo: ${unicodePrompt}`), `${cols}x${rows}: Unicode response was clipped\n${renderFrame(unicodeAnswered)}`);
+    await assertDom(page, unicodeAnswered, cols, rows, unicodeGeometry);
+
+    console.log(`TUI_LAYOUT_PLAYWRIGHT_OK ${cols}x${rows} idle+wrapped-draft+busy+active+unicode`);
   } finally {
     tmux("kill-session", "-t", session);
     await page.close();

@@ -38,6 +38,7 @@ mod session;
 mod tool_line;
 mod transcript;
 mod view;
+mod width;
 pub mod workbench;
 
 pub use session::{Message, Role, TuiSession};

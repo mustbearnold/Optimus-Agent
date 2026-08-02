@@ -15,13 +15,12 @@
 //! [`crate::workbench`], and a row index is never read back into any of them.
 
 use crate::session::{Message, Role};
+use crate::width;
 use crate::workbench::{BlockId, Item};
+use unicode_segmentation::UnicodeSegmentation;
 
 /// Longest line the transcript will lay out, however wide the terminal is.
 pub const READABLE_WIDTH: usize = 96;
-
-/// Narrowest a container may be, so a one-word turn still looks deliberate.
-const MIN_BOX: usize = 22;
 
 /// Fold markers: the run is open, and the run is closed.
 const OPEN: char = '▾';
@@ -263,12 +262,12 @@ fn greeting(width: u16) -> Vec<Row> {
     rows
 }
 
-/// Wrap a message's text into styled character rows at `content` columns.
+/// Wrap a message's text into styled terminal-cell rows at `content` columns.
 ///
 /// Shared by both framings: the container and the bare gutter differ only in
 /// what they put either side of these lines.
-fn laid_out(text: &str, content: usize) -> Vec<Vec<(char, bool)>> {
-    let mut lines: Vec<Vec<(char, bool)>> = Vec::new();
+fn laid_out(text: &str, content: usize) -> Vec<Vec<(String, bool)>> {
+    let mut lines: Vec<Vec<(String, bool)>> = Vec::new();
     let mut after_bullet = false;
     for line in text.split('\n') {
         let parsed = parse_inline(line);
@@ -299,14 +298,34 @@ fn message_rows(message: &Message, width: u16) -> Vec<Row> {
 /// they stood alone.
 fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> Vec<Row> {
     let usable = usize::from(width).min(READABLE_WIDTH);
-    // Never let a narrow pane drive the content width to zero.
-    let content = usable.saturating_sub(first.chars().count()).max(8);
+    if usable == 0 {
+        return vec![Row {
+            role,
+            segments: Vec::new(),
+            block: None,
+            selected: false,
+        }];
+    }
+    let first = width::truncate(first, usable);
+    let indent = width::truncate(indent, usable);
+    // Both the first-row marker and the continuation indent must fit. Never
+    // use a fixed minimum here: that was the source of narrow-pane overflow.
+    let chrome = width::cells(&first).max(width::cells(&indent));
+    if usable <= chrome {
+        return vec![Row {
+            role,
+            segments: vec![Segment::plain(first)],
+            block: None,
+            selected: false,
+        }];
+    }
+    let content = usable.saturating_sub(chrome).max(1);
 
     laid_out(text, content)
         .iter()
         .enumerate()
         .map(|(index, line)| {
-            let lead = if index == 0 { first } else { indent };
+            let lead = if index == 0 { &first } else { &indent };
             let mut segments = vec![Segment::plain(lead)];
             segments.extend(runs(line));
             Row {
@@ -324,24 +343,33 @@ fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> V
 /// The box hugs its content rather than spanning the pane, so a two-word reply
 /// reads as a small card instead of a full-width bar.
 fn boxed_rows(message: &Message, width: u16) -> Vec<Row> {
-    let title = if message.role == Role::User {
+    let raw_title = if message.role == Role::User {
         " YOU "
     } else {
         " OPTIMUS "
     };
     // Two columns of border and one of padding on each side.
-    let outer = usize::from(width).clamp(MIN_BOX, READABLE_WIDTH);
-    let room = outer - 4;
+    let outer = usize::from(width).min(READABLE_WIDTH);
+    if outer < 5 {
+        return message_rows(message, width);
+    }
+    let room = outer.saturating_sub(4).max(1);
+    let title = width::truncate(raw_title, room.saturating_sub(1));
 
     let lines = laid_out(&message.text, room);
-    let widest = lines.iter().map(Vec::len).max().unwrap_or(0);
-    let inner = widest.max(title.chars().count() + 1).min(room);
+    let widest = lines
+        .iter()
+        .map(|line| line.iter().map(|(text, _)| width::cells(text)).sum())
+        .max()
+        .unwrap_or(0);
+    let inner = widest.max(width::cells(&title).saturating_add(1)).min(room);
 
-    let mut rows = vec![edge_row(message.role, title, inner, true)];
+    let mut rows = vec![edge_row(message.role, &title, inner, true)];
     rows.extend(lines.iter().map(|line| {
         let mut segments = vec![Segment::edge("│ ")];
         segments.extend(runs(line));
-        let pad = " ".repeat(inner.saturating_sub(line.len()));
+        let line_width: usize = line.iter().map(|(text, _)| width::cells(text)).sum();
+        let pad = " ".repeat(inner.saturating_sub(line_width));
         segments.push(Segment::edge(format!("{pad} │")));
         Row {
             role: message.role,
@@ -358,7 +386,8 @@ fn boxed_rows(message: &Message, width: u16) -> Vec<Row> {
 /// closes squarely however long the title is.
 fn edge_row(role: Role, title: &str, inner: usize, top: bool) -> Row {
     let (left, right) = if top { ('╭', '╮') } else { ('╰', '╯') };
-    let fill = "─".repeat(inner + 1 - title.chars().count());
+    let title = width::truncate(title, inner.saturating_sub(1));
+    let fill = "─".repeat(inner + 1 - width::cells(&title));
     Row {
         role,
         segments: vec![Segment::edge(format!("{left}─{title}{fill}{right}"))],
@@ -369,21 +398,21 @@ fn edge_row(role: Role, title: &str, inner: usize, top: bool) -> Row {
 
 /// One logical line resolved into styled characters, plus how it lays out.
 struct Parsed {
-    marked: Vec<(char, bool)>,
+    marked: Vec<(String, bool)>,
     bullet: bool,
     /// Columns to indent continuation lines by, so a wrapped bullet's later
     /// lines sit under its text rather than under the glyph.
     hang: usize,
 }
 
-/// Turn one logical line into characters tagged with emphasis.
+/// Turn one logical line into grapheme clusters tagged with emphasis.
 ///
 /// Only the markdown that actually shows up in answers is handled: `**bold**`,
 /// setext-free `#` headings, and `-`/`*` bullets. Anything else is left alone
 /// rather than half-rendered — a wrong transform reads worse than a literal one.
 fn parse_inline(line: &str) -> Parsed {
     let trimmed = line.trim_start();
-    let leading = line.len() - trimmed.len();
+    let leading = width::cells(&line[..line.len() - trimmed.len()]);
     let mut prefix = " ".repeat(leading);
     let mut rest = trimmed;
     let mut heading = false;
@@ -403,20 +432,23 @@ fn parse_inline(line: &str) -> Parsed {
         rest = after;
         bullet = true;
     }
-    let hang = if bullet { prefix.chars().count() } else { 0 };
+    let hang = if bullet { width::cells(&prefix) } else { 0 };
 
-    let mut marked: Vec<(char, bool)> = prefix.chars().map(|c| (c, heading)).collect();
-    let chars: Vec<char> = rest.chars().collect();
+    let mut marked: Vec<(String, bool)> = prefix
+        .graphemes(true)
+        .map(|grapheme| (grapheme.to_owned(), heading))
+        .collect();
+    let graphemes: Vec<&str> = rest.graphemes(true).collect();
     let mut bold = false;
     let mut index = 0;
-    while index < chars.len() {
+    while index < graphemes.len() {
         // `**` toggles emphasis and is not itself printed.
-        if chars[index] == '*' && chars.get(index + 1) == Some(&'*') {
+        if graphemes[index] == "*" && graphemes.get(index + 1).copied() == Some("*") {
             bold = !bold;
             index += 2;
             continue;
         }
-        marked.push((chars[index], bold || heading));
+        marked.push((graphemes[index].to_owned(), bold || heading));
         index += 1;
     }
     Parsed {
@@ -426,58 +458,92 @@ fn parse_inline(line: &str) -> Parsed {
     }
 }
 
-/// Greedy word wrap that keeps each character's emphasis attached to it.
+/// Greedy word wrap that keeps each grapheme's emphasis attached to it.
 ///
 /// `hang` indents every line after the first, which is what makes a wrapped
 /// bullet read as one item rather than as two.
-fn wrap_marked(marked: &[(char, bool)], width: usize, hang: usize) -> Vec<Vec<(char, bool)>> {
+fn wrap_marked(marked: &[(String, bool)], width: usize, hang: usize) -> Vec<Vec<(String, bool)>> {
     if marked.is_empty() {
         return vec![Vec::new()];
     }
-    // A hang wider than the line would leave no room for text at all.
-    let hang = if hang < width { hang } else { 0 };
+    if width == 0 {
+        return vec![Vec::new()];
+    }
+    // A hang wider than the line would leave no room for text at all. Keep one
+    // cell for the content so the row remains a valid terminal row.
+    let hang = hang.min(width.saturating_sub(1));
     let mut rows = Vec::new();
     let mut start = 0;
     while start < marked.len() {
         let indent = if rows.is_empty() { 0 } else { hang };
-        let room = width - indent;
-        if marked.len() - start <= room {
-            rows.push(indented(&marked[start..], indent));
+        let room = width.saturating_sub(indent).max(1);
+        let mut end = start;
+        let mut used = 0;
+        while end < marked.len() {
+            let item_width = width::grapheme_cells(&marked[end].0);
+            if item_width > room {
+                if used == 0 {
+                    end += 1;
+                }
+                break;
+            }
+            if used > 0 && used + item_width > room {
+                break;
+            }
+            used += item_width;
+            end += 1;
+        }
+        if end == start {
+            end = (start + 1).min(marked.len());
+        }
+        if end == marked.len() {
+            rows.push(indented(&marked[start..], indent, room));
             break;
         }
-        // Look one past the edge: a space exactly there still breaks cleanly.
-        let window = &marked[start..(start + room + 1).min(marked.len())];
-        let take = match window.iter().rposition(|(c, _)| *c == ' ') {
-            // A token longer than the line has no break point; cut it.
-            Some(0) | None => room,
-            Some(at) => at,
-        };
-        rows.push(indented(&marked[start..start + take], indent));
-        start += take;
-        while start < marked.len() && marked[start].0 == ' ' {
+        // A space just beyond the measured edge is still a useful break point.
+        if end < marked.len() && marked[end].0 == " " {
+            end += 1;
+        }
+        let take = (start..end)
+            .rev()
+            .find(|index| *index > start && marked[*index].0 == " ")
+            .unwrap_or(end);
+        let take = take.max(start + 1).min(marked.len());
+        rows.push(indented(&marked[start..take], indent, room));
+        start = take;
+        while start < marked.len() && marked[start].0 == " " {
             start += 1;
+        }
+        if start == marked.len() {
+            break;
         }
     }
     rows
 }
 
-fn indented(chunk: &[(char, bool)], indent: usize) -> Vec<(char, bool)> {
-    if indent == 0 {
-        return chunk.to_vec();
+fn indented(chunk: &[(String, bool)], indent: usize, room: usize) -> Vec<(String, bool)> {
+    let mut row = vec![(" ".to_owned(), false); indent];
+    let mut used = 0;
+    for (text, bold) in chunk {
+        let remaining = room.saturating_sub(used);
+        let fitted = width::fit_grapheme(text, remaining);
+        if fitted.is_empty() && !text.is_empty() {
+            continue;
+        }
+        used += width::cells(&fitted);
+        row.push((fitted, *bold));
     }
-    let mut row = vec![(' ', false); indent];
-    row.extend_from_slice(chunk);
     row
 }
 
-/// Collapse tagged characters back into the fewest segments that preserve style.
-fn runs(marked: &[(char, bool)]) -> Vec<Segment> {
+/// Collapse tagged graphemes back into the fewest segments that preserve style.
+fn runs(marked: &[(String, bool)]) -> Vec<Segment> {
     let mut segments: Vec<Segment> = Vec::new();
-    for (character, bold) in marked {
+    for (grapheme, bold) in marked {
         match segments.last_mut() {
-            Some(last) if last.bold == *bold => last.text.push(*character),
+            Some(last) if last.bold == *bold => last.text.push_str(grapheme),
             _ => segments.push(Segment {
-                text: character.to_string(),
+                text: grapheme.clone(),
                 bold: *bold,
                 dim: false,
             }),
@@ -550,7 +616,7 @@ mod tests {
         let rows = message_rows(&message(Role::Assistant, text.trim()), 400);
         assert!(
             rows.iter()
-                .all(|r| r.plain().chars().count() <= READABLE_WIDTH),
+                .all(|r| width::cells(&r.plain()) <= READABLE_WIDTH),
             "a 400-column terminal must still wrap for readability"
         );
         assert!(rows.len() > 1);
@@ -684,7 +750,7 @@ mod tests {
     fn every_edge_of_a_container_is_the_same_width() {
         for text in ["hi", "a much longer message that has to wrap somewhere", ""] {
             let rows = painted(&[message(Role::Assistant, text)], 40, Chrome::Boxed);
-            let widths: Vec<usize> = rows.iter().map(|r| r.plain().chars().count()).collect();
+            let widths: Vec<usize> = rows.iter().map(|r| width::cells(&r.plain())).collect();
             assert!(
                 widths.iter().all(|w| *w == widths[0]),
                 "a ragged box is a broken box for {text:?}: {widths:?}"
@@ -696,7 +762,7 @@ mod tests {
     fn a_container_hugs_its_content_rather_than_spanning_the_pane() {
         let rows = painted(&[message(Role::User, "hi")], 90, Chrome::Boxed);
         assert!(
-            rows[0].plain().chars().count() < 20,
+            width::cells(&rows[0].plain()) < 20,
             "a two-word turn must not stretch a full-width bar: {}",
             rows[0].plain()
         );
@@ -708,7 +774,7 @@ mod tests {
         let rows = painted(&[message(Role::Assistant, text.trim())], 400, Chrome::Boxed);
         assert!(rows
             .iter()
-            .all(|r| r.plain().chars().count() <= READABLE_WIDTH));
+            .all(|r| width::cells(&r.plain()) <= READABLE_WIDTH));
     }
 
     #[test]
@@ -762,6 +828,25 @@ mod tests {
     fn a_narrow_pane_still_lays_out_without_panicking() {
         let rows = message_rows(&message(Role::Assistant, "some words here"), 1);
         assert!(!rows.is_empty());
+    }
+
+    #[test]
+    fn every_chrome_mode_keeps_unicode_rows_inside_the_requested_cell_width() {
+        let messages = vec![message(
+            Role::Assistant,
+            "界界 👍👍 e\u{301} ｶｶ and a deliberately long token",
+        )];
+        for width in [0_u16, 1, 2, 3, 4, 5, 8, 16, 24, 40, 96, 120] {
+            for chrome in [Chrome::Plain, Chrome::Boxed] {
+                let painted = painted(&messages, width, chrome);
+                assert!(
+                    painted
+                        .iter()
+                        .all(|row| width::cells(&row.plain()) <= usize::from(width)),
+                    "{chrome:?} overflowed {width}: {painted:?}"
+                );
+            }
+        }
     }
 
     // ADR-0075 phase 2: rows project items, and each names the block it paints.

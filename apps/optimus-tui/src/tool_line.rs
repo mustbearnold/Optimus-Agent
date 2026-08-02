@@ -9,6 +9,7 @@
 use optimus_kernel::{ToolLifecycleEvent, ToolLifecyclePhase};
 
 use crate::session::ToolStep;
+use crate::width;
 use crate::workbench::ToolDetail;
 
 /// Longest detail a row shows before it is cut, so the row stays one line even
@@ -118,11 +119,10 @@ fn field(key: &str, value: &str) -> String {
 }
 
 fn clip(text: &str) -> String {
-    if text.chars().count() <= MAX_DETAIL {
+    if width::cells(text) <= MAX_DETAIL {
         return text.to_string();
     }
-    let kept: String = text.chars().take(MAX_DETAIL - 1).collect();
-    format!("{}…", kept.trim_end())
+    width::truncate(text, MAX_DETAIL)
 }
 
 /// Restore the line breaks in an effect summary.
@@ -260,7 +260,7 @@ mod tests {
     fn a_long_detail_is_cut_so_the_row_stays_one_line() {
         let summary = format!("web_search: {}", "word ".repeat(40));
         let line = tool_step(&event("succeeded", &summary, None)).line;
-        assert!(line.chars().count() < 80, "{line}");
+        assert!(crate::width::cells(&line) < 80, "{line}");
         assert!(line.ends_with('…'));
     }
 

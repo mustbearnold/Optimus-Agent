@@ -12,6 +12,7 @@ use ratatui::widgets::{Block, Borders, Paragraph};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::composer::Composer;
+use crate::width;
 use crate::wrapped;
 
 /// Columns reserved for the prompt gutter, on every visual row so wrapped
@@ -74,9 +75,13 @@ pub fn render(
         .style(Style::default().bg(Color::Rgb(25, 25, 25)));
     if let Some(title) = title {
         block = block
-            .title(title)
+            .title(width::truncate(
+                title,
+                usize::from(area.width.saturating_sub(2)),
+            ))
             .title_style(Style::default().fg(Color::Rgb(132, 164, 255)));
     }
+    let provider = width::truncate(provider, usize::from(area.width.saturating_sub(2)));
     block = block.title_bottom(
         Line::from(format!(" {provider} "))
             .right_aligned()
@@ -94,10 +99,19 @@ pub fn render(
         wrapped(visible.join("\n"))
     };
     frame.render_widget(paragraph.block(block), area);
-    frame.set_cursor_position(Position::new(
-        area.x + 1 + layout.cursor_col as u16,
-        area.y + 1 + (layout.cursor_row - first) as u16,
-    ));
+    if area.width > 0 && area.height > 0 {
+        let cursor_x = area
+            .x
+            .saturating_add(1)
+            .saturating_add(layout.cursor_col as u16)
+            .min(area.x + area.width - 1);
+        let cursor_y = area
+            .y
+            .saturating_add(1)
+            .saturating_add((layout.cursor_row - first) as u16)
+            .min(area.y + area.height - 1);
+        frame.set_cursor_position(Position::new(cursor_x, cursor_y));
+    }
 }
 
 /// Wrap the draft and locate the cursor within the wrapped rows. `width` is
@@ -105,30 +119,54 @@ pub fn render(
 pub fn layout(text: &str, cursor: usize, width: u16) -> Layout {
     let text_width = text_width(width);
     let rows = wrap(text, text_width);
-    // Walk the same segmentation the wrap used, counting graphemes before the
-    // cursor, so both agree on where a row ends.
-    let before = &text[..cursor.min(text.len())];
+    let gutter_width = gutter_width(width);
+    if text_width == 0 {
+        return Layout {
+            rows: vec![width::take("› ", gutter_width)],
+            cursor_row: 0,
+            cursor_col: gutter_width,
+        };
+    }
+    // Walk the same grapheme segmentation the wrap used, counting terminal
+    // cells before the cursor, so both agree on where a row ends.
+    let mut cursor = cursor.min(text.len());
+    while cursor > 0 && !text.is_char_boundary(cursor) {
+        cursor -= 1;
+    }
+    let before = &text[..cursor];
     let mut cursor_row = 0;
     let mut cursor_col = 0;
-    for line in before.split('\n') {
-        let count = line.graphemes(true).count();
-        // A cursor after exactly `text_width` graphemes belongs at the end of
-        // that row, not at the start of a row the wrap never produced —
-        // hence (count - 1), and the reserved column in `text_width`.
-        let row = count.saturating_sub(1) / text_width;
-        cursor_row += row + 1;
-        cursor_col = count - row * text_width;
+    for grapheme in before.graphemes(true) {
+        if grapheme == "\n" {
+            cursor_row += 1;
+            cursor_col = 0;
+            continue;
+        }
+        let display = width::fit_grapheme(grapheme, text_width);
+        let display_width = width::cells(&display);
+        if width::grapheme_cells(grapheme) > text_width {
+            if cursor_col > 0 {
+                cursor_row += 1;
+            }
+            cursor_col = display_width.min(text_width);
+        } else if cursor_col > 0 && cursor_col + display_width > text_width {
+            cursor_row += 1;
+            cursor_col = display_width;
+        } else {
+            cursor_col += display_width;
+        }
     }
-    // The loop counts one row per logical line; the cursor sits on the last.
-    let cursor_row = cursor_row.saturating_sub(1);
     Layout {
         rows: rows
             .iter()
             .enumerate()
-            .map(|(index, row)| format!("{}{row}", if index == 0 { "› " } else { "  " }))
+            .map(|(index, row)| {
+                let gutter = if index == 0 { "› " } else { "  " };
+                format!("{}{}", width::take(gutter, gutter_width), row)
+            })
             .collect(),
         cursor_row,
-        cursor_col: cursor_col + usize::from(GUTTER),
+        cursor_col: cursor_col + gutter_width,
     }
 }
 
@@ -136,21 +174,51 @@ pub fn layout(text: &str, cursor: usize, width: u16) -> Layout {
 /// gutter, and one column kept free so a cursor sitting after a full row still
 /// paints inside the border.
 fn text_width(width: u16) -> usize {
-    usize::from(width.saturating_sub(BORDER + GUTTER + 1)).max(1)
+    let inner = usize::from(width.saturating_sub(BORDER));
+    inner.saturating_sub(gutter_width(width) + 1)
 }
 
-/// Hard-wrap each logical line at the available width, in graphemes. An empty
+fn gutter_width(width: u16) -> usize {
+    usize::from(width.saturating_sub(BORDER)).min(usize::from(GUTTER))
+}
+
+/// Hard-wrap each logical line at the available terminal-cell width. An empty
 /// draft still occupies one row — that is where the cursor sits.
 fn wrap(text: &str, width: usize) -> Vec<String> {
+    if width == 0 {
+        return vec![String::new()];
+    }
+    let width = width.max(1);
     let mut rows = Vec::new();
     for line in text.split('\n') {
-        let clusters: Vec<&str> = line.graphemes(true).collect();
-        if clusters.is_empty() {
+        if line.is_empty() {
             rows.push(String::new());
             continue;
         }
-        for chunk in clusters.chunks(width) {
-            rows.push(chunk.concat());
+        let mut row = String::new();
+        let mut used = 0;
+        for grapheme in line.graphemes(true) {
+            let grapheme_width = width::grapheme_cells(grapheme);
+            if grapheme_width > width {
+                if !row.is_empty() {
+                    rows.push(std::mem::take(&mut row));
+                    used = 0;
+                }
+                let fitted = width::fit_grapheme(grapheme, width);
+                if !fitted.is_empty() {
+                    rows.push(fitted);
+                }
+            } else if used > 0 && used + grapheme_width > width {
+                rows.push(std::mem::take(&mut row));
+                row.push_str(grapheme);
+                used = grapheme_width;
+            } else {
+                row.push_str(grapheme);
+                used += grapheme_width;
+            }
+        }
+        if !row.is_empty() {
+            rows.push(row);
         }
     }
     if rows.is_empty() {
@@ -242,9 +310,28 @@ mod tests {
     }
 
     #[test]
-    fn wrapping_counts_grapheme_clusters_not_bytes() {
+    fn wrapping_counts_terminal_cells_without_splitting_graphemes() {
         let text = "👍👍👍";
         let layout = lay(text, text.len(), 7); // 2 usable columns
-        assert_eq!(layout.rows, vec!["› 👍👍".to_string(), "  👍".to_string()]);
+        assert_eq!(
+            layout.rows,
+            vec!["› 👍".to_string(), "  👍".to_string(), "  👍".to_string()]
+        );
+    }
+
+    #[test]
+    fn every_composer_row_stays_inside_its_outer_width() {
+        for width in 0_u16..=24 {
+            let text = "界👍e\u{301}ｶ";
+            let layout = lay(text, text.len(), width);
+            assert!(
+                layout
+                    .rows
+                    .iter()
+                    .all(|row| crate::width::cells(row) <= usize::from(width)),
+                "composer overflowed {width}: {:?}",
+                layout.rows
+            );
+        }
     }
 }
