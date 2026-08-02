@@ -87,9 +87,11 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
 /// Compact project/provider context, deliberately quieter than the work area.
 fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
     let right = format!("{}  ", session.provider);
+    let prefix = 2_u16;
+    let gap = 2_u16.min(area.width.saturating_sub(prefix + right.len() as u16));
     let path_width = area
         .width
-        .saturating_sub(right.chars().count().min(usize::from(u16::MAX)) as u16 + 2);
+        .saturating_sub(prefix + gap + right.chars().count().min(usize::from(u16::MAX)) as u16);
     let left = format!("  {}", compact_path(&session.home, path_width));
     let gap = usize::from(area.width).saturating_sub(left.chars().count() + right.chars().count());
     frame.render_widget(
@@ -247,15 +249,24 @@ fn compact_status(session: &TuiSession) -> String {
 }
 
 fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
-    let items = if session.busy() {
-        [("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")]
+    let compact = if area.width < 32 {
+        vec![("Esc", "clear")]
+    } else if area.width < 44 {
+        if session.busy() {
+            vec![("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")]
+        } else {
+            vec![("↵", "send"), ("Tab", "inspect"), ("Esc", "clear")]
+        }
+    } else if session.busy() {
+        vec![("Ctrl-C", "stop"), ("Tab", "inspect"), ("Esc", "clear")]
     } else {
-        [("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")]
+        vec![("Enter", "send"), ("Tab", "inspect"), ("Esc", "clear")]
     };
     let mut spans = vec![Span::raw("  ")];
-    for (index, (key, action)) in items.into_iter().enumerate() {
+    for (index, (key, action)) in compact.into_iter().enumerate() {
         if index > 0 {
-            spans.push(Span::styled("  │  ", Style::default().fg(HAIRLINE)));
+            let separator = if area.width < 44 { " │ " } else { "  │  " };
+            spans.push(Span::styled(separator, Style::default().fg(HAIRLINE)));
         }
         spans.push(Span::styled(
             key,
@@ -508,6 +519,21 @@ mod tests {
         assert_eq!(
             transcript_text(&session, 80)[0],
             "  What should Optimus do?"
+        );
+    }
+
+    #[test]
+    fn narrow_chrome_keeps_complete_context_and_keyboard_labels() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 40, 20);
+        let help = screen.last().expect("help rail");
+        assert!(
+            screen[0].contains("  auto"),
+            "provider needs a breathing gap: {screen:?}"
+        );
+        assert!(
+            help.contains("↵:send") && help.contains("Tab:inspect") && help.contains("Esc:clear"),
+            "compact labels must remain complete: {screen:?}"
         );
     }
 

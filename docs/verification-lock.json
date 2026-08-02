@@ -115,7 +115,7 @@
       "resolved_files": 7
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "294310ef46b4f288aeb99d1dbc3cd1a4a64c2befd80c43c4181433078efaa8ea",
+      "binding_sha256": "63c8dfeb78aee30137d0a0ff17c496e9a05113b1f9ff0a00a93434e794d3b7a4",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -133,13 +133,13 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "1da776cc4a86fb789abd4a11a92cad4a47db8e8d4b4cd881423007b4fd1deb38",
+      "binding_sha256": "886f7fc0c7659c194bef41c6785ad7c9e76360f13a603feb0b08e8fde6a69c70",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
       "resolved_files": 347
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
-      "binding_sha256": "5e4c95a61f1094b920d3342132e4cbaf2425441bfc58f5d228f09608b143a63e",
+      "binding_sha256": "9d7bb2390275e354ac0774166c57f368763ee6d198d80d4d6e66a739d4f2a0e5",
       "document_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "resolved_files": 9
@@ -463,7 +463,7 @@
       "resolved_files": 11
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "371fd99094b32684ff9520b6d753b896d85e51be7c6a5eeecc491888c414a967",
+      "binding_sha256": "345193c6efa9689a3fa9d2831f430cae2b9e3f756a144a128f3d206ff3de32da",
       "document_sha256": "cf6db2ab6df65b98f95d10e6df35fe7d9ab89ff60584193d3d73a2083d2484b6",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -499,31 +499,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "7d446f808b75a5d9e97dc6f63f55a14070b7fd85fc5ec38d3f89700eeb11765c",
+      "binding_sha256": "27a47c96a60350fd1a2e987290ea5de9929e130dace5809bdaa9dce16c130bbe",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "f7635327b74effd0bba736765081e6a3b284bb2af380275e5a343feb04b09377",
+      "binding_sha256": "386b5d25e2345cdd94d71aaa55c971317988314ce5e742c06f26c83a8ff403ee",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "110cff168f44f4561efb41225c340afc6e211d3bb943780fe5772bcdf4d9851f",
+      "binding_sha256": "ba958c9d65b608d8b0ec90b704ac4d218a9c46dbb39a091dc883e89566800751",
       "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "a7fe1c56f98de59fbf2fd0ecd283713f55d65237a441b533bd3e5d5dd24a8f53",
+      "binding_sha256": "1bd457e0e9a97e7601805db2c2189741efb165d5b321def4a61dfa57719cd676",
       "document_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "753038440f6cae27be75d59caf15b6ddf5c1f6d8015cd41b1ee3831156222e6b",
+      "binding_sha256": "1f6eb61c361d926388058aaaa3ae329eacfc8bbb65e5c53da4d157a10bc390ea",
       "document_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
@@ -553,13 +553,13 @@
       "resolved_files": 9
     },
     "decisions-0074-a-surface-owns-the-catalog-it-answers-from": {
-      "binding_sha256": "f6a052a5e68fddf21ac38d13420ba11cdc9f87e3b1d457d42a2b9442bf577fd7",
+      "binding_sha256": "9cf13dca0add985864e048bfbe2c029d19ea16e51bf23d0d28b1c00d9c6b021a",
       "document_sha256": "fa0062efa6ce67c8368c6d2c231378e1c01040471fc4383ce0093cff7505fcca",
       "path": "docs/decisions/0074-a-surface-owns-the-catalog-it-answers-from.md",
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "8be0325e12e792be7c9c35cab493b9f3b165c14688466f86a2333f48aa1544e7",
+      "binding_sha256": "da10aa36c278dfa0aed71284464d04ec2d665aa9920c60b7b6aa292ad65a229b",
       "document_sha256": "51c5a6e335e3ead46ff3f2361b127a80614060fde3a01252bb44500d4db47b6c",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21
@@ -643,7 +643,7 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "45597b40ad799412b3914e01108cb06ccc812006cf073d3cbc00b2b6f79d75f9",
+      "binding_sha256": "319dc099b07fab252749dcadfeb4603df7d0353fa4a534d1e2323d473bd473f1",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12

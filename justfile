@@ -30,6 +30,12 @@ test:
 ui:
     @bash scripts/verify.sh ui
 
+# Real binary in a pty, with Playwright asserting a DOM projection of each
+# terminal frame across wide, normal, and narrow workbench sizes.
+tui-layout:
+    cargo build -p optimus-cli
+    node scripts/tui_layout_playwright.cjs
+
 # Every tier. Managed land runs this with skips forbidden.
 verify:
     @bash scripts/verify.sh all

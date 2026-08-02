@@ -138,7 +138,7 @@ pub fn rows(
     chrome: Chrome,
 ) -> Vec<Row> {
     if messages.is_empty() {
-        return greeting();
+        return greeting(width);
     }
     let mut rows = Vec::new();
     for (index, item) in items.iter().enumerate() {
@@ -237,24 +237,30 @@ fn contained(role: Role) -> bool {
     matches!(role, Role::User | Role::Assistant)
 }
 
-fn greeting() -> Vec<Row> {
-    vec![
-        Row::chrome(
-            Role::Assistant,
-            vec![Segment {
-                text: "  What should Optimus do?".into(),
-                bold: true,
-                dim: false,
-            }],
-        ),
-        Row::blank(),
-        Row::chrome(
-            Role::Assistant,
-            vec![Segment::plain(
-                "  Describe a task and press Enter. Ctrl-C stops a run; Esc clears a draft.",
-            )],
-        ),
-    ]
+fn greeting(width: u16) -> Vec<Row> {
+    let mut title = laid_rows(
+        Role::Assistant,
+        "What should Optimus do?",
+        width,
+        "  ",
+        "  ",
+    );
+    for row in &mut title {
+        for segment in &mut row.segments {
+            segment.bold = true;
+        }
+    }
+
+    let mut rows = title;
+    rows.push(Row::blank());
+    rows.extend(laid_rows(
+        Role::Assistant,
+        "Describe a task and press Enter. Ctrl-C stops a run; Esc clears a draft.",
+        width,
+        "  ",
+        "  ",
+    ));
+    rows
 }
 
 /// Wrap a message's text into styled character rows at `content` columns.
@@ -738,6 +744,18 @@ mod tests {
             painted(&[], 80, Chrome::Boxed)[0].plain(),
             "  What should Optimus do?"
         );
+    }
+
+    #[test]
+    fn a_narrow_greeting_wraps_every_instruction_instead_of_clipping_it() {
+        let screen = plain(&painted(&[], 34, Chrome::Plain))
+            .join(" ")
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert!(screen.contains("What should Optimus do?"));
+        assert!(screen
+            .contains("Describe a task and press Enter. Ctrl-C stops a run; Esc clears a draft."));
     }
 
     #[test]

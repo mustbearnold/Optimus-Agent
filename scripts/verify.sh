@@ -363,8 +363,14 @@ tier_ui() {
   if command -v tmux >/dev/null 2>&1; then
     run "build optimus cli" cargo build -p optimus-cli
     spawn "tui e2e" python3 scripts/tui_e2e.py
+    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
+      spawn "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
+    else
+      skip "tui layout (playwright)" "npm ci in apps/optimus-electron"
+    fi
   else
     skip "tui e2e" "tmux not installed"
+    skip "tui layout (playwright)" "tmux not installed"
   fi
 
   # Playwright drives the real host binary (e2e/support.js spawns
@@ -509,8 +515,14 @@ tier_all() {
   if command -v tmux >/dev/null 2>&1; then
     run "build optimus cli" cargo build -p optimus-cli
     spawn "tui e2e" python3 scripts/tui_e2e.py
+    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
+      spawn "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
+    else
+      skip "tui layout (playwright)" "npm ci in apps/optimus-electron"
+    fi
   else
     skip "tui e2e" "tmux not installed"
+    skip "tui layout (playwright)" "tmux not installed"
   fi
 
   if [ "$host_built" = 1 ] && (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
