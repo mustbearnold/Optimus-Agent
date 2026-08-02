@@ -8,7 +8,7 @@ use crate::session::TuiSession;
 use crate::sidebar::{self, Section};
 use crate::width;
 
-use super::{ACCENT, HAIRLINE, MUTED, SIDEBAR_ACTION, SIDEBAR_BACKGROUND, TEXT};
+use super::{ACCENT, HAIRLINE, MUTED, SIDEBAR_ACTION, SIDEBAR_BACKGROUND, SIDEBAR_SELECTED, TEXT};
 
 pub(super) fn draw(frame: &mut Frame, area: Rect, session: &TuiSession) {
     if area.width == 0 || area.height == 0 {
@@ -19,12 +19,15 @@ pub(super) fn draw(frame: &mut Frame, area: Rect, session: &TuiSession) {
         area,
     );
 
-    if sidebar::NEW_SESSION_ROW < area.height {
+    for row in 0..area.height {
+        let Some(background) = row_background(session, row) else {
+            continue;
+        };
         frame.render_widget(
-            Block::default().style(Style::default().bg(SIDEBAR_ACTION)),
+            Block::default().style(Style::default().bg(background)),
             Rect {
                 x: area.x,
-                y: area.y + sidebar::NEW_SESSION_ROW,
+                y: area.y + row,
                 width: area.width,
                 height: 1,
             },
@@ -37,25 +40,48 @@ pub(super) fn draw(frame: &mut Frame, area: Rect, session: &TuiSession) {
     frame.render_widget(Paragraph::new(lines), area);
 }
 
+fn row_background(session: &TuiSession, row: u16) -> Option<Color> {
+    match sidebar::row_at(session.sidebar.hit_state(), row) {
+        sidebar::Row::NewSession => Some(SIDEBAR_ACTION),
+        sidebar::Row::Session(index) => {
+            let current = session.sidebar.session_at(index).is_none_or(|meta| {
+                session.session_id.as_deref() == Some(meta.id.to_string().as_str())
+            });
+            current.then_some(SIDEBAR_SELECTED)
+        }
+        sidebar::Row::PinnedSession(index) => session
+            .sidebar
+            .pinned_session_at(index)
+            .is_some_and(|meta| session.session_id.as_deref() == Some(meta.id.to_string().as_str()))
+            .then_some(SIDEBAR_SELECTED),
+        sidebar::Row::Project(index) => session
+            .sidebar
+            .project_at(index)
+            .is_some_and(|project| project.current)
+            .then_some(SIDEBAR_SELECTED),
+        _ => None,
+    }
+}
+
 fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
     let (marker, label, style) = match sidebar::row_at(session.sidebar.hit_state(), row) {
         sidebar::Row::Workspace => (
-            "",
+            "◆  ",
             "WORKSPACE".to_owned(),
             Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
         ),
-        sidebar::Row::Close => (
-            "‹  ",
-            "close sidebar".to_owned(),
-            Style::default().fg(MUTED),
-        ),
+        sidebar::Row::Close => ("‹  ", "collapse".to_owned(), Style::default().fg(MUTED)),
         sidebar::Row::NewSession => (
             "+  ",
             "New session".to_owned(),
             Style::default().fg(TEXT).add_modifier(Modifier::BOLD),
         ),
         sidebar::Row::SessionsHeading => (
-            "",
+            if session.sidebar.section == Section::Sessions {
+                "▾  "
+            } else {
+                "›  "
+            },
             "SESSIONS".to_owned(),
             section_style(session.sidebar.section == Section::Sessions),
         ),
@@ -74,7 +100,11 @@ fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
             Style::default().fg(MUTED),
         ),
         sidebar::Row::ProjectsHeading => (
-            "",
+            if session.sidebar.section == Section::Projects {
+                "▾  "
+            } else {
+                "›  "
+            },
             "PROJECTS".to_owned(),
             section_style(session.sidebar.section == Section::Projects),
         ),
@@ -93,7 +123,11 @@ fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
             Style::default().fg(MUTED),
         ),
         sidebar::Row::PinnedHeading => (
-            "",
+            if session.sidebar.section == Section::Pinned {
+                "▾  "
+            } else {
+                "›  "
+            },
             "PINNED".to_owned(),
             section_style(session.sidebar.section == Section::Pinned),
         ),
@@ -201,8 +235,12 @@ pub(super) fn draw_divider(frame: &mut Frame, area: Rect) {
     let middle = area.height / 2;
     let lines = (0..area.height)
         .map(|row| {
-            let glyph = if row == middle { "╋" } else { "│" };
-            Line::from(Span::styled(glyph, Style::default().fg(HAIRLINE)))
+            let (glyph, colour) = if row == middle {
+                ("┊", ACCENT)
+            } else {
+                ("│", HAIRLINE)
+            };
+            Line::from(Span::styled(glyph, Style::default().fg(colour)))
         })
         .collect::<Vec<_>>();
     frame.render_widget(Paragraph::new(lines), area);

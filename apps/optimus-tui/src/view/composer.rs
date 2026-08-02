@@ -8,12 +8,14 @@
 //! terminal.
 
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::composer::Composer;
 use crate::width;
 use crate::wrapped;
+
+use super::{ACCENT, COMPOSER_BACKGROUND, HAIRLINE, MUTED};
 
 /// Columns reserved for the prompt gutter, on every visual row so wrapped
 /// text stays aligned under the first character.
@@ -71,28 +73,29 @@ pub fn render(
 
     let mut block = Block::default()
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Rgb(42, 42, 42)))
-        .style(Style::default().bg(Color::Rgb(25, 25, 25)));
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(HAIRLINE))
+        .style(Style::default().bg(COMPOSER_BACKGROUND));
     if let Some(title) = title {
         block = block
             .title(width::truncate(
                 title,
                 usize::from(area.width.saturating_sub(2)),
             ))
-            .title_style(Style::default().fg(Color::Rgb(132, 164, 255)));
+            .title_style(Style::default().fg(ACCENT));
     }
     let provider = width::truncate(provider, usize::from(area.width.saturating_sub(2)));
     block = block.title_bottom(
         Line::from(format!(" {provider} "))
             .right_aligned()
-            .style(Style::default().fg(Color::Rgb(126, 126, 126))),
+            .style(Style::default().fg(MUTED)),
     );
     let paragraph = if composer.text().is_empty() && title.is_none() {
         Paragraph::new(Line::from(vec![
-            Span::styled("› ", Style::default().fg(Color::Rgb(132, 164, 255))),
+            Span::styled("› ", Style::default().fg(ACCENT)),
             Span::styled(
-                "Type a command...",
-                Style::default().fg(Color::Rgb(100, 100, 100)),
+                "Ask Optimus anything…",
+                Style::default().fg(MUTED).add_modifier(Modifier::DIM),
             ),
         ]))
     } else {

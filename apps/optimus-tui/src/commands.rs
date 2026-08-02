@@ -107,7 +107,7 @@ pub const COMMANDS: &[Command] = &[
     },
     offered("yolo", "unrestricted access, releases the open approval"),
     offered("pin", "pin or unpin the current session"),
-    offered("frame", "containers around turns, or plain gutters"),
+    offered("frame", "workbench surface, or copy-clean gutters"),
     typed(
         "mouse",
         None,
@@ -532,14 +532,17 @@ fn pin(session: &mut TuiSession) {
     }
 }
 
-/// Swap between containers and bare gutters.
+/// Swap between the app-like workbench and bare copy-clean gutters.
 ///
-/// Containers are easier to scan; plain is easier to copy out of, because a
-/// mouse selection over a box drags the border characters with it.
+/// The workbench is easier to scan; plain is easier to copy out of because it
+/// removes the task surface and semantic rails.
 fn frame(session: &mut TuiSession) {
     let (next, told) = match session.chrome {
-        Chrome::Boxed => (Chrome::Plain, "plain gutters — copies cleanly"),
-        Chrome::Plain => (Chrome::Boxed, "containers around each turn"),
+        Chrome::Workbench => (Chrome::Plain, "plain gutters — copies cleanly"),
+        Chrome::Plain => (
+            Chrome::Workbench,
+            "workbench surface — task card and open output",
+        ),
     };
     session.chrome = next;
     session.push(Role::Assistant, format!("frame: {told}"));

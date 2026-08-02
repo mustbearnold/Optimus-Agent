@@ -46,6 +46,7 @@ pub enum Item {
     Single {
         index: usize,
         id: BlockId,
+        lifecycle: BlockLifecycle,
         body: Option<Body>,
     },
     /// A run of adjacent calls to one tool, all settled clean.
@@ -134,6 +135,7 @@ pub fn project(blocks: &[WorkbenchBlock]) -> Vec<Item> {
         items.push(Item::Single {
             index: at,
             id: head.id,
+            lifecycle: head.lifecycle,
             body: body_of(head),
         });
         at += 1;
@@ -204,6 +206,7 @@ pub(crate) fn ungrouped(count: usize) -> Vec<Item> {
         .map(|index| Item::Single {
             index,
             id: BlockId::mint(),
+            lifecycle: BlockLifecycle::Succeeded,
             body: None,
         })
         .collect()
@@ -260,6 +263,19 @@ mod tests {
             vec!["single:0", "single:1"],
             "two rows becoming a header hides as much as it saves"
         );
+    }
+
+    #[test]
+    fn a_single_item_carries_its_typed_lifecycle_to_the_renderer() {
+        let mut state = state();
+        call(&mut state, "web_search", "live", BlockLifecycle::Running);
+        assert!(matches!(
+            project(state.blocks()).as_slice(),
+            [Item::Single {
+                lifecycle: BlockLifecycle::Running,
+                ..
+            }]
+        ));
     }
 
     #[test]

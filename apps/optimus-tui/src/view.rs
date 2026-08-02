@@ -23,8 +23,14 @@ const HAIRLINE: Color = Color::Rgb(42, 42, 42);
 const TEXT: Color = Color::Rgb(228, 228, 228);
 const MUTED: Color = Color::Rgb(126, 126, 126);
 const ACCENT: Color = Color::Rgb(132, 164, 255);
+const SUCCESS: Color = Color::Rgb(137, 201, 112);
+const WARNING: Color = Color::Rgb(226, 190, 112);
+const DANGER: Color = Color::Rgb(235, 116, 116);
+const PROMPT_BACKGROUND: Color = Color::Rgb(27, 27, 29);
+const COMPOSER_BACKGROUND: Color = Color::Rgb(25, 25, 27);
 const SIDEBAR_BACKGROUND: Color = Color::Rgb(17, 17, 17);
 const SIDEBAR_ACTION: Color = Color::Rgb(24, 27, 36);
+const SIDEBAR_SELECTED: Color = Color::Rgb(23, 24, 29);
 
 /// Rows the composer block occupies for this draft, borders included. One
 /// arithmetic, shared by the layout below and by every caller that has to
@@ -79,12 +85,17 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
         .workbench
         .inspecting()
         .then_some("Inspect · ↑↓ move · Space fold · Tab back");
+    let composer_badge = session
+        .model
+        .as_ref()
+        .map(|model| format!("{}/{model}", session.provider))
+        .unwrap_or_else(|| session.provider.clone());
     composer::render(
         frame,
         areas.composer,
         &session.composer,
         composer_title,
-        &session.provider,
+        &composer_badge,
     );
 
     draw_status(frame, areas.status, session);
@@ -172,12 +183,15 @@ fn compact_path(path: &std::path::Path, width: u16) -> String {
 /// so which block the keyboard is pointed at never depends on a palette.
 fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Line<'static> {
     let mut base = match row.role {
-        Role::User => Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+        Role::User => Style::default().fg(TEXT),
         Role::Assistant => Style::default().fg(TEXT),
         Role::Tool => Style::default().fg(MUTED),
-        Role::Action => Style::default().fg(Color::LightYellow),
-        Role::Error => Style::default().fg(Color::LightRed),
+        Role::Action => Style::default().fg(WARNING),
+        Role::Error => Style::default().fg(DANGER),
     };
+    if row.surface_width.is_some() {
+        base = base.bg(PROMPT_BACKGROUND);
+    }
     if row.selected {
         base = base
             .add_modifier(Modifier::REVERSED)
@@ -185,33 +199,52 @@ fn paint_with_hover(row: &Row, hovered: Option<crate::workbench::BlockId>) -> Li
     } else if row.block.is_some() && row.block == hovered {
         base = base.add_modifier(Modifier::UNDERLINED);
     }
-    Line::from(
-        row.segments
+    let mut spans = row
+        .segments
+        .iter()
+        .enumerate()
+        .map(|(index, segment)| {
+            let mut style = base;
+            if index == 0 && !row.selected {
+                let marker = segment.text.trim_start().chars().next();
+                style = match (row.role, marker) {
+                    (Role::User, Some('›')) | (Role::Assistant, Some('✦')) => {
+                        style.fg(ACCENT).add_modifier(Modifier::BOLD)
+                    }
+                    (Role::Tool, Some('│')) => style.fg(SUCCESS),
+                    (Role::Tool, Some('▸' | '▾')) => style.fg(ACCENT),
+                    _ => style,
+                };
+            }
+            if row.role == Role::Tool {
+                style = match segment.text.trim() {
+                    "[done]" => style.fg(SUCCESS),
+                    "[failed]" | "[stopped]" => style.fg(DANGER),
+                    "[queued]" | "[running]" | "[waiting]" | "[approval]" | "[stalled]" => {
+                        style.fg(WARNING)
+                    }
+                    _ => style,
+                };
+            }
+            if segment.bold {
+                style = style.add_modifier(Modifier::BOLD);
+            }
+            if segment.dim {
+                style = style.add_modifier(Modifier::DIM);
+            }
+            Span::styled(segment.text.clone(), style)
+        })
+        .collect::<Vec<_>>();
+    if let Some(target) = row.surface_width {
+        let used = spans
             .iter()
-            .enumerate()
-            .map(|(index, segment)| {
-                let mut style = base;
-                if index == 0
-                    && row.role == Role::Tool
-                    && segment
-                        .text
-                        .trim_start()
-                        .chars()
-                        .next()
-                        .is_some_and(|character| matches!(character, '⏺' | '▸' | '▾'))
-                {
-                    style = style.fg(ACCENT);
-                }
-                if segment.bold {
-                    style = style.add_modifier(Modifier::BOLD);
-                }
-                if segment.dim {
-                    style = style.add_modifier(Modifier::DIM);
-                }
-                Span::styled(segment.text.clone(), style)
-            })
-            .collect::<Vec<_>>(),
-    )
+            .map(|span| width::cells(span.content.as_ref()))
+            .sum::<usize>();
+        if target > used {
+            spans.push(Span::styled(" ".repeat(target - used), base));
+        }
+    }
+    Line::from(spans)
 }
 
 /// The footer is the workbench's compact state rail. The text remains the
@@ -252,7 +285,12 @@ fn draw_status(frame: &mut Frame, area: Rect, session: &TuiSession) {
     }
     let (marker, marker_style, label) = status_parts(session);
     let prefix = format!("  {marker} ");
-    let right_full = format!("{}  ", compact_status(session));
+    let policy = compact_status(session);
+    let right_full = if policy.is_empty() {
+        String::new()
+    } else {
+        format!("{policy}  ")
+    };
     let right_budget = width::cells(&right_full).min(total.saturating_sub(4));
     let right = width::truncate(&right_full, right_budget);
     let gap = if total >= width::cells(&prefix) + width::cells(&right) + 2 {
@@ -286,30 +324,14 @@ fn draw_status(frame: &mut Frame, area: Rect, session: &TuiSession) {
     frame.render_widget(Paragraph::new(line), area);
 }
 
-/// The durable session id belongs in logs and state, not in the primary visual
-/// rail. Keep this side compact enough to read as a metric beside the semantic
-/// status marker on the left.
+/// Only policy belongs opposite the turn state. Provider/model already lives
+/// in the context and composer, and repeating `ready` on both sides made the
+/// footer read like duplicated telemetry rather than a calm status rail.
 fn compact_status(session: &TuiSession) -> String {
-    let state = if session.busy() {
-        if session.status.is_empty() {
-            "working"
-        } else {
-            session.status.as_str()
-        }
-    } else if session.pending_approval.is_some() {
-        "approval required"
-    } else {
-        "ready"
-    };
     let mut parts = Vec::new();
     if session.yolo {
         parts.push("YOLO".to_owned());
     }
-    let provider = match &session.model {
-        Some(model) => format!("{}/{}", session.provider, model),
-        None => session.provider.clone(),
-    };
-    parts.push(provider);
     if let Some(thinking) = &session.thinking {
         parts.push(format!("think:{thinking}"));
     }
@@ -318,7 +340,6 @@ fn compact_status(session: &TuiSession) -> String {
             parts.push(format!("access:{access}"));
         }
     }
-    parts.push(state.to_owned());
     parts.join(" · ")
 }
 
@@ -650,7 +671,7 @@ mod tests {
         let (_dir, session) = session_with(&[]);
         assert_eq!(
             transcript_text(&session, 80)[0],
-            "  What should Optimus do?"
+            "  ✦ What should Optimus do?"
         );
     }
 
@@ -685,7 +706,7 @@ mod tests {
             "sidebar must keep every painted row inside the terminal: {screen:?}"
         );
         assert!(
-            screen.iter().any(|line| line.contains('╋')),
+            screen.iter().any(|line| line.contains('┊')),
             "the divider needs a visible drag handle: {screen:?}"
         );
     }
@@ -720,7 +741,7 @@ mod tests {
     }
 
     #[test]
-    fn a_long_provider_is_truncated_at_a_cell_boundary_in_the_context_and_status_rails() {
+    fn a_long_provider_is_truncated_at_a_cell_boundary_in_context_and_composer() {
         let (_dir, mut session) = session_with(&[]);
         session.provider = "provider界👍e\u{301}with-a-very-long-name".into();
         let screen = render(&session, 32, 12);
@@ -729,8 +750,10 @@ mod tests {
             "context needs an explicit elision: {screen:?}"
         );
         assert!(
-            screen[screen.len() - 2].contains('…'),
-            "status needs an explicit elision: {screen:?}"
+            screen
+                .iter()
+                .any(|row| row.contains('╰') && row.contains('…')),
+            "composer badge needs an explicit elision: {screen:?}"
         );
         assert!(screen.iter().all(|line| crate::width::cells(line) <= 32));
     }
@@ -746,24 +769,45 @@ mod tests {
     }
 
     #[test]
-    fn each_role_paints_a_distinct_colour() {
-        let mut seen = Vec::new();
-        for role in [
-            Role::User,
-            Role::Assistant,
-            Role::Tool,
-            Role::Action,
-            Role::Error,
+    fn semantic_markers_keep_the_workbench_scannable() {
+        for (role, marker, colour) in [
+            (Role::User, "› ", ACCENT),
+            (Role::Assistant, "✦ ", ACCENT),
+            (Role::Tool, "│ ", SUCCESS),
+            (Role::Action, "◇ ", WARNING),
+            (Role::Error, "× ", DANGER),
         ] {
-            let row = Row::chrome(role, vec![crate::transcript::Segment::plain("x")]);
-            seen.push(paint_with_hover(&row, None).spans[0].style.fg);
+            let row = Row::chrome(role, vec![crate::transcript::Segment::plain(marker)]);
+            assert_eq!(paint_with_hover(&row, None).spans[0].style.fg, Some(colour));
         }
-        let unique: std::collections::HashSet<_> = seen.iter().collect();
-        assert_eq!(
-            unique.len(),
-            seen.len(),
-            "roles must not share a colour, or the transcript cannot be scanned"
+    }
+
+    #[test]
+    fn the_task_surface_fills_its_visual_row_without_tinting_the_prompt_text() {
+        let mut row = Row::chrome(
+            Role::User,
+            vec![
+                crate::transcript::Segment::plain("  › "),
+                crate::transcript::Segment::plain("trace the regression"),
+            ],
         );
+        row.surface_width = Some(40);
+        let line = paint_with_hover(&row, None);
+        assert_eq!(
+            line.spans
+                .iter()
+                .map(|span| crate::width::cells(span.content.as_ref()))
+                .sum::<usize>(),
+            40
+        );
+        assert!(
+            line.spans
+                .iter()
+                .all(|span| span.style.bg == Some(PROMPT_BACKGROUND)),
+            "every cell of the task card needs the same surface"
+        );
+        assert_eq!(line.spans[0].style.fg, Some(ACCENT));
+        assert_eq!(line.spans[1].style.fg, Some(TEXT));
     }
 
     #[test]
@@ -892,7 +936,7 @@ mod tests {
         );
         let screen = render(&session, 60, 12).join("\n");
         assert!(
-            screen.contains("⏺ web_search  Found 3 sources  (1.2s)"),
+            screen.contains("│ web_search  Found 3 sources  (1.2s)"),
             "tool work belongs on screen:\n{screen}"
         );
     }
@@ -1159,7 +1203,10 @@ mod tests {
         let transcript = |session: &TuiSession| {
             render(session, 60, 14)
                 .into_iter()
-                .take_while(|row| !row.trim_start().starts_with('┌'))
+                .take_while(|row| {
+                    let row = row.trim_start();
+                    !row.starts_with('┌') && !row.starts_with('╭')
+                })
                 .collect::<Vec<_>>()
         };
         let quiet = transcript(&session);

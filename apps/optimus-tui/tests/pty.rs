@@ -383,8 +383,13 @@ fn typing_while_inspecting_never_reaches_the_draft() {
         "Tab never handed the keyboard back",
     );
     let row = draft_row(&term);
+    let draft = row
+        .trim_matches(['│', ' '])
+        .strip_prefix('›')
+        .expect("composer prompt marker")
+        .trim();
     assert!(
-        row.trim_matches(['│', ' ']).starts_with('›') && !row.contains('j') && !row.contains('k'),
+        draft == "Ask Optimus anything…",
         "keys meant for the transcript must not land in the prompt: {row:?}"
     );
 }

@@ -16,7 +16,7 @@
 
 use crate::session::{Message, Role};
 use crate::width;
-use crate::workbench::{BlockId, Item};
+use crate::workbench::{BlockId, BlockLifecycle, Item};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Longest line the transcript will lay out, however wide the terminal is.
@@ -29,8 +29,9 @@ const SHUT: char = '▸';
 /// How conversational turns are framed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Chrome {
-    /// Each turn sits in its own titled container.
-    Boxed,
+    /// The default app-like workbench: a filled task surface for the human,
+    /// open assistant prose, and quiet operation rails.
+    Workbench,
     /// Gutter markers only: two more rows of content per message, and a
     /// transcript that copies out of the terminal without border characters.
     Plain,
@@ -41,8 +42,7 @@ pub enum Chrome {
 pub struct Segment {
     pub text: String,
     pub bold: bool,
-    /// Container edges are drawn dim, so the frame never competes with the
-    /// text it is framing.
+    /// Supporting runs can recede without losing their terminal cells.
     pub dim: bool,
 }
 
@@ -52,14 +52,6 @@ impl Segment {
             text: text.into(),
             bold: false,
             dim: false,
-        }
-    }
-
-    fn edge(text: impl Into<String>) -> Self {
-        Self {
-            text: text.into(),
-            bold: false,
-            dim: true,
         }
     }
 }
@@ -74,6 +66,10 @@ pub struct Row {
     pub block: Option<BlockId>,
     /// Whether this row belongs to the item the keyboard is pointed at.
     pub selected: bool,
+    /// Fill this many cells with the row's background. Prompt surfaces use it
+    /// to paint a full-width card without storing trailing spaces in the text
+    /// projection that copy/paste and tests consume.
+    pub surface_width: Option<usize>,
 }
 
 impl Row {
@@ -83,6 +79,7 @@ impl Row {
             segments: Vec::new(),
             block: None,
             selected: false,
+            surface_width: None,
         }
     }
 
@@ -93,6 +90,7 @@ impl Row {
             segments,
             block: None,
             selected: false,
+            surface_width: None,
         }
     }
 
@@ -148,7 +146,12 @@ pub fn rows(
         }
         let chosen = selected == Some(item.id());
         match item {
-            Item::Single { index, id, body } => {
+            Item::Single {
+                index,
+                id,
+                lifecycle,
+                body,
+            } => {
                 let Some(message) = messages.get(*index) else {
                     continue;
                 };
@@ -156,6 +159,15 @@ pub fn rows(
                     // A block with a body wears the fold marker in place of
                     // its role's, so one glyph answers "is there more here"
                     // for a run and for a command alike.
+                    Some(body) if chrome == Chrome::Workbench && message.role == Role::Tool => {
+                        operation_rows(
+                            message,
+                            width,
+                            *lifecycle,
+                            &format!("{} ", marker(body.expanded)),
+                            "  ",
+                        )
+                    }
                     Some(body) => laid_rows(
                         message.role,
                         &message.text,
@@ -163,8 +175,8 @@ pub fn rows(
                         &format!("{} ", marker(body.expanded)),
                         "  ",
                     ),
-                    None if chrome == Chrome::Boxed && contained(message.role) => {
-                        boxed_rows(message, width)
+                    None if chrome == Chrome::Workbench => {
+                        workbench_rows(message, width, *lifecycle)
                     }
                     None => message_rows(message, width),
                 };
@@ -230,19 +242,13 @@ fn marker(expanded: bool) -> char {
     }
 }
 
-/// Only conversational turns get a container. Tool, action, and error rows are
-/// one-liners; a box around each would be more frame than content.
-fn contained(role: Role) -> bool {
-    matches!(role, Role::User | Role::Assistant)
-}
-
 fn greeting(width: u16) -> Vec<Row> {
     let mut title = laid_rows(
         Role::Assistant,
         "What should Optimus do?",
         width,
-        "  ",
-        "  ",
+        "  ✦ ",
+        "    ",
     );
     for row in &mut title {
         for segment in &mut row.segments {
@@ -264,8 +270,8 @@ fn greeting(width: u16) -> Vec<Row> {
 
 /// Wrap a message's text into styled terminal-cell rows at `content` columns.
 ///
-/// Shared by both framings: the container and the bare gutter differ only in
-/// what they put either side of these lines.
+/// Shared by both framings: the task surface and the bare gutter differ only
+/// in what they put beside these lines.
 fn laid_out(text: &str, content: usize) -> Vec<Vec<(String, bool)>> {
     let mut lines: Vec<Vec<(String, bool)>> = Vec::new();
     let mut after_bullet = false;
@@ -304,6 +310,7 @@ fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> V
             segments: Vec::new(),
             block: None,
             selected: false,
+            surface_width: None,
         }];
     }
     let first = width::truncate(first, usable);
@@ -317,6 +324,7 @@ fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> V
             segments: vec![Segment::plain(first)],
             block: None,
             selected: false,
+            surface_width: None,
         }];
     }
     let content = usable.saturating_sub(chrome).max(1);
@@ -333,67 +341,147 @@ fn laid_rows(role: Role, text: &str, width: u16, first: &str, indent: &str) -> V
                 segments,
                 block: None,
                 selected: false,
+                surface_width: None,
             }
         })
         .collect()
 }
 
-/// One turn drawn inside a titled container.
-///
-/// The box hugs its content rather than spanning the pane, so a two-word reply
-/// reads as a small card instead of a full-width bar.
-fn boxed_rows(message: &Message, width: u16) -> Vec<Row> {
-    let raw_title = if message.role == Role::User {
-        " YOU "
-    } else {
-        " OPTIMUS "
+/// The reference-inspired default face. One strong filled surface belongs to
+/// the user's task; everything Optimus does beneath it stays on the open
+/// canvas. That produces hierarchy without turning a long run into nested
+/// terminal boxes.
+fn workbench_rows(message: &Message, width: u16, lifecycle: BlockLifecycle) -> Vec<Row> {
+    match message.role {
+        Role::User => prompt_rows(message, width),
+        Role::Assistant => laid_rows(message.role, &message.text, width, "  ✦ ", "    "),
+        Role::Tool => operation_rows(message, width, lifecycle, "  │ ", "  │ "),
+        Role::Action => laid_rows(message.role, &message.text, width, "  ◇ ", "    "),
+        Role::Error => laid_rows(message.role, &message.text, width, "  × ", "    "),
+    }
+}
+
+/// A compact operation row with a typed lifecycle chip aligned to the right.
+/// At narrow widths the chip stands down and the original human line remains,
+/// so status never steals the tool name or causes overflow.
+fn operation_rows(
+    message: &Message,
+    width: u16,
+    lifecycle: BlockLifecycle,
+    first: &str,
+    indent: &str,
+) -> Vec<Row> {
+    let outer = usize::from(width);
+    let status = format!("[{}]", lifecycle_label(lifecycle));
+    let first_width = width::cells(first);
+    let status_width = width::cells(&status);
+    if outer < first_width.saturating_add(status_width).saturating_add(10) {
+        return laid_rows(message.role, &message.text, width, first, indent);
+    }
+
+    let content = concise_operation_text(&message.text, lifecycle);
+    let room = outer
+        .saturating_sub(first_width + status_width + 2)
+        .min(READABLE_WIDTH.saturating_sub(first_width))
+        .max(1);
+    let lines = laid_out(&content, room);
+    lines
+        .iter()
+        .enumerate()
+        .map(|(index, line)| {
+            let lead = if index == 0 { first } else { indent };
+            let mut segments = vec![Segment::plain(lead)];
+            segments.extend(runs(line));
+            if index == 0 {
+                let used = segments
+                    .iter()
+                    .map(|segment| width::cells(&segment.text))
+                    .sum::<usize>();
+                let gap = outer.saturating_sub(used + status_width);
+                segments.push(Segment::plain(" ".repeat(gap)));
+                segments.push(Segment::plain(status.clone()));
+            }
+            Row {
+                role: message.role,
+                segments,
+                block: None,
+                selected: false,
+                surface_width: None,
+            }
+        })
+        .collect()
+}
+
+fn lifecycle_label(lifecycle: BlockLifecycle) -> &'static str {
+    match lifecycle {
+        BlockLifecycle::Queued => "queued",
+        BlockLifecycle::Running => "running",
+        BlockLifecycle::Waiting => "waiting",
+        BlockLifecycle::Blocked => "approval",
+        BlockLifecycle::Succeeded => "done",
+        BlockLifecycle::Failed => "failed",
+        BlockLifecycle::Cancelled => "stopped",
+        BlockLifecycle::PossiblyStalled => "stalled",
+    }
+}
+
+/// Remove the phase word only when the typed lifecycle chip says exactly the
+/// same thing. Details such as `failed: rate limited` remain intact.
+fn concise_operation_text(text: &str, lifecycle: BlockLifecycle) -> String {
+    let phase = match lifecycle {
+        BlockLifecycle::Running => "running",
+        BlockLifecycle::Blocked => "awaiting approval",
+        BlockLifecycle::Succeeded => "done",
+        BlockLifecycle::Failed => "failed",
+        BlockLifecycle::Cancelled => "cancelled",
+        _ => return text.to_owned(),
     };
-    // Two columns of border and one of padding on each side.
-    let outer = usize::from(width).min(READABLE_WIDTH);
-    if outer < 5 {
+    let duration_at = text
+        .rfind("  (")
+        .filter(|at| text[*at..].ends_with(')'))
+        .unwrap_or(text.len());
+    let (summary, duration) = text.split_at(duration_at);
+    let suffix = format!("  {phase}");
+    summary
+        .strip_suffix(&suffix)
+        .map(|summary| format!("{summary}{duration}"))
+        .unwrap_or_else(|| text.to_owned())
+}
+
+/// A full-width task surface with one row of vertical padding. The readable
+/// text measure remains bounded even on a cinema-wide terminal; the surface
+/// itself spans the pane, matching the command-card hierarchy of the visual
+/// reference.
+fn prompt_rows(message: &Message, width: u16) -> Vec<Row> {
+    let outer = usize::from(width);
+    if outer < 6 {
         return message_rows(message, width);
     }
-    let room = outer.saturating_sub(4).max(1);
-    let title = width::truncate(raw_title, room.saturating_sub(1));
-
-    let lines = laid_out(&message.text, room);
-    let widest = lines
-        .iter()
-        .map(|line| line.iter().map(|(text, _)| width::cells(text)).sum())
-        .max()
-        .unwrap_or(0);
-    let inner = widest.max(width::cells(&title).saturating_add(1)).min(room);
-
-    let mut rows = vec![edge_row(message.role, &title, inner, true)];
-    rows.extend(lines.iter().map(|line| {
-        let mut segments = vec![Segment::edge("│ ")];
+    let content = outer
+        .saturating_sub(6)
+        .min(READABLE_WIDTH.saturating_sub(6));
+    let lines = laid_out(&message.text, content.max(1));
+    let surface = || Row {
+        role: Role::User,
+        segments: Vec::new(),
+        block: None,
+        selected: false,
+        surface_width: Some(outer),
+    };
+    let mut rows = vec![surface()];
+    rows.extend(lines.iter().enumerate().map(|(index, line)| {
+        let mut segments = vec![Segment::plain(if index == 0 { "  › " } else { "    " })];
         segments.extend(runs(line));
-        let line_width: usize = line.iter().map(|(text, _)| width::cells(text)).sum();
-        let pad = " ".repeat(inner.saturating_sub(line_width));
-        segments.push(Segment::edge(format!("{pad} │")));
         Row {
-            role: message.role,
+            role: Role::User,
             segments,
             block: None,
             selected: false,
+            surface_width: Some(outer),
         }
     }));
-    rows.push(edge_row(message.role, "", inner, false));
+    rows.push(surface());
     rows
-}
-
-/// Top or bottom of a container. Both come to `inner + 4` columns so the box
-/// closes squarely however long the title is.
-fn edge_row(role: Role, title: &str, inner: usize, top: bool) -> Row {
-    let (left, right) = if top { ('╭', '╮') } else { ('╰', '╯') };
-    let title = width::truncate(title, inner.saturating_sub(1));
-    let fill = "─".repeat(inner + 1 - width::cells(&title));
-    Row {
-        role,
-        segments: vec![Segment::edge(format!("{left}─{title}{fill}{right}"))],
-        block: None,
-        selected: false,
-    }
 }
 
 /// One logical line resolved into styled characters, plus how it lays out.
@@ -741,50 +829,75 @@ mod tests {
     }
 
     #[test]
-    fn a_turn_is_drawn_in_a_titled_container() {
-        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Boxed);
-        assert_eq!(plain(&rows), vec!["╭─ YOU ──╮", "│ hello  │", "╰────────╯"]);
+    fn the_workbench_task_is_a_padded_full_width_surface() {
+        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Workbench);
+        assert_eq!(plain(&rows), vec!["", "  › hello", ""]);
+        assert!(rows.iter().all(|row| row.surface_width == Some(40)));
     }
 
     #[test]
-    fn every_edge_of_a_container_is_the_same_width() {
-        for text in ["hi", "a much longer message that has to wrap somewhere", ""] {
-            let rows = painted(&[message(Role::Assistant, text)], 40, Chrome::Boxed);
-            let widths: Vec<usize> = rows.iter().map(|r| width::cells(&r.plain())).collect();
-            assert!(
-                widths.iter().all(|w| *w == widths[0]),
-                "a ragged box is a broken box for {text:?}: {widths:?}"
-            );
-        }
-    }
-
-    #[test]
-    fn a_container_hugs_its_content_rather_than_spanning_the_pane() {
-        let rows = painted(&[message(Role::User, "hi")], 90, Chrome::Boxed);
-        assert!(
-            width::cells(&rows[0].plain()) < 20,
-            "a two-word turn must not stretch a full-width bar: {}",
-            rows[0].plain()
+    fn assistant_output_stays_on_the_open_canvas() {
+        let rows = painted(
+            &[message(Role::Assistant, "a considered answer")],
+            40,
+            Chrome::Workbench,
         );
+        assert_eq!(plain(&rows), vec!["  ✦ a considered answer"]);
+        assert!(rows.iter().all(|row| row.surface_width.is_none()));
     }
 
     #[test]
-    fn a_container_never_outgrows_the_readable_width() {
+    fn a_task_surface_spans_the_pane_without_padding_the_text_projection() {
+        let rows = painted(&[message(Role::User, "hi")], 90, Chrome::Workbench);
+        assert!(
+            rows.iter().all(|row| row.surface_width == Some(90)),
+            "the painter needs one shared card edge: {rows:?}"
+        );
+        assert_eq!(rows[1].plain(), "  › hi");
+    }
+
+    #[test]
+    fn task_text_never_outgrows_the_readable_width() {
         let text = "word ".repeat(80);
-        let rows = painted(&[message(Role::Assistant, text.trim())], 400, Chrome::Boxed);
+        let rows = painted(&[message(Role::User, text.trim())], 400, Chrome::Workbench);
         assert!(rows
             .iter()
             .all(|r| width::cells(&r.plain()) <= READABLE_WIDTH));
     }
 
     #[test]
-    fn tool_rows_are_never_boxed_even_in_boxed_mode() {
+    fn tool_rows_use_a_quiet_operation_rail_in_workbench_mode() {
         let rows = painted(
             &[message(Role::Tool, "web_search  8 results")],
             40,
-            Chrome::Boxed,
+            Chrome::Workbench,
         );
-        assert_eq!(plain(&rows), vec!["⏺ web_search  8 results"]);
+        assert!(rows[0].plain().starts_with("  │ web_search  8 results"));
+        assert!(rows[0].plain().ends_with("[done]"));
+        assert_eq!(width::cells(&rows[0].plain()), 40);
+    }
+
+    #[test]
+    fn operation_status_comes_from_lifecycle_and_does_not_duplicate_phase_text() {
+        let message = message(Role::Tool, "terminal  running");
+        let rows = operation_rows(&message, 40, BlockLifecycle::Running, "  │ ", "  │ ");
+        assert!(rows[0].plain().contains("terminal"));
+        assert_eq!(rows[0].plain().matches("running").count(), 1);
+        assert!(rows[0].plain().ends_with("[running]"));
+    }
+
+    #[test]
+    fn narrow_operations_keep_the_original_line_instead_of_clipping_for_a_chip() {
+        let message = message(Role::Tool, "web_search  running");
+        let rows = operation_rows(&message, 16, BlockLifecycle::Running, "  │ ", "  │ ");
+        assert!(!rows.iter().any(|row| row.plain().contains("[running]")));
+        assert_eq!(
+            plain(&rows)
+                .iter()
+                .map(|row| row.trim_end())
+                .collect::<Vec<_>>(),
+            vec!["  │ web_search", "  │ running"]
+        );
     }
 
     #[test]
@@ -794,21 +907,19 @@ mod tests {
     }
 
     #[test]
-    fn container_edges_are_dim_so_the_frame_never_shouts() {
-        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Boxed);
-        assert!(rows[0].segments.iter().all(|s| s.dim), "top edge");
-        assert!(
-            rows[1].segments.first().is_some_and(|s| s.dim)
-                && rows[1].segments.iter().any(|s| !s.dim),
-            "the text inside the box keeps its own emphasis"
-        );
+    fn a_prompt_surface_does_not_store_visual_fill_as_copyable_text() {
+        let rows = painted(&[message(Role::User, "hello")], 40, Chrome::Workbench);
+        assert_eq!(rows[0].plain(), "");
+        assert_eq!(rows[1].plain(), "  › hello");
+        assert_eq!(rows[2].plain(), "");
+        assert!(rows.iter().all(|row| row.surface_width == Some(40)));
     }
 
     #[test]
     fn the_empty_transcript_greets() {
         assert_eq!(
-            painted(&[], 80, Chrome::Boxed)[0].plain(),
-            "  What should Optimus do?"
+            painted(&[], 80, Chrome::Workbench)[0].plain(),
+            "  ✦ What should Optimus do?"
         );
     }
 
@@ -837,7 +948,7 @@ mod tests {
             "界界 👍👍 e\u{301} ｶｶ and a deliberately long token",
         )];
         for width in [0_u16, 1, 2, 3, 4, 5, 8, 16, 24, 40, 96, 120] {
-            for chrome in [Chrome::Plain, Chrome::Boxed] {
+            for chrome in [Chrome::Plain, Chrome::Workbench] {
                 let painted = painted(&messages, width, chrome);
                 assert!(
                     painted
@@ -925,11 +1036,11 @@ mod tests {
         let messages = vec![message(Role::User, "hello"), message(Role::Assistant, "hi")];
         let items = ungrouped(2);
         let chosen = items[0].id();
-        let rows = rows(&messages, &items, Some(chosen), 40, Chrome::Boxed);
+        let rows = rows(&messages, &items, Some(chosen), 40, Chrome::Workbench);
         let marked: Vec<bool> = rows.iter().map(|row| row.selected).collect();
         assert!(
             marked.iter().filter(|m| **m).count() >= 3,
-            "the whole container is selected, not one of its edges: {marked:?}"
+            "the whole task surface is selected, not one of its rows: {marked:?}"
         );
         assert!(
             rows.iter()
@@ -968,6 +1079,7 @@ mod tests {
         let items = vec![Item::Single {
             index: 0,
             id: BlockId::mint(),
+            lifecycle: BlockLifecycle::Succeeded,
             body: Some(Body {
                 lines: vec!["running 47 tests".into(), "test result: ok".into()],
                 expanded,

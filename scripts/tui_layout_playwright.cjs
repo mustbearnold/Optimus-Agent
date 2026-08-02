@@ -73,12 +73,12 @@ function renderFrame(lines) {
 }
 
 function composerGeometry(lines, cols) {
-  const top = lines.findIndex((line) => line.includes("┌"));
-  const bottom = lines.findIndex((line, index) => index > top && line.includes("└"));
+  const top = lines.findIndex((line) => line.includes("╭"));
+  const bottom = lines.findIndex((line, index) => index > top && line.includes("╰"));
   assert(top >= 0, `composer top border is missing at ${cols} columns\n${renderFrame(lines)}`);
   assert(bottom > top, `composer bottom border is missing at ${cols} columns\n${renderFrame(lines)}`);
-  const left = lines[top].indexOf("┌");
-  const right = lines[top].lastIndexOf("┐");
+  const left = lines[top].indexOf("╭");
+  const right = lines[top].lastIndexOf("╮");
   assert(right > left, `composer right border is missing at ${cols} columns\n${renderFrame(lines)}`);
   return { top, bottom, left, right, status: bottom + 1, help: bottom + 2 };
 }
@@ -86,10 +86,10 @@ function composerGeometry(lines, cols) {
 function sidebarGeometry(lines) {
   const header = lines.findIndex((line) => line.includes("WORKSPACE"));
   if (header < 0) return { open: false, divider: -1 };
-  const dividerRow = lines.findIndex((line) => line.includes("╋"));
+  const dividerRow = lines.findIndex((line) => line.includes("┊"));
   return {
     open: true,
-    divider: dividerRow < 0 ? -1 : lines[dividerRow].indexOf("╋"),
+    divider: dividerRow < 0 ? -1 : lines[dividerRow].indexOf("┊"),
   };
 }
 

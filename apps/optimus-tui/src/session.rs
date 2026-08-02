@@ -186,7 +186,7 @@ impl TuiSession {
             running_tool: None,
             // A terminal app should have a visual hierarchy on first launch.
             // `/frame` remains the escape hatch for clean copy/paste gutters.
-            chrome: Chrome::Boxed,
+            chrome: Chrome::Workbench,
             dragging: false,
             hovered_block: None,
             mouse: true,
