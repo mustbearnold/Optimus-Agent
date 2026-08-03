@@ -140,16 +140,26 @@ fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
     };
     let path_width = total.saturating_sub(width::cells(&prefix) + gap + right_width);
     let path = context_path(session, path_width as u16);
-    let left = format!("{prefix}{path}");
-    let gap = total.saturating_sub(width::cells(&left) + right_width);
-    frame.render_widget(
-        Paragraph::new(Line::from(vec![
-            Span::styled(left, Style::default().fg(MUTED)),
-            Span::raw(" ".repeat(gap)),
-            Span::styled(right, Style::default().fg(TEXT)),
-        ])),
-        area,
-    );
+    let (path_label, scope_label) = context_parts(&path);
+    let left = format!("{prefix}{path_label}");
+    let scope_width = width::cells(scope_label);
+    let gap = total.saturating_sub(width::cells(&left) + scope_width + right_width);
+    let mut spans = vec![Span::styled(left, Style::default().fg(MUTED))];
+    if !scope_label.is_empty() {
+        spans.push(Span::styled(
+            scope_label.to_owned(),
+            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+        ));
+    }
+    spans.push(Span::raw(" ".repeat(gap)));
+    spans.push(Span::styled(right, Style::default().fg(TEXT)));
+    frame.render_widget(Paragraph::new(Line::from(spans)), area);
+}
+
+fn context_parts(path: &str) -> (&str, &str) {
+    path.rfind(" · ")
+        .map(|index| (&path[..index], &path[index..]))
+        .unwrap_or((path, ""))
 }
 
 /// Keep a named project scope visible after the sidebar is collapsed. The
@@ -782,6 +792,33 @@ mod tests {
         assert!(
             narrow[0].contains("project"),
             "narrow context should prefer the active scope: {narrow:?}"
+        );
+    }
+
+    #[test]
+    fn an_active_project_scope_is_accented_without_reversing_the_context_rail() {
+        let (_dir, mut session) = session_with(&[]);
+        session.sidebar.projects = vec![crate::sidebar::ProjectEntry {
+            id: Some("project-a".into()),
+            label: "project-a".into(),
+            session_count: 1,
+            current: true,
+        }];
+        session.project_id = Some("project-a".into());
+        let backend = ratatui::backend::TestBackend::new(80, 20);
+        let mut terminal = Terminal::new(backend).expect("test terminal");
+        terminal.draw(|f| draw(f, &session)).expect("draw");
+        let buffer = terminal.backend().buffer();
+        let row = (0..buffer.area.width)
+            .map(|x| buffer[(x, 0)].symbol())
+            .collect::<String>();
+        let scope_start = row.find("project-a").expect("active scope on context rail");
+        let scope_cell = buffer[(scope_start as u16, 0)].style();
+        assert_eq!(scope_cell.fg, Some(ACCENT));
+        assert!(scope_cell.add_modifier.contains(Modifier::BOLD));
+        assert!(
+            !scope_cell.add_modifier.contains(Modifier::REVERSED),
+            "scope emphasis must stay within the app's visual language"
         );
     }
 
