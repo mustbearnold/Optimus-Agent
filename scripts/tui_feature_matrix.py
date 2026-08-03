@@ -1309,6 +1309,74 @@ def pending_repeated_call_relaunch_journey(
         thread.join(timeout=2)
 
 
+def pending_approval_session_switch_journey(
+    audit: Audit, binary: Path, home: Path
+) -> None:
+    audit.begin("pending-approval-survives-new-session-and-session-switch")
+    PendingRepeatedCallFixtureHandler.requests = 0
+    workspace = home / "workspace"
+    workspace.mkdir(parents=True, exist_ok=True)
+    (workspace / "alpha.txt").write_text("alpha", encoding="utf-8")
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), PendingRepeatedCallFixtureHandler
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    environment = {
+        "OPTIMUS_API_BASE": f"http://127.0.0.1:{server.server_address[1]}/v1",
+        "OPTIMUS_API_KEY": "pending-session-switch-fixture",
+        "OPTIMUS_MODEL": "tui-pending-session-switch",
+    }
+    try:
+        case = Case(binary, home, cols=100, rows=34, environment=environment)
+        case.launch()
+        try:
+            case.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            case.type_submit("read alpha first")
+            case.wait_text("The completed read alpha", 30)
+            case.type_submit("write the pending proof")
+            case.wait_text("Approval required", 30)
+            case.keys("Escape")
+            case.command("/new", "new session ready")
+
+            picker = case.command("/sessions", "Open a saved session")
+            audit.check(
+                "read alpha first" in normalized(picker),
+                "session picker omitted the parked session",
+                case,
+            )
+            case.keys("Enter")
+            restored = case.wait_text("Approval required", 20)
+            restored_text = normalized(restored)
+            audit.check(
+                "path=alpha.txt" in restored_text
+                and "write_file" in restored_text
+                and "[approval]" in restored_text,
+                "switching back did not restore history beside the pending card",
+                case,
+            )
+            audit.check(
+                "Approve and continue" in restored_text
+                and "! approval" in restored_text,
+                "switched-back approval was not actionable",
+                case,
+            )
+            audit.check(
+                all(len(line) <= case.cols for line in restored),
+                "switched-back approval overflowed the terminal",
+                case,
+            )
+        finally:
+            case.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def editor_and_history(audit: Audit, case: Case) -> None:
     audit.begin("composer-editing-unicode-paste-and-history")
     case.launch()
@@ -2056,6 +2124,11 @@ def main() -> int:
                 audit,
                 binary,
                 fresh("pending-repeated-call-relaunch"),
+            )
+            pending_approval_session_switch_journey(
+                audit,
+                binary,
+                fresh("pending-approval-session-switch"),
             )
             editor_and_history(audit, Case(binary, fresh("editor")))
             streaming_and_cancel(
