@@ -168,7 +168,8 @@ impl TuiSession {
                     awaiting = true;
                     // The bound call's block waits on the human; the card row
                     // pushed below is the note that says so.
-                    self.workbench.hold_for_approval(&binding.call_id);
+                    self.workbench
+                        .hold_for_approval(&binding.call_id, binding.run_id);
                     self.push(
                         Role::Action,
                         format!("approval required:\n{}", readable(&binding.summary)),

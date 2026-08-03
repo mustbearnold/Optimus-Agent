@@ -234,6 +234,66 @@ class ReusedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class PendingRepeatedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
+    """A completed call is followed by a pending call with the same provider id."""
+
+    requests = 0
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
+        length = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(length)
+        type(self).requests += 1
+        request_number = type(self).requests
+        if request_number == 1:
+            message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {
+                            "name": "read_file",
+                            "arguments": json.dumps({"path": "alpha.txt"}),
+                        },
+                    }
+                ],
+            }
+        elif request_number == 2:
+            message = {
+                "role": "assistant",
+                "content": "The completed read alpha.",
+            }
+        else:
+            message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {
+                            "name": "write_file",
+                            "arguments": json.dumps(
+                                {"path": "pending-proof.txt", "contents": "pending"}
+                            ),
+                        },
+                    }
+                ],
+            }
+        body = json.dumps(
+            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 class FeatureFailure(RuntimeError):
     """A named user-visible contract failed."""
 
@@ -1180,6 +1240,75 @@ def reused_call_id_relaunch_journey(audit: Audit, binary: Path, home: Path) -> N
         thread.join(timeout=2)
 
 
+def pending_repeated_call_relaunch_journey(
+    audit: Audit, binary: Path, home: Path
+) -> None:
+    audit.begin("pending-call-reuse-keeps-the-completed-occurrence-visible")
+    PendingRepeatedCallFixtureHandler.requests = 0
+    workspace = home / "workspace"
+    workspace.mkdir(parents=True, exist_ok=True)
+    (workspace / "alpha.txt").write_text("alpha", encoding="utf-8")
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), PendingRepeatedCallFixtureHandler
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    environment = {
+        "OPTIMUS_API_BASE": f"http://127.0.0.1:{server.server_address[1]}/v1",
+        "OPTIMUS_API_KEY": "pending-repeated-call-fixture",
+        "OPTIMUS_MODEL": "tui-pending-repeated-call",
+    }
+    try:
+        first = Case(binary, home, cols=100, rows=34, environment=environment)
+        first.launch()
+        try:
+            first.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            first.type_submit("read alpha first")
+            first.wait_text("The completed read alpha", 30)
+            first.type_submit("write the pending proof")
+            first.wait_text("Approval required", 30)
+            first.keys("Escape")
+            first.type_submit("/quit")
+            first.wait_exit()
+        finally:
+            first.close()
+
+        resumed = Case(binary, home, cols=100, rows=34, environment=environment)
+        resumed.launch(allow_approval=True)
+        try:
+            restored = resumed.wait_text("Approval required", 20)
+            restored_text = normalized(restored)
+            audit.check(
+                "path=alpha.txt" in restored_text and "[done]" in restored_text,
+                "relaunch hid the completed occurrence behind the pending reused call id",
+                resumed,
+            )
+            audit.check(
+                "write_file" in restored_text and "[approval]" in restored_text,
+                "relaunch lost the pending occurrence beside the completed one",
+                resumed,
+            )
+            audit.check(
+                "call_1" not in restored_text,
+                "pending-call relaunch exposed the raw provider call id",
+                resumed,
+            )
+            audit.check(
+                all(len(line) <= resumed.cols for line in restored),
+                "pending-call relaunch overflowed the terminal",
+                resumed,
+            )
+        finally:
+            resumed.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def editor_and_history(audit: Audit, case: Case) -> None:
     audit.begin("composer-editing-unicode-paste-and-history")
     case.launch()
@@ -1922,6 +2051,11 @@ def main() -> int:
                 audit,
                 binary,
                 fresh("reused-call-id-relaunch"),
+            )
+            pending_repeated_call_relaunch_journey(
+                audit,
+                binary,
+                fresh("pending-repeated-call-relaunch"),
             )
             editor_and_history(audit, Case(binary, fresh("editor")))
             streaming_and_cancel(

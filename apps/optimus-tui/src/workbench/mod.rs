@@ -364,12 +364,13 @@ impl WorkbenchState {
     }
 
     /// The kernel holds the effect; the block waits on the human. Finds the
-    /// live block for the bound call — a binding for a call this session never
-    /// saw start (a resumed park) has no block to hold, and that is fine: the
-    /// card row itself is mirrored as a note.
-    pub(crate) fn hold_for_approval(&mut self, call_id: &str) {
+    /// live block for the exact bound call occurrence — a binding for a call
+    /// this session never saw start (a resumed park) has no block to hold, and
+    /// that is fine: the card row itself is mirrored as a note.
+    pub(crate) fn hold_for_approval(&mut self, call_id: &str, run_id: Uuid) {
         let held = self.blocks.iter_mut().rev().find(|block| {
-            !block.lifecycle.is_settled()
+            block.turn_id == Some(run_id)
+                && !block.lifecycle.is_settled()
                 && matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id: own, .. } if own == call_id)
         });
         if let Some(block) = held {
@@ -611,10 +612,13 @@ mod tests {
             ToolLifecyclePhase::Started,
             "write-1",
             "run-1:write-1:started",
-            "run-1",
+            "11111111-1111-4111-8111-111111111111",
         ));
-        state.hold_for_approval("write-1");
-        state.hold_for_approval("no-such-call");
+        state.hold_for_approval(
+            "write-1",
+            Uuid::parse_str("11111111-1111-4111-8111-111111111111").unwrap(),
+        );
+        state.hold_for_approval("no-such-call", Uuid::nil());
         assert_eq!(state.blocks()[1].lifecycle, BlockLifecycle::Blocked);
 
         state.settle_interrupted();
@@ -629,6 +633,31 @@ mod tests {
             "the held binding outlives the worker, so the block keeps waiting"
         );
         assert!(state.blocks()[1].settled_at.is_none());
+    }
+
+    #[test]
+    fn approval_holds_only_the_exact_run_when_a_provider_reuses_a_call_id() {
+        let mut state = WorkbenchState::default();
+        state.apply_tool_step(&step(
+            ToolLifecyclePhase::Started,
+            "call_1",
+            "run-1:call_1:started",
+            "11111111-1111-4111-8111-111111111111",
+        ));
+        state.apply_tool_step(&step(
+            ToolLifecyclePhase::Started,
+            "call_1",
+            "run-2:call_1:started",
+            "22222222-2222-4222-8222-222222222222",
+        ));
+
+        state.hold_for_approval(
+            "call_1",
+            Uuid::parse_str("22222222-2222-4222-8222-222222222222").unwrap(),
+        );
+
+        assert_eq!(state.blocks()[0].lifecycle, BlockLifecycle::Running);
+        assert_eq!(state.blocks()[1].lifecycle, BlockLifecycle::Blocked);
     }
 
     #[test]

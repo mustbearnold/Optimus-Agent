@@ -341,18 +341,24 @@ impl TuiSession {
             }
             if stored_role == optimus_kernel::Role::Tool {
                 if let Some(call_id) = tool_call_id.as_deref() {
-                    let is_pending = pending
-                        .as_ref()
-                        .is_some_and(|(binding, _)| binding.call_id == call_id);
-                    if is_pending {
-                        // The pending call has no tool result yet; its blocked
-                        // row is restored from the exact approval binding
-                        // after the durable transcript is projected.
-                        continue;
-                    }
                     if let Some(lifecycle) =
                         next_tool_lifecycle(&lifecycles, call_id, &mut lifecycle_cursor)
                     {
+                        let is_pending = pending.as_ref().is_some_and(|(binding, _)| {
+                            lifecycle.phase == ToolLifecyclePhase::ApprovalRequired
+                                && lifecycle.run_id == binding.run_id.to_string()
+                                && lifecycle.call_id == binding.call_id
+                                && lifecycle.approval.as_ref() == Some(binding)
+                        });
+                        if is_pending {
+                            // The pending call has no tool result yet; its
+                            // blocked row is restored from the exact approval
+                            // binding after the durable transcript is
+                            // projected. Matching the lifecycle, rather than
+                            // only its provider id, keeps an older completed
+                            // call with the same id visible.
+                            continue;
+                        }
                         let step = crate::tool_line::tool_step(lifecycle);
                         self.workbench.apply_tool_step(&step);
                         self.messages.push(Message {
