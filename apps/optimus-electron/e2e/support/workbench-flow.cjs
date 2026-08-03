@@ -73,6 +73,25 @@ async function offlineWorkbenchFlow(page, options) {
   await expect(page.getByRole('complementary', { name: 'Evidence workspace' })).toHaveCount(0);
   await workspaceToggle.click();
   await expect(page.getByRole('complementary', { name: 'Evidence workspace' })).toBeVisible();
+  const workspaceBeforeTerminal = await page
+    .getByRole('complementary', { name: 'Evidence workspace' })
+    .boundingBox();
+  await page.getByRole('button', { name: 'Terminal' }).click();
+  const dock = await page.getByRole('complementary', { name: 'Execution dock' }).boundingBox();
+  const workColumn = await page.locator('.work-column').boundingBox();
+  const workspaceAfterTerminal = await page
+    .getByRole('complementary', { name: 'Evidence workspace' })
+    .boundingBox();
+  expect(workspaceBeforeTerminal).not.toBeNull();
+  expect(dock).not.toBeNull();
+  expect(workColumn).not.toBeNull();
+  expect(workspaceAfterTerminal).not.toBeNull();
+  expect(dock.x).toBeGreaterThanOrEqual(workColumn.x - 1);
+  expect(dock.x + dock.width).toBeLessThanOrEqual(workColumn.x + workColumn.width + 1);
+  expect(workspaceAfterTerminal.x).toBeCloseTo(workspaceBeforeTerminal.x, 2);
+  expect(workspaceAfterTerminal.width).toBeCloseTo(workspaceBeforeTerminal.width, 2);
+  await page.getByRole('button', { name: 'Terminal' }).click();
+  await expect(page.locator('.execution-dock')).not.toHaveClass(/is-open/);
   await workspaceToggle.click();
   await expect(page.getByRole('complementary', { name: 'Evidence workspace' })).toHaveCount(0);
 
