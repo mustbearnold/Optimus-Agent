@@ -9,7 +9,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from synthetic_user_lab import DEFAULT_COHORT, compile_manifest, load_cohort, public_scenario  # noqa: E402
+from synthetic_user_lab import (  # noqa: E402
+    DEFAULT_COHORT,
+    ROOT,
+    compile_manifest,
+    load_cohort,
+    public_scenario,
+    stored_run_path,
+)
 from synthetic_user_lab_eval import evaluate  # noqa: E402
 
 
@@ -21,6 +28,9 @@ def main() -> int:
     assert first != compile_manifest(cohort, 43, 3), "different seeds should explore different cohorts"
     assert "private_profile" not in first
     assert all(len(value) == 64 for value in first["private_profile_sha256"].values())
+    assert stored_run_path(ROOT / "local" / "tmp" / "run") == "local/tmp/run"
+    external = stored_run_path(Path("/tmp/optimus-synthetic-user-lab/run"))
+    assert external == "/tmp/optimus-synthetic-user-lab/run"
 
     scenario = cohort["scenarios"][0]
     public = public_scenario(scenario)

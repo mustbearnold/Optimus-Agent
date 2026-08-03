@@ -75,6 +75,15 @@ def public_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     return {"id": scenario["id"], "kind": scenario["kind"], "rubric": scenario["rubric"]}
 
 
+def stored_run_path(path: Path) -> str:
+    """Keep report paths portable for both repo-local and external evidence."""
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
+
+
 def compile_manifest(cohort: dict[str, Any], seed: int, count: int) -> dict[str, Any]:
     selected = choose_scenarios(cohort, seed, count)
     return {
@@ -333,7 +342,7 @@ def main() -> int:
         print(f"{scenario_id}: score={grade['score']} passed={grade['passed']}")
     report = {
         "version": 1,
-        "run_dir": str(run_dir.relative_to(ROOT)),
+        "run_dir": stored_run_path(run_dir),
         "passed": all(row["grade"]["passed"] for row in results),
         "mean_score": round(sum(row["grade"]["score"] for row in results) / len(results), 2),
         "results": results,
