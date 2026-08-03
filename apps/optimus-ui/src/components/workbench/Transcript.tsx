@@ -54,12 +54,14 @@ export function Transcript({
   messages,
   status,
   statusText,
+  promptNavigationId,
   onStarter,
   onApprovalDecision,
 }: {
   messages: Message[];
   status: RunStatus;
   statusText: string;
+  promptNavigationId?: string | null;
   onStarter: (text: string) => void;
   onApprovalDecision?: ApprovalDecisionHandler;
 }) {
@@ -95,6 +97,23 @@ export function Transcript({
     node.scrollTop += node.scrollHeight - prependHeight.current;
     prependHeight.current = null;
   }, [visibleCount]);
+
+  useEffect(() => {
+    if (!promptNavigationId) return;
+    const targetIndex = messages.findIndex((message) => message.id === promptNavigationId);
+    if (targetIndex < 0) return;
+    if (targetIndex < messages.length - visibleCount) {
+      setVisibleCount(messages.length);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const target = Array.from(
+        scroller.current?.querySelectorAll<HTMLElement>('[data-message-id]') || []
+      ).find((element) => element.dataset.messageId === promptNavigationId);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages.length, promptNavigationId, visibleCount]);
 
   const onScroll = () => {
     const node = scroller.current;

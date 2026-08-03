@@ -68,6 +68,7 @@ import { ProjectsRail } from '../components/projects/ProjectsRail';
 import { ProjectSourcesDialog } from '../components/projects/ProjectSourcesDialog';
 import { SettingsDialog } from '../components/settings/SettingsDialog';
 import { Composer } from '../components/workbench/Composer';
+import { PromptHistoryRail } from '../components/workbench/PromptHistoryRail';
 import { SessionBar } from '../components/workbench/SessionBar';
 import { Transcript } from '../components/workbench/Transcript';
 import { WorkbenchStatusBar } from '../components/workbench/WorkbenchStatusBar';
@@ -838,17 +839,32 @@ const WorkbenchChat = memo(function WorkbenchChat({
   // should repaint the conversation, not the rail, browser, and window chrome.
   const conversation = useConversation(sessionId);
   const isRunOwner = activeRunSessionId === sessionId;
+  const [activePromptId, setActivePromptId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activePromptId && !conversation.messages.some((message) => message.id === activePromptId)) {
+      setActivePromptId(null);
+    }
+  }, [activePromptId, conversation.messages]);
 
   return (
     <>
       <SessionBar title={title} project={project} showSeparator={showSeparator} />
-      <Transcript
-        messages={conversation.messages}
-        status={conversation.status}
-        statusText={conversation.statusText}
-        onStarter={onStarter}
-        onApprovalDecision={onApprovalDecision}
-      />
+      <div className="workbench-conversation-row">
+        <PromptHistoryRail
+          messages={conversation.messages}
+          activePromptId={activePromptId}
+          onSelect={setActivePromptId}
+        />
+        <Transcript
+          messages={conversation.messages}
+          status={conversation.status}
+          statusText={conversation.statusText}
+          promptNavigationId={activePromptId}
+          onStarter={onStarter}
+          onApprovalDecision={onApprovalDecision}
+        />
+      </div>
       <Composer
         value={annotation ? `${input}${input ? '\n\n' : ''}${annotation}` : input}
         runStatus={isRunOwner ? conversation.status : 'idle'}

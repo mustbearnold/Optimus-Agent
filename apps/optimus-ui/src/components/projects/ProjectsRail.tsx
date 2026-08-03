@@ -32,6 +32,7 @@ export function ProjectsRail(props: Props) {
   const [menuPoint, setMenuPoint] = useState<{ x: number; y: number } | null>(null);
   const [projectScope, setProjectScope] = useState<string>('all');
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [dropProjectId, setDropProjectId] = useState<string | null>(null);
   const menuTriggers = useRef<Record<string, HTMLButtonElement | null>>({});
   const menuRef = useRef<HTMLDivElement | null>(null);
   const projectMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -40,24 +41,29 @@ export function ProjectsRail(props: Props) {
     setProjectMenuOpen(false);
     if (restoreFocus) requestAnimationFrame(() => projectMenuTriggerRef.current?.focus());
   }, []);
-  const visibleSessions = useMemo(() => props.sessions, [props.sessions]);
-  const projectForSession = (session: SessionMeta, projectId?: string) => {
-    return props.projects.find(
-      (candidate) => candidate.id === (projectId || props.assignments[session.id])
-    ) || null;
-  };
-  const pinnedSessions = visibleSessions.filter((session) => {
-    if (!session.pinned) return false;
+
+  const projectForSession = useCallback((session: SessionMeta) => {
+    return props.projects.find((candidate) => candidate.id === props.assignments[session.id]) || null;
+  }, [props.assignments, props.projects]);
+
+  const matchesScope = useCallback((session: SessionMeta) => {
     if (projectScope === 'archived') return Boolean(session.archived);
     if (session.archived) return false;
-    return projectScope === 'all' || projectForSession(session)?.id === projectScope;
-  });
-  const scopedSessions = visibleSessions.filter((session) => {
-    if (session.pinned) return false;
-    if (projectScope === 'archived') return Boolean(session.archived);
-    if (session.archived) return false;
-    return projectScope === 'all' || projectForSession(session)?.id === projectScope;
-  });
+    return projectScope === 'all' || props.assignments[session.id] === projectScope;
+  }, [projectScope, props.assignments]);
+
+  const scopedSessions = useMemo(
+    () => props.sessions.filter(matchesScope),
+    [matchesScope, props.sessions]
+  );
+  const recentSessions = useMemo(
+    () => scopedSessions.filter((session) => !projectForSession(session)),
+    [projectForSession, scopedSessions]
+  );
+  const archivedSessions = useMemo(
+    () => scopedSessions.filter((session) => Boolean(session.archived)),
+    [scopedSessions]
+  );
   const scopedProject = props.projects.find((project) => project.id === projectScope) || null;
   const projectScopeLabel = projectScope === 'archived' ? 'Archived' : scopedProject?.name || 'All projects';
 
@@ -133,10 +139,24 @@ export function ProjectsRail(props: Props) {
     requestAnimationFrame(() => menuTriggers.current[sessionId]?.focus());
   };
 
-  const renderSession = (session: SessionMeta, projectId?: string) => {
+  const startDrag = (event: DragEvent<HTMLDivElement>, session: SessionMeta) => {
+    event.dataTransfer.setData('text/optimus-session', session.id);
+    event.dataTransfer.setData('text/plain', session.id);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const dropInto = (projectId: string) => (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = event.dataTransfer.getData('text/optimus-session');
+    setDropProjectId(null);
+    if (id) props.onAssign(id, projectId);
+  };
+
+  const renderSession = (session: SessionMeta) => {
     const active = session.id === props.selectedSessionId;
     const indicator = props.sessionIndicators[session.id] || null;
-    const project = projectForSession(session, projectId);
+    const project = projectForSession(session);
     const indicatorLabel =
       indicator === 'working'
         ? 'Optimus is working'
@@ -149,18 +169,16 @@ export function ProjectsRail(props: Props) {
     return (
       <div
         className={`session-row${active ? ' is-active' : ''}${project ? '' : ' is-unassigned'}${project || indicator ? ' has-status' : ''}`}
-        key={`${projectId || 'root'}:${session.id}`}
+        key={session.id}
         draggable
+        data-session-id={session.id}
         onContextMenu={(event) => {
           event.preventDefault();
           setMenuSession(session.id);
           setMenuPoint({ x: event.clientX, y: event.clientY });
           requestAnimationFrame(() => menuTriggers.current[session.id]?.focus());
         }}
-        onDragStart={(event) => {
-          event.dataTransfer.setData('text/optimus-session', session.id);
-          event.dataTransfer.effectAllowed = 'move';
-        }}
+        onDragStart={(event) => startDrag(event, session)}
       >
         <button
           ref={(node) => { menuTriggers.current[session.id] = node; }}
@@ -190,7 +208,7 @@ export function ProjectsRail(props: Props) {
                 ? 'Working'
                 : indicator === 'attention'
                   ? 'Attention'
-                : indicator === 'error'
+                  : indicator === 'error'
                     ? 'Error'
                     : formatSessionAge(session.updated_at || session.created_at, clock)}
             </span>
@@ -214,6 +232,23 @@ export function ProjectsRail(props: Props) {
             <button type="button" role="menuitem" onClick={() => closeMenu(session.id, () => props.onToggleArchive(session))}>
               {session.archived ? 'Unarchive session' : 'Archive session'}
             </button>
+            {props.projects.map((candidate) => (
+              <button
+                type="button"
+                role="menuitem"
+                key={candidate.id}
+                onClick={() => closeMenu(session.id, () => props.onAssign(session.id, candidate.id))}
+              >
+                <Icon name="folder" />
+                {project?.id === candidate.id ? `Remove from ${candidate.name}` : `Move to ${candidate.name}`}
+              </button>
+            ))}
+            {project ? (
+              <button type="button" role="menuitem" onClick={() => closeMenu(session.id, () => props.onAssign(session.id, null))}>
+                <Icon name="folder" />
+                Move to Recent Chats
+              </button>
+            ) : null}
             <button type="button" role="menuitem" onClick={() => closeMenu(session.id, () => props.onRename(session))}>
               Rename
             </button>
@@ -232,10 +267,67 @@ export function ProjectsRail(props: Props) {
     );
   };
 
-  const dropInto = (projectId: string) => (event: DragEvent) => {
-    event.preventDefault();
-    const id = event.dataTransfer.getData('text/optimus-session');
-    if (id) props.onAssign(id, projectId);
+  const renderProject = (project: Project) => {
+    const isOpen = props.expanded[project.id] !== false;
+    const projectSessions = scopedSessions.filter((session) => props.assignments[session.id] === project.id);
+    const sessionsId = `project-sessions-${project.id}`;
+    const isDropTarget = dropProjectId === project.id;
+    return (
+      <section
+        className={`project-group${isOpen ? ' is-open' : ''}${isDropTarget ? ' is-drop-target' : ''}`}
+        key={project.id}
+        data-project-id={project.id}
+        data-drop-target="project"
+        aria-label={project.name}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          setDropProjectId(project.id);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropProjectId(null);
+        }}
+        onDrop={dropInto(project.id)}
+      >
+        <div className="project-heading">
+          <button
+            type="button"
+            className="project-toggle"
+            aria-expanded={isOpen}
+            aria-controls={sessionsId}
+            onClick={() => props.onToggleProject(project.id)}
+            title={`Toggle ${project.name}`}
+          >
+            <Icon name="chevron" />
+            <Icon name="folder" />
+            <span>{project.name}</span>
+            <small>{projectSessions.length}</small>
+          </button>
+          <button
+            type="button"
+            className="project-new-session"
+            aria-label={`New thread in ${project.name}`}
+            title={`New thread in ${project.name}`}
+            onClick={() => props.onNewSession(project.id)}
+          >
+            <Icon name="compose" />
+          </button>
+          <button
+            type="button"
+            className="project-manage"
+            id={`project-manage-${project.id}`}
+            aria-label={`Manage sources for ${project.name}`}
+            title={`Manage sources for ${project.name}`}
+            onClick={() => props.onManageProject(project)}
+          >
+            <Icon name="more" />
+          </button>
+        </div>
+        <div id={sessionsId} className="project-sessions" role="group" aria-label={`Sessions in ${project.name}`}>
+          {projectSessions.length ? projectSessions.map(renderSession) : <div className="project-drop-hint">Drop a session here</div>}
+        </div>
+      </section>
+    );
   };
 
   return (
@@ -341,25 +433,52 @@ export function ProjectsRail(props: Props) {
       </div>
 
       <div className="rail-scroll">
-        {pinnedSessions.length ? (
-          <section className="rail-section">
+        {projectScope === 'archived' ? (
+          <section className="rail-section recent-section" data-testid="archived-chats-section" aria-labelledby="archived-chats-heading">
+            <div className="rail-section-heading" id="archived-chats-heading"><span>Archived Chats</span></div>
             <div className="session-stack">
-              {pinnedSessions.map((session) => renderSession(session))}
+              {archivedSessions.length ? archivedSessions.map(renderSession) : <div className="rail-empty">No archived chats</div>}
             </div>
           </section>
-        ) : null}
+        ) : (
+          <>
+            <section className="rail-section recent-section" data-testid="recent-chats-section" aria-labelledby="recent-chats-heading">
+              <div className="rail-section-heading" id="recent-chats-heading">
+                <span>Recent Chats</span>
+                <button type="button" aria-label="New recent chat" title="New recent chat" onClick={() => props.onNewSession()}>
+                  <Icon name="compose" />
+                </button>
+              </div>
+              <div
+                className="session-stack recent-session-stack"
+                data-drop-target="recent-chats"
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const id = event.dataTransfer.getData('text/optimus-session');
+                  if (id) props.onAssign(id, null);
+                }}
+              >
+                {recentSessions.length ? recentSessions.map(renderSession) : <div className="rail-empty">No recent chats</div>}
+              </div>
+            </section>
 
-        <section className="rail-section session-inbox">
-          <div
-            className="session-stack"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={scopedProject ? dropInto(scopedProject.id) : undefined}
-          >
-            {scopedSessions.length
-              ? scopedSessions.map((session) => renderSession(session))
-              : <div className="rail-empty">No threads in this view</div>}
-          </div>
-        </section>
+            <section className="rail-section projects-section" data-testid="projects-section" aria-labelledby="projects-heading">
+              <div className="rail-section-heading" id="projects-heading">
+                <span>Projects</span>
+                <button type="button" aria-label="Create project folder" title="Create project folder" onClick={props.onAddProject}>
+                  <Icon name="project" />
+                </button>
+              </div>
+              {props.projects.length
+                ? props.projects.map(renderProject)
+                : <div className="rail-empty">Add a project to organize chats</div>}
+            </section>
+          </>
+        )}
       </div>
 
       <div className="rail-footer">

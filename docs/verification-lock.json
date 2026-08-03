@@ -133,10 +133,10 @@
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "5411ae9595ccb8ef14283e960adf2f0bd72842eae194cf01d66fddeb98de2810",
+      "binding_sha256": "9d3454717b816862f8297f5be93f3d3b7d3caf62762b09bd23112ee821d90b96",
       "document_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
       "path": "docs/current/status.md",
-      "resolved_files": 365
+      "resolved_files": 368
     },
     "decision-0062-source-and-development-are-separate-workspace-planes": {
       "binding_sha256": "ee2e1ad738418fbd13d24900dcef121a747de32b8fd4e98c1b7164241adc61f5",
@@ -319,28 +319,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "42308201a476fc351ad664a431cd50f62a63937f50530f5d089ac560c477a562",
+      "binding_sha256": "bced7063545a149749e1023c55648017cc16454e3cd84f7c5dca450860a0ccbb",
       "document_sha256": "de58fe424aee66fd31dadbb254c470c0a0bb0d57bf66fe722c4249f660abebca",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 127
+      "resolved_files": 130
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "30919a6e03828011f32a68d4933836aefc6b51113c9018040e50c9ccb3eb382b",
+      "binding_sha256": "786a81d2886b55e174011343bcde94b3d70d7ed5fd419e685128e7027bdbbdfd",
       "document_sha256": "9947d9bb090b59f83e953b336120a79b9b467acc3358fbb7b9ab9b936169f8f8",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 127
+      "resolved_files": 130
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "a4490e832216ab699bd99b859153785a4f7e74ef78fb38671d27dc1ffad316d8",
+      "binding_sha256": "b1f6107306d083eafe8757699f611e7339a3117a4f669cefac4c78ed8e9988f2",
       "document_sha256": "5454bddfb445341aa15389f08ffe6d6b9e2286eec7e54ad096ebd8864b0a0ad0",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 111
+      "resolved_files": 114
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "fb2d5c6ce64d8a06bc6f8b1f0f4b94b7e85057cd1a3246aa186ff54e1cf2505f",
+      "binding_sha256": "bcc1ab74a1a96ee3079ce40c6245da76963a45ecbd4a7e764c59efa00b67140e",
       "document_sha256": "ed013ec8a70e7222ebd3080683e3dc25303922429d887ecf7606f928994ef797",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 108
+      "resolved_files": 111
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "2d1283c698c5f17c9dfb77f319ab86ca16d448d827e2d8ab9289ccc814831b09",
@@ -391,7 +391,7 @@
       "resolved_files": 13
     },
     "decisions-0040-shared-browser-contract": {
-      "binding_sha256": "b360e3cc5726fb9666796d8ac58a7545818d219efd14c767b21548afd2ce7839",
+      "binding_sha256": "237c88a970322af529cf31e5ccfc131e250ed8722b902b5d6d4344f9d683fa53",
       "document_sha256": "a3a0ea9785a0909c028c2557ccbd43b5d2088b7347a2acc5d689a2f80024d469",
       "path": "docs/decisions/0040-shared-browser-contract.md",
       "resolved_files": 28
@@ -457,7 +457,7 @@
       "resolved_files": 5
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "b8216e81b316d6236e365b845fcbf86f0bc0cfe2b8fb39ed929d39226257988a",
+      "binding_sha256": "b91ff1cc65d47120fa0c1855ef2904654e430c4bd2bfb1069d1e785a35efe4b2",
       "document_sha256": "59e42e6384ebae28e9f0a21609ca3c99506e7b6ba16be2b15bb1ab8aeab18e06",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 11
@@ -583,16 +583,16 @@
       "resolved_files": 82
     },
     "design-codex-convergence-experience-contract": {
-      "binding_sha256": "ec924ece991664989384c02d7a832e35ecc8e47588ede51e41f28296bfefdb6c",
+      "binding_sha256": "0761d1943cf7e05e95c72fe98cf8f2a83222214b61b0c0a98d775bb4fcea509d",
       "document_sha256": "1df6d7f82e0ec8a0a18602ada10d71cc1f42168ec21c02cd57fe2e204d8a0e1c",
       "path": "docs/design/codex-convergence-experience-contract.md",
-      "resolved_files": 108
+      "resolved_files": 111
     },
     "design-codex-convergence-state-matrix": {
-      "binding_sha256": "40d1c4c0589541247488cc3faa3217e729f29848149d2472cb1c576d8b854285",
+      "binding_sha256": "9397a41bfc2fd7c415bb46a43e2147723a61859c28201b433736a7fd030ad043",
       "document_sha256": "f986075be9aec2905b191c44a4e54a633a6f54ac0d4eb76c8bc6330b1e876dae",
       "path": "docs/design/codex-convergence-state-matrix.md",
-      "resolved_files": 107
+      "resolved_files": 110
     },
     "docs-home": {
       "binding_sha256": null,
@@ -679,10 +679,10 @@
       "resolved_files": 0
     },
     "specifications-in-transcript-approval-resolution": {
-      "binding_sha256": "3f649d7c2a159b7aa03b837acb2ef174d14a3b5420954331cdf0d76879c7d28e",
+      "binding_sha256": "fb204f1b72fff95f1ef48f543b171d060760e3932a6ec4f7734540d7c3cb96cb",
       "document_sha256": "922011db9de79508c195994cd38c294f4754cb22c6760256d5544252baa354bd",
       "path": "docs/specifications/in-transcript-approval-resolution.md",
-      "resolved_files": 121
+      "resolved_files": 124
     },
     "specifications-react-workbench-electron-preview-cutover": {
       "binding_sha256": null,

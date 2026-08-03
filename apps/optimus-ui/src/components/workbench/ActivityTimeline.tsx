@@ -22,6 +22,7 @@ export function ActivityTimeline({
   const attention = tools.some((tool) => isAttention(tool.status));
   const running = tools.some((tool) => isActive(tool.status));
   const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
+  const [openDetails, setOpenDetails] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState(attention);
   const rowsId = `activity-rows-${useId().replaceAll(':', '')}`;
 
@@ -36,6 +37,7 @@ export function ActivityTimeline({
       className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}
       data-open={open ? 'true' : 'false'}
       data-tool-count={tools.length}
+      aria-label="Tool activity"
     >
       <button
         type="button"
@@ -53,16 +55,37 @@ export function ActivityTimeline({
           {tools.map((tool) => {
             const category = categorizeTool(tool.name);
             const approvalState = approvalStates[tool.id];
+            const detailOpen = Boolean(openDetails[tool.id]);
+            const detailId = `${rowsId}-detail-${tool.id.replace(/[^a-zA-Z0-9_-]/g, '')}`;
             return (
-              <div className="activity-item" key={tool.id}>
-                <div className={`activity-row is-${tool.status}`}>
+              <div className="activity-item" key={tool.id} data-tool-id={tool.id}>
+                <button
+                  type="button"
+                  className={`activity-row is-${tool.status}`}
+                  aria-expanded={detailOpen}
+                  aria-controls={detailId}
+                  aria-label={`Expand ${category} tool details`}
+                  title={`${tool.name}: ${tool.detail}`}
+                  onClick={() => setOpenDetails((current) => ({ ...current, [tool.id]: !detailOpen }))}
+                >
                   <Icon name={toolIcon(category, tool.status)} />
                   <strong>{toolLabel(category, tool.name, tool.status)}</strong>
                   <span title={tool.detail || undefined}>
                     {tool.detail}
                     {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
                   </span>
-                </div>
+                </button>
+                {detailOpen ? (
+                  <div className="activity-detail" id={detailId} role="region" aria-label={`Technical details for ${tool.name}`}>
+                    <dl>
+                      <div><dt>Tool</dt><dd>{tool.name}</dd></div>
+                      <div><dt>Status</dt><dd>{tool.status}</dd></div>
+                      <div><dt>Call</dt><dd>{tool.callId}</dd></div>
+                      {typeof tool.durationMs === 'number' ? <div><dt>Duration</dt><dd>{formatDuration(tool.durationMs)}</dd></div> : null}
+                    </dl>
+                    {tool.outcome ? <pre>{JSON.stringify(tool.outcome, null, 2)}</pre> : null}
+                  </div>
+                ) : null}
                 {tool.status === 'awaiting_approval' && tool.approval ? (
                   <ToolApprovalCard
                     tool={tool}

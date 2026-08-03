@@ -24,18 +24,18 @@ describe('motion contract', () => {
     expect(css).toMatch(/\.surface-row:not\(:has\(\.workspace-shell\)\)\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
   });
 
-  it('paints the work area as one translucent pane without an opaque transcript layer', () => {
+  it('paints the work area as one opaque square pane without text bleed', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--work-pane-bg:\s*rgba\(7,\s*7,\s*7,\s*0\.78\)/s);
-    expect(css).toMatch(/\.work-surface\s*\{[^}]*background:\s*var\(--work-pane-bg\)[^}]*box-shadow:\s*inset/s);
-    expect(css).toMatch(/\.transcript\s*\{[^}]*background:\s*transparent/s);
+    expect(css).toMatch(/--work-pane-bg:\s*#0b0b0b/);
+    expect(css).toMatch(/\.work-surface\s*\{[^}]*background:\s*var\(--work-pane-bg\)/s);
+    expect(css).toMatch(/\.transcript\s*\{[^}]*background:\s*#0b0b0b/s);
     expect(css).toMatch(/\.composer-shell\s*\{[^}]*var\(--work-pane-bg\)/s);
   });
 
-  it('paints the project sidebar as translucent black without blurring its text', () => {
+  it('paints the project sidebar as solid black without blurring its text', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--project-rail-bg:\s*rgba\(0,\s*0,\s*0,\s*0\.82\)/s);
-    expect(css).toMatch(/\.project-rail\s*\{[^}]*background:\s*var\(--project-rail-bg\)/s);
+    expect(css).toMatch(/--project-rail-bg:\s*#080808/);
+    expect(css).toMatch(/\.project-rail\s*\{[^}]*background:\s*#080808/s);
     expect(css).not.toMatch(/backdrop-filter/i);
   });
 
@@ -104,7 +104,7 @@ describe('motion contract', () => {
     expect(css).not.toMatch(/\.send-button\s*\{[^}]*background:\s*var\(--accent\)/s);
   });
 
-  it('keeps the chat surface rounded without adding broad visual effects', () => {
+  it('keeps every workbench surface square without adding broad visual effects', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     for (const selector of [
       '.app-stage',
@@ -123,12 +123,11 @@ describe('motion contract', () => {
     ]) {
       expect(css).toContain(selector);
     }
-    expect(css).toMatch(/--radius-sm:\s*6px/);
-    expect(css).toMatch(/--radius:\s*8px/);
-    expect(css).toMatch(/--radius-lg:\s*12px/);
-    expect(css).toMatch(/\.message\s*\{[^}]*animation:\s*message-in\s+160ms/s);
-    expect(css).toMatch(/\.activity-timeline\[data-open="true"\]\s*\{[^}]*border-radius:\s*var\(--radius-lg\)/s);
-    expect(css).toMatch(/\.send-button\s*\{[^}]*border-radius:\s*var\(--radius-sm\)/s);
-    expect(css).not.toMatch(/border-radius:\s*0\s*!important/);
+    expect(css).toMatch(/\*,\s*\*::before,\s*\*::after\s*\{[^}]*border-radius:\s*0\s*!important/s);
+    expect(css).toMatch(/--radius-sm:\s*0px/);
+    expect(css).toMatch(/--radius:\s*0px/);
+    expect(css).toMatch(/--radius-lg:\s*0px/);
+    expect(css).toMatch(/\.activity-detail\s*\{/);
+    expect(css).toMatch(/\.prompt-history-rail\s*\{/);
   });
 });

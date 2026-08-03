@@ -492,3 +492,80 @@ async function assertWorkSurfaceContrast(page) {
   expect(contract.ratio).toBeGreaterThanOrEqual(4.5);
   expect(contract.ancestors.filter((item) => item.opacity !== '1')).toEqual([]);
 }
+
+test('projects, prompt history, tool groups, and square geometry work together', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto(URL);
+  await expect(page.getByRole('complementary', { name: 'Projects and sessions' })).toBeVisible();
+
+  await page.evaluate(() => {
+    localStorage.setItem('optimus.ui.projects', JSON.stringify({
+      version: 2,
+      projects: [{ id: 'p-shell', name: 'Optimus Agent', rootPaths: ['/workspace'] }],
+    }));
+    localStorage.setItem('optimus.ui.sessionProjects', JSON.stringify({ 'fixture-assess': 'p-shell' }));
+    localStorage.setItem('optimus.ui.projectExpanded', JSON.stringify({ 'p-shell': true }));
+  });
+  await page.reload();
+
+  await expect(page.getByTestId('recent-chats-section')).toBeVisible();
+  await expect(page.getByTestId('projects-section')).toBeVisible();
+  const project = page.locator('[data-project-id="p-shell"]');
+  await expect(project).toBeVisible();
+  await expect(project.locator('[data-session-id="fixture-assess"]')).toHaveCount(1);
+  await expect(page.getByTestId('prompt-history')).toBeVisible();
+  await expect(page.locator('.prompt-history-item')).toHaveCount(2);
+
+  const secondPrompt = page.locator('.prompt-history-item[data-prompt-id="fixture-assess:persisted:2"]');
+  await expect(secondPrompt).toHaveCount(1);
+  await secondPrompt.click();
+  await expect(secondPrompt).toHaveAttribute('aria-current', 'true');
+
+  const looseSession = page.locator('.session-row[data-session-id="fixture-runtime"]');
+  await expect(looseSession).toHaveCount(1);
+  await looseSession.dragTo(project);
+  await expect(project.locator('[data-session-id="fixture-runtime"]')).toHaveCount(1);
+  await expect(page.getByTestId('recent-chats-section').locator('[data-session-id="fixture-runtime"]')).toHaveCount(0);
+
+  // The seeded project is intentionally not authorized in the fixture. Select
+  // an unfiled chat for the stream proof so the test covers project navigation
+  // and tool rendering independently of the authorization gate.
+  await page.getByTitle('Preview browser integration').click();
+  const composer = page.getByLabel('Message Optimus');
+  await composer.fill('verify grouped tool activity');
+  await page.getByRole('button', { name: 'Send message' }).click();
+  await expect(page.locator('.message-body').getByText(/working from the offline fixture transport/i)).toBeVisible();
+  const toolGroup = page.getByLabel('Tool activity');
+  await expect(toolGroup).toHaveCount(1);
+  const groupToggle = toolGroup.getByRole('button', { name: /Read files/i });
+  await groupToggle.click();
+  const toolRow = toolGroup.locator('.activity-row');
+  await expect(toolRow).toHaveCount(1);
+  await toolRow.click();
+  await expect(toolGroup.getByRole('region', { name: 'Technical details for read_file' })).toBeVisible();
+
+  const radii = await page.evaluate(() => Array.from(document.querySelectorAll(
+    '.app-stage, .composer-card, .project-group, .session-row, .prompt-history-item, .activity-timeline'
+  )).map((element) => ({
+    className: typeof element.className === 'string' ? element.className : element.tagName,
+    radius: getComputedStyle(element).borderRadius,
+  })));
+  expect(radii.length).toBeGreaterThan(4);
+  expect(radii.every((item) => item.radius === '0px')).toBe(true);
+
+  await page.getByRole('button', { name: /^Access: / }).click();
+  const accessMenu = page.getByRole('listbox', { name: 'Access' });
+  await expect(accessMenu).toBeVisible();
+  const menuSurface = await accessMenu.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { color: style.backgroundColor, image: style.backgroundImage, radius: style.borderRadius };
+  });
+  expect(menuSurface.color).toBe('rgb(17, 17, 17)');
+  expect(menuSurface.image).toBe('none');
+  expect(menuSurface.radius).toBe('0px');
+  await page.keyboard.press('Escape');
+
+  await assertNoHorizontalOverflow(page);
+  expect(errors).toEqual([]);
+});

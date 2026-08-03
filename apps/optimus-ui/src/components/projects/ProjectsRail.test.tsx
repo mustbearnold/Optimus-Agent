@@ -325,6 +325,86 @@ describe('ProjectsRail session actions', () => {
     fireEvent.contextMenu(archivedThread.closest('.session-row')!);
     expect(screen.getByRole('menuitem', { name: 'Unarchive session' })).toBeInTheDocument();
   });
+
+  it('renders Recent Chats separately from nested project sessions and accepts a drop', () => {
+    const onAssign = vi.fn();
+    const { container } = render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[
+          { id: 'linked', title: 'Linked session' },
+          { id: 'loose', title: 'Loose session' },
+        ]}
+        projects={[{ id: 'project-1', name: 'Alpha', rootPaths: ['/alpha'] }]}
+        assignments={{ linked: 'project-1' }}
+        expanded={{ 'project-1': true }}
+        selectedSessionId="linked"
+        sessionIndicators={{}}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={onAssign}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('recent-chats-section')).toHaveTextContent('Recent Chats');
+    expect(screen.getByTestId('projects-section')).toHaveTextContent('Projects');
+    expect(screen.getByTitle('Loose session')).toBeInTheDocument();
+    expect(screen.getByTitle('Linked session')).toBeInTheDocument();
+    expect(screen.getByTitle('Linked session').closest('[data-project-id="project-1"]')).not.toBeNull();
+    expect(screen.getByTitle('Loose session').closest('[data-project-id="project-1"]')).toBeNull();
+
+    const project = container.querySelector('[data-project-id="project-1"]');
+    const loose = screen.getByTitle('Loose session').closest('.session-row');
+    expect(project).not.toBeNull();
+    expect(loose).not.toBeNull();
+    const dataTransfer = {
+      effectAllowed: '',
+      dropEffect: '',
+      setData: vi.fn(),
+      getData: vi.fn().mockReturnValue('loose'),
+    };
+    fireEvent.dragStart(loose!, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith('text/optimus-session', 'loose');
+    fireEvent.drop(project!, { dataTransfer });
+    expect(onAssign).toHaveBeenCalledWith('loose', 'project-1');
+  });
+
+  it('offers a keyboard-safe move action from the session menu', () => {
+    render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[{ id: 'loose', title: 'Loose session' }]}
+        projects={[{ id: 'project-1', name: 'Alpha', rootPaths: ['/alpha'] }]}
+        assignments={{}}
+        expanded={{}}
+        selectedSessionId="loose"
+        sessionIndicators={{}}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={vi.fn()}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+    fireEvent.keyDown(screen.getByTitle('Loose session'), { key: 'F10', shiftKey: true });
+    expect(screen.getByRole('menuitem', { name: 'Move to Alpha' })).toBeInTheDocument();
+  });
 });
 
 async function waitForFocus(element: HTMLElement) {
