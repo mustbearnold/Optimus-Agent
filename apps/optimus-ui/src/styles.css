@@ -3752,6 +3752,11 @@ code {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes activity-row-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes surface-in {
   from { opacity: 0; }
   to { opacity: 1; }

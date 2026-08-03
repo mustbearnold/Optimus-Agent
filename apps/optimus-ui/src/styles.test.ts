@@ -41,8 +41,8 @@ describe('motion contract', () => {
 
   it('uses the black glass palette in both saved theme modes', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#000000[^}]*--accent:\s*#d9d9d9/s);
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--canvas:\s*#000000[^}]*--surface:\s*rgba\(10,\s*10,\s*10,\s*0\.84\)[^}]*--accent:\s*#d9d9d9/s);
+    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#000000[^}]*--accent:\s*#f47742/s);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--canvas:\s*#000000[^}]*--surface:\s*rgba\(10,\s*10,\s*10,\s*0\.84\)[^}]*--accent:\s*#f47742/s);
   });
 
   it('keeps thread rows flat and reserves full-contrast titles for selection', () => {
@@ -98,7 +98,7 @@ describe('motion contract', () => {
     expect(css).not.toMatch(/\.send-button\s*\{[^}]*background:\s*var\(--accent\)/s);
   });
 
-  it('enforces square geometry for every card and panel surface', () => {
+  it('keeps the chat surface rounded without adding broad visual effects', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     for (const selector of [
       '.app-stage',
@@ -117,8 +117,12 @@ describe('motion contract', () => {
     ]) {
       expect(css).toContain(selector);
     }
-    expect(css).toMatch(/\.app-stage,[\s\S]*?\.terminal-panel\s*\{\s*border-radius:\s*0;/s);
-    expect(css).toMatch(/\.send-button\s*\{[^}]*border-radius:\s*0/s);
-    expect(css).toMatch(/\*,\s*\*::before,\s*\*::after\s*\{\s*border-radius:\s*0\s*!important;/s);
+    expect(css).toMatch(/--radius-sm:\s*6px/);
+    expect(css).toMatch(/--radius:\s*8px/);
+    expect(css).toMatch(/--radius-lg:\s*12px/);
+    expect(css).toMatch(/\.message\s*\{[^}]*animation:\s*message-in\s+160ms/s);
+    expect(css).toMatch(/\.activity-timeline\[data-open="true"\]\s*\{[^}]*border-radius:\s*var\(--radius-lg\)/s);
+    expect(css).toMatch(/\.send-button\s*\{[^}]*border-radius:\s*var\(--radius-sm\)/s);
+    expect(css).not.toMatch(/border-radius:\s*0\s*!important/);
   });
 });

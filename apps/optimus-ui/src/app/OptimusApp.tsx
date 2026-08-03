@@ -69,6 +69,7 @@ import { SettingsDialog } from '../components/settings/SettingsDialog';
 import { Composer } from '../components/workbench/Composer';
 import { SessionBar } from '../components/workbench/SessionBar';
 import { Transcript } from '../components/workbench/Transcript';
+import { WorkbenchStatusBar } from '../components/workbench/WorkbenchStatusBar';
 import { ArtifactsSurface } from '../components/workspace/ArtifactsSurface';
 import { WorkspacePane } from '../components/workspace/WorkspacePane';
 import { composeSendMessage } from './composeSendMessage';
@@ -841,6 +842,12 @@ const WorkbenchChat = memo(function WorkbenchChat({
         onSettings={onSettings}
         onSend={onSend}
         onStop={onStop}
+      />
+      <WorkbenchStatusBar
+        status={conversation.status}
+        statusText={conversation.statusText}
+        settings={settings}
+        project={project}
       />
     </>
   );

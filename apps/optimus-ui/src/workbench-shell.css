@@ -35,20 +35,24 @@
   --faint: #626262;
   --rail-nav-text: #a0a0a0;
   --chrome-control-icon: #a0a0a0;
-  --accent: #d9d9d9;
-  --accent-strong: #ffffff;
-  --accent-soft: rgba(255, 255, 255, 0.1);
+  /* Warm action colour from the dark Reasonix surface; keep status success
+     green and danger red semantically separate. */
+  --accent: #f47742;
+  --accent-strong: #ff9a6a;
+  --accent-soft: rgba(244, 119, 66, 0.16);
   --success: #78b892;
-  --warning: #d0aa64;
+  --warning: #ff9a6a;
   --danger: #d87882;
   --danger-contrast: #050505;
   --danger-soft: rgba(216, 120, 130, 0.11);
   /* ADR-0030 measured wide-shell anchor. Rebaseline only with a newer captured
      baseline that supersedes that decision, not by editing this token. */
   --topbar-h: 36px;
-  --radius-sm: 0px;
-  --radius: 0px;
-  --radius-lg: 0px;
+  /* Reasonix keeps the shell quiet, but gives interactive surfaces enough
+     radius to read as one coherent desktop app instead of terminal panes. */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
   --rail-card-inset: inset 0 0 15px rgba(255, 255, 255, 0.04);
   --shadow-popover: inset 0 0 0 1px var(--border);
   --shadow-dialog: inset 0 0 0 1px var(--border-strong);
@@ -85,17 +89,17 @@
   --faint: #626262;
   --rail-nav-text: #a0a0a0;
   --chrome-control-icon: #a0a0a0;
-  --accent: #d9d9d9;
-  --accent-strong: #ffffff;
-  --accent-soft: rgba(255, 255, 255, 0.1);
+  --accent: #f47742;
+  --accent-strong: #ff9a6a;
+  --accent-soft: rgba(244, 119, 66, 0.16);
   --success: #78b892;
-  --warning: #d0aa64;
+  --warning: #ff9a6a;
   --danger: #d87882;
   --danger-contrast: #050505;
   --danger-soft: rgba(216, 120, 130, 0.11);
-  --radius-sm: 0px;
-  --radius: 0px;
-  --radius-lg: 0px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
   --rail-card-inset: inset 0 0 15px rgba(255, 255, 255, 0.04);
   --shadow-popover: inset 0 0 0 1px var(--border);
   --shadow-dialog: inset 0 0 0 1px var(--border-strong);
@@ -688,6 +692,7 @@ select:focus-visible,
 
 .message {
   margin-bottom: 30px;
+  animation: message-in 160ms var(--ease-out);
 }
 
 .message-body {
@@ -708,6 +713,73 @@ select:focus-visible,
 
 .message-assistant {
   max-width: 720px;
+}
+
+/* Reasonix treats tool activity as a quiet, nested part of the assistant
+   turn. Keep the collapsed state lightweight, then give the opened group a
+   readable surface and a single visual spine for the rows. */
+.activity-timeline[data-open="true"] {
+  margin-top: 14px;
+  padding: 7px 9px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  box-shadow: inset 0 0 0 1px var(--work-pane-edge);
+}
+
+.activity-heading {
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 5px;
+  border-radius: var(--radius-sm);
+}
+
+.activity-timeline[data-open="true"] .activity-heading {
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+}
+
+.activity-rows {
+  padding: 6px 5px 2px 29px;
+}
+
+.activity-rows-inner {
+  position: relative;
+  gap: 3px;
+}
+
+.activity-rows-inner::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 5px;
+  left: -17px;
+  width: 1px;
+  background: color-mix(in srgb, var(--border-strong) 72%, transparent);
+}
+
+.activity-timeline[data-open="true"] .activity-item {
+  animation: activity-row-in 160ms var(--ease-out) both;
+}
+
+.activity-timeline[data-open="true"] .activity-item:nth-child(2) {
+  animation-delay: 18ms;
+}
+
+.activity-timeline[data-open="true"] .activity-item:nth-child(3) {
+  animation-delay: 36ms;
+}
+
+.activity-timeline[data-open="true"] .activity-item:nth-child(4) {
+  animation-delay: 54ms;
+}
+
+.activity-row {
+  min-height: 28px;
+}
+
+.activity-row span:last-child {
+  cursor: default;
 }
 
 .message-worked,
@@ -827,7 +899,7 @@ select:focus-visible,
   width: 32px;
   height: 32px;
   border: 1px solid var(--border-strong);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   color: var(--text-2);
   background: var(--send-control);
 }
@@ -1018,13 +1090,121 @@ select:focus-visible,
 .settings-callout,
 .activity-group,
 .terminal-panel {
-  border-radius: 0;
   box-shadow: inset 0 0 0 1px var(--work-pane-edge);
 }
 
 .composer-card:focus-within {
   border-color: var(--border-strong);
   box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.workbench-statusbar {
+  min-width: 0;
+  min-height: 28px;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.workbench-status-state,
+.workbench-status-segment {
+  min-width: 0;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.workbench-status-state {
+  color: var(--muted);
+}
+
+.workbench-status-state.is-working {
+  color: var(--accent-strong);
+}
+
+.workbench-status-state.is-attention {
+  color: var(--warning);
+}
+
+.workbench-status-state.is-failed {
+  color: var(--danger);
+}
+
+.workbench-status-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.workbench-status-state.is-working .workbench-status-dot {
+  animation: status-pulse 1.15s ease-in-out infinite;
+}
+
+.workbench-status-detail,
+.workbench-status-segment > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-status-detail {
+  max-width: 28ch;
+  color: var(--faint);
+}
+
+.workbench-status-segment {
+  color: var(--muted);
+}
+
+.workbench-status-segment:hover {
+  color: var(--text-2);
+  background: var(--hover);
+}
+
+.workbench-status-segment > svg {
+  width: 12px;
+  height: 12px;
+  color: var(--faint);
+}
+
+.workbench-status-spacer {
+  min-width: 8px;
+  flex: 1;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 0.42; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 680px) {
+  .workbench-statusbar {
+    padding-inline: 6px;
+  }
+
+  .workbench-status-state,
+  .workbench-status-segment {
+    padding-inline: 5px;
+  }
+
+  .workbench-status-secondary {
+    display: none;
+  }
 }
 
 .terminal-panel,
@@ -1036,12 +1216,4 @@ select:focus-visible,
 .terminal-command button {
   color: var(--danger-contrast);
   background: var(--accent);
-}
-
-/* Absolute geometry contract: no legacy route, control, pseudo-element, or
-   breakpoint may restore curved corners. */
-*,
-*::before,
-*::after {
-  border-radius: 0 !important;
 }

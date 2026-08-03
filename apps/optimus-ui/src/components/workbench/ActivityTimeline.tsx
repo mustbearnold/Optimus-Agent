@@ -35,6 +35,7 @@ export function ActivityTimeline({
     <div
       className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}
       data-open={open ? 'true' : 'false'}
+      data-tool-count={tools.length}
     >
       <button
         type="button"
@@ -57,7 +58,7 @@ export function ActivityTimeline({
                 <div className={`activity-row is-${tool.status}`}>
                   <Icon name={toolIcon(category, tool.status)} />
                   <strong>{toolLabel(category, tool.name, tool.status)}</strong>
-                  <span>
+                  <span title={tool.detail || undefined}>
                     {tool.detail}
                     {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
                   </span>

@@ -404,6 +404,17 @@ async function assertVisibleElementsStayInViewport(page) {
 // while saying nothing about whether the result was still legible. A WCAG AA
 // ratio holds in either theme and still fails on a real regression.
 async function assertWorkSurfaceContrast(page) {
+  // Newly mounted turns use a short entry motion. Wait for that finite motion
+  // before sampling opacity so this gate checks the settled surface rather
+  // than a frame midway through the animation.
+  await page.locator('.message').evaluateAll((elements) =>
+    Promise.all(
+      elements
+        .flatMap((element) => element.getAnimations())
+        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+        .map((animation) => animation.finished)
+    )
+  );
   const contract = await page.locator('.message-assistant .message-body').first().evaluate((element) => {
     const parse = (value) => {
       const parts = (value.match(/[\d.]+/g) || []).map(Number);
