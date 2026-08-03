@@ -283,6 +283,21 @@ impl WorkbenchState {
         }
     }
 
+    /// Reopen a durable approval as a blocked tool call. The session store
+    /// contains the model protocol message, while the execution store owns
+    /// the human-facing lifecycle; restoring this block keeps those concerns
+    /// separate and gives the picker a real call identity after relaunch.
+    pub(crate) fn restore_blocked_tool(&mut self, tool: &str, call_id: &str, run_id: Uuid) {
+        self.blocks.push(WorkbenchBlock::born(
+            WorkbenchBlockKind::ToolCall {
+                call_id: call_id.to_string(),
+                tool: tool.to_string(),
+            },
+            BlockLifecycle::Blocked,
+            Some(run_id),
+        ));
+    }
+
     /// A delta reached the last assistant bubble. A settled bubble reopens:
     /// the delta is a typed event, and more text arriving is the stream saying
     /// the answer was not finished after all.

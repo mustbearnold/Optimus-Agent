@@ -206,7 +206,7 @@ class Case:
         self.environment = environment or {}
         self.session = f"optimus-tui-matrix-{os.getpid()}-{Case._serial}"
 
-    def launch(self) -> None:
+    def launch(self, *, allow_approval: bool = False) -> None:
         assignments = [
             f"{key}={shlex.quote(value)}"
             for key, value in sorted(self.environment.items())
@@ -235,7 +235,12 @@ class Case:
             raise FeatureFailure(
                 f"tmux could not launch {self.session}: {started.stderr.strip()}"
             )
-        self.wait(lambda lines: "· ready" in normalized(lines), 20, "launch ready")
+        self.wait(
+            lambda lines: "· ready" in normalized(lines)
+            or (allow_approval and "! approval" in normalized(lines)),
+            20,
+            "launch ready",
+        )
 
     def close(self) -> None:
         tmux("kill-session", "-t", self.session)
@@ -700,8 +705,48 @@ def approval_resolution_journey(
                 "approval modal overflowed the narrow terminal",
                 approve,
             )
-            approve.click_text("Approve and continue")
-            settled = approve.wait(
+            # The decision must remain actionable if the terminal closes while
+            # the human is considering it. Escaping the picker leaves the
+            # pending job untouched; /quit simulates an ordinary app exit.
+            approve.keys("Escape")
+            approve.type_submit("/quit")
+            approve.wait_exit()
+        finally:
+            approve.close()
+
+        resumed = Case(
+            binary,
+            approval_home,
+            cols=40,
+            rows=20,
+            environment=environment,
+        )
+        resumed.launch(allow_approval=True)
+        try:
+            restored = resumed.wait_text("Approval required", 20)
+            restored_text = normalized(restored)
+            audit.check(
+                "write_file" in restored_text and "[approval]" in restored_text,
+                "relaunch did not restore the blocked tool row",
+                resumed,
+            )
+            audit.check(
+                "approval-call-1" not in restored_text,
+                "relaunch leaked the model's raw tool-call envelope",
+                resumed,
+            )
+            audit.check(
+                "! approval" in restored_text,
+                "relaunch did not restore the approval footer",
+                resumed,
+            )
+            audit.check(
+                all(len(line) <= resumed.cols for line in restored),
+                "restored approval modal overflowed the narrow terminal",
+                resumed,
+            )
+            resumed.click_text("Approve and continue")
+            settled = resumed.wait(
                 lambda lines: "approved continuation" in normalized(lines)
                 and "turn · ready" in normalized(lines),
                 30,
@@ -711,18 +756,18 @@ def approval_resolution_journey(
                 "approved — running the exact" in normalized(settled)
                 and "action…" in normalized(settled),
                 "approval decision was not recorded in the transcript",
-                approve,
+                resumed,
             )
             audit.check(
                 "turn · ready" in normalized(settled),
                 "approved continuation did not return the workbench to ready",
-                approve,
+                resumed,
             )
             proof = approval_home / "workspace" / "approval-proof.txt"
-            approve.wait(lambda _lines: proof.is_file(), 10, "approved file")
-            approve.command("/approval", "no approval is pending")
+            resumed.wait(lambda _lines: proof.is_file(), 10, "approved file")
+            resumed.command("/approval", "no approval is pending")
         finally:
-            approve.close()
+            resumed.close()
 
         deny = Case(
             binary,

@@ -692,6 +692,39 @@ impl ExecutionStore {
             .transpose()
     }
 
+    /// Find the exact chat approval a surface must restore for one session.
+    ///
+    /// A parked turn remains running while its approval row remains pending.
+    /// Looking it up through the manifest keeps the renderer from having to
+    /// know the execution schema or infer a call from painted transcript text.
+    /// There can be only one actionable pending call for a session at a time,
+    /// but the ordering makes recovery deterministic if an interrupted older
+    /// manifest is present as well.
+    pub fn pending_chat_approval_for_session(
+        &self,
+        session_id: Uuid,
+    ) -> Result<Option<(ToolApprovalBinding, ToolCall)>> {
+        self.conn
+            .query_row(
+                "SELECT a.binding_json,a.call_json
+                 FROM execution_chat_approvals a
+                 JOIN execution_manifests m ON m.id=a.manifest_id
+                 WHERE m.session_id=?1 AND m.status='running' AND a.status='pending'
+                 ORDER BY m.created_unix DESC,m.id DESC,a.rowid DESC
+                 LIMIT 1",
+                params![session_id.to_string()],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+            )
+            .optional()?
+            .map(|(binding, call)| {
+                Ok((
+                    serde_json::from_str(&binding)?,
+                    serde_json::from_str(&call)?,
+                ))
+            })
+            .transpose()
+    }
+
     pub fn has_pending_chat_approval(&self, manifest_id: Uuid) -> Result<bool> {
         self.conn
             .query_row(
@@ -1084,5 +1117,64 @@ mod tests {
             "Read file"
         );
         assert!(events[0].sequence < events[1].sequence);
+    }
+
+    #[test]
+    fn pending_chat_approval_is_recoverable_by_session_after_reopen() {
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("execution.db");
+        let session_id = Uuid::new_v4();
+        let turn_id = Uuid::new_v4();
+        let store = ExecutionStore::open(&path).unwrap();
+        let manifest = store
+            .begin(
+                session_id,
+                turn_id,
+                "open-ai-compat",
+                "fixture",
+                b"prompt",
+                b"tools",
+                b"policy",
+            )
+            .unwrap();
+        let call = ToolCall {
+            id: "approval-call-1".into(),
+            name: "write_file".into(),
+            arguments: json!({"path":"proof.txt","contents":"ok"}),
+        };
+        let binding = ToolApprovalBinding {
+            run_id: manifest,
+            call_id: call.id.clone(),
+            tool_id: optimus_packs::ToolId::new("write_file"),
+            job_id: optimus_runtime::job_id(Uuid::new_v4()),
+            node_id: Uuid::new_v4(),
+            node_index: 0,
+            effect_sha256: "0".repeat(64),
+            summary: "Write proof.txt (2 bytes)".into(),
+        };
+        let event = ToolLifecycleEvent {
+            schema_version: crate::TOOL_LIFECYCLE_SCHEMA_VERSION,
+            event_id: format!("{manifest}:{}:approval_required", call.id),
+            run_id: manifest.to_string(),
+            call_id: call.id.clone(),
+            tool_id: binding.tool_id.clone(),
+            phase: crate::ToolLifecyclePhase::ApprovalRequired,
+            summary: binding.summary.clone(),
+            duration_ms: Some(3),
+            outcome: None,
+            approval: Some(binding.clone()),
+        };
+        store
+            .record_chat_approval_required(manifest, &call, &event, &binding)
+            .unwrap();
+        drop(store);
+
+        let reopened = ExecutionStore::open(&path).unwrap();
+        let (found_binding, found_call) = reopened
+            .pending_chat_approval_for_session(session_id)
+            .unwrap()
+            .expect("pending approval should survive reopening the store");
+        assert_eq!(found_binding, binding);
+        assert_eq!(found_call, call);
     }
 }

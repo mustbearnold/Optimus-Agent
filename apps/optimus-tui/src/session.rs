@@ -21,7 +21,9 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use optimus_host::handle_ipc;
-use optimus_kernel::{CancellationToken, SessionMeta, SessionStore, ToolApprovalBinding};
+use optimus_kernel::{
+    CancellationToken, ExecutionStore, SessionMeta, SessionStore, ToolApprovalBinding, ToolCall,
+};
 use serde_json::json;
 
 use crate::composer::Composer;
@@ -299,6 +301,9 @@ impl TuiSession {
         let (_, messages, _, _) = store
             .load_bound_transcript(meta.id, meta.project.as_deref())
             .map_err(|error| error.to_string())?;
+        let pending = ExecutionStore::open(self.home.join("execution.db"))
+            .and_then(|store| store.pending_chat_approval_for_session(meta.id))
+            .map_err(|error| error.to_string())?;
 
         self.messages.clear();
         self.workbench.clear();
@@ -313,6 +318,17 @@ impl TuiSession {
             // history. Reopening it would dump internal instructions into the
             // user's transcript and make a clean session look enormous.
             if stored_role == optimus_kernel::Role::System {
+                continue;
+            }
+            // The kernel keeps the assistant's protocol tool-call envelope in
+            // the durable conversation so a resumed model sees it. It is not
+            // a useful terminal row, though: the execution store's typed
+            // approval binding below is the authoritative human-facing view.
+            if stored_role == optimus_kernel::Role::Assistant
+                && pending
+                    .as_ref()
+                    .is_some_and(|(_, call)| assistant_contains_tool_call(&content, call))
+            {
                 continue;
             }
             let (role, text) = match stored_role {
@@ -345,7 +361,34 @@ impl TuiSession {
         self.running_tool = None;
         self.answer_started = false;
         self.refresh_sidebar();
+        if let Some((binding, call)) = pending {
+            self.restore_pending_approval(binding, &call);
+        }
         Ok(())
+    }
+
+    /// Rebuild the human-facing approval card from the exact durable binding.
+    /// The model transcript is deliberately not trusted to recreate authority
+    /// after a restart; it only supplies context to the next kernel turn.
+    fn restore_pending_approval(&mut self, binding: ToolApprovalBinding, call: &ToolCall) {
+        let call_id = binding.call_id.clone();
+        let tool = call.name.clone();
+        self.workbench
+            .restore_blocked_tool(&tool, &call_id, binding.run_id);
+        self.messages.push(Message {
+            role: Role::Tool,
+            text: format!("{tool}  awaiting approval"),
+            call_id: Some(call_id.clone()),
+        });
+        self.pending_approval = Some(Box::new(binding.clone()));
+        self.push(
+            Role::Action,
+            format!(
+                "approval required:\n{}",
+                crate::tool_line::readable(&binding.summary)
+            ),
+        );
+        self.open_approval_picker();
     }
 
     pub(crate) fn open_sidebar_session(&mut self, index: usize, pinned: bool) {
@@ -715,6 +758,12 @@ impl TuiSession {
             access
         )
     }
+}
+
+fn assistant_contains_tool_call(content: &str, expected: &ToolCall) -> bool {
+    serde_json::from_str::<Vec<ToolCall>>(content)
+        .map(|calls| calls.iter().any(|call| call == expected))
+        .unwrap_or(false)
 }
 
 /// The most recently touched durable session in this home.
