@@ -850,13 +850,12 @@ fn next_tool_lifecycle<'a>(
     call_id: &str,
     cursor: &mut usize,
 ) -> Option<&'a ToolLifecycleEvent> {
-    while let Some(event) = lifecycles.get(*cursor) {
-        *cursor += 1;
-        if event.call_id == call_id {
-            return Some(event);
-        }
-    }
-    None
+    let offset = lifecycles
+        .get(*cursor..)?
+        .iter()
+        .position(|event| event.call_id == call_id)?;
+    *cursor += offset + 1;
+    lifecycles.get(*cursor - 1)
 }
 
 /// The most recently touched durable session in this home.
@@ -1560,6 +1559,36 @@ mod tests {
             "web_search  Found 3 sources  (1.2s)"
         );
         assert!(session.running_tool.is_none(), "nothing is in flight now");
+    }
+
+    #[test]
+    fn an_unmatched_legacy_tool_row_cannot_consume_replay_events() {
+        let mut second = tool_event("succeeded", "second result", Some(40));
+        second.call_id = "call-2".into();
+        second.event_id = "run-1:call-2:succeeded".into();
+        let lifecycles = vec![tool_event("succeeded", "first result", Some(20)), second];
+        let mut cursor = 0;
+
+        assert!(
+            next_tool_lifecycle(&lifecycles, "legacy-call", &mut cursor).is_none(),
+            "a legacy transcript row may have no typed lifecycle"
+        );
+        assert_eq!(
+            cursor, 0,
+            "a miss must leave replay positioned at the first event"
+        );
+        assert_eq!(
+            next_tool_lifecycle(&lifecycles, "call-1", &mut cursor)
+                .expect("the first typed row remains recoverable")
+                .summary,
+            "first result"
+        );
+        assert_eq!(
+            next_tool_lifecycle(&lifecycles, "call-2", &mut cursor)
+                .expect("the later typed row remains recoverable")
+                .summary,
+            "second result"
+        );
     }
 
     #[test]
