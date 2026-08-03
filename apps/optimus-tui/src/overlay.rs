@@ -26,6 +26,20 @@ fn accent(kind: Kind) -> Color {
     }
 }
 
+/// A selected row should read as part of the workbench, not as a terminal
+/// copy-selection rectangle. `REVERSED` turns the entire row white on many
+/// terminals and makes a picker feel like an accidental text selection.
+pub(crate) fn selection_style(kind: Kind) -> Style {
+    let background = match kind {
+        Kind::Modal => Color::Rgb(35, 39, 53),
+        Kind::Suggestions => Color::Rgb(31, 42, 52),
+    };
+    Style::default()
+        .fg(Color::Rgb(242, 242, 242))
+        .bg(background)
+        .add_modifier(Modifier::BOLD)
+}
+
 /// Paint the part of the frame an overlay will own.
 pub(crate) fn prepare(frame: &mut Frame, rect: Rect, kind: Kind) {
     if kind == Kind::Modal {

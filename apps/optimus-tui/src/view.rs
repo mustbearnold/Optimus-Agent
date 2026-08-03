@@ -515,8 +515,8 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
     frame.render_stateful_widget(
         List::new(rows)
             .block(overlay::panel(&title, overlay::Kind::Modal))
-            .highlight_symbol("> ")
-            .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
+            .highlight_symbol("› ")
+            .highlight_style(overlay::selection_style(overlay::Kind::Modal)),
         rect,
         &mut state,
     );
@@ -599,8 +599,8 @@ fn draw_suggestions(frame: &mut Frame, session: &TuiSession, composer: Rect) {
                 "Tab to complete",
                 overlay::Kind::Suggestions,
             ))
-            .highlight_symbol("> ")
-            .highlight_style(Style::default().add_modifier(Modifier::REVERSED)),
+            .highlight_symbol("› ")
+            .highlight_style(overlay::selection_style(overlay::Kind::Suggestions)),
         rect,
         &mut state,
     );
@@ -972,6 +972,24 @@ mod tests {
         );
     }
 
+    #[test]
+    fn picker_selection_uses_a_quiet_surface_not_terminal_reverse_video() {
+        let (_dir, mut session) = session_with(&[]);
+        session.picker = Some(crate::commands::menu());
+        let backend = ratatui::backend::TestBackend::new(60, 12);
+        let mut terminal = Terminal::new(backend).expect("test terminal");
+        terminal.draw(|f| draw(f, &session)).expect("draw");
+        let area = Rect::new(0, 0, 60, 12);
+        let rect = crate::mouse::picker_rect(area, session.picker.as_ref().unwrap());
+        let selected = terminal.backend().buffer()[(rect.x + 1, rect.y + 1)].style();
+        assert_eq!(selected.bg, Some(Color::Rgb(35, 39, 53)));
+        assert_eq!(selected.fg, Some(Color::Rgb(242, 242, 242)));
+        assert!(
+            !selected.add_modifier.contains(Modifier::REVERSED),
+            "selection must not look like terminal text selection"
+        );
+    }
+
     /// Render a real frame and read it back as text, so layout is asserted the
     /// way a user sees it rather than through the row model alone.
     fn render(session: &TuiSession, width: u16, height: u16) -> Vec<String> {
@@ -1109,7 +1127,10 @@ mod tests {
         session.completion.down(count);
 
         let screen = render(&session, 60, 12);
-        let marked: Vec<&String> = screen.iter().filter(|row| row.contains("> /")).collect();
+        let marked: Vec<&String> = screen
+            .iter()
+            .filter(|row| row.contains("│› /provider"))
+            .collect();
         assert_eq!(marked.len(), 1, "exactly one row is marked: {screen:?}");
         assert!(
             marked[0].contains("/provider <id>"),
