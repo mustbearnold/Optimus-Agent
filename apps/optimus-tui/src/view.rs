@@ -139,7 +139,7 @@ fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
         0
     };
     let path_width = total.saturating_sub(width::cells(&prefix) + gap + right_width);
-    let path = compact_path(&session.home, path_width as u16);
+    let path = context_path(session, path_width as u16);
     let left = format!("{prefix}{path}");
     let gap = total.saturating_sub(width::cells(&left) + right_width);
     frame.render_widget(
@@ -150,6 +150,37 @@ fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
         ])),
         area,
     );
+}
+
+/// Keep a named project scope visible after the sidebar is collapsed. The
+/// runtime home is still useful context, so preserve both when there is room;
+/// on a narrow frame the scope wins because it explains what the next turn
+/// will operate on.
+fn context_path(session: &TuiSession, width: u16) -> String {
+    let Some(scope) = session
+        .sidebar
+        .projects
+        .iter()
+        .find(|project| project.current && project.id.is_some())
+        .map(|project| project.label.as_str())
+    else {
+        return compact_path(&session.home, width);
+    };
+
+    const SEPARATOR: &str = " · ";
+    let limit = usize::from(width);
+    if limit <= width::cells(SEPARATOR) + 4 {
+        return width::truncate(scope, limit);
+    }
+    let scope_budget = limit
+        .saturating_sub(width::cells(SEPARATOR))
+        .saturating_sub(4);
+    let scope_display = width::truncate(scope, scope_budget);
+    let base_budget = limit
+        .saturating_sub(width::cells(SEPARATOR))
+        .saturating_sub(width::cells(&scope_display));
+    let base = compact_path(&session.home, base_budget as u16);
+    format!("{base}{SEPARATOR}{scope_display}")
 }
 
 fn compact_path(path: &std::path::Path, width: u16) -> String {
@@ -727,6 +758,30 @@ mod tests {
         assert!(
             help.contains("↵:send") && help.contains("Tab:inspect") && help.contains("Esc:clear"),
             "compact labels must remain complete: {screen:?}"
+        );
+    }
+
+    #[test]
+    fn a_named_project_scope_stays_visible_beside_the_context_path() {
+        let (_dir, mut session) = session_with(&[]);
+        session.sidebar.projects = vec![crate::sidebar::ProjectEntry {
+            id: Some("project-a".into()),
+            label: "project-a".into(),
+            session_count: 1,
+            current: true,
+        }];
+        session.project_id = Some("project-a".into());
+        let wide = render(&session, 80, 20);
+        assert!(wide[0].contains("project-a"), "scope disappeared: {wide:?}");
+
+        let narrow = render(&session, 32, 12);
+        assert!(
+            narrow.iter().all(|line| crate::width::cells(line) <= 32),
+            "scope context overflowed a narrow frame: {narrow:?}"
+        );
+        assert!(
+            narrow[0].contains("project"),
+            "narrow context should prefer the active scope: {narrow:?}"
         );
     }
 
