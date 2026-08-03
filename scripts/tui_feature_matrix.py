@@ -94,6 +94,54 @@ class ApprovalFixtureHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class CompletedToolFixtureHandler(http.server.BaseHTTPRequestHandler):
+    """A local provider whose read-only tool turn is safe to reopen.
+
+    The first response lists the workspace; the second answers from that
+    result. The journey is intentionally completed before the process exits,
+    so relaunch coverage can distinguish a polished lifecycle row from the
+    model protocol envelope kept in the durable conversation.
+    """
+
+    requests = 0
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
+        length = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(length)
+        type(self).requests += 1
+        if type(self).requests == 1:
+            message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "list-call-1",
+                        "type": "function",
+                        "function": {
+                            "name": "list_dir",
+                            "arguments": json.dumps({"path": "."}),
+                        },
+                    }
+                ],
+            }
+        else:
+            message = {
+                "role": "assistant",
+                "content": "The directory listing came back clean.",
+            }
+        body = json.dumps(
+            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 class FeatureFailure(RuntimeError):
     """A named user-visible contract failed."""
 
@@ -808,6 +856,78 @@ def approval_resolution_journey(
             )
         finally:
             deny.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def completed_tool_relaunch_journey(audit: Audit, binary: Path, home: Path) -> None:
+    audit.begin("completed-tool-relaunch-keeps-polished-lifecycle")
+    CompletedToolFixtureHandler.requests = 0
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), CompletedToolFixtureHandler
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    environment = {
+        "OPTIMUS_API_BASE": f"http://127.0.0.1:{server.server_address[1]}/v1",
+        "OPTIMUS_API_KEY": "completed-tool-fixture",
+        "OPTIMUS_MODEL": "tui-completed-tool",
+    }
+    binary = binary.resolve()
+    try:
+        first = Case(binary, home, cols=80, rows=28, environment=environment)
+        first.launch()
+        try:
+            first.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            first.type_submit("show the workspace")
+            first.wait(
+                lambda lines: "directory listing came back clean" in normalized(lines)
+                and "turn · ready" in normalized(lines),
+                30,
+                "completed tool turn settled",
+            )
+            first.keys("C-c")
+            first.wait_exit()
+        finally:
+            first.close()
+
+        resumed = Case(binary, home, cols=80, rows=28, environment=environment)
+        resumed.launch()
+        try:
+            restored = resumed.capture()
+            restored_text = normalized(restored)
+            audit.check(
+                "list_dir" in restored_text and "[done]" in restored_text,
+                "relaunch lost the completed tool lifecycle row",
+                resumed,
+            )
+            audit.check(
+                "list-call-1" not in restored_text,
+                "relaunch leaked the completed model tool-call envelope",
+                resumed,
+            )
+            audit.check(
+                '"version":1' not in restored_text and '"call_id"' not in restored_text,
+                "relaunch leaked the raw tool receipt payload",
+                resumed,
+            )
+            audit.check(
+                "directory listing came back clean" in restored_text,
+                "relaunch lost the assistant answer after the tool result",
+                resumed,
+            )
+            audit.check(
+                all(len(line) <= resumed.cols for line in restored),
+                "completed tool relaunch overflowed the terminal",
+                resumed,
+            )
+        finally:
+            resumed.close()
     finally:
         server.shutdown()
         server.server_close()
@@ -1541,6 +1661,11 @@ def main() -> int:
                 binary,
                 fresh("approval-resolution"),
                 fresh("approval-denial"),
+            )
+            completed_tool_relaunch_journey(
+                audit,
+                binary,
+                fresh("completed-tool-relaunch"),
             )
             editor_and_history(audit, Case(binary, fresh("editor")))
             streaming_and_cancel(

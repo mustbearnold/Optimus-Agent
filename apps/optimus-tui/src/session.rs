@@ -301,8 +301,13 @@ impl TuiSession {
         let (_, messages, _, _) = store
             .load_bound_transcript(meta.id, meta.project.as_deref())
             .map_err(|error| error.to_string())?;
-        let pending = ExecutionStore::open(self.home.join("execution.db"))
-            .and_then(|store| store.pending_chat_approval_for_session(meta.id))
+        let execution = ExecutionStore::open(self.home.join("execution.db"))
+            .map_err(|error| error.to_string())?;
+        let pending = execution
+            .pending_chat_approval_for_session(meta.id)
+            .map_err(|error| error.to_string())?;
+        let lifecycles = execution
+            .tool_lifecycle_for_session(meta.id)
             .map_err(|error| error.to_string())?;
 
         self.messages.clear();
@@ -322,14 +327,37 @@ impl TuiSession {
             }
             // The kernel keeps the assistant's protocol tool-call envelope in
             // the durable conversation so a resumed model sees it. It is not
-            // a useful terminal row, though: the execution store's typed
-            // approval binding below is the authoritative human-facing view.
-            if stored_role == optimus_kernel::Role::Assistant
-                && pending
-                    .as_ref()
-                    .is_some_and(|(_, call)| assistant_contains_tool_call(&content, call))
-            {
+            // a useful terminal row: lifecycle events below are the typed
+            // human-facing view, so raw JSON never returns on relaunch.
+            if stored_role == optimus_kernel::Role::Assistant && is_tool_call_envelope(&content) {
                 continue;
+            }
+            if stored_role == optimus_kernel::Role::Tool {
+                if let Some(call_id) = tool_call_id.as_deref() {
+                    let is_pending = pending
+                        .as_ref()
+                        .is_some_and(|(binding, _)| binding.call_id == call_id);
+                    if is_pending {
+                        // The pending call has no tool result yet; its blocked
+                        // row is restored from the exact approval binding
+                        // after the durable transcript is projected.
+                        continue;
+                    }
+                    if let Some(lifecycle) = lifecycles
+                        .iter()
+                        .rev()
+                        .find(|lifecycle| lifecycle.event.call_id == call_id)
+                    {
+                        let step = crate::tool_line::tool_step(&lifecycle.event);
+                        self.workbench.apply_tool_step(&step);
+                        self.messages.push(Message {
+                            role: Role::Tool,
+                            text: step.line,
+                            call_id: Some(call_id.to_string()),
+                        });
+                        continue;
+                    }
+                }
             }
             let (role, text) = match stored_role {
                 optimus_kernel::Role::User => (Role::User, content),
@@ -760,9 +788,9 @@ impl TuiSession {
     }
 }
 
-fn assistant_contains_tool_call(content: &str, expected: &ToolCall) -> bool {
+fn is_tool_call_envelope(content: &str) -> bool {
     serde_json::from_str::<Vec<ToolCall>>(content)
-        .map(|calls| calls.iter().any(|call| call == expected))
+        .map(|calls| !calls.is_empty())
         .unwrap_or(false)
 }
 
