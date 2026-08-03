@@ -351,22 +351,27 @@ electron_e2e_command() {
 }
 
 tier_ui() {
-  # Unit, terminal, DOM, and browser suites can share a phase. Native Electron
-  # gets its own phase: running it beside another Chromium stack can starve the
-  # renderer event loop long enough for a click to sit unconsumed even though
-  # the identical flow is consistently sub-three-seconds on an idle host.
+  # Unit suites share an initial phase. Native Electron gets its own phase:
+  # running it beside another Chromium stack can starve the renderer event loop
+  # long enough for a click to sit unconsumed even though the identical flow is
+  # consistently sub-three-seconds on an idle host.
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
 
   # The terminal face gets the same treatment as the desktop: the real binary,
-  # driven end to end, deterministically (offline provider, temp home).
+  # driven end to end, deterministically (offline provider, temp home). These
+  # three suites deliberately run one at a time. They all drive tmux event
+  # loops and Chromium/PTY scheduling at once; parallelising them made a slow
+  # host occasionally capture a pre-paint frame and report a false Unicode
+  # layout failure.
   if command -v tmux >/dev/null 2>&1; then
+    reap
     run "build optimus cli" cargo build -p optimus-cli
-    spawn "tui e2e" python3 scripts/tui_e2e.py
-    spawn "tui feature matrix" python3 scripts/tui_feature_matrix.py
+    run "tui e2e" python3 scripts/tui_e2e.py
+    run "tui feature matrix" python3 scripts/tui_feature_matrix.py
     if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
-      spawn "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
+      run "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "npm ci in apps/optimus-electron"
     fi
@@ -523,13 +528,16 @@ tier_all() {
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
   spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
 
-  # Terminal face, same standard as the desktop: real binary, deterministic pty.
+  # Terminal face, same standard as the desktop: real binary, deterministic
+  # pty. Reap the browser/unit jobs first, then keep all three terminal suites
+  # serial for the same tmux/event-loop reason as tier_ui above.
   if command -v tmux >/dev/null 2>&1; then
+    reap
     run "build optimus cli" cargo build -p optimus-cli
-    spawn "tui e2e" python3 scripts/tui_e2e.py
-    spawn "tui feature matrix" python3 scripts/tui_feature_matrix.py
+    run "tui e2e" python3 scripts/tui_e2e.py
+    run "tui feature matrix" python3 scripts/tui_feature_matrix.py
     if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
-      spawn "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
+      run "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "npm ci in apps/optimus-electron"
     fi
