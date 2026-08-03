@@ -267,7 +267,7 @@ class PendingRepeatedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
                 "role": "assistant",
                 "content": "The completed read alpha.",
             }
-        else:
+        elif request_number == 3:
             message = {
                 "role": "assistant",
                 "content": None,
@@ -283,6 +283,11 @@ class PendingRepeatedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
                         },
                     }
                 ],
+            }
+        else:
+            message = {
+                "role": "assistant",
+                "content": "The pending proof was approved after switching sessions.",
             }
         body = json.dumps(
             {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
@@ -1367,6 +1372,23 @@ def pending_approval_session_switch_journey(
             audit.check(
                 all(len(line) <= case.cols for line in restored),
                 "switched-back approval overflowed the terminal",
+                case,
+            )
+            case.click_text("Approve and continue")
+            settled = case.wait(
+                lambda lines: "pending proof was approved" in normalized(lines)
+                and "turn · ready" in normalized(lines),
+                30,
+                "switched-back approval resolution",
+            )
+            audit.check(
+                (home / "workspace" / "pending-proof.txt").is_file(),
+                "approval restored after a session switch did not run the effect",
+                case,
+            )
+            audit.check(
+                "turn · ready" in normalized(settled),
+                "switched-back approval did not return to ready",
                 case,
             )
         finally:
