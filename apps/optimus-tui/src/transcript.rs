@@ -605,7 +605,20 @@ fn compact_long_urls(marked: Vec<Marked>) -> Vec<Marked> {
             .map(|grapheme| grapheme.text.as_str())
             .collect::<String>();
         if width::cells(&url) <= MAX_SOURCE_URL_CELLS {
-            compacted.extend(marked[at..end].iter().cloned());
+            // Search-detail rows may already be clipped at the workbench
+            // boundary. They still belong to this URL pass: preserve the
+            // visible identity, but let the terminal recede the existing
+            // ellipsis just like it does for a raw assistant URL.
+            if width::cells(&url) == MAX_SOURCE_URL_CELLS && url.ends_with('…') {
+                compacted.extend(marked[at..end - 1].iter().cloned());
+                compacted.push(Marked {
+                    text: marked[end - 1].text.clone(),
+                    bold: marked[end - 1].bold,
+                    dim: true,
+                });
+            } else {
+                compacted.extend(marked[at..end].iter().cloned());
+            }
         } else {
             compacted.push(Marked {
                 text: width::take(&url, MAX_SOURCE_URL_CELLS - 1),
@@ -829,6 +842,19 @@ mod tests {
                 .flat_map(|row| row.segments.iter())
                 .any(|segment| segment.dim && segment.text.contains('…')),
             "the fade cue should use the transcript's supporting style"
+        );
+    }
+
+    #[test]
+    fn a_preclipped_grouped_source_keeps_its_dim_fade() {
+        let url = "https://www.google.com/search?q=latest+ai+news+today&source=web&client=optimus&hl=en-NZ&safe=active";
+        let clipped = width::truncate(url, MAX_SOURCE_URL_CELLS);
+        let rows = message_rows(&message(Role::Assistant, &format!("   {clipped}")), 100);
+        assert!(
+            rows.iter()
+                .flat_map(|row| row.segments.iter())
+                .any(|segment| segment.dim && segment.text == "…"),
+            "a source row clipped by the detail view still needs a dim ellipsis: {rows:?}"
         );
     }
 
