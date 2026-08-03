@@ -86,8 +86,8 @@ const fn typed(
 /// serves a name you already know — in which case you would have typed it.
 pub const COMMANDS: &[Command] = &[
     offered("providers", "pick a provider from a list"),
-    typed("sessions", None, "open a saved session"),
-    typed("pinned", None, "open a pinned session"),
+    typed("sessions", Some("<query>"), "open a saved session"),
+    typed("pinned", Some("<query>"), "open a pinned session"),
     typed("projects", None, "choose a project scope"),
     typed(
         "provider",
@@ -143,7 +143,7 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
     };
     let mut parts = rest.split_whitespace();
     let name = parts.next().unwrap_or("").to_ascii_lowercase();
-    let argument = parts.next().unwrap_or("").to_string();
+    let argument = parts.collect::<Vec<_>>().join(" ");
 
     if name.is_empty() {
         session.push(Role::Error, "type /help for commands".into());
@@ -159,8 +159,8 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
     match command.name {
         "help" => help(session),
         "providers" => providers(session),
-        "sessions" => sessions(session, false),
-        "pinned" => sessions(session, true),
+        "sessions" => sessions(session, false, &argument),
+        "pinned" => sessions(session, true, &argument),
         "projects" => projects(session),
         "provider" => set_provider(session, &argument),
         "model" => set_model(session, &argument),
@@ -277,12 +277,26 @@ fn session_picker_label(meta: &SessionMeta) -> String {
     }
 }
 
-fn sessions(session: &mut TuiSession, pinned: bool) {
+fn sessions(session: &mut TuiSession, pinned: bool, query: &str) {
+    let query = query.trim().to_ascii_lowercase();
     let entries = session
         .sidebar
         .sessions
         .iter()
         .filter(|meta| !pinned || meta.pinned)
+        .filter(|meta| {
+            query.is_empty()
+                || session_picker_label(meta)
+                    .to_ascii_lowercase()
+                    .contains(&query)
+                || meta
+                    .project
+                    .as_deref()
+                    .unwrap_or("workspace")
+                    .to_ascii_lowercase()
+                    .contains(&query)
+                || meta.id.to_string().starts_with(&query)
+        })
         .map(|meta| {
             let id = meta.id.to_string();
             let current = session.session_id.as_deref() == Some(id.as_str());
@@ -303,10 +317,17 @@ fn sessions(session: &mut TuiSession, pinned: bool) {
     if entries.is_empty() {
         session.push(
             Role::Error,
-            if pinned {
-                "no pinned sessions yet — use /pin after a turn".into()
+            if query.is_empty() {
+                if pinned {
+                    "no pinned sessions yet — use /pin after a turn".into()
+                } else {
+                    "no saved sessions yet — send a prompt first".into()
+                }
             } else {
-                "no saved sessions yet — send a prompt first".into()
+                format!(
+                    "no {} sessions matching `{query}`",
+                    if pinned { "pinned" } else { "saved" }
+                )
             },
         );
         return;
@@ -318,9 +339,17 @@ fn sessions(session: &mut TuiSession, pinned: bool) {
             PickerKind::Session
         },
         if pinned {
-            "Open a pinned session"
+            if query.is_empty() {
+                "Open a pinned session".into()
+            } else {
+                format!("Pinned sessions · {query}")
+            }
         } else {
-            "Open a saved session"
+            if query.is_empty() {
+                "Open a saved session".into()
+            } else {
+                format!("Saved sessions · {query}")
+            }
         },
         entries,
     ));
@@ -711,6 +740,45 @@ mod tests {
         ] {
             assert!(text.contains(expected), "missing {expected}");
         }
+    }
+
+    #[test]
+    fn sessions_accept_a_case_insensitive_query_without_losing_scope_context() {
+        let (_dir, mut session) = session();
+        let meta = |title: &str, project: Option<&str>| SessionMeta {
+            id: uuid::Uuid::new_v4(),
+            title: title.into(),
+            created_at: "ts:1".into(),
+            updated_at: "ts:1".into(),
+            message_count: 2,
+            packs: Vec::new(),
+            pinned: false,
+            archived: false,
+            project: project.map(str::to_owned),
+        };
+        session.sidebar.sessions = vec![
+            meta("Morning Handover", Some("warehouse")),
+            meta("Weekend groceries", None),
+        ];
+
+        assert!(dispatch(&mut session, "/sessions morning handover"));
+        let picker = session.picker.as_ref().expect("filtered picker");
+        assert_eq!(picker.kind, PickerKind::Session);
+        assert_eq!(picker.items.len(), 1);
+        assert_eq!(picker.items[0].label, "Morning Handover");
+        assert_eq!(picker.items[0].detail, "warehouse");
+        assert_eq!(picker.title, "Saved sessions · morning handover");
+    }
+
+    #[test]
+    fn an_empty_session_query_reports_the_filter_without_opening_a_blank_picker() {
+        let (_dir, mut session) = session();
+        assert!(dispatch(&mut session, "/pinned gardening"));
+        assert!(session.picker.is_none());
+        assert!(session.messages[0]
+            .text
+            .contains("pinned sessions matching"));
+        assert!(session.messages[0].text.contains("gardening"));
     }
 
     #[test]

@@ -921,6 +921,21 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
             case,
         )
         case.keys("Escape")
+        case.type_submit("/sessions project-four")
+        filtered_picker = case.wait_text("Saved sessions · project-four")
+        audit.check(
+            "project-four-session" in normalized(filtered_picker),
+            "session query omitted the matching saved session",
+            case,
+        )
+        case.keys("Escape")
+        case.type_submit("/sessions no-such-session")
+        no_match = case.wait_text("no saved sessions matching `no-such-session`")
+        audit.check(
+            "Open a saved session" not in normalized(no_match),
+            "empty session query opened a blank picker",
+            case,
+        )
         case.type_submit("/pinned")
         pinned_picker = case.wait_text("Open a pinned session")
         audit.check(
