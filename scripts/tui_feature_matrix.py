@@ -446,6 +446,15 @@ def picker_and_menu(audit: Audit, case: Case) -> None:
         for item in ("Auto (recommended)", "offline", "codex", "open-ai-compat"):
             audit.check(item in normalized(picker), f"provider picker omitted {item}", case)
 
+        picker_frame = case.capture()
+        title_row = next(
+            index for index, line in enumerate(picker_frame) if "Select a provider" in line
+        )
+        right_border = picker_frame[title_row].rindex("┐")
+        case.click(right_border, title_row + 1)
+        case.wait_text("Select a provider")
+        audit.check(case.alive(), "provider picker closed from a border click", case)
+
         case.keys("C-b")
         still_open = case.wait_text("Select a provider")
         audit.check("WORKSPACE" in normalized(still_open), "Ctrl-B leaked through picker", case)

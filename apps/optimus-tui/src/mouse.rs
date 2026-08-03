@@ -433,6 +433,9 @@ fn row_of(rect: Rect, at: Position, count: usize, offset: usize) -> Option<usize
     if at.y <= rect.y {
         return None;
     }
+    if rect.width < 3 || at.x <= rect.x || at.x - rect.x >= rect.width - 1 {
+        return None;
+    }
     let relative = usize::from(at.y - rect.y - 1);
     if visible == 0 || relative >= visible {
         return None;
@@ -691,6 +694,22 @@ mod tests {
 
         assert_eq!(
             intent(&bottom_border, area, 3, Some(&picker), false),
+            Intent::Nothing
+        );
+    }
+
+    #[test]
+    fn clicking_the_picker_side_border_selects_nothing() {
+        let picker = menu();
+        let rect = picker_rect(AREA, &picker);
+        let side_border = at(
+            MouseEventKind::Down(MouseButton::Left),
+            rect.x + rect.width - 1,
+            rect.y + 1,
+        );
+
+        assert_eq!(
+            intent(&side_border, AREA, 3, Some(&picker), false),
             Intent::Nothing
         );
     }
