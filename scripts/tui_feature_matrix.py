@@ -17,12 +17,14 @@ so a future audit can tell which test architecture was reviewed.
 from __future__ import annotations
 
 import argparse
+import http.server
 import json
 import os
 import re
 import shlex
 import subprocess
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Callable
@@ -35,6 +37,61 @@ METHOD_SOURCES = (
     "https://github.com/tmux/tmux/wiki/Control-Mode",
 )
 BRAILLE = set("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
+
+
+class ApprovalFixtureHandler(http.server.BaseHTTPRequestHandler):
+    """A tiny local Chat Completions provider for the approval journey.
+
+    The first and third requests deliberately ask for a real ``write_file``
+    call. The following request supplies the continuation answer. This keeps
+    the matrix on the actual provider, kernel, PTY, and TUI boundaries instead
+    of manufacturing a pending binding inside the renderer.
+    """
+
+    requests = 0
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
+        length = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(length)
+        type(self).requests += 1
+        request_number = type(self).requests
+        if request_number in (1, 3):
+            filename = (
+                "approval-proof.txt" if request_number == 1 else "denial-proof.txt"
+            )
+            message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": f"approval-call-{request_number}",
+                        "type": "function",
+                        "function": {
+                            "name": "write_file",
+                            "arguments": json.dumps(
+                                {"path": filename, "contents": "approved"}
+                            ),
+                        },
+                    }
+                ],
+            }
+        else:
+            outcome = "approved" if request_number == 2 else "denied"
+            message = {
+                "role": "assistant",
+                "content": f"The {outcome} continuation returned.",
+            }
+        body = json.dumps(
+            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 class FeatureFailure(RuntimeError):
@@ -592,6 +649,124 @@ def scrolled_picker_at_low_height(audit: Audit, case: Case) -> None:
         )
     finally:
         case.close()
+
+
+def approval_resolution_journey(
+    audit: Audit,
+    binary: Path,
+    approval_home: Path,
+    denial_home: Path,
+) -> None:
+    audit.begin("provider-backed-approval-resolution-and-denial")
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), ApprovalFixtureHandler
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    environment = {
+        "OPTIMUS_API_BASE": f"http://127.0.0.1:{server.server_address[1]}/v1",
+        "OPTIMUS_API_KEY": "tui-feature-fixture",
+        "OPTIMUS_MODEL": "tui-approval-fixture",
+    }
+    try:
+        approve = Case(
+            binary,
+            approval_home,
+            cols=40,
+            rows=20,
+            environment=environment,
+        )
+        approve.launch()
+        try:
+            approve.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            approve.type_submit("write the approval proof")
+            approval = approve.wait_text("Approval required", 20)
+            audit.check(
+                "Write appro" in normalized(approval)
+                and "bytes)" in normalized(approval),
+                "approval picker omitted the bounded effect summary",
+                approve,
+            )
+            audit.check(
+                "! approval" in normalized(approval),
+                "approval footer did not show that it is waiting on a decision",
+                approve,
+            )
+            audit.check(
+                all(len(line) <= approve.cols for line in approval),
+                "approval modal overflowed the narrow terminal",
+                approve,
+            )
+            approve.click_text("Approve and continue")
+            settled = approve.wait(
+                lambda lines: "approved continuation" in normalized(lines)
+                and "turn · ready" in normalized(lines),
+                30,
+                "approved continuation settled",
+            )
+            audit.check(
+                "approved — running the exact" in normalized(settled)
+                and "action…" in normalized(settled),
+                "approval decision was not recorded in the transcript",
+                approve,
+            )
+            audit.check(
+                "turn · ready" in normalized(settled),
+                "approved continuation did not return the workbench to ready",
+                approve,
+            )
+            proof = approval_home / "workspace" / "approval-proof.txt"
+            approve.wait(lambda _lines: proof.is_file(), 10, "approved file")
+            approve.command("/approval", "no approval is pending")
+        finally:
+            approve.close()
+
+        deny = Case(
+            binary,
+            denial_home,
+            cols=40,
+            rows=20,
+            environment=environment,
+        )
+        deny.launch()
+        try:
+            deny.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            deny.type_submit("write the denial proof")
+            deny.wait_text("Approval required", 20)
+            deny.keys("Down", "Enter")
+            denied = deny.wait(
+                lambda lines: "denied continuation" in normalized(lines)
+                and "turn · ready" in normalized(lines),
+                30,
+                "denied continuation settled",
+            )
+            audit.check(
+                "denied — it will not" in normalized(denied),
+                "denial decision was not recorded in the transcript",
+                deny,
+            )
+            audit.check(
+                "turn · ready" in normalized(denied),
+                "denied continuation did not return the workbench to ready",
+                deny,
+            )
+            audit.check(
+                not (denial_home / "workspace" / "denial-proof.txt").exists(),
+                "denied effect changed the workspace",
+                deny,
+            )
+        finally:
+            deny.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
 
 
 def editor_and_history(audit: Audit, case: Case) -> None:
@@ -1315,6 +1490,12 @@ def main() -> int:
             scrolled_picker_at_low_height(
                 audit,
                 Case(binary, fresh("scrolled-picker"), cols=80, rows=10),
+            )
+            approval_resolution_journey(
+                audit,
+                binary,
+                fresh("approval-resolution"),
+                fresh("approval-denial"),
             )
             editor_and_history(audit, Case(binary, fresh("editor")))
             streaming_and_cancel(

@@ -535,6 +535,10 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
     // Same rectangle the hit-test uses, so a click lands on the row shown.
     let rect = mouse::picker_rect(frame.area(), picker);
     let inner_width = usize::from(rect.width.saturating_sub(2));
+    // Ratatui paints the selected-row marker outside the ListItem content.
+    // Reserve those cells before budgeting the label and detail; otherwise a
+    // narrow selected row loses its own ellipsis to the list's final clip.
+    let item_width = inner_width.saturating_sub(width::cells("› "));
 
     let rows: Vec<ListItem> = picker
         .items
@@ -544,12 +548,12 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
             // Labels identify the action; details are supporting context. At
             // narrow widths the old order preserved details and erased the
             // command name, turning a picker into a list of mysterious dots.
-            let label_budget = inner_width
+            let label_budget = item_width
                 .saturating_sub(width::cells(mark))
                 .saturating_sub(1);
             let label = width::truncate(&item.label, label_budget);
             let detail_budget =
-                inner_width.saturating_sub(width::cells(mark) + width::cells(&label));
+                item_width.saturating_sub(width::cells(mark) + width::cells(&label));
             let detail = if detail_budget >= 2 {
                 width::truncate(&format!("  {}", item.detail), detail_budget)
             } else {
@@ -1111,6 +1115,35 @@ mod tests {
         assert!(
             !selected.add_modifier.contains(Modifier::REVERSED),
             "selection must not look like terminal text selection"
+        );
+    }
+
+    #[test]
+    fn a_narrow_selected_picker_row_keeps_its_detail_ellipsis_visible() {
+        let (_dir, mut session) = session_with(&[]);
+        session.picker = Some(crate::picker::Picker::new(
+            crate::picker::PickerKind::Approval,
+            "Approval required",
+            vec![crate::picker::PickerItem {
+                id: "approve".into(),
+                label: "Approve and continue".into(),
+                detail: "Write approval-proof.txt (8 bytes)".into(),
+                current: true,
+                connected: true,
+            }],
+        ));
+        let screen = render(&session, 40, 10);
+        let selected = screen
+            .iter()
+            .find(|row| row.contains("Approve and continue"))
+            .expect("selected approval row");
+        assert!(
+            selected.contains('…'),
+            "the selected row clipped its detail marker: {screen:?}"
+        );
+        assert!(
+            screen.iter().all(|line| crate::width::cells(line) <= 40),
+            "picker overflowed the narrow frame: {screen:?}"
         );
     }
 
