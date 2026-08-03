@@ -882,7 +882,35 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         overflow = sidebar_window("PROJECTS 4–5/5", "project-4")
         audit.check("project-4" in normalized(overflow), "last project inaccessible", case)
         case.click_text("project-4", sidebar_only=True)
-        case.wait_text("project scope: project-4")
+        filtered = case.wait(
+            lambda lines: "project scope: project-4" in normalized(lines)
+            and any(
+                "project-4" in line and "auto" in line
+                for line in lines
+            ),
+            12,
+            "active project scope did not reach the context rail",
+        )
+        audit.check(
+            any(
+                "project-4" in line and "auto" in line
+                for line in filtered
+            ),
+            "active project scope missing from context rail",
+            case,
+        )
+        case.keys("C-b")
+        collapsed_scope = case.wait_absent("WORKSPACE")
+        audit.check(
+            any(
+                "project-4" in line and "auto" in line
+                for line in collapsed_scope
+            ),
+            "active project scope disappeared with the sidebar",
+            case,
+        )
+        case.keys("C-b")
+        case.wait_text("WORKSPACE")
         case.prompt("project-four-session")
         case.command("/pin", "session pinned")
         case.type_submit("/sessions")
