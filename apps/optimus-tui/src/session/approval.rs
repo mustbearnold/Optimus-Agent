@@ -44,11 +44,13 @@ impl TuiSession {
         // resumed turn streams through this same worker and can raise its own
         // approval before the resolver returns, so settlement has to say which
         // card it settled rather than clearing whatever is held at the end.
-        let settling_call_id = self
+        let Some(settling_binding) = self
             .pending_approval
             .as_ref()
-            .map(|binding| binding.call_id.clone())
-            .unwrap_or_default();
+            .map(|binding| (**binding).clone())
+        else {
+            return;
+        };
         // The continuation opens its own bubble, exactly as a fresh turn does.
         self.answer_started = false;
         self.begin("resolving approval");
@@ -68,7 +70,7 @@ impl TuiSession {
                 Ok(value) => {
                     // Ok means the decision itself was carried out, whatever
                     // the resumed turn goes on to do.
-                    let _ = tx.send(TurnUpdate::ApprovalSettled(settling_call_id));
+                    let _ = tx.send(TurnUpdate::ApprovalSettled(Box::new(settling_binding)));
                     resolved_update(&value)
                 }
                 Err(error) => TurnUpdate::Failed(format!("approval resolution failed: {error}")),

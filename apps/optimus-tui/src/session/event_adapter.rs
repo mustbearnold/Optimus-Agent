@@ -52,13 +52,16 @@ pub enum TurnUpdate {
     /// An exact effect paused awaiting a human decision. The turn will park
     /// (settle as failed at the kernel API) while the job stays pending.
     Approval(Box<ToolApprovalBinding>),
-    /// The decision was carried out, naming the call it settled. Not terminal:
+    /// The decision was carried out, naming the exact approval binding it
+    /// settled. Not terminal:
     /// the turn it unblocked runs on, and whatever happens next belongs to that
     /// turn rather than to the decision. It is sent the moment the resolver
     /// returns, so a continuation that later fails cannot leave a spent card on
-    /// the screen — and it names the call because that continuation may already
-    /// have parked on an approval of its own, which must survive.
-    ApprovalSettled(String),
+    /// the screen — and it names the exact binding because that continuation
+    /// may already have parked on an approval of its own, which must survive.
+    /// Providers may reuse a call id while a resumed run is still alive, so a
+    /// call id (or even a run id plus call id) is not enough identity here.
+    ApprovalSettled(Box<ToolApprovalBinding>),
     /// Terminal success: the durable session id and the settled answer.
     Done { session_id: String, text: String },
     /// Terminal failure, already rendered for a human.
@@ -172,7 +175,7 @@ impl TuiSession {
                     );
                     self.pending_approval = Some(binding);
                 }
-                TurnUpdate::ApprovalSettled(call_id) => {
+                TurnUpdate::ApprovalSettled(settled) => {
                     // Only the card that settled. The resumed turn parks on its
                     // own approval before the resolver returns, so clearing
                     // whatever is held here would swallow that newer binding
@@ -181,7 +184,7 @@ impl TuiSession {
                     if self
                         .pending_approval
                         .as_ref()
-                        .is_some_and(|binding| binding.call_id == call_id)
+                        .is_some_and(|binding| binding.as_ref() == settled.as_ref())
                     {
                         self.pending_approval = None;
                     }

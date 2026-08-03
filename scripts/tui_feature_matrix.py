@@ -94,6 +94,56 @@ class ApprovalFixtureHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class ApprovalContinuationFixtureHandler(http.server.BaseHTTPRequestHandler):
+    """A provider that parks twice, once in the original turn and once in its continuation."""
+
+    requests = 0
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
+        length = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(length)
+        type(self).requests += 1
+        request_number = type(self).requests
+        if request_number in (1, 2):
+            filename = (
+                "first-approval-proof.txt"
+                if request_number == 1
+                else "second-approval-proof.txt"
+            )
+            message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1" if request_number == 1 else "call_2",
+                        "type": "function",
+                        "function": {
+                            "name": "write_file",
+                            "arguments": json.dumps(
+                                {"path": filename, "contents": filename}
+                            ),
+                        },
+                    }
+                ],
+            }
+        else:
+            message = {
+                "role": "assistant",
+                "content": "both approval continuations completed",
+            }
+        body = json.dumps(
+            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 class CompletedToolFixtureHandler(http.server.BaseHTTPRequestHandler):
     """A local provider whose read-only tool turn is safe to reopen.
 
@@ -898,6 +948,90 @@ def approval_resolution_journey(
             )
         finally:
             deny.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def approval_continuation_journey(
+    audit: Audit, binary: Path, home: Path
+) -> None:
+    audit.begin("second-approval-continuation-keeps-the-new-card-actionable")
+    ApprovalContinuationFixtureHandler.requests = 0
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), ApprovalContinuationFixtureHandler
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    environment = {
+        "OPTIMUS_API_BASE": f"http://127.0.0.1:{server.server_address[1]}/v1",
+        "OPTIMUS_API_KEY": "tui-approval-continuation-fixture",
+        "OPTIMUS_MODEL": "tui-approval-continuation-fixture",
+    }
+    try:
+        case = Case(binary, home, cols=52, rows=22, environment=environment)
+        case.launch()
+        try:
+            case.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            case.type_submit("perform the two approved writes")
+            first = case.wait(
+                lambda lines: "Approval required" in normalized(lines)
+                and "Approve and continue" in normalized(lines)
+                and "first-approval-pr" in normalized(lines),
+                20,
+                "first approval picker",
+            )
+            audit.check(
+                "Approval required" in normalized(first)
+                and "! approval" in normalized(first),
+                "first approval did not present an actionable picker",
+                case,
+            )
+            case.click_text("Approve and continue")
+
+            second = case.wait(
+                lambda lines: "Approval required" in normalized(lines)
+                and "second-approval-pr" in normalized(lines)
+                and "Approve and continue" in normalized(lines)
+                and "! approval" in normalized(lines),
+                30,
+                "second approval from a resumed turn",
+            )
+            audit.check(
+                "second-approval-pr" in normalized(second),
+                "continuation lost the second approval summary",
+                case,
+            )
+            audit.check(
+                all(len(line) <= case.cols for line in second),
+                "second approval overflowed the narrow terminal",
+                case,
+            )
+            case.click_text("Approve and continue")
+            settled = case.wait(
+                lambda lines: "both approval continuations completed" in normalized(lines)
+                and "turn · ready" in normalized(lines),
+                30,
+                "second approval continuation settled",
+            )
+            audit.check(
+                "approved — running the exact" in normalized(settled),
+                "second approval decision was not recorded",
+                case,
+            )
+            audit.check(
+                (home / "workspace" / "first-approval-proof.txt").is_file()
+                and (home / "workspace" / "second-approval-proof.txt").is_file(),
+                "one of the two approved effects did not run",
+                case,
+            )
+            case.command("/approval", "no approval is pending")
+        finally:
+            case.close()
     finally:
         server.shutdown()
         server.server_close()
@@ -1773,6 +1907,11 @@ def main() -> int:
                 binary,
                 fresh("approval-resolution"),
                 fresh("approval-denial"),
+            )
+            approval_continuation_journey(
+                audit,
+                binary,
+                fresh("approval-continuation"),
             )
             completed_tool_relaunch_journey(
                 audit,

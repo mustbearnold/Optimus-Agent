@@ -1351,8 +1351,10 @@ mod tests {
         let (_dir, mut session) = session();
         session.pending_approval = Some(super::approval_binding_fixture());
         let tx = install_worker(&mut session, WorkerKind::Resolve);
-        tx.send(TurnUpdate::ApprovalSettled("write-1".into()))
-            .unwrap();
+        tx.send(TurnUpdate::ApprovalSettled(
+            super::approval_binding_fixture(),
+        ))
+        .unwrap();
         tx.send(TurnUpdate::Done {
             session_id: "55555555-5555-4555-8555-555555555555".into(),
             text: "Wrote src/proof.txt as asked.".into(),
@@ -1384,11 +1386,13 @@ mod tests {
         let tx = install_worker(&mut session, WorkerKind::Resolve);
 
         let mut second = super::approval_binding_fixture();
-        second.call_id = "curl-2".into();
+        second.effect_sha256 = "cd".repeat(32);
         second.summary = "Run \"bash\" with args [\"-lc\",\"curl …\"]".into();
         tx.send(TurnUpdate::Approval(second)).unwrap();
-        tx.send(TurnUpdate::ApprovalSettled("write-1".into()))
-            .unwrap();
+        tx.send(TurnUpdate::ApprovalSettled(
+            super::approval_binding_fixture(),
+        ))
+        .unwrap();
         tx.send(TurnUpdate::Failed("parked".into())).unwrap();
         settle(&mut session);
 
@@ -1396,7 +1400,7 @@ mod tests {
             .pending_approval
             .as_ref()
             .expect("the continuation's own card must survive settlement");
-        assert_eq!(held.call_id, "curl-2");
+        assert_eq!(held.call_id, "write-1");
         assert!(session.picker.is_some(), "and must be decidable");
     }
 
@@ -1409,8 +1413,10 @@ mod tests {
         let (_dir, mut session) = session();
         session.pending_approval = Some(super::approval_binding_fixture());
         let tx = install_worker(&mut session, WorkerKind::Resolve);
-        tx.send(TurnUpdate::ApprovalSettled("write-1".into()))
-            .unwrap();
+        tx.send(TurnUpdate::ApprovalSettled(
+            super::approval_binding_fixture(),
+        ))
+        .unwrap();
         tx.send(TurnUpdate::Failed("max steps exceeded (32)".into()))
             .unwrap();
         settle(&mut session);
