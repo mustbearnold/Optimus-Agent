@@ -20,7 +20,8 @@ use super::{Message, Role, TuiSession, WorkerKind};
 /// One tool call's progress, already rendered for the transcript.
 #[derive(Debug, Clone)]
 pub struct ToolStep {
-    /// Identity of the call, so successive phases update one row.
+    /// Identity of the call, so successive phases update one row. The run id
+    /// matters because providers may reuse the call id on a later turn.
     pub call_id: String,
     pub name: String,
     pub line: String,
@@ -282,21 +283,22 @@ impl TuiSession {
     /// Place a tool's progress, rewriting the row that call already owns.
     fn apply_tool_step(&mut self, step: ToolStep) {
         // The block mirror first, from the typed phase the step carries; the
-        // row below stays the projection that paints. Both key on `call_id`
-        // with the same latest-match rule, so they upsert in lockstep.
+        // row below stays the projection that paints. Both key on the typed
+        // `(run_id, call_id)` identity, so a provider reusing `call_1` on a
+        // later turn cannot rewrite an older row.
         self.workbench.apply_tool_step(&step);
         self.running_tool = step.running.then(|| step.name.clone());
-        let existing = self
-            .messages
-            .iter_mut()
-            .rev()
-            .find(|m| m.call_id.as_deref() == Some(step.call_id.as_str()));
+        let existing = self.messages.iter_mut().rev().find(|m| {
+            m.call_id.as_deref() == Some(step.call_id.as_str())
+                && m.run_id.as_deref() == Some(step.run_id.as_str())
+        });
         match existing {
             Some(message) => message.text = step.line,
             None => self.messages.push(Message {
                 role: Role::Tool,
                 text: step.line,
                 call_id: Some(step.call_id),
+                run_id: Some(step.run_id),
             }),
         }
         debug_assert_eq!(

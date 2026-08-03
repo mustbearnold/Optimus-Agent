@@ -22,7 +22,8 @@ use std::time::Instant;
 
 use optimus_host::handle_ipc;
 use optimus_kernel::{
-    CancellationToken, ExecutionStore, SessionMeta, SessionStore, ToolApprovalBinding, ToolCall,
+    CancellationToken, ExecutionStore, PersistedToolLifecycle, SessionMeta, SessionStore,
+    ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase,
 };
 use serde_json::json;
 
@@ -71,9 +72,13 @@ pub enum Role {
 pub struct Message {
     pub role: Role,
     pub text: String,
-    /// Set on [`Role::Tool`] rows so a later lifecycle phase for the same call
-    /// rewrites the row it already owns instead of appending a duplicate.
+    /// Set on [`Role::Tool`] rows so a later lifecycle phase for the same
+    /// `(run_id, call_id)` rewrites the row it already owns instead of
+    /// appending a duplicate. Providers may reuse a call id on later turns.
     pub call_id: Option<String>,
+    /// The execution run identity carried by typed tool lifecycle events.
+    /// `None` is honest for compatibility rows that predate the event store.
+    pub run_id: Option<String>,
 }
 
 /// What the worker thread is doing, which decides how its terminal update is
@@ -309,6 +314,8 @@ impl TuiSession {
         let lifecycles = execution
             .tool_lifecycle_for_session(meta.id)
             .map_err(|error| error.to_string())?;
+        let lifecycles = collapse_tool_lifecycles(lifecycles);
+        let mut lifecycle_cursor = 0;
 
         self.messages.clear();
         self.workbench.clear();
@@ -343,17 +350,16 @@ impl TuiSession {
                         // after the durable transcript is projected.
                         continue;
                     }
-                    if let Some(lifecycle) = lifecycles
-                        .iter()
-                        .rev()
-                        .find(|lifecycle| lifecycle.event.call_id == call_id)
+                    if let Some(lifecycle) =
+                        next_tool_lifecycle(&lifecycles, call_id, &mut lifecycle_cursor)
                     {
-                        let step = crate::tool_line::tool_step(&lifecycle.event);
+                        let step = crate::tool_line::tool_step(lifecycle);
                         self.workbench.apply_tool_step(&step);
                         self.messages.push(Message {
                             role: Role::Tool,
                             text: step.line,
                             call_id: Some(call_id.to_string()),
+                            run_id: Some(step.run_id.clone()),
                         });
                         continue;
                     }
@@ -377,6 +383,7 @@ impl TuiSession {
                 role,
                 text,
                 call_id: tool_call_id,
+                run_id: None,
             });
         }
         self.session_id = Some(meta.id.to_string());
@@ -407,6 +414,7 @@ impl TuiSession {
             role: Role::Tool,
             text: format!("{tool}  awaiting approval"),
             call_id: Some(call_id.clone()),
+            run_id: Some(binding.run_id.to_string()),
         });
         self.pending_approval = Some(Box::new(binding.clone()));
         self.push(
@@ -710,6 +718,7 @@ impl TuiSession {
             role,
             text,
             call_id: None,
+            run_id: None,
         });
         debug_assert_eq!(
             self.workbench.len(),
@@ -733,6 +742,7 @@ impl TuiSession {
             role: Role::Tool,
             text: line.into(),
             call_id: Some(call_id.into()),
+            run_id: None,
         });
     }
 
@@ -792,6 +802,55 @@ fn is_tool_call_envelope(content: &str) -> bool {
     serde_json::from_str::<Vec<ToolCall>>(content)
         .map(|calls| !calls.is_empty())
         .unwrap_or(false)
+}
+
+/// Collapse each call's typed lifecycle into the latest phase for that call
+/// occurrence, preserving repeated provider ids across turns. Providers are
+/// allowed to reuse identifiers such as `call_1`; a global map would repaint
+/// every historical row with the newest call's outcome after relaunch.
+fn collapse_tool_lifecycles(lifecycles: Vec<PersistedToolLifecycle>) -> Vec<ToolLifecycleEvent> {
+    let mut occurrences: Vec<ToolLifecycleEvent> = Vec::new();
+    for lifecycle in lifecycles {
+        let event = lifecycle.event;
+        let can_update = occurrences.last().is_some_and(|previous| {
+            previous.run_id == event.run_id
+                && previous.call_id == event.call_id
+                && !is_terminal_tool_phase(previous.phase)
+        });
+        if can_update {
+            if let Some(previous) = occurrences.last_mut() {
+                *previous = event;
+            }
+        } else {
+            occurrences.push(event);
+        }
+    }
+    occurrences
+}
+
+fn is_terminal_tool_phase(phase: ToolLifecyclePhase) -> bool {
+    matches!(
+        phase,
+        ToolLifecyclePhase::Succeeded
+            | ToolLifecyclePhase::Failed
+            | ToolLifecyclePhase::Cancelled
+            | ToolLifecyclePhase::Suppressed
+            | ToolLifecyclePhase::Ambiguous
+    )
+}
+
+fn next_tool_lifecycle<'a>(
+    lifecycles: &'a [ToolLifecycleEvent],
+    call_id: &str,
+    cursor: &mut usize,
+) -> Option<&'a ToolLifecycleEvent> {
+    while let Some(event) = lifecycles.get(*cursor) {
+        *cursor += 1;
+        if event.call_id == call_id {
+            return Some(event);
+        }
+    }
+    None
 }
 
 /// The most recently touched durable session in this home.

@@ -142,6 +142,48 @@ class CompletedToolFixtureHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class ReusedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
+    """A provider fixture that deliberately reuses ``call_1`` on two turns."""
+
+    requests = 0
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
+        length = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(length)
+        type(self).requests += 1
+        request_number = type(self).requests
+        if request_number in (1, 3):
+            path = "alpha.txt" if request_number == 1 else "beta.txt"
+            message = {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {
+                            "name": "read_file",
+                            "arguments": json.dumps({"path": path}),
+                        },
+                    }
+                ],
+            }
+        else:
+            answer = "The alpha file was read." if request_number == 2 else "The beta file was read."
+            message = {"role": "assistant", "content": answer}
+        body = json.dumps(
+            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 class FeatureFailure(RuntimeError):
     """A named user-visible contract failed."""
 
@@ -934,6 +976,76 @@ def completed_tool_relaunch_journey(audit: Audit, binary: Path, home: Path) -> N
         thread.join(timeout=2)
 
 
+def reused_call_id_relaunch_journey(audit: Audit, binary: Path, home: Path) -> None:
+    audit.begin("reused-tool-call-id-keeps-each-run-distinct")
+    ReusedCallFixtureHandler.requests = 0
+    workspace = home / "workspace"
+    workspace.mkdir(parents=True, exist_ok=True)
+    (workspace / "alpha.txt").write_text("alpha", encoding="utf-8")
+    (workspace / "beta.txt").write_text("beta", encoding="utf-8")
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), ReusedCallFixtureHandler
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    environment = {
+        "OPTIMUS_API_BASE": f"http://127.0.0.1:{server.server_address[1]}/v1",
+        "OPTIMUS_API_KEY": "reused-call-fixture",
+        "OPTIMUS_MODEL": "tui-reused-call",
+    }
+    try:
+        first = Case(binary, home, cols=100, rows=34, environment=environment)
+        first.launch()
+        try:
+            first.command(
+                "/provider open-ai-compat",
+                "provider is now open-ai-compat",
+            )
+            first.type_submit("read the alpha file")
+            first.wait_text("The alpha file was read", 30)
+            first.type_submit("read the beta file")
+            first.wait_text("The beta file was read", 30)
+            first.keys("Escape")
+            first.type_submit("/quit")
+            first.wait_exit()
+        finally:
+            first.close()
+
+        resumed = Case(binary, home, cols=100, rows=34, environment=environment)
+        resumed.launch()
+        try:
+            restored = resumed.capture()
+            restored_text = normalized(restored)
+            audit.check(
+                "path=alpha.txt" in restored_text
+                and "path=beta.txt" in restored_text,
+                "relaunch merged repeated provider call ids into one outcome",
+                resumed,
+            )
+            audit.check(
+                "call_1" not in restored_text,
+                "relaunch exposed the reused raw provider call id",
+                resumed,
+            )
+            audit.check(
+                "The alpha file was read" in restored_text
+                and "The beta file was read" in restored_text,
+                "relaunch lost one answer beside the repeated tool id",
+                resumed,
+            )
+            audit.check(
+                all(len(line) <= resumed.cols for line in restored),
+                "reused-call relaunch overflowed the terminal",
+                resumed,
+            )
+        finally:
+            resumed.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def editor_and_history(audit: Audit, case: Case) -> None:
     audit.begin("composer-editing-unicode-paste-and-history")
     case.launch()
@@ -1666,6 +1778,11 @@ def main() -> int:
                 audit,
                 binary,
                 fresh("completed-tool-relaunch"),
+            )
+            reused_call_id_relaunch_journey(
+                audit,
+                binary,
+                fresh("reused-call-id-relaunch"),
             )
             editor_and_history(audit, Case(binary, fresh("editor")))
             streaming_and_cancel(

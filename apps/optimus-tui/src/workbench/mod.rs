@@ -6,8 +6,9 @@
 //! from blocks yet — the `Message` vector remains the compatibility projection
 //! and the PTY suite proves the pixels did not move. What this buys is the
 //! structure every later phase builds on: identity minted once at adaptation
-//! time and keyed by domain identity (the kernel `call_id` for tools), never
-//! by row position, so it survives streaming, folding, resize, and redraw.
+//! time and keyed by domain identity (the kernel `(run_id, call_id)` for tools),
+//! never by row position, so it survives streaming, folding, resize, and
+//! redraw even when a provider reuses a call id on a later turn.
 //!
 //! Lifecycle moves only on typed events — the [`ToolStep`] phase carried from
 //! `ToolLifecycleEvent`, and the turn's own settlement — never by parsing
@@ -80,8 +81,8 @@ impl BlockLifecycle {
 pub enum WorkbenchBlockKind {
     UserPrompt,
     AssistantAnswer,
-    /// One tool call, keyed by the kernel's `call_id` so every lifecycle
-    /// phase lands on the block that call already owns.
+    /// One tool call, keyed by the kernel's `(run_id, call_id)` identity so
+    /// every lifecycle phase lands on the block that call already owns.
     ToolCall {
         call_id: String,
         /// The kernel's `tool_id`, carried because grouping has to ask the
@@ -238,7 +239,7 @@ impl WorkbenchState {
     pub(crate) fn push_note(&mut self, role: Role, turn_active: bool) {
         debug_assert!(
             role != Role::Tool,
-            "tool rows are born in apply_tool_step, keyed by call_id"
+            "tool rows are born in apply_tool_step, keyed by run and call id"
         );
         let (kind, lifecycle) = match role {
             Role::User => (WorkbenchBlockKind::UserPrompt, BlockLifecycle::Succeeded),
@@ -316,14 +317,16 @@ impl WorkbenchState {
         }
     }
 
-    /// Mirror one tool lifecycle event: every phase for a `call_id` lands on
-    /// the one block that call owns, exactly as the transcript rewrites the
-    /// one row it owns. Lifecycle comes from the typed phase, never from the
-    /// rendered line.
+    /// Mirror one tool lifecycle event: every phase for a `(run_id, call_id)`
+    /// lands on the one block that call owns, exactly as the transcript
+    /// rewrites the one row it owns. Lifecycle comes from the typed phase,
+    /// never from the rendered line.
     pub(crate) fn apply_tool_step(&mut self, step: &ToolStep) {
         let lifecycle = lifecycle_for(step.phase);
+        let turn_id = Uuid::parse_str(&step.run_id).ok();
         let existing = self.blocks.iter_mut().rev().find(|block| {
-            matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id, .. } if *call_id == step.call_id)
+            block.turn_id == turn_id
+                && matches!(&block.kind, WorkbenchBlockKind::ToolCall { call_id, .. } if *call_id == step.call_id)
         });
         match existing {
             Some(block) => {
@@ -571,6 +574,33 @@ mod tests {
         state.apply_tool_step(&event);
         state.apply_tool_step(&event);
         assert_eq!(state.blocks()[0].provenance.len(), 1);
+    }
+
+    #[test]
+    fn a_reused_provider_call_id_gets_a_new_block_for_a_new_run() {
+        let mut state = WorkbenchState::default();
+        state.apply_tool_step(&step(
+            ToolLifecyclePhase::Succeeded,
+            "call-1",
+            "run-1:call-1:succeeded",
+            "11111111-1111-4111-8111-111111111111",
+        ));
+        state.apply_tool_step(&step(
+            ToolLifecyclePhase::Succeeded,
+            "call-1",
+            "run-2:call-1:succeeded",
+            "22222222-2222-4222-8222-222222222222",
+        ));
+
+        assert_eq!(state.len(), 2);
+        assert_eq!(
+            state.blocks()[0].turn_id.unwrap().to_string(),
+            "11111111-1111-4111-8111-111111111111"
+        );
+        assert_eq!(
+            state.blocks()[1].turn_id.unwrap().to_string(),
+            "22222222-2222-4222-8222-222222222222"
+        );
     }
 
     #[test]

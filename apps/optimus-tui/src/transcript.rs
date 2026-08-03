@@ -764,6 +764,7 @@ mod tests {
             role,
             text: text.into(),
             call_id: None,
+            run_id: None,
         }
     }
 
