@@ -16,6 +16,7 @@
 //! screen thread is never blocked by one.
 
 use optimus_host::handle_ipc;
+use optimus_kernel::SessionMeta;
 use serde_json::json;
 
 use crate::picker::{Picker, PickerItem, PickerKind};
@@ -85,6 +86,9 @@ const fn typed(
 /// serves a name you already know — in which case you would have typed it.
 pub const COMMANDS: &[Command] = &[
     offered("providers", "pick a provider from a list"),
+    typed("sessions", None, "open a saved session"),
+    typed("pinned", None, "open a pinned session"),
+    typed("projects", None, "choose a project scope"),
     typed(
         "provider",
         Some("<id>"),
@@ -155,6 +159,9 @@ pub fn dispatch(session: &mut TuiSession, input: &str) -> bool {
     match command.name {
         "help" => help(session),
         "providers" => providers(session),
+        "sessions" => sessions(session, false),
+        "pinned" => sessions(session, true),
+        "projects" => projects(session),
         "provider" => set_provider(session, &argument),
         "model" => set_model(session, &argument),
         "thinking" => set_thinking(session, &argument),
@@ -259,6 +266,93 @@ fn providers(session: &mut TuiSession) {
         }
         Err(error) => session.push(Role::Error, error),
     }
+}
+
+fn session_picker_label(meta: &SessionMeta) -> String {
+    if meta.title.trim().is_empty() || meta.title == "session" {
+        let id = meta.id.to_string();
+        format!("Session {}", id.chars().take(8).collect::<String>())
+    } else {
+        meta.title.clone()
+    }
+}
+
+fn sessions(session: &mut TuiSession, pinned: bool) {
+    let entries = session
+        .sidebar
+        .sessions
+        .iter()
+        .filter(|meta| !pinned || meta.pinned)
+        .map(|meta| {
+            let id = meta.id.to_string();
+            let current = session.session_id.as_deref() == Some(id.as_str());
+            let scope = meta.project.as_deref().unwrap_or("workspace");
+            PickerItem {
+                id,
+                label: session_picker_label(meta),
+                detail: if meta.pinned {
+                    format!("★ pinned · {scope}")
+                } else {
+                    scope.to_owned()
+                },
+                current,
+                connected: true,
+            }
+        })
+        .collect::<Vec<_>>();
+    if entries.is_empty() {
+        session.push(
+            Role::Error,
+            if pinned {
+                "no pinned sessions yet — use /pin after a turn".into()
+            } else {
+                "no saved sessions yet — send a prompt first".into()
+            },
+        );
+        return;
+    }
+    session.picker = Some(Picker::new(
+        if pinned {
+            PickerKind::PinnedSession
+        } else {
+            PickerKind::Session
+        },
+        if pinned {
+            "Open a pinned session"
+        } else {
+            "Open a saved session"
+        },
+        entries,
+    ));
+}
+
+fn projects(session: &mut TuiSession) {
+    let entries = session
+        .sidebar
+        .projects
+        .iter()
+        .enumerate()
+        .map(|(index, project)| PickerItem {
+            id: index.to_string(),
+            label: project.label.clone(),
+            detail: format!(
+                "{} session{}",
+                project.session_count,
+                if project.session_count == 1 { "" } else { "s" }
+            ),
+            current: project.current,
+            connected: true,
+        })
+        .collect::<Vec<_>>();
+    if entries.is_empty() {
+        session.push(Role::Error, "no project scopes are available".into());
+        return;
+    }
+    session.picker = Some(Picker::new(
+        PickerKind::Project,
+        "Choose a project scope",
+        entries,
+    ));
 }
 
 fn set_provider(session: &mut TuiSession, argument: &str) {

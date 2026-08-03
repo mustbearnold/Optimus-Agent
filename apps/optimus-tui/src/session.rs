@@ -508,6 +508,40 @@ impl TuiSession {
                     crate::commands::enable_yolo(self);
                 }
             }
+            crate::picker::PickerKind::Session => {
+                // The global picker can be opened while the rail is filtered
+                // to one project. Clear that presentation filter before using
+                // the shared sidebar index, otherwise a valid session from a
+                // different project looks like a stale row and opening it is
+                // silently ignored.
+                self.sidebar.select(crate::sidebar::Section::Sessions);
+                let current_unsaved = usize::from(self.sidebar.current_unsaved);
+                if let Some(index) = self
+                    .sidebar
+                    .sessions
+                    .iter()
+                    .position(|meta| meta.id.to_string() == item.id)
+                {
+                    self.open_sidebar_session(index + current_unsaved, false);
+                }
+            }
+            crate::picker::PickerKind::PinnedSession => {
+                self.sidebar.select(crate::sidebar::Section::Sessions);
+                if let Some(index) = self
+                    .sidebar
+                    .sessions
+                    .iter()
+                    .filter(|meta| meta.pinned)
+                    .position(|meta| meta.id.to_string() == item.id)
+                {
+                    self.open_sidebar_session(index, true);
+                }
+            }
+            crate::picker::PickerKind::Project => {
+                if let Ok(index) = item.id.parse::<usize>() {
+                    self.select_sidebar_project(index);
+                }
+            }
             // Route back through dispatch so a menu row and the typed command
             // cannot drift apart.
             crate::picker::PickerKind::Command => {

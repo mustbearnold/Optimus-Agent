@@ -1106,6 +1106,7 @@ mod tests {
         session.composer.set("/pro");
         let count = crate::completion::suggestions(session.composer.text()).len();
         session.completion.down(count);
+        session.completion.down(count);
 
         let screen = render(&session, 60, 12);
         let marked: Vec<&String> = screen.iter().filter(|row| row.contains("> /")).collect();

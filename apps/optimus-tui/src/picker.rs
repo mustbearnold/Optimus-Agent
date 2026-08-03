@@ -27,6 +27,12 @@ pub enum PickerKind {
     Approval,
     /// Confirm the break-glass access transition before it reaches the host.
     Yolo,
+    /// Open one of the durable sessions shown in the workspace rail.
+    Session,
+    /// Open one of the pinned durable sessions shown in the workspace rail.
+    PinnedSession,
+    /// Select an authorized project scope shown in the workspace rail.
+    Project,
     /// Slash commands, reachable with the right mouse button.
     Command,
 }

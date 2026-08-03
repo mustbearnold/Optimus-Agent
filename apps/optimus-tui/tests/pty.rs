@@ -310,8 +310,10 @@ fn the_arrows_pick_a_suggestion_before_they_recall_a_prompt() {
     );
 
     // Down would otherwise be history's key. Over a half-typed command it moves
-    // the highlight instead, and the draft underneath must not change.
-    term.send(b"\x1b[B");
+    // the highlight instead, and the draft underneath must not change. The
+    // project picker is a deliberate middle match, so two presses reach the
+    // provider command rather than the newly added `/projects` row.
+    term.send(b"\x1b[B\x1b[B");
     let deadline = Instant::now() + Duration::from_secs(5);
     while !term.screen().contains("> /provider <id>") && Instant::now() < deadline {
         thread::sleep(Duration::from_millis(20));

@@ -360,6 +360,9 @@ def command_surface(audit: Audit, case: Case) -> None:
         help_text = normalized(frame)
         for command in (
             "/providers",
+            "/sessions",
+            "/pinned",
+            "/projects",
             "/provider <id>",
             "/model <id>",
             "/thinking <lvl>",
@@ -463,7 +466,7 @@ def picker_and_menu(audit: Audit, case: Case) -> None:
         case.literal("/pro")
         suggestions = case.wait_text("/provider <id>")
         audit.check("/providers" in normalized(suggestions), "providers suggestion missing", case)
-        case.keys("Down", "Tab")
+        case.keys("Down", "Down", "Tab")
         completed = case.wait(
             lambda lines: "/provider" in composer_text(lines),
             5,
@@ -484,6 +487,16 @@ def picker_and_menu(audit: Audit, case: Case) -> None:
         case.wait_text("Select a provider")
         case.click_text("Auto")
         case.wait_text("provider is now auto")
+
+        case.type_submit("/projects")
+        project_picker = case.wait_text("Choose a project scope")
+        audit.check(
+            case.home.name in normalized(project_picker),
+            "project picker omitted workspace",
+            case,
+        )
+        case.keys("Enter")
+        case.wait_text("project scope:")
 
         case.mouse("right-down", 70, 5)
         menu = case.wait_text("Commands")
@@ -861,6 +874,22 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.wait_text("project scope: project-4")
         case.prompt("project-four-session")
         case.command("/pin", "session pinned")
+        case.type_submit("/sessions")
+        saved_picker = case.wait_text("Open a saved session")
+        audit.check(
+            "project-four-session" in normalized(saved_picker),
+            "session picker omitted current session",
+            case,
+        )
+        case.keys("Escape")
+        case.type_submit("/pinned")
+        pinned_picker = case.wait_text("Open a pinned session")
+        audit.check(
+            "project-four-session" in normalized(pinned_picker),
+            "pinned picker omitted current session",
+            case,
+        )
+        case.keys("Escape")
 
         case.command("/new", "new session ready")
         case.click_text("PROJECTS", sidebar_only=True)
@@ -870,6 +899,20 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.wait_text(f"project scope: {case.home.name}")
         case.prompt("workspace-session-one")
         case.command("/pin", "session pinned")
+
+        case.type_submit("/sessions")
+        session_picker = case.wait_text("Open a saved session")
+        audit.check(
+            "project-four-session" in normalized(session_picker),
+            "session picker omitted the earlier session",
+            case,
+        )
+        case.keys("Up", "Enter")
+        case.wait_text("offline echo: project-four-session")
+        case.type_submit("/pinned")
+        case.wait_text("Open a pinned session")
+        case.keys("Down", "Enter")
+        case.wait_text("offline echo: workspace-session-one")
 
         for index in range(2, 7):
             case.command("/new", "new session ready")

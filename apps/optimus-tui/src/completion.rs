@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn typing_narrows_to_the_names_that_still_fit() {
-        assert_eq!(names("/pro"), vec!["providers", "provider"]);
+        assert_eq!(names("/pro"), vec!["providers", "projects", "provider"]);
         assert_eq!(names("/th"), vec!["thinking"]);
     }
 
@@ -188,6 +188,7 @@ mod tests {
     fn tab_takes_the_highlighted_row_not_the_first() {
         let mut completion = Completion::default();
         assert_eq!(completion.completed("/pro").as_deref(), Some("/providers"));
+        completion.down(suggestions("/pro").len());
         completion.down(suggestions("/pro").len());
         assert_eq!(completion.completed("/pro").as_deref(), Some("/provider "));
     }
