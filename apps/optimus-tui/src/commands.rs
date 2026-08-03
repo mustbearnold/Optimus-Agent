@@ -385,7 +385,8 @@ fn projects(session: &mut TuiSession) {
 }
 
 fn set_provider(session: &mut TuiSession, argument: &str) {
-    if argument.is_empty() {
+    let requested = argument.trim();
+    if requested.is_empty() {
         session.push(Role::Error, "usage: /provider <id> — see /providers".into());
         return;
     }
@@ -399,24 +400,30 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
         .collect();
     known.insert(0, "auto".into());
 
-    if argument.eq_ignore_ascii_case("auto") && session.model.is_some() {
+    let Some(provider) = known
+        .iter()
+        .find(|id| id.eq_ignore_ascii_case(requested))
+        .cloned()
+    else {
+        session.push(
+            Role::Error,
+            format!("unknown provider {requested} — have: {}", known.join(", ")),
+        );
+        return;
+    };
+
+    if provider == "auto" && session.model.is_some() {
         session.push(
             Role::Error,
             "choose model Auto before returning provider selection to Auto".into(),
         );
         return;
     }
-    if !known.is_empty() && !known.iter().any(|id| id == argument) {
-        session.push(
-            Role::Error,
-            format!("unknown provider {argument} — have: {}", known.join(", ")),
-        );
-        return;
-    }
-    if let Some(row) = catalog
-        .iter()
-        .find(|row| row.get("id").and_then(|value| value.as_str()) == Some(argument))
-    {
+    if let Some(row) = catalog.iter().find(|row| {
+        row.get("id")
+            .and_then(|value| value.as_str())
+            .is_some_and(|id| id.eq_ignore_ascii_case(requested))
+    }) {
         let connected = row
             .get("connect")
             .and_then(|value| value.as_str())
@@ -429,17 +436,17 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
             session.push(
                 Role::Error,
                 format!(
-                    "{argument} is not connected — {detail}. The active provider was kept; use /providers to connect it."
+                    "{provider} is not connected — {detail}. The active provider was kept; use /providers to connect it."
                 ),
             );
             return;
         }
     }
-    session.provider = argument.to_string();
+    session.provider = provider.clone();
     session.remember_model_choice();
     session.push(
         Role::Assistant,
-        format!("provider is now {argument} — remembered for next launch"),
+        format!("provider is now {provider} — remembered for next launch"),
     );
 }
 
@@ -487,7 +494,9 @@ fn set_model(session: &mut TuiSession, argument: &str) {
 /// certainly not one, so a new level added upstream keeps working here.
 fn set_thinking(session: &mut TuiSession, argument: &str) {
     const LEVELS: &[&str] = &["minimal", "low", "medium", "high", "xhigh", "max", "ultra"];
-    match argument {
+    let requested = argument.trim();
+    let normalized = requested.to_ascii_lowercase();
+    match normalized.as_str() {
         "" => session.push(
             Role::Error,
             format!("usage: /thinking <{}|off>", LEVELS.join("|")),
@@ -505,9 +514,12 @@ fn set_thinking(session: &mut TuiSession, argument: &str) {
                 format!("thinking is now {level} — remembered for next launch"),
             );
         }
-        other => session.push(
+        _ => session.push(
             Role::Error,
-            format!("unknown level {other} — have: {}, off", LEVELS.join(", ")),
+            format!(
+                "unknown level {requested} — have: {}, off",
+                LEVELS.join(", ")
+            ),
         ),
     }
 }
@@ -1025,6 +1037,23 @@ mod tests {
         let (_dir, mut session) = session();
         dispatch(&mut session, "/provider offline");
         assert_eq!(session.provider, "offline");
+    }
+
+    #[test]
+    fn provider_ids_and_thinking_levels_accept_case_variants() {
+        let (_dir, mut session) = session();
+        dispatch(&mut session, "/provider OFFLINE");
+        assert_eq!(session.provider, "offline");
+        dispatch(&mut session, "/thinking HIGH");
+        assert_eq!(session.thinking.as_deref(), Some("high"));
+    }
+
+    #[test]
+    fn auto_provider_is_canonicalized_without_an_explicit_model() {
+        let (_dir, mut session) = session();
+        dispatch(&mut session, "/provider AUTO");
+        assert_eq!(session.provider, "auto");
+        assert!(session.messages[0].text.contains("provider is now auto"));
     }
 
     #[test]

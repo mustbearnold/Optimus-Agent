@@ -658,7 +658,7 @@ def command_surface(audit: Audit, case: Case) -> None:
         case.command("/does-not-exist", "unknown command /does-not-exist")
         case.command("/provider", "usage: /provider <id>")
         case.command("/provider does-not-exist", "unknown provider does-not-exist")
-        case.command("/provider offline", "provider is now offline")
+        case.command("/provider OFFLINE", "provider is now offline")
         case.command("/model offline-scripted", "model is now offline-scripted")
         case.command("/provider auto", "choose model Auto")
         case.command("/model auto", "model selection is now Auto")
@@ -666,6 +666,8 @@ def command_surface(audit: Audit, case: Case) -> None:
         case.command("/model matrix-model", "choose a provider")
 
         case.command("/thinking", "usage: /thinking")
+        upper = case.command("/thinking HIGH", "thinking is now high")
+        audit.check("think:high" in normalized(upper), "uppercase thinking level was not normalized", case)
         ultra = case.command("/thinking ultra", "thinking is now ultra")
         audit.check("think:ultra" in normalized(ultra), "ultra missing from status", case)
         case.command("/thinking impossible", "unknown level impossible")
