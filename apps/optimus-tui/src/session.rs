@@ -414,17 +414,31 @@ impl TuiSession {
             return None;
         }
         let spinner = SPINNER[(self.frame / self.spinner_every) % SPINNER.len()];
-        let what = match (&self.running_tool, self.status.as_str()) {
-            (Some(tool), _) => tool.as_str(),
-            (None, "") => "working",
-            (None, status) => status,
-        };
+        let what = self.activity_label();
         Some(crate::activity::text(
             spinner,
-            what,
+            &what,
             self.elapsed_secs(),
             usize::from(width),
         ))
+    }
+
+    /// Keep the active effect identifiable while retaining the worker phase.
+    ///
+    /// A status event can arrive while a tool is running (the kernel emits the
+    /// model step immediately before dispatch). Dropping it made the spinner
+    /// look stuck on a repeated tool name, while replacing the tool with it
+    /// made the most important context disappear. The tool stays first so the
+    /// narrow-width truncation policy preserves it; the phase follows only
+    /// when it adds information beyond the generic `working` state.
+    fn activity_label(&self) -> String {
+        let status = self.status.trim();
+        match (&self.running_tool, status) {
+            (Some(tool), "" | "working") => tool.clone(),
+            (Some(tool), status) => format!("{tool} · {status}"),
+            (None, "") => "working".into(),
+            (None, status) => status.into(),
+        }
     }
 
     fn elapsed_secs(&self) -> u64 {
@@ -1457,6 +1471,30 @@ mod tests {
 
         session.running_tool = Some("web_search".into());
         assert!(session.activity_line(80).unwrap().contains("web_search"));
+    }
+
+    #[test]
+    fn the_running_tool_keeps_the_latest_worker_status_visible() {
+        let (_dir, mut session) = session();
+        let _worker = install_worker(&mut session, WorkerKind::Turn);
+        session.begin("model step 2");
+        session.running_tool = Some("web_search".into());
+
+        let line = session.activity_line(80).expect("a running turn spins");
+        assert!(line.contains("web_search"), "{line}");
+        assert!(line.contains("model step 2"), "{line}");
+    }
+
+    #[test]
+    fn the_generic_working_status_is_not_repeated_after_a_tool_name() {
+        let (_dir, mut session) = session();
+        let _worker = install_worker(&mut session, WorkerKind::Turn);
+        session.begin("working");
+        session.running_tool = Some("web_search".into());
+
+        let line = session.activity_line(80).expect("a running turn spins");
+        assert!(line.contains("web_search"), "{line}");
+        assert!(!line.contains("web_search · working"), "{line}");
     }
 
     #[test]
