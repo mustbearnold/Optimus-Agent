@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { ToolActivity, ToolApprovalBinding } from '../../ipc/contracts';
 import { Icon, type IconName } from '../chrome/Icon';
 
@@ -17,52 +17,67 @@ export function ActivityTimeline({
   tools: ToolActivity[];
   onApprovalDecision?: ApprovalDecisionHandler;
 }) {
-  const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
-  if (!tools.length) return null;
   const summary = summarizeTools(tools);
   const failed = tools.some((tool) => isFailed(tool.status));
   const attention = tools.some((tool) => isAttention(tool.status));
   const running = tools.some((tool) => isActive(tool.status));
+  const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
+  const [open, setOpen] = useState(attention);
+  const rowsId = `activity-rows-${useId().replaceAll(':', '')}`;
+
+  useEffect(() => {
+    if (attention) setOpen(true);
+  }, [attention]);
+
+  if (!tools.length) return null;
 
   return (
-    <details
+    <div
       className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}
-      open={attention || undefined}
+      data-open={open ? 'true' : 'false'}
     >
-      <summary className="activity-heading">
+      <button
+        type="button"
+        className="activity-heading"
+        aria-expanded={open}
+        aria-controls={rowsId}
+        onClick={() => setOpen((current) => !current)}
+      >
         <Icon name={failed || attention ? 'warning' : 'source'} />
         <span>{summary}</span>
         <Icon className="activity-chevron" name="chevron" />
-      </summary>
-      <div className="activity-rows">
-        {tools.map((tool) => {
-          const category = categorizeTool(tool.name);
-          const approvalState = approvalStates[tool.id];
-          return (
-            <div className="activity-item" key={tool.id}>
-              <div className={`activity-row is-${tool.status}`}>
-                <Icon name={toolIcon(category, tool.status)} />
-                <strong>{toolLabel(category, tool.name, tool.status)}</strong>
-                <span>
-                  {tool.detail}
-                  {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
-                </span>
+      </button>
+      <div className="activity-rows" id={rowsId} aria-hidden={!open}>
+        <div className="activity-rows-inner">
+          {tools.map((tool) => {
+            const category = categorizeTool(tool.name);
+            const approvalState = approvalStates[tool.id];
+            return (
+              <div className="activity-item" key={tool.id}>
+                <div className={`activity-row is-${tool.status}`}>
+                  <Icon name={toolIcon(category, tool.status)} />
+                  <strong>{toolLabel(category, tool.name, tool.status)}</strong>
+                  <span>
+                    {tool.detail}
+                    {typeof tool.durationMs === 'number' ? ` · ${formatDuration(tool.durationMs)}` : ''}
+                  </span>
+                </div>
+                {tool.status === 'awaiting_approval' && tool.approval ? (
+                  <ToolApprovalCard
+                    tool={tool}
+                    state={approvalState}
+                    onDecision={onApprovalDecision}
+                    onStateChange={(next) =>
+                      setApprovalStates((current) => ({ ...current, [tool.id]: next }))
+                    }
+                  />
+                ) : null}
               </div>
-              {tool.status === 'awaiting_approval' && tool.approval ? (
-                <ToolApprovalCard
-                  tool={tool}
-                  state={approvalState}
-                  onDecision={onApprovalDecision}
-                  onStateChange={(next) =>
-                    setApprovalStates((current) => ({ ...current, [tool.id]: next }))
-                  }
-                />
-              ) : null}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </details>
+    </div>
   );
 }
 

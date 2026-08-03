@@ -1,8 +1,8 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Message, RunStatus } from '../../ipc/contracts';
-import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
 import { ActivityTimeline, type ApprovalDecisionHandler } from './ActivityTimeline';
+import { RichText } from './RichText';
 
 const MessageRow = memo(function MessageRow({
   message,
@@ -11,8 +11,6 @@ const MessageRow = memo(function MessageRow({
   message: Message;
   onApprovalDecision?: ApprovalDecisionHandler;
 }) {
-  const visibleContent = useTypewriterContent(message);
-  const revealing = visibleContent !== message.content;
   const activeAssistantStatus =
     message.role === 'assistant' && message.status && message.status !== 'completed';
 
@@ -27,7 +25,7 @@ const MessageRow = memo(function MessageRow({
           <span className="message-status">{statusLabel(message.status!)}</span>
         </div>
       ) : null}
-      {message.role === 'assistant' && message.status === 'completed' && !revealing && typeof message.durationMs === 'number' ? (
+      {message.role === 'assistant' && message.status === 'completed' && typeof message.durationMs === 'number' ? (
         <div className="message-worked" aria-label={`Worked for ${formatDuration(message.durationMs)}`}>
           Worked for {formatDuration(message.durationMs)} <span aria-hidden="true">›</span>
         </div>
@@ -39,7 +37,11 @@ const MessageRow = memo(function MessageRow({
         </details>
       ) : null}
       <div className="message-body">
-        {visibleContent || (message.status === 'working' ? <span className="stream-caret">Working</span> : null)}
+        {message.content
+          ? <RichText content={message.content} />
+          : message.status === 'working'
+            ? <span className="stream-caret">Working</span>
+            : null}
       </div>
       {message.role === 'assistant' && message.tools?.length ? (
         <ActivityTimeline tools={message.tools} onApprovalDecision={onApprovalDecision} />
@@ -47,79 +49,6 @@ const MessageRow = memo(function MessageRow({
     </article>
   );
 });
-
-const typewriterTailLength = 180;
-const liveStatuses = new Set<RunStatus>([
-  'submitting',
-  'working',
-  'awaiting_approval',
-  'cancelling',
-]);
-
-function useTypewriterContent(message: Message) {
-  // Animate only while the turn is live — never fake-stream completed text.
-  const liveAssistant =
-    message.role === 'assistant' && Boolean(message.status && liveStatuses.has(message.status));
-  const visibleRef = useRef(message.content);
-  const visibleCharacterCount = useRef(Array.from(message.content).length);
-  const targetCharacters = useRef(Array.from(message.content));
-  const [visible, setVisible] = useState(message.content);
-  const frameKey = `typewriter:${message.id}`;
-  const revealNext = useRef<() => void>(() => undefined);
-
-  targetCharacters.current = Array.from(message.content);
-
-  revealNext.current = () => {
-    const target = targetCharacters.current;
-    let nextCount = visibleCharacterCount.current;
-    const backlog = target.length - nextCount;
-    if (backlog <= 0) return;
-
-    nextCount =
-      backlog > typewriterTailLength
-        ? target.length - typewriterTailLength
-        : nextCount + 1;
-    const next = target.slice(0, nextCount).join('');
-    visibleCharacterCount.current = nextCount;
-    visibleRef.current = next;
-    setVisible(next);
-
-    if (nextCount < target.length) {
-      frameCoordinator.scheduleKeyed('content', frameKey, () => revealNext.current());
-    }
-  };
-
-  useEffect(() => {
-    const reducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const currentIsPrefix = message.content.startsWith(visibleRef.current);
-    const animate =
-      liveAssistant &&
-      !reducedMotion &&
-      !document.hidden &&
-      currentIsPrefix;
-
-    if (!animate) {
-      frameCoordinator.cancelKeyed('content', frameKey);
-      visibleRef.current = message.content;
-      visibleCharacterCount.current = targetCharacters.current.length;
-      setVisible(message.content);
-      return;
-    }
-
-    if (visibleRef.current !== message.content) {
-      frameCoordinator.scheduleKeyed('content', frameKey, () => revealNext.current());
-    }
-  }, [frameKey, liveAssistant, message.content, message.role, message.status]);
-
-  useEffect(
-    () => () => frameCoordinator.cancelKeyed('content', frameKey),
-    [frameKey]
-  );
-
-  return visible;
-}
 
 export function Transcript({
   messages,
@@ -144,7 +73,9 @@ export function Transcript({
   );
   const announcement = useMemo(() => {
     const assistantText =
-      [...messages].reverse().find((message) => message.role === 'assistant')?.content.trim() || '';
+      stripForAnnouncement(
+        [...messages].reverse().find((message) => message.role === 'assistant')?.content || ''
+      );
     if (['completed', 'cancelled', 'failed', 'disconnected'].includes(status)) {
       return assistantText ? `${assistantText.slice(-320)}. ${statusText}` : statusText;
     }
@@ -225,6 +156,16 @@ export function Transcript({
       ) : null}
     </div>
   );
+}
+
+function stripForAnnouncement(value: string) {
+  return value
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/g, '$1')
+    .replace(/^\s{0,3}(?:[-+*]|\d+[.)])\s+/gm, '')
+    .replace(/[\*_`#>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function EmptyWorkbench({ onStarter }: { onStarter: (text: string) => void }) {

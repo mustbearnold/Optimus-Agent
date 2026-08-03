@@ -34,6 +34,7 @@ class ConversationStore {
   private readonly streamThinking = new Map<string, string>();
   private readonly toolEventIds = new Map<string, Set<string>>();
   private readonly sessionVersions = new Map<string, number>();
+  private readonly indicatorSnapshots = new Map<string, SessionIndicatorState | null>();
   private allVersion = 0;
 
   get(sessionId: string | null): SessionProjection {
@@ -376,8 +377,14 @@ class ConversationStore {
 
   private emit(sessionId: string) {
     this.sessionVersions.set(sessionId, this.version(sessionId) + 1);
-    this.allVersion += 1;
     this.listeners.get(sessionId)?.forEach((listener) => listener());
+    const nextIndicator = this.indicator(sessionId);
+    const indicatorChanged =
+      !this.indicatorSnapshots.has(sessionId) ||
+      this.indicatorSnapshots.get(sessionId) !== nextIndicator;
+    this.indicatorSnapshots.set(sessionId, nextIndicator);
+    if (!indicatorChanged) return;
+    this.allVersion += 1;
     this.allListeners.forEach((listener) => listener());
   }
 }

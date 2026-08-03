@@ -799,9 +799,17 @@ code {
   grid-template-columns: minmax(520px, 1fr) 3px minmax(360px, var(--workspace-width));
 }
 
+.work-column {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .work-surface {
   min-width: 0;
   min-height: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--canvas);
@@ -1942,6 +1950,112 @@ code {
   white-space: pre-wrap;
 }
 
+.message-body .rich-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.rich-text > :first-child {
+  margin-top: 0;
+}
+
+.rich-text > :last-child {
+  margin-bottom: 0;
+}
+
+.rich-text p,
+.rich-text h1,
+.rich-text h2,
+.rich-text h3,
+.rich-text h4,
+.rich-text h5,
+.rich-text h6,
+.rich-text blockquote,
+.rich-text ul,
+.rich-text ol,
+.rich-text pre,
+.rich-text hr {
+  margin-block: 0 0.8em;
+}
+
+.rich-text p {
+  white-space: normal;
+}
+
+.rich-text h1,
+.rich-text h2,
+.rich-text h3,
+.rich-text h4,
+.rich-text h5,
+.rich-text h6 {
+  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.rich-text h1 { font-size: 1.35em; }
+.rich-text h2 { font-size: 1.22em; }
+.rich-text h3 { font-size: 1.1em; }
+.rich-text h4,
+.rich-text h5,
+.rich-text h6 { font-size: 1em; }
+
+.rich-text ul,
+.rich-text ol {
+  padding-left: 1.5em;
+}
+
+.rich-text li + li {
+  margin-top: 0.35em;
+}
+
+.rich-text blockquote {
+  padding-left: 1em;
+  border-left: 2px solid var(--border-strong);
+  color: var(--muted);
+}
+
+.rich-text code {
+  padding: 0.12em 0.35em;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: "SFMono-Regular", "Cascadia Code", monospace;
+  font-size: 0.92em;
+}
+
+.rich-text .rich-code {
+  padding: 12px 14px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: "SFMono-Regular", "Cascadia Code", monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.rich-text .rich-code code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.rich-text a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 42%, transparent);
+  text-underline-offset: 2px;
+}
+
+.rich-text hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
 .message-user {
   max-width: 84%;
   margin-left: auto;
@@ -2079,12 +2193,16 @@ code {
   align-items: center;
   gap: 8px;
   padding: 1px 2px;
+  border: 0;
+  background: transparent;
   border-radius: 5px;
   color: var(--muted);
   cursor: pointer;
   font-size: 12px;
+  font-family: inherit;
   line-height: 1.35;
   list-style: none;
+  text-align: left;
   transition:
     color 90ms var(--ease-out),
     background-color 90ms var(--ease-out);
@@ -2097,6 +2215,11 @@ code {
 .activity-heading:hover {
   color: var(--text-2);
   background: color-mix(in srgb, var(--hover) 65%, transparent);
+}
+
+.activity-heading:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .activity-heading > svg {
@@ -2112,7 +2235,7 @@ code {
   transition: transform 120ms var(--ease-out);
 }
 
-.activity-timeline[open] .activity-chevron {
+.activity-timeline[data-open="true"] .activity-chevron {
   transform: rotate(0);
 }
 
@@ -2130,8 +2253,30 @@ code {
 
 .activity-rows {
   display: grid;
+  grid-template-rows: 0fr;
+  padding-left: 25px;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 180ms var(--ease-out),
+    opacity 140ms var(--ease-out),
+    visibility 0s linear 180ms;
+}
+
+.activity-rows-inner {
+  min-height: 0;
+  display: grid;
   gap: 2px;
-  padding: 4px 0 2px 25px;
+  padding: 4px 0 2px;
+  overflow: hidden;
+}
+
+.activity-timeline[data-open="true"] .activity-rows {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .activity-item {
@@ -2147,6 +2292,7 @@ code {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
+  transition: color 120ms var(--ease-out), transform 180ms var(--ease-out);
 }
 
 .activity-row strong {
@@ -2158,6 +2304,8 @@ code {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 18px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 18px), transparent 100%);
 }
 
 .activity-row > svg {
@@ -3719,6 +3867,11 @@ code {
   .surface-row {
     position: relative;
     display: block;
+  }
+
+  .work-column {
+    position: absolute;
+    inset: 0;
   }
 
   .work-surface {

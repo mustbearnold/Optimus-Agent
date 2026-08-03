@@ -1,6 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Transcript } from './Transcript';
 
 describe('Transcript', () => {
@@ -56,7 +55,7 @@ describe('Transcript', () => {
     expect(screen.queryByText('Optimus')).not.toBeInTheDocument();
   });
 
-  it('reveals a live assistant response one character per display frame', () => {
+  it('renders the latest live assistant response without a second typewriter queue', () => {
     const onStarter = vi.fn();
     const { rerender } = render(
       <Transcript
@@ -76,10 +75,7 @@ describe('Transcript', () => {
       />
     );
 
-    act(() => frameCoordinator.flushNow());
-    expect(screen.getByText('A')).toBeInTheDocument();
-    act(() => frameCoordinator.flushNow());
-    expect(screen.getByText('AB')).toBeInTheDocument();
+    expect(screen.getByText('ABC')).toBeInTheDocument();
 
     rerender(
       <Transcript
@@ -92,6 +88,31 @@ describe('Transcript', () => {
     // Completed turns snap to full text immediately (no fake post-stream typewriter).
     expect(screen.getByText('ABC')).toBeInTheDocument();
     expect(screen.getByLabelText('Worked for 0m 01s')).toBeInTheDocument();
+  });
+
+  it('renders common assistant Markdown as rich text without exposing raw markers', () => {
+    render(
+      <Transcript
+        messages={[{
+          id: 'assistant-markdown',
+          role: 'assistant',
+          content: 'The **compute race** matters.\n\n- **Open models:** more choice\n- `npm test` stays visible\n\n[Read the source](https://example.com/source)',
+          status: 'completed',
+        }]}
+        status="completed"
+        statusText="Completed"
+        onStarter={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('compute race').tagName).toBe('STRONG');
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Open models: more choice');
+    expect(screen.getByText('npm test').tagName).toBe('CODE');
+    expect(screen.getByRole('link', { name: 'Read the source' })).toHaveAttribute(
+      'href',
+      'https://example.com/source'
+    );
+    expect(screen.queryByText('**compute race**')).not.toBeInTheDocument();
   });
 
   it('keeps tool calls collapsed on their owning assistant turn until clicked', () => {
@@ -129,13 +150,13 @@ describe('Transcript', () => {
       />
     );
 
-    const details = container.querySelector('details.activity-timeline');
-    expect(details).not.toHaveAttribute('open');
+    const timeline = container.querySelector('.activity-timeline');
+    expect(timeline).toHaveAttribute('data-open', 'false');
     expect(screen.getByText('Read files, ran a command')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Read files, ran a command'));
+    fireEvent.click(screen.getByRole('button', { name: 'Read files, ran a command' }));
 
-    expect(details).toHaveAttribute('open');
+    expect(timeline).toHaveAttribute('data-open', 'true');
     expect(screen.getByText('AGENTS.md')).toBeVisible();
     expect(screen.getByText('npm test')).toBeVisible();
   });
@@ -212,7 +233,7 @@ describe('Transcript', () => {
       />
     );
 
-    expect(container.querySelector('details.activity-timeline')).toHaveAttribute('open');
+    expect(container.querySelector('.activity-timeline')).toHaveAttribute('data-open', 'true');
     expect(screen.getAllByText('Write src/app.ts (12 bytes)')).toHaveLength(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'Approve and continue' }));
@@ -279,7 +300,7 @@ describe('Transcript', () => {
       />
     );
 
-    expect(container.querySelector('details.activity-timeline')).toHaveAttribute('open');
+    expect(container.querySelector('.activity-timeline')).toHaveAttribute('data-open', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
 
     expect(screen.getByRole('button', { name: 'Denying…' })).toBeDisabled();

@@ -24,6 +24,28 @@ describe('ConversationStore', () => {
     expect(projection.messages.at(-1)?.content.endsWith('789')).toBe(true);
   });
 
+  it('does not invalidate the whole session rail for same-state stream frames', () => {
+    const id = `indicator-frame-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    let allNotifications = 0;
+    const unsubscribe = conversationStore.subscribeAll(() => {
+      allNotifications += 1;
+    });
+
+    conversationStore.begin(id, 'stream');
+    expect(allNotifications).toBe(1);
+
+    conversationStore.apply(id, { type: 'delta', text: 'partial' });
+    frameCoordinator.flushNow();
+    conversationStore.apply(id, { type: 'thinking', text: 'reasoning' });
+    frameCoordinator.flushNow();
+    expect(allNotifications).toBe(1);
+
+    conversationStore.apply(id, { type: 'done' });
+    expect(allNotifications).toBe(2);
+    unsubscribe();
+  });
+
   it('keeps events and terminal state attached to their owning sessions', () => {
     const first = `first-${Date.now()}`;
     const second = `second-${Date.now()}`;

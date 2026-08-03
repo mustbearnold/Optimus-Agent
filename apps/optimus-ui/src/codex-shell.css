@@ -1403,6 +1403,11 @@ svg {
     display: block;
   }
 
+  .work-column {
+    position: absolute;
+    inset: 0;
+  }
+
   .work-surface {
     position: absolute;
     inset: 0;

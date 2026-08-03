@@ -1,5 +1,6 @@
 import {
   Component,
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -36,6 +37,7 @@ import {
   loadComposer,
   modelOverride,
   saveComposer,
+  type ComposerSettings,
 } from '../state/composerStore';
 import {
   defaultLayout,
@@ -136,7 +138,6 @@ export function OptimusApp() {
   }, [projectScopes, projects]);
   const sourceProject = projects.find((project) => project.id === sourceProjectId) || null;
   const browserSuspended = state.settingsOpen || Boolean(sourceProject);
-  const conversation = useConversation(state.selectedSessionId);
   const sessionIndicators = useConversationIndicators(
     sessions.map((session) => session.id)
   );
@@ -210,11 +211,11 @@ export function OptimusApp() {
 
   useEffect(() => {
     const id = state.selectedSessionId;
-    if (!id || conversation.loaded) return;
+    if (!id || conversationStore.get(id).loaded) return;
     transport.invoke<SessionDetail>('get_session', { id }).then((detail) => {
       conversationStore.load(detail);
     }).catch((error) => setBootError(error instanceof Error ? error.message : String(error)));
-  }, [conversation.loaded, state.selectedSessionId]);
+  }, [state.selectedSessionId]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = state.theme;
@@ -580,23 +581,20 @@ export function OptimusApp() {
           <section className="app-stage">
             {bootError ? <div className="boot-error" role="alert"><Icon name="warning" /><span>{bootError}</span><button type="button" onClick={() => void refreshRuntime()}>Retry</button></div> : null}
             <div className={`surface-row${workspaceMaximized ? ' is-workspace-maximized' : ''}`}>
-              <section className={`work-surface${workVisible ? ' is-compact-active' : ''}`} aria-label="Agent work surface">
-                {state.layout.route === 'work' ? (
-                  <>
-                    <SessionBar title={title} project={selectedProject} showSeparator={workspaceVisible} />
-                    <Transcript
-                      messages={conversation.messages}
-                      status={conversation.status}
-                      statusText={conversation.statusText}
-                      onStarter={(text) => setInput(text)}
-                      onApprovalDecision={resolveTranscriptApproval}
-                    />
-                    <Composer
-                      value={annotation ? `${input}${input ? '\n\n' : ''}${annotation}` : input}
-                      runStatus={state.activeRunSessionId === state.selectedSessionId ? conversation.status : 'idle'}
-                      disabled={Boolean(state.activeRunSessionId && state.activeRunSessionId !== state.selectedSessionId)}
-                      isRunOwner={state.activeRunSessionId === state.selectedSessionId}
+              <div className="work-column">
+                <section className={`work-surface${workVisible ? ' is-compact-active' : ''}`} aria-label="Agent work surface">
+                  {state.layout.route === 'work' ? (
+                    <WorkbenchChat
+                      title={title}
+                      project={selectedProject}
+                      showSeparator={workspaceVisible}
+                      sessionId={state.selectedSessionId}
+                      activeRunSessionId={state.activeRunSessionId}
+                      input={input}
+                      annotation={annotation}
                       settings={composer}
+                      onStarter={setInput}
+                      onApprovalDecision={resolveTranscriptApproval}
                       onChange={(value) => { setAnnotation(''); setInput(value); }}
                       onSettings={(next) => {
                         if (next.provider !== composer.provider) providerChosen.current = true;
@@ -606,27 +604,34 @@ export function OptimusApp() {
                       onSend={() => void send()}
                       onStop={() => void stop()}
                     />
-                  </>
-                ) : state.layout.route === 'capabilities' ? (
-                  <CapabilitiesPage
-                    doctor={doctor}
-                    approvals={approvals}
-                    campaigns={campaigns}
-                    transport={transport}
-                    onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })}
-                  />
-                ) : state.layout.route === 'consoles' ? (
-                  <ConsolesPage
-                    key={consoleTab}
-                    transport={transport}
-                    initialTab={consoleTab}
-                  />
-                ) : state.layout.route === 'mail' ? (
-                  <MailPage transport={transport} />
-                ) : state.layout.route === 'artifacts' ? (
-                  <ArtifactsSurface transport={transport} active standalone />
-                ) : null}
-              </section>
+                  ) : state.layout.route === 'capabilities' ? (
+                    <CapabilitiesPage
+                      doctor={doctor}
+                      approvals={approvals}
+                      campaigns={campaigns}
+                      transport={transport}
+                      onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })}
+                    />
+                  ) : state.layout.route === 'consoles' ? (
+                    <ConsolesPage
+                      key={consoleTab}
+                      transport={transport}
+                      initialTab={consoleTab}
+                    />
+                  ) : state.layout.route === 'mail' ? (
+                    <MailPage transport={transport} />
+                  ) : state.layout.route === 'artifacts' ? (
+                    <ArtifactsSurface transport={transport} active standalone />
+                  ) : null}
+                </section>
+                {state.layout.executionOpen ? <div className="execution-resizer" role="separator" tabIndex={0} aria-label="Resize execution dock" aria-orientation="horizontal" aria-valuemin={120} aria-valuemax={520} aria-valuenow={state.layout.executionHeight} aria-valuetext={`${state.layout.executionHeight} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'execution')} onPointerDown={(event) => beginResize(event, 'execution')} /> : null}
+                <ExecutionDock
+                  transport={transport}
+                  open={state.layout.executionOpen}
+                  onClose={() => dispatch({ type: 'patch-layout', patch: { executionOpen: false, compactSurface: 'work' } })}
+                  onState={updateExecutionState}
+                />
+              </div>
 
               {workspaceVisible ? (
                 <>
@@ -648,13 +653,6 @@ export function OptimusApp() {
                 </>
               ) : null}
             </div>
-            {state.layout.executionOpen ? <div className="execution-resizer" role="separator" tabIndex={0} aria-label="Resize execution dock" aria-orientation="horizontal" aria-valuemin={120} aria-valuemax={520} aria-valuenow={state.layout.executionHeight} aria-valuetext={`${state.layout.executionHeight} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'execution')} onPointerDown={(event) => beginResize(event, 'execution')} /> : null}
-            <ExecutionDock
-              transport={transport}
-              open={state.layout.executionOpen}
-              onClose={() => dispatch({ type: 'patch-layout', patch: { executionOpen: false, compactSurface: 'work' } })}
-              onState={updateExecutionState}
-            />
           </section>
         </div>
 
@@ -773,6 +771,70 @@ export function OptimusApp() {
     </ErrorBoundary>
   );
 }
+
+const WorkbenchChat = memo(function WorkbenchChat({
+  title,
+  project,
+  showSeparator,
+  sessionId,
+  activeRunSessionId,
+  input,
+  annotation,
+  settings,
+  onStarter,
+  onApprovalDecision,
+  onChange,
+  onSettings,
+  onSend,
+  onStop,
+}: {
+  title: string;
+  project: Project | null;
+  showSeparator: boolean;
+  sessionId: string | null;
+  activeRunSessionId: string | null;
+  input: string;
+  annotation: string;
+  settings: ComposerSettings;
+  onStarter: (text: string) => void;
+  onApprovalDecision: (
+    binding: ToolApprovalBinding,
+    decision: 'approve' | 'deny'
+  ) => void | Promise<void>;
+  onChange: (value: string) => void;
+  onSettings: (settings: ComposerSettings) => void;
+  onSend: () => void;
+  onStop: () => void;
+}) {
+  // Keep the high-frequency stream subscription below the shell. Tool deltas
+  // should repaint the conversation, not the rail, browser, and window chrome.
+  const conversation = useConversation(sessionId);
+  const isRunOwner = activeRunSessionId === sessionId;
+
+  return (
+    <>
+      <SessionBar title={title} project={project} showSeparator={showSeparator} />
+      <Transcript
+        messages={conversation.messages}
+        status={conversation.status}
+        statusText={conversation.statusText}
+        onStarter={onStarter}
+        onApprovalDecision={onApprovalDecision}
+      />
+      <Composer
+        value={annotation ? `${input}${input ? '\n\n' : ''}${annotation}` : input}
+        runStatus={isRunOwner ? conversation.status : 'idle'}
+        disabled={Boolean(activeRunSessionId && !isRunOwner)}
+        isRunOwner={isRunOwner}
+        settings={settings}
+        onChange={onChange}
+        onSettings={onSettings}
+        onSend={onSend}
+        onStop={onStop}
+      />
+    </>
+  );
+});
 
 function sortSessions(list: SessionMeta[]): SessionMeta[] {
   return [...list].sort((a, b) => {
