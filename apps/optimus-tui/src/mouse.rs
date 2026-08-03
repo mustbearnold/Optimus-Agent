@@ -214,6 +214,8 @@ pub enum Intent {
     Release,
     /// Choose the picker row at this index.
     Choose(usize),
+    /// Move the open picker by wheel notches, positive being upward.
+    PickerScroll(isize),
     /// Open the command menu.
     OpenMenu,
     /// A click landed this many rows into the transcript viewport. The block
@@ -309,6 +311,8 @@ pub fn intent_with_sidebar(
         MouseEventKind::ScrollDown if picker.is_none() && layout.sidebar.contains(at) => {
             return Intent::SidebarScroll(-WHEEL)
         }
+        MouseEventKind::ScrollUp if picker.is_some() => return Intent::PickerScroll(WHEEL),
+        MouseEventKind::ScrollDown if picker.is_some() => return Intent::PickerScroll(-WHEEL),
         MouseEventKind::ScrollUp => return Intent::Scroll(WHEEL),
         MouseEventKind::ScrollDown => return Intent::Scroll(-WHEEL),
         MouseEventKind::Up(MouseButton::Left) if interaction.sidebar_dragging => {
@@ -702,12 +706,17 @@ mod tests {
     }
 
     #[test]
-    fn the_wheel_still_scrolls_while_a_picker_is_open() {
+    fn the_wheel_moves_the_open_picker_instead_of_the_transcript() {
         let picker = menu();
-        let event = at(MouseEventKind::ScrollUp, 40, 5);
+        let up = at(MouseEventKind::ScrollUp, 40, 5);
         assert_eq!(
-            intent(&event, AREA, 3, Some(&picker), false),
-            Intent::Scroll(WHEEL)
+            intent(&up, AREA, 3, Some(&picker), false),
+            Intent::PickerScroll(WHEEL)
+        );
+        let down = at(MouseEventKind::ScrollDown, 40, 5);
+        assert_eq!(
+            intent(&down, AREA, 3, Some(&picker), false),
+            Intent::PickerScroll(-WHEEL)
         );
     }
 

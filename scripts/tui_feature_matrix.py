@@ -509,6 +509,17 @@ def picker_and_menu(audit: Audit, case: Case) -> None:
         case.keys("Down", "Enter")
         case.wait_text("project scope: project-1")
 
+        # The modal owns the wheel too: three notches from the first menu row
+        # land on /yolo, so Enter should open its confirmation picker rather
+        # than acting on whichever transcript row sits underneath the menu.
+        case.mouse("right-down", 70, 5)
+        case.wait_text("Commands")
+        case.mouse("wheel-down", 70, 5)
+        case.keys("Enter")
+        case.wait_text("Confirm unrestricted access")
+        case.keys("Escape")
+        case.wait_absent("Confirm unrestricted access")
+
         case.mouse("right-down", 70, 5)
         menu = case.wait_text("Commands")
         for item in ("/providers", "/approval", "/access", "/yolo", "/pin", "/frame", "/new", "/help"):

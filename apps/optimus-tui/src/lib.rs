@@ -436,6 +436,17 @@ fn on_mouse(
             }
             session.confirm_picker();
         }
+        mouse::Intent::PickerScroll(rows) => {
+            if let Some(picker) = session.picker.as_mut() {
+                for _ in 0..rows.unsigned_abs() {
+                    if rows.is_positive() {
+                        picker.up();
+                    } else {
+                        picker.down();
+                    }
+                }
+            }
+        }
         mouse::Intent::OpenMenu => session.picker = Some(commands::menu()),
         // Keyboard and pointer reach the same two moves: select the block, and
         // open or close it when the row clicked is the one that heads it.
