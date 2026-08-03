@@ -438,6 +438,7 @@ def command_surface(audit: Audit, case: Case) -> None:
 
 def picker_and_menu(audit: Audit, case: Case) -> None:
     audit.begin("pickers-suggestions-and-command-menu")
+    seed_projects(case.home)
     case.launch()
     try:
         case.type_submit("/providers")
@@ -497,6 +498,16 @@ def picker_and_menu(audit: Audit, case: Case) -> None:
         )
         case.keys("Enter")
         case.wait_text("project scope:")
+
+        case.type_submit("/projects")
+        named_project_picker = case.wait_text("Choose a project scope")
+        audit.check(
+            "project-1" in normalized(named_project_picker),
+            "project picker omitted the first named scope",
+            case,
+        )
+        case.keys("Down", "Enter")
+        case.wait_text("project scope: project-1")
 
         case.mouse("right-down", 70, 5)
         menu = case.wait_text("Commands")
