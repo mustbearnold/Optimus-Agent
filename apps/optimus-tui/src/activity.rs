@@ -6,6 +6,15 @@ use crate::width;
 /// the interrupt hint mid-word. Elapsed time is least important, followed by
 /// status detail; the spinner and an actionable Ctrl-C cue survive longest.
 pub(crate) fn text(spinner: char, what: &str, elapsed_secs: u64, width: usize) -> String {
+    // Status is a transport boundary. Keep a malformed or future provider
+    // message from injecting a newline/tab into a row the layout treats as
+    // one terminal line; whitespace between words remains readable.
+    let normalized = what.split_whitespace().collect::<Vec<_>>().join(" ");
+    let what = if normalized.is_empty() {
+        "working"
+    } else {
+        normalized.as_str()
+    };
     let full = format!("{spinner} {what}… {elapsed_secs}s · Ctrl-C to interrupt");
     if fits(&full, width) {
         return full;
@@ -69,5 +78,14 @@ mod tests {
         let rendered = text('⠼', "解析作業を実行中", 7, 30);
         assert!(width::cells(&rendered) <= 30, "{rendered}");
         assert!(rendered.contains("Ctrl-C"), "{rendered}");
+    }
+
+    #[test]
+    fn status_text_cannot_inject_extra_terminal_rows() {
+        let rendered = text('⠼', "searching\nprimary\t sources", 7, 80);
+        assert!(!rendered.contains('\n'), "{rendered:?}");
+        assert!(!rendered.contains('\t'), "{rendered:?}");
+        assert!(rendered.contains("searching primary sources"), "{rendered}");
+        assert!(width::cells(&rendered) <= 80, "{rendered}");
     }
 }
