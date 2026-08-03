@@ -87,7 +87,14 @@ fn openai_compat_http_roundtrip() {
                 "role": "assistant",
                 "content": "mock-ok"
             }
-        }]
+        }],
+        "usage": {
+            "prompt_tokens": 11,
+            "completion_tokens": 7,
+            "total_tokens": 18,
+            "prompt_tokens_details": { "cached_tokens": 3 },
+            "completion_tokens_details": { "reasoning_tokens": 2 }
+        }
     })
     .to_string();
     let (base, handle) = spawn_mock(200, body);
@@ -100,6 +107,7 @@ fn openai_compat_http_roundtrip() {
             timeout_secs: 5,
         },
         completions_url_override: None,
+        last_usage: None,
     };
     let resp = model
         .complete(CompletionRequest {
@@ -117,6 +125,12 @@ fn openai_compat_http_roundtrip() {
         })
         .expect("complete");
     assert_eq!(resp.text.as_deref(), Some("mock-ok"));
+    let usage = model.last_usage.expect("provider usage");
+    assert_eq!(usage.input_tokens, Some(11));
+    assert_eq!(usage.output_tokens, Some(7));
+    assert_eq!(usage.total_tokens, Some(18));
+    assert_eq!(usage.cached_input_tokens, Some(3));
+    assert_eq!(usage.reasoning_tokens, Some(2));
     handle.join().unwrap();
 }
 
@@ -133,6 +147,7 @@ fn openai_compat_http_error_surface() {
             timeout_secs: 5,
         },
         completions_url_override: None,
+        last_usage: None,
     };
     let err = model
         .complete(CompletionRequest {

@@ -4854,6 +4854,32 @@
     },
     {
       "authority": "record",
+      "content_sha256": "22325d6c2986f0925d6cc1acfe499f34570aa79299a5e271a7db531b2b56c227",
+      "headings": [
+        "ADR-0077: Verified progress per token is the development objective",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons",
+        "Risks",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0077-verified-progress-per-token-is-the-development-objective",
+      "path": "docs/decisions/0077-verified-progress-per-token-is-the-development-objective.md",
+      "plane": "decision",
+      "review_by": "2026-11-03",
+      "reviewed_on": "2026-08-03",
+      "status": "current",
+      "summary": "Optimus optimizes verified progress per model token by pairing exact wall-clock action timing with provider-reported usage, compact structured context, targeted verification, and explicit unknown accounting.",
+      "title": "ADR-0077: Verified progress per token is the development objective",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "3d67948f1096aecbbfe0c69a89ef52f0d73b13fff65bda31e30741906ae49e3c",
       "headings": [
         "Architecture decision index",
@@ -7222,7 +7248,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "d94f3c070427dc29b85ee0b864272b46c772422815244b2f7a96f4fcfb4e4ad3",
+  "documents_sha256": "f176a0f4698097e46f2c7d23756f961b9cc964c769f9c14d3dc6af0d9efa5511",
   "routes": [
     {
       "id": "docs.navigation",

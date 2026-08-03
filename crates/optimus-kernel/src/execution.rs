@@ -7,15 +7,16 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::execution_timing::ExecutionModelCallSummary;
 use crate::{
     execution_schema,
     execution_support::{
         ensure_column, insert_manifest, now_unix, read_classes, replay_name, sha256,
     },
-    ChatApprovalStatus, CompletionRequest, CompletionResponse, KernelError, Result, SpanId,
-    ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase, TraceContext, TraceId,
+    ChatApprovalStatus, CompletionRequest, CompletionResponse, CompletionUsage, KernelError,
+    Result, SpanId, ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase,
+    TraceContext, TraceId,
 };
-
 pub const EXECUTION_MANIFEST_VERSION: u16 = 2;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -54,18 +55,6 @@ pub struct TimingEvent {
     pub elapsed_ms: u64,
     pub status: Option<String>,
     pub suppressed: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-pub struct ExecutionTimingSummary {
-    pub total_ms: u64,
-    pub first_response_ms: Option<u64>,
-    pub model_ms: u64,
-    pub tool_ms: u64,
-    pub model_call_count: usize,
-    pub executed_tool_call_count: usize,
-    pub suppressed_tool_call_count: usize,
-    pub terminal_status: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -122,18 +111,6 @@ pub struct ReplayReport {
     pub tool_call_count: usize,
 }
 
-/// Bounded projection of one model step for causal reconstruction.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ExecutionModelCallSummary {
-    pub step: u32,
-    pub provider: String,
-    pub model: String,
-    pub request_sha256: String,
-    pub response_sha256: String,
-    pub replay_class: String,
-    pub duration_ms: u64,
-}
-
 /// Bounded projection of one tool invocation for causal reconstruction.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ExecutionToolCallSummary {
@@ -166,7 +143,7 @@ pub struct PersistedToolLifecycle {
 }
 
 pub struct ExecutionStore {
-    conn: Connection,
+    pub(crate) conn: Connection,
 }
 
 impl ExecutionStore {
@@ -202,6 +179,34 @@ impl ExecutionStore {
             "duration_ms",
             "INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0)",
         )?;
+        for (name, definition) in [
+            (
+                "input_tokens",
+                "INTEGER CHECK(input_tokens IS NULL OR input_tokens >= 0)",
+            ),
+            (
+                "output_tokens",
+                "INTEGER CHECK(output_tokens IS NULL OR output_tokens >= 0)",
+            ),
+            (
+                "total_tokens",
+                "INTEGER CHECK(total_tokens IS NULL OR total_tokens >= 0)",
+            ),
+            (
+                "reasoning_tokens",
+                "INTEGER CHECK(reasoning_tokens IS NULL OR reasoning_tokens >= 0)",
+            ),
+            (
+                "cached_input_tokens",
+                "INTEGER CHECK(cached_input_tokens IS NULL OR cached_input_tokens >= 0)",
+            ),
+            (
+                "cache_write_tokens",
+                "INTEGER CHECK(cache_write_tokens IS NULL OR cache_write_tokens >= 0)",
+            ),
+        ] {
+            ensure_column(&conn, "execution_model_calls", name, definition)?;
+        }
         ensure_column(
             &conn,
             "execution_tool_calls",
@@ -315,10 +320,20 @@ impl ExecutionStore {
 
     pub fn list_model_calls(&self, manifest_id: Uuid) -> Result<Vec<ExecutionModelCallSummary>> {
         let mut statement = self.conn.prepare(
-            "SELECT step,provider,model,request_sha256,response_sha256,replay_class,duration_ms
+            "SELECT step,provider,model,request_sha256,response_sha256,replay_class,duration_ms,
+                    input_tokens,output_tokens,total_tokens,reasoning_tokens,cached_input_tokens,
+                    cache_write_tokens
              FROM execution_model_calls WHERE manifest_id=?1 ORDER BY step",
         )?;
         let rows = statement.query_map(params![manifest_id.to_string()], |row| {
+            let usage = CompletionUsage {
+                input_tokens: row.get::<_, Option<i64>>(7)?.map(|value| value as u64),
+                output_tokens: row.get::<_, Option<i64>>(8)?.map(|value| value as u64),
+                total_tokens: row.get::<_, Option<i64>>(9)?.map(|value| value as u64),
+                reasoning_tokens: row.get::<_, Option<i64>>(10)?.map(|value| value as u64),
+                cached_input_tokens: row.get::<_, Option<i64>>(11)?.map(|value| value as u64),
+                cache_write_tokens: row.get::<_, Option<i64>>(12)?.map(|value| value as u64),
+            };
             Ok(ExecutionModelCallSummary {
                 step: row.get::<_, i64>(0)? as u32,
                 provider: row.get(1)?,
@@ -327,6 +342,7 @@ impl ExecutionStore {
                 response_sha256: row.get(4)?,
                 replay_class: row.get(5)?,
                 duration_ms: row.get::<_, i64>(6)? as u64,
+                usage: (!usage.is_empty()).then_some(usage),
             })
         })?;
         rows.collect::<std::result::Result<Vec<_>, _>>()
@@ -432,6 +448,7 @@ impl ExecutionStore {
             .transpose()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn record_model_call(
         &self,
         manifest_id: Uuid,
@@ -440,6 +457,7 @@ impl ExecutionStore {
         request: &CompletionRequest,
         response: &CompletionResponse,
         duration_ms: u64,
+        usage: Option<&CompletionUsage>,
     ) -> Result<()> {
         let (provider, model) = identity;
         let replay = if provider == "offline" {
@@ -449,8 +467,9 @@ impl ExecutionStore {
         };
         self.conn.execute(
             "INSERT INTO execution_model_calls(
-               manifest_id,step,provider,model,request_sha256,response_sha256,replay_class,duration_ms
-             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8)",
+               manifest_id,step,provider,model,request_sha256,response_sha256,replay_class,duration_ms,
+               input_tokens,output_tokens,total_tokens,reasoning_tokens,cached_input_tokens,cache_write_tokens
+             ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)",
             params![
                 manifest_id.to_string(),
                 step as i64,
@@ -459,7 +478,19 @@ impl ExecutionStore {
                 sha256(&serde_json::to_vec(request)?),
                 sha256(&serde_json::to_vec(response)?),
                 replay_name(replay),
-                duration_ms as i64
+                duration_ms as i64,
+                usage.and_then(|value| value.input_tokens).map(|value| value as i64),
+                usage.and_then(|value| value.output_tokens).map(|value| value as i64),
+                usage.and_then(|value| value.total_tokens).map(|value| value as i64),
+                usage
+                    .and_then(|value| value.reasoning_tokens)
+                    .map(|value| value as i64),
+                usage
+                    .and_then(|value| value.cached_input_tokens)
+                    .map(|value| value as i64),
+                usage
+                    .and_then(|value| value.cache_write_tokens)
+                    .map(|value| value as i64)
             ],
         )?;
         Ok(())
@@ -782,37 +813,6 @@ impl ExecutionStore {
         Ok(())
     }
 
-    pub fn timing_summary(&self, manifest_id: Uuid) -> Result<ExecutionTimingSummary> {
-        self.conn
-            .query_row(
-                "SELECT m.duration_ms,
-                        (SELECT elapsed_ms FROM execution_timing_events WHERE manifest_id=m.id AND kind='first_response' ORDER BY sequence LIMIT 1),
-                        COALESCE((SELECT sum(duration_ms) FROM execution_timing_events WHERE manifest_id=m.id AND kind='model_finished'),0),
-                        COALESCE((SELECT sum(duration_ms) FROM execution_timing_events WHERE manifest_id=m.id AND kind='tool_finished' AND suppressed=0),0),
-                        (SELECT count(*) FROM execution_timing_events WHERE manifest_id=m.id AND kind='model_finished'),
-                        (SELECT count(*) FROM execution_timing_events WHERE manifest_id=m.id AND kind='tool_finished' AND suppressed=0),
-                        (SELECT count(*) FROM execution_timing_events WHERE manifest_id=m.id AND kind='tool_finished' AND suppressed=1),
-                        CASE WHEN m.status='running' THEN NULL ELSE m.status END
-                 FROM execution_manifests m WHERE m.id=?1",
-                params![manifest_id.to_string()],
-                |row| {
-                    Ok(ExecutionTimingSummary {
-                        total_ms: row.get::<_, i64>(0)? as u64,
-                        first_response_ms: row
-                            .get::<_, Option<i64>>(1)?
-                            .map(|value| value as u64),
-                        model_ms: row.get::<_, i64>(2)? as u64,
-                        tool_ms: row.get::<_, i64>(3)? as u64,
-                        model_call_count: row.get::<_, i64>(4)? as usize,
-                        executed_tool_call_count: row.get::<_, i64>(5)? as usize,
-                        suppressed_tool_call_count: row.get::<_, i64>(6)? as usize,
-                        terminal_status: row.get(7)?,
-                    })
-                },
-            )
-            .map_err(KernelError::Sqlite)
-    }
-
     pub fn manifest(&self, id: Uuid) -> Result<ExecutionManifest> {
         self.conn
             .query_row(
@@ -926,6 +926,14 @@ mod tests {
                 b"policy",
             )
             .unwrap();
+        let usage = CompletionUsage {
+            input_tokens: Some(11),
+            output_tokens: Some(7),
+            total_tokens: Some(18),
+            reasoning_tokens: Some(2),
+            cached_input_tokens: Some(3),
+            cache_write_tokens: None,
+        };
         store
             .record_model_call(
                 manifest,
@@ -937,8 +945,16 @@ mod tests {
                     tool_calls: vec![],
                 },
                 17,
+                Some(&usage),
             )
             .unwrap();
+        let calls = store.list_model_calls(manifest).unwrap();
+        assert_eq!(calls[0].usage.as_ref(), Some(&usage));
+        let timing = store.timing_summary(manifest).unwrap();
+        assert_eq!(timing.total_tokens, Some(18));
+        assert_eq!(timing.reasoning_tokens, Some(2));
+        assert_eq!(timing.accounted_model_call_count, 1);
+        assert_eq!(timing.unaccounted_model_call_count, 0);
         let report = store.replay_report(manifest).unwrap();
         assert_eq!(report.classification, ReplayClassification::NonReplayable);
         assert_eq!(report.blockers, vec!["model_nondeterministic"]);

@@ -63,6 +63,7 @@ fn open_test_model(config: CodexOAuthConfig) -> CodexOAuthModel {
         config,
         responses_url_override: None,
         store,
+        last_usage: None,
     }
 }
 
@@ -230,7 +231,7 @@ fn codex_responses_http_roundtrip() {
         .unwrap();
     let url = spawn_mock(
         200,
-        r#"{"output":[{"type":"message","content":[{"type":"output_text","text":"codex-hi"}]}]}"#,
+        r#"{"output":[{"type":"message","content":[{"type":"output_text","text":"codex-hi"}]}],"usage":{"input_tokens":13,"output_tokens":5,"total_tokens":18,"input_tokens_details":{"cached_tokens":4},"output_tokens_details":{"reasoning_tokens":1}}}"#,
     );
     let mut model = open_test_model(CodexOAuthConfig {
         home: dir.path().to_path_buf(),
@@ -254,6 +255,36 @@ fn codex_responses_http_roundtrip() {
         })
         .unwrap();
     assert_eq!(resp.text.as_deref(), Some("codex-hi"));
+    let usage = model.last_usage.expect("provider usage");
+    assert_eq!(usage.input_tokens, Some(13));
+    assert_eq!(usage.output_tokens, Some(5));
+    assert_eq!(usage.total_tokens, Some(18));
+    assert_eq!(usage.cached_input_tokens, Some(4));
+    assert_eq!(usage.reasoning_tokens, Some(1));
+}
+
+#[test]
+fn codex_streaming_records_completed_usage() {
+    let (_dir, mut model) = mock_streaming_model(
+        "data: {\"type\":\"response.output_text.delta\",\"delta\":\"streamed\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"streamed\"}]}],\"usage\":{\"input_tokens\":9,\"output_tokens\":3,\"total_tokens\":12}}}\n\n",
+    );
+    let response = model
+        .complete_streaming(
+            CompletionRequest {
+                messages: vec![Message {
+                    role: Role::User,
+                    content: "hi".into(),
+                    tool_call_id: None,
+                    name: None,
+                }],
+                tools: vec![],
+                ..Default::default()
+            },
+            &mut |_| {},
+        )
+        .unwrap();
+    assert_eq!(response.text.as_deref(), Some("streamed"));
+    assert_eq!(model.last_usage.unwrap().total_tokens, Some(12));
 }
 
 #[test]

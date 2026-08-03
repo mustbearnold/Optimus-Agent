@@ -274,6 +274,7 @@ impl Kernel {
             sink(StreamEvent::Timing(model_finish_event));
             let resp = response?;
             let (provider, model_id) = model.identity();
+            let usage = model.last_usage();
             self.executions.record_model_call(
                 execution.manifest_id,
                 steps,
@@ -281,6 +282,7 @@ impl Kernel {
                 &recorded_request,
                 &resp,
                 model_duration_ms,
+                usage.as_ref(),
             )?;
 
             if !resp.tool_calls.is_empty() {

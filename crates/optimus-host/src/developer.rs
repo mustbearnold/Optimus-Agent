@@ -10,7 +10,7 @@ use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use optimus_kernel::{atomic_write_user_only, ProductSettings};
 use optimus_policy::{
@@ -73,6 +73,9 @@ pub(super) fn handle(
     method: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
+    let action_id = uuid::Uuid::new_v4();
+    let started_unix_ms = now_unix_ms();
+    let started = Instant::now();
     let result = match method {
         "developer_access_get" => access_get(home),
         "developer_access_enable" => access_enable(home, params),
@@ -86,13 +89,17 @@ pub(super) fn handle(
         "developer_supervisor_log" => supervisor_log(home, params),
         _ => Err(format!("unknown method: {method}")),
     };
-    if !matches!(
+    let outcome = if result.is_ok() { "ok" } else { "error" };
+    let duration_ms = started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64;
+    let _ = append_action_log(
+        home,
+        action_id,
         method,
-        "developer_access_get" | "developer_supervisor_status" | "developer_supervisor_log"
-    ) {
-        let outcome = if result.is_ok() { "ok" } else { "error" };
-        let _ = append_action_log(home, method, outcome);
-    }
+        outcome,
+        started_unix_ms,
+        now_unix_ms(),
+        duration_ms,
+    );
     result
 }
 
@@ -313,7 +320,15 @@ fn read_log_tail(path: &Path, requested: usize) -> Result<(String, usize), Strin
     Ok((lines[start..].join("\n"), lines.len().saturating_sub(start)))
 }
 
-fn append_action_log(home: &Path, action: &str, outcome: &str) -> Result<(), String> {
+fn append_action_log(
+    home: &Path,
+    action_id: uuid::Uuid,
+    action: &str,
+    outcome: &str,
+    started_unix_ms: u64,
+    finished_unix_ms: u64,
+    duration_ms: u64,
+) -> Result<(), String> {
     let dir = supervisor_dir(home);
     fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
     let path = dir.join(ACTION_LOG_FILE);
@@ -324,9 +339,13 @@ fn append_action_log(home: &Path, action: &str, outcome: &str) -> Result<(), Str
         .open(path)
         .map_err(|error| error.to_string())?;
     let record = json!({
-        "at": now_unix(),
+        "action_id": action_id,
         "action": action,
         "outcome": outcome,
+        "at": finished_unix_ms / 1_000,
+        "started_unix_ms": started_unix_ms,
+        "finished_unix_ms": finished_unix_ms,
+        "duration_ms": duration_ms,
     });
     writeln!(file, "{record}").map_err(|error| error.to_string())
 }
@@ -672,6 +691,13 @@ fn now_unix() -> u64 {
         .unwrap_or(0)
 }
 
+fn now_unix_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_millis().min(u128::from(u64::MAX)) as u64)
+        .unwrap_or(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -725,6 +751,28 @@ mod tests {
         let result = access_revoke(&home.path().to_path_buf()).unwrap();
         assert_eq!(result["developer_access"]["enabled"], false);
         assert_eq!(result["supervisor"]["status"], "emergency_stopped");
+    }
+
+    #[test]
+    fn handle_records_every_developer_action_with_monotonic_duration() {
+        let home = tempdir().unwrap();
+        let _ = handle(
+            &home.path().to_path_buf(),
+            "developer_access_get",
+            json!({}),
+        );
+        let lines =
+            fs::read_to_string(home.path().join(SUPERVISOR_DIR).join(ACTION_LOG_FILE)).unwrap();
+        let record: serde_json::Value =
+            serde_json::from_str(lines.lines().next().unwrap()).unwrap();
+        assert!(record["action_id"].as_str().is_some());
+        assert_eq!(record["action"], "developer_access_get");
+        assert!(record["started_unix_ms"].as_u64().unwrap() > 0);
+        assert!(
+            record["finished_unix_ms"].as_u64().unwrap()
+                >= record["started_unix_ms"].as_u64().unwrap()
+        );
+        assert!(record["duration_ms"].as_u64().is_some());
     }
 
     #[cfg(unix)]

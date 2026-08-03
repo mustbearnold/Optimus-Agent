@@ -11,6 +11,7 @@ mod causal;
 mod chat_approval;
 pub mod codex_device_login;
 mod codex_oauth;
+mod codex_responses;
 mod compress;
 mod config;
 mod credential;
@@ -19,10 +20,13 @@ mod developer_runtime;
 mod execution;
 mod execution_schema;
 mod execution_support;
+mod execution_timing;
 mod fs_sandbox;
 mod fs_search;
 mod home_ops;
 mod model_call;
+mod model_contract;
+mod model_usage;
 mod network_policy;
 mod openai_compat;
 mod page_extract;
@@ -83,10 +87,11 @@ pub use causal::{
 pub use chat_approval::{ChatApprovalDecision, ChatApprovalResolution, ChatApprovalStatus};
 pub use codex_oauth::{
     chatgpt_account_id_from_jwt, extract_codex_tokens_from_codex_cli,
-    extract_codex_tokens_from_hermes, from_codex_responses_response, from_codex_responses_sse,
-    jwt_expiring, refresh_codex_tokens, to_codex_responses_request, CodexAuthStatus,
-    CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CodexTokens, DEFAULT_CODEX_BASE_URL,
+    extract_codex_tokens_from_hermes, jwt_expiring, refresh_codex_tokens,
+    to_codex_responses_request, CodexAuthStatus, CodexAuthStore, CodexOAuthConfig, CodexOAuthModel,
+    CodexTokens, DEFAULT_CODEX_BASE_URL,
 };
+pub use codex_responses::{from_codex_responses_response, from_codex_responses_sse};
 pub use compress::{estimate_chars, CompressionConfig, COMPRESSED_MARKER};
 pub use config::KernelConfig;
 pub use credential::{
@@ -94,16 +99,19 @@ pub use credential::{
     SystemCredentialProtector,
 };
 pub use execution::{
-    ExecutionManifest, ExecutionModelCallSummary, ExecutionStatus, ExecutionStore,
-    ExecutionTimingSummary, ExecutionToolCallSummary, ExecutionToolLifecycleSummary,
-    PersistedToolLifecycle, ReplayClassification, ReplayReport, TimingEvent, TimingEventKind,
-    EXECUTION_MANIFEST_VERSION,
+    ExecutionManifest, ExecutionStatus, ExecutionStore, ExecutionToolCallSummary,
+    ExecutionToolLifecycleSummary, PersistedToolLifecycle, ReplayClassification, ReplayReport,
+    TimingEvent, TimingEventKind, EXECUTION_MANIFEST_VERSION,
 };
+pub use execution_timing::{ExecutionModelCallSummary, ExecutionTimingSummary};
 pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
 };
 pub use home_ops::{get_session, list_sessions, open_cron, tick_cron, SessionDetail};
 pub use model_call::{apply_fast_mode, normalize_thinking_level};
+pub use model_contract::{CompletionRequest, CompletionResponse, Message, Role, ToolCall};
+pub(crate) use model_usage::completion_usage_from_value;
+pub use model_usage::CompletionUsage;
 pub use network_policy::{
     assert_public_http_url, assert_public_http_url_str, host_blocked, ip_blocked, socket_blocked,
     EgressError,
@@ -249,51 +257,6 @@ impl From<optimus_ops::CronError> for KernelError {
 
 pub type Result<T> = std::result::Result<T, KernelError>;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum Role {
-    #[default]
-    User,
-    System,
-    Assistant,
-    Tool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct Message {
-    pub role: Role,
-    pub content: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tool_call_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ToolCall {
-    pub id: String,
-    pub name: String,
-    pub arguments: Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct CompletionRequest {
-    pub messages: Vec<Message>,
-    pub tools: Vec<ToolSchema>,
-    /// Reasoning effort: low | medium | high | xhigh | max | ultra (None = omit).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub reasoning_effort: Option<String>,
-    /// Prefer faster completions when true (may lower effort floor).
-    #[serde(default)]
-    pub fast_mode: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct CompletionResponse {
-    pub text: Option<String>,
-    pub tool_calls: Vec<ToolCall>,
-}
-
 /// Incremental events during a model completion (for UI streaming).
 #[derive(Debug, Clone)]
 pub enum StreamEvent {
@@ -386,6 +349,13 @@ pub trait ModelProvider {
 
     fn identity(&self) -> (String, String) {
         ("custom".into(), "unknown".into())
+    }
+
+    /// Provider-reported usage for the most recent completion, if available.
+    /// The default keeps custom/offline providers honest when they have no
+    /// tokenizer or usage accounting.
+    fn last_usage(&self) -> Option<CompletionUsage> {
+        None
     }
 
     /// Streaming completion. Default: one-shot `complete` then a single TextDelta.

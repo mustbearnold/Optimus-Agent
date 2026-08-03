@@ -3,8 +3,8 @@
 use serde_json::{json, Value};
 
 use crate::{
-    CompletionRequest, CompletionResponse, KernelError, Message, ModelProvider, Result, Role,
-    ToolCall, ToolSchema,
+    completion_usage_from_value, CompletionRequest, CompletionResponse, CompletionUsage,
+    KernelError, Message, ModelProvider, Result, Role, ToolCall, ToolSchema,
 };
 
 #[derive(Debug, Clone)]
@@ -41,6 +41,7 @@ pub struct OpenAiCompatModel {
     pub config: OpenAiCompatConfig,
     /// Optional override for tests: full chat completions URL.
     pub completions_url_override: Option<String>,
+    pub last_usage: Option<CompletionUsage>,
 }
 
 impl OpenAiCompatModel {
@@ -48,6 +49,7 @@ impl OpenAiCompatModel {
         Self {
             config,
             completions_url_override: None,
+            last_usage: None,
         }
     }
 
@@ -69,7 +71,12 @@ impl ModelProvider for OpenAiCompatModel {
         ("openai-compat".into(), self.config.model.clone())
     }
 
+    fn last_usage(&self) -> Option<CompletionUsage> {
+        self.last_usage.clone()
+    }
+
     fn complete(&mut self, request: CompletionRequest) -> Result<CompletionResponse> {
+        self.last_usage = None;
         let body = to_openai_request(&request, &self.config.model);
         let url = self.completions_url();
         let agent = ureq::AgentBuilder::new()
@@ -97,6 +104,7 @@ impl ModelProvider for OpenAiCompatModel {
         }
         let value: Value =
             serde_json::from_str(&text).map_err(|e| KernelError::Model(e.to_string()))?;
+        self.last_usage = completion_usage_from_value(&value);
         from_openai_response(&value)
     }
 }

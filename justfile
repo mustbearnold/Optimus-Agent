@@ -181,6 +181,10 @@ perf-baseline:
 perf-compare:
     @python3 scripts/perf_harness.py compare
 
+# Compact wall-time, model/token, tool, and Developer Full Access action report.
+efficiency db actions:
+    @python3 scripts/development_efficiency.py --db {{quote(db)}} --actions {{quote(actions)}}
+
 # --- build and run -----------------------------------------------------------
 
 # Debug build of the whole workspace.
