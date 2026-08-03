@@ -57,6 +57,14 @@ function capture(session, rows) {
   return lines.slice(0, rows).map((line) => Array.from(line).slice(0, 400).join(""));
 }
 
+function captureAnsi(session) {
+  const result = tmux("capture-pane", "-e", "-t", session, "-p");
+  if (result.status !== 0) {
+    throw new Error(result.stderr || `tmux ANSI capture failed for ${session}`);
+  }
+  return result.stdout.replaceAll("\r", "");
+}
+
 async function waitFor(session, rows, predicate, description) {
   const deadline = Date.now() + 15_000;
   let frame = capture(session, rows);
@@ -266,6 +274,14 @@ async function assertNoDomOverflow(page, frame, cols, rows) {
   assert(overflow.widestRow <= 1, `${cols}x${rows}: a DOM row overflowed by ${overflow.widestRow}px`);
 }
 
+async function assertOverlay(page, session, frame, cols, rows, title, label) {
+  assert(frame.some((line) => line.includes(title)), `${label}: overlay title is missing\n${renderFrame(frame)}`);
+  assert(frame.some((line) => line.includes("›")), `${label}: overlay selection marker is missing\n${renderFrame(frame)}`);
+  await assertNoDomOverflow(page, frame, cols, rows);
+  const ansi = captureAnsi(session);
+  assert(!ansi.includes("\u001b[7m"), `${label}: overlay still uses terminal reverse-video selection`);
+}
+
 function assertFrame(frame, cols, rows, geometry, label) {
   const [context] = frame;
   const joined = frame.join(" ").replace(/\s+/g, " ");
@@ -380,6 +396,34 @@ async function checkViewport(browser, binary, cols, rows) {
     let idleGeometry = composerGeometry(idle, cols);
     assertFrame(idle, cols, rows, idleGeometry, `${cols}x${rows} idle`);
     await assertDom(page, idle, cols, rows, idleGeometry);
+
+    const suggestionInput = tmux("send-keys", "-t", session, "-l", "/pro");
+    if (suggestionInput.status !== 0) throw new Error(suggestionInput.stderr || `${cols}x${rows}: could not type suggestion prefix`);
+    const suggestions = await waitFor(
+      session,
+      rows,
+      (frame) => frame.join("\n").includes("Tab to complete"),
+      `${cols}x${rows}: slash suggestions never appeared`,
+    );
+    await assertOverlay(page, session, suggestions, cols, rows, "Tab to complete", `${cols}x${rows} suggestions`);
+    const clearSuggestions = tmux("send-keys", "-t", session, "Escape");
+    if (clearSuggestions.status !== 0) throw new Error(clearSuggestions.stderr || `${cols}x${rows}: could not clear suggestions`);
+    await waitFor(session, rows, (frame) => !frame.join("\n").includes("Tab to complete"), `${cols}x${rows}: suggestions did not close`);
+
+    const pickerInput = tmux("send-keys", "-t", session, "-l", "/providers");
+    if (pickerInput.status !== 0) throw new Error(pickerInput.stderr || `${cols}x${rows}: could not type provider command`);
+    const pickerSubmit = tmux("send-keys", "-t", session, "Enter");
+    if (pickerSubmit.status !== 0) throw new Error(pickerSubmit.stderr || `${cols}x${rows}: could not open provider picker`);
+    const pickerFrame = await waitFor(
+      session,
+      rows,
+      (frame) => frame.join("\n").includes("Select a provider"),
+      `${cols}x${rows}: provider picker never appeared`,
+    );
+    await assertOverlay(page, session, pickerFrame, cols, rows, "Select a provider", `${cols}x${rows} picker`);
+    const closePicker = tmux("send-keys", "-t", session, "Escape");
+    if (closePicker.status !== 0) throw new Error(closePicker.stderr || `${cols}x${rows}: could not close provider picker`);
+    await waitFor(session, rows, (frame) => !frame.join("\n").includes("Select a provider"), `${cols}x${rows}: provider picker did not close`);
 
     if (cols >= 80) {
       const initialSidebar = sidebarGeometry(idle);
