@@ -212,7 +212,11 @@ test('measured maximum shell preserves Codex geometry and terminal ownership', a
   expect(browserChrome.height).toBe(40);
   await page.getByRole('button', { name: 'Terminal' }).click();
   const dock = await page.getByRole('complementary', { name: 'Execution dock' }).boundingBox();
-  expect(dock.height).toBe(190);
+  // CSS layout can land a declared 190px track a fraction below the integer
+  // in Chromium (for example 189.99993896484375 at this viewport). Assert the
+  // contract at a browser-meaningful precision rather than making a subpixel
+  // rounding artifact fail the desktop gate.
+  expect(dock.height).toBeCloseTo(190, 2);
   await page.locator('.execution-dock').evaluate((element) =>
     Promise.all(
       element.getAnimations({ subtree: true })
