@@ -184,6 +184,22 @@ pub fn picker_rect(area: Rect, picker: &Picker) -> Rect {
     }
 }
 
+/// The first item Ratatui's one-line picker can display at its current
+/// selection. Keeping this calculation beside the rectangle means the mouse
+/// can map a screen row back to the same item the list paints after it scrolls.
+pub fn picker_scroll_offset(rect: Rect, picker: &Picker) -> usize {
+    let count = picker.items.len();
+    let visible = usize::from(rect.height.saturating_sub(2));
+    if count == 0 || visible == 0 {
+        return 0;
+    }
+
+    let selected = picker.selected().min(count.saturating_sub(1));
+    selected
+        .saturating_sub(visible.saturating_sub(1))
+        .min(count.saturating_sub(visible))
+}
+
 /// What the event loop should do about a mouse event.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Intent {
@@ -321,7 +337,12 @@ pub fn intent_with_sidebar(
     if let Some(picker) = picker {
         let rect = picker_rect(area, picker);
         return match event.kind {
-            MouseEventKind::Down(MouseButton::Left) => match row_of(rect, at, picker.items.len()) {
+            MouseEventKind::Down(MouseButton::Left) => match row_of(
+                rect,
+                at,
+                picker.items.len(),
+                picker_scroll_offset(rect, picker),
+            ) {
                 Some(index) => Intent::Choose(index),
                 None => Intent::Nothing,
             },
@@ -400,12 +421,20 @@ fn fraction(track: Rect, row: u16) -> f64 {
 
 /// Index of the list row under `at`, or `None` outside the rows themselves —
 /// the border is part of the overlay but is not a selectable row.
-fn row_of(rect: Rect, at: Position, count: usize) -> Option<usize> {
+fn row_of(rect: Rect, at: Position, count: usize, offset: usize) -> Option<usize> {
     if !rect.contains(at) {
         return None;
     }
-    let index = usize::from(at.y.saturating_sub(rect.y + 1));
-    (at.y > rect.y && index < count).then_some(index)
+    let visible = usize::from(rect.height.saturating_sub(2));
+    if at.y <= rect.y {
+        return None;
+    }
+    let relative = usize::from(at.y - rect.y - 1);
+    if visible == 0 || relative >= visible {
+        return None;
+    }
+    let index = offset.saturating_add(relative);
+    (index < count).then_some(index)
 }
 
 #[cfg(test)]
@@ -583,6 +612,81 @@ mod tests {
         let event = at(MouseEventKind::Down(MouseButton::Left), rect.x + 2, rect.y);
         assert_eq!(
             intent(&event, AREA, 3, Some(&picker), false),
+            Intent::Nothing
+        );
+    }
+
+    #[test]
+    fn clicking_a_scrolled_picker_row_targets_the_item_that_is_visible() {
+        let items = (0..10)
+            .map(|i| PickerItem {
+                id: format!("id{i}"),
+                label: format!("item {i}"),
+                detail: String::new(),
+                current: false,
+                connected: true,
+            })
+            .collect();
+        let mut picker = Picker::new(PickerKind::Command, "Commands", items);
+        picker.select(9);
+        let area = Rect {
+            width: 80,
+            height: 10,
+            ..AREA
+        };
+        let rect = picker_rect(area, &picker);
+
+        assert_eq!(rect.height, 10);
+        assert_eq!(picker_scroll_offset(rect, &picker), 2);
+
+        let first_visible = at(
+            MouseEventKind::Down(MouseButton::Left),
+            rect.x + 2,
+            rect.y + 1,
+        );
+        assert_eq!(
+            intent(&first_visible, area, 3, Some(&picker), false),
+            Intent::Choose(2)
+        );
+
+        let last_visible = at(
+            MouseEventKind::Down(MouseButton::Left),
+            rect.x + 2,
+            rect.y + rect.height - 2,
+        );
+        assert_eq!(
+            intent(&last_visible, area, 3, Some(&picker), false),
+            Intent::Choose(9)
+        );
+    }
+
+    #[test]
+    fn clicking_the_scrolled_picker_bottom_border_selects_nothing() {
+        let items = (0..10)
+            .map(|i| PickerItem {
+                id: format!("id{i}"),
+                label: format!("item {i}"),
+                detail: String::new(),
+                current: false,
+                connected: true,
+            })
+            .collect();
+        let mut picker = Picker::new(PickerKind::Command, "Commands", items);
+        picker.select(9);
+        let area = Rect {
+            width: 80,
+            height: 10,
+            ..AREA
+        };
+        let rect = picker_rect(area, &picker);
+        let bottom_border = at(
+            MouseEventKind::Down(MouseButton::Left),
+            rect.x + 2,
+            rect.y + rect.height - 1,
+        );
+
+        assert_eq!(
+            intent(&bottom_border, area, 3, Some(&picker), false),
             Intent::Nothing
         );
     }

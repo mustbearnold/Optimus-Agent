@@ -564,6 +564,7 @@ fn draw_picker(frame: &mut Frame, picker: &crate::picker::Picker) {
 
     let mut state = ListState::default();
     state.select(Some(picker.selected()));
+    *state.offset_mut() = mouse::picker_scroll_offset(rect, picker);
 
     overlay::prepare(frame, rect, overlay::Kind::Modal);
     let title = width::truncate(&picker.title, inner_width);
@@ -1110,6 +1111,43 @@ mod tests {
         assert!(
             !selected.add_modifier.contains(Modifier::REVERSED),
             "selection must not look like terminal text selection"
+        );
+    }
+
+    #[test]
+    fn a_short_terminal_scrolls_the_picker_to_the_selected_command() {
+        let (_dir, mut session) = session_with(&[]);
+        let items = (0..10)
+            .map(|i| crate::picker::PickerItem {
+                id: format!("id{i}"),
+                label: format!("item {i}"),
+                detail: String::new(),
+                current: false,
+                connected: true,
+            })
+            .collect();
+        let mut picker =
+            crate::picker::Picker::new(crate::picker::PickerKind::Command, "Commands", items);
+        picker.select(9);
+        session.picker = Some(picker);
+
+        let screen = render(&session, 80, 10);
+        let joined = screen.join("\n");
+        assert!(
+            joined.contains("item 2"),
+            "first visible row disappeared: {screen:?}"
+        );
+        assert!(
+            joined.contains("item 9"),
+            "selected row disappeared: {screen:?}"
+        );
+        assert!(
+            !joined.contains("item 0"),
+            "scrolled-off row leaked into the panel: {screen:?}"
+        );
+        assert!(
+            screen.iter().all(|line| crate::width::cells(line) <= 80),
+            "picker overflowed the short terminal: {screen:?}"
         );
     }
 

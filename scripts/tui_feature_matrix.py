@@ -522,6 +522,58 @@ def picker_and_menu(audit: Audit, case: Case) -> None:
         case.close()
 
 
+def scrolled_picker_at_low_height(audit: Audit, case: Case) -> None:
+    audit.begin("scrolled-picker-at-low-height")
+    case.launch()
+    try:
+        # Nine saved sessions make the picker taller than an 80x10 terminal.
+        # The newest session is selected first; moving down to the oldest one
+        # forces the overlay to scroll before the mouse is allowed to choose a
+        # row that is only visible after that scroll.
+        for index in range(9):
+            case.prompt(f"picker-session-{index}")
+            if index < 8:
+                case.command("/new", "new session ready")
+
+        case.type_submit("/sessions")
+        case.wait_text("Open a saved session")
+        # Crossterm receives one key event per loop turn. Pacing this burst
+        # keeps tmux from presenting eight arrows while the first repaint is
+        # still pending, which would make the probe stop at the first row.
+        for _ in range(8):
+            case.keys("Down")
+            time.sleep(0.08)
+        frame = case.wait(
+            lambda lines: len(lines) > 8
+            and "picker-session-0" in lines[8]
+            and "›" in lines[8],
+            8,
+            "scrolled session picker rows",
+        )
+        # At 80x10 the modal fills the frame vertically, so its first content
+        # row is screen row 1. Restricting the locator to that row avoids the
+        # same title in the context rail or sidebar becoming the click target.
+        first_row = frame[1]
+        match = re.search(r"picker-session-\d+", first_row)
+        audit.check(match is not None, "scrolled picker painted no first row", case)
+        first_visible = match.group(0) if match else ""
+        audit.check(
+            first_visible == "picker-session-7",
+            "picker did not move its visible window after selection moved",
+            case,
+        )
+
+        case.click(first_row.index(first_visible), 1)
+        opened = case.wait_text(f"offline echo: {first_visible}", 12)
+        audit.check(
+            f"offline echo: {first_visible}" in normalized(opened),
+            "mouse chose a different session than the visible row",
+            case,
+        )
+    finally:
+        case.close()
+
+
 def editor_and_history(audit: Audit, case: Case) -> None:
     audit.begin("composer-editing-unicode-paste-and-history")
     case.launch()
@@ -1240,6 +1292,10 @@ def main() -> int:
 
             command_surface(audit, Case(binary, fresh("commands")))
             picker_and_menu(audit, Case(binary, fresh("pickers")))
+            scrolled_picker_at_low_height(
+                audit,
+                Case(binary, fresh("scrolled-picker"), cols=80, rows=10),
+            )
             editor_and_history(audit, Case(binary, fresh("editor")))
             streaming_and_cancel(
                 audit,
