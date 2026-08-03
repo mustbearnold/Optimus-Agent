@@ -478,7 +478,17 @@ export function OptimusApp() {
             setWorkspaceMaximized((current) => !current);
             if (!workspaceVisible) dispatch({ type: 'patch-layout', patch: { workspaceOpen: true } });
           }}
-          onToggleExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: !state.layout.executionOpen, compactSurface: 'execution' } })}
+          onToggleExecution={() => dispatch({
+            type: 'patch-layout',
+            patch: {
+              executionOpen: !state.layout.executionOpen,
+              // On compact widths the execution dock owns the only visible
+              // surface. Closing it must hand that surface back to chat;
+              // otherwise the dock disappears while the work surface stays
+              // hidden behind `data-compact-surface="execution"`.
+              compactSurface: state.layout.executionOpen ? 'work' : 'execution',
+            },
+          })}
           onWindow={(action) => void transport.windowAction(action)}
         />
 

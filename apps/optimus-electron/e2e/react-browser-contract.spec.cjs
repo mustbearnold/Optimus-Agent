@@ -104,6 +104,30 @@ test('compact 640x800 switches one primary surface at a time', async ({ page }) 
   expect(errors).toEqual([]);
 });
 
+test('compact terminal takes the primary surface and returns to chat when closed', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 840, height: 800 });
+  await page.goto(URL);
+
+  await page.getByRole('tab', { name: 'browser', exact: true }).click();
+  await expect(page.getByRole('complementary', { name: 'Evidence workspace' })).toBeVisible();
+
+  const terminal = page.getByRole('button', { name: 'Terminal' });
+  await terminal.click();
+  await expect(page.getByRole('complementary', { name: 'Execution dock' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Agent work surface' })).toBeHidden();
+  await expect(page.getByRole('complementary', { name: 'Evidence workspace' })).toBeHidden();
+  await assertNoHorizontalOverflow(page);
+
+  await terminal.click();
+  await expect(page.getByRole('complementary', { name: 'Execution dock' })).toBeHidden();
+  await expect(page.getByLabel('Message Optimus')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Evidence workspace' })).toBeHidden();
+  await assertComposerInsideViewport(page);
+  await assertNoHorizontalOverflow(page);
+  expect(errors).toEqual([]);
+});
+
 test('320 CSS px reflow and reduced motion preserve state and focus', async ({ page }) => {
   const errors = collectErrors(page);
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });

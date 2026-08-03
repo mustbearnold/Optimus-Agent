@@ -82,6 +82,22 @@ describe('OptimusApp fixture contract', () => {
     expect(container.querySelector('.surface-row')).not.toHaveClass('is-workspace-maximized');
   });
 
+  it('returns to the work surface when the terminal is toggled closed', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<OptimusApp />);
+    const app = container.querySelector('.optimus-app');
+    const terminal = await screen.findByRole('button', { name: 'Terminal' });
+
+    await user.click(terminal);
+    expect(app).toHaveAttribute('data-compact-surface', 'execution');
+    expect(screen.getByRole('complementary', { name: 'Execution dock' })).toHaveClass('is-open');
+
+    await user.click(terminal);
+    expect(app).toHaveAttribute('data-compact-surface', 'work');
+    expect(screen.getByRole('complementary', { name: 'Execution dock' })).not.toHaveClass('is-open');
+    expect(screen.getByRole('region', { name: 'Agent work surface' })).toBeInTheDocument();
+  });
+
   it('keeps every evidence surface reachable on a wide desktop layout', async () => {
     // Regression: workspaceTab was only settable from the compact switcher, which
     // is display:none above 899px, so a desktop window could reach Browser only.
