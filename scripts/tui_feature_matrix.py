@@ -1039,6 +1039,47 @@ def responsive_sidebar_reopen(audit: Audit, case: Case) -> None:
         case.close()
 
 
+def compact_sidebar_at_low_height(audit: Audit, case: Case) -> None:
+    audit.begin("compact-sidebar-at-low-height")
+    seed_projects(case.home)
+    case.launch()
+    try:
+        initial = case.capture()
+        for label in ("SESSIONS", "PROJECTS", "PINNED"):
+            audit.check(
+                label in normalized(initial),
+                f"low-height sidebar omitted {label}",
+                case,
+            )
+
+        case.click_text("PROJECTS", sidebar_only=True)
+        projects = case.wait(
+            lambda lines: "PROJECTS 1–2/5" in normalized(lines)
+            and "project-1" in normalized(lines),
+            12,
+            "low-height project rows",
+        )
+        audit.check(
+            "project-1" in normalized(projects),
+            "low-height project row was unreachable",
+            case,
+        )
+        case.click_text("project-1", sidebar_only=True)
+        case.wait_text("project scope: project-1")
+
+        case.click_text("PINNED", sidebar_only=True)
+        pinned = case.wait_text("PINNED")
+        audit.check(
+            "SESSIONS" in normalized(pinned)
+            and "PROJECTS" in normalized(pinned)
+            and "PINNED" in normalized(pinned),
+            "low-height section headings were not all retained",
+            case,
+        )
+    finally:
+        case.close()
+
+
 def exit_routes(audit: Audit, binary: Path, root: Path) -> None:
     audit.begin("all-exit-routes")
     routes: tuple[tuple[str, Callable[[Case], None]], ...] = (
@@ -1108,6 +1149,10 @@ def main() -> int:
             responsive_sidebar_reopen(
                 audit,
                 Case(binary, fresh("responsive-sidebar"), cols=60, rows=20),
+            )
+            compact_sidebar_at_low_height(
+                audit,
+                Case(binary, fresh("compact-sidebar"), cols=100, rows=10),
             )
             exit_routes(audit, binary, root)
     except (FeatureFailure, StopIteration) as error:

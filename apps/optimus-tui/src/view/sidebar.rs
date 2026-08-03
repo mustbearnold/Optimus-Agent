@@ -20,7 +20,7 @@ pub(super) fn draw(frame: &mut Frame, area: Rect, session: &TuiSession) {
     );
 
     for row in 0..area.height {
-        let Some(background) = row_background(session, row) else {
+        let Some(background) = row_background(session, row, area.height) else {
             continue;
         };
         frame.render_widget(
@@ -35,13 +35,13 @@ pub(super) fn draw(frame: &mut Frame, area: Rect, session: &TuiSession) {
     }
 
     let lines = (0..area.height)
-        .map(|row| line(area.width, row, session))
+        .map(|row| line(area.width, row, session, area.height))
         .collect::<Vec<_>>();
     frame.render_widget(Paragraph::new(lines), area);
 }
 
-fn row_background(session: &TuiSession, row: u16) -> Option<Color> {
-    match sidebar::row_at(session.sidebar.hit_state(), row) {
+fn row_background(session: &TuiSession, row: u16, height: u16) -> Option<Color> {
+    match sidebar::row_at_for_height(session.sidebar.hit_state(), row, height) {
         sidebar::Row::NewSession => Some(SIDEBAR_ACTION),
         sidebar::Row::Session(index) => {
             let current = session.sidebar.session_at(index).is_none_or(|meta| {
@@ -63,90 +63,91 @@ fn row_background(session: &TuiSession, row: u16) -> Option<Color> {
     }
 }
 
-fn line(width: u16, row: u16, session: &TuiSession) -> Line<'static> {
-    let (marker, label, style) = match sidebar::row_at(session.sidebar.hit_state(), row) {
-        sidebar::Row::Workspace => (
-            "◆  ",
-            "WORKSPACE".to_owned(),
-            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
-        ),
-        sidebar::Row::Close => ("‹  ", "collapse".to_owned(), Style::default().fg(MUTED)),
-        sidebar::Row::NewSession => (
-            "+  ",
-            "New session".to_owned(),
-            Style::default().fg(TEXT).add_modifier(Modifier::BOLD),
-        ),
-        sidebar::Row::SessionsHeading => (
-            if session.sidebar.section == Section::Sessions {
-                "▾  "
-            } else {
-                "›  "
-            },
-            section_label("SESSIONS", session, Section::Sessions),
-            section_style(session.sidebar.section == Section::Sessions),
-        ),
-        sidebar::Row::Session(index) => session_row(session, index),
-        sidebar::Row::SessionsSummary => (
-            "·  ",
-            format!(
-                "{} session{}",
-                session.sidebar.session_count(),
-                if session.sidebar.session_count() == 1 {
-                    ""
-                } else {
-                    "s"
-                }
+fn line(width: u16, row: u16, session: &TuiSession, height: u16) -> Line<'static> {
+    let (marker, label, style) =
+        match sidebar::row_at_for_height(session.sidebar.hit_state(), row, height) {
+            sidebar::Row::Workspace => (
+                "◆  ",
+                "WORKSPACE".to_owned(),
+                Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
             ),
-            Style::default().fg(MUTED),
-        ),
-        sidebar::Row::ProjectsHeading => (
-            if session.sidebar.section == Section::Projects {
-                "▾  "
-            } else {
-                "›  "
-            },
-            section_label("PROJECTS", session, Section::Projects),
-            section_style(session.sidebar.section == Section::Projects),
-        ),
-        sidebar::Row::Project(index) => project_row(session, index),
-        sidebar::Row::ProjectsSummary => (
-            "·  ",
-            format!(
-                "{} project{}",
-                session.sidebar.projects.len(),
-                if session.sidebar.projects.len() == 1 {
-                    ""
-                } else {
-                    "s"
-                }
+            sidebar::Row::Close => ("‹  ", "collapse".to_owned(), Style::default().fg(MUTED)),
+            sidebar::Row::NewSession => (
+                "+  ",
+                "New session".to_owned(),
+                Style::default().fg(TEXT).add_modifier(Modifier::BOLD),
             ),
-            Style::default().fg(MUTED),
-        ),
-        sidebar::Row::PinnedHeading => (
-            if session.sidebar.section == Section::Pinned {
-                "▾  "
-            } else {
-                "›  "
-            },
-            section_label("PINNED", session, Section::Pinned),
-            section_style(session.sidebar.section == Section::Pinned),
-        ),
-        sidebar::Row::PinnedSession(index) => pinned_session_row(session, index),
-        sidebar::Row::PinnedSummary => (
-            "·  ",
-            format!(
-                "{} pinned session{}",
-                session.sidebar.pinned_count(),
-                if session.sidebar.pinned_count() == 1 {
-                    ""
+            sidebar::Row::SessionsHeading => (
+                if session.sidebar.section == Section::Sessions {
+                    "▾  "
                 } else {
-                    "s"
-                }
+                    "›  "
+                },
+                section_label("SESSIONS", session, Section::Sessions),
+                section_style(session.sidebar.section == Section::Sessions),
             ),
-            Style::default().fg(MUTED),
-        ),
-        sidebar::Row::Empty => ("", String::new(), Style::default()),
-    };
+            sidebar::Row::Session(index) => session_row(session, index),
+            sidebar::Row::SessionsSummary => (
+                "·  ",
+                format!(
+                    "{} session{}",
+                    session.sidebar.session_count(),
+                    if session.sidebar.session_count() == 1 {
+                        ""
+                    } else {
+                        "s"
+                    }
+                ),
+                Style::default().fg(MUTED),
+            ),
+            sidebar::Row::ProjectsHeading => (
+                if session.sidebar.section == Section::Projects {
+                    "▾  "
+                } else {
+                    "›  "
+                },
+                section_label("PROJECTS", session, Section::Projects),
+                section_style(session.sidebar.section == Section::Projects),
+            ),
+            sidebar::Row::Project(index) => project_row(session, index),
+            sidebar::Row::ProjectsSummary => (
+                "·  ",
+                format!(
+                    "{} project{}",
+                    session.sidebar.projects.len(),
+                    if session.sidebar.projects.len() == 1 {
+                        ""
+                    } else {
+                        "s"
+                    }
+                ),
+                Style::default().fg(MUTED),
+            ),
+            sidebar::Row::PinnedHeading => (
+                if session.sidebar.section == Section::Pinned {
+                    "▾  "
+                } else {
+                    "›  "
+                },
+                section_label("PINNED", session, Section::Pinned),
+                section_style(session.sidebar.section == Section::Pinned),
+            ),
+            sidebar::Row::PinnedSession(index) => pinned_session_row(session, index),
+            sidebar::Row::PinnedSummary => (
+                "·  ",
+                format!(
+                    "{} pinned session{}",
+                    session.sidebar.pinned_count(),
+                    if session.sidebar.pinned_count() == 1 {
+                        ""
+                    } else {
+                        "s"
+                    }
+                ),
+                Style::default().fg(MUTED),
+            ),
+            sidebar::Row::Empty => ("", String::new(), Style::default()),
+        };
 
     let marker = width::take(marker, usize::from(width));
     let label_budget = usize::from(width).saturating_sub(width::cells(&marker));

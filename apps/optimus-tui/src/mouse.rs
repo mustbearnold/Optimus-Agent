@@ -339,9 +339,10 @@ pub fn intent_with_sidebar(
         if matches!(event.kind, MouseEventKind::Down(MouseButton::Left))
             && layout.sidebar.contains(at)
         {
-            return match sidebar::row_at(
+            return match sidebar::row_at_for_height(
                 interaction.sidebar_state,
                 at.y.saturating_sub(layout.sidebar.y),
+                layout.sidebar.height,
             ) {
                 sidebar::Row::Close => Intent::ToggleSidebar,
                 sidebar::Row::NewSession => Intent::NewSession,

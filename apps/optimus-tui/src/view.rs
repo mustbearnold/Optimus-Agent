@@ -778,6 +778,16 @@ mod tests {
     }
 
     #[test]
+    fn a_low_height_frame_keeps_all_sidebar_sections_in_the_drawn_rail() {
+        let (_dir, session) = session_with(&[]);
+        let screen = render(&session, 100, 10);
+        assert!(screen[4].contains("SESSIONS"), "{screen:?}");
+        assert!(screen[5].contains("PROJECTS"), "{screen:?}");
+        assert!(screen[6].contains("PINNED"), "{screen:?}");
+        assert!(screen.iter().all(|line| crate::width::cells(line) <= 100));
+    }
+
+    #[test]
     fn a_narrow_frame_collapses_the_rail_but_keeps_the_reopen_tab() {
         let (_dir, session) = session_with(&[]);
         let screen = render(&session, 60, 20);

@@ -26,6 +26,8 @@ pub(crate) const PINNED_ROW: u16 = 12;
 const SESSION_SLOTS: usize = 3;
 const PROJECT_SLOTS: usize = 2;
 const PINNED_SLOTS: usize = 3;
+const COMPACT_HEIGHT: u16 = 16;
+const COMPACT_CONTENT_ROW: u16 = 7;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub(crate) enum Section {
@@ -334,6 +336,10 @@ impl State {
 /// Section headers keep their established coordinates so a user can build
 /// muscle memory, while selecting a section expands its actual contents.
 pub(crate) fn rows(state: HitState, height: u16) -> Vec<Row> {
+    if height < COMPACT_HEIGHT {
+        return compact_rows(state, height);
+    }
+
     let mut rows = vec![Row::Empty; usize::from(height.max(PINNED_ROW + 1))];
     put(&mut rows, 0, Row::Workspace);
     put(&mut rows, CLOSE_ROW, Row::Close);
@@ -400,11 +406,37 @@ pub(crate) fn rows(state: HitState, height: u16) -> Vec<Row> {
     rows
 }
 
-pub(crate) fn row_at(state: HitState, row: u16) -> Row {
-    rows(state, row.saturating_add(1))
+pub(crate) fn row_at_for_height(state: HitState, row: u16, height: u16) -> Row {
+    rows(state, height)
         .get(usize::from(row))
         .copied()
         .unwrap_or(Row::Empty)
+}
+
+fn compact_rows(state: HitState, height: u16) -> Vec<Row> {
+    let mut rows = vec![Row::Empty; usize::from(height)];
+    put(&mut rows, 0, Row::Workspace);
+    put(&mut rows, CLOSE_ROW, Row::Close);
+    put(&mut rows, NEW_SESSION_ROW, Row::NewSession);
+    put(&mut rows, 4, Row::SessionsHeading);
+    put(&mut rows, 5, Row::ProjectsHeading);
+    put(&mut rows, 6, Row::PinnedHeading);
+
+    let (count, offset, slots) = match state.section {
+        Section::Sessions => (state.sessions, state.session_offset, SESSION_SLOTS),
+        Section::Projects => (state.projects, state.project_offset, PROJECT_SLOTS),
+        Section::Pinned => (state.pinned, state.pinned_offset, PINNED_SLOTS),
+    };
+    for slot in 0..display_slots(count.saturating_sub(offset), slots) {
+        let row = COMPACT_CONTENT_ROW + slot as u16;
+        let item = match state.section {
+            Section::Sessions => Row::Session(offset + slot),
+            Section::Projects => Row::Project(offset + slot),
+            Section::Pinned => Row::PinnedSession(offset + slot),
+        };
+        put(&mut rows, row, item);
+    }
+    rows
 }
 
 fn display_slots(count: usize, slots: usize) -> usize {
@@ -460,12 +492,54 @@ mod tests {
     #[test]
     fn default_rows_keep_the_original_heading_coordinates() {
         let hit = HitState::default();
-        assert_eq!(row_at(hit, CLOSE_ROW), Row::Close);
-        assert_eq!(row_at(hit, NEW_SESSION_ROW), Row::NewSession);
-        assert_eq!(row_at(hit, SESSIONS_ROW), Row::SessionsHeading);
-        assert_eq!(row_at(hit, PROJECTS_ROW), Row::ProjectsHeading);
-        assert_eq!(row_at(hit, PINNED_ROW), Row::PinnedHeading);
-        assert_eq!(row_at(hit, 6), Row::Session(0));
+        assert_eq!(
+            row_at_for_height(hit, CLOSE_ROW, COMPACT_HEIGHT),
+            Row::Close
+        );
+        assert_eq!(
+            row_at_for_height(hit, NEW_SESSION_ROW, COMPACT_HEIGHT),
+            Row::NewSession
+        );
+        assert_eq!(
+            row_at_for_height(hit, SESSIONS_ROW, COMPACT_HEIGHT),
+            Row::SessionsHeading
+        );
+        assert_eq!(
+            row_at_for_height(hit, PROJECTS_ROW, COMPACT_HEIGHT),
+            Row::ProjectsHeading
+        );
+        assert_eq!(
+            row_at_for_height(hit, PINNED_ROW, COMPACT_HEIGHT),
+            Row::PinnedHeading
+        );
+        assert_eq!(row_at_for_height(hit, 6, COMPACT_HEIGHT), Row::Session(0));
+    }
+
+    #[test]
+    fn compact_rows_keep_all_section_headings_and_active_items_reachable() {
+        let hit = HitState {
+            projects: 5,
+            pinned: 3,
+            ..HitState::default()
+        };
+        assert_eq!(row_at_for_height(hit, 4, 10), Row::SessionsHeading);
+        assert_eq!(row_at_for_height(hit, 5, 10), Row::ProjectsHeading);
+        assert_eq!(row_at_for_height(hit, 6, 10), Row::PinnedHeading);
+
+        let projects = HitState {
+            section: Section::Projects,
+            projects: 5,
+            ..hit
+        };
+        assert_eq!(row_at_for_height(projects, 7, 10), Row::Project(0));
+        assert_eq!(row_at_for_height(projects, 8, 10), Row::Project(1));
+
+        let pinned = HitState {
+            section: Section::Pinned,
+            ..hit
+        };
+        assert_eq!(row_at_for_height(pinned, 7, 10), Row::PinnedSession(0));
+        assert_eq!(row_at_for_height(pinned, 9, 10), Row::PinnedSession(2));
     }
 
     #[test]
@@ -490,13 +564,25 @@ mod tests {
 
         state.scroll(-3);
         let hit = state.hit_state();
-        assert_eq!(row_at(hit, SESSIONS_ROW), Row::SessionsHeading);
-        assert_eq!(row_at(hit, SESSIONS_ROW + 1), Row::Session(3));
-        assert_eq!(row_at(hit, SESSIONS_ROW + 3), Row::Session(5));
+        assert_eq!(
+            row_at_for_height(hit, SESSIONS_ROW, COMPACT_HEIGHT),
+            Row::SessionsHeading
+        );
+        assert_eq!(
+            row_at_for_height(hit, SESSIONS_ROW + 1, COMPACT_HEIGHT),
+            Row::Session(3)
+        );
+        assert_eq!(
+            row_at_for_height(hit, SESSIONS_ROW + 3, COMPACT_HEIGHT),
+            Row::Session(5)
+        );
         assert_eq!(state.visible_window(Section::Sessions), (3, 6, 6));
 
         state.scroll(3);
-        assert_eq!(row_at(state.hit_state(), SESSIONS_ROW + 1), Row::Session(0));
+        assert_eq!(
+            row_at_for_height(state.hit_state(), SESSIONS_ROW + 1, COMPACT_HEIGHT),
+            Row::Session(0)
+        );
     }
 
     #[test]
