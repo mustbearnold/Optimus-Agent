@@ -944,6 +944,14 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
             case,
         )
         case.keys("Escape")
+        case.type_submit("/pinned project-four")
+        filtered_pinned = case.wait_text("Pinned sessions · project-four")
+        audit.check(
+            "project-four-session" in normalized(filtered_pinned),
+            "pinned session query omitted the matching session",
+            case,
+        )
+        case.keys("Escape")
 
         case.command("/new", "new session ready")
         case.click_text("PROJECTS", sidebar_only=True)
