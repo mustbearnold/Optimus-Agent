@@ -22,6 +22,10 @@ const MAX_KEPT_LINES: usize = 200;
 /// A search result is evidence, not a browser dump. Keep enough titles to
 /// identify what the call found while leaving the rest behind the fold.
 const MAX_SEARCH_RESULTS: usize = 8;
+/// Keep source rows readable in the terminal. The transcript wraps to its
+/// current pane, but a bounded source row means a long tracking URL cannot
+/// dominate several screens before wrapping even begins.
+const MAX_SEARCH_TEXT_CELLS: usize = 64;
 
 /// The typed body a block can open, when its tool produced one.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -139,14 +143,18 @@ impl SearchDetail {
     fn body(&self) -> Vec<String> {
         let mut rows = Vec::new();
         if !self.query.is_empty() {
-            rows.push(format!("query: {}", self.query));
+            rows.push(format!("query: {}", compact_search_text(&self.query)));
         }
         for (index, result) in self.results.iter().enumerate() {
             if !result.title.is_empty() {
-                rows.push(format!("{}. {}", index + 1, result.title));
+                rows.push(format!(
+                    "{}. {}",
+                    index + 1,
+                    compact_search_text(&result.title)
+                ));
             }
             if !result.url.is_empty() {
-                rows.push(format!("   {}", result.url));
+                rows.push(format!("   {}", compact_search_text(&result.url)));
             }
         }
         if self.omitted > 0 {
@@ -154,6 +162,10 @@ impl SearchDetail {
         }
         rows
     }
+}
+
+fn compact_search_text(value: &str) -> String {
+    crate::width::truncate(value, MAX_SEARCH_TEXT_CELLS)
 }
 
 /// What a command did: its streams, how it left, and what was dropped on the
@@ -371,6 +383,42 @@ mod tests {
             ]
         );
         assert!(!search.body().join("\n").contains("not copied"));
+    }
+
+    #[test]
+    fn long_search_text_fades_with_a_cell_safe_ellipsis() {
+        let read = ToolDetail::read(Some(&ToolOutcome::succeeded(
+            "call-1",
+            "web_search",
+            "Found 1 source",
+            json!({
+                "query": "q".repeat(MAX_SEARCH_TEXT_CELLS + 20),
+                "results": [{
+                    "title": format!("Headline {}", "t".repeat(MAX_SEARCH_TEXT_CELLS + 20)),
+                    "provenance_url": format!(
+                        "https://google.example/search?q={}",
+                        "x".repeat(MAX_SEARCH_TEXT_CELLS + 40)
+                    )
+                }]
+            }),
+            ReplayClass::ExternalNondeterministic,
+        )));
+        let ToolDetail::WebSearch(search) = read else {
+            panic!("expected search detail: {read:?}");
+        };
+        let body = search.body();
+        assert!(body
+            .iter()
+            .any(|line| { line.starts_with("query: ") && line.ends_with('…') }));
+        assert!(body
+            .iter()
+            .any(|line| line.starts_with("1. ") && line.ends_with('…')));
+        assert!(body
+            .iter()
+            .any(|line| line.starts_with("   https://") && line.ends_with('…')));
+        assert!(body
+            .iter()
+            .all(|line| crate::width::cells(line) <= MAX_SEARCH_TEXT_CELLS + 8));
     }
 
     #[test]
