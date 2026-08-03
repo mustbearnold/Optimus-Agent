@@ -139,8 +139,11 @@ fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
         0
     };
     let path_width = total.saturating_sub(width::cells(&prefix) + gap + right_width);
-    let path = context_path(session, path_width as u16);
-    let (path_label, scope_label) = context_parts(&path);
+    let context = context_path(session, path_width as u16);
+    let (path_label, scope_label) = context
+        .scope_start
+        .map(|start| (&context.label[..start], &context.label[start..]))
+        .unwrap_or((&context.label, ""));
     let left = format!("{prefix}{path_label}");
     let scope_width = width::cells(scope_label);
     let gap = total.saturating_sub(width::cells(&left) + scope_width + right_width);
@@ -156,31 +159,39 @@ fn draw_context(frame: &mut Frame, area: Rect, session: &TuiSession) {
     frame.render_widget(Paragraph::new(Line::from(spans)), area);
 }
 
-fn context_parts(path: &str) -> (&str, &str) {
-    path.rfind(" · ")
-        .map(|index| (&path[..index], &path[index..]))
-        .unwrap_or((path, ""))
+struct ContextPath {
+    label: String,
+    scope_start: Option<usize>,
+}
+
+fn active_project_scope(session: &TuiSession) -> Option<&str> {
+    session
+        .sidebar
+        .projects
+        .iter()
+        .find(|project| project.current && project.id.is_some())
+        .map(|project| project.label.as_str())
 }
 
 /// Keep a named project scope visible after the sidebar is collapsed. The
 /// runtime home is still useful context, so preserve both when there is room;
 /// on a narrow frame the scope wins because it explains what the next turn
 /// will operate on.
-fn context_path(session: &TuiSession, width: u16) -> String {
-    let Some(scope) = session
-        .sidebar
-        .projects
-        .iter()
-        .find(|project| project.current && project.id.is_some())
-        .map(|project| project.label.as_str())
-    else {
-        return compact_path(&session.home, width);
+fn context_path(session: &TuiSession, width: u16) -> ContextPath {
+    let Some(scope) = active_project_scope(session) else {
+        return ContextPath {
+            label: compact_path(&session.home, width),
+            scope_start: None,
+        };
     };
 
     const SEPARATOR: &str = " · ";
     let limit = usize::from(width);
     if limit <= width::cells(SEPARATOR) + 4 {
-        return width::truncate(scope, limit);
+        return ContextPath {
+            label: width::truncate(scope, limit),
+            scope_start: Some(0),
+        };
     }
     let scope_budget = limit
         .saturating_sub(width::cells(SEPARATOR))
@@ -190,7 +201,10 @@ fn context_path(session: &TuiSession, width: u16) -> String {
         .saturating_sub(width::cells(SEPARATOR))
         .saturating_sub(width::cells(&scope_display));
     let base = compact_path(&session.home, base_budget as u16);
-    format!("{base}{SEPARATOR}{scope_display}")
+    ContextPath {
+        scope_start: Some(base.len() + SEPARATOR.len()),
+        label: format!("{base}{SEPARATOR}{scope_display}"),
+    }
 }
 
 fn compact_path(path: &std::path::Path, width: u16) -> String {
@@ -820,6 +834,23 @@ mod tests {
             !scope_cell.add_modifier.contains(Modifier::REVERSED),
             "scope emphasis must stay within the app's visual language"
         );
+    }
+
+    #[test]
+    fn a_middle_dot_in_the_home_path_is_not_mistaken_for_a_project_scope() {
+        let (_dir, mut session) = session_with(&[]);
+        session.home = "/tmp/opt · musings".into();
+        let backend = ratatui::backend::TestBackend::new(80, 20);
+        let mut terminal = Terminal::new(backend).expect("test terminal");
+        terminal.draw(|f| draw(f, &session)).expect("draw");
+        let buffer = terminal.backend().buffer();
+        let row = (0..buffer.area.width)
+            .map(|x| buffer[(x, 0)].symbol())
+            .collect::<String>();
+        let path_start = row.find("musings").expect("home path on context rail");
+        let path_cell = buffer[(path_start as u16, 0)].style();
+        assert_eq!(path_cell.fg, Some(MUTED));
+        assert!(!path_cell.add_modifier.contains(Modifier::BOLD));
     }
 
     #[test]
