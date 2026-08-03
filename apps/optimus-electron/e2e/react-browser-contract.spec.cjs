@@ -128,6 +128,28 @@ test('compact terminal takes the primary surface and returns to chat when closed
   expect(errors).toEqual([]);
 });
 
+test('composer access menu is opaque over transcript content', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 840, height: 800 });
+  await page.goto(URL);
+
+  await page.getByRole('button', { name: /^Access: / }).click();
+  const menu = page.getByRole('listbox', { name: 'Access' });
+  await expect(menu).toBeVisible();
+  const surface = await menu.evaluate((element) => {
+    const color = getComputedStyle(element).backgroundColor;
+    const channels = (color.match(/[\d.]+/g) || []).map(Number);
+    return {
+      color,
+      alpha: channels.length === 4 ? channels[3] : 1,
+      image: getComputedStyle(element).backgroundImage,
+    };
+  });
+  expect(surface.alpha).toBe(1);
+  expect(surface.image).toBe('none');
+  expect(errors).toEqual([]);
+});
+
 test('320 CSS px reflow and reduced motion preserve state and focus', async ({ page }) => {
   const errors = collectErrors(page);
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });

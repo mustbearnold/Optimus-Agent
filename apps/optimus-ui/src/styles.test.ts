@@ -39,6 +39,12 @@ describe('motion contract', () => {
     expect(css).not.toMatch(/backdrop-filter/i);
   });
 
+  it('keeps elevated menus opaque over the transcript', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*--elevated:\s*#0c0c0c/s);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--elevated:\s*#0c0c0c/s);
+  });
+
   it('uses the black glass palette in both saved theme modes', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#000000[^}]*--accent:\s*#f47742/s);

@@ -5,8 +5,13 @@
 //! auto-authorize, must ask the user, deny, or report unavailability.
 
 mod command_class;
+mod developer_access;
 
 pub use command_class::{capability_for_command, classify_command, CommandClass};
+pub use developer_access::{
+    DeveloperAccessGrant, DeveloperCapabilities, DeveloperScope,
+    DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+};
 
 use std::net::{IpAddr, Ipv4Addr};
 
@@ -28,6 +33,8 @@ pub enum AutonomyProfile {
     ReadOnly,
     /// Broader project-local autonomy (Advanced), still not unrestricted host.
     FullProject,
+    /// Explicit local self-development authority, bounded by a persisted grant.
+    DeveloperFullAccess,
     /// Expert break-glass marker; runtime should pair with unrestricted policy.
     UnrestrictedHost,
 }
@@ -39,6 +46,7 @@ impl AutonomyProfile {
             Self::ReviewChanges => "review_changes",
             Self::ReadOnly => "read_only",
             Self::FullProject => "full_project",
+            Self::DeveloperFullAccess => "developer_full_access",
             Self::UnrestrictedHost => "unrestricted_host",
         }
     }
@@ -49,6 +57,9 @@ impl AutonomyProfile {
             "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
             "read_only" | "readonly" | "read" => Some(Self::ReadOnly),
             "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
+            "developer_full_access" | "developer-full-access" | "developer" => {
+                Some(Self::DeveloperFullAccess)
+            }
             // Break-glass answers to words that cannot be misread as ordinary.
             // “full” and “host” used to land here — the composer's first menu
             // item said "Full access" and meant this (#118) — so a stale
@@ -267,6 +278,8 @@ pub struct ActionTarget {
     pub project_root_hash: Option<String>,
     pub relative_path: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub absolute_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub owned_localhost: Option<OwnedLocalhostBinding>,
 }
 
@@ -282,6 +295,8 @@ pub struct ActionRequest {
     pub reversibility: Reversibility,
     pub sensitivity: Sensitivity,
     pub externality: Externality,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub developer_access: Option<DeveloperAccessGrant>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -381,11 +396,16 @@ impl CapabilityBroker {
         }
 
         // Hard fences first.
+        let developer_grant = (profile == AutonomyProfile::DeveloperFullAccess)
+            .then_some(request.developer_access.as_ref())
+            .flatten();
         if matches!(request.capability, CapabilityId::CommerceSpend)
-            || matches!(request.sensitivity, Sensitivity::Credential)
+            || (matches!(request.sensitivity, Sensitivity::Credential)
                 && matches!(request.capability, CapabilityId::CredentialReadRaw)
-            || matches!(request.externality, Externality::HostSystem)
+                && developer_grant.is_none())
+            || (matches!(request.externality, Externality::HostSystem)
                 && matches!(request.capability, CapabilityId::SystemModify)
+                && developer_grant.is_none())
         {
             if matches!(profile, AutonomyProfile::UnrestrictedHost) {
                 return self.allow(profile, request, "unrestricted_host_break_glass");
@@ -443,7 +463,65 @@ impl CapabilityBroker {
             }
             AutonomyProfile::Standard => self.decide_standard(request),
             AutonomyProfile::FullProject => self.decide_full_project(request),
+            AutonomyProfile::DeveloperFullAccess => {
+                self.decide_developer_full_access(request, developer_grant)
+            }
         }
+    }
+
+    fn decide_developer_full_access(
+        &self,
+        request: &ActionRequest,
+        grant: Option<&DeveloperAccessGrant>,
+    ) -> AuthorityDecision {
+        let Some(grant) = grant else {
+            return AuthorityDecision::Deny {
+                code: "developer_access_not_enabled".into(),
+                reason: "Developer Full Access requires an active local grant.".into(),
+                recovery: Some(RecoveryAction {
+                    label: "Enable Developer Full Access".into(),
+                    detail: "Confirm a scope and capability toggles in Optimus settings first."
+                        .into(),
+                }),
+            };
+        };
+        if let Err(reason) = grant.validate() {
+            return AuthorityDecision::Deny {
+                code: "developer_access_invalid".into(),
+                reason,
+                recovery: Some(RecoveryAction {
+                    label: "Review Developer Full Access".into(),
+                    detail: "Revoke and enable the mode again with a valid scope.".into(),
+                }),
+            };
+        }
+        if !grant.allows(request.capability, &request.target) {
+            return AuthorityDecision::Deny {
+                code: "developer_access_scope_or_capability".into(),
+                reason: format!(
+                    "Developer Full Access does not grant {} in the selected scope.",
+                    request.capability.as_str()
+                ),
+                recovery: Some(RecoveryAction {
+                    label: "Adjust the Developer Full Access grant".into(),
+                    detail:
+                        "Enable the capability and ensure the target is inside the active scope."
+                            .into(),
+                }),
+            };
+        }
+        if grant.should_pause(request.capability, request.reversibility) {
+            return self.ask(
+                request,
+                "developer_pause_before_destructive",
+                "Developer Full Access is active, but pause before destructive actions is enabled.",
+            );
+        }
+        self.allow(
+            AutonomyProfile::DeveloperFullAccess,
+            request,
+            "developer_full_access_grant",
+        )
     }
 
     fn decide_standard(&self, request: &ActionRequest) -> AuthorityDecision {
@@ -629,6 +707,7 @@ pub fn build_owned_localhost_serve_request(
             summary,
             project_root_hash: Some(binding.project_root_hash.clone()),
             relative_path: None,
+            absolute_path: None,
             owned_localhost: Some(binding),
         },
         effect_digest: EffectDigest {
@@ -639,6 +718,7 @@ pub fn build_owned_localhost_serve_request(
         reversibility: Reversibility::Reversible,
         sensitivity: Sensitivity::Ordinary,
         externality: Externality::OwnedLocalhost,
+        developer_access: None,
     }
 }
 
@@ -706,6 +786,7 @@ pub fn build_effect_request_for(
             summary,
             project_root_hash,
             relative_path,
+            absolute_path: None,
             owned_localhost: None,
         },
         effect_digest: EffectDigest {
@@ -714,6 +795,7 @@ pub fn build_effect_request_for(
         reversibility,
         sensitivity: Sensitivity::Ordinary,
         externality,
+        developer_access: None,
     })
 }
 
@@ -732,6 +814,7 @@ mod tests {
                 summary: "test".into(),
                 project_root_hash: Some("abc".into()),
                 relative_path: Some("src/App.tsx".into()),
+                absolute_path: Some("/tmp/project/src/App.tsx".into()),
                 owned_localhost: None,
             },
             effect_digest: EffectDigest {
@@ -740,6 +823,7 @@ mod tests {
             reversibility: Reversibility::Reversible,
             sensitivity: Sensitivity::Ordinary,
             externality: Externality::ProjectLocal,
+            developer_access: None,
         }
     }
 
@@ -797,6 +881,66 @@ mod tests {
             &req(CapabilityId::FsProjectWrite),
         );
         assert!(matches!(d, AuthorityDecision::Deny { .. }));
+    }
+
+    #[test]
+    fn developer_full_access_requires_a_valid_grant() {
+        let denied = CapabilityBroker.decide(
+            AutonomyProfile::DeveloperFullAccess,
+            &req(CapabilityId::FsProjectWrite),
+        );
+        assert!(matches!(
+            denied,
+            AuthorityDecision::Deny {
+                code,
+                ..
+            } if code == "developer_access_not_enabled"
+        ));
+
+        let mut request = req(CapabilityId::FsProjectWrite);
+        let mut grant = DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/tmp/project".into(),
+                root_hash: None,
+            },
+            pause_before_destructive: false,
+            ..Default::default()
+        };
+        request.developer_access = Some(grant.clone());
+        assert!(CapabilityBroker
+            .decide(AutonomyProfile::DeveloperFullAccess, &request)
+            .is_allow());
+
+        grant.capabilities.workspace_files = false;
+        request.developer_access = Some(grant);
+        assert!(matches!(
+            CapabilityBroker.decide(AutonomyProfile::DeveloperFullAccess, &request),
+            AuthorityDecision::Deny {
+                code,
+                ..
+            } if code == "developer_access_scope_or_capability"
+        ));
+    }
+
+    #[test]
+    fn developer_full_access_pause_toggle_stays_an_approval_boundary() {
+        let mut request = req(CapabilityId::FsProjectDelete);
+        request.developer_access = Some(DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/tmp/project".into(),
+                root_hash: None,
+            },
+            ..Default::default()
+        });
+        assert!(CapabilityBroker
+            .decide(AutonomyProfile::DeveloperFullAccess, &request)
+            .is_ask());
     }
 
     #[test]

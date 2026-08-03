@@ -166,7 +166,9 @@ fn main() -> wry::Result<()> {
             }
             eprintln!("[optimus-desktop] host-only mode on 127.0.0.1:{port}");
             // Electron parent reads this line to pair Authorization.
-            eprintln!("[optimus-desktop] OPTIMUS_HTTP_TOKEN={token}");
+            if std::env::var_os("OPTIMUS_SUPPRESS_TOKEN_LOG").is_none() {
+                eprintln!("[optimus-desktop] OPTIMUS_HTTP_TOKEN={token}");
+            }
         }
         let security = match HttpSecurity::new(port, development, token) {
             Ok(security) => security,

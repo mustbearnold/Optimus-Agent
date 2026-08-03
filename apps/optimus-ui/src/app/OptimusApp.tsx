@@ -17,6 +17,7 @@ import type {
   Approval,
   Campaign,
   ChatHandle,
+  DeveloperAccess,
   Doctor,
   Project,
   ProjectRuntimeScope,
@@ -97,6 +98,7 @@ export function OptimusApp() {
     theme: (localStorage.getItem('optimus.react.theme') === 'dark' ? 'dark' : 'light') as 'dark' | 'light',
   }));
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [developerAccess, setDeveloperAccess] = useState<DeveloperAccess | null>(null);
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -145,6 +147,16 @@ export function OptimusApp() {
 
   const alive = useAlive();
 
+  useEffect(() => {
+    let live = true;
+    void transport.invoke<{ developer_access?: DeveloperAccess }>('developer_access_get')
+      .then((result) => {
+        if (live && result.developer_access) setDeveloperAccess(result.developer_access);
+      })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+
   const refreshCapabilityState = useCallback(async () => {
     try {
       const [doctorResult, campaignResult] = await Promise.all([
@@ -153,6 +165,7 @@ export function OptimusApp() {
       ]);
       if (!alive()) return;
       setDoctor(doctorResult);
+      setDeveloperAccess(doctorResult.settings?.developer_access || doctorResult.developer_access || null);
       setCampaigns(campaignResult.campaigns || []);
     } catch (error) {
       if (!alive()) return;
@@ -604,6 +617,7 @@ export function OptimusApp() {
                       input={input}
                       annotation={annotation}
                       settings={composer}
+                      developerAccess={developerAccess || undefined}
                       onStarter={setInput}
                       onApprovalDecision={resolveTranscriptApproval}
                       onChange={(value) => { setAnnotation(''); setInput(value); }}
@@ -674,6 +688,7 @@ export function OptimusApp() {
           projects={projects}
           onTheme={(theme) => dispatch({ type: 'theme', theme })}
           onManageProject={(project) => setSourceProjectId(project.id)}
+          onDeveloperAccess={setDeveloperAccess}
           onClose={() => dispatch({ type: 'settings', open: false })}
         />
         <ProjectSourcesDialog
@@ -792,6 +807,7 @@ const WorkbenchChat = memo(function WorkbenchChat({
   input,
   annotation,
   settings,
+  developerAccess,
   onStarter,
   onApprovalDecision,
   onChange,
@@ -807,6 +823,7 @@ const WorkbenchChat = memo(function WorkbenchChat({
   input: string;
   annotation: string;
   settings: ComposerSettings;
+  developerAccess?: DeveloperAccess;
   onStarter: (text: string) => void;
   onApprovalDecision: (
     binding: ToolApprovalBinding,
@@ -847,6 +864,7 @@ const WorkbenchChat = memo(function WorkbenchChat({
         status={conversation.status}
         statusText={conversation.statusText}
         settings={settings}
+        developerAccess={developerAccess}
         project={project}
       />
     </>

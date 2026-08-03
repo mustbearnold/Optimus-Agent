@@ -29,6 +29,7 @@ impl AutonomyProfile {{
             Self::ReviewChanges => "review_changes",
             Self::ReadOnly => "read_only",
             Self::FullProject => "full_project",
+            Self::DeveloperFullAccess => "developer_full_access",
             Self::UnrestrictedHost => "unrestricted_host",
         }}
     }}
@@ -39,6 +40,7 @@ impl AutonomyProfile {{
             "review_changes" | "ask" => Some(Self::ReviewChanges),
             "read_only" | "read" => Some(Self::ReadOnly),
             "full_project" => Some(Self::FullProject),
+            "developer_full_access" => Some(Self::DeveloperFullAccess),
             {break_glass} => Some(Self::UnrestrictedHost),
             _ => None,
         }}
@@ -58,7 +60,7 @@ const accessTiers = [
 
 DEFAULT_TIERS = "\n".join(
     f"  {{ tier: '{tier}', heading: '{tier}' }},"
-    for tier in ("primary", "advanced", "expert")
+    for tier in ("primary", "advanced", "developer", "expert")
 )
 
 DESKTOP_TEMPLATE = """
@@ -80,6 +82,7 @@ FIVE_DESKTOP_OPTIONS = "\n".join(
         ("review_changes", "primary", "y"),
         ("read_only", "primary", "y"),
         ("full_project", "advanced", "y"),
+        ("developer_full_access", "developer", "y"),
         ("unrestricted_host", "expert", "y"),
     )
 )
@@ -93,6 +96,7 @@ FIVE_ITEMS = "\n".join(
         ("review_changes", "primary"),
         ("read_only", "primary"),
         ("full_project", "advanced"),
+        ("developer_full_access", "developer"),
         ("unrestricted_host", "expert"),
     )
 )
@@ -107,6 +111,7 @@ const ACCESS_ALIASES: Readonly<Record<string, string>> = {prototype}{{
   read_only: 'read_only',
   read: 'read_only',
   full_project: '{alias}',
+  developer_full_access: 'developer_full_access',
 {extra_alias}
 }}{close};
 export function restoredAccess(raw: unknown): string {{
@@ -210,6 +215,7 @@ const ACCESS_ALIASES = Object.assign(Object.create(null), {{
   read_only: 'read_only',
   read: 'read_only',
   full_project: '{alias}',
+  developer_full_access: 'developer_full_access',
 {extra_alias}
 }});
 function restoredAccess(raw) {{
@@ -405,6 +411,25 @@ class AutonomyGateTests(unittest.TestCase):
     def test_a_guarded_arm_cannot_smuggle_break_glass(self) -> None:
         self.write(policy_break_glass='"unrestricted_host" if true')
         self.assert_fails("a match guard must not be invisible")
+
+    def test_a_rustfmt_block_arm_without_a_comma_is_classified(self) -> None:
+        source = """
+impl AutonomyProfile {
+    pub fn parse(raw: &str) -> Option<Self> {
+        match raw {
+            "standard" => {
+                Some(Self::Standard)
+            }
+            "unrestricted_host" => Some(Self::UnrestrictedHost),
+            _ => None,
+        }
+    }
+}
+"""
+        self.assertEqual(
+            GATE.parse_table(source, "fixture"),
+            {"standard": "Standard", "unrestricted_host": "UnrestrictedHost"},
+        )
 
     def test_a_wrapped_or_pattern_cannot_smuggle_break_glass(self) -> None:
         self.write(

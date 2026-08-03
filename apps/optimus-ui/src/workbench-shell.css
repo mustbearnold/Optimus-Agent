@@ -18,7 +18,8 @@
   --surface: rgba(10, 10, 10, 0.84);
   --surface-2: rgba(15, 15, 15, 0.82);
   --surface-3: rgba(20, 20, 20, 0.78);
-  --elevated: rgba(12, 12, 12, 0.9);
+  /* Menus are solid so transcript text never shines through the surface. */
+  --elevated: #0c0c0c;
   --hover: rgba(255, 255, 255, 0.055);
   --selected: rgba(255, 255, 255, 0.08);
   --session-card: rgba(18, 18, 18, 0.68);
@@ -72,7 +73,7 @@
   --surface: rgba(10, 10, 10, 0.84);
   --surface-2: rgba(15, 15, 15, 0.82);
   --surface-3: rgba(20, 20, 20, 0.78);
-  --elevated: rgba(12, 12, 12, 0.9);
+  --elevated: #0c0c0c;
   --hover: rgba(255, 255, 255, 0.055);
   --selected: rgba(255, 255, 255, 0.08);
   --session-card: rgba(18, 18, 18, 0.68);

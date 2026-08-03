@@ -8,6 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use optimus_graph::CommandFsEnvelope;
+use optimus_policy::DeveloperAccessGrant;
 use serde::{Deserialize, Serialize};
 
 use crate::{atomic_write_user_only, KernelError, Result};
@@ -92,6 +93,10 @@ pub struct ProductSettings {
     pub work_isolation: WorkIsolationMode,
     /// When true, concurrent mutating work across projects is allowed once B/C enforce.
     pub allow_concurrent_projects: bool,
+    /// Explicitly enabled local authority for self-development. It is always
+    /// persisted as a record so the UI can show a truthful disabled state.
+    #[serde(default)]
+    pub developer_access: DeveloperAccessGrant,
     /// Optional note when an unknown value was coerced on load.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub load_note: Option<String>,
@@ -103,6 +108,7 @@ impl Default for ProductSettings {
             version: SETTINGS_VERSION,
             work_isolation: WorkIsolationMode::Shared,
             allow_concurrent_projects: false,
+            developer_access: DeveloperAccessGrant::default(),
             load_note: None,
         }
     }
@@ -194,6 +200,7 @@ impl ProductSettings {
             "configured_mode": configured,
             "work_isolation_label": self.work_isolation.label(),
             "allow_concurrent_projects": self.allow_concurrent_projects,
+            "developer_access": self.developer_access.public_json(),
             // Product FS isolation only (not command envelope).
             "enforcement_active": product_fs,
             "product_fs_enforced": product_fs,

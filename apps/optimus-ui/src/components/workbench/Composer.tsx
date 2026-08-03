@@ -44,6 +44,13 @@ const accessOptions = [
     tier: 'advanced',
   },
   {
+    value: 'developer_full_access',
+    label: 'Developer Full Access',
+    hint: 'Edit, execute, install, and rebuild inside an explicit local scope',
+    icon: 'terminal',
+    tier: 'developer',
+  },
+  {
     value: 'unrestricted_host',
     label: 'Unrestricted host',
     hint: 'Break-glass: no pauses, and the whole machine is in reach',
@@ -55,6 +62,7 @@ const accessOptions = [
 const accessTiers = [
   { tier: 'primary', heading: '' },
   { tier: 'advanced', heading: 'Advanced' },
+  { tier: 'developer', heading: 'Developer' },
   { tier: 'expert', heading: 'Expert' },
 ] as const;
 

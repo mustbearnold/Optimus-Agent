@@ -13,7 +13,7 @@
 //! connect workers; [`approval`] decides parked effects; [`reservation`]
 //! secures durable identity before a provider is contacted.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 #[cfg(test)]
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
@@ -22,8 +22,8 @@ use std::time::Instant;
 
 use optimus_host::handle_ipc;
 use optimus_kernel::{
-    CancellationToken, ExecutionStore, PersistedToolLifecycle, SessionMeta, SessionStore,
-    ToolApprovalBinding, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase,
+    CancellationToken, ExecutionStore, SessionMeta, SessionStore, ToolApprovalBinding, ToolCall,
+    ToolLifecyclePhase,
 };
 use serde_json::json;
 
@@ -35,10 +35,14 @@ use crate::workbench::WorkbenchState;
 
 mod approval;
 mod event_adapter;
+mod lifecycles;
 mod reservation;
 mod workers;
 
 pub use event_adapter::{ToolStep, TurnUpdate};
+use lifecycles::{
+    collapse_tool_lifecycles, is_tool_call_envelope, latest_session_id, next_tool_lifecycle,
+};
 
 // All are exercised from this module's test block, beside the rest of the
 // surface's behaviour; none is called from production code up here.
@@ -802,73 +806,6 @@ impl TuiSession {
             access
         )
     }
-}
-
-fn is_tool_call_envelope(content: &str) -> bool {
-    serde_json::from_str::<Vec<ToolCall>>(content)
-        .map(|calls| !calls.is_empty())
-        .unwrap_or(false)
-}
-
-/// Collapse each call's typed lifecycle into the latest phase for that call
-/// occurrence, preserving repeated provider ids across turns. Providers are
-/// allowed to reuse identifiers such as `call_1`; a global map would repaint
-/// every historical row with the newest call's outcome after relaunch.
-fn collapse_tool_lifecycles(lifecycles: Vec<PersistedToolLifecycle>) -> Vec<ToolLifecycleEvent> {
-    let mut occurrences: Vec<ToolLifecycleEvent> = Vec::new();
-    for lifecycle in lifecycles {
-        let event = lifecycle.event;
-        let can_update = occurrences.last().is_some_and(|previous| {
-            previous.run_id == event.run_id
-                && previous.call_id == event.call_id
-                && !is_terminal_tool_phase(previous.phase)
-        });
-        if can_update {
-            if let Some(previous) = occurrences.last_mut() {
-                *previous = event;
-            }
-        } else {
-            occurrences.push(event);
-        }
-    }
-    occurrences
-}
-
-fn is_terminal_tool_phase(phase: ToolLifecyclePhase) -> bool {
-    matches!(
-        phase,
-        ToolLifecyclePhase::Succeeded
-            | ToolLifecyclePhase::Failed
-            | ToolLifecyclePhase::Cancelled
-            | ToolLifecyclePhase::Suppressed
-            | ToolLifecyclePhase::Ambiguous
-    )
-}
-
-fn next_tool_lifecycle<'a>(
-    lifecycles: &'a [ToolLifecycleEvent],
-    call_id: &str,
-    cursor: &mut usize,
-) -> Option<&'a ToolLifecycleEvent> {
-    let offset = lifecycles
-        .get(*cursor..)?
-        .iter()
-        .position(|event| event.call_id == call_id)?;
-    *cursor += offset + 1;
-    lifecycles.get(*cursor - 1)
-}
-
-/// The most recently touched durable session in this home.
-///
-/// A turn that parks on an approval settles as an error, which carries no
-/// session id — but resolution needs one. The turn that just parked is by
-/// construction the newest session, so recover the id from the durable list.
-fn latest_session_id(home: &Path) -> Option<String> {
-    let latest = SessionStore::open(home.join("sessions.db"))
-        .ok()?
-        .latest()
-        .ok()??;
-    Some(latest.id.to_string())
 }
 
 #[cfg(test)]

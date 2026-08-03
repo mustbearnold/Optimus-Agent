@@ -2272,6 +2272,7 @@
     read_only: 'read_only',
     read: 'read_only',
     full_project: 'full_project',
+    developer_full_access: 'developer_full_access',
   });
   function restoredAccess(raw) {
     if (typeof raw !== 'string') return 'standard';

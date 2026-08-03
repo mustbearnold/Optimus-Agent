@@ -4,6 +4,7 @@ use std::fs;
 use std::path::Path;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
+use optimus_policy::{DeveloperAccessGrant, DeveloperScope, DEVELOPER_ACCESS_CONFIRMATION_VERSION};
 use optimus_runtime::{ApprovalGrant, Runtime, RuntimeError};
 use tempfile::tempdir;
 
@@ -104,6 +105,53 @@ fn nested_write_remains_available_inside_workspace() {
         fs::read_to_string(workspace.join("nested/inside.txt")).unwrap(),
         "inside"
     );
+}
+
+#[test]
+fn developer_scope_allows_direct_mutation_in_a_selected_secondary_root() {
+    let root = tempdir().expect("root tempdir");
+    let workspace = root.path().join("workspace");
+    let secondary = root.path().join("secondary");
+    fs::create_dir_all(&workspace).expect("workspace");
+    fs::create_dir_all(&secondary).expect("secondary");
+    let grant = DeveloperAccessGrant {
+        enabled: true,
+        confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+        issued_unix: 1,
+        scope: DeveloperScope::SelectedDirectories {
+            roots: vec![
+                workspace.display().to_string(),
+                secondary.display().to_string(),
+            ],
+        },
+        pause_before_destructive: false,
+        ..Default::default()
+    };
+    let rt = Runtime::open_with_developer_access(
+        &root.path().join("optimus.db"),
+        &workspace,
+        optimus_graph::RuntimeConfig {
+            autonomy_profile: optimus_graph::AutonomyProfile::DeveloperFullAccess,
+            ..Default::default()
+        },
+        Some(grant),
+        vec![workspace.clone(), secondary.clone()],
+    )
+    .expect("developer runtime");
+    let target = secondary.join("direct.txt");
+    let job = create_single_effect_job(
+        &rt,
+        "developer-secondary-write",
+        Effect::ProjectWriteFile {
+            workspace_sha256: rt.workspace_sha256(),
+            relative_path: target.display().to_string(),
+            contents: "developer scope".into(),
+        },
+    );
+
+    rt.run_next(job)
+        .expect("developer grant should allow the exact write");
+    assert_eq!(fs::read_to_string(target).unwrap(), "developer scope");
 }
 
 #[test]

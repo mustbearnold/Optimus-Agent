@@ -450,8 +450,16 @@ pub(crate) fn linux_contained_command(
     args: &[String],
     workspace: &Path,
     envelope: CommandFsEnvelope,
+    developer_roots: &[std::path::PathBuf],
 ) -> (Command, String) {
-    linux_contained_command_in_mode(program, args, workspace, envelope, LinuxRunMode::WaitPiped)
+    linux_contained_command_in_mode(
+        program,
+        args,
+        workspace,
+        envelope,
+        developer_roots,
+        LinuxRunMode::WaitPiped,
+    )
 }
 
 /// Same containment as [`linux_contained_command`], for a process that keeps
@@ -466,7 +474,14 @@ pub(crate) fn linux_contained_serve_command(
     workspace: &Path,
     envelope: CommandFsEnvelope,
 ) -> (Command, String) {
-    linux_contained_command_in_mode(program, args, workspace, envelope, LinuxRunMode::Detached)
+    linux_contained_command_in_mode(
+        program,
+        args,
+        workspace,
+        envelope,
+        &[],
+        LinuxRunMode::Detached,
+    )
 }
 
 #[cfg(target_os = "linux")]
@@ -475,6 +490,7 @@ fn linux_contained_command_in_mode(
     args: &[String],
     workspace: &Path,
     envelope: CommandFsEnvelope,
+    developer_roots: &[std::path::PathBuf],
     mode: LinuxRunMode,
 ) -> (Command, String) {
     let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, AtomicOrdering::Relaxed);
@@ -505,12 +521,14 @@ fn linux_contained_command_in_mode(
         .arg(format!("--unit={unit_base}"))
         .arg("--")
         .arg("/usr/bin/bwrap");
-    for arg in command_envelope::linux_bwrap_args(workspace, envelope) {
+    for arg in command_envelope::linux_bwrap_args_with_roots(workspace, envelope, developer_roots) {
         command.arg(arg);
     }
     // UnrestrictedHost still binds host `/`; mask session bus + tmpfs the
     // systemd runtime dir. Confined profiles already replace `/run` with tmpfs.
-    if matches!(envelope, CommandFsEnvelope::UnrestrictedHost) {
+    if matches!(envelope, CommandFsEnvelope::UnrestrictedHost)
+        || developer_roots.iter().any(|root| root == Path::new("/"))
+    {
         let runtime_dir = format!("/run/user/{}", unsafe { libc::geteuid() });
         command
             .arg("--ro-bind")

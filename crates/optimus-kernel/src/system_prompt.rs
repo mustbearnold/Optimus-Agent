@@ -20,12 +20,14 @@ pub(crate) fn command_envelope_note(envelope: optimus_graph::CommandFsEnvelope) 
         optimus_graph::CommandFsEnvelope::ConfinedNoNetwork => {
             "`terminal` runs with **no network**: every hostname fails to resolve. \
              Do not reach for curl, wget, git clone, pip, npm, or any language's \
-             HTTP client — they cannot work here. Use `web_search`, or the browser \
-             pack's tools, for anything online."
+             HTTP client — they cannot work here. The workspace and any explicitly \
+             approved Developer Full Access roots are writable. Use `web_search`, \
+             or the browser pack's tools, for anything online."
         }
         optimus_graph::CommandFsEnvelope::Confined => {
             "`terminal` has network access, and the workspace is the only writable \
-             tree. Paths outside it are readable at best."
+             tree unless Developer Full Access explicitly adds roots. Paths outside \
+             those roots are readable at best."
         }
         optimus_graph::CommandFsEnvelope::UnrestrictedHost => {
             "`terminal` has network access and sees the host filesystem. This is \

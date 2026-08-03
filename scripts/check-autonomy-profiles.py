@@ -76,12 +76,14 @@ EXPECTED_ALIASES = {
     "read_only": "read_only",
     "read": "read_only",
     "full_project": "full_project",
+    "developer_full_access": "developer_full_access",
 }
 EXPECTED_TIERS = {
     "standard": "primary",
     "review_changes": "primary",
     "read_only": "primary",
     "full_project": "advanced",
+    "developer_full_access": "developer",
     "unrestricted_host": "expert",
 }
 
@@ -245,6 +247,14 @@ def logical_arms(body: str, surface: str) -> list[str]:
             depth -= 1
             if depth < 0:
                 fail(f"{surface}: match arm has an unmatched closing delimiter")
+            # Rust permits omitting the comma between a block arm and the
+            # following arm. Rustfmt removes an optional trailing comma here,
+            # so the closing block is the reliable boundary.
+            if char == "}" and depth == 0:
+                arm = body[start : offset + 1].strip()
+                if arm:
+                    arms.append(arm)
+                start = offset + 1
         elif char == "," and depth == 0:
             arm = body[start:offset].strip()
             if arm:

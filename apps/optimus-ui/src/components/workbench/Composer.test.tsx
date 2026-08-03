@@ -255,13 +255,14 @@ describe('Composer', () => {
     await user.click(screen.getByRole('button', { name: 'Access: Standard' }));
     const accessMenu = screen.getByRole('listbox', { name: 'Access' });
     const options = within(accessMenu).getAllByRole('option');
-    expect(options).toHaveLength(5);
+    expect(options).toHaveLength(6);
     expect(options[0]).toHaveTextContent('Standard');
-    expect(options[4]).toHaveTextContent('Unrestricted host');
-    expect(options[4].closest('.composer-access-tier')).toHaveClass('is-expert');
-    expect(within(accessMenu).getByRole('group', { name: 'Expert' })).toContainElement(options[4]);
+    expect(options[4]).toHaveTextContent('Developer Full Access');
+    expect(options[5]).toHaveTextContent('Unrestricted host');
+    expect(options[5].closest('.composer-access-tier')).toHaveClass('is-expert');
+    expect(within(accessMenu).getByRole('group', { name: 'Expert' })).toContainElement(options[5]);
 
-    await user.click(options[4]);
+    await user.click(options[5]);
     expect(onSettings).toHaveBeenCalledWith({ ...settings, access: 'unrestricted_host' });
   });
 
@@ -297,8 +298,8 @@ describe('Composer', () => {
     await user.keyboard('{ArrowUp}');
     await waitFor(() => expect(option(0)).toHaveFocus());
 
-    option(4).focus();
+    option(5).focus();
     await user.keyboard('{ArrowDown}');
-    await waitFor(() => expect(option(4)).toHaveFocus());
+    await waitFor(() => expect(option(5)).toHaveFocus());
   });
 });

@@ -8,6 +8,7 @@ import type {
   ChatRequest,
   CronJob,
   DesktopMethod,
+  DeveloperAccess,
   Doctor,
   FsEntry,
   OptimusTransport,
@@ -95,7 +96,29 @@ const settings: ProductSettings = {
   configured_mode: 'shared',
   enforced_mode: 'shared',
   command_envelope_enforced: true,
+  developer_access: disabledDeveloperAccess(),
 };
+
+function disabledDeveloperAccess(): DeveloperAccess {
+  return {
+    enabled: false,
+    scope: { kind: 'selected_repository', root: '' },
+    scope_label: 'Selected repository',
+    roots: [],
+    capabilities: {
+      workspace_files: true,
+      terminal_execution: true,
+      process_management: true,
+      package_installation: true,
+      network_access: true,
+      external_services: false,
+      production_systems: false,
+      secrets: false,
+    },
+    pause_before_destructive: true,
+    checkpoint_on_mutation: true,
+  };
+}
 
 const doctor: Doctor = {
   version: '0.1.0',
@@ -375,6 +398,35 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       doctor.work_isolation_label = settings.work_isolation_label;
       doctor.allow_concurrent_projects = settings.allow_concurrent_projects;
       return { settings };
+    case 'developer_access_get':
+      return {
+        developer_access: settings.developer_access,
+        supervisor: { status: 'idle', healthy: false, previous_available: false },
+        confirmation: 'I understand Developer Full Access risks',
+        confirmation_version: 1,
+      };
+    case 'developer_access_enable': {
+      const grant = (params.grant || {}) as Partial<DeveloperAccess>;
+      settings.developer_access = {
+        ...disabledDeveloperAccess(),
+        ...grant,
+        enabled: true,
+        scope: (grant.scope || disabledDeveloperAccess().scope) as DeveloperAccess['scope'],
+      };
+      return { developer_access: settings.developer_access, supervisor: { status: 'idle', healthy: false } };
+    }
+    case 'developer_access_revoke':
+      settings.developer_access = disabledDeveloperAccess();
+      return { developer_access: settings.developer_access, supervisor: { status: 'emergency_stopped', healthy: false } };
+    case 'developer_supervisor_status':
+      return { status: 'idle', healthy: false, previous_available: false };
+    case 'developer_supervisor_log':
+      return { path: '/fixture/developer-supervisor/instance.log', lines: '', line_count: 0, action_path: '/fixture/developer-supervisor/actions.log', actions: '', action_line_count: 0 };
+    case 'developer_supervisor_stop':
+    case 'developer_supervisor_restart':
+    case 'developer_supervisor_rollback':
+    case 'developer_emergency_stop':
+      return { status: method === 'developer_emergency_stop' ? 'emergency_stopped' : 'stopped', healthy: false };
     case 'sessions':
       return { sessions };
     case 'new_session': {

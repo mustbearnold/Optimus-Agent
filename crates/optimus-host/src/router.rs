@@ -7,6 +7,7 @@ use crate::scope::ScopePolicy;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Domain {
     System,
+    Developer,
     Sessions,
     Scheduling,
     Runtime,
@@ -39,6 +40,56 @@ const METHOD_DOMAINS: &[(&str, Domain, Option<ScopePolicy>)] = &[
     ("auth_import_cli", Domain::System, None),
     ("settings_get", Domain::System, None),
     ("settings_set", Domain::System, None),
+    (
+        "developer_access_get",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_access_enable",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_access_revoke",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_status",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_launch",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_stop",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_restart",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_rollback",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_log",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_emergency_stop",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
     ("sessions", Domain::Sessions, None),
     ("delete_session", Domain::Sessions, None),
     ("rename_session", Domain::Sessions, None),
@@ -126,6 +177,7 @@ fn scope_policy(method: &str) -> Option<ScopePolicy> {
 fn domain_recognizes(domain: Domain, method: &str) -> bool {
     match domain {
         Domain::System => crate::system::owns(method),
+        Domain::Developer => crate::developer::owns(method),
         Domain::Sessions => crate::sessions::owns(method),
         Domain::Scheduling => crate::scheduling::owns(method),
         Domain::Runtime => crate::runtime_ops::owns(method),
@@ -149,6 +201,7 @@ pub fn handle_ipc(
     crate::scope::enforce(scope_policy(method), home, method, &params)?;
     match domain {
         Domain::System => crate::system::handle(home, method, params),
+        Domain::Developer => crate::developer::handle(home, method, params),
         Domain::Sessions => crate::sessions::handle(home, method, params),
         Domain::Scheduling => crate::scheduling::handle(home, method, params),
         Domain::Runtime => crate::runtime_ops::handle(home, method, params),
@@ -185,6 +238,56 @@ mod tests {
         ("auth_import_cli", Domain::System, None),
         ("settings_get", Domain::System, None),
         ("settings_set", Domain::System, None),
+        (
+            "developer_access_get",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_access_enable",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_access_revoke",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_status",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_launch",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_stop",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_restart",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_rollback",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_log",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_emergency_stop",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
         ("sessions", Domain::Sessions, None),
         ("delete_session", Domain::Sessions, None),
         ("rename_session", Domain::Sessions, None),

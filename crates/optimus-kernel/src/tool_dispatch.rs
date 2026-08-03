@@ -288,7 +288,7 @@ impl Kernel {
                 let roots = FsRoots::new(self.project_roots.clone())
                     .map_err(|error| KernelError::Tool(format!("read {path}: {error}")))?;
                 let body = roots
-                    .read_text(path, 1024 * 1024, false)
+                    .read_text(path, 1024 * 1024, self.developer_secrets_allowed())
                     .map_err(|error| KernelError::Tool(format!("read {path}: {error}")))?;
                 let window = read_window(&call.arguments, &body.content);
                 Ok(json!({
@@ -322,6 +322,7 @@ impl Kernel {
                         .get("max_results")
                         .and_then(|v| v.as_u64())
                         .map(|value| value as usize),
+                    allow_secrets: self.developer_secrets_allowed(),
                 };
                 let hits = fs_search::search_content(&roots, &request)
                     .map_err(|error| KernelError::Tool(format!("search: {error}")))?;
@@ -335,7 +336,7 @@ impl Kernel {
                     .ok_or_else(|| KernelError::Tool("find_files requires glob".into()))?;
                 let roots = FsRoots::new(self.project_roots.clone())
                     .map_err(|error| KernelError::Tool(error.to_string()))?;
-                let found = fs_search::find_files(
+                let found = fs_search::find_files_with_secret_policy(
                     &roots,
                     glob,
                     call.arguments.get("path").and_then(|v| v.as_str()),
@@ -343,6 +344,7 @@ impl Kernel {
                         .get("max_results")
                         .and_then(|v| v.as_u64())
                         .map(|value| value as usize),
+                    self.developer_secrets_allowed(),
                 )
                 .map_err(|error| KernelError::Tool(format!("find: {error}")))?;
                 Ok(json!({ "paths": found, "count": found.len() }).to_string())

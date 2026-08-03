@@ -30,7 +30,7 @@ function parseRustMethods(source) {
   assert.notEqual(start, -1);
   const end = source.indexOf('];', start);
   const block = source.slice(start, end);
-  return new Set([...block.matchAll(/\("([a-z0-9_]+)",\s*Domain::/g)].map((m) => m[1]));
+  return new Set([...block.matchAll(/\(\s*"([a-z0-9_]+)",\s*Domain::/g)].map((m) => m[1]));
 }
 
 function parseDesktopMethod(source) {

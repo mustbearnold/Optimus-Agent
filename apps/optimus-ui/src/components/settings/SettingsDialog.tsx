@@ -9,12 +9,14 @@ import {
 import { useAlive } from '../../hooks/useAlive';
 import type {
   CronJob,
+  DeveloperAccess,
   OptimusTransport,
   ProductSettings,
   Project,
 } from '../../ipc/contracts';
 import { Icon, type IconName } from '../chrome/Icon';
 import { CronWorkbench } from '../cron/CronWorkbench';
+import { DeveloperAccessPanel } from './DeveloperAccessPanel';
 
 const fallback: ProductSettings = {
   work_isolation: 'shared',
@@ -64,6 +66,7 @@ export function SettingsDialog({
   projects,
   onTheme,
   onManageProject,
+  onDeveloperAccess,
   onClose,
 }: {
   open: boolean;
@@ -72,6 +75,7 @@ export function SettingsDialog({
   projects: Project[];
   onTheme: (theme: 'dark' | 'light') => void;
   onManageProject: (project: Project) => void;
+  onDeveloperAccess?: (value: DeveloperAccess) => void;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDivElement>(null);
@@ -320,14 +324,27 @@ export function SettingsDialog({
             ) : null}
 
             {active === 'execution' ? (
-              <SettingsGroup title="Terminal">
-                <SettingRow title="Durable commands" description="Shell commands run through the protected host path and can require approval.">
-                  <span className="state-chip is-ready">Protected</span>
-                </SettingRow>
-                <SettingRow title="Panel location" description="Resizable bottom panel; compact windows promote it to a dedicated surface.">
-                  <span className="state-chip">Bottom</span>
-                </SettingRow>
-              </SettingsGroup>
+              <>
+                <SettingsGroup title="Terminal">
+                  <SettingRow title="Durable commands" description="Shell commands run through the protected host path and can require approval.">
+                    <span className="state-chip is-ready">Protected</span>
+                  </SettingRow>
+                  <SettingRow title="Panel location" description="Resizable bottom panel; compact windows promote it to a dedicated surface.">
+                    <span className="state-chip">Bottom</span>
+                  </SettingRow>
+                </SettingsGroup>
+                <SettingsGroup title="Developer mode">
+                  <DeveloperAccessPanel
+                    transport={transport}
+                    projects={projects}
+                    value={settings.developer_access}
+                    onValue={(value) => {
+                      setSettings((current) => ({ ...current, developer_access: value }));
+                      onDeveloperAccess?.(value);
+                    }}
+                  />
+                </SettingsGroup>
+              </>
             ) : null}
 
             {active === 'approvals' ? (

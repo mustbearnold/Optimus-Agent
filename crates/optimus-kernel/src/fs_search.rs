@@ -55,6 +55,8 @@ pub struct SearchRequest<'a> {
     pub glob: Option<&'a str>,
     pub case_sensitive: bool,
     pub max_results: Option<usize>,
+    /// Secret basenames remain denied unless the active developer grant opts in.
+    pub allow_secrets: bool,
 }
 
 /// Search file contents for a regular expression.
@@ -72,7 +74,7 @@ pub fn search_content(
     let mut searcher = SearcherBuilder::new().line_number(true).build();
 
     let mut hits = Vec::new();
-    for entry in walk(roots, request.path)? {
+    for entry in walk(roots, request.path, request.allow_secrets)? {
         if hits.len() >= limit {
             break;
         }
@@ -105,15 +107,16 @@ pub fn search_content(
 }
 
 /// Find files whose workspace-relative path matches a glob.
-pub fn find_files(
+pub fn find_files_with_secret_policy(
     roots: &FsRoots,
     glob: &str,
     path: Option<&str>,
     max_results: Option<usize>,
+    allow_secrets: bool,
 ) -> Result<Vec<String>, String> {
     let limit = clamp_limit(max_results);
     let matcher = compile_glob(Some(glob))?.ok_or("a glob is required")?;
-    let mut found: Vec<String> = walk(roots, path)?
+    let mut found: Vec<String> = walk(roots, path, allow_secrets)?
         .into_iter()
         .map(|entry| roots_relative(roots, &entry))
         .filter(|relative| matcher.is_match(relative))
@@ -147,7 +150,11 @@ fn compile_glob(pattern: Option<&str>) -> Result<Option<GlobMatcher>, String> {
 /// Confinement is enforced by starting only at resolved roots and by refusing
 /// to follow symlinks: a link pointing outside the workspace must not become a
 /// way to read outside it.
-fn walk(roots: &FsRoots, path: Option<&str>) -> Result<Vec<std::path::PathBuf>, String> {
+fn walk(
+    roots: &FsRoots,
+    path: Option<&str>,
+    allow_secrets: bool,
+) -> Result<Vec<std::path::PathBuf>, String> {
     let starts = match path.filter(|value| !value.trim().is_empty()) {
         Some(path) => vec![roots
             .resolve_existing(path)
@@ -164,7 +171,7 @@ fn walk(roots: &FsRoots, path: Option<&str>) -> Result<Vec<std::path::PathBuf>, 
                 continue;
             }
             let candidate = entry.into_path();
-            if is_secret(&candidate) {
+            if !allow_secrets && is_secret(&candidate) {
                 continue;
             }
             files.push(candidate);
@@ -190,7 +197,7 @@ fn roots_relative(roots: &FsRoots, path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{find_files, search_content, SearchRequest};
+    use super::{find_files_with_secret_policy, search_content, SearchRequest};
     use crate::fs_sandbox::FsRoots;
     use std::fs;
     use tempfile::TempDir;
@@ -296,15 +303,15 @@ mod tests {
     #[test]
     fn find_files_matches_on_the_relative_path() {
         let (_dir, roots) = workspace();
-        let found = find_files(&roots, "src/*.rs", None, None).unwrap();
+        let found = find_files_with_secret_policy(&roots, "src/*.rs", None, None, false).unwrap();
         assert_eq!(found, vec!["src/main.rs", "src/util.rs"]);
     }
 
     #[test]
     fn find_files_is_ordered_so_the_same_call_answers_the_same_way() {
         let (_dir, roots) = workspace();
-        let first = find_files(&roots, "**/*.rs", None, None).unwrap();
-        let second = find_files(&roots, "**/*.rs", None, None).unwrap();
+        let first = find_files_with_secret_policy(&roots, "**/*.rs", None, None, false).unwrap();
+        let second = find_files_with_secret_policy(&roots, "**/*.rs", None, None, false).unwrap();
         assert_eq!(first, second);
         assert!(first.windows(2).all(|pair| pair[0] <= pair[1]));
     }

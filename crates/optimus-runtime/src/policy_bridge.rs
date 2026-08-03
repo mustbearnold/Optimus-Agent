@@ -24,6 +24,7 @@ fn policy_autonomy(profile: AutonomyProfile) -> PolicyAutonomy {
         AutonomyProfile::ReviewChanges => PolicyAutonomy::ReviewChanges,
         AutonomyProfile::ReadOnly => PolicyAutonomy::ReadOnly,
         AutonomyProfile::FullProject => PolicyAutonomy::FullProject,
+        AutonomyProfile::DeveloperFullAccess => PolicyAutonomy::DeveloperFullAccess,
         AutonomyProfile::UnrestrictedHost => PolicyAutonomy::UnrestrictedHost,
     }
 }
@@ -194,7 +195,7 @@ impl Runtime {
     ) -> Result<AuthorityDecision> {
         let profile = policy_autonomy(self.config.autonomy_profile);
         let (kind, root_hash, relative_path, summary) = effect_policy_view(effect);
-        let request = build_effect_request_for(
+        let mut request = build_effect_request_for(
             kind,
             effect_hash,
             root_hash,
@@ -205,6 +206,19 @@ impl Runtime {
         .ok_or_else(|| {
             RuntimeError::Effector(format!("no capability mapping for effect kind {kind}"))
         })?;
+        request.target.absolute_path = Some(
+            request
+                .target
+                .relative_path
+                .as_deref()
+                .map_or_else(
+                    || Ok(self.workspace_path().to_path_buf()),
+                    |relative| self.effect_absolute_path(relative),
+                )?
+                .display()
+                .to_string(),
+        );
+        request.developer_access = self.developer.grant.clone();
         Ok(CapabilityBroker.decide(profile, &request))
     }
 
@@ -238,6 +252,9 @@ impl Runtime {
             summary,
             binding.clone(),
         );
+        let mut request = request;
+        request.target.absolute_path = Some(self.workspace_path().display().to_string());
+        request.developer_access = self.developer.grant.clone();
         match CapabilityBroker.decide(policy_autonomy(self.config.autonomy_profile), &request) {
             AuthorityDecision::Allow { authority_id, .. } => Ok(Some(authority_id)),
             AuthorityDecision::Ask { .. } => Ok(None),

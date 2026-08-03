@@ -3201,9 +3201,11 @@ name = "optimus-host"
 version = "0.1.0"
 dependencies = [
  "dirs",
+ "libc",
  "optimus-graph",
  "optimus-kernel",
  "optimus-packs",
+ "optimus-policy",
  "optimus-runtime",
  "rfd",
  "serde",
@@ -3233,6 +3235,7 @@ dependencies = [
  "optimus-memory",
  "optimus-ops",
  "optimus-packs",
+ "optimus-policy",
  "optimus-runtime",
  "optimus-skills",
  "optimus-workflow",

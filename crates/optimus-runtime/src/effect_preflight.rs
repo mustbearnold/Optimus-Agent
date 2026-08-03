@@ -24,7 +24,7 @@ impl Runtime {
             | Effect::ProjectDeletePath { relative_path, .. }
             | Effect::PatchFile { relative_path, .. }
             | Effect::ProjectPatchFile { relative_path, .. } => {
-                self.safe_relative_path(relative_path)?;
+                self.safe_effect_path(relative_path)?;
             }
             Effect::RenamePath {
                 from_relative_path,
@@ -36,8 +36,8 @@ impl Runtime {
                 to_relative_path,
                 ..
             } => {
-                self.safe_relative_path(from_relative_path)?;
-                self.safe_relative_path(to_relative_path)?;
+                self.safe_effect_path(from_relative_path)?;
+                self.safe_effect_path(to_relative_path)?;
             }
             Effect::RunCommand { program, .. } | Effect::ProjectRunCommand { program, .. } => {
                 if program.trim().is_empty() {
@@ -75,14 +75,23 @@ impl Runtime {
                 return Err(RuntimeError::PathEscape(relative.into()));
             }
         }
-        if rel
-            .file_name()
-            .and_then(|name| name.to_str())
-            .is_some_and(is_secret_basename)
+        if !self.developer_secrets_allowed()
+            && rel
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(is_secret_basename)
         {
             return Err(RuntimeError::PathEscape(relative.into()));
         }
         Ok(rel.to_path_buf())
+    }
+
+    pub(crate) fn safe_effect_path(&self, requested: &str) -> Result<()> {
+        if Path::new(requested).is_absolute() {
+            self.resolve_developer_absolute_path(requested).map(|_| ())
+        } else {
+            self.safe_relative_path(requested).map(|_| ())
+        }
     }
 }
 

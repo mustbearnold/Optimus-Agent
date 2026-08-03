@@ -64,13 +64,56 @@ pub fn parent_dirs_for_bind(workspace: &Path) -> Vec<PathBuf> {
 /// Confined modes: workspace is the only host path bound read-write. System
 /// trees are ro-bind when present. No full-root `--bind / /`.
 pub fn linux_bwrap_args(workspace: &Path, envelope: CommandFsEnvelope) -> Vec<String> {
+    linux_bwrap_args_with_roots(workspace, envelope, &[])
+}
+
+/// Build a confined envelope with additional explicitly selected writable
+/// roots. The workspace remains the current directory; extra roots only widen
+/// the bind set for Developer Full Access and are never used for ordinary
+/// profiles.
+pub fn linux_bwrap_args_with_roots(
+    workspace: &Path,
+    envelope: CommandFsEnvelope,
+    extra_roots: &[PathBuf],
+) -> Vec<String> {
     let mut args: Vec<String> = vec!["--die-with-parent".into(), "--unshare-pid".into()];
+    let explicit_whole_machine_root = extra_roots.iter().any(|root| root == Path::new("/"));
     if envelope.linux_unshare_net() {
         args.push("--unshare-net".into());
     }
 
     match envelope {
+        CommandFsEnvelope::UnrestrictedHost if explicit_whole_machine_root => {
+            args.extend([
+                "--bind".into(),
+                "/".into(),
+                "/".into(),
+                "--dev-bind".into(),
+                "/dev".into(),
+                "/dev".into(),
+                "--proc".into(),
+                "/proc".into(),
+            ]);
+        }
         CommandFsEnvelope::UnrestrictedHost => {
+            args.extend([
+                "--bind".into(),
+                "/".into(),
+                "/".into(),
+                "--dev-bind".into(),
+                "/dev".into(),
+                "/dev".into(),
+                "--proc".into(),
+                "/proc".into(),
+            ]);
+        }
+        CommandFsEnvelope::Confined | CommandFsEnvelope::ConfinedNoNetwork
+            if explicit_whole_machine_root =>
+        {
+            // Entire-local-machine Developer Full Access with networking
+            // disabled uses the confined envelope solely for its network
+            // namespace. The explicit `/` root remains an intentional full
+            // filesystem bind.
             args.extend([
                 "--bind".into(),
                 "/".into(),
@@ -114,6 +157,17 @@ pub fn linux_bwrap_args(workspace: &Path, envelope: CommandFsEnvelope) -> Vec<St
             }
             let ws = workspace.to_string_lossy().into_owned();
             args.extend(["--bind".into(), ws.clone(), ws]);
+            for root in extra_roots {
+                if root == workspace || !root.is_absolute() || root == Path::new("/") {
+                    continue;
+                }
+                for dir in parent_dirs_for_bind(root) {
+                    args.push("--dir".into());
+                    args.push(dir.to_string_lossy().into_owned());
+                }
+                let root = root.to_string_lossy().into_owned();
+                args.extend(["--bind".into(), root.clone(), root]);
+            }
         }
     }
 
@@ -201,6 +255,18 @@ mod tests {
     fn unrestricted_host_uses_full_root_bind() {
         let ws = PathBuf::from("/tmp/ws");
         let args = linux_bwrap_args(&ws, CommandFsEnvelope::UnrestrictedHost);
+        assert!(args.windows(3).any(|w| w == ["--bind", "/", "/"]));
+    }
+
+    #[test]
+    fn explicit_machine_root_preserves_full_fs_when_network_is_disabled() {
+        let ws = PathBuf::from("/tmp/ws");
+        let args = linux_bwrap_args_with_roots(
+            &ws,
+            CommandFsEnvelope::ConfinedNoNetwork,
+            &[PathBuf::from("/")],
+        );
+        assert!(args.iter().any(|arg| arg == "--unshare-net"));
         assert!(args.windows(3).any(|w| w == ["--bind", "/", "/"]));
     }
 

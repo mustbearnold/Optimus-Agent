@@ -8,6 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 optimus-graph.workspace = true
+optimus-policy.workspace = true
 optimus-runtime.workspace = true
 optimus-memory.workspace = true
 optimus-skills.workspace = true

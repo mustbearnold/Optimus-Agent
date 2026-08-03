@@ -8,6 +8,7 @@
 mod chat;
 mod consoles;
 mod contract;
+mod developer;
 mod extensibility;
 mod files;
 mod gateway_turn;

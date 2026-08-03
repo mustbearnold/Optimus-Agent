@@ -380,27 +380,32 @@ test('chat pane scrolls and composer controls exist', async ({ page }) => {
   // Access keeps broader authority behind visible Advanced/Expert boundaries.
   await page.click('#accessBtn');
   const tiers = page.locator('#cddPortal .cdd-access-tier');
-  await expect(tiers).toHaveCount(3);
+  await expect(tiers).toHaveCount(4);
   await expect(tiers.nth(0)).toHaveAttribute('aria-label', 'Recommended');
   await expect(tiers.nth(1)).toHaveAttribute('aria-label', 'Advanced');
-  await expect(tiers.nth(2)).toHaveAttribute('aria-label', 'Expert');
+  await expect(tiers.nth(2)).toHaveAttribute('aria-label', 'Developer');
+  await expect(tiers.nth(3)).toHaveAttribute('aria-label', 'Expert');
   await expect(tiers.nth(1).locator('.cdd-sec')).toHaveText('Advanced');
   await expect(tiers.nth(1).locator('button')).toHaveAttribute('data-v', 'full_project');
-  await expect(tiers.nth(2).locator('.cdd-sec')).toHaveText('Expert');
-  const unrestricted = page.locator('#cddPortal button[data-v="unrestricted_host"]');
+  await expect(tiers.nth(2).locator('.cdd-sec')).toHaveText('Developer');
   await expect(tiers.nth(2).locator('button')).toHaveCount(1);
-  await expect(tiers.nth(2).locator('button')).toHaveAttribute('data-v', 'unrestricted_host');
-  await expect(page.locator('#cddPortal button[role="option"]')).toHaveCount(5);
+  await expect(tiers.nth(2).locator('button')).toHaveAttribute('data-v', 'developer_full_access');
+  await expect(tiers.nth(3).locator('.cdd-sec')).toHaveText('Expert');
+  const unrestricted = page.locator('#cddPortal button[data-v="unrestricted_host"]');
+  await expect(tiers.nth(3).locator('button')).toHaveCount(1);
+  await expect(tiers.nth(3).locator('button')).toHaveAttribute('data-v', 'unrestricted_host');
+  await expect(page.locator('#cddPortal button[role="option"]')).toHaveCount(6);
   expect(
     await page.locator('#cddPortal button[role="option"]').evaluateAll((buttons) =>
       buttons.map((button) => button.getAttribute('data-v'))
     )
-  ).toEqual(['standard', 'review_changes', 'read_only', 'full_project', 'unrestricted_host']);
+  ).toEqual(['standard', 'review_changes', 'read_only', 'full_project', 'developer_full_access', 'unrestricted_host']);
   const accessibleOptions = [
     ['standard', 'Standard. Ordinary project work runs; anything else asks'],
     ['review_changes', 'Review changes. Reads run; writes and commands ask first'],
     ['read_only', 'Read only. Nothing is changed'],
     ['full_project', 'Full project. Wider autonomy inside the project; credentials and your system still ask'],
+    ['developer_full_access', 'Developer Full Access. Edit, execute, install, and rebuild inside an explicit local scope'],
     ['unrestricted_host', 'Unrestricted host. Break-glass: no pauses, and the whole machine is in reach'],
   ];
   for (const [value, name] of accessibleOptions) {

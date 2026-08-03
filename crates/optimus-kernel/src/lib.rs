@@ -12,9 +12,12 @@ mod chat_approval;
 pub mod codex_device_login;
 mod codex_oauth;
 mod compress;
+mod config;
 mod credential;
 mod dev_run;
+mod developer_runtime;
 mod execution;
+mod execution_schema;
 mod execution_support;
 mod fs_sandbox;
 mod fs_search;
@@ -43,8 +46,8 @@ mod web_search;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
 use optimus_packs::{
-    CapabilitySession, DurableEffectProvenance, PackBudgetConfig, PackError, PackId,
-    ToolErrorDetail, ToolId, ToolInvocation, ToolOutcome, ToolOutcomeKind,
+    CapabilitySession, DurableEffectProvenance, PackError, PackId, ToolErrorDetail, ToolId,
+    ToolInvocation, ToolOutcome, ToolOutcomeKind,
 };
 use optimus_runtime::{ApprovalGrant, JobId, JobStatus, Runtime, RuntimeError};
 use std::path::{Path, PathBuf};
@@ -85,6 +88,7 @@ pub use codex_oauth::{
     CodexAuthStore, CodexOAuthConfig, CodexOAuthModel, CodexTokens, DEFAULT_CODEX_BASE_URL,
 };
 pub use compress::{estimate_chars, CompressionConfig, COMPRESSED_MARKER};
+pub use config::KernelConfig;
 pub use credential::{
     atomic_write_user_only, harden_user_only, verify_user_only, CredentialProtector,
     SystemCredentialProtector,
@@ -412,52 +416,6 @@ pub trait ModelProvider {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct KernelConfig {
-    /// Model round-trips one turn may take, spanning any approval pause.
-    pub max_steps: u32,
-    pub max_tool_calls_per_step: usize,
-    pub pack_budget: PackBudgetConfig,
-    pub memory_ctx: WriteContext,
-    pub compression: CompressionConfig,
-    /// Reasoning effort: low|medium|high|xhigh|max|ultra (None or "off" = omit).
-    pub thinking_level: Option<String>,
-    pub fast_mode: bool,
-    /// SmartDeny by default; unrestricted is an explicit user/test choice.
-    pub effect_policy: optimus_graph::PolicyMode,
-    /// Per-turn ADR-0044 profile; ReviewChanges unless the surface asks.
-    pub autonomy_profile: optimus_graph::AutonomyProfile,
-    /// Overrides product-settings command FS envelope; `None` → settings.json work_isolation.
-    pub command_fs_envelope: Option<optimus_graph::CommandFsEnvelope>,
-}
-
-impl Default for KernelConfig {
-    fn default() -> Self {
-        Self {
-            // ADR-0047: eight starved real turns; a retry that cannot happen
-            // is the same as no retry.
-            max_steps: 32,
-            max_tool_calls_per_step: 8,
-            pack_budget: PackBudgetConfig::default(),
-            memory_ctx: WriteContext {
-                tenant: "local".into(),
-                user: "user".into(),
-                agent: "optimus".into(),
-                project: "default".into(),
-                principal: "user:local".into(),
-                max_trust: TrustDomain::User,
-                max_sensitivity: Sensitivity::Personal,
-            },
-            compression: CompressionConfig::default(),
-            thinking_level: None,
-            fast_mode: false,
-            effect_policy: optimus_graph::PolicyMode::SmartDeny,
-            autonomy_profile: optimus_graph::AutonomyProfile::ReviewChanges,
-            command_fs_envelope: None,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TurnResult {
     pub assistant_text: String,
@@ -555,20 +513,29 @@ impl Kernel {
                 (workspace.clone(), vec![workspace])
             }
         };
+        let product_settings = ProductSettings::load(&home)?;
+        let developer_runtime =
+            developer_runtime::resolve(workspace, project_roots, &config, &product_settings);
+        let developer_runtime::Context {
+            workspace,
+            project_roots,
+            command_fs_envelope,
+            developer_access,
+            developer_roots,
+        } = developer_runtime;
         std::fs::create_dir_all(&workspace)?;
-        let command_fs_envelope = match config.command_fs_envelope {
-            Some(envelope) => envelope,
-            None => ProductSettings::load(&home)?
-                .work_isolation
-                .command_fs_envelope(),
-        };
         let runtime_config = optimus_graph::RuntimeConfig {
             policy: config.effect_policy,
             command_fs_envelope,
             autonomy_profile: config.autonomy_profile,
         };
-        let runtime =
-            Runtime::open_with_config(&home.join("optimus.db"), &workspace, runtime_config)?;
+        let runtime = Runtime::open_with_developer_access(
+            &home.join("optimus.db"),
+            &workspace,
+            runtime_config,
+            developer_access,
+            developer_roots,
+        )?;
         let memory = Memory::open(home.join("memory.db"))?;
         let skills = SkillRegistry::open(home.join("skills.db"))?;
         let sessions = SessionStore::open(home.join("sessions.db"))?;
@@ -657,6 +624,10 @@ impl Kernel {
 
     pub fn workspace(&self) -> &Path {
         &self.workspace
+    }
+
+    pub(crate) fn developer_secrets_allowed(&self) -> bool {
+        self.runtime.developer_secrets_allowed()
     }
 
     pub fn turn(&mut self, model: &mut dyn ModelProvider, user_text: &str) -> Result<TurnResult> {

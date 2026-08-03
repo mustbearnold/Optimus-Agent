@@ -1,4 +1,4 @@
-import type { Project, RunStatus } from '../../ipc/contracts';
+import type { DeveloperAccess, Project, RunStatus } from '../../ipc/contracts';
 import type { ComposerSettings } from '../../state/composerStore';
 import { Icon } from '../chrome/Icon';
 
@@ -6,10 +6,11 @@ type Props = {
   status: RunStatus;
   statusText: string;
   settings: ComposerSettings;
+  developerAccess?: DeveloperAccess;
   project: Project | null;
 };
 
-export function WorkbenchStatusBar({ status, statusText, settings, project }: Props) {
+export function WorkbenchStatusBar({ status, statusText, settings, developerAccess, project }: Props) {
   const busy = status === 'submitting' || status === 'working' || status === 'cancelling';
   const attention = status === 'awaiting_approval';
   const failed = status === 'failed' || status === 'disconnected';
@@ -26,7 +27,9 @@ export function WorkbenchStatusBar({ status, statusText, settings, project }: Pr
             : 'Ready';
   const model = settings.model || (settings.provider === 'offline' ? 'Offline' : 'Auto');
   const thinking = settings.thinking ? capitalize(settings.thinking) : 'High';
-  const access = accessLabel(settings.access);
+  const access = developerAccess?.enabled
+    ? `Developer · ${developerScopeLabel(developerAccess)}`
+    : accessLabel(settings.access);
 
   return (
     <footer className="workbench-statusbar" aria-label="Session status">
@@ -49,7 +52,7 @@ export function WorkbenchStatusBar({ status, statusText, settings, project }: Pr
         <span>{thinking}</span>
       </span>
       <span className="workbench-status-segment workbench-status-secondary" title={`Access · ${access}`}>
-        <Icon name="shield" />
+        <Icon name={developerAccess?.enabled ? 'terminal' : 'shield'} />
         <span>{access}</span>
       </span>
     </footer>
@@ -62,9 +65,16 @@ function accessLabel(value: string) {
     review_changes: 'Review changes',
     read_only: 'Read only',
     full_project: 'Full project',
+    developer_full_access: 'Developer Full Access',
     unrestricted_host: 'Unrestricted host',
   };
   return labels[value] || 'Standard';
+}
+
+function developerScopeLabel(access: DeveloperAccess) {
+  if (access.scope.kind === 'entire_local_machine') return 'machine';
+  if (access.scope.kind === 'selected_repository') return 'repository';
+  return `${access.scope.roots.length} dirs`;
 }
 
 function capitalize(value: string) {

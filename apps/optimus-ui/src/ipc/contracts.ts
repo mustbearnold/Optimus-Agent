@@ -6,6 +6,16 @@ export type DesktopMethod =
   | 'auth_import_cli'
   | 'settings_get'
   | 'settings_set'
+  | 'developer_access_get'
+  | 'developer_access_enable'
+  | 'developer_access_revoke'
+  | 'developer_supervisor_status'
+  | 'developer_supervisor_launch'
+  | 'developer_supervisor_stop'
+  | 'developer_supervisor_restart'
+  | 'developer_supervisor_rollback'
+  | 'developer_supervisor_log'
+  | 'developer_emergency_stop'
   | 'sessions'
   | 'new_session'
   | 'get_session'
@@ -125,6 +135,49 @@ export type ProductSettings = {
   command_envelope_enforced?: boolean;
   command_fs_envelope?: string;
   note?: string;
+  developer_access?: DeveloperAccess;
+};
+
+export type DeveloperScope =
+  | { kind: 'selected_repository'; root: string; root_hash?: string | null }
+  | { kind: 'selected_directories'; roots: string[] }
+  | { kind: 'entire_local_machine' };
+
+export type DeveloperCapabilities = {
+  workspace_files: boolean;
+  terminal_execution: boolean;
+  process_management: boolean;
+  package_installation: boolean;
+  network_access: boolean;
+  external_services: boolean;
+  production_systems: boolean;
+  secrets: boolean;
+};
+
+export type DeveloperAccess = {
+  enabled: boolean;
+  scope: DeveloperScope;
+  scope_label?: string;
+  roots?: string[];
+  capabilities: DeveloperCapabilities;
+  pause_before_destructive: boolean;
+  checkpoint_on_mutation: boolean;
+  confirmation_version?: number;
+};
+
+export type DeveloperSupervisorStatus = {
+  status: string;
+  healthy: boolean;
+  pid?: number | null;
+  port?: number | null;
+  binary?: string | null;
+  workspace?: string | null;
+  child_home?: string | null;
+  log_path?: string;
+  started_unix?: number | null;
+  last_error?: string | null;
+  emergency_stopped?: boolean;
+  previous_available?: boolean;
 };
 
 export type PackTool = {
@@ -182,6 +235,8 @@ export type Doctor = {
   enforced_mode?: string;
   command_envelope_enforced?: boolean;
   pack_catalog?: PackDescriptor[];
+  developer_access?: DeveloperAccess;
+  developer_supervisor?: DeveloperSupervisorStatus;
   settings?: ProductSettings;
 };
 

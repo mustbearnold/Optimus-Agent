@@ -63,6 +63,7 @@ const ACCESS_ALIASES: Readonly<Record<string, string>> = Object.assign(Object.cr
   read_only: 'read_only',
   read: 'read_only',
   full_project: 'full_project',
+  developer_full_access: 'developer_full_access',
 });
 
 /**

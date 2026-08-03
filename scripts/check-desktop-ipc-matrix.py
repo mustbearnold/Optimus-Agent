@@ -90,7 +90,7 @@ def parse_rust_registry(path: Path) -> list[str]:
     )
     if not block:
         raise SystemExit(f"cannot find METHOD_DOMAINS in {path}")
-    methods = re.findall(r'\("([a-z0-9_]+)",\s*Domain::', block.group(1))
+    methods = re.findall(r'\(\s*"([a-z0-9_]+)",\s*Domain::', block.group(1))
     if not methods:
         raise SystemExit(f"empty METHOD_DOMAINS parse in {path}")
     return methods

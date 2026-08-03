@@ -4828,7 +4828,33 @@
     },
     {
       "authority": "record",
-      "content_sha256": "8ab4bf0d45ed44cf07fb70a86582926a032af565f828570f6d91c3ce0246c05e",
+      "content_sha256": "cc43ab6c608ba5723028cdd8c3295ae6f7680d1681b5157751d6bce9b1280f62",
+      "headings": [
+        "ADR-0076: Developer Full Access is a scoped grant with a stable supervisor",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Reasons",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor",
+      "path": "docs/decisions/0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor.md",
+      "plane": "decision",
+      "review_by": "2026-11-03",
+      "reviewed_on": "2026-08-03",
+      "status": "current",
+      "summary": "Developer Full Access is an explicit, revocable local capability grant with a selected path scope and independent toggles; self-rebuilds run through a stable supervisor that health-checks, logs, stops, and restores a separate development instance.",
+      "title": "ADR-0076: Developer Full Access is a scoped grant with a stable supervisor",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "3d67948f1096aecbbfe0c69a89ef52f0d73b13fff65bda31e30741906ae49e3c",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -7196,7 +7222,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "a82645a5fac2f3cb0f2937b079fcb28defcf2afd4ded5e2a2424d4e86f7c796a",
+  "documents_sha256": "d94f3c070427dc29b85ee0b864272b46c772422815244b2f7a96f4fcfb4e4ad3",
   "routes": [
     {
       "id": "docs.navigation",

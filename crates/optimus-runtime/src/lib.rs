@@ -186,6 +186,7 @@ pub struct Runtime {
     workspace: PathBuf,
     workspace_dir: Dir,
     config: RuntimeConfig,
+    pub(crate) developer: workspace_identity::DeveloperAccessState,
     owned_localhost: std::sync::Arc<std::sync::Mutex<owned_localhost::OwnedLocalhostLeaseRegistry>>,
     owned_localhost_scope: String,
     /// Identity of this process's runtime, minted per `open` and never stored.
@@ -924,9 +925,9 @@ impl Runtime {
                 relative_path,
                 contents,
             } => {
-                let relative = self.safe_relative_path(relative_path)?;
+                let (workspace_dir, relative) = self.resolve_effect_path(relative_path)?;
                 if let Some(parent) = relative.parent() {
-                    self.workspace_dir.create_dir_all(parent).map_err(|error| {
+                    workspace_dir.create_dir_all(parent).map_err(|error| {
                         RuntimeError::PathEscape(format!("{relative_path}: {error}"))
                     })?;
                 }
@@ -939,22 +940,19 @@ impl Runtime {
                     .parent()
                     .map(|parent| parent.join(&temp_name))
                     .unwrap_or_else(|| PathBuf::from(&temp_name));
-                let mut file = self.workspace_dir.create(&temporary).map_err(|error| {
+                let mut file = workspace_dir.create(&temporary).map_err(|error| {
                     RuntimeError::PathEscape(format!("{relative_path}: {error}"))
                 })?;
                 if let Err(error) = file
                     .write_all(contents.as_bytes())
                     .and_then(|_| file.sync_all())
                 {
-                    let _ = self.workspace_dir.remove_file(&temporary);
+                    let _ = workspace_dir.remove_file(&temporary);
                     return Err(error.into());
                 }
                 drop(file);
-                if let Err(error) =
-                    self.workspace_dir
-                        .rename(&temporary, &self.workspace_dir, &relative)
-                {
-                    let _ = self.workspace_dir.remove_file(&temporary);
+                if let Err(error) = workspace_dir.rename(&temporary, workspace_dir, &relative) {
+                    let _ = workspace_dir.remove_file(&temporary);
                     return Err(RuntimeError::Effector(format!(
                         "atomic replace {relative_path}: {error}"
                     )));
@@ -969,12 +967,10 @@ impl Runtime {
                 ))
             }
             Effect::Mkdir { relative_path } => {
-                let relative = self.safe_relative_path(relative_path)?;
-                self.workspace_dir
-                    .create_dir_all(&relative)
-                    .map_err(|error| {
-                        RuntimeError::PathEscape(format!("{relative_path}: {error}"))
-                    })?;
+                let (workspace_dir, relative) = self.resolve_effect_path(relative_path)?;
+                workspace_dir.create_dir_all(&relative).map_err(|error| {
+                    RuntimeError::PathEscape(format!("{relative_path}: {error}"))
+                })?;
                 Ok((
                     None,
                     serde_json::json!({
@@ -984,12 +980,12 @@ impl Runtime {
                 ))
             }
             Effect::DeletePath { relative_path } => {
-                let relative = self.safe_relative_path(relative_path)?;
+                let (workspace_dir, relative) = self.resolve_effect_path(relative_path)?;
                 // Prefer file delete; fall back to empty directory remove.
-                match self.workspace_dir.remove_file(&relative) {
+                match workspace_dir.remove_file(&relative) {
                     Ok(()) => {}
                     Err(_) => {
-                        self.workspace_dir.remove_dir(&relative).map_err(|error| {
+                        workspace_dir.remove_dir(&relative).map_err(|error| {
                             RuntimeError::Effector(format!("delete {relative_path}: {error}"))
                         })?;
                     }
@@ -1006,20 +1002,23 @@ impl Runtime {
                 from_relative_path,
                 to_relative_path,
             } => {
-                let from = self.safe_relative_path(from_relative_path)?;
-                let to = self.safe_relative_path(to_relative_path)?;
+                let (from_dir, from) = self.resolve_effect_path(from_relative_path)?;
+                let (to_dir, to) = self.resolve_effect_path(to_relative_path)?;
+                if !std::ptr::eq(from_dir, to_dir) {
+                    return Err(RuntimeError::PathEscape(
+                        "rename cannot cross developer roots".into(),
+                    ));
+                }
                 if let Some(parent) = to.parent() {
-                    self.workspace_dir.create_dir_all(parent).map_err(|error| {
+                    to_dir.create_dir_all(parent).map_err(|error| {
                         RuntimeError::PathEscape(format!("{to_relative_path}: {error}"))
                     })?;
                 }
-                self.workspace_dir
-                    .rename(&from, &self.workspace_dir, &to)
-                    .map_err(|error| {
-                        RuntimeError::Effector(format!(
-                            "rename {from_relative_path} -> {to_relative_path}: {error}"
-                        ))
-                    })?;
+                from_dir.rename(&from, to_dir, &to).map_err(|error| {
+                    RuntimeError::Effector(format!(
+                        "rename {from_relative_path} -> {to_relative_path}: {error}"
+                    ))
+                })?;
                 Ok((
                     None,
                     serde_json::json!({
@@ -1039,8 +1038,8 @@ impl Runtime {
                         "patch old_string must be non-empty".into(),
                     ));
                 }
-                let relative = self.safe_relative_path(relative_path)?;
-                let mut file = self.workspace_dir.open(&relative).map_err(|error| {
+                let (workspace_dir, relative) = self.resolve_effect_path(relative_path)?;
+                let mut file = workspace_dir.open(&relative).map_err(|error| {
                     RuntimeError::PathEscape(format!("{relative_path}: {error}"))
                 })?;
                 let mut actual = String::new();
@@ -1078,8 +1077,8 @@ impl Runtime {
                 relative_path,
                 expected,
             } => {
-                let relative = self.safe_relative_path(relative_path)?;
-                let mut file = self.workspace_dir.open(&relative).map_err(|error| {
+                let (workspace_dir, relative) = self.resolve_effect_path(relative_path)?;
+                let mut file = workspace_dir.open(&relative).map_err(|error| {
                     RuntimeError::PathEscape(format!("{relative_path}: {error}"))
                 })?;
                 let mut actual = String::new();
@@ -1151,6 +1150,7 @@ impl Runtime {
             args,
             &self.workspace,
             self.config.command_fs_envelope,
+            &self.developer.roots,
         );
         #[cfg(not(target_os = "linux"))]
         let mut command = Command::new(program);
