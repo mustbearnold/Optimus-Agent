@@ -85,6 +85,8 @@ PATH_SUITES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("apps/optimus-ui/", (SUITE_UI, SUITE_PLAYWRIGHT)),
     ("apps/optimus-desktop/", (SUITE_PLAYWRIGHT,)),
     ("docs/", (SUITE_GATES,)),
+    ("specs/", (SUITE_GATES,)),
+    ("_attic/", (SUITE_GATES,)),
     ("scripts/", (SUITE_GATES,)),
     # The knowledge graph's own generated state: the engineering-memory gate
     # reads every one of these and fails on drift.
@@ -108,7 +110,6 @@ INERT_PATHS = (
     "**/*.jpg",
     "**/*.svg",
     "**/*.ico",
-    "local/**",
 )
 
 

@@ -345,8 +345,8 @@ class EngineeringMemoryTests(unittest.TestCase):
 
     def test_current_docs_do_not_resurrect_adr_0019_superseded_debt(self) -> None:
         current_docs = [
-            ROOT / "docs/architecture/system-overview.md",
-            ROOT / "docs/maps/security-and-approvals.md",
+            ROOT / "docs/architecture.md",
+            ROOT / "specs/004-runtime-effects/spec.md",
         ]
         stale_claims = [
             "runtime path confinement is not handle-relative",
@@ -362,8 +362,8 @@ class EngineeringMemoryTests(unittest.TestCase):
 
     def test_current_authority_does_not_resurrect_fixed_repository_debt(self) -> None:
         current_docs = [
-            ROOT / "docs/engineering-memory/README.md",
-            ROOT / "docs/architecture/system-overview.md",
+            ROOT / "docs/runbooks/engineering-memory.md",
+            ROOT / "docs/architecture.md",
         ]
         obsolete_claims = [
             "this repository has no `.git` directory",
@@ -450,7 +450,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         self.assertTrue(hits["crates/optimus-packs/src/lib.rs"])
 
     def test_system_overview_no_longer_owns_entire_kernel_tree(self) -> None:
-        overview = EM.parse_frontmatter(ROOT / "docs/architecture/system-overview.md")
+        overview = EM.parse_frontmatter(ROOT / "docs/architecture.md")
         assert overview is not None
         owns = EM.ownership_patterns(overview)
         self.assertIn("crates/optimus-kernel/src/lib.rs", owns)
@@ -464,7 +464,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         overview_relations = {
             row["relation"]
             for row in hits
-            if row["document"] == "docs/architecture/system-overview.md"
+            if row["document"] == "docs/architecture.md"
         }
         self.assertIn("watches", overview_relations)
         self.assertNotIn("owns", overview_relations)

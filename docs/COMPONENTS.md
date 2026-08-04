@@ -48,6 +48,7 @@ This is the generated human view of `docs/repository-components.json`.
 | `skills` | Focused procedures for coding agents developing and verifying Optimus Agent. | `supporting` | `repository-only` | no |
 | `skills/optimus-native-ui-testing` | Developer procedure for installed native UI and live-surface verification. | `supporting` | `repository-only` | no |
 | `skills/update-engineering-memory` | Developer procedure for source-backed Engineering Memory regeneration and validation. | `supporting` | `repository-only` | no |
+| `specs` | SDD capability specs: one directory per capability with a living spec.md (requirements + acceptance criteria), transient plan.md/tasks.md while work is active, and the BACKLOG of unspecced gaps. | `primary` | `repository-only` | no |
 | `spikes/001-leptos-wry-csr` | Retired standalone Leptos and Wry experiment preserved only as a compact historical verdict. | `historical` | `none` | yes |
 | `target` | Ignored Cargo build cache and compiled development output. | `generated` | `generated-local` | yes |
 | `workspace://Development` | Machine-local development data: evidence, caches, tools, archives, and historical delivery records. | `generated` | `generated-local` | no |

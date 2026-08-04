@@ -42,7 +42,7 @@ def main() -> int:
     if not adr.is_file():
         fail("missing ADR-0043 no auto-updater")
 
-    install_doc = ROOT / "docs" / "architecture" / "desktop-install-relaunch.md"
+    install_doc = ROOT / "docs" / "runbooks" / "install-relaunch.md"
     if not install_doc.is_file():
         fail("missing desktop-install-relaunch.md")
     install_doc_text = install_doc.read_text(encoding="utf-8", errors="replace")

@@ -125,7 +125,7 @@ fresh human click when a durable project trust grant already covers it.
 8. **Follow-on (same program, not this ADR’s full exit):** owned-localhost
    leases, same-run continuation frames, structured failure taxonomy, checkpoint
    manifests, layered readiness, first-run smoke. See
-   [reliability-autonomy-program.md](../plans/reliability-autonomy-program.md).
+   [reliability-autonomy-program.md](../../_attic/plans/reliability-autonomy-program.md).
 
 ## Consequences
 

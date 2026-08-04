@@ -47,17 +47,10 @@ def findings(root: Path = ROOT) -> list[str]:
     readme = read(root, "README.md")
     kernel = read(root, "crates/optimus-kernel/src/lib.rs")
     system_prompt = read(root, "crates/optimus-kernel/src/system_prompt.rs")
-    github = read(root, "docs/contributing/github-conventions.md")
     justfile = read(root, "justfile")
     pre_commit = read(root, ".githooks/pre-commit")
     post_checkout = read(root, ".githooks/post-checkout")
     reference_transaction = read(root, ".githooks/reference-transaction")
-    active_plans = "\n".join(
-        (
-            read(root, "docs/plans/github-engineer-program.md"),
-            read(root, "docs/plans/reliability-autonomy-program.md"),
-        )
-    )
 
     required: tuple[tuple[str, str, str], ...] = (
         ("AGENTS.md", agents, "Instruction-plane firewall"),
@@ -67,11 +60,6 @@ def findings(root: Path = ROOT) -> list[str]:
         ("OPTIMUS_AGENTS.md", runtime, "Do not translate instructions for developers"),
         ("README.md", readme, "## Instruction authority"),
         ("README.md", readme, "Development requests are not product requirements"),
-        (
-            "docs/contributing/github-conventions.md",
-            github,
-            "This repository no longer uses GitHub issues",
-        ),
         ("crates/optimus-kernel/src/lib.rs", kernel, "OPTIMUS_AGENTS.md"),
         (
             "crates/optimus-kernel/src/system_prompt.rs",
@@ -101,7 +89,6 @@ def findings(root: Path = ROOT) -> list[str]:
         ("README.md", readme, "python3 scripts/github_pr_branch.py"),
         ("README.md", readme, "gh issue"),
         ("AGENTS.md", agents, "owning issue"),
-        ("active plans", active_plans, "| Delivery | `PR #N`"),
     )
     for relative, text, marker in forbidden:
         if marker in text:

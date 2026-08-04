@@ -130,16 +130,16 @@ LANGUAGE_BY_SUFFIX = {
     ".yaml": "YAML",
 }
 IMPORTANT_DOCS = (
-    "docs/engineering-memory/README.md",
-    "docs/architecture/system-overview.md",
-    "docs/maps/repository-and-ownership.md",
-    "docs/maps/memory-and-retrieval.md",
-    "docs/maps/model-routing.md",
-    "docs/maps/security-and-approvals.md",
-    "docs/maps/observability-and-evaluations.md",
-    "docs/contracts/high-risk-contracts.md",
-    "docs/plans/engineering-memory-phases.md",
-    "docs/lessons/ai-agent-mistakes.md",
+    "docs/runbooks/engineering-memory.md",
+    "docs/architecture.md",
+    "specs/011-developer-tooling/spec.md",
+    "specs/006-memory-skills-packs/spec.md",
+    "specs/003-kernel-turns/spec.md",
+    "specs/004-runtime-effects/spec.md",
+    "specs/008-eval/spec.md",
+    "specs/004-runtime-effects/spec.md",
+    "_attic/plans/engineering-memory-phases.md",
+    "_attic/lessons/ai-agent-mistakes.md",
     "docs/decisions/0017-engineering-memory-separation.md",
     "docs/decisions/README.md",
 )
@@ -1362,7 +1362,7 @@ def build_contract_coverage() -> dict[str, Any]:
     ]
     return {
         **generated_header(),
-        "register": "docs/contracts/high-risk-contracts.md",
+        "register": "specs/004-runtime-effects/spec.md",
         "contracts": [
             {
                 "id": cid,
@@ -2020,8 +2020,8 @@ def current_architecture_semantic_errors(
         "concurrent campaign ownership/leases are not defined",
     ]
     for rel in (
-        "docs/architecture/system-overview.md",
-        "docs/maps/security-and-approvals.md",
+        "docs/architecture.md",
+        "specs/004-runtime-effects/spec.md",
     ):
         text = (ROOT / rel).read_text(encoding="utf-8").lower()
         for claim in stale_claims:
@@ -2513,8 +2513,8 @@ def build_context_pack(
     read_docs = list(dict.fromkeys([*stale_docs, *owner_docs]))
     if not read_docs:
         read_docs = [
-            "docs/engineering-memory/README.md",
-            "docs/architecture/system-overview.md",
+            "docs/runbooks/engineering-memory.md",
+            "docs/architecture.md",
         ]
     used_tokens = estimate_tokens("\n".join(lines))
     for doc in read_docs:

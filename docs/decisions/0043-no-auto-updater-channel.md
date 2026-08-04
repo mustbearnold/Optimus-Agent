@@ -17,7 +17,7 @@ depends_on:
   - docs/decisions/0038-ui-ipc-architecture.md
 validated_by:
   - crates/optimus-host/src/system.rs
-  - docs/architecture/product-complete-p29-verification.md
+  - _attic/architecture-records/product-complete-p29-verification.md
 ---
 
 # ADR-0043: No auto-updater channel at product-complete
@@ -73,7 +73,7 @@ Implementation can drift from the accepted boundary while the prose remains unch
 ## Evaluation evidence
 
 - `crates/optimus-host/src/system.rs`
-- `docs/architecture/product-complete-p29-verification.md`
+- `_attic/architecture-records/product-complete-p29-verification.md`
 
 ## Conditions for reconsideration
 
@@ -88,4 +88,4 @@ Reconsider when the named boundary or threat model changes and a replacement pre
 ## Relevant tests
 
 - `crates/optimus-host/src/system.rs`
-- `docs/architecture/product-complete-p29-verification.md`
+- `_attic/architecture-records/product-complete-p29-verification.md`

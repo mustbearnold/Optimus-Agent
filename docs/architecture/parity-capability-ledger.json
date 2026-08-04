@@ -65,12 +65,12 @@
     "crates/optimus-packs/tests/packs_budget.rs",
     "docs/decisions/0016-canonical-tool-contract.md",
     "crates/optimus-kernel/tests/kernel_turn.rs",
-    "docs/architecture/product-complete-p21-verification.md",
-    "docs/plans/product-complete-program.md",
-    "docs/evidence/product-complete-p21-hold-2026-07-25.md",
+    "_attic/architecture-records/product-complete-p21-verification.md",
+    "_attic/plans/product-complete-program.md",
+    "_attic/evidence/product-complete-p21-hold-2026-07-25.md",
     "crates/optimus-host/src/consoles.rs",
     "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-    "docs/architecture/product-complete-p26-verification.md"
+    "_attic/architecture-records/product-complete-p26-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-01,D-02"
@@ -87,9 +87,9 @@
     "docs/decisions/0016-canonical-tool-contract.md",
     "crates/optimus-packs/tests/packs_budget.rs",
     "crates/optimus-kernel/tests/domain_modularity.rs",
-    "docs/architecture/product-complete-p21-verification.md",
-    "docs/plans/product-complete-program.md",
-    "docs/evidence/product-complete-p21-hold-2026-07-25.md"
+    "_attic/architecture-records/product-complete-p21-verification.md",
+    "_attic/plans/product-complete-program.md",
+    "_attic/evidence/product-complete-p21-hold-2026-07-25.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-02,A-03,A-04,D-01"
@@ -126,7 +126,7 @@
     "crates/optimus-kernel/src/routing.rs",
     "crates/optimus-host/src/extensibility.rs",
     "apps/optimus-ui/src/components/capabilities/CapabilitiesPage.tsx",
-    "docs/architecture/product-complete-p27-verification.md"
+    "_attic/architecture-records/product-complete-p27-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-01"
@@ -139,7 +139,7 @@
    "evidence": [
     "crates/optimus-kernel/src/routing.rs",
     "crates/optimus-host/src/extensibility.rs",
-    "docs/architecture/product-complete-p27-verification.md"
+    "_attic/architecture-records/product-complete-p27-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-08"
@@ -166,7 +166,7 @@
     "apps/optimus-ui/src/components/workbench/Transcript.tsx",
     "apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx",
     "crates/optimus-host/src/sessions.rs",
-    "docs/architecture/product-complete-p24-verification.md"
+    "_attic/architecture-records/product-complete-p24-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-07"
@@ -191,7 +191,7 @@
     "crates/optimus-kernel/src/session.rs",
     "crates/optimus-host/src/sessions.rs",
     "apps/optimus-ui/src/components/projects/ProjectsRail.tsx",
-    "docs/architecture/product-complete-p24-verification.md"
+    "_attic/architecture-records/product-complete-p24-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-06,A-10"
@@ -204,7 +204,7 @@
    "evidence": [
     "apps/optimus-desktop/e2e/02-shell-and-composer.spec.js",
     "docs/decisions/0014-native-webview-ipc-mode.md",
-    "docs/architecture/desktop-install-relaunch.md",
+    "docs/runbooks/install-relaunch.md",
     "scripts/rebuild-install-relaunch.sh",
     "docs/decisions/0038-ui-ipc-architecture.md"
    ],
@@ -228,7 +228,7 @@
    "evidence": [
     "crates/optimus-host/src/consoles.rs",
     "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-    "docs/architecture/product-complete-p26-verification.md"
+    "_attic/architecture-records/product-complete-p26-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-09"
@@ -257,7 +257,7 @@
     "crates/optimus-runtime/tests/path_confinement.rs",
     "crates/optimus-packs/src/lib.rs",
     "docs/decisions/0039-files-mutate-effect-taxonomy.md",
-    "docs/architecture/product-complete-p22-verification.md"
+    "_attic/architecture-records/product-complete-p22-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-02,B-04"
@@ -281,7 +281,7 @@
    "state": "partial",
    "evidence": [
     "crates/optimus-ops/src/pty_session.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "B-05"
@@ -294,7 +294,7 @@
    "evidence": [
     "crates/optimus-kernel/src/web_search.rs",
     "crates/optimus-kernel/tests/web_search_live.rs",
-    "docs/architecture/product-complete-p23-verification.md"
+    "_attic/architecture-records/product-complete-p23-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "A-04"
@@ -308,7 +308,7 @@
     "crates/optimus-kernel/src/browser.rs",
     "crates/optimus-kernel/src/network_policy.rs",
     "crates/optimus-kernel/tests/browser_live.rs",
-    "docs/architecture/product-complete-p23-verification.md"
+    "_attic/architecture-records/product-complete-p23-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "B-01"
@@ -325,7 +325,7 @@
     "crates/optimus-browser/src/lib.rs",
     "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
     "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
-    "docs/architecture/product-complete-p23-verification.md"
+    "_attic/architecture-records/product-complete-p23-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "B-01,B-02"
@@ -338,8 +338,8 @@
    "evidence": [
     "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
     "apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx",
-    "docs/contracts/high-risk-contracts.md",
-    "docs/architecture/product-complete-p23-verification.md"
+    "specs/004-runtime-effects/spec.md",
+    "_attic/architecture-records/product-complete-p23-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "B-03"
@@ -351,7 +351,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-packs/src/lib.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "B-06"
@@ -365,7 +365,7 @@
     "crates/optimus-ops/src/cron.rs",
     "crates/optimus-host/src/scheduling.rs",
     "apps/optimus-ui/src/components/cron/CronWorkbench.tsx",
-    "docs/architecture/product-complete-p25-verification.md"
+    "_attic/architecture-records/product-complete-p25-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "C-01,C-04"
@@ -379,7 +379,7 @@
     "crates/optimus-ops/src/gateway.rs",
     "apps/optimus-cli/tests/gateway_http.rs",
     "crates/optimus-host/src/messaging.rs",
-    "docs/architecture/product-complete-p28-verification.md"
+    "_attic/architecture-records/product-complete-p28-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "C-02"
@@ -392,7 +392,7 @@
    "evidence": [
     "crates/optimus-ops/src/telegram.rs",
     "crates/optimus-host/src/messaging.rs",
-    "docs/architecture/product-complete-p28-verification.md"
+    "_attic/architecture-records/product-complete-p28-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "C-03"
@@ -404,7 +404,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-ops/src/channel_adapters.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "C-05"
@@ -417,7 +417,7 @@
    "evidence": [
     "apps/optimus-ui/src/components/mail/MailPage.tsx",
     "crates/optimus-host/src/messaging.rs",
-    "docs/architecture/product-complete-p28-verification.md"
+    "_attic/architecture-records/product-complete-p28-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "C-04"
@@ -431,7 +431,7 @@
     "crates/optimus-ops/src/mcp.rs",
     "docs/decisions/0041-mcp-ingress-pack-gated.md",
     "crates/optimus-host/src/extensibility.rs",
-    "docs/architecture/product-complete-p27-verification.md"
+    "_attic/architecture-records/product-complete-p27-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-01"
@@ -445,7 +445,7 @@
     "crates/optimus-packs/src/signed.rs",
     "docs/decisions/0042-signed-pack-manifests.md",
     "crates/optimus-host/src/extensibility.rs",
-    "docs/architecture/product-complete-p27-verification.md"
+    "_attic/architecture-records/product-complete-p27-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-02"
@@ -459,7 +459,7 @@
     "crates/optimus-skills/src/lib.rs",
     "crates/optimus-host/src/consoles.rs",
     "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-    "docs/architecture/product-complete-p26-verification.md"
+    "_attic/architecture-records/product-complete-p26-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-03"
@@ -473,7 +473,7 @@
     "crates/optimus-artifacts/src/lib.rs",
     "crates/optimus-host/src/files.rs",
     "apps/optimus-ui/src/components/workspace/ArtifactsSurface.tsx",
-    "docs/architecture/product-complete-p25-verification.md"
+    "_attic/architecture-records/product-complete-p25-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-04"
@@ -487,7 +487,7 @@
     "crates/optimus-memory/src/lib.rs",
     "crates/optimus-host/src/consoles.rs",
     "apps/optimus-ui/src/components/consoles/ConsolesPage.tsx",
-    "docs/architecture/product-complete-p26-verification.md"
+    "_attic/architecture-records/product-complete-p26-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-05"
@@ -500,7 +500,7 @@
    "evidence": [
     "apps/optimus-desktop/e2e/05-projects-and-session-management.spec.js",
     "crates/optimus-kernel/src/product_settings.rs",
-    "docs/architecture/product-complete-p22-verification.md",
+    "_attic/architecture-records/product-complete-p22-verification.md",
     "docs/decisions/0027-settings-driven-work-isolation.md"
    ],
    "trajectory": null,
@@ -513,7 +513,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-kernel/src/profile.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-06"
@@ -538,7 +538,7 @@
    "evidence": [
     "crates/optimus-workflow/src/child_lease.rs",
     "crates/optimus-workflow/src/specialist_vertical.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "D-07,E-08"
@@ -563,7 +563,7 @@
     "crates/optimus-kernel/src/vision.rs",
     "crates/optimus-ops/src/media_fixtures.rs",
     "crates/optimus-packs/src/lib.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": "cargo:optimus-kernel/vision",
    "owner_ticket": "E-01"
@@ -575,7 +575,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-ops/src/media_fixtures.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-02"
@@ -587,7 +587,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-ops/src/surfaces.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-03"
@@ -599,7 +599,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-ops/src/surfaces.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-04"
@@ -611,7 +611,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-ops/src/surfaces.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-05"
@@ -625,7 +625,7 @@
     "crates/optimus-ops/src/surface_commands.rs",
     "crates/optimus-host/src/consoles.rs",
     "apps/optimus-ui/src/components/chrome/CommandPalette.tsx",
-    "docs/architecture/product-complete-p26-verification.md"
+    "_attic/architecture-records/product-complete-p26-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-06"
@@ -637,7 +637,7 @@
    "state": "parity",
    "evidence": [
     "crates/optimus-ops/src/hermes_import.rs",
-    "docs/architecture/s7-track-z-verification.md"
+    "_attic/architecture-records/s7-track-z-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-07"
@@ -651,7 +651,7 @@
     "docs/decisions/0043-no-auto-updater-channel.md",
     "crates/optimus-host/src/system.rs",
     "scripts/rebuild-install-relaunch.sh",
-    "docs/architecture/product-complete-p29-verification.md"
+    "_attic/architecture-records/product-complete-p29-verification.md"
    ],
    "trajectory": null,
    "owner_ticket": "E-09"

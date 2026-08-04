@@ -25,7 +25,7 @@ LEDGER = ROOT / "docs" / "architecture" / "parity-capability-ledger.json"
 SCORECARD = ROOT / "docs" / "architecture" / "sota-scorecard.md"
 PROGRAM = (
     ROOT
-    / "docs"
+    / "_attic"
     / "plans"
     / "historical"
     / "2026-07-19_161855-hermes-parity-parallel-subagent-program.md"

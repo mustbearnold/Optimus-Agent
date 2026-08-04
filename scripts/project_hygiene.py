@@ -27,11 +27,6 @@ CLEANABLE = (
 
 SHARED_REPORT_ONLY = (
     "target",
-    "local/tmp/cargo-target-install-pr124",
-    "local/tmp/cargo-target-auth-keyring-fix",
-    "local/tmp/cargo-target-autonomy-default",
-    "local/tmp/ms-playwright",
-    "local/tools/pacman-cache",
 )
 
 

@@ -24,7 +24,7 @@ implemented.
 
 **Identity:** `ADR-NNNN` is the **decision** plane only. It is never equal to
 program phase `P##`, a managed-land task id, or a delivery SHA. See
-[artifact-naming.md](../contributing/artifact-naming.md).
+[artifact-naming.md](../../specs/011-developer-tooling/spec.md).
 
 | ID | Decision | Documentary status | Implementation interpretation |
 |---|---|---|---|

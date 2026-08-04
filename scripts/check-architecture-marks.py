@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MARKS = ROOT / "docs" / "architecture" / "architecture-marks.md"
+MARKS = ROOT / "docs" / "runbooks" / "architecture-marks.md"
 PROGRAM = ROOT / "docs" / "plans" / "s-plus-plus-plus-program.md"
 
 # Grade cell in the current-grades table: | Name | **GRADE** | notes |
@@ -60,8 +60,8 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
             "crates/optimus-workflow/src/lib.rs",
         ),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p12-verification.md",
-            "docs/architecture/s-plus-plus-plus-p10-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p12-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p10-verification.md",
         ),
     ),
     MarkRequirement(
@@ -69,7 +69,7 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         phases_done=("P11",),
         required_paths=("scripts/check-crate-layers.py",),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p11-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p11-verification.md",
             "docs/decisions/0034-control-plane-crate-peels.md",
         ),
     ),
@@ -78,10 +78,10 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         phases_done=("P12",),
         required_paths=(
             "docs/decisions/0035-command-capability-envelope.md",
-            "docs/maps/security-and-approvals.md",
+            "specs/004-runtime-effects/spec.md",
         ),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p12-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p12-verification.md",
         ),
     ),
     MarkRequirement(
@@ -89,7 +89,7 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         phases_done=("P13",),
         required_paths=("scripts/check-domain-modularity.py",),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p13-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p13-verification.md",
         ),
     ),
     MarkRequirement(
@@ -97,7 +97,7 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         phases_done=("P14",),
         required_paths=("scripts/check-observability-gate.py",),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p14-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p14-verification.md",
         ),
     ),
     MarkRequirement(
@@ -105,7 +105,7 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         phases_done=("P15",),
         required_paths=("scripts/check-desktop-ipc-matrix.py",),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p15-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p15-verification.md",
         ),
     ),
     MarkRequirement(
@@ -113,7 +113,7 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         phases_done=("P16",),
         required_paths=("scripts/engineering_memory.py",),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p16-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p16-verification.md",
         ),
     ),
     MarkRequirement(
@@ -123,10 +123,10 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
             "scripts/optimus_version.py",
             "scripts/check-parity-ledger.py",
             "scripts/check-architecture-marks.py",
-            "docs/architecture/release-and-parity-gates.md",
+            "docs/architecture.md",
         ),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p17-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p17-verification.md",
         ),
     ),
     MarkRequirement(
@@ -135,10 +135,10 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
         required_paths=(
             "crates/optimus-runtime/tests/crash_resume.rs",
             "apps/optimus-cli/src/doctor.rs",
-            "docs/architecture/durability-and-backup.md",
+            "docs/architecture.md",
         ),
         verification_any=(
-            "docs/architecture/s-plus-plus-plus-p18-verification.md",
+            "_attic/architecture-records/s-plus-plus-plus-p18-verification.md",
         ),
     ),
 )

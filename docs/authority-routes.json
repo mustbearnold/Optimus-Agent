@@ -31,11 +31,9 @@
         "where should I start"
       ],
       "primary": [
-        "docs-home"
+        "specs-backlog"
       ],
-      "supporting": [
-        "history-policy"
-      ]
+      "supporting": []
     },
     {
       "id": "docs.history",
@@ -49,11 +47,9 @@
         "record"
       ],
       "primary": [
-        "history-policy"
+        "spec-011-developer-tooling"
       ],
-      "supporting": [
-        "docs-home"
-      ]
+      "supporting": []
     },
     {
       "id": "product.status",
@@ -66,12 +62,9 @@
         "product status"
       ],
       "primary": [
-        "current-status"
+        "spec-001-desktop-shell"
       ],
-      "supporting": [
-        "architecture-system-overview",
-        "repository-readme"
-      ]
+      "supporting": []
     },
     {
       "id": "product.roadmap",
@@ -85,11 +78,9 @@
         "north star"
       ],
       "primary": [
-        "current-roadmap"
+        "specs-backlog"
       ],
-      "supporting": [
-        "current-status"
-      ]
+      "supporting": []
     },
     {
       "id": "architecture.overview",
@@ -107,10 +98,7 @@
       "primary": [
         "architecture-system-overview"
       ],
-      "supporting": [
-        "repository-and-ownership-map",
-        "current-status"
-      ]
+      "supporting": []
     },
     {
       "id": "development.instructions",
@@ -126,7 +114,7 @@
         "development-instructions"
       ],
       "supporting": [
-        "docs-home"
+        "specs-backlog"
       ]
     },
     {
@@ -143,7 +131,7 @@
         "runtime-constitution"
       ],
       "supporting": [
-        "current-status"
+        "spec-001-desktop-shell"
       ]
     },
     {
@@ -193,7 +181,7 @@
         "shipped surface"
       ],
       "primary": [
-        "contracts-desktop-shell-and-ipc-matrix"
+        "spec-001-desktop-shell"
       ],
       "supporting": [
         "architecture-system-overview"
@@ -212,12 +200,9 @@
         "capability broker"
       ],
       "primary": [
-        "map-security-and-approvals"
+        "spec-004-runtime-effects"
       ],
-      "supporting": [
-        "contracts-high-risk-contracts",
-        "runtime-constitution"
-      ]
+      "supporting": []
     },
     {
       "id": "models.routing",
@@ -232,11 +217,9 @@
         "Auto"
       ],
       "primary": [
-        "map-model-routing"
+        "spec-003-kernel-turns"
       ],
-      "supporting": [
-        "architecture-system-overview"
-      ]
+      "supporting": []
     },
     {
       "id": "memory.systems",
@@ -250,11 +233,9 @@
         "workspace memory"
       ],
       "primary": [
-        "map-memory-and-retrieval"
+        "spec-006-memory-skills-packs"
       ],
-      "supporting": [
-        "engineering-memory-readme"
-      ]
+      "supporting": []
     },
     {
       "id": "engineering-memory.authority",
@@ -267,54 +248,23 @@
         "impact lens"
       ],
       "primary": [
-        "engineering-memory-readme"
+        "spec-006-memory-skills-packs"
       ],
-      "supporting": [
-        "map-memory-and-retrieval",
-        "development-instructions"
-      ]
+      "supporting": []
     },
     {
       "id": "testing.synthetic-users",
       "keywords": [
         "synthetic user",
-        "persona",
-        "human simulation",
-        "harness test",
-        "journey",
-        "failure case",
-        "adversarial testing"
+        "lab",
+        "simulator",
+        "user simulation",
+        "eval"
       ],
       "primary": [
-        "specifications-synthetic-user-lab"
+        "spec-008-eval"
       ],
-      "supporting": [
-        "maps-observability-and-evaluations"
-      ]
-    },
-    {
-      "id": "repository.components",
-      "keywords": [
-        "what is this path",
-        "component database",
-        "does it ship",
-        "safe to delete",
-        "apps",
-        "crates",
-        "evals",
-        "Source",
-        "Repository",
-        "Development",
-        "stale experiment",
-        "development wiki"
-      ],
-      "primary": [
-        "repository-components"
-      ],
-      "supporting": [
-        "repository-and-ownership-map",
-        "development-instructions"
-      ]
+      "supporting": []
     },
     {
       "id": "development.project-knowledge",
@@ -362,6 +312,217 @@
       "supporting": [
         "repository-readme"
       ]
+    },
+    {
+      "id": "specs.001-desktop-shell",
+      "keywords": [
+        "tauri",
+        "desktop shell",
+        "react workbench",
+        "installer",
+        "window",
+        "wry"
+      ],
+      "primary": [
+        "spec-001-desktop-shell"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.002-host-ipc",
+      "keywords": [
+        "host",
+        "ipc",
+        "registry",
+        "bridge",
+        "method",
+        "http surface",
+        "token"
+      ],
+      "primary": [
+        "spec-002-host-ipc"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.003-kernel-turns",
+      "keywords": [
+        "kernel",
+        "turn",
+        "provider",
+        "session",
+        "routing",
+        "browser tools",
+        "transcript"
+      ],
+      "primary": [
+        "spec-003-kernel-turns"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.004-runtime-effects",
+      "keywords": [
+        "runtime",
+        "job",
+        "approval",
+        "smartdeny",
+        "cancellation",
+        "campaign",
+        "effect"
+      ],
+      "primary": [
+        "spec-004-runtime-effects"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.005-agents-workflows",
+      "keywords": [
+        "agent",
+        "specialist",
+        "workflow",
+        "registry",
+        "artifact",
+        "descriptor"
+      ],
+      "primary": [
+        "spec-005-agents-workflows"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.006-memory-skills-packs",
+      "keywords": [
+        "memory",
+        "skills",
+        "packs",
+        "tool descriptor",
+        "recall",
+        "retrieval"
+      ],
+      "primary": [
+        "spec-006-memory-skills-packs"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.007-ops",
+      "keywords": [
+        "cron",
+        "gateway",
+        "observability",
+        "operator",
+        "schedule"
+      ],
+      "primary": [
+        "spec-007-ops"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.008-eval",
+      "keywords": [
+        "evaluation",
+        "eval",
+        "baseline",
+        "fixture",
+        "replay",
+        "benchmark"
+      ],
+      "primary": [
+        "spec-008-eval"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.009-project-knowledge",
+      "keywords": [
+        "project knowledge",
+        "temporal",
+        "interval graph",
+        "staleness"
+      ],
+      "primary": [
+        "spec-009-project-knowledge"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.010-surfaces",
+      "keywords": [
+        "tui",
+        "cli",
+        "terminal",
+        "pty",
+        "command line"
+      ],
+      "primary": [
+        "spec-010-surfaces"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.011-developer-tooling",
+      "keywords": [
+        "gates",
+        "verify",
+        "engineering memory",
+        "ontology",
+        "docs db",
+        "instruction plane",
+        "main-only"
+      ],
+      "primary": [
+        "spec-011-developer-tooling"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.backlog",
+      "keywords": [
+        "backlog",
+        "unspecced",
+        "gap",
+        "future work",
+        "known capability"
+      ],
+      "primary": [
+        "specs-backlog"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "repository.components",
+      "keywords": [
+        "components",
+        "ontology",
+        "catalog",
+        "component database",
+        "component wiki",
+        "does it ship",
+        "safe to delete",
+        "repository path",
+        "development component"
+      ],
+      "primary": [
+        "repository-components"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "engineering-memory.runbook",
+      "keywords": [
+        "engineering memory",
+        "lenses",
+        "em context",
+        "staleness",
+        "regenerate"
+      ],
+      "primary": [
+        "engineering-memory-readme"
+      ],
+      "supporting": []
     }
   ],
   "schema_version": 1

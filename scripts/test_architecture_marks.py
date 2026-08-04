@@ -97,7 +97,7 @@ class ArchitectureMarksGateTests(unittest.TestCase):
             em = root / "scripts" / "engineering_memory.py"
             em.parent.mkdir(parents=True)
             em.write_text("# stub\n", encoding="utf-8")
-            ver = root / "docs" / "architecture" / "s-plus-plus-plus-p16-verification.md"
+            ver = root / "_attic" / "architecture-records" / "s-plus-plus-plus-p16-verification.md"
             ver.parent.mkdir(parents=True)
             ver.write_text("# ok\n", encoding="utf-8")
             findings = self.mod.check(
@@ -151,8 +151,8 @@ class ArchitectureMarksGateTests(unittest.TestCase):
                         "scripts/optimus_version.py",
                         "scripts/check-parity-ledger.py",
                         "scripts/check-architecture-marks.py",
-                        "docs/architecture/release-and-parity-gates.md",
-                        "docs/architecture/s-plus-plus-plus-p17-verification.md",
+                        "docs/architecture.md",
+                        "_attic/architecture-records/s-plus-plus-plus-p17-verification.md",
                     ):
                         path = root / rel
                         path.parent.mkdir(parents=True, exist_ok=True)
@@ -211,7 +211,7 @@ class ArchitectureMarksGateTests(unittest.TestCase):
                 "scripts/optimus_version.py",
                 "scripts/check-parity-ledger.py",
                 "scripts/check-architecture-marks.py",
-                "docs/architecture/release-and-parity-gates.md",
+                "docs/architecture.md",
             ):
                 path = root / rel
                 path.parent.mkdir(parents=True, exist_ok=True)

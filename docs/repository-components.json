@@ -1035,6 +1035,23 @@
         "A place for build output"
       ],
       "safe_to_delete": true
+    },
+    {
+      "id": "sdd-capability-specs",
+      "path": "specs",
+      "parent": "repository-root",
+      "storage_plane": "repository",
+      "concern": "knowledge",
+      "distribution": "repository-only",
+      "lifecycle": "primary",
+      "repository_role": "required",
+      "retention": "essential",
+      "summary": "SDD capability specs: one directory per capability with a living spec.md (requirements + acceptance criteria), transient plan.md/tasks.md while work is active, and the BACKLOG of unspecced gaps.",
+      "not": [
+        "A mirror of docs/",
+        "A place for operational how-tos"
+      ],
+      "safe_to_delete": false
     }
   ]
 }

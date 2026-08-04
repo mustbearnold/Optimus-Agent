@@ -15,8 +15,8 @@ Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnabl
 
 **Status banner:** This scorecard is a **parity/planning rollup**, not the
 architecture quality grade sheet. For modular architecture grades (S+++ climb)
-see [architecture-marks.md](./architecture-marks.md). For current topology and
-Confirmed behaviour see [system-overview.md](./system-overview.md).
+see [architecture-marks.md](../runbooks/architecture-marks.md). For current topology and
+Confirmed behaviour see [system-overview.md](../architecture.md).
 
 **Default product shell (Confirmed):** Electron + React over Rust host; Legacy
 Wry optional. Do not read “tao+wry Windows desktop shell” below as the default
@@ -101,7 +101,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Gateway: SQLite authority + config-gated live Telegram long-poll (`optimus gateway telegram run`) + Telegram mock + Discord/Slack mock enqueue (live Discord/Slack residual)
 - Retrieval: two SQLite FTS5 lexical indexes (`sessions_fts`, `claims_fts`); the claim index narrows only — every hit is re-authorized against `claims` and labelled with its bitemporal standing (ADR-0072). No vector, embedding, graph, reranking, or GPU index.
 - Capabilities: PRODUCT-COMPLETE + S7/Track Z scaffolds; Hermes gate not claimed
-- Architecture quality marks: [architecture-marks.md](./architecture-marks.md) (S+++ program)
+- Architecture quality marks: [architecture-marks.md](../runbooks/architecture-marks.md) (S+++ program)
 
 ## Baseline commands of record
 

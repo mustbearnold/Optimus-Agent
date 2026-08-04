@@ -180,7 +180,7 @@ class BaselineTests(unittest.TestCase):
 
     def test_limit_matches_the_documented_law(self) -> None:
         blueprint = (
-            ROOT / "docs" / "architecture" / "optimus-exceeds-hermes.md"
+            ROOT / "docs" / "architecture.md"
         ).read_text(encoding="utf-8")
         self.assertIn("no module > ~800 LOC", blueprint)
         self.assertEqual(CMS.LIMIT, 800)
