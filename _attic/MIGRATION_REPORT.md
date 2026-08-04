@@ -111,10 +111,45 @@ Backlog (from roadmap/status): items not yet spec'd → `specs/BACKLOG.md`.
       with the pre-migration snapshot as part of the Electron-retirement
       commit f3ef3c3)
 - [x] Phase 2 — purge junk, quarantine ambiguity
-- [ ] Phase 3 — extract specs, consolidate docs (capability map above)
-- [ ] Phase 4 — install constitution + conventions + AGENTS.md
-- [ ] Phase 5 — mechanical formatting
-- [ ] Phase 6 — verify and seal (all gates green, SDD_MIGRATION.md deleted)
+- [x] Phase 3 — extract specs, consolidate docs (capability map above;
+      commit 52d32b7, verify 61/61)
+- [x] Phase 4 — install constitution + conventions + AGENTS.md (commit
+      78d0179 + lock fix 2c7c180, verify 61/61)
+- [x] Phase 5 — mechanical formatting (assessment below; nothing to change)
+- [x] Phase 6 — verify and seal (SDD_MIGRATION.md deleted by this commit)
+
+## Phase 5 — formatter assessment
+
+Applied the formatters that exist in this repository:
+
+- **Rust:** `cargo fmt --all -- --check` is gate-enforced in both verify
+  tiers and passes — the tree is already formatter-clean. Nothing to change.
+- **JS/TS:** no Prettier config exists in the repository (checked root and
+  every workspace; the only `.prettierrc` on the machine is inside the
+  read-only Hermes reference copy under `Development/`). `specs/conventions.md`
+  was corrected to state the honest reality (editor config + ESLint).
+- **Python/Shell:** no formatter is configured (stdlib + `bash -n` gates);
+  unchanged.
+- **Markdown:** live docs carry no trailing whitespace; the only files with
+  it are inside `_attic/`, which formatting must not touch (quarantine).
+
+## Phase 6 — final counts (seal)
+
+- 743 tracked files classified (Phase 1 table above); 5 duplicate groups
+  reviewed and kept (Tauri generated layout).
+- `docs/` went from 236 cataloged documents to 104 (`specs/` + `docs/`),
+  ~110 retired to `_attic/` (34 doc_ids retired + 46 refreshed in the Phase 3
+  lock sync; final: 104 documents, 33 authority routes, 19 benchmark
+  questions, 100% top-one).
+- 11 capability specs + BACKLOG + constitution + conventions under `specs/`.
+- `_attic/` contents: 31 historical specifications, 13+ plans, 28+ evidence
+  records, lessons, history, architecture records (verification phases,
+  marks-era grading, baseline), `.claude` quarantine, MIGRATION_REPORT,
+  ATTIC index. **Emptying the attic is a human decision.**
+- Known blemishes carried forward: Windows WebView2 backend (ontology
+  `removal_when` 2026-10-31); optional `electronTransport.ts` dead-code
+  cleanup; WebKitGTK evidence ceiling (launch gate + transport tests +
+  desktop e2e = documented proof bar).
 
 ## Per-file inventory (Phase 1, machine-classified)
 
