@@ -4,7 +4,7 @@ doc_type: explanation
 plane: current
 status: current
 authority: supporting
-summary: Confirmed current behaviour: the installer stages Tauri + React as the primary desktop entry and keeps Electron and Wry as explicit rollback shells during preview parity work.
+summary: Confirmed current behaviour: the installer stages Tauri + React as the desktop entry and keeps Wry as the legacy rollback shell.
 reviewed_on: 2026-07-31
 review_by: 2026-10-31
 ---
@@ -14,8 +14,7 @@ review_by: 2026-10-31
 ## Default shell
 
 **Confirmed current behaviour:** the installer stages **Tauri + React** as the
-primary desktop entry, keeps **Electron** as an explicit rollback during
-browser-preview parity work, and retains the **Wry/Tao** binary as a legacy
+desktop entry and retains the **Wry/Tao** binary as a legacy
 rollback (`LegacyWry`). The Rust host remains authority for IPC and durable
 effects. See
 [desktop-shell-and-ipc-matrix.md](../contracts/desktop-shell-and-ipc-matrix.md).

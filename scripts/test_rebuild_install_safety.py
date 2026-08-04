@@ -56,40 +56,6 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             tauri.write_text(desktop_script, encoding="utf-8")
             tauri.chmod(tauri.stat().st_mode | stat.S_IXUSR)
         fake_binary(target / "release" / "optimus", "optimus", binary_version)
-        electron_dist = root / "electron-dist"
-        electron_dist.mkdir()
-        fake_binary(electron_dist / "electron", "electron", "43.2.0")
-        (electron_dist / "version").write_text("43.2.0\n", encoding="utf-8")
-        (electron_dist / "resources").mkdir()
-        electron_app = root / "electron-app"
-        electron_app.mkdir()
-        (electron_app / "package.json").write_text(
-            json.dumps(
-                {
-                    "name": "optimus-electron",
-                    "version": "0.1.0",
-                    "main": "main.cjs",
-                }
-            ),
-            encoding="utf-8",
-        )
-        for name in (
-            "main.cjs",
-            "preload.cjs",
-            "browser-policy.cjs",
-            "runtime-paths.cjs",
-            "host-discovery.cjs",
-        ):
-            (electron_app / name).write_text(
-                f"// installer fixture: {name}\n",
-                encoding="utf-8",
-            )
-        ui_dist = root / "ui-dist"
-        ui_dist.mkdir()
-        (ui_dist / "index.html").write_text(
-            "<!doctype html><title>Optimus fixture</title>\n",
-            encoding="utf-8",
-        )
         env = os.environ.copy()
         env.update(
             {
@@ -97,9 +63,6 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
                 "XDG_BIN_HOME": str(bin_home),
                 "OPTIMUS_INSTALL_ROOT": str(install),
                 "CARGO_TARGET_DIR": str(target),
-                "OPTIMUS_ELECTRON_DIST": str(electron_dist),
-                "OPTIMUS_ELECTRON_APP_SOURCE": str(electron_app),
-                "OPTIMUS_UI_DIST": str(ui_dist),
             }
         )
         env.update(env_overrides or {})
@@ -243,7 +206,7 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             ]
             self.assertEqual(release_checks, [release_checks[0], release_checks[0]])
 
-    def test_no_build_installs_tauri_primary_with_electron_rollback(self) -> None:
+    def test_no_build_installs_tauri_primary_without_electron(self) -> None:
         with tempfile.TemporaryDirectory(prefix="optimus-installer-tauri-") as tmp:
             root = Path(tmp)
 
@@ -254,8 +217,6 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             launcher = install / "bin" / "optimus-desktop"
             tauri = install / "bin" / "optimus-agent-tauri"
             host = install / "bin" / "optimus-desktop-host"
-            electron = install / "app-bundle" / "electron" / "optimus-agent"
-            packaged_app = install / "app-bundle" / "electron" / "resources" / "app"
             desktop_entry = root / "data" / "applications" / "optimus-agent.desktop"
 
             self.assertTrue(launcher.is_file())
@@ -263,13 +224,11 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertTrue(tauri.is_file())
             self.assertTrue(os.access(tauri, os.X_OK))
             self.assertTrue(host.is_file())
-            self.assertTrue(electron.is_file())
-            self.assertTrue((packaged_app / "main.cjs").is_file())
-            self.assertTrue((packaged_app / "host-discovery.cjs").is_file())
-            self.assertTrue((packaged_app / "ui-dist" / "index.html").is_file())
+            self.assertFalse((install / "app-bundle").exists())
             launcher_source = launcher.read_text(encoding="utf-8")
-            self.assertIn("ozone-platform=x11", launcher_source)
-            self.assertIn("disable-gpu", launcher_source)
+            self.assertIn("GDK_BACKEND", launcher_source)
+            self.assertIn("WEBKIT_DISABLE_COMPOSITING_MODE", launcher_source)
+            self.assertNotIn("ELECTRON", launcher_source)
             self.assertEqual(
                 subprocess.check_output(
                     [str(launcher), "--version"],
@@ -284,7 +243,10 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             entry = desktop_entry.read_text(encoding="utf-8")
             self.assertIn(f'Exec="{launcher}"', entry)
             self.assertIn("X-Optimus-UI=react-tauri", entry)
-            self.assertIn("ElectronRollback", entry)
+            self.assertNotIn("ElectronRollback", entry)
+            version_txt = (install / "VERSION.txt").read_text(encoding="utf-8")
+            self.assertIn("shell=react-tauri", version_txt)
+            self.assertNotIn("electron", version_txt)
 
     def test_install_rejects_binary_changed_after_first_version_validation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="optimus-installer-artifact-race-") as tmp:

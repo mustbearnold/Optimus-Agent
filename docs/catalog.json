@@ -1294,7 +1294,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "3b05cfe1702764fa933e91fe19618f3c307c92c76bcde4bfb468889b486a0032",
+      "content_sha256": "5678cddfaffbc9db17d099d813e065a58d5648f6cd6d9e248bed5aa1ba2e383b",
       "headings": [
         "Desktop install and relaunch convention",
         "Default shell",
@@ -1314,7 +1314,7 @@
       "review_by": "2026-10-31",
       "reviewed_on": "2026-07-31",
       "status": "current",
-      "summary": "Confirmed current behaviour: the installer stages Tauri + React as the primary desktop entry and keeps Electron and Wry as explicit rollback shells during preview parity work.",
+      "summary": "Confirmed current behaviour: the installer stages Tauri + React as the desktop entry and keeps Wry as the legacy rollback shell.",
       "title": "Desktop install and relaunch convention",
       "type": "explanation"
     },
@@ -7201,7 +7201,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "43e3f1dfa6ac9a6c7e75bcb1041dd72ca63e1b72fae2451473815814f852aad2",
+  "documents_sha256": "55f84a899da3edbed6867a9bf405354b06e7b577f64ca245c9dbb08ecdfccc28",
   "routes": [
     {
       "id": "docs.navigation",

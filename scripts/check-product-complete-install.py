@@ -29,11 +29,14 @@ def main() -> int:
         "react-tauri",
         "optimus-agent-tauri",
         "optimus-agent.desktop",
-        "Electron",
         "desktop_shell",
     ):
         if token not in text:
             fail(f"install script missing expected token: {token}")
+    # Anti-resurgence: the installer is exclusively Tauri. Electron must not
+    # creep back into the staged/rollback paths.
+    if "Electron" in text:
+        fail("install script must not reference Electron (Tauri is exclusive)")
 
     adr = ROOT / "docs" / "decisions" / "0043-no-auto-updater-channel.md"
     if not adr.is_file():
@@ -45,8 +48,8 @@ def main() -> int:
     install_doc_text = install_doc.read_text(encoding="utf-8", errors="replace")
     if "Tauri + React" not in install_doc_text:
         fail("install doc must declare Tauri + React default")
-    if "Electron" not in install_doc_text:
-        fail("install doc must retain Electron as an explicit rollback")
+    if "Electron" in install_doc_text:
+        fail("install doc must not retain Electron as a rollback")
 
     # Optional: probe existing user install (read-only), respecting XDG_DATA_HOME
     # the same way rebuild-install-relaunch.sh does.
@@ -83,8 +86,8 @@ def main() -> int:
             fail(f"install-meta desktop_shell must be react-tauri, got {shell!r}")
         if "X-Optimus-UI=react-tauri" not in de:
             fail("desktop entry does not evidence Tauri/React default shell")
-        if "ElectronRollback" not in de:
-            fail("desktop entry does not expose the Electron rollback action")
+        if "ElectronRollback" in de:
+            fail("desktop entry must not expose an Electron rollback action")
         status["desktop_entry_ok"] = True
     print("PRODUCT_COMPLETE_INSTALL_OK", json.dumps(status, sort_keys=True))
     return 0

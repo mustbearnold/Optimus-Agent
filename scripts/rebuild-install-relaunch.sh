@@ -123,17 +123,11 @@ fi
 raw_data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 raw_bin_home="${XDG_BIN_HOME:-$HOME/.local/bin}"
 raw_install_root="${OPTIMUS_INSTALL_ROOT:-$raw_data_home/optimus-agent}"
-raw_electron_dist="${OPTIMUS_ELECTRON_DIST:-$ROOT/apps/optimus-electron/node_modules/electron/dist}"
-raw_electron_app_source="${OPTIMUS_ELECTRON_APP_SOURCE:-$ROOT/apps/optimus-electron}"
-raw_ui_dist="${OPTIMUS_UI_DIST:-$ROOT/apps/optimus-ui/dist}"
 for path_value in \
   "$CARGO_TARGET_DIR" \
   "$raw_data_home" \
   "$raw_bin_home" \
-  "$raw_install_root" \
-  "$raw_electron_dist" \
-  "$raw_electron_app_source" \
-  "$raw_ui_dist"; do
+  "$raw_install_root"; do
   [[ "$path_value" == /* ]] || fail "Linux install paths must be absolute: $path_value"
   [[ "$path_value" != *$'\n'* && "$path_value" != *$'\r'* && "$path_value" != *$'\t'* ]] \
     || fail "Linux install paths must not contain control characters"
@@ -146,7 +140,6 @@ validate_lexical_install_paths() {
   assert_no_symlink_components "$raw_bin_home" "binary home"
   assert_no_symlink_components "$raw_install_root" "install root"
   assert_no_symlink_components "$raw_install_root/bin" "install bin directory"
-  assert_no_symlink_components "$raw_install_root/app-bundle" "installed Electron bundle"
   assert_no_symlink_components "$raw_install_root/.optimus-agent-install" "install marker"
 }
 
@@ -156,9 +149,6 @@ export CARGO_TARGET_DIR
 DATA_HOME="$(readlink -m -- "$raw_data_home")"
 BIN_HOME="$(readlink -m -- "$raw_bin_home")"
 INSTALL_ROOT="$(readlink -m -- "$raw_install_root")"
-ELECTRON_DIST_SOURCE="$(readlink -m -- "$raw_electron_dist")"
-ELECTRON_APP_SOURCE="$(readlink -m -- "$raw_electron_app_source")"
-UI_DIST_SOURCE="$(readlink -m -- "$raw_ui_dist")"
 HOME_ROOT="$(readlink -m -- "$HOME")"
 APPLICATIONS_DIR="$DATA_HOME/applications"
 ICON_DIR="$DATA_HOME/icons/hicolor/scalable/apps"
@@ -168,10 +158,6 @@ INSTALLED_DESKTOP="$INSTALL_ROOT/bin/optimus-desktop"
 INSTALLED_TAURI="$INSTALL_ROOT/bin/optimus-agent-tauri"
 INSTALLED_HOST="$INSTALL_ROOT/bin/optimus-desktop-host"
 INSTALLED_CLI="$INSTALL_ROOT/bin/optimus"
-APP_BUNDLE="$INSTALL_ROOT/app-bundle"
-INSTALLED_ELECTRON="$APP_BUNDLE/electron/optimus-agent"
-INSTALLED_ELECTRON_APP="$APP_BUNDLE/electron/resources/app"
-INSTALLED_UI_DIST="$INSTALLED_ELECTRON_APP/ui-dist"
 INSTALL_MARKER="$INSTALL_ROOT/.optimus-agent-install"
 INSTALL_MARKER_PREFIX="optimus-agent-user-install-v1"
 INSTALL_MARKER_VALUE=""
@@ -302,27 +288,6 @@ require_command mktemp
 require_command stat
 require_command python3
 
-validate_electron_sources() {
-  local required
-  [[ -d "$ELECTRON_DIST_SOURCE" && ! -L "$ELECTRON_DIST_SOURCE" ]] \
-    || fail "Electron runtime directory missing or symlinked: $ELECTRON_DIST_SOURCE"
-  [[ -x "$ELECTRON_DIST_SOURCE/electron" ]] \
-    || fail "Electron runtime executable missing: $ELECTRON_DIST_SOURCE/electron"
-  [[ -f "$ELECTRON_DIST_SOURCE/version" && ! -L "$ELECTRON_DIST_SOURCE/version" ]] \
-    || fail "Electron runtime version file missing: $ELECTRON_DIST_SOURCE/version"
-  [[ ! -e "$ELECTRON_DIST_SOURCE/resources/app" && ! -e "$ELECTRON_DIST_SOURCE/resources/app.asar" ]] \
-    || fail "Electron runtime source already contains an application payload"
-  [[ -d "$UI_DIST_SOURCE" && ! -L "$UI_DIST_SOURCE" && -f "$UI_DIST_SOURCE/index.html" ]] \
-    || fail "React production assets missing: $UI_DIST_SOURCE"
-  for required in package.json main.cjs preload.cjs browser-policy.cjs runtime-paths.cjs host-discovery.cjs; do
-    [[ -f "$ELECTRON_APP_SOURCE/$required" && ! -L "$ELECTRON_APP_SOURCE/$required" ]] \
-      || fail "Electron application file missing or symlinked: $ELECTRON_APP_SOURCE/$required"
-  done
-  if [[ -n "$(find "$ELECTRON_DIST_SOURCE" "$UI_DIST_SOURCE" -type l -print -quit)" ]]; then
-    fail "Electron package sources must not contain symlinks"
-  fi
-}
-
 file_sha256() {
   local path="$1" hash
   read -r hash _ < <(sha256sum -- "$path")
@@ -399,66 +364,6 @@ print(digest.hexdigest())
 PY
 }
 
-BUNDLE_STAGE=""
-BUNDLE_BACKUP=""
-
-cleanup_install_staging() {
-  local candidate
-  for candidate in "$BUNDLE_STAGE" "$BUNDLE_BACKUP"; do
-    [[ -n "$candidate" && "$candidate" == "$INSTALL_ROOT"/.app-bundle.* ]] || continue
-    [[ -d "$candidate" && ! -L "$candidate" ]] && rm -rf -- "$candidate"
-  done
-}
-trap cleanup_install_staging EXIT
-
-stage_electron_bundle() {
-  local app_destination electron_destination
-  mkdir -p "$INSTALL_ROOT"
-  BUNDLE_STAGE="$(mktemp -d "$INSTALL_ROOT/.app-bundle.stage.XXXXXXXX")"
-  electron_destination="$BUNDLE_STAGE/electron"
-  app_destination="$electron_destination/resources/app"
-
-  cp -a -- "$ELECTRON_DIST_SOURCE" "$electron_destination"
-  [[ -x "$electron_destination/electron" ]] \
-    || fail "staged Electron runtime is missing its executable"
-  mv -- "$electron_destination/electron" "$electron_destination/optimus-agent"
-  mkdir -p "$app_destination/ui-dist"
-  for file in package.json main.cjs preload.cjs browser-policy.cjs runtime-paths.cjs host-discovery.cjs; do
-    install -m 0644 -- "$ELECTRON_APP_SOURCE/$file" "$app_destination/$file"
-  done
-  cp -a -- "$UI_DIST_SOURCE/." "$app_destination/ui-dist/"
-  [[ -x "$electron_destination/optimus-agent" && -f "$app_destination/ui-dist/index.html" ]] \
-    || fail "staged Electron application is incomplete"
-  BUNDLE_SHA256="$(tree_sha256 "$BUNDLE_STAGE")"
-  [[ "$BUNDLE_SHA256" =~ ^[0-9a-f]{64}$ ]] || fail "could not hash staged Electron bundle"
-}
-
-publish_electron_bundle() {
-  [[ -n "$BUNDLE_STAGE" && -d "$BUNDLE_STAGE" && ! -L "$BUNDLE_STAGE" ]] \
-    || fail "Electron bundle was not staged"
-  [[ ! -L "$APP_BUNDLE" ]] || fail "refusing symlinked installed Electron bundle"
-  if [[ -e "$APP_BUNDLE" ]]; then
-    [[ -d "$APP_BUNDLE" ]] || fail "installed Electron bundle is not a directory"
-    BUNDLE_BACKUP="$INSTALL_ROOT/.app-bundle.backup.$INSTALL_ID"
-    [[ ! -e "$BUNDLE_BACKUP" ]] || fail "stale Electron bundle backup exists"
-    mv -- "$APP_BUNDLE" "$BUNDLE_BACKUP"
-  fi
-  if ! mv -- "$BUNDLE_STAGE" "$APP_BUNDLE"; then
-    if [[ -n "$BUNDLE_BACKUP" && -d "$BUNDLE_BACKUP" && ! -e "$APP_BUNDLE" ]]; then
-      mv -- "$BUNDLE_BACKUP" "$APP_BUNDLE" || true
-      BUNDLE_BACKUP=""
-    fi
-    fail "could not publish installed Electron bundle"
-  fi
-  BUNDLE_STAGE=""
-  [[ "$(tree_sha256 "$APP_BUNDLE")" == "$BUNDLE_SHA256" ]] \
-    || fail "installed Electron bundle does not match the validated staged bytes"
-  if [[ -n "$BUNDLE_BACKUP" ]]; then
-    rm -rf -- "$BUNDLE_BACKUP"
-    BUNDLE_BACKUP=""
-  fi
-}
-
 process_start_time() {
   local pid="$1" stat_line rest fields=()
   [[ -r "/proc/$pid/stat" ]] || return 1
@@ -469,22 +374,12 @@ process_start_time() {
   printf '%s\n' "${fields[19]}"
 }
 
-process_is_installed_electron_main() {
-  local pid="$1" exe argument
-  exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-  [[ "$exe" == "$INSTALLED_ELECTRON" ]] || return 1
-  while IFS= read -r -d '' argument; do
-    [[ "$argument" == --type=* ]] && return 1
-  done <"/proc/$pid/cmdline"
-  return 0
-}
-
 process_is_installed_app() {
   local pid="$1" exe
   exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
   [[ "$exe" == "$INSTALLED_DESKTOP" || "$exe" == "$INSTALLED_TAURI" || "$exe" == "$INSTALLED_HOST" ]] \
     && return 0
-  process_is_installed_electron_main "$pid"
+  return 1
 }
 
 process_matches_identity() {
@@ -506,18 +401,6 @@ find_installed_pids() {
     start_time="$(process_start_time "$pid" 2>/dev/null || true)"
     [[ "$start_time" =~ ^[0-9]+$ ]] || continue
     process_is_installed_app "$pid" \
-      && printf '%s:%s\n' "$pid" "$start_time"
-  done
-}
-
-find_installed_electron_pids() {
-  local proc pid start_time
-  for proc in /proc/[0-9]*; do
-    [[ -d "$proc" ]] || continue
-    pid="${proc#/proc/}"
-    start_time="$(process_start_time "$pid" 2>/dev/null || true)"
-    [[ "$start_time" =~ ^[0-9]+$ ]] || continue
-    process_is_installed_electron_main "$pid" \
       && printf '%s:%s\n' "$pid" "$start_time"
   done
 }
@@ -626,18 +509,6 @@ verify_built_versions
 BUILT_DESKTOP_SHA256="$(file_sha256 "$BUILT_DESKTOP")"
 BUILT_TAURI_SHA256="$(file_sha256 "$BUILT_TAURI")"
 BUILT_CLI_SHA256="$(file_sha256 "$BUILT_CLI")"
-validate_electron_sources
-ELECTRON_VERSION="$(tr -d '\r\n' <"$ELECTRON_DIST_SOURCE/version")"
-[[ "$ELECTRON_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]] \
-  || fail "invalid Electron runtime version: $ELECTRON_VERSION"
-ELECTRON_APP_VERSION="$(
-  python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["version"])' \
-    "$ELECTRON_APP_SOURCE/package.json"
-)"
-[[ "$ELECTRON_APP_VERSION" == "$PRODUCT_VERSION" ]] \
-  || fail "Electron application version $ELECTRON_APP_VERSION does not match policy version $PRODUCT_VERSION"
-step "Staging self-contained Electron application"
-stage_electron_bundle
 
 # The build may take minutes. Revalidate the ownership boundary immediately
 # before stopping or replacing the installed application.
@@ -666,10 +537,8 @@ atomic_install_file "$BUILT_CLI" "$INSTALLED_CLI" 0755 "$BUILT_CLI_SHA256"
 ln -sfn optimus "$INSTALL_ROOT/bin/optimus-cli"
 ln -sfn "$INSTALLED_CLI" "$BIN_HOME/optimus"
 ln -sfn "$INSTALLED_CLI" "$BIN_HOME/optimus-cli"
-publish_electron_bundle
 printf '  %s\n' "$INSTALLED_HOST"
 printf '  %s\n' "$INSTALLED_TAURI"
-printf '  %s\n' "$INSTALLED_ELECTRON"
 printf '  %s\n' "$INSTALLED_CLI"
 
 atomic_install_file "$ROOT/assets/optimus-agent.svg" "$ICON_FILE" 0644
@@ -677,9 +546,6 @@ atomic_install_file "$ROOT/assets/optimus-agent.svg" "$ICON_FILE" 0644
 printf -v q_install_root '%q' "$INSTALL_ROOT"
 printf -v q_installed_tauri '%q' "$INSTALLED_TAURI"
 printf -v q_installed_host '%q' "$INSTALLED_HOST"
-printf -v q_installed_electron '%q' "$INSTALLED_ELECTRON"
-printf -v q_installed_electron_app '%q' "$INSTALLED_ELECTRON_APP"
-printf -v q_installed_ui_dist '%q' "$INSTALLED_UI_DIST"
 printf -v q_default_optimus_home '%q' "$DATA_HOME/optimus"
 printf -v q_product_version '%q' "$version"
 atomic_write_file "$INSTALLED_DESKTOP" 0755 <<EOF
@@ -688,9 +554,6 @@ set -Eeuo pipefail
 INSTALL_ROOT=$q_install_root
 TAURI_BINARY=$q_installed_tauri
 HOST_BINARY=$q_installed_host
-ELECTRON_BINARY=$q_installed_electron
-ELECTRON_APP=$q_installed_electron_app
-UI_DIST=$q_installed_ui_dist
 DEFAULT_OPTIMUS_HOME=$q_default_optimus_home
 PRODUCT_VERSION=$q_product_version
 
@@ -718,39 +581,6 @@ case "\${OPTIMUS_DESKTOP_SHELL:-tauri}" in
     export WEBKIT_DISABLE_COMPOSITING_MODE=1
     exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
     exec "\$TAURI_BINARY" "\$@"
-    ;;
-  electron)
-    [[ -x "\$ELECTRON_BINARY" && -f "\$ELECTRON_APP/main.cjs" && -f "\$ELECTRON_APP/host-discovery.cjs" && -f "\$UI_DIST/index.html" ]] || {
-      printf 'Installed Optimus Electron application is incomplete: %s\\n' "\$INSTALL_ROOT" >&2
-      exit 1
-    }
-    export OPTIMUS_APP_ROOT="\$INSTALL_ROOT"
-    export OPTIMUS_DESKTOP_BIN="\$HOST_BINARY"
-    export OPTIMUS_UI_DIST="\$UI_DIST"
-    export OPTIMUS_ELECTRON_UI="\${OPTIMUS_ELECTRON_UI:-react}"
-    export OPTIMUS_HOME="\${OPTIMUS_HOME:-\$DEFAULT_OPTIMUS_HOME}"
-    export OPTIMUS_ELECTRON_USER_DATA="\${OPTIMUS_ELECTRON_USER_DATA:-\$OPTIMUS_HOME/electron}"
-    # Coding agents and some shells export ELECTRON_RUN_AS_NODE=1, which turns the
-    # packaged binary into plain Node and breaks GUI launch (and rejects Chromium
-    # flags such as --class). Always clear it for the desktop shell.
-    unset ELECTRON_RUN_AS_NODE
-    # User-local installs cannot root-own chrome-sandbox (mode 4755). Without that,
-    # Chromium aborts; disable the SUID helper so namespace sandboxing can proceed.
-    electron_dir="\$(dirname -- "\$ELECTRON_BINARY")"
-    if [[ ! -u "\$electron_dir/chrome-sandbox" ]]; then
-      export ELECTRON_DISABLE_SANDBOX=1
-    fi
-    exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
-    # Do not pass --class: with RUN_AS_NODE or Node-first argv parsing it is rejected.
-    # WM class comes from the binary name (optimus-agent) and StartupWMClass.
-    electron_args=("\$@")
-    # Electron 43 can spin before creating a renderer on this Wayland/Vulkan
-    # combination. Prefer the available Xwayland path with software compositing;
-    # pure-Wayland systems without DISPLAY retain the native default.
-    if [[ -n "\${WAYLAND_DISPLAY:-}" && -n "\${DISPLAY:-}" ]]; then
-      electron_args+=(--ozone-platform=x11 --disable-gpu)
-    fi
-    exec "\$ELECTRON_BINARY" "\${electron_args[@]}"
     ;;
   wry)
     exec "\$HOST_BINARY" "\$@"
@@ -789,7 +619,7 @@ StartupNotify=true
 StartupWMClass=optimus-agent
 X-Optimus-Install-ID=$INSTALL_ID
 X-Optimus-UI=react-tauri
-Actions=OpenData;ElectronRollback;LegacyWry;
+Actions=OpenData;LegacyWry;
 
 [Desktop Action OpenData]
 Name=Open Optimus data folder
@@ -798,17 +628,12 @@ Exec=xdg-open $(desktop_quote "$DATA_HOME/optimus")
 [Desktop Action LegacyWry]
 Name=Launch legacy Wry shell
 Exec=env OPTIMUS_DESKTOP_SHELL=wry $(desktop_quote "$INSTALLED_DESKTOP")
-
-[Desktop Action ElectronRollback]
-Name=Launch Electron rollback shell
-Exec=env OPTIMUS_DESKTOP_SHELL=electron $(desktop_quote "$INSTALLED_DESKTOP")
 EOF
 
 atomic_write_file "$INSTALL_ROOT/VERSION.txt" 0644 <<EOF
 Optimus Agent $version
 profile=$PROFILE
 shell=react-tauri
-electron=$ELECTRON_VERSION
 installed=$installed_at
 source=$ROOT
 platform=linux-$(uname -m)
@@ -842,7 +667,6 @@ atomic_write_file "$INSTALL_ROOT/install-meta.json" 0644 <<EOF
   "hermes_feature_contracts": $HERMES_FEATURE_CONTRACTS,
   "configuration": "$(json_escape "$PROFILE")",
   "desktop_shell": "react-tauri",
-  "electron_version": "$(json_escape "$ELECTRON_VERSION")",
   "installed_at": "$(json_escape "$installed_at")",
   "install_id": "$(json_escape "$INSTALL_ID")",
   "install_root": "$(json_escape "$INSTALL_ROOT")",
@@ -851,10 +675,6 @@ atomic_write_file "$INSTALL_ROOT/install-meta.json" 0644 <<EOF
   "desktop_binary": "$(json_escape "$INSTALLED_DESKTOP")",
   "tauri_binary": "$(json_escape "$INSTALLED_TAURI")",
   "host_binary": "$(json_escape "$INSTALLED_HOST")",
-  "electron_binary": "$(json_escape "$INSTALLED_ELECTRON")",
-  "electron_app": "$(json_escape "$INSTALLED_ELECTRON_APP")",
-  "ui_dist": "$(json_escape "$INSTALLED_UI_DIST")",
-  "bundle_sha256": "$(json_escape "$BUNDLE_SHA256")",
   "cli_binary": "$(json_escape "$INSTALLED_CLI")",
   "desktop_entry": "$(json_escape "$DESKTOP_FILE")"
 }
@@ -872,7 +692,6 @@ printf -v q_install_marker_value '%q' "$INSTALL_MARKER_VALUE"
 printf -v q_desktop '%q' "$INSTALLED_DESKTOP"
 printf -v q_tauri '%q' "$INSTALLED_TAURI"
 printf -v q_host '%q' "$INSTALLED_HOST"
-printf -v q_electron '%q' "$INSTALLED_ELECTRON"
 printf -v q_desktop_file '%q' "$DESKTOP_FILE"
 printf -v q_icon_file '%q' "$ICON_FILE"
 printf -v q_desktop_file_hash '%q' "$desktop_file_hash"
@@ -890,7 +709,6 @@ INSTALL_MARKER_VALUE=$q_install_marker_value
 DESKTOP_BINARY=$q_desktop
 TAURI_BINARY=$q_tauri
 HOST_BINARY=$q_host
-ELECTRON_BINARY=$q_electron
 DESKTOP_FILE=$q_desktop_file
 ICON_FILE=$q_icon_file
 DESKTOP_FILE_HASH=$q_desktop_file_hash
@@ -924,21 +742,11 @@ process_start_time() {
   printf '%s\n' "${fields[19]}"
 }
 
-process_is_electron_main() {
-  local pid="$1" exe argument
-  exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-  [[ "$exe" == "$ELECTRON_BINARY" ]] || return 1
-  while IFS= read -r -d '' argument; do
-    [[ "$argument" == --type=* ]] && return 1
-  done <"/proc/$pid/cmdline"
-  return 0
-}
-
 process_is_installed_app() {
   local pid="$1" exe
   exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
   [[ "$exe" == "$TAURI_BINARY" || "$exe" == "$HOST_BINARY" ]] && return 0
-  process_is_electron_main "$pid"
+  return 1
 }
 
 process_matches_identity() {
@@ -1043,9 +851,6 @@ Launch:
 
 Legacy Wry rollback:
   OPTIMUS_DESKTOP_SHELL=wry $INSTALLED_DESKTOP
-
-Electron rollback:
-  OPTIMUS_DESKTOP_SHELL=electron $INSTALLED_DESKTOP
 
 CLI:
   $BIN_HOME/optimus --help

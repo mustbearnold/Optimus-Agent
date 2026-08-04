@@ -26,7 +26,7 @@
     },
     "architecture-desktop-install-relaunch": {
       "binding_sha256": null,
-      "document_sha256": "3b05cfe1702764fa933e91fe19618f3c307c92c76bcde4bfb468889b486a0032",
+      "document_sha256": "5678cddfaffbc9db17d099d813e065a58d5648f6cd6d9e248bed5aa1ba2e383b",
       "path": "docs/architecture/desktop-install-relaunch.md",
       "resolved_files": 0
     },
@@ -283,7 +283,7 @@
       "resolved_files": 15
     },
     "decisions-0024-hermes-parity-version-gate": {
-      "binding_sha256": "cecc3fc0a8d5ebc795125582f6c58068725bb97172b88b8563e7f11bf41415ab",
+      "binding_sha256": "8db9198b8f3aebe8cca7e61f5637a74d43173f7f5e13025f4ae952fb4645e6ff",
       "document_sha256": "4a6ff2ec4b58c8e2ecf900f110e77e8298db8ed6662b1f38f6a25c3cedaea292",
       "path": "docs/decisions/0024-hermes-parity-version-gate.md",
       "resolved_files": 13
@@ -367,7 +367,7 @@
       "resolved_files": 7
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "e3a20ec3a43e242e070835ed5966d71a314b0e21ef0d2fc972bfcc97b904dbe5",
+      "binding_sha256": "039becd98d6553a0607b1b8415a3453143a3f75c9e03c83c2ca624006fffc352",
       "document_sha256": "2dddb01099233d01788be84e8c56b94907fdeb14aaba4e218043fc99c189e2a6",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 13
@@ -397,7 +397,7 @@
       "resolved_files": 4
     },
     "decisions-0043-no-auto-updater-channel": {
-      "binding_sha256": "ce879778890d32fc2e58437955b2c276071717b928f7d56765f91fb1e01348ab",
+      "binding_sha256": "2523f060c08bdfb7a193f93aca87d977e982e3a117ea4ba8d87cdc73a5ba39c5",
       "document_sha256": "a0932fe9817d5a4f04455725de0f5cf60c3f3975087205f7786bb39d8874efc7",
       "path": "docs/decisions/0043-no-auto-updater-channel.md",
       "resolved_files": 6
@@ -487,31 +487,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "187d3e61c0e2f23d2758bd68df8768edc2657870187adda32f82153b23b773af",
+      "binding_sha256": "feff9201499770df59391749c0836176e9a48694aa6a0f3627d876343aebcaf5",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "4eafe757425bacc74aa71565f5513ee93c2f6445f9c09bb1123fa4ea46bb0413",
+      "binding_sha256": "be4dd9e9ae7a724159439e00bfddd0ce7983b1f7a53c9b7d274ecc3e4ecb62ee",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "0a935ffe024986f4d2f97a306d54240e87511a8f96817ad70e7177d4444a25bc",
+      "binding_sha256": "6493e195d0e21f3192f88adb021320e5f0f1fa26df5873e741390f862f90c370",
       "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "ced80ab3d954adbd5be14f5ffb674de505a0da2399572f2484165238877f5261",
+      "binding_sha256": "f5016fb54d28469003e95ee427c3bab07abe1c1ac89a96899ddf724e06777dbf",
       "document_sha256": "f969702a05605695ac75b397d8789b022be4e5856b9779606cb20d6952195221",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 8
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "071cb9b8fd2f8490aaf56050beafe824607518ffcdfcc0cea0a5497827b2f274",
+      "binding_sha256": "fc63bb5ac12a461a5e31714c09b84294f3f0b8d9c10169f2f07fae7d79cbea31",
       "document_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
@@ -649,7 +649,7 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "fa4b667577fce809a0b231687ec949f3c3817784d44eb93a8e07808a269be497",
+      "binding_sha256": "861895a28386383063b921dd104d3fc0ac514896194baa820048b0b9b31d68ca",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12
