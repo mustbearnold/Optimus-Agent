@@ -44,28 +44,28 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 
 ### Canonical root
 
-- Workspace wrapper: `/home/mustbearn/Projects/Optimus Agent`
-- Active repository: `/home/mustbearn/Projects/Optimus Agent/Repository`
+- Workspace / repository root: `/home/mustbearn/Projects/Optimus Agent`
 - **Main-only development (owner directive, 2026-08-04): all work happens
-  directly on `main` in `Repository/`. Zero linked worktrees, zero feature
+  directly on `main` in the project root. Zero linked worktrees, zero feature
   branches.** This is enforced by `.githooks/` (`pre-commit`, `post-checkout`,
   `reference-transaction`): commits off `main` are blocked, leaving `main`
   forces a return, and creating or moving any other branch is refused.
   `git worktree add` is therefore impossible. Do not attempt to bypass these
   hooks.
-- `Repository/` is the complete reproducible GitHub repository: product source,
-  tests, evaluation definitions, documentation, and build logic. It is the
-  active working copy of `main`; develop there directly.
+- `/home/mustbearn/Projects/Optimus Agent` is the complete reproducible GitHub
+  repository: product source, tests, evaluation definitions, documentation, and
+  build logic. It is the active working copy of `main`; develop there directly.
+  Machine-local support data lives in `Development/` (excluded from Git).
 - Resolve the repository path with `readlink -f` / `pwd -P` before editing.
   Compare resolved paths, never remembered aliases.
-- If the active workspace is not the Optimus `Repository/`, **stop**. Never
+- If the active workspace is not the Optimus project root, **stop**. Never
   edit another project from here.
 
 ### Allowed write scope
 
 Only create/modify/delete files under:
 
-1. `/home/mustbearn/Projects/Optimus Agent/Repository/**` (source, docs,
+1. `/home/mustbearn/Projects/Optimus Agent/**` (source, docs,
    skills, scripts, and local build/evidence)
 2. Optimus install/runtime paths **only when the task explicitly requires
    install, relaunch, uninstall, or live desktop verification**:
@@ -100,7 +100,7 @@ Do **not** edit, reorganize, install into, or “clean up”:
 ### Enforcement checklist (every Optimus development turn)
 
 1. Run `just orient` and confirm the workspace resolves to
-   `/home/mustbearn/Projects/Optimus Agent/Repository` on branch `main`.
+   `/home/mustbearn/Projects/Optimus Agent` on branch `main`.
 2. Before any write/patch/rm, assert the target path is inside that
    repository or an explicitly allowed Optimus install path above.
 3. Refuse cross-project drive-by fixes. If another project is implicated, report
@@ -232,7 +232,7 @@ If a proposed name collapses two planes, **stop and rename** before commit.
 Standing delivery contract (owner directive, 2026-08-04 — supersedes the
 2026-07-31 managed-delivery rules):
 
-- Develop directly on `main` in `Repository/`. Zero linked worktrees, zero
+- Develop directly on `main` in the project root. Zero linked worktrees, zero
   feature branches; the `.githooks/` enforcement makes this non-negotiable.
 - Commit directly with `git commit` on `main`. Keep commits small, verified,
   and conventional (`<emoji> <type>(<scope>): <summary>`).
