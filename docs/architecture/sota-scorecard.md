@@ -23,9 +23,9 @@ Wry optional. Do not read “tao+wry Windows desktop shell” below as the defau
 install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  
-**Validator:** `python scripts/check-parity-ledger.py`  
+**Validator:** `python scripts/gates/check-parity-ledger.py`  
 **Rule:** executable current-repository evidence outranks architecture blueprints and historical phase prose. A `parity` or `win` row requires an existing evidence path; every row's trajectory is either runnable (`cargo:`/`playwright:`, resolved to a real target by the validator) or pinned on the validator's shrink-only unclassified list.
-**Release-version gate:** `docs/architecture/optimus-version.json` plus `python scripts/optimus_version.py gate`. The 50 rows below are a planning rollup, not sufficient for a product-level Hermes parity claim. The strict v0.19.0 baseline contains 2,063 per-feature contracts.
+**Release-version gate:** `docs/architecture/optimus-version.json` plus `python scripts/tools/optimus_version.py gate`. The 50 rows below are a planning rollup, not sufficient for a product-level Hermes parity claim. The strict v0.19.0 baseline contains 2,063 per-feature contracts.
 
 ## Current ledger summary
 

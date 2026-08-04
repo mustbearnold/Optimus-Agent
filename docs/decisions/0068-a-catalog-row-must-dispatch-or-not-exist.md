@@ -11,13 +11,13 @@ knowledge_type: decision
 covers:
   - crates/optimus-packs/src/lib.rs
   - crates/optimus-packs/src/catalog.rs
-  - scripts/check-tool-coverage.py
+  - scripts/gates/check-tool-coverage.py
   - docs/architecture/parity-capability-ledger.json
 depends_on:
   - docs/decisions/0036-domain-modularity-single-catalog.md
 validated_by:
   - crates/optimus-kernel/tests/tool_coverage.rs
-  - scripts/check-tool-coverage.py
+  - scripts/gates/check-tool-coverage.py
   - scripts/verify.sh
 ---
 
@@ -73,7 +73,7 @@ paper, refusal at dispatch.
 
 - `crates/optimus-kernel/tests/tool_coverage.rs` proves the remaining five
   refuse with the typed unavailable contract and the seventeen dispatch.
-- `scripts/check-tool-coverage.py` pins the new counts.
+- `scripts/gates/check-tool-coverage.py` pins the new counts.
 
 ## Reconsider when
 

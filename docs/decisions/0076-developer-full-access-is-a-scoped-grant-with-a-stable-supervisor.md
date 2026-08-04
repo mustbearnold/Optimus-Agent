@@ -180,7 +180,7 @@ the existence of a new binary or a successful compile.
 - `crates/optimus-policy/src/developer_access.rs`
 - `crates/optimus-host/src/developer.rs`
 - `apps/optimus-tauri/src/main.rs`
-- `scripts/test_self_development.py`
+- `scripts/tests/test_self_development.py`
 - `crates/optimus-runtime/src/workspace_identity.rs`
 - `crates/optimus-runtime/src/command_envelope.rs`
 - `crates/optimus-kernel/src/lib.rs`
@@ -196,7 +196,7 @@ the existence of a new binary or a successful compile.
 - `crates/optimus-host/src/developer.rs`
 - `crates/optimus-host/src/chat.rs`
 - `crates/optimus-kernel/tests/tool_coverage.rs`
-- `scripts/test_self_development.py`
+- `scripts/tests/test_self_development.py`
 - `crates/optimus-runtime/tests/path_confinement.rs`
 - `apps/optimus-electron/test/ipc-allowlist.test.cjs`
 - `apps/optimus-ui/src/components/workbench/Composer.test.tsx`

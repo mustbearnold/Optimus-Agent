@@ -20,7 +20,7 @@ fn binding() -> CandidateBinding {
             });
             let output = Command::new(python)
                 .current_dir(workspace)
-                .arg("scripts/engineering_memory.py")
+                .arg("scripts/tools/engineering_memory.py")
                 .arg("binding")
                 .output()
                 .unwrap();

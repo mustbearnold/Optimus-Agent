@@ -9,15 +9,15 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - scripts/engineering_memory.py
-  - scripts/test_engineering_memory.py
+  - scripts/tools/engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
   - docs/runbooks/engineering-memory.md
   - skills/update-engineering-memory/**
   - AGENTS.md
 depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
 validated_by:
-  - scripts/test_engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
 ---
 
 # ADR-0032: Compact Engineering Memory facts and budgeted agent lenses
@@ -128,13 +128,13 @@ Do not weaken claim labels or merge with runtime memory.
 
 ## Relevant code
 
-- `scripts/engineering_memory.py`
-- `scripts/test_engineering_memory.py`
+- `scripts/tools/engineering_memory.py`
+- `scripts/tests/test_engineering_memory.py`
 - `skills/update-engineering-memory/SKILL.md`
 - `docs/engineering-memory/README.md`
 
 ## Relevant tests
 
-- `scripts/test_engineering_memory.py`
-- `python scripts/engineering_memory.py validate`
-- `python scripts/engineering_memory.py context --budget 3000`
+- `scripts/tests/test_engineering_memory.py`
+- `python scripts/tools/engineering_memory.py validate`
+- `python scripts/tools/engineering_memory.py context --budget 3000`

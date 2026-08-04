@@ -165,7 +165,7 @@ fresh human click when a durable project trust grant already covers it.
   option's accessible name rather than being visual-only. The CLI's former
   `open` policy alias is also removed:
   only the explicit word `unrestricted` disables effect checks.
-  `scripts/check-autonomy-profiles.py` holds both menus, both persistence paths,
+  `scripts/gates/check-autonomy-profiles.py` holds both menus, both persistence paths,
   both profile parsers, and the CLI policy parser against this vocabulary on
   every verify; its Wry rendering proof is scoped to the live access branch.
   Desktop Playwright coverage independently checks the rendered group order,

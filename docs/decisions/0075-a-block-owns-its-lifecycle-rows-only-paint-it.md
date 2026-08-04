@@ -202,7 +202,7 @@ open — markdown renders bold only, fenced code paints as body text.
 **Already-landed overlap.** Predictive slash completion exists and is
 non-modal (ADR-0074: the surface owns its catalog; suggestions overlay the
 transcript and borrow three keys). The performance harness
-(scripts/perf_harness.py, baseline docs/architecture/perf-baseline.json,
+(scripts/tools/perf_harness.py, baseline docs/architecture/perf-baseline.json,
 schema `optimus-perf/1`) measures the eight CLI turn scenarios offline; it
 does not measure terminal frames, and no input-to-render latency baseline
 exists anywhere.
@@ -513,7 +513,7 @@ app, because both consume the same host surface.
   unrestricted synonyms are refused (apps/optimus-tui/src/commands.rs:369-413
   with tests) — the July audit's U4 is closed; U2, U3, and U5 remain open as
   mapped.
-- **Confirmed current behaviour.** scripts/perf_harness.py and
+- **Confirmed current behaviour.** scripts/tools/perf_harness.py and
   docs/architecture/perf-baseline.json (`optimus-perf/1`) baseline the eight
   CLI turn scenarios; they do not measure terminal frames.
 - Phase 4 source and test changes are covered by the focused TUI unit and PTY

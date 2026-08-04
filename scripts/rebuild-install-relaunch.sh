@@ -455,8 +455,8 @@ check_release_policy() {
   local label="$1" parity_status_json
   local -a parity_fields=()
   step "$label"
-  (cd "$ROOT" && python3 scripts/optimus_version.py release-check)
-  parity_status_json="$(cd "$ROOT" && python3 scripts/optimus_version.py status --json)"
+  (cd "$ROOT" && python3 scripts/tools/optimus_version.py release-check)
+  parity_status_json="$(cd "$ROOT" && python3 scripts/tools/optimus_version.py status --json)"
   mapfile -t parity_fields < <(
     printf '%s' "$parity_status_json" | python3 -c '
 import json, sys

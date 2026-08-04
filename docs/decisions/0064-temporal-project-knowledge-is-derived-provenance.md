@@ -9,7 +9,7 @@ reviewed_on: 2026-08-01
 review_by: 2026-11-01
 knowledge_type: decision
 covers:
-  - scripts/project_knowledge.py
+  - scripts/tools/project_knowledge.py
   - specs/009-project-knowledge/project-knowledge.md
   - docs/repository-components.json
 depends_on:
@@ -17,8 +17,8 @@ depends_on:
   - docs/decisions/0062-source-and-development-are-separate-workspace-planes.md
   - docs/decisions/0063-documentation-is-a-governed-authority-plane.md
 validated_by:
-  - scripts/test_project_knowledge.py
-  - scripts/repository_ontology.py
+  - scripts/tests/test_project_knowledge.py
+  - scripts/tools/repository_ontology.py
 ---
 
 # ADR-0064: Temporal project knowledge is derived provenance
@@ -116,14 +116,14 @@ separation, disposable-projection rule or cleanup safety laws.
 
 ## Relevant code
 
-- `scripts/project_knowledge.py`
-- `scripts/repository_ontology.py`
-- `scripts/managed_project_cleanup.py`
+- `scripts/tools/project_knowledge.py`
+- `scripts/tools/repository_ontology.py`
+- `scripts/tools/managed_project_cleanup.py`
 - `scripts/managed_worktree_retirement.py`
 
 ## Relevant tests
 
-- `scripts/test_project_knowledge.py`
-- `scripts/test_managed_project_cleanup.py`
-- `scripts/test_managed_worktree_retirement.py`
+- `scripts/tests/test_project_knowledge.py`
+- `scripts/tests/test_managed_project_cleanup.py`
+- `scripts/tests/test_managed_worktree_retirement.py`
 - `scripts/verify.sh`

@@ -20,7 +20,7 @@ covers:
   - crates/optimus-kernel/src/codex_oauth.rs
   - crates/optimus-kernel/src/codex_responses.rs
   - crates/optimus-host/src/developer.rs
-  - scripts/development_efficiency.py
+  - scripts/tools/development_efficiency.py
 depends_on:
   - docs/decisions/0032-engineering-memory-compact-lenses.md
   - docs/decisions/0049-module-size-is-measured-honestly.md
@@ -30,7 +30,7 @@ validated_by:
   - crates/optimus-kernel/tests/openai_http.rs
   - crates/optimus-kernel/tests/codex_oauth.rs
   - crates/optimus-host/src/developer.rs
-  - scripts/test_development_efficiency.py
+  - scripts/tests/test_development_efficiency.py
 ---
 
 # ADR-0077: Verified progress per token is the development objective
@@ -70,7 +70,7 @@ the model call that consumed it.
    effort for mechanical transformations only when the same acceptance tests
    show equal verified progress. Deterministic local tools own formatting,
    filtering, batching, and test execution.
-6. `scripts/development_efficiency.py` is the compact local readout for wall
+6. `scripts/tools/development_efficiency.py` is the compact local readout for wall
    time, action percentiles, model/tool counts, provider token totals, and
    unknown accounting. It is diagnostic evidence, not a new authority plane.
 
@@ -104,7 +104,7 @@ the model call that consumed it.
 - Execution usage persistence and accounted/unaccounted aggregation: kernel
   execution test passes.
 - Developer action timing: host unit test passes.
-- Compact report and unknown accounting: `scripts/test_development_efficiency.py`
+- Compact report and unknown accounting: `scripts/tests/test_development_efficiency.py`
   passes.
 
 ## Conditions for reconsideration
@@ -130,11 +130,11 @@ neither is silently converted into a zero-cost claim.
 - `crates/optimus-kernel/src/model_usage.rs`
 - `crates/optimus-kernel/src/execution_timing.rs`
 - `crates/optimus-host/src/developer.rs`
-- `scripts/development_efficiency.py`
+- `scripts/tools/development_efficiency.py`
 
 ## Relevant tests
 
 - `crates/optimus-kernel/tests/openai_http.rs`
 - `crates/optimus-kernel/tests/codex_oauth.rs`
 - `crates/optimus-host/src/developer.rs`
-- `scripts/test_development_efficiency.py`
+- `scripts/tests/test_development_efficiency.py`

@@ -11,7 +11,7 @@ knowledge_type: engineering-memory-guide
 covers:
   - AGENTS.md
   - OPTIMUS_AGENTS.md
-  - scripts/engineering_memory.py
+  - scripts/tools/engineering_memory.py
   - skills/update-engineering-memory/**
 depends_on:
   - Cargo.toml
@@ -19,7 +19,7 @@ depends_on:
   - docs/decisions/0032-engineering-memory-compact-lenses.md
   - docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md
 validated_by:
-  - scripts/test_engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
 ---
 
 # Optimus Engineering Memory
@@ -89,18 +89,18 @@ be reported and resolved rather than blended.
 ## Commands
 
 ```text
-python scripts/engineering_memory.py check
-python scripts/engineering_memory.py context --budget 3000
-python scripts/engineering_memory.py impact --path crates/optimus-kernel/src/lib.rs
-python scripts/engineering_memory.py owner --path crates/optimus-packs/src/lib.rs
-python scripts/engineering_memory.py tools --available
-python scripts/engineering_memory.py stale
-python scripts/engineering_memory.py report
-python scripts/engineering_memory.py stat
-python scripts/engineering_memory.py generate
-python scripts/engineering_memory.py validate
-python scripts/engineering_memory.py validate --quick
-python scripts/engineering_memory.py binding > ../optimus-binding.json
+python scripts/tools/engineering_memory.py check
+python scripts/tools/engineering_memory.py context --budget 3000
+python scripts/tools/engineering_memory.py impact --path crates/optimus-kernel/src/lib.rs
+python scripts/tools/engineering_memory.py owner --path crates/optimus-packs/src/lib.rs
+python scripts/tools/engineering_memory.py tools --available
+python scripts/tools/engineering_memory.py stale
+python scripts/tools/engineering_memory.py report
+python scripts/tools/engineering_memory.py stat
+python scripts/tools/engineering_memory.py generate
+python scripts/tools/engineering_memory.py validate
+python scripts/tools/engineering_memory.py validate --quick
+python scripts/tools/engineering_memory.py binding > ../optimus-binding.json
 just project-status
 just path-history crates/optimus-kernel
 ```

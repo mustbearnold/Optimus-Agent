@@ -12,9 +12,9 @@ covers:
   - apps/optimus-tui/src/**
   - apps/optimus-cli/src/**
 validated_by:
-  - scripts/tui_e2e.py
-  - scripts/tui_feature_matrix.py
-  - scripts/tui_layout_playwright.cjs
+  - scripts/tools/tui_e2e.py
+  - scripts/tools/tui_feature_matrix.py
+  - scripts/tests/tui_layout_playwright.cjs
 ---
 
 # 010 — Surfaces: TUI and CLI

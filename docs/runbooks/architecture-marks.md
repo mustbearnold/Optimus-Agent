@@ -62,7 +62,7 @@ not auto-promote or re-prove marks.
 | Durability / crash safety | **S+++** | Work Graph crash-resume + ambiguous command non-replay; process-tree ownership before settle; session multi-link repair-on-open; campaign crash recover; workflow cancel idempotent. Operator contract: `optimus doctor` multi-DB inventory/quarantine + `doctor backup-list`; scope = process-local SQLite (external messaging exactly-once out of scope). |
 | Security boundary design | **S+++** | SmartDeny high-risk effects; exact grants; path preflight; skill class grants. Linux commands: confined bwrap (workspace-only RW; no full-root bind) under default `CommandFsEnvelope::Confined`; `UnrestrictedHost` is explicit break-glass. Windows: Job Object residual for Confined; `ConfinedNoNetwork` fail-closed. Shared egress helper for browser/web_search. Credential encryption residual is not a runtime authorization hole (documented). |
 | Domain modularity (packs/memory/skills/store) | **S+++** | Single `ToolDesc` authority in packs; kernel dispatches via `ToolInvocation` only. Memory/session/skills/EM planes separated with fail-closed ActionAuthorize + class-scoped skill grants. Store has no chat schema. Gate: `check-domain-modularity.py` + `domain_modularity` tests. |
-| Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
+| Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/gates/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
 | Multi-agent readiness | **S+++** | Two specialists (`workspace_writer`, `workspace_reader`); three registered workflows including `write_then_read_handoff` DAG; durable `WorkflowRunStore`; parent cancel tree. P12 closed the command-FS residual that blocked S+++ after P10. Still registered-only (no open-ended model spawn — out of P10 scope). |
 | Observability / eval | **S+++** | Offline integrity gate; store-backed causal reconstruction (`trace show` / `load_causal_turn`); versioned local export `optimus.causal.v1` (`trace export`) with home redaction; stable security-denial codes; cancel terminals reconstructible without logs. OTLP deferred (ADR-0037). |
 | UI architecture | **S+++** | Electron + React default install; Wry optional. IPC matrix: host ⊇ Electron = React; every host method classified invoke vs non-invoke; expanded critical set (approvals, scopes, term_run, jobs, sessions). Preview WebContentsView sandboxed (static tests). Renderer cannot mint `project_root_stage_native`. Cancel via host stream. |
@@ -137,7 +137,7 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as th
 - Architecture S+++ does **not** require claiming Hermes parity early.
 - Operator matrix documents pre-merge vs pre-release vs pre-parity-claim gates
   ([release-and-parity-gates.md](../architecture.md)).
-- S+++ grade claims are checked by `scripts/check-architecture-marks.py`.
+- S+++ grade claims are checked by `scripts/gates/check-architecture-marks.py`.
 
 ## Program phases
 

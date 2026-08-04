@@ -11,11 +11,11 @@ knowledge_type: decision
 covers:
   - AGENTS.md
   - justfile
-  - scripts/project_hygiene.py
+  - scripts/tools/project_hygiene.py
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
 validated_by:
-  - scripts/test_project_hygiene.py
+  - scripts/tests/test_project_hygiene.py
 ---
 
 # ADR-0062: Source and Development are separate workspace planes
@@ -131,13 +131,13 @@ The decision makes the invariant in the Decision section explicit and testable. 
 - `justfile`
 - `scripts/workspace_layout.py`
 - `scripts/managed_delivery.py`
-- `scripts/project_hygiene.py`
+- `scripts/tools/project_hygiene.py`
 
 ## Relevant tests
 
-- `scripts/test_workspace_layout.py`
-- `scripts/test_managed_delivery.py`
-- `scripts/test_project_hygiene.py`
+- `scripts/tests/test_workspace_layout.py`
+- `scripts/tests/test_managed_delivery.py`
+- `scripts/tests/test_project_hygiene.py`
 
 ## Repository naming addendum (2026-08-01)
 

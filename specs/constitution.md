@@ -15,8 +15,8 @@ covers:
 depends_on:
   - docs/decisions/0062-source-and-development-are-separate-workspace-planes.md
 validated_by:
-  - scripts/check-instruction-planes.py
-  - scripts/docs_system.py
+  - scripts/gates/check-instruction-planes.py
+  - scripts/tools/docs_system.py
 ---
 
 # Constitution — Optimus Agent

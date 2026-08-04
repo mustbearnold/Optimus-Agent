@@ -9,16 +9,16 @@ reviewed_on: 2026-08-01
 review_by: 2026-11-01
 knowledge_type: decision
 covers:
-  - scripts/project_knowledge.py
-  - scripts/project_knowledge_code.py
-  - scripts/project_knowledge_db.py
-  - scripts/test_project_knowledge.py
+  - scripts/tools/project_knowledge.py
+  - scripts/tools/project_knowledge_code.py
+  - scripts/tools/project_knowledge_db.py
+  - scripts/tests/test_project_knowledge.py
   - specs/009-project-knowledge/project-knowledge.md
 depends_on:
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md
   - docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md
 validated_by:
-  - scripts/test_project_knowledge.py
+  - scripts/tests/test_project_knowledge.py
   - scripts/verify.sh
 ---
 

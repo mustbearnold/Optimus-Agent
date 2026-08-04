@@ -14,10 +14,10 @@ covers:
   - apps/optimus-desktop/src/main.rs
   - scripts/rebuild-install-relaunch.sh
 validated_by:
-  - scripts/check-tauri-launch.py
-  - scripts/test_tui_feature_matrix.py
+  - scripts/gates/check-tauri-launch.py
+  - scripts/tests/test_tui_feature_matrix.py
   - apps/optimus-desktop/e2e/**
-  - scripts/test_rebuild_install_safety.py
+  - scripts/tests/test_rebuild_install_safety.py
 ---
 
 # 001 — Desktop shell
@@ -52,9 +52,9 @@ shell retained only as a legacy rollback surface.
   `window.__TAURI_INTERNALS__` is present, HTTP host mode for tests. [inferred]
 
 ## Acceptance criteria
-- [ ] A1. Given a clean checkout on main with the Tauri shell built, when `scripts/check-tauri-launch.py` runs, then it exits 0 and prints `TAURI_LAUNCH_OK` with a windowed surface.
+- [ ] A1. Given a clean checkout on main with the Tauri shell built, when `scripts/gates/check-tauri-launch.py` runs, then it exits 0 and prints `TAURI_LAUNCH_OK` with a windowed surface.
 - [ ] A2. Given the full gate spine, when `bash scripts/verify.sh all` runs, then the `tauri launch acceptance` tier passes and no electron tier is spawned.
-- [ ] A3. Given an installed product, when `scripts/check-product-complete-install.py` runs, then it reports `desktop_shell react-tauri` with no ElectronRollback action.
+- [ ] A3. Given an installed product, when `scripts/gates/check-product-complete-install.py` runs, then it reports `desktop_shell react-tauri` with no ElectronRollback action.
 - [ ] A4. Given the desktop e2e suite, when Playwright drives the React workbench over the host, then all specs pass including a chat round-trip.
 
 ## Out of scope

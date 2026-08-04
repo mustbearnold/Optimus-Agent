@@ -16,8 +16,8 @@ depends_on:
 
 validated_by:
   - crates/optimus-eval/tests/**
-  - scripts/repository_ontology.py
-  - scripts/docs_system.py
+  - scripts/tools/repository_ontology.py
+  - scripts/tools/docs_system.py
 ---
 
 # 008 — Evaluation

@@ -9,15 +9,15 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - scripts/engineering_memory.py
-  - scripts/test_engineering_memory.py
+  - scripts/tools/engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
   - docs/runbooks/engineering-memory.md
   - .gitignore
 depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
   - docs/decisions/0032-engineering-memory-compact-lenses.md
 validated_by:
-  - scripts/test_engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
 ---
 
 # ADR-0061: Generated Engineering Memory is a disposable cache
@@ -131,9 +131,9 @@ Memory with runtime or session memory.
 
 ## Relevant code
 
-- `scripts/engineering_memory.py`
+- `scripts/tools/engineering_memory.py`
 - `.gitignore`
 
 ## Relevant tests
 
-- `scripts/test_engineering_memory.py`
+- `scripts/tests/test_engineering_memory.py`

@@ -9,12 +9,12 @@ reviewed_on: 2026-08-01
 review_by: 2026-11-01
 knowledge_type: decision
 covers:
-  - scripts/optimus_version.py
+  - scripts/tools/optimus_version.py
   - docs/architecture/optimus-version.json
 depends_on:
   - docs/decisions/0024-hermes-parity-version-gate.md
 validated_by:
-  - scripts/test_optimus_version.py
+  - scripts/tests/test_optimus_version.py
   - scripts/verify.sh
 ---
 
@@ -63,9 +63,9 @@ Rejected: the data is an asset; only its gating role is the defect.
 
 ## Decision (proposed)
 
-Adopt B. Concretely: `scripts/optimus_version.py gate` re-keys to the
+Adopt B. Concretely: `scripts/tools/optimus_version.py gate` re-keys to the
 Optimus-native bars above; the Hermes evaluation moves to an explicit
-`scripts/optimus_version.py hermes-scorecard` (informational, never wired
+`scripts/tools/optimus_version.py hermes-scorecard` (informational, never wired
 into verify or land); `docs/architecture/optimus-version.json` release_rules
 re-key accordingly; the README status line names the native bar and its live
 state instead of "parity unverified."

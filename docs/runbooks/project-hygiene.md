@@ -9,10 +9,10 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: process
 covers:
-  - scripts/project_hygiene.py
+  - scripts/tools/project_hygiene.py
   - justfile
 validated_by:
-  - scripts/test_project_hygiene.py
+  - scripts/tests/test_project_hygiene.py
 ---
 
 # Project hygiene

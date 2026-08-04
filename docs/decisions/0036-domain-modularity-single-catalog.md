@@ -14,7 +14,7 @@ covers:
   - crates/optimus-skills/**
   - crates/optimus-store/**
   - crates/optimus-kernel/src/lib.rs
-  - scripts/check-domain-modularity.py
+  - scripts/gates/check-domain-modularity.py
 depends_on:
   - docs/decisions/0002-memory-invariants.md
   - docs/decisions/0005-skills-2.md
@@ -26,7 +26,7 @@ validated_by:
   - crates/optimus-skills/tests/skills_lifecycle.rs
   - crates/optimus-memory/tests/metamemory_mvp.rs
   - crates/optimus-runtime/tests/skill_bridge.rs
-  - scripts/check-domain-modularity.py
+  - scripts/gates/check-domain-modularity.py
 ---
 
 # ADR-0036: Domain modularity — single catalog and memory planes (P13)
@@ -56,7 +56,7 @@ script would fail if a second catalog or grant path appears.
    `Terminal` → commands). Engineering Memory and session rows never issue
    SmartDeny grants.
 3. **Store** owns Work Graph projections only — no chat message tables.
-4. **Gate:** `scripts/check-domain-modularity.py` plus
+4. **Gate:** `scripts/gates/check-domain-modularity.py` plus
    `crates/optimus-kernel/tests/domain_modularity.rs` and existing packs/skills/
    memory hold suites.
 
@@ -97,7 +97,7 @@ The decision makes the invariant in the Decision section explicit and testable. 
 - `crates/optimus-skills/tests/skills_lifecycle.rs`
 - `crates/optimus-memory/tests/metamemory_mvp.rs`
 - `crates/optimus-runtime/tests/skill_bridge.rs`
-- `scripts/check-domain-modularity.py`
+- `scripts/gates/check-domain-modularity.py`
 
 ## Relevant code
 
@@ -106,7 +106,7 @@ The decision makes the invariant in the Decision section explicit and testable. 
 - `crates/optimus-skills/**`
 - `crates/optimus-store/**`
 - `crates/optimus-kernel/src/lib.rs`
-- `scripts/check-domain-modularity.py`
+- `scripts/gates/check-domain-modularity.py`
 
 ## Relevant tests
 
@@ -115,4 +115,4 @@ The decision makes the invariant in the Decision section explicit and testable. 
 - `crates/optimus-skills/tests/skills_lifecycle.rs`
 - `crates/optimus-memory/tests/metamemory_mvp.rs`
 - `crates/optimus-runtime/tests/skill_bridge.rs`
-- `scripts/check-domain-modularity.py`
+- `scripts/gates/check-domain-modularity.py`

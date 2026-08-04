@@ -291,7 +291,7 @@ Revisit if any of the following holds:
 - `crates/optimus-engineering/tests/worktree_lifecycle.rs`
 - `crates/optimus-engineering/tests/resume_after_interrupt.rs`
 - `crates/optimus-kernel/tests/dev_run_containment.rs`
-- `scripts/check-crate-layers.py`, `scripts/check-project-bleed.py`
+- `scripts/gates/check-crate-layers.py`, `scripts/gates/check-project-bleed.py`
 
 ## Explicit non-claims
 

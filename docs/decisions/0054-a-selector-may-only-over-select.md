@@ -9,14 +9,14 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - scripts/impact_select.py
+  - scripts/tools/impact_select.py
   - justfile
 depends_on:
   - docs/decisions/0049-module-size-is-measured-honestly.md
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
 validated_by:
-  - scripts/test_impact_select.py
+  - scripts/tests/test_impact_select.py
 ---
 
 # ADR-0054: A test selector may only ever over-select
@@ -44,7 +44,7 @@ regression that ships with a green check next to it.
 ## Decision
 
 Focused verification exists (`just dev-check`, `just test-changed`,
-`just impact`), and every rule in `scripts/impact_select.py` is written in the
+`just impact`), and every rule in `scripts/tools/impact_select.py` is written in the
 direction that keeps its output a superset of what would actually fail.
 
 **1. Unknown escalates.** A changed path no rule classifies selects the entire
@@ -141,7 +141,7 @@ heuristic trades the one place where completeness is worth its cost.
 
 ## Evaluation evidence
 
-`scripts/test_impact_select.py` — 27 tests. The ones carrying the decision:
+`scripts/tests/test_impact_select.py` — 27 tests. The ones carrying the decision:
 
 - `test_a_path_no_rule_recognises_selects_everything`
 - `test_the_selector_cannot_shrink_itself`
@@ -162,7 +162,7 @@ Measured on this repository, warm cache: `cargo test -p optimus-engineering
 [ADR-0073](0073-an-unreachable-vertical-is-archived-not-carried.md) on
 2026-08-01; the ratio is what the measurement records, and any leaf crate
 reproduces it. This decision is unaffected — the selector lives in
-`scripts/impact_select.py`, not in the archived crate.)
+`scripts/tools/impact_select.py`, not in the archived crate.)
 
 ## Conditions for reconsideration
 
@@ -175,9 +175,9 @@ reproduces it. This decision is unaffected — the selector lives in
 
 ## Relevant code
 
-- `scripts/impact_select.py` — the four rules, the workspace closure, the plan.
+- `scripts/tools/impact_select.py` — the four rules, the workspace closure, the plan.
 - `justfile` — `impact`, `dev-check`, `test-changed`.
 
 ## Relevant tests
 
-- `scripts/test_impact_select.py`
+- `scripts/tests/test_impact_select.py`

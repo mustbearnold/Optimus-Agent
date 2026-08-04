@@ -10,7 +10,7 @@ review_by: 2026-11-01
 knowledge_type: repository-component-authority
 owns:
   - docs/repository-components.json
-  - scripts/repository_ontology.py
+  - scripts/tools/repository_ontology.py
   - evals/repository-orientation/questions-v1.json
 covers:
   - Cargo.toml
@@ -20,8 +20,8 @@ covers:
 depends_on:
   - AGENTS.md
 validated_by:
-  - scripts/test_repository_ontology.py
-  - scripts/docs_system.py
+  - scripts/tests/test_repository_ontology.py
+  - scripts/tools/docs_system.py
 ---
 
 # Repository component authority

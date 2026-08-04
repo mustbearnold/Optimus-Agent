@@ -183,7 +183,7 @@ surface's private vocabulary is how single catalogs stop being single.
   17-line `help()` array. `apps/optimus-tui/Cargo.toml` lists no `optimus-ops` dependency.
 - **Confirmed current behaviour.** `cargo test -p optimus-tui --lib` — 213 passed,
   0 failed. `cargo test -p optimus-tui --test pty` — 11 passed, 0 failed.
-- **Confirmed current behaviour.** `scripts/check-module-size.py` passes; the largest
+- **Confirmed current behaviour.** `scripts/gates/check-module-size.py` passes; the largest
   terminal module is `session.rs` at 796 production lines against the hard limit of 800,
   and `apps/optimus-tui/**` has no entry in `docs/architecture/module-size-baseline.json`.
 - **Inferred behaviour.** The 81% discard rate is arithmetic on the two lists as they

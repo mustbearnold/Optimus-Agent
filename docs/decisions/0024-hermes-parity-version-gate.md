@@ -14,8 +14,8 @@ covers:
   - docs/architecture/hermes-feature-evidence.json
   - docs/architecture/hermes-performance-evidence.json
   - docs/architecture/hermes-manual-capabilities.json
-  - scripts/optimus_version.py
-  - scripts/check-parity-ledger.py
+  - scripts/tools/optimus_version.py
+  - scripts/gates/check-parity-ledger.py
   - scripts/rebuild-install-relaunch.sh
   - scripts/rebuild-install-relaunch.ps1
   - apps/optimus-cli/src/main.rs
@@ -23,8 +23,8 @@ depends_on:
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
   - docs/architecture/parity-capability-ledger.json
 validated_by:
-  - scripts/test_optimus_version.py
-  - scripts/check-parity-ledger.py
+  - scripts/tests/test_optimus_version.py
+  - scripts/gates/check-parity-ledger.py
   - apps/optimus-cli/src/main.rs
 ---
 
@@ -155,31 +155,31 @@ the truth check on the path that can publish a misleading version.
 
 ## Evaluation evidence
 
-- `scripts/test_optimus_version.py` covers short/long option identity,
+- `scripts/tests/test_optimus_version.py` covers short/long option identity,
   collision preservation, numerical-version rejection, independent development
   versions, protocol proof, equal-or-faster comparisons, slower p95 rejection,
   and checked-in manifest integrity.
-- `scripts/check-parity-ledger.py` validates the rollup and version-system
+- `scripts/gates/check-parity-ledger.py` validates the rollup and version-system
   structural errors together.
 - `cargo test -p optimus-cli --all-targets -- --test-threads=1` compiles and
   tests the embedded version command.
 - `optimus version --json` is checked to avoid creating an Optimus home and to
   expose parity as null while unverified.
-- `scripts/optimus_version.py gate` is expected to fail until all blockers are
+- `scripts/tools/optimus_version.py gate` is expected to fail until all blockers are
   removed; `release-check` is expected to pass the independent `0.1.0`
   development version.
 
 ## Relevant code
 
-- `scripts/optimus_version.py`
-- `scripts/check-parity-ledger.py`
+- `scripts/tools/optimus_version.py`
+- `scripts/gates/check-parity-ledger.py`
 - `apps/optimus-cli/src/main.rs`
 - `scripts/rebuild-install-relaunch.sh`
 - `scripts/rebuild-install-relaunch.ps1`
 
 ## Relevant tests
 
-- `scripts/test_optimus_version.py`
+- `scripts/tests/test_optimus_version.py`
 - `apps/optimus-cli/tests/eval_compare.rs`
 - `apps/optimus-cli/tests/eval_report.rs`
 
@@ -204,7 +204,7 @@ process-wide `GIT_WORK_TREE` workaround is forbidden: it leaks into verification
 fixtures that intentionally create bare remotes and changes the meaning of
 their Git commands.
 
-`scripts/test_optimus_version.py` reproduces the shared `core.bare=true` shape
+`scripts/tests/test_optimus_version.py` reproduces the shared `core.bare=true` shape
 and a poisoned hook environment, then proves the scoped query sees the candidate
 worktree without mutating the process environment. This changes only repository
 discovery; the clean-tree promotion requirement remains unchanged.

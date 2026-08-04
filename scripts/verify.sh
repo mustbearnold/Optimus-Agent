@@ -223,53 +223,53 @@ reap() {
 tier_gates() {
   spawn_section "gates"
   spawn "fmt"                        cargo fmt --all -- --check
-  spawn "architecture-marks"         python3 scripts/check-architecture-marks.py
-  spawn "crate-layers"               python3 scripts/check-crate-layers.py
-  spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
-  spawn "instruction-planes"         python3 scripts/check-instruction-planes.py
-  spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
-  spawn "autonomy-profiles"          python3 scripts/check-autonomy-profiles.py
-  spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
-  spawn "project-bleed"              python3 scripts/check-project-bleed.py
-  spawn "tool-coverage"              python3 scripts/check-tool-coverage.py
-  spawn "observability"              python3 scripts/check-observability-gate.py
-  spawn "module-size"                python3 scripts/check-module-size.py
-  spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
-  spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
-  spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
-  spawn "version-validate"           python3 scripts/optimus_version.py validate
-  spawn "version-release-check"      python3 scripts/optimus_version.py release-check
-  spawn "lockfile-discipline"        python3 scripts/check-lockfile-discipline.py
-  spawn "engineering-memory"         python3 scripts/engineering_memory.py check
-  spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
-  spawn "documentation-contract"     python3 scripts/docs_system.py check
-  spawn "repository-ontology"        python3 scripts/repository_ontology.py check
-  spawn "temporal-project-knowledge" python3 scripts/project_knowledge.py check
+  spawn "architecture-marks"         python3 scripts/gates/check-architecture-marks.py
+  spawn "crate-layers"               python3 scripts/gates/check-crate-layers.py
+  spawn "domain-modularity"          python3 scripts/gates/check-domain-modularity.py
+  spawn "instruction-planes"         python3 scripts/gates/check-instruction-planes.py
+  spawn "desktop-ipc-matrix"         python3 scripts/gates/check-desktop-ipc-matrix.py
+  spawn "autonomy-profiles"          python3 scripts/gates/check-autonomy-profiles.py
+  spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
+  spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
+  spawn "tool-coverage"              python3 scripts/gates/check-tool-coverage.py
+  spawn "observability"              python3 scripts/gates/check-observability-gate.py
+  spawn "module-size"                python3 scripts/gates/check-module-size.py
+  spawn "product-complete-install"   python3 scripts/gates/check-product-complete-install.py
+  spawn "parity-ledger"              python3 scripts/gates/check-parity-ledger.py
+  spawn "neutral-fixtures"           python3 scripts/gates/check-neutral-fixtures.py
+  spawn "version-validate"           python3 scripts/tools/optimus_version.py validate
+  spawn "version-release-check"      python3 scripts/tools/optimus_version.py release-check
+  spawn "lockfile-discipline"        python3 scripts/gates/check-lockfile-discipline.py
+  spawn "engineering-memory"         python3 scripts/tools/engineering_memory.py check
+  spawn "engineering-memory-valid"   python3 scripts/tools/engineering_memory.py validate
+  spawn "documentation-contract"     python3 scripts/tools/docs_system.py check
+  spawn "repository-ontology"        python3 scripts/tools/repository_ontology.py check
+  spawn "temporal-project-knowledge" python3 scripts/tools/project_knowledge.py check
 
   spawn_section "gate self-tests"
-  spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
-  spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
-  spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
-  spawn "test_docs_system"           python3 scripts/test_docs_system.py
-  spawn "test_repository_ontology"   python3 scripts/test_repository_ontology.py
-  spawn "test_project_knowledge"      python3 scripts/test_project_knowledge.py
-  spawn "test_managed_project_cleanup" python3 scripts/test_managed_project_cleanup.py
-  spawn "test_impact_select"         python3 scripts/test_impact_select.py
-  spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
-  spawn "test_perf_harness"          python3 scripts/test_perf_harness.py
-  spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
-  spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
-  spawn "test_synthetic_user_lab"    python3 scripts/test_synthetic_user_lab.py
-  spawn "test_synthetic_simulator"   python3 scripts/test_synthetic_user_simulator.py
-  spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
-  spawn "test_module_size"           python3 scripts/test_module_size.py
-  spawn "test_autonomy_profiles"     python3 scripts/test_autonomy_profiles.py
-  spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
-  spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
-  spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
-  spawn "test_tui_feature_matrix"    python3 scripts/test_tui_feature_matrix.py
-  spawn "test_verify_gate_parity"    python3 scripts/test_verify_gate_parity.py
-  spawn "test_lockfile_discipline"   python3 scripts/test_lockfile_discipline.py
+  spawn "test_architecture_marks"    python3 scripts/tests/test_architecture_marks.py
+  spawn "test_desktop_ipc_matrix"    python3 scripts/tests/test_desktop_ipc_matrix.py
+  spawn "test_engineering_memory"    python3 scripts/tests/test_engineering_memory.py
+  spawn "test_docs_system"           python3 scripts/tests/test_docs_system.py
+  spawn "test_repository_ontology"   python3 scripts/tests/test_repository_ontology.py
+  spawn "test_project_knowledge"      python3 scripts/tests/test_project_knowledge.py
+  spawn "test_managed_project_cleanup" python3 scripts/tests/test_managed_project_cleanup.py
+  spawn "test_impact_select"         python3 scripts/tests/test_impact_select.py
+  spawn "test_instruction_planes"    python3 scripts/tests/test_instruction_planes.py
+  spawn "test_perf_harness"          python3 scripts/tests/test_perf_harness.py
+  spawn "test_project_hygiene"       python3 scripts/tests/test_project_hygiene.py
+  spawn "test_live_smoke"            python3 scripts/tests/test_live_smoke.py
+  spawn "test_synthetic_user_lab"    python3 scripts/tests/test_synthetic_user_lab.py
+  spawn "test_synthetic_simulator"   python3 scripts/tests/test_synthetic_user_simulator.py
+  spawn "test_tool_coverage_gate"    python3 scripts/tests/test_tool_coverage_gate.py
+  spawn "test_module_size"           python3 scripts/tests/test_module_size.py
+  spawn "test_autonomy_profiles"     python3 scripts/tests/test_autonomy_profiles.py
+  spawn "test_optimus_version"       python3 scripts/tests/test_optimus_version.py
+  spawn "test_rebuild_install"       python3 scripts/tests/test_rebuild_install_safety.py
+  spawn "test_verify_skip_report"    python3 scripts/tests/test_verify_skip_report.py
+  spawn "test_tui_feature_matrix"    python3 scripts/tests/test_tui_feature_matrix.py
+  spawn "test_verify_gate_parity"    python3 scripts/tests/test_verify_gate_parity.py
+  spawn "test_lockfile_discipline"   python3 scripts/tests/test_lockfile_discipline.py
   reap
 }
 
@@ -302,7 +302,7 @@ tier_live() {
   if [ ! -x target/debug/optimus ]; then
     run "build optimus cli" cargo build -p optimus-cli
   fi
-  run "live smoke (codex)" python3 scripts/live_smoke.py
+  run "live smoke (codex)" python3 scripts/tools/live_smoke.py
   # Browser success needs the public web (loopback is refused by the SSRF
   # law), so its dispatch-path test is network-marked and runs here.
   run "browser success (network)" \
@@ -354,22 +354,22 @@ tier_ui() {
     run "build react ui" bun run --cwd apps/optimus-ui build
     run "build optimus cli" cargo build -p optimus-cli
     run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
-    run "tui e2e" python3 scripts/tui_e2e.py
-    run "tui feature matrix" python3 scripts/tui_feature_matrix.py
+    run "tui e2e" python3 scripts/tools/tui_e2e.py
+    run "tui feature matrix" python3 scripts/tools/tui_feature_matrix.py
     # Launch acceptance for the Tauri desktop shell: supervised launch,
     # readiness marker, windowed surface, and stable process. Requires a
     # display like the TUI tiers above.
     if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
       if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-        run "tauri launch acceptance" xvfb-run -a python3 scripts/check-tauri-launch.py
+        run "tauri launch acceptance" xvfb-run -a python3 scripts/gates/check-tauri-launch.py
       else
-        run "tauri launch acceptance" python3 scripts/check-tauri-launch.py
+        run "tauri launch acceptance" python3 scripts/gates/check-tauri-launch.py
       fi
     else
       skip "tauri launch acceptance" "no display and no xvfb-run"
     fi
     if [ -d node_modules ] && (bunx playwright --version >/dev/null 2>&1); then
-      run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
+      run "tui layout (playwright)" bun scripts/tests/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "bun install in workspace root"
     fi
@@ -378,10 +378,10 @@ tier_ui() {
     # so a rule that stops detecting its defect fails the gate rather than
     # reporting a clean shell.
     if [ -d node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
-      run "ui layout audit" node scripts/ui_layout_audit.cjs
+      run "ui layout audit" node scripts/tests/ui_layout_audit.cjs
       # Same rules, the engine the product ships: WebKitGTK. Skips itself when
       # the introspection bindings are absent.
-      run "ui layout audit (webkit)" python3 scripts/ui_layout_audit_webkit.py
+      run "ui layout audit (webkit)" python3 scripts/tools/ui_layout_audit_webkit.py
     else
       skip "ui layout audit" "bun install + bun run --cwd apps/optimus-ui build"
       skip "ui layout audit (webkit)" "bun install + bun run --cwd apps/optimus-ui build"
@@ -432,53 +432,53 @@ tier_all() {
 
   spawn_section "gates"
   spawn "fmt"                        cargo fmt --all -- --check
-  spawn "architecture-marks"         python3 scripts/check-architecture-marks.py
-  spawn "crate-layers"               python3 scripts/check-crate-layers.py
-  spawn "domain-modularity"          python3 scripts/check-domain-modularity.py
-  spawn "instruction-planes"         python3 scripts/check-instruction-planes.py
-  spawn "desktop-ipc-matrix"         python3 scripts/check-desktop-ipc-matrix.py
-  spawn "autonomy-profiles"          python3 scripts/check-autonomy-profiles.py
-  spawn "project-scope"              python3 scripts/check-project-scope-assertions.py
-  spawn "project-bleed"              python3 scripts/check-project-bleed.py
-  spawn "tool-coverage"              python3 scripts/check-tool-coverage.py
-  spawn "observability"              python3 scripts/check-observability-gate.py
-  spawn "module-size"                python3 scripts/check-module-size.py
-  spawn "product-complete-install"   python3 scripts/check-product-complete-install.py
-  spawn "parity-ledger"              python3 scripts/check-parity-ledger.py
-  spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
-  spawn "version-validate"           python3 scripts/optimus_version.py validate
-  spawn "version-release-check"      python3 scripts/optimus_version.py release-check
-  spawn "lockfile-discipline"        python3 scripts/check-lockfile-discipline.py
-  spawn "engineering-memory"         python3 scripts/engineering_memory.py check
-  spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
-  spawn "documentation-contract"     python3 scripts/docs_system.py check
-  spawn "repository-ontology"        python3 scripts/repository_ontology.py check
-  spawn "temporal-project-knowledge" python3 scripts/project_knowledge.py check
+  spawn "architecture-marks"         python3 scripts/gates/check-architecture-marks.py
+  spawn "crate-layers"               python3 scripts/gates/check-crate-layers.py
+  spawn "domain-modularity"          python3 scripts/gates/check-domain-modularity.py
+  spawn "instruction-planes"         python3 scripts/gates/check-instruction-planes.py
+  spawn "desktop-ipc-matrix"         python3 scripts/gates/check-desktop-ipc-matrix.py
+  spawn "autonomy-profiles"          python3 scripts/gates/check-autonomy-profiles.py
+  spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
+  spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
+  spawn "tool-coverage"              python3 scripts/gates/check-tool-coverage.py
+  spawn "observability"              python3 scripts/gates/check-observability-gate.py
+  spawn "module-size"                python3 scripts/gates/check-module-size.py
+  spawn "product-complete-install"   python3 scripts/gates/check-product-complete-install.py
+  spawn "parity-ledger"              python3 scripts/gates/check-parity-ledger.py
+  spawn "neutral-fixtures"           python3 scripts/gates/check-neutral-fixtures.py
+  spawn "version-validate"           python3 scripts/tools/optimus_version.py validate
+  spawn "version-release-check"      python3 scripts/tools/optimus_version.py release-check
+  spawn "lockfile-discipline"        python3 scripts/gates/check-lockfile-discipline.py
+  spawn "engineering-memory"         python3 scripts/tools/engineering_memory.py check
+  spawn "engineering-memory-valid"   python3 scripts/tools/engineering_memory.py validate
+  spawn "documentation-contract"     python3 scripts/tools/docs_system.py check
+  spawn "repository-ontology"        python3 scripts/tools/repository_ontology.py check
+  spawn "temporal-project-knowledge" python3 scripts/tools/project_knowledge.py check
 
   spawn_section "gate self-tests"
-  spawn "test_architecture_marks"    python3 scripts/test_architecture_marks.py
-  spawn "test_desktop_ipc_matrix"    python3 scripts/test_desktop_ipc_matrix.py
-  spawn "test_engineering_memory"    python3 scripts/test_engineering_memory.py
-  spawn "test_docs_system"           python3 scripts/test_docs_system.py
-  spawn "test_repository_ontology"   python3 scripts/test_repository_ontology.py
-  spawn "test_project_knowledge"      python3 scripts/test_project_knowledge.py
-  spawn "test_managed_project_cleanup" python3 scripts/test_managed_project_cleanup.py
-  spawn "test_impact_select"         python3 scripts/test_impact_select.py
-  spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
-  spawn "test_perf_harness"          python3 scripts/test_perf_harness.py
-  spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
-  spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
-  spawn "test_synthetic_user_lab"    python3 scripts/test_synthetic_user_lab.py
-  spawn "test_synthetic_simulator"   python3 scripts/test_synthetic_user_simulator.py
-  spawn "test_tool_coverage_gate"    python3 scripts/test_tool_coverage_gate.py
-  spawn "test_module_size"           python3 scripts/test_module_size.py
-  spawn "test_autonomy_profiles"     python3 scripts/test_autonomy_profiles.py
-  spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
-  spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
-  spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
-  spawn "test_tui_feature_matrix"    python3 scripts/test_tui_feature_matrix.py
-  spawn "test_verify_gate_parity"    python3 scripts/test_verify_gate_parity.py
-  spawn "test_lockfile_discipline"   python3 scripts/test_lockfile_discipline.py
+  spawn "test_architecture_marks"    python3 scripts/tests/test_architecture_marks.py
+  spawn "test_desktop_ipc_matrix"    python3 scripts/tests/test_desktop_ipc_matrix.py
+  spawn "test_engineering_memory"    python3 scripts/tests/test_engineering_memory.py
+  spawn "test_docs_system"           python3 scripts/tests/test_docs_system.py
+  spawn "test_repository_ontology"   python3 scripts/tests/test_repository_ontology.py
+  spawn "test_project_knowledge"      python3 scripts/tests/test_project_knowledge.py
+  spawn "test_managed_project_cleanup" python3 scripts/tests/test_managed_project_cleanup.py
+  spawn "test_impact_select"         python3 scripts/tests/test_impact_select.py
+  spawn "test_instruction_planes"    python3 scripts/tests/test_instruction_planes.py
+  spawn "test_perf_harness"          python3 scripts/tests/test_perf_harness.py
+  spawn "test_project_hygiene"       python3 scripts/tests/test_project_hygiene.py
+  spawn "test_live_smoke"            python3 scripts/tests/test_live_smoke.py
+  spawn "test_synthetic_user_lab"    python3 scripts/tests/test_synthetic_user_lab.py
+  spawn "test_synthetic_simulator"   python3 scripts/tests/test_synthetic_user_simulator.py
+  spawn "test_tool_coverage_gate"    python3 scripts/tests/test_tool_coverage_gate.py
+  spawn "test_module_size"           python3 scripts/tests/test_module_size.py
+  spawn "test_autonomy_profiles"     python3 scripts/tests/test_autonomy_profiles.py
+  spawn "test_optimus_version"       python3 scripts/tests/test_optimus_version.py
+  spawn "test_rebuild_install"       python3 scripts/tests/test_rebuild_install_safety.py
+  spawn "test_verify_skip_report"    python3 scripts/tests/test_verify_skip_report.py
+  spawn "test_tui_feature_matrix"    python3 scripts/tests/test_tui_feature_matrix.py
+  spawn "test_verify_gate_parity"    python3 scripts/tests/test_verify_gate_parity.py
+  spawn "test_lockfile_discipline"   python3 scripts/tests/test_lockfile_discipline.py
 
   spawn_section "compile"
   spawn "cargo check" cargo check --workspace --all-targets
@@ -513,22 +513,22 @@ tier_all() {
     run "build react ui" bun run --cwd apps/optimus-ui build
     run "build optimus cli" cargo build -p optimus-cli
     run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
-    run "tui e2e" python3 scripts/tui_e2e.py
-    run "tui feature matrix" python3 scripts/tui_feature_matrix.py
+    run "tui e2e" python3 scripts/tools/tui_e2e.py
+    run "tui feature matrix" python3 scripts/tools/tui_feature_matrix.py
     # Launch acceptance for the Tauri desktop shell: supervised launch,
     # readiness marker, windowed surface, and stable process. Requires a
     # display like the TUI tiers above.
     if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
       if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-        run "tauri launch acceptance" xvfb-run -a python3 scripts/check-tauri-launch.py
+        run "tauri launch acceptance" xvfb-run -a python3 scripts/gates/check-tauri-launch.py
       else
-        run "tauri launch acceptance" python3 scripts/check-tauri-launch.py
+        run "tauri launch acceptance" python3 scripts/gates/check-tauri-launch.py
       fi
     else
       skip "tauri launch acceptance" "no display and no xvfb-run"
     fi
     if [ -d node_modules ] && (bunx playwright --version >/dev/null 2>&1); then
-      run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
+      run "tui layout (playwright)" bun scripts/tests/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "bun install in workspace root"
     fi
@@ -537,10 +537,10 @@ tier_all() {
     # so a rule that stops detecting its defect fails the gate rather than
     # reporting a clean shell.
     if [ -d node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
-      run "ui layout audit" node scripts/ui_layout_audit.cjs
+      run "ui layout audit" node scripts/tests/ui_layout_audit.cjs
       # Same rules, the engine the product ships: WebKitGTK. Skips itself when
       # the introspection bindings are absent.
-      run "ui layout audit (webkit)" python3 scripts/ui_layout_audit_webkit.py
+      run "ui layout audit (webkit)" python3 scripts/tools/ui_layout_audit_webkit.py
     else
       skip "ui layout audit" "bun install + bun run --cwd apps/optimus-ui build"
       skip "ui layout audit (webkit)" "bun install + bun run --cwd apps/optimus-ui build"

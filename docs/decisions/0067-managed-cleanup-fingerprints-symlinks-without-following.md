@@ -9,14 +9,14 @@ reviewed_on: 2026-08-01
 review_by: 2026-11-01
 knowledge_type: decision
 covers:
-  - scripts/managed_project_cleanup.py
-  - scripts/test_managed_project_cleanup.py
+  - scripts/tools/managed_project_cleanup.py
+  - scripts/tests/test_managed_project_cleanup.py
 depends_on:
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md
   - docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md
   - specs/009-project-knowledge/project-knowledge.md
 validated_by:
-  - scripts/test_managed_project_cleanup.py
+  - scripts/tests/test_managed_project_cleanup.py
   - scripts/verify.sh
 ---
 
@@ -71,7 +71,7 @@ and `shutil.rmtree` unlinks symlink entries without traversing their targets.
 
 ## Evaluation evidence
 
-- `scripts/test_managed_project_cleanup.py` proves fingerprints change when a
+- `scripts/tests/test_managed_project_cleanup.py` proves fingerprints change when a
   link is retargeted, dangling links fingerprint without error, symlink
   targets outside the candidate survive execution, and a symlink candidate
   root still refuses.

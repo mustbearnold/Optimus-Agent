@@ -19,7 +19,7 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/tests/dev_run_containment.rs
   - crates/optimus-kernel/tests/dev_run_trust.rs
-  - scripts/test_repository_ontology.py
+  - scripts/tests/test_repository_ontology.py
 ---
 
 # ADR-0073: An unreachable vertical is archived, not carried
@@ -45,7 +45,7 @@ substrate" — together with exactly two exits and a deadline:
 > `review_by`: 2026-10-31
 
 That deadline is not decorative. `validate_database` in
-`scripts/repository_ontology.py` raises `lifecycle review expired on <date>` for
+`scripts/tools/repository_ontology.py` raises `lifecycle review expired on <date>` for
 an incubating row past its review date, so the repository-wide gate turns red on
 2026-11-01 whether or not anyone decides. The row was written by someone who
 understood that an unmade decision is still a decision, and arranged for it to
@@ -70,7 +70,7 @@ component row already named. This ADR takes the second one.
 
 `crates/optimus-engineering` is deleted, along with its workspace `members`
 entry, its `[workspace.dependencies]` entry, and its component-database row.
-The layer rule in `scripts/check-crate-layers.py` that kept it below the control
+The layer rule in `scripts/gates/check-crate-layers.py` that kept it below the control
 plane is removed with the crate it constrained.
 
 Removal is from the working tree, not from history. The crate remains readable
@@ -93,8 +93,8 @@ Superseded by this decision, and marked `status: historical`:
 **[ADR-0054](0054-a-selector-may-only-over-select.md) is not superseded and
 remains current.** It sits inside the same numeric run and reads as part of the
 same series, but its decision was never implemented in the crate: it covers
-`scripts/impact_select.py` and the `justfile`, and it is validated by
-`scripts/test_impact_select.py`. That selector is live, gated, and used by every
+`scripts/tools/impact_select.py` and the `justfile`, and it is validated by
+`scripts/tests/test_impact_select.py`. That selector is live, gated, and used by every
 `just check` in this repository. Superseding it because of its neighbours would
 have retired a working invariant on the strength of an adjacency.
 
@@ -212,7 +212,7 @@ with no caller and no recorded reason to exist.
   misconception it corrected no longer has a subject. A case asserting the
   removal replaces it, so an agent that has read stale material is corrected by
   the same mechanism.
-- `scripts/test_impact_select.py` no longer uses the crate as its leaf-package
+- `scripts/tests/test_impact_select.py` no longer uses the crate as its leaf-package
   fixture; the ADR-0054 selector it validates is unchanged.
 - The `2026-10-31` incubation deadline is discharged. No component row is
   waiting on a lifecycle decision.
@@ -234,7 +234,7 @@ with no caller and no recorded reason to exist.
 - `crates/optimus-kernel/tests/dev_run_containment.rs` and
   `dev_run_trust.rs` — the retained containment property still holds with the
   crate gone.
-- `scripts/test_repository_ontology.py` — the component database validates with
+- `scripts/tests/test_repository_ontology.py` — the component database validates with
   no row for the removed crate and no unclassified path left behind.
 - `just verify` — the full gate passes with 18 workspace members.
 
@@ -254,13 +254,13 @@ either way; the ADRs are the right one.
 - `docs/repository-components.json` — component authority
 - `crates/optimus-kernel/src/dev_run.rs` — retained session-to-worktree binding
 - `crates/optimus-kernel/src/project_authority.rs` — `dev_run_scope`
-- `scripts/check-crate-layers.py` — layer rules, with the crate's rule removed
+- `scripts/gates/check-crate-layers.py` — layer rules, with the crate's rule removed
 
 ## Relevant tests
 
 - `crates/optimus-kernel/tests/dev_run_containment.rs`
 - `crates/optimus-kernel/tests/dev_run_trust.rs`
-- `scripts/test_repository_ontology.py`
+- `scripts/tests/test_repository_ontology.py`
 - `evals/repository-orientation/questions-v1.json`
 
 ## Explicit non-claims

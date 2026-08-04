@@ -9,11 +9,11 @@ reviewed_on: 2026-08-05
 review_by: 2026-10-31
 knowledge_type: specification
 covers:
-  - scripts/project_knowledge.py
-  - scripts/project_knowledge_code.py
-  - scripts/project_knowledge_db.py
+  - scripts/tools/project_knowledge.py
+  - scripts/tools/project_knowledge_code.py
+  - scripts/tools/project_knowledge_db.py
 validated_by:
-  - scripts/test_project_knowledge.py
+  - scripts/tests/test_project_knowledge.py
 ---
 
 # 009 — Temporal project knowledge
@@ -30,7 +30,7 @@ Memory, runtime memory, and retrieval indexes.
 
 ## Requirements
 
-- R1. The database MUST be generated (`scripts/project_knowledge.py
+- R1. The database MUST be generated (`scripts/tools/project_knowledge.py
   generate`), content-addressed by its identity, and gitignored; generated
   JSON is not delivery state.
 - R2. The generator MUST NOT depend on machine-local state
@@ -41,7 +41,7 @@ Memory, runtime memory, and retrieval indexes.
   interval graph semantics.
 
 ## Acceptance criteria
-- [ ] A1. Given the current tree, when `scripts/project_knowledge.py generate` runs, then the temporal database is produced with a stable identity and `scripts/test_project_knowledge.py` passes.
+- [ ] A1. Given the current tree, when `scripts/tools/project_knowledge.py generate` runs, then the temporal database is produced with a stable identity and `scripts/tests/test_project_knowledge.py` passes.
 
 ## Out of scope
 
@@ -53,5 +53,5 @@ Memory, runtime memory, and retrieval indexes.
 
 ## Links
 
-Code: scripts/project_knowledge.py · ADRs: 0064–0069 · Ontology:
+Code: scripts/tools/project_knowledge.py · ADRs: 0064–0069 · Ontology:
 temporal-project-knowledge

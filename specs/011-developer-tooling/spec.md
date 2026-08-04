@@ -22,9 +22,9 @@ depends_on:
 
 validated_by:
   - scripts/verify.sh
-  - scripts/test_verify_gate_parity.py
-  - scripts/test_instruction_planes.py
-  - scripts/test_verify_skip_report.py
+  - scripts/tests/test_verify_gate_parity.py
+  - scripts/tests/test_instruction_planes.py
+  - scripts/tests/test_verify_skip_report.py
 ---
 
 # 011 — Developer tooling
@@ -76,6 +76,6 @@ firewall, and the main-only delivery law enforced by `.githooks/`.
 
 ## Links
 
-Code: scripts/verify.sh, scripts/docs_system.py, scripts/engineering_memory.py,
-scripts/repository_ontology.py, .githooks · Tests: gate self-tests · ADRs:
+Code: scripts/verify.sh, scripts/tools/docs_system.py, scripts/tools/engineering_memory.py,
+scripts/tools/repository_ontology.py, .githooks · Tests: gate self-tests · ADRs:
 0049, 0062 (historical) · Ontology: repository-root, development-hooks

@@ -326,9 +326,9 @@ if (-not $python) {
 Write-Step "Checking Optimus/Hermes version policy"
 Push-Location $root
 try {
-  & $python.Source scripts/optimus_version.py release-check
+  & $python.Source scripts/tools/optimus_version.py release-check
   if ($LASTEXITCODE -ne 0) { throw "Optimus/Hermes release-version check failed" }
-  $parityJson = (& $python.Source scripts/optimus_version.py status --json | Out-String)
+  $parityJson = (& $python.Source scripts/tools/optimus_version.py status --json | Out-String)
   if ($LASTEXITCODE -ne 0) { throw "Could not read Optimus/Hermes version metadata" }
   $parityStatus = $parityJson | ConvertFrom-Json
 } finally {
@@ -381,9 +381,9 @@ $builtCliSha256 = (Get-FileHash -LiteralPath $builtCli -Algorithm SHA256).Hash.T
 Write-Step "Rechecking Optimus/Hermes version policy and selected binaries"
 Push-Location $root
 try {
-  & $python.Source scripts/optimus_version.py release-check
+  & $python.Source scripts/tools/optimus_version.py release-check
   if ($LASTEXITCODE -ne 0) { throw "Optimus/Hermes release-version recheck failed" }
-  $parityJson = (& $python.Source scripts/optimus_version.py status --json | Out-String)
+  $parityJson = (& $python.Source scripts/tools/optimus_version.py status --json | Out-String)
   if ($LASTEXITCODE -ne 0) { throw "Could not reread Optimus/Hermes version metadata" }
   $parityStatus = $parityJson | ConvertFrom-Json
 } finally {

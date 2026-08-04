@@ -14,14 +14,14 @@ covers:
   - crates/optimus-artifacts/**
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-runtime/src/lib.rs
-  - scripts/check-crate-layers.py
+  - scripts/gates/check-crate-layers.py
   - Cargo.toml
 depends_on:
   - docs/decisions/0001-kernel-and-work-graph.md
   - docs/decisions/0022-versioned-agent-and-workflow-contracts.md
   - docs/decisions/0033-multi-agent-dag-execution.md
 validated_by:
-  - scripts/check-crate-layers.py
+  - scripts/gates/check-crate-layers.py
   - crates/optimus-kernel/tests/agent_contracts.rs
   - crates/optimus-kernel/tests/workflow_dag.rs
   - crates/optimus-kernel/tests/specialist_vertical.rs
@@ -61,7 +61,7 @@ eval/ops/agent/workflow/artifacts cannot re-form a god module.
    `browser.rs` stays the product effector facade (HTTP + CDP factory). Full
    HTTP move into `optimus-browser` is deferred without blocking control-plane
    S+++ for agent/workflow/artifacts peels.
-7. **Layer lint:** `scripts/check-crate-layers.py` enforces the forbidden and
+7. **Layer lint:** `scripts/gates/check-crate-layers.py` enforces the forbidden and
    required edges above.
 
 ## Dependency graph
@@ -108,7 +108,7 @@ existing ops/eval extraction pattern.
 
 ## Evaluation evidence
 
-- `python3 scripts/check-crate-layers.py` exits 0
+- `python3 scripts/gates/check-crate-layers.py` exits 0
 - Kernel multi-agent/contract tests green against re-exports
 - `cargo check -p optimus-agent -p optimus-workflow -p optimus-artifacts`
 
@@ -126,7 +126,7 @@ existing ops/eval extraction pattern.
 - `crates/optimus-artifacts/`
 - `crates/optimus-kernel/src/lib.rs`
 - `crates/optimus-runtime/src/lib.rs` (`CancellationToken`)
-- `scripts/check-crate-layers.py`
+- `scripts/gates/check-crate-layers.py`
 
 ## Relevant tests
 

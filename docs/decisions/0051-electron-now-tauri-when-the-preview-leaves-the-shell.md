@@ -19,8 +19,8 @@ depends_on:
   - docs/decisions/0040-shared-browser-contract.md
   - docs/decisions/0045-agent-host-and-surface-transports.md
 validated_by:
-  - scripts/check-desktop-ipc-matrix.py
-  - scripts/check-module-size.py
+  - scripts/gates/check-desktop-ipc-matrix.py
+  - scripts/gates/check-module-size.py
 ---
 
 # ADR-0051: Tauri primary, Electron rollback during preview parity

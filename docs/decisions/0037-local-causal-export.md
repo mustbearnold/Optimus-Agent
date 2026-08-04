@@ -11,13 +11,13 @@ knowledge_type: decision
 covers:
   - crates/optimus-kernel/src/causal.rs
   - apps/optimus-cli/src/main.rs
-  - scripts/check-observability-gate.py
+  - scripts/gates/check-observability-gate.py
 depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
 validated_by:
   - crates/optimus-kernel/tests/causal_trace.rs
-  - scripts/check-observability-gate.py
+  - scripts/gates/check-observability-gate.py
 ---
 
 # ADR-0037: Local causal export (not OTLP) — P14
@@ -77,15 +77,15 @@ The decision makes the invariant in the Decision section explicit and testable. 
 ## Evaluation evidence
 
 - `crates/optimus-kernel/tests/causal_trace.rs`
-- `scripts/check-observability-gate.py`
+- `scripts/gates/check-observability-gate.py`
 
 ## Relevant code
 
 - `crates/optimus-kernel/src/causal.rs`
 - `apps/optimus-cli/src/main.rs`
-- `scripts/check-observability-gate.py`
+- `scripts/gates/check-observability-gate.py`
 
 ## Relevant tests
 
 - `crates/optimus-kernel/tests/causal_trace.rs`
-- `scripts/check-observability-gate.py`
+- `scripts/gates/check-observability-gate.py`

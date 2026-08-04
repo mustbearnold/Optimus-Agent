@@ -17,15 +17,15 @@ covers:
   - crates/optimus-store/src/lib.rs
   - crates/optimus-kernel/src/fs_sandbox.rs
   - apps/optimus-cli/src/main.rs
-  - scripts/engineering_memory.py
-  - scripts/test_engineering_memory.py
+  - scripts/tools/engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
 depends_on:
   - docs/decisions/0018-fail-closed-runtime-safety.md
 validated_by:
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-runtime/src/campaign.rs
   - crates/optimus-store/src/lib.rs
-  - scripts/test_engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
 last_verified_commit: b59b90766fd3b001725dd1542a05326a1d4b4894
 ---
 
@@ -164,7 +164,7 @@ storage terminal uniqueness, and schema-v4 fenced campaign leases.
 - `crates/optimus-store/src/lib.rs`
 - `crates/optimus-kernel/src/fs_sandbox.rs`
 - `apps/optimus-cli/src/main.rs`
-- `scripts/engineering_memory.py`
+- `scripts/tools/engineering_memory.py`
 
 ## Relevant tests
 
@@ -172,7 +172,7 @@ storage terminal uniqueness, and schema-v4 fenced campaign leases.
 - inline campaign migration, corruption, recovery, authority, and repair tests in
   `crates/optimus-runtime/src/campaign.rs`
 - atomic late-node rollback test in `crates/optimus-store/src/lib.rs`
-- ADR-0019 semantic guard tests in `scripts/test_engineering_memory.py`
+- ADR-0019 semantic guard tests in `scripts/tests/test_engineering_memory.py`
 
 ## Conditions for reconsideration
 

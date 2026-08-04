@@ -12,13 +12,13 @@ covers:
   - docs/authority-routes.json
   - docs/catalog.json
   - docs/verification-lock.json
-  - scripts/docs_system.py
+  - scripts/tools/docs_system.py
 depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
   - docs/decisions/0032-engineering-memory-compact-lenses.md
   - docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md
 validated_by:
-  - scripts/test_docs_system.py
+  - scripts/tests/test_docs_system.py
   - evals/docs-authority/questions-v1.json
 ---
 
@@ -120,14 +120,14 @@ least 95% top-one authority resolution for the maintained question suite.
 
 ## Relevant code
 
-- `scripts/docs_system.py`
+- `scripts/tools/docs_system.py`
 - `docs/authority-routes.json`
 - `docs/catalog.json`
 - `docs/verification-lock.json`
 
 ## Relevant tests
 
-- `scripts/test_docs_system.py`
+- `scripts/tests/test_docs_system.py`
 - `evals/docs-authority/questions-v1.json`
 - `scripts/verify.sh`
 

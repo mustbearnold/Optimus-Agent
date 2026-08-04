@@ -72,7 +72,7 @@ rule applies to the default branch: an unresolvable one stays `None` rather than
 becoming `"main"`.
 
 **3. A repository cannot weaken its own floor.** `SENSITIVE_FLOOR` — `.github/**`,
-`scripts/verify.sh`, `scripts/check-*.py`, the justfile, instruction files,
+`scripts/verify.sh`, `scripts/gates/check-*.py`, the justfile, instruction files,
 `.optimus/**`, keys and `.env` files — is unioned with declared sensitive paths,
 never replaced by them. Declared verification commands are accepted only when
 non-empty, so a repository cannot declare its way to "nothing to run". The first

@@ -9,13 +9,13 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - scripts/check-module-size.py
+  - scripts/gates/check-module-size.py
   - docs/architecture/module-size-baseline.json
   - AGENTS.md
 depends_on:
   - docs/architecture.md
 validated_by:
-  - scripts/test_module_size.py
+  - scripts/tests/test_module_size.py
 ---
 
 # ADR-0049: The module-size law is measured honestly, and does not tax splitting
@@ -26,7 +26,7 @@ validated_by:
 ## Context
 
 The 800-line module law (AGENTS.md rule 21) is enforced by
-`scripts/check-module-size.py` as a ratchet. The law is sound. Its measurement
+`scripts/gates/check-module-size.py` as a ratchet. The law is sound. Its measurement
 was not.
 
 "Production lines" was implemented as *everything before the first
@@ -92,7 +92,7 @@ and Rust convention puts unit tests in the file they test.
 **Parse with `syn` or `rust-analyzer` instead of scanning text.** Exact, and it
 would remove the blanking machinery. Rejected as disproportionate: the gate must
 run in the ~1s `just gates` tier with no Rust toolchain dependency, and the
-scanner's failure modes are all covered by `scripts/test_module_size.py`.
+scanner's failure modes are all covered by `scripts/tests/test_module_size.py`.
 
 ## Reasons
 
@@ -124,7 +124,7 @@ scanner's failure modes are all covered by `scripts/test_module_size.py`.
   hashes, byte strings and lifetimes are handled explicitly; something exotic
   enough could still desynchronise the brace count. The failure is loud — a
   desynchronised count produces an absurd number, not a plausible one — and
-  `scripts/test_module_size.py` pins each case.
+  `scripts/tests/test_module_size.py` pins each case.
 - **`mod x;` exemption is a small hole.** A file consisting only of module
   declarations measures near zero. That is correct — it is a registry, not a
   god-module — but it does mean the metric cannot see a crate that is wide
@@ -132,7 +132,7 @@ scanner's failure modes are all covered by `scripts/test_module_size.py`.
 
 ## Evaluation evidence
 
-- `scripts/test_module_size.py` grew from 3 to 11 `production_lines` cases:
+- `scripts/tests/test_module_size.py` grew from 3 to 11 `production_lines` cases:
   code after a test module is counted, `mod` declarations are not, a brace in a
   literal does not desynchronise the skip, a lifetime is not a char literal,
   `#[cfg(all(test, …))]` is recognised, `#[cfg(feature = "test")]` is not, a
@@ -157,11 +157,11 @@ scanner's failure modes are all covered by `scripts/test_module_size.py`.
 
 ## Relevant code
 
-- `scripts/check-module-size.py` — `code_only`, `production_lines`, `MEASURE`
+- `scripts/gates/check-module-size.py` — `code_only`, `production_lines`, `MEASURE`
 - `apps/optimus-tui/src/session/approval.rs` — the split this revealed
 - `docs/architecture/module-size-baseline.json`
 
 ## Relevant tests
 
-- `scripts/test_module_size.py::ProductionLinesTests` — all ten cases
-- `scripts/test_module_size.py::BaselineTests::test_baseline_matches_the_current_tree`
+- `scripts/tests/test_module_size.py::ProductionLinesTests` — all ten cases
+- `scripts/tests/test_module_size.py::BaselineTests::test_baseline_matches_the_current_tree`

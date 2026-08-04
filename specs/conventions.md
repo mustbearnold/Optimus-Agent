@@ -15,8 +15,8 @@ covers:
 depends_on:
   - specs/constitution.md
 validated_by:
-  - scripts/test_verify_gate_parity.py
-  - scripts/check-lockfile-discipline.py
+  - scripts/tests/test_verify_gate_parity.py
+  - scripts/gates/check-lockfile-discipline.py
 ---
 
 # Conventions — Optimus Agent
@@ -27,7 +27,7 @@ The second authority in this repository, after
 ## Documents (Markdown)
 
 - Frontmatter: every cataloged doc keeps `doc_id`/`plane`/`status`/… so the
-  docs DB (`scripts/docs_system.py`) and Engineering Memory keep working.
+  docs DB (`scripts/tools/docs_system.py`) and Engineering Memory keep working.
   Specs additionally carry the SDD template fields (Status, Owner).
 - ATX headings (`#`), exactly one H1 per file (the title), sentence case.
 - Blank line before and after headings, lists, and code fences.

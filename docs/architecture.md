@@ -306,7 +306,7 @@ plane-separated (grade **S+++** in architecture-marks):
 
 Kernel dispatch resolves only `packs.resolve_loaded_tool` then matches on
 `ToolInvocation`. Skill grants are class-scoped (`FsWorkspace` → writes,
-`Terminal` → commands). Gates: `scripts/check-domain-modularity.py` and
+`Terminal` → commands). Gates: `scripts/gates/check-domain-modularity.py` and
 `cargo test -p optimus-kernel --test domain_modularity`.
 
 **Confirmed current behaviour:** project sessions load canonical roots from the
@@ -530,7 +530,7 @@ also retain subsystem-specific state.
 `optimus.causal.v1` (`optimus trace export` / `write_causal_export`) is
 store-backed, versioned, and redacts the Optimus home path. It does not re-run
 live providers and is not OTLP. Merge gate
-`scripts/check-observability-gate.py` covers integrity, causal/export tests,
+`scripts/gates/check-observability-gate.py` covers integrity, causal/export tests,
 and export API surface. See ADR-0037.
 
 **Confirmed current behaviour:** versioned execution manifests and immutable,
@@ -589,7 +589,7 @@ failure both print the complete report; threshold failure exits non-zero. The
 legacy four-case `eval run` command remains available.
 
 **Confirmed current behaviour:**
-`python scripts/engineering_memory.py binding` emits the only context accepted by
+`python scripts/tools/engineering_memory.py binding` emits the only context accepted by
 the exact offline runner: the current canonical source-tree identity, canonical
 evaluation/tool/routing source hashes, and fixed `offline/offline-scripted`
 provider/model identity. The runner rejects context drift before creating run state.
@@ -609,7 +609,7 @@ stores via `load_causal_turn` / `optimus trace show` using a root trace id,
 manifest id, or turn id. Security/policy fences map to a closed
 `SecurityDenialCode` vocabulary when classifiable. Offline integrity + causal +
 export surface tests are the observability gate
-(`scripts/check-observability-gate.py`, P14).
+(`scripts/gates/check-observability-gate.py`, P14).
 
 **Unknown or unresolved behaviour:** there is no OpenTelemetry/OTLP export (local
 `optimus.causal.v1` export exists — ADR-0037), live security-denial event stream,
@@ -1538,8 +1538,8 @@ feature cannot be traded for an unrelated Optimus advantage.
 | `docs/architecture/hermes-feature-evidence.json` | Per-feature Optimus evidence bound to a commit |
 | `docs/architecture/hermes-performance-evidence.json` | Raw paired benchmark samples and protocol provenance |
 | `docs/architecture/parity-capability-ledger.json` | Human-readable capability rollup and ownership |
-| `scripts/optimus_version.py` | Capture, validation, status, release, and promotion gate |
-| `scripts/check-parity-ledger.py` | Rollup validation plus version-system integrity check |
+| `scripts/tools/optimus_version.py` | Capture, validation, status, release, and promotion gate |
+| `scripts/gates/check-parity-ledger.py` | Rollup validation plus version-system integrity check |
 
 Executable evidence outranks prose. Architecture documents are not parity
 proof unless a claim also names a passing trajectory and an existing evidence
@@ -1643,26 +1643,26 @@ valid for 30 days and must target the exact Hermes baseline and Optimus commit.
 
 ```bash
 # Human and machine-readable status
-python3 scripts/optimus_version.py status
-python3 scripts/optimus_version.py status --json
+python3 scripts/tools/optimus_version.py status
+python3 scripts/tools/optimus_version.py status --json
 
 # Structural integrity; incomplete parity is reported but is not an error
-python3 scripts/optimus_version.py validate
+python3 scripts/tools/optimus_version.py validate
 
 # Strict full-parity gate; expected to fail until all work is complete
-python3 scripts/optimus_version.py gate
+python3 scripts/tools/optimus_version.py gate
 
 # Release preflight. Development versions pass; false matching claims fail.
-python3 scripts/optimus_version.py release-check
+python3 scripts/tools/optimus_version.py release-check
 
 # Existing rollup plus version-system integrity
-python3 scripts/check-parity-ledger.py
+python3 scripts/gates/check-parity-ledger.py
 
 # Architecture S+++ claim hygiene (not Hermes product parity)
-python3 scripts/check-architecture-marks.py
+python3 scripts/gates/check-architecture-marks.py
 
 # Record parity only after all blockers are gone
-python3 scripts/optimus_version.py promote --reviewer "reviewer identity"
+python3 scripts/tools/optimus_version.py promote --reviewer "reviewer identity"
 
 # Built CLI status
 optimus version
@@ -1685,7 +1685,7 @@ worktree and the installed Hermes virtualenv only as the dependency runtime:
 source_repo="$HOME/.hermes/hermes-agent"
 clean_source="$(mktemp -d /tmp/optimus-hermes-0.19.0-XXXXXX)"
 git -C "$source_repo" worktree add --detach "$clean_source" 8967e73e
-python3 scripts/optimus_version.py capture-hermes \
+python3 scripts/tools/optimus_version.py capture-hermes \
   --hermes-source "$clean_source" \
   --hermes-python "$source_repo/venv/bin/python"
 git -C "$source_repo" worktree remove --force "$clean_source"
@@ -1748,16 +1748,16 @@ Full policy: the merged Versioning section above.
 
 | Gate | Command | Pre-merge (PR / local) | Pre-release (ship binary / install) | Pre-parity-claim | Notes |
 |---|---|:---:|:---:|:---:|---|
-| Version structural integrity | `python3 scripts/optimus_version.py validate` | ✅ | ✅ | ✅ | Incomplete parity is reported; structural errors fail |
-| Development release honesty | `python3 scripts/optimus_version.py release-check` | ✅ | ✅ (required by installer) | ✅ | Passes independent SemVer; blocks numeric Hermes collision without verified claim |
-| Strict Hermes parity | `python3 scripts/optimus_version.py gate` | ❌ (expected red until complete) | ❌ unless claiming parity | ✅ required | Fail-closed; **not** an architecture S+++ blocker |
-| Parity ledger rollup | `python3 scripts/check-parity-ledger.py` | ✅ | ✅ | ✅ | Evidence paths must exist; `parity`/`win` need trajectory |
-| Architecture marks claim hygiene | `python3 scripts/check-architecture-marks.py` | ✅ | ✅ | optional | Fails if a mark is graded **S+++** without done phase / required paths |
-| Observability | `python3 scripts/check-observability-gate.py` | ✅ when touching kernel/runtime/packs/eval | recommended | optional | Cargo integrity + causal/export surface |
-| Desktop IPC matrix | `python3 scripts/check-desktop-ipc-matrix.py` | ✅ when touching desktop/electron/ui | recommended | optional | Host ⊇ Electron = React classification |
-| Domain modularity | `python3 scripts/check-domain-modularity.py` | ✅ when touching packs/kernel/store | recommended | optional | Single `ToolDesc` catalog / plane separation |
-| Crate layers | `python3 scripts/check-crate-layers.py` | ✅ when touching crate graph | recommended | optional | Control-plane peel deps |
-| Engineering Memory | `python3 scripts/engineering_memory.py check` (+ `generate` / `validate` when stale) | ✅ | ✅ | optional | Generated maps must not be hand-edited |
+| Version structural integrity | `python3 scripts/tools/optimus_version.py validate` | ✅ | ✅ | ✅ | Incomplete parity is reported; structural errors fail |
+| Development release honesty | `python3 scripts/tools/optimus_version.py release-check` | ✅ | ✅ (required by installer) | ✅ | Passes independent SemVer; blocks numeric Hermes collision without verified claim |
+| Strict Hermes parity | `python3 scripts/tools/optimus_version.py gate` | ❌ (expected red until complete) | ❌ unless claiming parity | ✅ required | Fail-closed; **not** an architecture S+++ blocker |
+| Parity ledger rollup | `python3 scripts/gates/check-parity-ledger.py` | ✅ | ✅ | ✅ | Evidence paths must exist; `parity`/`win` need trajectory |
+| Architecture marks claim hygiene | `python3 scripts/gates/check-architecture-marks.py` | ✅ | ✅ | optional | Fails if a mark is graded **S+++** without done phase / required paths |
+| Observability | `python3 scripts/gates/check-observability-gate.py` | ✅ when touching kernel/runtime/packs/eval | recommended | optional | Cargo integrity + causal/export surface |
+| Desktop IPC matrix | `python3 scripts/gates/check-desktop-ipc-matrix.py` | ✅ when touching desktop/electron/ui | recommended | optional | Host ⊇ Electron = React classification |
+| Domain modularity | `python3 scripts/gates/check-domain-modularity.py` | ✅ when touching packs/kernel/store | recommended | optional | Single `ToolDesc` catalog / plane separation |
+| Crate layers | `python3 scripts/gates/check-crate-layers.py` | ✅ when touching crate graph | recommended | optional | Control-plane peel deps |
+| Engineering Memory | `python3 scripts/tools/engineering_memory.py check` (+ `generate` / `validate` when stale) | ✅ | ✅ | optional | Generated maps must not be hand-edited |
 | Runtime / pack hold suites | `cargo test -p optimus-runtime` / `optimus-kernel` / `optimus-packs` as touched | ✅ scoped | full workspace before major ship | optional | See program hold suites |
 | Installer re-gate | `scripts/rebuild-install-relaunch.*` | n/a | ✅ | n/a | Runs `release-check` before binary selection and again before replace |
 
@@ -1787,29 +1787,29 @@ Track Z after product-complete. The Release mark grades the **gate system**
 ### Before opening / merging a PR
 
 ```bash
-python3 scripts/optimus_version.py release-check
-python3 scripts/check-parity-ledger.py
-python3 scripts/check-architecture-marks.py
-python3 scripts/engineering_memory.py check
+python3 scripts/tools/optimus_version.py release-check
+python3 scripts/gates/check-parity-ledger.py
+python3 scripts/gates/check-architecture-marks.py
+python3 scripts/tools/engineering_memory.py check
 # plus dimension gates for the files you touched
 ```
 
 ### Before install / ship of a development build
 
 ```bash
-python3 scripts/optimus_version.py release-check
-python3 scripts/check-parity-ledger.py
+python3 scripts/tools/optimus_version.py release-check
+python3 scripts/gates/check-parity-ledger.py
 # installer scripts re-run release-check around binary selection
 ```
 
 ### Only when claiming Hermes parity
 
 ```bash
-python3 scripts/optimus_version.py validate
-python3 scripts/check-parity-ledger.py
-python3 scripts/optimus_version.py gate          # must PASS
-python3 scripts/optimus_version.py release-check
-python3 scripts/optimus_version.py promote --reviewer "…"
+python3 scripts/tools/optimus_version.py validate
+python3 scripts/gates/check-parity-ledger.py
+python3 scripts/tools/optimus_version.py gate          # must PASS
+python3 scripts/tools/optimus_version.py release-check
+python3 scripts/tools/optimus_version.py promote --reviewer "…"
 ```
 
 ## Sources of truth
@@ -1820,9 +1820,9 @@ python3 scripts/optimus_version.py promote --reviewer "…"
 | `docs/architecture/parity-capability-ledger.json` | Human rollup (51 rows); not the 2,063-feature gate |
 | `docs/architecture/architecture-marks.md` | Architecture quality grades (S+++ climb) |
 | `docs/plans/s-plus-plus-plus-program.md` | Phase exit criteria; P17 owns this matrix |
-| `scripts/optimus_version.py` | Capture / validate / gate / release-check / promote |
-| `scripts/check-parity-ledger.py` | Rollup + version integrity |
-| `scripts/check-architecture-marks.py` | S+++ claim ↔ phase done / path existence |
+| `scripts/tools/optimus_version.py` | Capture / validate / gate / release-check / promote |
+| `scripts/gates/check-parity-ledger.py` | Rollup + version integrity |
+| `scripts/gates/check-architecture-marks.py` | S+++ claim ↔ phase done / path existence |
 
 ## Related verification
 
@@ -1844,9 +1844,9 @@ Wry optional. Do not read “tao+wry Windows desktop shell” below as the defau
 install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  
-**Validator:** `python scripts/check-parity-ledger.py`  
+**Validator:** `python scripts/gates/check-parity-ledger.py`  
 **Rule:** executable current-repository evidence outranks architecture blueprints and historical phase prose. A `parity` or `win` row requires an existing evidence path; every row's trajectory is either runnable (`cargo:`/`playwright:`, resolved to a real target by the validator) or pinned on the validator's shrink-only unclassified list.
-**Release-version gate:** `docs/architecture/optimus-version.json` plus `python scripts/optimus_version.py gate`. The 50 rows below are a planning rollup, not sufficient for a product-level Hermes parity claim. The strict v0.19.0 baseline contains 2,063 per-feature contracts.
+**Release-version gate:** `docs/architecture/optimus-version.json` plus `python scripts/tools/optimus_version.py gate`. The 50 rows below are a planning rollup, not sufficient for a product-level Hermes parity claim. The strict v0.19.0 baseline contains 2,063 per-feature contracts.
 
 ## Current ledger summary
 

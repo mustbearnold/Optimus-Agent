@@ -9,20 +9,20 @@ reviewed_on: 2026-08-01
 review_by: 2026-11-01
 knowledge_type: temporal-project-knowledge
 owns:
-  - scripts/project_knowledge.py
-  - scripts/project_knowledge_code.py
-  - scripts/project_knowledge_db.py
-  - scripts/test_project_knowledge.py
-  - scripts/managed_project_cleanup.py
-  - scripts/test_managed_project_cleanup.py
+  - scripts/tools/project_knowledge.py
+  - scripts/tools/project_knowledge_code.py
+  - scripts/tools/project_knowledge_db.py
+  - scripts/tests/test_project_knowledge.py
+  - scripts/tools/managed_project_cleanup.py
+  - scripts/tests/test_managed_project_cleanup.py
 depends_on:
   - docs/repository-components.json
-  - scripts/repository_ontology.py
+  - scripts/tools/repository_ontology.py
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md
   - docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md
   - docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md
 validated_by:
-  - scripts/test_project_knowledge.py
+  - scripts/tests/test_project_knowledge.py
   - scripts/verify.sh
 ---
 
@@ -78,8 +78,8 @@ persistent.
 just project-status
 just cleanup-candidates
 just path-history spikes/001-leptos-wry-csr
-just path-at scripts/project_knowledge.py 5df1d567
-just project-neighbors scripts/project_knowledge.py 2
+just path-at scripts/tools/project_knowledge.py 5df1d567
+just project-neighbors scripts/tools/project_knowledge.py 2
 just project-neighbors cargo:optimus-desktop 1 5df1d567
 just project-query "SELECT path, occurred_at, status FROM file_events ORDER BY occurred_at DESC LIMIT 10"
 just project-query "SELECT dependency, valid_from_time, valid_to_time FROM package_dependencies WHERE package_id='cargo:optimus-desktop'"

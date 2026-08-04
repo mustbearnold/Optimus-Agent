@@ -13,7 +13,7 @@ covers:
 depends_on:
   - docs/architecture.md
 validated_by:
-  - scripts/test_engineering_memory.py
+  - scripts/tests/test_engineering_memory.py
 ---
 
 # Architecture decision index

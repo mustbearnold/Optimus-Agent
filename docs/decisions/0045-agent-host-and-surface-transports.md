@@ -19,8 +19,8 @@ depends_on:
   - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
 validated_by:
-  - scripts/check-desktop-ipc-matrix.py
-  - scripts/check-crate-layers.py
+  - scripts/gates/check-desktop-ipc-matrix.py
+  - scripts/gates/check-crate-layers.py
 ---
 
 # ADR-0045: Agent host and surface transports
@@ -174,8 +174,8 @@ naming-plane collapse `AGENTS.md` forbids.
 
 ## Relevant tests
 
-- `scripts/check-desktop-ipc-matrix.py`
-- `scripts/check-crate-layers.py`
+- `scripts/gates/check-desktop-ipc-matrix.py`
+- `scripts/gates/check-crate-layers.py`
 - `apps/optimus-electron/e2e/compiled-shell.spec.cjs`
 - `apps/optimus-electron/e2e/compiled-workbench.spec.cjs`
 - `crates/optimus-runtime/tests/project_trust_profile.rs`
