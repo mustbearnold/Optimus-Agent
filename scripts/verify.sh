@@ -239,6 +239,7 @@ tier_gates() {
   spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
   spawn "version-validate"           python3 scripts/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
+  spawn "lockfile-discipline"        python3 scripts/check-lockfile-discipline.py
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/docs_system.py check
@@ -267,6 +268,7 @@ tier_gates() {
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
   spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
   spawn "test_verify_gate_parity"    python3 scripts/test_verify_gate_parity.py
+  spawn "test_lockfile_discipline"   python3 scripts/test_lockfile_discipline.py
   reap
 }
 
@@ -477,6 +479,7 @@ tier_all() {
   spawn "neutral-fixtures"           python3 scripts/check-neutral-fixtures.py
   spawn "version-validate"           python3 scripts/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/optimus_version.py release-check
+  spawn "lockfile-discipline"        python3 scripts/check-lockfile-discipline.py
   spawn "engineering-memory"         python3 scripts/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/docs_system.py check
@@ -505,6 +508,7 @@ tier_all() {
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
   spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
   spawn "test_verify_gate_parity"    python3 scripts/test_verify_gate_parity.py
+  spawn "test_lockfile_discipline"   python3 scripts/test_lockfile_discipline.py
 
   spawn_section "compile"
   spawn "cargo check" cargo check --workspace --all-targets
