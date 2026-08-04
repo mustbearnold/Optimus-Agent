@@ -565,13 +565,13 @@
       "resolved_files": 78
     },
     "specs-backlog": {
-      "binding_sha256": "0975f5181e98a6417ffb28a6095786e1f22786fdb3f0b170182186a885b86417",
+      "binding_sha256": "6bda8d0081c6cc6dd901a77c3f3231a11ab128bc0b2e1875c0bd11ce8c71db19",
       "document_sha256": "06a2cff9635cffe3214893ed7a0de9b260a05e7381e4c95e34a3b982582fcfe4",
       "path": "specs/BACKLOG.md",
       "resolved_files": 23
     },
     "specs-constitution": {
-      "binding_sha256": "89f6432a955a647c751178c8b59cc70984ac2837bf9a9540b3bdfeb171009475",
+      "binding_sha256": "e7c93a2c664f0193665b251b1f74166a3071ecb5de402ce674d71ec31a40537f",
       "document_sha256": "eb5eb3e275e3a54ea043c9f80dbd877cd0296fc589433ce452c9b06b40422f79",
       "path": "specs/constitution.md",
       "resolved_files": 107
