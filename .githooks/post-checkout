@@ -1,0 +1,21 @@
+#!/bin/sh
+# ENFORCED POLICY: all development happens on `main`. Zero worktrees, zero branches.
+# post-checkout <old-head> <new-head> <branch-flag>
+
+gitdir="$(git rev-parse --git-dir)"
+
+# Do not interfere with in-progress operations that legitimately detach HEAD.
+for marker in rebase-merge rebase-apply MERGE_HEAD BISECT_LOG CHERRY_PICK_HEAD REVERT_HEAD; do
+    [ -e "$gitdir/$marker" ] && exit 0
+done
+
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
+if [ "$branch" != "main" ]; then
+    echo "POLICY VIOLATION: this repository is main-only (current: ${branch:-detached HEAD})." >&2
+    echo "Forcing checkout back to 'main'..." >&2
+    git checkout main || {
+        echo "ERROR: could not restore 'main'. Fix manually: git checkout main" >&2
+        exit 1
+    }
+fi
+exit 0

@@ -1,0 +1,8 @@
+#!/bin/sh
+# ENFORCED POLICY: all development happens on `main`. Zero worktrees, zero branches.
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
+if [ "$branch" != "main" ]; then
+    echo "BLOCKED: commits are only allowed on 'main' (current: ${branch:-detached HEAD})." >&2
+    echo "Policy: main-only development, zero worktrees. Run: git checkout main" >&2
+    exit 1
+fi

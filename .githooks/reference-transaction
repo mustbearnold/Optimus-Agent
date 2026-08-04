@@ -1,0 +1,18 @@
+#!/bin/sh
+# ENFORCED POLICY: `main` is the only branch. Zero worktrees, zero branches.
+# Blocks creation/movement of any refs/heads/* except main. Deletions stay allowed
+# so stale branches can still be cleaned up.
+while read -r old new ref; do
+    case "$ref" in
+        refs/heads/main) ;;
+        refs/heads/*)
+            if [ "$new" = "0000000000000000000000000000000000000000" ]; then
+                continue  # deletion: allowed (cleanup)
+            fi
+            echo "BLOCKED: '$ref' — this repository is main-only." >&2
+            echo "Policy: develop directly on 'main'. Zero branches, zero worktrees." >&2
+            exit 1
+            ;;
+    esac
+done
+exit 0

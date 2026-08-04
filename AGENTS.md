@@ -29,7 +29,7 @@ Interpret these common requests precisely:
 
 | User request | Plane | Meaning |
 |---|---|---|
-| “Work autonomously on Optimus” | Development | Make progress in the assigned worktree without repeatedly asking for routine choices. |
+| “Work autonomously on Optimus” | Development | Make progress directly on `main` without repeatedly asking for routine choices. |
 | “Use agents/models appropriate to the task” | Development | The primary coding agent selects and orchestrates bounded engineering subtasks. |
 | “Make Optimus more autonomous” | Product | Change runtime behaviour, with source, tests, docs, and safety review. |
 | “Change how Optimus asks for approval” | Product | Change the product policy/UX, not the coding-agent permission model. |
@@ -45,26 +45,28 @@ When developing Optimus Agent, work is confined to the Optimus project tree.
 ### Canonical root
 
 - Workspace wrapper: `/home/mustbearn/Projects/Optimus Agent`
-- Clean landed-repository view: `/home/mustbearn/Projects/Optimus Agent/Repository`
-- Development happens only in an assigned linked worktree under
-  `/home/mustbearn/Projects/Optimus Agent/Development/worktrees/`.
+- Active repository: `/home/mustbearn/Projects/Optimus Agent/Repository`
+- **Main-only development (owner directive, 2026-08-04): all work happens
+  directly on `main` in `Repository/`. Zero linked worktrees, zero feature
+  branches.** This is enforced by `.githooks/` (`pre-commit`, `post-checkout`,
+  `reference-transaction`): commits off `main` are blocked, leaving `main`
+  forces a return, and creating or moving any other branch is refused.
+  `git worktree add` is therefore impossible. Do not attempt to bypass these
+  hooks.
 - `Repository/` is the complete reproducible GitHub repository: product source,
-  tests, evaluation definitions, documentation, and build logic. It is a
-  detached, clean view of remote `main`; never develop there.
-  The wrapper's `local` and `.git` compatibility links resolve into
-  `Development/` and exist only for older automation.
-- Resolve both the repository and active worktree with `readlink -f` / `pwd -P`
-  before editing. Compare resolved paths, never remembered aliases.
-- If the active workspace is not an assigned Optimus worktree, **stop**. Never
-  edit the bare repository root or another worktree directly.
+  tests, evaluation definitions, documentation, and build logic. It is the
+  active working copy of `main`; develop there directly.
+- Resolve the repository path with `readlink -f` / `pwd -P` before editing.
+  Compare resolved paths, never remembered aliases.
+- If the active workspace is not the Optimus `Repository/`, **stop**. Never
+  edit another project from here.
 
 ### Allowed write scope
 
 Only create/modify/delete files under:
 
-1. The assigned worktree under
-   `/home/mustbearn/Projects/Optimus Agent/Development/worktrees/**` (source, docs,
-   skills, scripts, and worktree-local build/evidence)
+1. `/home/mustbearn/Projects/Optimus Agent/Repository/**` (source, docs,
+   skills, scripts, and local build/evidence)
 2. Optimus install/runtime paths **only when the task explicitly requires
    install, relaunch, uninstall, or live desktop verification**:
    - `~/.local/share/optimus-agent/**`
@@ -97,14 +99,14 @@ Do **not** edit, reorganize, install into, or “clean up”:
 
 ### Enforcement checklist (every Optimus development turn)
 
-1. Run `just orient` and confirm the workspace resolves to the assigned linked
-   worktree under the canonical repository.
-2. Before any write/patch/rm, assert the target path is inside that assigned
-   worktree or an explicitly allowed Optimus install path above.
+1. Run `just orient` and confirm the workspace resolves to
+   `/home/mustbearn/Projects/Optimus Agent/Repository` on branch `main`.
+2. Before any write/patch/rm, assert the target path is inside that
+   repository or an explicitly allowed Optimus install path above.
 3. Refuse cross-project drive-by fixes. If another project is implicated, report
    the path and ask; do not touch it.
-4. Keep build artifacts, evidence, and temp outputs inside the assigned
-   worktree or the Optimus `Development/` plane rather than other projects.
+4. Keep build artifacts, evidence, and temp outputs inside the repository
+   or the Optimus `Development/` plane rather than other projects.
 5. Treat path containment as a hard gate equal to “do not land unverified work”.
 
 ## Naming planes (mandatory — humans and coding agents)
@@ -227,30 +229,21 @@ If a proposed name collapses two planes, **stop and rename** before commit.
 
 ## Managed autonomous delivery (mandatory)
 
-Standing delivery contract (owner instruction, 2026-07-31):
+Standing delivery contract (owner directive, 2026-08-04 — supersedes the
+2026-07-31 managed-delivery rules):
 
+- Develop directly on `main` in `Repository/`. Zero linked worktrees, zero
+  feature branches; the `.githooks/` enforcement makes this non-negotiable.
+- Commit directly with `git commit` on `main`. Keep commits small, verified,
+  and conventional (`<emoji> <type>(<scope>): <summary>`).
 - Never run `gh` or use pull requests, issues, or GitHub workflow ceremony.
-- Never run raw history-changing Git commands, including `git commit`,
-  `git push`, `git merge`, `git rebase`, `git stash`, or `git reset`. Read-only
-  `git status`, `git diff`, `git log`, and `git show` remain allowed.
-- Work only in the assigned isolated worktree. Save recoverable progress with
-  `just checkpoint <label>`.
-- Finish only through
-  `just land <task-id> --model <model> --effort <level>`. `land` alone runs the
-  affected gates and fixtures, fast-forwards main, and generates the commit
-  message and provenance record.
-- The primary agent owns routine orchestration: derive a stable task id from the
-  task, assess difficulty, select an actually available model and reasoning
-  effort, and delegate bounded subtasks when useful. Do not ask the user to make
-  these routine implementation choices, and never record a model or effort that
-  did not produce the work.
-- If `land` refuses, fix the reported gate/fixture and retry, or use
-  `just undo <label>`. Never bypass a red land with raw Git.
-- If `checkpoint`, `land`, or `undo` is unavailable or cannot express the
-  required operation, leave the verified work in the assigned worktree and
-  report the tooling limitation. Do not improvise with raw Git.
-- Delivery means the SHA that `land` places on `origin/main`. Worktree changes,
-  checkpoints, and feature branches are not completion.
+- Never run history-changing Git commands (`git push --force`, `git rebase`,
+  `git reset` against landed history). Read-only `git status`, `git diff`,
+  `git log`, and `git show` remain allowed.
+- `just checkpoint`, `just land`, and `just undo` are retired; do not invoke
+  them.
+- Delivery means verified commits on `main` (pushed to `origin/main` when the
+  user asks).
 
 ## Repository conventions
 
@@ -275,7 +268,7 @@ Standing delivery contract (owner instruction, 2026-07-31):
 
 Provider-specific skills are optional accelerators, never repository
 requirements. Any Codex, Claude, or other coding-agent skill remains subordinate
-to this file, the assigned-worktree boundary, and managed delivery. Do not add
+to this file, the main-only boundary, and direct-on-main delivery. Do not add
 provider installation ceremony to routine tasks.
 
 ### Task records
