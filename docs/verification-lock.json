@@ -145,7 +145,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "b95e9e8e16223283ac389314f34eb0e3f8c5c366550dec4951c9169baaf0cde6",
+      "binding_sha256": "0ab8134cc330ad6be1b18e118116c54a8c65b496ad2778a0435b6be2e128a660",
       "document_sha256": "e707a52dbe8dad51c74781e1f4b4b14e8607951b5f173e9296fa3ffae6e07d04",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -199,7 +199,7 @@
       "resolved_files": 9
     },
     "decisions-0026-separate-development-and-runtime-agents": {
-      "binding_sha256": "a7be034963e60d1dee7fdea4badd3dab28e70f2807aa3eaf2ce68fe75c5b2024",
+      "binding_sha256": "5615294da8c4fc7da331f6f1e8c31d03039e98d7ad8ebe6a4b9bc9e32b1d3487",
       "document_sha256": "48479242a324749b37582d686c2a8ffac4f5e958067d245161951f6408232331",
       "path": "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "resolved_files": 5
@@ -235,7 +235,7 @@
       "resolved_files": 117
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "42f5708cdf88f24e7d9f911370a5e019f42b7e93aede9584c41ccdf8ef09956d",
+      "binding_sha256": "f2c0e78e07e14f62d2ed298951a7b2706cbf03036a8df7b6ed9e433abfcf5f0f",
       "document_sha256": "8c361418e4d79c1d596de7e95f44385d86cae955fcee56d6c60792b61b7c4271",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 5
@@ -337,7 +337,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "996254ee42239c4e5ea0139dbdcdc57a45d4f3a5471442383e84ccc5409d14d0",
+      "binding_sha256": "32cce1785e9b27b5baa749187a22756fffb2b9c8b370c8d14840e536eaa98c6f",
       "document_sha256": "133cf880d4d8b44a176b9a2d5cf41ef7cae47df7b6ea66cca5de0f0c48550d21",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 4
@@ -379,7 +379,7 @@
       "resolved_files": 5
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "7f5bdb5f33e627d14e3ea04412de012ca7aa897c008757721b3a1962e84a2bb7",
+      "binding_sha256": "ab15618815ae33ce8b7696561f4d749079725a35494acdf9e7934128e0934d0b",
       "document_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 7
@@ -481,7 +481,7 @@
       "resolved_files": 82
     },
     "engineering-memory-readme": {
-      "binding_sha256": "0f19487110ff51adcca02f5e37bff3f5289e582fe8253907a5b86d1fce7d6ccc",
+      "binding_sha256": "3b9169fa28a31e1fa1abd0b7d2d7358e80526922021d14305bc1595ee2030838",
       "document_sha256": "01a29eaff931ade2862ec336008d62b28fcb6f79e9207d19bb8469f6e41757c2",
       "path": "docs/runbooks/engineering-memory.md",
       "resolved_files": 9
@@ -493,7 +493,7 @@
       "resolved_files": 12
     },
     "repository-components": {
-      "binding_sha256": "b1b0532ff4c99060337aba299599aae8098ad35279b59a9c67b2bd7c50604f03",
+      "binding_sha256": "460dd8220b5fddc80c9631d77aaec45142e11f6e0f2d887f1fbd2cf6d67e8299",
       "document_sha256": "0bd86b802af10b072ccd650f9fcd0161f4e56bc9e7ca91e3a919186a798926d6",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29
@@ -559,16 +559,28 @@
       "resolved_files": 43
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "e4ca9a7c05d26acc0d8cdb89b1b3fe840858b5606616ae015519fd286621b2e0",
+      "binding_sha256": "52b3b2695ea15e586ee9975e63c414a21679cd313b3e7fee643f619b0ef75732",
       "document_sha256": "8f9eae8b7f091beb8b25e2bec97cb9f2c4e333442dd3995abba6a04a2a3173c4",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 78
     },
     "specs-backlog": {
-      "binding_sha256": "73966a266e1f98e5c41a8a95646e1ae452b9fb1fdee01fac34a77e4fa65c659c",
+      "binding_sha256": "0975f5181e98a6417ffb28a6095786e1f22786fdb3f0b170182186a885b86417",
       "document_sha256": "06a2cff9635cffe3214893ed7a0de9b260a05e7381e4c95e34a3b982582fcfe4",
       "path": "specs/BACKLOG.md",
-      "resolved_files": 21
+      "resolved_files": 23
+    },
+    "specs-constitution": {
+      "binding_sha256": "89f6432a955a647c751178c8b59cc70984ac2837bf9a9540b3bdfeb171009475",
+      "document_sha256": "eb5eb3e275e3a54ea043c9f80dbd877cd0296fc589433ce452c9b06b40422f79",
+      "path": "specs/constitution.md",
+      "resolved_files": 107
+    },
+    "specs-conventions": {
+      "binding_sha256": "16501cf384351aeb63ac4b26145ba708c6141ce68c717bd74483161e985d5ddc",
+      "document_sha256": "00b27f964304c162e9786c2c4e7cd42b12d37190bb16653e87ded983d0825f80",
+      "path": "specs/conventions.md",
+      "resolved_files": 6
     }
   },
   "policy": "Explicitly reviewed current source bindings; validation never refreshes this file.",

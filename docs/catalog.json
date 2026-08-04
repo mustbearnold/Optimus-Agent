@@ -1061,7 +1061,7 @@
   "documents": [
     {
       "authority": "canonical",
-      "content_sha256": "038ba58b96efde9cb5cbb7dbede65587f27a1d0ce53fe61e19e37d5ab86c8329",
+      "content_sha256": "396266142d3d4f0852aed72227c957c1224123292a5ec23cf83d59ab4e67c688",
       "headings": [],
       "id": "development-instructions",
       "path": "AGENTS.md",
@@ -3789,9 +3789,58 @@
       "summary": "One line per known-but-unspecced capability or gap; items graduate to a capability spec when work starts.",
       "title": "BACKLOG",
       "type": "reference"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "eb5eb3e275e3a54ea043c9f80dbd877cd0296fc589433ce452c9b06b40422f79",
+      "headings": [
+        "Constitution — Optimus Agent",
+        "Purpose",
+        "Principles",
+        "Definition of done",
+        "Decision protocol",
+        "Naming planes (mandatory)"
+      ],
+      "id": "specs-constitution",
+      "path": "specs/constitution.md",
+      "plane": "work",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "The highest repository authority — principles, the SDD loop, definition of done, and naming planes for the Optimus repository.",
+      "title": "Constitution — Optimus Agent",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "00b27f964304c162e9786c2c4e7cd42b12d37190bb16653e87ded983d0825f80",
+      "headings": [
+        "Conventions — Optimus Agent",
+        "Documents (Markdown)",
+        "Code",
+        "Commits",
+        "Naming",
+        "Spec template (every `specs/NNN-<slug>/spec.md`)",
+        "<Capability name>",
+        "Purpose",
+        "Requirements",
+        "Acceptance criteria",
+        "Out of scope",
+        "Open questions",
+        "Links"
+      ],
+      "id": "specs-conventions",
+      "path": "specs/conventions.md",
+      "plane": "work",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "Repository conventions — documents, code formatting, package managers, commits, naming, and the spec template every capability follows.",
+      "title": "Conventions — Optimus Agent",
+      "type": "reference"
     }
   ],
-  "documents_sha256": "5b4a744b3a7c5b109abe7dce6f1a52536b86c3a0ca1d93af0e93e2029da266e0",
+  "documents_sha256": "88be54eb730d3d449491c04f9754b50a70da6c5e876a761a3ccfbf794a4e8a67",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4294,6 +4343,38 @@
       ],
       "primary": [
         "engineering-memory-readme"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.constitution",
+      "keywords": [
+        "constitution",
+        "principles",
+        "sdd loop",
+        "definition of done",
+        "naming planes",
+        "highest authority"
+      ],
+      "primary": [
+        "specs-constitution"
+      ],
+      "supporting": [
+        "specs-conventions"
+      ]
+    },
+    {
+      "id": "specs.conventions",
+      "keywords": [
+        "conventions",
+        "formatting",
+        "commit style",
+        "spec template",
+        "package manager",
+        "placement law"
+      ],
+      "primary": [
+        "specs-conventions"
       ],
       "supporting": []
     }

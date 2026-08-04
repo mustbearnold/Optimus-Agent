@@ -1,20 +1,15 @@
 # Optimus Agent engineering rules
 
-This file contains repository-wide **development** laws only. It is for humans
-and coding agents working on the Optimus source tree.
+This file is the operational entry point for humans and coding agents working
+on the Optimus source tree. The repository's governing law is
+[`specs/constitution.md`](specs/constitution.md) (highest authority), with
+[`specs/conventions.md`](specs/conventions.md) second. Conflict order:
+constitution → conventions → specs → code comments.
 
-It is intentionally separate from the product runtime constitution:
-
-| File | Audience | Loaded into Optimus chat? |
-|---|---|---|
-| `AGENTS.md` | Developers / coding agents building Optimus | No |
-| `OPTIMUS_AGENTS.md` | Installed Optimus Agent product sessions | Yes |
-
-Detailed procedures live under `docs/` and `skills/`. Start every documentation
-lookup at `docs/README.md`; it routes current status, roadmap, architecture,
-operations, decisions, and history without making agents scan the whole tree.
-Start every development turn with `just orient`; use `just explain-path <path>`
-before guessing whether a directory ships, is development-only, or is removable.
+This is a developer control artifact. The installed Optimus runtime must
+never mutate it. The product runtime constitution is
+[`OPTIMUS_AGENTS.md`](OPTIMUS_AGENTS.md) — loaded into Optimus chat sessions;
+it is intentionally separate from this file.
 
 ## Instruction-plane firewall (mandatory)
 
@@ -22,128 +17,39 @@ A request about **how a coding agent should develop Optimus** is not a product
 requirement. Development instructions about autonomy, orchestration, model
 selection, reasoning effort, permissions, tools, VCS, testing, or reporting
 govern the agents changing this repository only. Never copy them into product
-prompts, policy defaults, UI behaviour, or runtime capabilities unless the user
-explicitly asks to change Optimus Agent itself.
-
-Interpret these common requests precisely:
+prompts, policy defaults, UI behaviour, or runtime capabilities unless the
+user explicitly asks to change Optimus Agent itself.
 
 | User request | Plane | Meaning |
 |---|---|---|
-| “Work autonomously on Optimus” | Development | Make progress directly on `main` without repeatedly asking for routine choices. |
-| “Use agents/models appropriate to the task” | Development | The primary coding agent selects and orchestrates bounded engineering subtasks. |
-| “Make Optimus more autonomous” | Product | Change runtime behaviour, with source, tests, docs, and safety review. |
-| “Change how Optimus asks for approval” | Product | Change the product policy/UX, not the coding-agent permission model. |
+| "Work autonomously on Optimus" | Development | Make progress directly on `main` without repeatedly asking for routine choices. |
+| "Use agents/models appropriate to the task" | Development | The primary coding agent selects and orchestrates bounded engineering subtasks. |
+| "Make Optimus more autonomous" | Product | Change runtime behaviour, with source, tests, docs, and safety review. |
+| "Change how Optimus asks for approval" | Product | Change the product policy/UX, not the coding-agent permission model. |
 
 When wording is ambiguous, preserve the existing product behaviour and treat
 the request as development-process guidance. A product change needs explicit
 product/runtime intent and executable evidence.
 
-## Hard project boundary (mandatory)
+## Main-only development (mandatory)
 
-When developing Optimus Agent, work is confined to the Optimus project tree.
+All work happens directly on `main` in the project root. Zero linked
+worktrees, zero feature branches — enforced by `.githooks/` (`pre-commit`,
+`post-checkout`, `reference-transaction`). Commits off `main` are blocked,
+leaving `main` forces a return, and creating or moving any other branch is
+refused. Do not attempt to bypass these hooks.
 
-### Canonical root
-
-- Workspace / repository root: `/home/mustbearn/Projects/Optimus Agent`
-- **Main-only development (owner directive, 2026-08-04): all work happens
-  directly on `main` in the project root. Zero linked worktrees, zero feature
-  branches.** This is enforced by `.githooks/` (`pre-commit`, `post-checkout`,
-  `reference-transaction`): commits off `main` are blocked, leaving `main`
-  forces a return, and creating or moving any other branch is refused.
-  `git worktree add` is therefore impossible. Do not attempt to bypass these
-  hooks.
-- `/home/mustbearn/Projects/Optimus Agent` is the complete reproducible GitHub
-  repository: product source, tests, evaluation definitions, documentation, and
-  build logic. It is the active working copy of `main`; develop there directly.
-  Machine-local support data lives in `Development/` (excluded from Git).
 - Resolve the repository path with `readlink -f` / `pwd -P` before editing.
-  Compare resolved paths, never remembered aliases.
-- If the active workspace is not the Optimus project root, **stop**. Never
-  edit another project from here.
-
-### Allowed write scope
-
-Only create/modify/delete files under:
-
-1. `/home/mustbearn/Projects/Optimus Agent/**` (source, docs,
-   skills, scripts, and local build/evidence)
-2. Optimus install/runtime paths **only when the task explicitly requires
-   install, relaunch, uninstall, or live desktop verification**:
-   - `~/.local/share/optimus-agent/**`
-   - `~/.local/share/optimus/**`
-   - `~/.local/share/applications/optimus-agent.desktop`
-   - `~/.local/share/icons/**/optimus-agent.*`
-   - `~/.local/bin/optimus` and `~/.local/bin/optimus-cli` when they are
-     Optimus-managed symlinks
-3. `/home/mustbearn/Projects/Optimus Agent/Development/land/**` only through
-   `just checkpoint`, `just undo`, or `just land`; it holds locks, immutable
-   task receipts, private checkpoint records, and verification evidence.
-
-### Forbidden without explicit user instruction naming that other target
-
-Do **not** edit, reorganize, install into, or “clean up”:
-
-- Sibling projects under `~/Projects/` (for example
-  `Hermes Next`, `Heracles Agent`, `i-have-adhd`, `spicybrowse`, or any future
-  non-Optimus folder). Optimus shares `/mnt/Projects/` with several unrelated
-  trees, so being on the same disk grants nothing.
-- Other application source trees under `~/`, `~/Projects/`, `/mnt/Projects/`, or
-  elsewhere
-- Hermes product/config trees used for Hermes itself (for example
-  `~/.hermes/**`) except read-only inspection when needed for Optimus import
-  compatibility
-- Other agents’ repos, websites, business projects, or shared utilities outside
-  the Optimus root
-- Global system packages, user services, or shell config unless the user
-  explicitly asked for that host change as part of the Optimus task
-
-### Enforcement checklist (every Optimus development turn)
-
-1. Run `just orient` and confirm the workspace resolves to
-   `/home/mustbearn/Projects/Optimus Agent` on branch `main`.
-2. Before any write/patch/rm, assert the target path is inside that
-   repository or an explicitly allowed Optimus install path above.
-3. Refuse cross-project drive-by fixes. If another project is implicated, report
-   the path and ask; do not touch it.
-4. Keep build artifacts, evidence, and temp outputs inside the repository
-   or the Optimus `Development/` plane rather than other projects.
-5. Treat path containment as a hard gate equal to “do not land unverified work”.
-
-## Naming planes (mandatory — humans and coding agents)
-
-Identifiers from **different planes are never interchangeable**. Coding agents
-must enforce this on every branch name, commit subject, ADR, issue, plan
-microtask, and grade claim.
-
-| Plane | Token | Authority |
-|---|---|---|
-| Decision | `ADR-NNNN` | `docs/decisions/` |
-| Program | `P##` (historical program phase) | `docs/plans/**`; no program document overrides the current roadmap in `docs/current/roadmap.md`. Always say **program P##** in historical prose. |
-| Plan / microtask | plan-local (`M*`, `C*`, `S*`…) | owning `docs/plans/**` (e.g. full-app `S*.*`) |
-| Delivery | full Git commit SHA on `origin/main` | remote `refs/heads/main` |
-| Grade / mark | mark + grade (`S+++`, `A-`…) | `docs/architecture/architecture-marks.md` |
-| Runtime product | `id@version` / crate / pack | source contracts, SemVer, EM |
-
-**Hard gates**
-
-1. `P12` ≠ a delivery SHA ≠ `ADR-0012` ≠ grade `S+++`. Never “align” identifiers
-   across planes.
-2. ADRs are monotonic and permanent; never renumber or invent without scanning
-   `docs/decisions/`.
-3. Commits are **emoji-first Conventional Commits**.
-4. Program phase may appear in commit text (`program P21 …`, `S+++ P12 …`);
-   delivery identity is the full landed commit SHA. Historical product specs
-   named `phase-20*` are **not** program P20.
-5. Grades move only with source + tests + docs exit criteria — not because a
-   commit landed or a phase label was applied. Product ledger rows are not
-   grades.
-6. Runtime product ids are not program phases or ADR numbers.
-7. A temporary or feature branch is never delivery. Only the SHA read back from
-   remote `refs/heads/main` proves completion.
-
-**Canonical detail:** [`docs/contributing/artifact-naming.md`](docs/contributing/artifact-naming.md)
-
-If a proposed name collapses two planes, **stop and rename** before commit.
+  If the active workspace is not the Optimus project root, stop.
+- Commit directly on `main`: small, verified, emoji-first Conventional
+  Commits (`<emoji> <type>(<scope>): <summary>`). Never run `gh`, pull
+  requests, issues, or GitHub workflow ceremony. Never run history-changing
+  Git commands. Delivery means verified commits on `main`, pushed to
+  `origin/main` when the user asks.
+- Allowed write scope: the repository tree plus the Optimus install/runtime
+  paths only when a task explicitly requires install, relaunch, uninstall,
+  or live desktop verification. Never edit sibling projects, other agents'
+  repos, global system packages, or shell config.
 
 ## Architectural laws
 
@@ -167,34 +73,29 @@ If a proposed name collapses two planes, **stop and rename** before commit.
 18. Bug fixes require regression tests.
 19. Important architectural decisions require an ADR.
 20. A feature is incomplete when its Engineering Memory is stale.
-21. No module exceeds 800 production lines. Enforced as a ratchet by
-    `scripts/check-module-size.py`: new files must comply, and the 14
-    grandfathered modules in `docs/architecture/module-size-baseline.json` may
-    only shrink. Never add a baseline entry by hand — split the file instead.
-    Production lines exclude every `#[cfg(test)]` item and bare `mod x;`
-    declaration, so inline coverage is never penalised and splitting a module
-    never pushes its declaring file over the ratchet (ADR-0049).
+21. No module exceeds 800 production lines (ratchet, ADR-0049).
 
 ## Evidence and status
 
-- Label architecture claims as **Confirmed current behaviour**, **Inferred
-  behaviour**, **Planned behaviour**, or **Unknown or unresolved behaviour**.
-- Source code and executable tests outrank prose. ADRs preserve decisions and
-  history; do not rewrite them to hide superseded reasoning.
-- Do not claim specialist agents, model routing, cancellation, replay, GPU, or
-  project integrations exist unless their real implementation and tests exist.
-- Generated Engineering Memory identity is the content-addressed source tree
-  hash. Do not invent commit SHAs as generated self-identity. Git commits remain
-  external delivery/provenance evidence only.
+Label architecture claims as **Confirmed current behaviour**, **Inferred
+behaviour**, **Planned behaviour**, or **Unknown or unresolved behaviour**.
+Source code and executable tests outrank prose. ADRs preserve decisions and
+history; do not rewrite them to hide superseded reasoning. Do not claim
+specialist agents, model routing, cancellation, replay, GPU, or project
+integrations exist unless their real implementation and tests exist.
 
 ## Development workflow
 
-0. Gates run through `just`, never as hand-typed command lists. `just check` is
-   the inner loop and `just verify` is the complete land gate.
-   `scripts/verify.sh` is the single source of truth — add new gates there, not
-   to a hook, workflow, or doc. Managed `just land` is the only delivery path.
-1. Identify the owning subsystem and read its Engineering Memory through lenses,
-   not by dumping raw `.engineering-memory/*.json` into prompts.
+0. Gates run through `just`, never as hand-typed command lists. `just check`
+   is the inner loop and `just verify` is the complete land gate.
+   `scripts/verify.sh` is the single source of truth — add new gates there,
+   not to a hook, workflow, or doc. Start every development turn with
+   `just orient`; use `just explain-path <path>` before guessing whether a
+   directory ships, is development-only, or is removable. Documentation
+   lookups start at `specs/conventions.md` and `docs/architecture.md`.
+1. Identify the owning spec (SDD loop: no code without a spec) and read its
+   Engineering Memory through lenses (`just em-context`), not by dumping raw
+   `.engineering-memory/*.json` into prompts.
 2. Inspect current source, related tests, contracts, and ADRs.
 3. Establish a reproducible baseline.
 4. Before installed-Desktop or live-model testing, load and follow
@@ -202,82 +103,45 @@ If a proposed name collapses two planes, **stop and rename** before commit.
    primary and deterministic tests are supplementary.
 5. Make the smallest coherent change; preserve unrelated work.
 6. Test focused behaviour, then relevant integration/evaluation surfaces.
-   When *building or extending a test layer* — not when adding a case to an
-   existing one — first verify what the current best practice and tooling are
-   **on the date the work is being done**, by search rather than from memory,
-   and state where the existing suite sits against that bar. A model's
-   knowledge has a cutoff; an inherited practice decays silently, and a suite
-   that is green because it is old is the self-serving green the north-star
-   criteria ban. Check the maturity of anything new before depending on it,
-   and record the finding with sources in the managed local task/provenance record so the next pass
-   can see what was checked and when.
 7. Review security, approval, cancellation, terminal outcomes, observability,
    replay implications, and CPU fallback where applicable.
-8. Run `just docs-check`. If a current or planned document or one of its source
-   bindings changed, review only the reported document ids, run
-   `just docs-refresh <doc-id>...`, and regenerate the deterministic catalog
-   with `just docs-generate`. Generation never acknowledges semantic review.
-9. Run `just em-check` before refreshing Engineering Memory.
-10. If changed/stale, run `just em-context` and update only owned knowledge from
-   that pack.
-11. Run `just em-generate` only when warming or rebuilding the disposable local
-    cache is useful; generated JSON is not delivery state.
-12. Run full `python3 scripts/engineering_memory.py validate` before
-    delivery/release; report known gaps via `report`.
-13. VCS changes go only through the managed delivery commands below. Publishing,
-    installing, or deploying outside that Git delivery remains task-scoped.
-
-## Main-only delivery (mandatory)
-
-Standing delivery contract (owner directive, 2026-08-04 — supersedes the
-2026-07-31 managed-delivery rules):
-
-- Develop directly on `main` in the project root. Zero linked worktrees, zero
-  feature branches; the `.githooks/` enforcement makes this non-negotiable.
-- Commit directly with `git commit` on `main`. Keep commits small, verified,
-  and conventional (`<emoji> <type>(<scope>): <summary>`).
-- Never run `gh` or use pull requests, issues, or GitHub workflow ceremony.
-- Never run history-changing Git commands (`git push --force`, `git rebase`,
-  `git reset` against landed history). Read-only `git status`, `git diff`,
-  `git log`, and `git show` remain allowed.
-- `just checkpoint`, `just land`, and `just undo` are retired; do not invoke
-  them.
-- Delivery means verified commits on `main` (pushed to `origin/main` when the
-  user asks).
+8. Run `just docs-check`; on staleness `just docs-refresh <ids>` +
+   `just docs-generate`. Generation never acknowledges semantic review.
+9. Run `just em-check` before refreshing Engineering Memory; `just em-context`
+   updates owned knowledge; run full
+   `python3 scripts/engineering_memory.py validate` before delivery.
+10. VCS changes go only through direct commits on `main`.
 
 ## Repository conventions
 
 - Rust workspace truth comes from `Cargo.toml` and `cargo metadata`.
 - `optimus-packs::ToolDesc` is the canonical implemented tool contract.
 - Durable effects go through `optimus-runtime`; do not bypass SmartDeny.
-- Runtime memory (`optimus-memory`), session state, skills, project knowledge,
-  retrieval indexes, and Engineering Memory are distinct systems.
+- Runtime memory (`optimus-memory`), session state, skills, project
+  knowledge, retrieval indexes, and Engineering Memory are distinct systems.
 - `.engineering-memory/` is an ignored disposable cache generated by
   `scripts/engineering_memory.py`; never edit or commit its JSON.
-- Prefer Engineering Memory lenses (`context`, `impact`, `owner`, `tools`,
-  `report`, `stat`) over loading whole generated maps into model context.
-- `AGENTS.md` is a developer control artifact. `OPTIMUS_AGENTS.md` is the product
-  runtime constitution. The installed Optimus runtime must never mutate either.
-- Naming planes are mandatory for coding agents (see Naming planes above).
-  `docs/contributing/artifact-naming.md` defines identity; the managed delivery
-  policy above controls all VCS delivery.
-- New reusable procedures belong in a focused repository skill. Keep this file
-  concise.
+- `AGENTS.md` is a developer control artifact. `OPTIMUS_AGENTS.md` is the
+  product runtime constitution. The installed Optimus runtime must never
+  mutate either.
+- Naming planes are mandatory (see `specs/constitution.md` and
+  `specs/conventions.md`); `docs/decisions/` holds ADRs; `docs/runbooks/`
+  holds operations.
+- New reusable procedures belong in a focused repository skill. Keep this
+  file concise.
 
 ## Agent skills
 
 Provider-specific skills are optional accelerators, never repository
-requirements. Any Codex, Claude, or other coding-agent skill remains subordinate
-to this file, the main-only boundary, and direct-on-main delivery. Do not add
-provider installation ceremony to routine tasks.
+requirements. Any Codex, Claude, or other coding-agent skill remains
+subordinate to this file, the main-only boundary, and direct-on-main delivery.
 
 ### Task records
 
-The managed land system owns task and provenance records. Repository development
-does not use GitHub issues or pull requests as an execution or delivery plane.
+Repository development does not use GitHub issues or pull requests as an
+execution or delivery plane.
 
 ### Domain docs
 
-Single-context: one root `CONTEXT.md`, with ADRs in **`docs/decisions/`** rather
-than the skills' default `docs/adr/`. ADR front matter is mandatory. See
-`docs/agents/domain.md`.
+Single-context: one root `CONTEXT.md`, with ADRs in **`docs/decisions/`**.
+ADR front matter is mandatory. See `docs/runbooks/agent-domain.md`.

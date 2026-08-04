@@ -523,6 +523,38 @@
         "engineering-memory-readme"
       ],
       "supporting": []
+    },
+    {
+      "id": "specs.constitution",
+      "keywords": [
+        "constitution",
+        "principles",
+        "sdd loop",
+        "definition of done",
+        "naming planes",
+        "highest authority"
+      ],
+      "primary": [
+        "specs-constitution"
+      ],
+      "supporting": [
+        "specs-conventions"
+      ]
+    },
+    {
+      "id": "specs.conventions",
+      "keywords": [
+        "conventions",
+        "formatting",
+        "commit style",
+        "spec template",
+        "package manager",
+        "placement law"
+      ],
+      "primary": [
+        "specs-conventions"
+      ],
+      "supporting": []
     }
   ],
   "schema_version": 1
