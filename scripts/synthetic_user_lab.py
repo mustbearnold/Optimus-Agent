@@ -28,7 +28,7 @@ from synthetic_user_lab_eval import evaluate
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COHORT = ROOT / "evals" / "synthetic-user-lab" / "cohort-v1.json"
-TMUX = shutil.which("tmux") or str(ROOT / "local" / "tools" / "tmux-root" / "usr" / "bin" / "tmux")
+TMUX = shutil.which("tmux") or ""
 
 
 def load_cohort(path: Path) -> dict[str, Any]:

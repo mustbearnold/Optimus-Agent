@@ -81,6 +81,24 @@ class InstructionPlaneTest(unittest.TestCase):
             any("stale development instruction" in item for item in instruction_planes.findings(self.root))
         )
 
+    def test_rejects_ceremony_prose_in_readme_and_justfile(self) -> None:
+        readme = self.root / "README.md"
+        readme.write_text(
+            readme.read_text(encoding="utf-8")
+            + "\nDevelopment uses assigned isolated worktrees and `just land`.\n",
+            encoding="utf-8",
+        )
+        justfile = self.root / "justfile"
+        justfile.write_text(
+            justfile.read_text(encoding="utf-8")
+            + "\n# Remove worktree-local artifacts inside the assigned worktree.\n",
+            encoding="utf-8",
+        )
+        problems = instruction_planes.findings(self.root)
+        self.assertTrue(
+            any("stale development instruction" in item for item in problems)
+        )
+
     def test_rejects_development_agents_embedded_in_product(self) -> None:
         path = self.root / "crates/optimus-kernel/src/lib.rs"
         path.write_text(

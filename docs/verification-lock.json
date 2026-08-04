@@ -109,7 +109,7 @@
       "resolved_files": 5
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "d4d91945b6c36a9f78ac09c8239fc6124ed158368c73ecae9cd520abb5078312",
+      "binding_sha256": "2676d0844d513901280bb8d14e56d128ba355163ae420820f28ae640452ece68",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -451,7 +451,7 @@
       "resolved_files": 11
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "489219107085ce89293c1718537d821cfda592d06f955e199b963e561688e162",
+      "binding_sha256": "13ca6492dbd7b6268ed974d5ff04c88abda31cde7b8ca39c67066ce6ffb7785a",
       "document_sha256": "cf6db2ab6df65b98f95d10e6df35fe7d9ab89ff60584193d3d73a2083d2484b6",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -655,7 +655,7 @@
       "resolved_files": 12
     },
     "repository-and-ownership-map": {
-      "binding_sha256": "03f568204ce1dde6869bba41dc54255f8898dde36f0dd88576c7e5fedfdfb6f8",
+      "binding_sha256": "4b2a22e20bf50e1ae3eb38b125059f66ff32f2037d503c82228f8037eedda2f6",
       "document_sha256": "640ac221f8720c2d7d1e77199153e21d294dbe9bd2c937842d59833ca8145bd8",
       "path": "docs/maps/repository-and-ownership.md",
       "resolved_files": 22

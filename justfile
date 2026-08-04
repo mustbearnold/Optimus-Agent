@@ -168,11 +168,11 @@ dev-legacy:
 
 # --- fix ---------------------------------------------------------------------
 
-# Report worktree-local rebuildable artifacts and shared report-only candidates.
+# Report rebuildable artifacts and shared report-only candidates.
 clean-report:
     python3 scripts/project_hygiene.py report
 
-# Delete only the closed, verified allowlist inside this assigned worktree.
+# Delete only the closed, verified allowlist of generated outputs.
 clean:
     python3 scripts/project_hygiene.py clean
 

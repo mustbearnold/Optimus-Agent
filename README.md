@@ -140,10 +140,10 @@ just ui       # Vitest, Electron, Playwright
 ```
 
 [`scripts/verify.sh`](scripts/verify.sh) is the single source of truth. The
-justfile, managed land, humans, and coding agents all call it, so there is no
-second hook or hosted-workflow command list to drift. It runs every gate to
-completion and reports the full picture rather than stopping at the first
-failure. `just land` runs it with skipped gates forbidden before delivery.
+justfile, humans, and coding agents all call it, so there is no second hook or
+hosted-workflow command list to drift. It runs every gate to completion and
+reports the full picture rather than stopping at the first failure. `just
+verify` runs it with skipped gates forbidden before delivery.
 
 The Hermes parity gate is fail-closed by design and is deliberately **not** part
 of `just verify`. Check it with `just parity`.
@@ -179,9 +179,9 @@ Emoji provides a compact visual label for each workspace area.
 
 ## Developing Optimus
 
-Start with [`AGENTS.md`](AGENTS.md). Development uses assigned isolated
-worktrees and the repository-managed checkpoint/land workflow; coding agents do
-not use raw history-changing Git, pull requests, issues, or `gh`.
+Start with [`AGENTS.md`](AGENTS.md). Development happens directly on `main`:
+zero worktrees, zero feature branches, enforced by `.githooks/`. Coding agents
+do not use raw history-changing Git, pull requests, issues, or `gh`.
 
 Artifact identity planes (`P##` ≠ task id ≠ `ADR-NNNN` ≠ grade) are defined in
 [artifact-naming.md](docs/contributing/artifact-naming.md).
