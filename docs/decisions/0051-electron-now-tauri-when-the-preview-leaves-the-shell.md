@@ -9,7 +9,6 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - apps/optimus-electron/main.cjs
   - apps/optimus-ui/src/app/OptimusApp.tsx
   - apps/optimus-desktop/src/main.rs
   - crates/optimus-browser/src/lib.rs

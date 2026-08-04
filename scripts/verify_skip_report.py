@@ -2,7 +2,7 @@
 """Render the gates that a local `verify.sh` invocation did not run.
 
 `verify.sh` allows skips locally on purpose: a contributor without tmux, or a
-fresh worktree with no `apps/optimus-electron/node_modules`, can still inspect
+fresh clone with no installed JS dependencies, can still inspect
 the available suite. Managed land forbids them (`OPTIMUS_VERIFY_FORBID_SKIPS=1`).
 
 What was not intended is the hook printing `clean` afterwards. A push that ran

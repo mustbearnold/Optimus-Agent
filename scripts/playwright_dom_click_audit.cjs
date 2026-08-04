@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const assert = require("node:assert/strict");
-const { chromium } = require("../apps/optimus-electron/node_modules/playwright");
+const { chromium } = require("playwright");
 
 const URL = process.env.OPTIMUS_UI_URL || "http://127.0.0.1:4173";
 const HEIGHT = 900;

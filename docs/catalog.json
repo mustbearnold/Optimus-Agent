@@ -181,7 +181,6 @@
       "npm_package": "optimus-desktop-e2e",
       "package": "optimus-desktop",
       "paired_with": [
-        "optimus-electron",
         "optimus-ui",
         "optimus-host"
       ],
@@ -204,69 +203,18 @@
       ],
       "paired_with": [
         "optimus-desktop",
-        "optimus-electron",
         "optimus-ui"
       ],
       "parent": "optimus-desktop",
       "path": "apps/optimus-desktop/ui",
       "removal_when": "Linux and Windows native install, launch, IPC, and parity acceptance no longer depend on Wry.",
-      "replacement": "optimus-electron and optimus-ui with a verified Windows installer",
+      "replacement": "optimus-ui with a verified Windows installer",
       "repository_role": "required",
       "retention": "conditional",
       "review_by": "2026-10-31",
       "safe_to_delete": false,
       "storage_plane": "repository",
       "summary": "Legacy Wry UI retained for rollback and the current Windows installation path."
-    },
-    {
-      "concern": "product-interface",
-      "distribution": "bundled",
-      "id": "optimus-electron",
-      "lifecycle": "rollback-only",
-      "not": [
-        "The React interface",
-        "The Rust filesystem and policy authority"
-      ],
-      "outputs_to": [
-        "workspace://Development/cache/bun",
-        "workspace://Development/evidence/playwright"
-      ],
-      "package": "optimus-electron",
-      "paired_with": [
-        "optimus-desktop",
-        "optimus-tauri",
-        "optimus-ui"
-      ],
-      "parent": "applications",
-      "path": "apps/optimus-electron",
-      "removal_when": "Tauri browser-preview, input, install, and rollback acceptance passes on the supported desktop targets.",
-      "repository_role": "required",
-      "retention": "essential",
-      "review_by": "2026-10-31",
-      "safe_to_delete": false,
-      "storage_plane": "repository",
-      "summary": "Electron desktop rollback shell, process supervisor, preload boundary, and preview host retained during Tauri parity work."
-    },
-    {
-      "concern": "development-tooling",
-      "distribution": "generated-local",
-      "id": "electron-dependency-cache",
-      "lifecycle": "generated",
-      "not": [
-        "Electron source",
-        "Installed product files"
-      ],
-      "optional_path": true,
-      "outputs_to": [
-        "workspace://Development/cache/npm/optimus-electron"
-      ],
-      "parent": "optimus-electron",
-      "path": "apps/optimus-electron/node_modules",
-      "repository_role": "generated",
-      "retention": "regenerable",
-      "safe_to_delete": true,
-      "storage_plane": "development",
-      "summary": "Ignored npm dependencies installed for Electron development and tests."
     },
     {
       "concern": "product-interface",
@@ -282,8 +230,7 @@
       "package": "optimus-tauri",
       "paired_with": [
         "optimus-ui",
-        "optimus-host",
-        "optimus-electron"
+        "optimus-host"
       ],
       "parent": "applications",
       "path": "apps/optimus-tauri",
@@ -330,7 +277,6 @@
       ],
       "package": "optimus-ui",
       "paired_with": [
-        "optimus-electron",
         "optimus-tauri",
         "optimus-desktop"
       ],
@@ -1109,7 +1055,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "5a3c6b68f52551311cf1d2324ff482267c422a0081cb8648e6741918fedf5b63",
+      "content_sha256": "83ef40e77c7f893153def6d05db1b9714870cb31b3895bde7ea2c115f289a16d",
       "headings": [],
       "id": "repository-readme",
       "path": "README.md",
@@ -1994,7 +1940,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "8a06b48e61140af96157934fce930e3f93e6c8b0abaa49e570294dbfd8ec9ee5",
+      "content_sha256": "f8017519096afdc6849ecd82ac50887c54fab8fa94e43eb6ff0a02051cde0eab",
       "headings": [
         "Product-complete program P23 verification",
         "Goal",
@@ -2429,7 +2375,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "7d94685c3ac7aeacf1ca335bdbaabb6cacfe959feeaf837c57f4f74363901f5a",
+      "content_sha256": "3b9f7290abc0fed8bc3711c24469ed31e28bdd8405d1836635f098012185a141",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
@@ -2485,7 +2431,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "838e49a318d2e771ad9624125bda6a4e771b2b4749927e1e49c7ad937ca709d2",
+      "content_sha256": "8909aea03147bac86254c86f0de94c650c0aa9e638f48a380be69cb2c6a577ce",
       "headings": [
         "Workspace redesign — shell verification",
         "Why this record exists",
@@ -2526,9 +2472,9 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "e99701d1b32c2e7da6365128cd0971d5ebe29490352e0be449a8404d1ffee284",
+      "content_sha256": "86f7629c1e052d15fd2295bdd48eea104ebd2712ba7d1212c832da93030fa1c4",
       "headings": [
-        "Desktop IPC method inventory (frozen for shell migration)",
+        "Desktop IPC method inventory (frozen for the Tauri shell)",
         "Registry methods (`ipc/router.rs`)",
         "System",
         "Sessions",
@@ -2538,28 +2484,28 @@
         "Chat",
         "OS / window",
         "Chat tool lifecycle",
-        "Non-registry stream / embed methods",
-        "Host HTTP surface (Electron main / Playwright)",
-        "Electron React bridge"
+        "Non-registry stream / shell channels",
+        "Host HTTP surface (Rust host / Playwright)",
+        "Tauri React bridge"
       ],
       "id": "contracts-desktop-ipc-methods",
       "path": "docs/contracts/desktop-ipc-methods.md",
       "plane": "current",
       "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
+      "reviewed_on": "2026-08-05",
       "status": "current",
-      "summary": "Cross-surface allowlist matrix (Rust registry vs Electron vs React): desktop-shell-and-ipc-matrix.md and python3 scripts/check-desktop-ipc-matrix.py.",
-      "title": "Desktop IPC method inventory (frozen for shell migration)",
+      "summary": "Cross-surface IPC matrix (Rust registry vs the React renderer surface via the Tauri bridge): desktop-shell-and-ipc-matrix.md and python3 scripts/check-desktop-ipc-matrix.py.",
+      "title": "Desktop IPC method inventory (frozen for the Tauri shell)",
       "type": "reference"
     },
     {
       "authority": "canonical",
-      "content_sha256": "c48ef8c2b5840aa7bad41a9d205f4e628d767c0402185fb80832d30b6e659984",
+      "content_sha256": "2530237c2fc4bfb431a94bc7645f056af02e4d14b5d93587354739276506867a",
       "headings": [
-        "Desktop shell authority and IPC matrix (Phase 4)",
+        "Desktop shell authority and IPC matrix",
         "Default shell (truth freeze)",
         "IPC ownership matrix",
-        "Critical invoke paths (must stay on all three parse surfaces)",
+        "Critical invoke paths (must stay on the renderer surface and host registry)",
         "Browser product language",
         "Renderer non-authority"
       ],
@@ -2567,15 +2513,15 @@
       "path": "docs/contracts/desktop-shell-and-ipc-matrix.md",
       "plane": "current",
       "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
+      "reviewed_on": "2026-08-05",
       "status": "current",
-      "summary": "Install authority: scripts/rebuild-install-relaunch.sh stages Tauri as the primary entry and keeps Electron and Wry as explicit rollback shells.",
-      "title": "Desktop shell authority and IPC matrix (Phase 4)",
+      "summary": "Install authority: scripts/rebuild-install-relaunch.sh stages Tauri + React as the desktop entry and keeps Wry as the legacy rollback shell.",
+      "title": "Desktop shell authority and IPC matrix",
       "type": "reference"
     },
     {
       "authority": "supporting",
-      "content_sha256": "67df91760420ec7b1ad65366d730d3ce8f6dbbbba145280cad0e3c06448790fd",
+      "content_sha256": "6fa2071724924c69186379812e90849e2c7d8dbaf2788e217bc22c026ef39101",
       "headings": [
         "Highest-risk behavioural contracts",
         "Priority 0",
@@ -2588,7 +2534,7 @@
         "C-07 Provider call envelope and whole-batch authorization",
         "C-15 Atomic projection and event-ledger transitions",
         "C-16 Campaign-to-job consistency and recovery",
-        "C-17 Native preview annotation and overlay isolation",
+        "C-17 Browser annotation and overlay isolation",
         "Priority 1",
         "C-08 Canonical tool output/error/cancel/replay schema",
         "C-09 Universal agent lifecycle",
@@ -3438,7 +3384,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "de58fe424aee66fd31dadbb254c470c0a0bb0d57bf66fe722c4249f660abebca",
+      "content_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "headings": [
         "ADR-0028: Electron + React shell over Rust host",
         "Context",
@@ -3465,7 +3411,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "9947d9bb090b59f83e953b336120a79b9b467acc3358fbb7b9ab9b936169f8f8",
+      "content_sha256": "613536bcaf89d6fc413e62367f83667d58343f8e9fc99e3fb136f138a11b36db",
       "headings": [
         "ADR-0029: React workbench and Electron preview view",
         "Context",
@@ -3499,7 +3445,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5454bddfb445341aa15389f08ffe6d6b9e2286eec7e54ad096ebd8864b0a0ad0",
+      "content_sha256": "09f6ef95e5287135bfa1cb05ecc2b39fb6704bb3f573668678d54e6f7abe44ae",
       "headings": [
         "ADR-0030: Codex-measured shell and multi-folder projects",
         "Context",
@@ -3530,7 +3476,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "ed013ec8a70e7222ebd3080683e3dc25303922429d887ecf7606f928994ef797",
+      "content_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "headings": [
         "ADR-0031: Safe project work loop and durable tool lifecycle",
         "Context",
@@ -3724,7 +3670,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "2dddb01099233d01788be84e8c56b94907fdeb14aaba4e218043fc99c189e2a6",
+      "content_sha256": "c1442c585bab8ef4721896606d8c36a5565a50328c2a4f958c9d79a9f95bff41",
       "headings": [
         "ADR-0038: UI IPC architecture completeness (P15)",
         "Context",
@@ -3778,7 +3724,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "a3a0ea9785a0909c028c2557ccbd43b5d2088b7347a2acc5d689a2f80024d469",
+      "content_sha256": "ac9e92f67da63f0599131a4219d6e0e15b7a7e6e8b14b087d8ffd0011401f61f",
       "headings": [
         "ADR-0040: SharedBrowserContract (coordinated, not merged trust)",
         "Context",
@@ -3920,7 +3866,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "93c87bd93ef42d7f029555d3f895642fbc95ad0f2b4284a13ee78f19d4e2ab88",
+      "content_sha256": "db84458a798cbfd112eeb58cbf30d9a1dd95929c7a98df9d966837a14181cf37",
       "headings": [
         "ADR-0045: Agent host and surface transports",
         "Context",
@@ -4089,7 +4035,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "dd5698da4bdd4401573d6622019ac387a53802352b7912cf0d172c61461696cf",
+      "content_sha256": "8d83c9867bad64b2b1738893a240f38b924da97f5dcc9557b16b305386707dda",
       "headings": [
         "ADR-0051: Tauri primary, Electron rollback during preview parity",
         "Context",
@@ -4758,7 +4704,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "2bb607eb29d8ea47ada847a0165f9bb059a5c7cb2228a327d56694fe6a99006b",
+      "content_sha256": "15db5198d4f760e4250bf803873ee3a2169c8b0970ca74cac9774be3d6d73783",
       "headings": [
         "ADR-0076: Developer Full Access is a scoped grant with a stable supervisor",
         "Context",
@@ -4850,7 +4796,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "1df6d7f82e0ec8a0a18602ada10d71cc1f42168ec21c02cd57fe2e204d8a0e1c",
+      "content_sha256": "6d9fe12ac7c0b613c1f0877a0c556e339d4e1f1ca576387f77e3d698048d391a",
       "headings": [
         "Codex-converged Optimus experience contract",
         "1. Product and user",
@@ -4883,7 +4829,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "f986075be9aec2905b191c44a4e54a633a6f54ac0d4eb76c8bc6330b1e876dae",
+      "content_sha256": "32c6a3a7716da01166cf6b61550abedd73966c441c520aed2f03f6bf17a99a00",
       "headings": [
         "Codex-converged Optimus state matrix",
         "Run lifecycle",
@@ -5621,7 +5567,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "640ac221f8720c2d7d1e77199153e21d294dbe9bd2c937842d59833ca8145bd8",
+      "content_sha256": "48b3209ba5c607378e8ad5a473f65e8004ffee543f4e42cf8be5c8f7d61ea66c",
       "headings": [
         "Repository and ownership map",
         "Audit basis and package ownership",
@@ -5787,7 +5733,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "a373a7e41d55bcc5b98cf64534be3b4bc08ad87be59fc86dd92dc649b99f971d",
+      "content_sha256": "b58c17f03b5853328341ff40f8c17ba309f3249485bd1028096862a95ad168ed",
       "headings": [
         "Full-app micro-tasks (efficiency-ordered)",
         "Stage → program phase map",
@@ -6084,7 +6030,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "790d485647616d7463a9a3b267deb68a56a0f6395dce51bb2e2e1b2e2a3bc811",
+      "content_sha256": "94dd51d716d6d2444d8a2b256c9c86042fb24fdc47831e4e89b5e6997a0c5c24",
       "headings": [
         "Product-complete program — P20–P29",
         "Naming planes (mandatory)",
@@ -6466,8 +6412,8 @@
       "type": "history"
     },
     {
-      "authority": "supporting",
-      "content_sha256": "ecc1716ca623fe8cb3818abaaaa1c62fbef849a4960badca74b875da6890f33e",
+      "authority": "historical",
+      "content_sha256": "1ecc0c46aa0bcaac311d35edc4f1eda605cd4668d2fb370e673d766ea236a649",
       "headings": [
         "Electron + React migration — Slice 1 host + Electron + UI scaffold",
         "Current disposition",
@@ -6476,13 +6422,13 @@
       ],
       "id": "specifications-electron-react-migration-slice-1",
       "path": "docs/specifications/electron-react-migration-slice-1.md",
-      "plane": "work",
-      "review_by": "2026-10-31",
+      "plane": "history",
+      "review_by": "never",
       "reviewed_on": "2026-07-31",
-      "status": "planned",
-      "summary": "Confirmed current behaviour: this scaffold slice is complete and has been superseded by docs/specifications/react-workbench-electron-preview-cutover.md for current renderer, preload, native Browser, responsive, motion, accessibility,...",
+      "status": "historical",
+      "summary": "Historical scaffold record superseded by the React workbench cutover; the Electron transport itself was retired with Electron on 2026-08-05.",
       "title": "Electron + React migration — Slice 1 host + Electron + UI scaffold",
-      "type": "reference"
+      "type": "history"
     },
     {
       "authority": "historical",
@@ -6606,7 +6552,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "922011db9de79508c195994cd38c294f4754cb22c6760256d5544252baa354bd",
+      "content_sha256": "3c37452c53c366ef55ac1a60ccb20054c2347d0ff20f619eb70136d3b052aa8c",
       "headings": [
         "In-transcript exact approval resolution",
         "Experience contract",
@@ -6953,8 +6899,8 @@
       "type": "history"
     },
     {
-      "authority": "supporting",
-      "content_sha256": "18929ee41d7e6666cb40011bad4073a2a337015a458a6246f7721e4e35279139",
+      "authority": "historical",
+      "content_sha256": "66827461877457d1c47d4db9e425ba3fb8b3f1d1cb6f0c956d318018762b777f",
       "headings": [
         "React workbench and Electron preview cutover",
         "Objective and release boundary",
@@ -6976,13 +6922,13 @@
       ],
       "id": "specifications-react-workbench-electron-preview-cutover",
       "path": "docs/specifications/react-workbench-electron-preview-cutover.md",
-      "plane": "work",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "planned",
-      "summary": "Replace the minimal React renderer with the Optimus Vantage workbench and make it the default Electron renderer without changing Rust method names, durable state, approval semantics, or databases.",
+      "plane": "history",
+      "review_by": "never",
+      "reviewed_on": "2026-08-05",
+      "status": "historical",
+      "summary": "Historical record for the React workbench and Electron preview cutover. The React workbench remains the default renderer; the Electron preview transport was retired with Electron on 2026-08-05 in favour of the exclusive Tauri shell.",
       "title": "React workbench and Electron preview cutover",
-      "type": "reference"
+      "type": "history"
     },
     {
       "authority": "historical",
@@ -7201,7 +7147,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "55f84a899da3edbed6867a9bf405354b06e7b577f64ca245c9dbb08ecdfccc28",
+  "documents_sha256": "d25462d999f5db98d0c7e58926a7e589a83ee9c1cbfeaa188f43441665a0fdfb",
   "routes": [
     {
       "id": "docs.navigation",

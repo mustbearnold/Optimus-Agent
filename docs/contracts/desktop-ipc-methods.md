@@ -4,8 +4,8 @@ doc_type: reference
 plane: current
 status: current
 authority: supporting
-summary: Cross-surface allowlist matrix (Rust registry vs Electron vs React): desktop-shell-and-ipc-matrix.md and python3 scripts/check-desktop-ipc-matrix.py.
-reviewed_on: 2026-07-31
+summary: Cross-surface IPC matrix (Rust registry vs the React renderer surface via the Tauri bridge): desktop-shell-and-ipc-matrix.md and python3 scripts/check-desktop-ipc-matrix.py.
+reviewed_on: 2026-08-05
 review_by: 2026-10-31
 knowledge_type: contract
 covers:
@@ -14,14 +14,14 @@ covers:
   - apps/optimus-desktop/src/bridge.rs
   - apps/optimus-desktop/src/native_workers.rs
   - apps/optimus-desktop/src/preview_embed.rs
-  - apps/optimus-electron/main.cjs
-  - apps/optimus-electron/preload.cjs
+  - apps/optimus-tauri/src/main.rs
   - apps/optimus-ui/src/ipc/**
 ---
 
-# Desktop IPC method inventory (frozen for shell migration)
+# Desktop IPC method inventory (frozen for the Tauri shell)
 
-Cross-surface allowlist matrix (Rust registry vs Electron vs React):
+Cross-surface IPC matrix (Rust registry vs the React renderer surface via the
+Tauri bridge):
 [desktop-shell-and-ipc-matrix.md](./desktop-shell-and-ipc-matrix.md) and
 `python3 scripts/check-desktop-ipc-matrix.py`.
 
@@ -113,10 +113,10 @@ reaches the host; every other shell starts with no handoff, so the host
 answers `{ "session_id": null, "handoff": false }`.
 
 `pick_folder` stages the native selection as a short-lived, single-use project
-root grant and returns its opaque token. Electron main exchanges the native
-path through internal `project_root_stage_native`; that method is not in the
-renderer `invoke` allowlist and requires a separate random main-process secret
-that is not sent to renderer code.
+root grant and returns its opaque token. The Tauri shell and Rust host
+exchange the native path through internal `project_root_stage_native`; that
+method is not in the renderer `DesktopMethod` surface and requires a separate
+random process secret that is not sent to renderer code.
 
 ## Chat tool lifecycle
 
@@ -130,18 +130,19 @@ may be replayed by `get_session`; consumers deduplicate by `event_id`.
 `chat_approval_resolve`. Terminal events may retain that binding as audit
 evidence, but the UI exposes controls only for the pending phase.
 
-## Non-registry stream / embed methods
+## Non-registry stream / shell channels
 
-| Method | Role |
+| Channel | Role |
 |---|---|
-| `chat_stream` | Streaming chat |
-| `chat_cancel` | Cancel stream by id |
-| `browser_embed` | Preview bounds/z-order |
-| `browser_back` / `browser_forward` | Preview history |
-| `browser_set_annotate` | Annotation mode |
-| `browser_annotation` | Pin push from preview |
+| `chat_start` / `chat_cancel` | Tauri commands: bounded stream + cancellation (not `host_invoke`) |
+| `window_action` / `pick_folder` | Tauri commands: window chrome + native folder selection |
+| `browser_*` | Ordinary registry methods; the workbench Browser surface is the kernel browser effector |
 
-## Host HTTP surface (Electron main / Playwright)
+The Electron preview channels (`browser_embed`, `browser_back`,
+`browser_forward`, `browser_set_annotate`, `browser_annotation`) are retired
+with the `WebContentsView` preview.
+
+## Host HTTP surface (Rust host / Playwright)
 
 | Route | Role |
 |---|---|
@@ -152,31 +153,19 @@ evidence, but the UI exposes controls only for the pending phase.
 
 Security: `OPTIMUS_HTTP_TOKEN` ≥ 32 chars, development/host flag, loopback only.
 
-## Electron React bridge
+## Tauri React bridge
 
 **Confirmed current behaviour:** the production React renderer does not call
-the host routes directly and does not receive `OPTIMUS_HTTP_TOKEN`. Electron
-main authenticates the same frozen host calls and the preload exposes:
+the host routes directly and does not receive `OPTIMUS_HTTP_TOKEN`. The Tauri
+shell (`apps/optimus-tauri/src/main.rs`) exposes a small command surface and
+forwards every registry method through its host bridge:
 
 ```ts
-type OptimusElectronBridge = {
+type OptimusTauriBridge = {
   invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
   chat: {
     start(request: ChatRequest): Promise<{ streamId: number }>;
     cancel(streamId: number): Promise<{ requested: boolean }>;
-    subscribe(listener: (event: ChatEnvelope) => void): () => void;
-  };
-  browser: {
-    setBounds(bounds: BrowserBounds): void;
-    setVisible(visible: boolean): void;
-    navigate(url: string): Promise<BrowserState>;
-    back(): Promise<BrowserState>;
-    forward(): Promise<BrowserState>;
-    reload(): Promise<BrowserState>;
-    state(): Promise<BrowserState>;
-    annotate(): Promise<BrowserAnnotation>;
-    cancelAnnotation(): Promise<{ cancelled: boolean }>;
-    subscribe(listener: (state: BrowserState) => void): () => void;
   };
   windowAction(action: "minimize" | "maximize" | "close"): Promise<unknown>;
   pickFolder(): Promise<PickFolderResult>;
@@ -184,19 +173,24 @@ type OptimusElectronBridge = {
 };
 ```
 
-The bridge allowlists existing desktop method names, rejects serialized
-requests larger than 1 MiB, and permits one foreground chat stream per window.
-Chat envelopes carry both `streamId` and session ID. `hostInfo` is retained for
-legacy compatibility but omits the token in React mode.
+The bridge surface:
 
-The Electron Browser methods control a user-facing `WebContentsView`; they are
-not aliases for Rust `browser_navigate`, `browser_click`, or
-`browser_reload`.
+- `host_invoke(method, params)` — forwards any registry method to
+  `optimus_host::handle_ipc`; unknown or main-only methods fail in the host.
+  The renderer's typed `DesktopMethod` union is the declared surface and the
+  `check-desktop-ipc-matrix` gate pins it to the registry.
+- `chat_start(streamId, request, events)` — one bounded stream per call with a
+  cancellable token; events push over the Tauri `Channel` and end in exactly
+  one terminal event (`done`, `error`, or `cancelled`).
+- `chat_cancel(streamId)` — cancels exactly the owning stream.
+- `window_action(action)` — native minimize / maximize / close for the
+  borderless window.
+- `pick_folder()` — native selection staged as a single-use project-root
+  grant token.
+- `open_path` — a registry method forwarded through `host_invoke`.
 
-`annotate()` is an explicit one-shot user-preview capability. Main injects a
-temporary capture into the sandboxed page and returns at most bounded URL,
-title, tag, role, accessible label/short text, and rounded geometry. It
-consumes the selected click, times out after two minutes, and is cancelled by
-Escape, `cancelAnnotation()`, or preview suspension. No page HTML or selector
-crosses the preload boundary. Settings, project-source management, and task
-overlays set the preview invisible before their renderer UI is shown.
+Browser methods (`browser_navigate`, `browser_click`, `browser_reload`, …)
+are ordinary registry methods under Tauri: the workbench Browser surface drives
+the kernel browser effector (CDP when available), not a shell-owned native
+view. The Electron `WebContentsView` preview and its annotation channel are
+retired with Electron.

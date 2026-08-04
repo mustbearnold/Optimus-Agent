@@ -18,10 +18,6 @@ depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
 validated_by:
-  - apps/optimus-electron/e2e/support/workbench-flow.cjs
-  - apps/optimus-electron/e2e/compiled-workbench.spec.cjs
-  - apps/optimus-electron/e2e/compiled-shell.spec.cjs
-  - apps/optimus-electron/e2e/installed-shell.spec.cjs
   - apps/optimus-ui/src/app/OptimusApp.test.tsx
   - scripts/verify.sh
 ---

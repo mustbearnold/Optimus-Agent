@@ -1,16 +1,15 @@
 ---
 doc_id: specifications-react-workbench-electron-preview-cutover
-doc_type: reference
-plane: work
-status: planned
-authority: supporting
-summary: Replace the minimal React renderer with the Optimus Vantage workbench and make it the default Electron renderer without changing Rust method names, durable state, approval semantics, or databases.
-reviewed_on: 2026-07-31
-review_by: 2026-10-31
+doc_type: history
+plane: history
+status: historical
+authority: historical
+summary: Historical record for the React workbench and Electron preview cutover. The React workbench remains the default renderer; the Electron preview transport was retired with Electron on 2026-08-05 in favour of the exclusive Tauri shell.
+reviewed_on: 2026-08-05
+review_by: never
 knowledge_type: specification
 covers:
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
   - apps/optimus-desktop/src/server.rs
   - crates/optimus-host/src/**
   - docs/contracts/desktop-ipc-methods.md
@@ -20,8 +19,6 @@ depends_on:
 validated_by:
   - apps/optimus-ui/src/**/*.test.ts
   - apps/optimus-ui/src/**/*.test.tsx
-  - apps/optimus-electron/test/*.test.cjs
-  - apps/optimus-electron/e2e/*.spec.cjs
   - apps/optimus-desktop/e2e/**
 ---
 

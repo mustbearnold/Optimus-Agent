@@ -12,14 +12,12 @@ covers:
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-desktop/src/server.rs
   - crates/optimus-host/src/**
-  - apps/optimus-electron/**
   - apps/optimus-ui/**
 depends_on:
   - docs/decisions/0014-native-webview-ipc-mode.md
   - docs/decisions/0015-preview-browser-cdp.md
 validated_by:
   - apps/optimus-desktop/src/main.rs
-  - apps/optimus-electron/package.json
 ---
 
 # ADR-0028: Electron + React shell over Rust host

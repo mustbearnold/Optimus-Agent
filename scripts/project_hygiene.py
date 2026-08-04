@@ -18,7 +18,6 @@ WARNING_BYTES = 20 * 1024**3
 CLEANABLE = (
     "target",
     "apps/optimus-desktop/node_modules",
-    "apps/optimus-electron/node_modules",
     "apps/optimus-ui/node_modules",
     "apps/optimus-ui/dist",
     "scripts/__pycache__",

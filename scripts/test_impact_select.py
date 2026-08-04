@@ -142,7 +142,7 @@ class PathClassificationTests(unittest.TestCase):
     def test_the_ui_selects_the_ui_suites(self) -> None:
         plan = plan_for("apps/optimus-ui/src/app/OptimusApp.tsx")
         self.assertIn(IS.SUITE_UI, plan.suites)
-        self.assertIn(IS.SUITE_ELECTRON_E2E, plan.suites)
+        self.assertIn(IS.SUITE_PLAYWRIGHT, plan.suites)
 
     def test_the_tui_crate_selects_the_pty_suite(self) -> None:
         plan = plan_for("apps/optimus-tui/src/composer.rs")

@@ -76,16 +76,14 @@ ESCALATING_PATHS = (
 
 # Suites that are not cargo packages. Selected by path, never by inference.
 SUITE_UI = "optimus-ui vitest"
-SUITE_ELECTRON = "optimus-electron"
-SUITE_ELECTRON_E2E = "electron e2e"
 SUITE_PLAYWRIGHT = "playwright"
 SUITE_TUI_E2E = "tui e2e"
 SUITE_GATES = "gates"
 
 # Path prefix -> suites, for the parts of the tree cargo does not describe.
 PATH_SUITES: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("apps/optimus-ui/", (SUITE_UI, SUITE_PLAYWRIGHT, SUITE_ELECTRON_E2E)),
-    ("apps/optimus-desktop/", (SUITE_ELECTRON, SUITE_ELECTRON_E2E, SUITE_PLAYWRIGHT)),
+    ("apps/optimus-ui/", (SUITE_UI, SUITE_PLAYWRIGHT)),
+    ("apps/optimus-desktop/", (SUITE_PLAYWRIGHT,)),
     ("docs/", (SUITE_GATES,)),
     ("scripts/", (SUITE_GATES,)),
     # The knowledge graph's own generated state: the engineering-memory gate
@@ -285,7 +283,7 @@ def build_plan(
     if "optimus-tui" in plan.packages:
         plan.suites.add(SUITE_TUI_E2E)
     if "optimus-desktop" in plan.packages:
-        plan.suites.update((SUITE_ELECTRON, SUITE_ELECTRON_E2E))
+        plan.suites.add(SUITE_PLAYWRIGHT)
 
     return plan
 

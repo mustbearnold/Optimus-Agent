@@ -16,8 +16,6 @@ This is the generated human view of `docs/repository-components.json`.
 | `apps/optimus-cli` | Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch. | `primary` | `binary` | no |
 | `apps/optimus-desktop` | Rust desktop authority and IPC/HTTP host, plus the still-required Windows Wry surface. | `primary` | `binary` | no |
 | `apps/optimus-desktop/ui` | Legacy Wry UI retained for rollback and the current Windows installation path. | `rollback-only` | `embedded` | no |
-| `apps/optimus-electron` | Electron desktop rollback shell, process supervisor, preload boundary, and preview host retained during Tauri parity work. | `rollback-only` | `bundled` | no |
-| `apps/optimus-electron/node_modules` | Ignored npm dependencies installed for Electron development and tests. | `generated` | `generated-local` | yes |
 | `apps/optimus-tauri` | Primary Tauri v2 desktop shell that calls the Rust host directly and renders the React workbench. | `primary` | `binary` | no |
 | `apps/optimus-tui` | Terminal conversation presentation, streamed turns, input, history, and approval UX. | `primary` | `binary` | no |
 | `apps/optimus-ui` | React workbench presentation with no filesystem, policy, or runtime authority. | `primary` | `bundled` | no |

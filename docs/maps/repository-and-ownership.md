@@ -113,14 +113,14 @@ Playwright and browser testing. The IPC method registry and its domain modules
 (system, sessions, scheduling, runtime, files, chat, OS) now live in
 `crates/optimus-host` (ADR-0045); the desktop binary is a transport over them. Linux user installation and
 desktop registration are owned by `scripts/rebuild-install-relaunch.sh` and the
-XDG data/bin/application/icon locations it manages. Electron plus React is the
+XDG data/bin/application/icon locations it manages. Tauri plus React is the
 default Linux install; the Windows rebuild/install path still uses Wry, so the
 Wry UI is rollback-only but not yet safe to remove.
 
-**Confirmed current behaviour:** `apps/optimus-electron` is the default
-repository-level shell and owns the context-isolated preload, host
-authentication, foreground stream controller, native preview view, bounded
-preview annotations, window actions, and native-view overlay lifecycle.
+**Confirmed current behaviour:** `apps/optimus-tauri` is the default
+repository-level shell and owns the Tauri command surface: the frozen-method
+host bridge, bounded chat streams with cancellation, window chrome, native
+folder selection, and embedded workbench assets.
 `apps/optimus-ui` owns the React presentation, Codex-measured token layer,
 responsive panel composition, local project `rootPaths[]` catalog,
 session-to-project grouping, and layout/theme/density state. None of that local
@@ -136,8 +136,8 @@ project state grants Rust filesystem access.
 - **Confirmed:** runtime semantic memory belongs to `optimus-memory`.
 - **Confirmed:** runtime procedural skills belong to `optimus-skills`.
 - **Confirmed:** the Rust host and Wry rollback belong to
-  `apps/optimus-desktop`; the default Electron transport boundary belongs to
-  `apps/optimus-electron`; React presentation and local multi-folder grouping
+  `apps/optimus-desktop`; the Tauri transport boundary belongs to
+  `apps/optimus-tauri`; React presentation and local multi-folder grouping
   belong to `apps/optimus-ui`. Domain behavior remains in Rust libraries.
 - **Confirmed:** `optimus-agent` / `optimus-workflow` own typed agent/workflow
   contracts, registries, invocation evidence, and DAG verticals; kernel owns

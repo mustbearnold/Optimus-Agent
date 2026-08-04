@@ -11,7 +11,10 @@
       "repository_role": "external",
       "retention": "conditional",
       "summary": "Machine-local development data: evidence, caches, tools, archives, and historical delivery records.",
-      "not": ["The GitHub repository", "Optimus product runtime state"],
+      "not": [
+        "The GitHub repository",
+        "Optimus product runtime state"
+      ],
       "safe_to_delete": false
     },
     {
@@ -25,7 +28,10 @@
       "repository_role": "external",
       "retention": "essential",
       "summary": "Managed checkpoints, land receipts, recovery refs, locks, and verification evidence.",
-      "not": ["Temporary build cache", "GitHub repository content"],
+      "not": [
+        "Temporary build cache",
+        "GitHub repository content"
+      ],
       "safe_to_delete": false
     },
     {
@@ -39,7 +45,10 @@
       "repository_role": "external",
       "retention": "conditional",
       "summary": "Machine-local bundled development tools and browser payloads required by managed gates.",
-      "not": ["Product runtime tools", "Always-safe deletion"],
+      "not": [
+        "Product runtime tools",
+        "Always-safe deletion"
+      ],
       "safe_to_delete": false
     },
     {
@@ -53,7 +62,10 @@
       "repository_role": "external",
       "retention": "conditional",
       "summary": "Large temporary and raw evidence area requiring per-child retention review before cleanup.",
-      "not": ["Versioned repository data", "Blanket safe-to-delete cache"],
+      "not": [
+        "Versioned repository data",
+        "Blanket safe-to-delete cache"
+      ],
       "safe_to_delete": false
     },
     {
@@ -67,7 +79,10 @@
       "repository_role": "external",
       "retention": "regenerable",
       "summary": "Disposable development scratch and short-lived temporary files.",
-      "not": ["Managed land evidence", "Authored source progress"],
+      "not": [
+        "Managed land evidence",
+        "Authored source progress"
+      ],
       "safe_to_delete": true
     },
     {
@@ -81,7 +96,10 @@
       "repository_role": "external",
       "retention": "conditional",
       "summary": "Recoverable pre-migration and historical local snapshots awaiting explicit retention decisions.",
-      "not": ["Current repository authority", "Automatically disposable data"],
+      "not": [
+        "Current repository authority",
+        "Automatically disposable data"
+      ],
       "safe_to_delete": false
     },
     {
@@ -95,7 +113,10 @@
       "repository_role": "external",
       "retention": "conditional",
       "summary": "Machine-local external reference material used for comparison and development research.",
-      "not": ["Optimus source authority", "Installed product data"],
+      "not": [
+        "Optimus source authority",
+        "Installed product data"
+      ],
       "safe_to_delete": false
     },
     {
@@ -108,7 +129,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Root manifests, product and developer constitutions, landing documentation, and licenses.",
-      "not": ["A runtime-only source directory", "A place for local evidence or caches"],
+      "not": [
+        "A runtime-only source directory",
+        "A place for local evidence or caches"
+      ],
       "safe_to_delete": false
     },
     {
@@ -122,7 +146,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused.",
-      "not": ["A bypassable ceremony", "Product runtime code"],
+      "not": [
+        "A bypassable ceremony",
+        "Product runtime code"
+      ],
       "safe_to_delete": false
     },
     {
@@ -137,8 +164,13 @@
       "repository_role": "historical",
       "retention": "conditional",
       "summary": "Retired standalone Leptos and Wry experiment preserved only as a compact historical verdict.",
-      "not": ["An active frontend direction", "Current executable source"],
-      "paired_with": ["development-knowledge"],
+      "not": [
+        "An active frontend direction",
+        "Current executable source"
+      ],
+      "paired_with": [
+        "development-knowledge"
+      ],
       "lifecycle_events": [
         {
           "at": "2026-08-01",
@@ -160,7 +192,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Versioned nextest configuration used by repository verification.",
-      "not": ["User application configuration", "Optimus runtime preferences"],
+      "not": [
+        "User application configuration",
+        "Optimus runtime preferences"
+      ],
       "safe_to_delete": false
     },
     {
@@ -174,8 +209,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Mandatory law for humans and coding agents developing Optimus Agent.",
-      "not": ["Instructions loaded into Optimus product conversations", "OPTIMUS_AGENTS.md"],
-      "paired_with": ["runtime-constitution"],
+      "not": [
+        "Instructions loaded into Optimus product conversations",
+        "OPTIMUS_AGENTS.md"
+      ],
+      "paired_with": [
+        "runtime-constitution"
+      ],
       "safe_to_delete": false
     },
     {
@@ -189,8 +229,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Compile-time embedded constitution loaded into installed Optimus product sessions.",
-      "not": ["Coding-agent development law", "AGENTS.md"],
-      "paired_with": ["developer-instructions", "optimus-kernel"],
+      "not": [
+        "Coding-agent development law",
+        "AGENTS.md"
+      ],
+      "paired_with": [
+        "developer-instructions",
+        "optimus-kernel"
+      ],
       "safe_to_delete": false
     },
     {
@@ -204,7 +250,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Accepted design contract referenced by architecture decisions and interface fixtures.",
-      "not": ["An unowned scratchpad", "Current product status"],
+      "not": [
+        "An unowned scratchpad",
+        "Current product status"
+      ],
       "safe_to_delete": false
     },
     {
@@ -219,8 +268,13 @@
       "repository_role": "generated",
       "retention": "regenerable",
       "summary": "Ignored generated Engineering Memory cache derived from repository source and docs.",
-      "not": ["Runtime semantic memory", "Authored repository truth"],
-      "outputs_to": ["workspace://Development/cache/engineering-memory"],
+      "not": [
+        "Runtime semantic memory",
+        "Authored repository truth"
+      ],
+      "outputs_to": [
+        "workspace://Development/cache/engineering-memory"
+      ],
       "safe_to_delete": true
     },
     {
@@ -235,8 +289,13 @@
       "repository_role": "generated",
       "retention": "regenerable",
       "summary": "Ignored Cargo build cache and compiled development output.",
-      "not": ["Product source", "A distributable installation"],
-      "outputs_to": ["workspace://Development/cache/cargo"],
+      "not": [
+        "Product source",
+        "A distributable installation"
+      ],
+      "outputs_to": [
+        "workspace://Development/cache/cargo"
+      ],
       "safe_to_delete": true
     },
     {
@@ -251,8 +310,13 @@
       "repository_role": "generated",
       "retention": "regenerable",
       "summary": "Ignored installed npm dependency cache for the React interface.",
-      "not": ["Authored React source", "A product bundle"],
-      "outputs_to": ["workspace://Development/cache/npm/optimus-ui"],
+      "not": [
+        "Authored React source",
+        "A product bundle"
+      ],
+      "outputs_to": [
+        "workspace://Development/cache/npm/optimus-ui"
+      ],
       "safe_to_delete": true
     },
     {
@@ -267,24 +331,13 @@
       "repository_role": "generated",
       "retention": "regenerable",
       "summary": "Generated React distribution consumed by packaging and local desktop runs.",
-      "not": ["Authored UI source", "The Electron shell"],
-      "outputs_to": ["workspace://Development/build/ui"],
-      "safe_to_delete": true
-    },
-    {
-      "id": "electron-dependency-cache",
-      "path": "apps/optimus-electron/node_modules",
-      "parent": "optimus-electron",
-      "optional_path": true,
-      "storage_plane": "development",
-      "concern": "development-tooling",
-      "distribution": "generated-local",
-      "lifecycle": "generated",
-      "repository_role": "generated",
-      "retention": "regenerable",
-      "summary": "Ignored npm dependencies installed for Electron development and tests.",
-      "not": ["Electron source", "Installed product files"],
-      "outputs_to": ["workspace://Development/cache/npm/optimus-electron"],
+      "not": [
+        "Authored UI source",
+        "The Electron shell"
+      ],
+      "outputs_to": [
+        "workspace://Development/build/ui"
+      ],
       "safe_to_delete": true
     },
     {
@@ -298,7 +351,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Product binaries, terminal surface, native host, desktop shell, and React interface.",
-      "not": ["Five duplicate applications", "Generated development tooling"],
+      "not": [
+        "Five duplicate applications",
+        "Generated development tooling"
+      ],
       "safe_to_delete": false
     },
     {
@@ -312,7 +368,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Product icons and resources consumed by installers and installed surfaces.",
-      "not": ["Development screenshots", "Generated evaluation evidence"],
+      "not": [
+        "Development screenshots",
+        "Generated evaluation evidence"
+      ],
       "safe_to_delete": false
     },
     {
@@ -326,7 +385,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Typed product-runtime libraries, every one of them reached by a shipped binary.",
-      "not": ["Generated Cargo dependencies", "Independent duplicate agents"],
+      "not": [
+        "Generated Cargo dependencies",
+        "Independent duplicate agents"
+      ],
       "safe_to_delete": false
     },
     {
@@ -340,7 +402,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Governed architecture, decisions, plans, contracts, current truth, and generated indexes.",
-      "not": ["Product conversation memory", "An ungoverned dump of agent notes"],
+      "not": [
+        "Product conversation memory",
+        "An ungoverned dump of agent notes"
+      ],
       "safe_to_delete": false
     },
     {
@@ -354,9 +419,17 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Versioned evaluation inputs, questions, rubrics, and expected facts.",
-      "not": ["Generated transcripts", "Local evaluation results", "Installed product data"],
-      "outputs_to": ["workspace://Development/evidence/evals"],
-      "paired_with": ["optimus-eval"],
+      "not": [
+        "Generated transcripts",
+        "Local evaluation results",
+        "Installed product data"
+      ],
+      "outputs_to": [
+        "workspace://Development/evidence/evals"
+      ],
+      "paired_with": [
+        "optimus-eval"
+      ],
       "safe_to_delete": false
     },
     {
@@ -370,8 +443,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Deterministic repository gates, generation, installation, and diagnostics.",
-      "not": ["Runtime agent tools", "Ad-hoc commands agents may bypass"],
-      "outputs_to": ["workspace://Development/land", "workspace://Development/evidence"],
+      "not": [
+        "Runtime agent tools",
+        "Ad-hoc commands agents may bypass"
+      ],
+      "outputs_to": [
+        "workspace://Development/land",
+        "workspace://Development/evidence"
+      ],
       "safe_to_delete": false
     },
     {
@@ -385,11 +464,15 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Focused procedures for coding agents developing and verifying Optimus Agent.",
-      "not": ["Runtime procedural skills", "crates/optimus-skills"],
-      "paired_with": ["optimus-skills"],
+      "not": [
+        "Runtime procedural skills",
+        "crates/optimus-skills"
+      ],
+      "paired_with": [
+        "optimus-skills"
+      ],
       "safe_to_delete": false
     },
-
     {
       "id": "optimus-cli",
       "path": "apps/optimus-cli",
@@ -402,8 +485,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.",
-      "not": ["The terminal renderer", "The runtime kernel"],
-      "paired_with": ["optimus-tui", "optimus-kernel"],
+      "not": [
+        "The terminal renderer",
+        "The runtime kernel"
+      ],
+      "paired_with": [
+        "optimus-tui",
+        "optimus-kernel"
+      ],
       "safe_to_delete": false
     },
     {
@@ -420,8 +509,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Rust desktop authority and IPC/HTTP host, plus the still-required Windows Wry surface.",
-      "not": ["The React visual interface", "The Electron process shell alone"],
-      "paired_with": ["optimus-electron", "optimus-ui", "optimus-host"],
+      "not": [
+        "The React visual interface",
+        "The Electron process shell alone"
+      ],
+      "paired_with": [
+        "optimus-ui",
+        "optimus-host"
+      ],
       "safe_to_delete": false
     },
     {
@@ -435,30 +530,17 @@
       "repository_role": "required",
       "retention": "conditional",
       "summary": "Legacy Wry UI retained for rollback and the current Windows installation path.",
-      "not": ["The default Linux React workbench", "Safe-to-delete dead code"],
-      "replacement": "optimus-electron and optimus-ui with a verified Windows installer",
+      "not": [
+        "The default Linux React workbench",
+        "Safe-to-delete dead code"
+      ],
+      "replacement": "optimus-ui with a verified Windows installer",
       "removal_when": "Linux and Windows native install, launch, IPC, and parity acceptance no longer depend on Wry.",
       "review_by": "2026-10-31",
-      "paired_with": ["optimus-desktop", "optimus-electron", "optimus-ui"],
-      "safe_to_delete": false
-    },
-    {
-      "id": "optimus-electron",
-      "path": "apps/optimus-electron",
-      "parent": "applications",
-      "package": "optimus-electron",
-      "storage_plane": "repository",
-      "concern": "product-interface",
-      "distribution": "bundled",
-      "lifecycle": "rollback-only",
-      "repository_role": "required",
-      "retention": "essential",
-      "summary": "Electron desktop rollback shell, process supervisor, preload boundary, and preview host retained during Tauri parity work.",
-      "not": ["The React interface", "The Rust filesystem and policy authority"],
-      "outputs_to": ["workspace://Development/cache/bun", "workspace://Development/evidence/playwright"],
-      "removal_when": "Tauri browser-preview, input, install, and rollback acceptance passes on the supported desktop targets.",
-      "review_by": "2026-10-31",
-      "paired_with": ["optimus-desktop", "optimus-tauri", "optimus-ui"],
+      "paired_with": [
+        "optimus-desktop",
+        "optimus-ui"
+      ],
       "safe_to_delete": false
     },
     {
@@ -475,8 +557,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Primary Tauri v2 desktop shell that calls the Rust host directly and renders the React workbench.",
-      "not": ["The browser-preview implementation", "The Rust policy and execution authority"],
-      "paired_with": ["optimus-ui", "optimus-host", "optimus-electron"],
+      "not": [
+        "The browser-preview implementation",
+        "The Rust policy and execution authority"
+      ],
+      "paired_with": [
+        "optimus-ui",
+        "optimus-host"
+      ],
       "safe_to_delete": false
     },
     {
@@ -491,8 +579,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Terminal conversation presentation, streamed turns, input, history, and approval UX.",
-      "not": ["CLI command parsing", "The Optimus runtime itself"],
-      "paired_with": ["optimus-cli", "optimus-host"],
+      "not": [
+        "CLI command parsing",
+        "The Optimus runtime itself"
+      ],
+      "paired_with": [
+        "optimus-cli",
+        "optimus-host"
+      ],
       "safe_to_delete": false
     },
     {
@@ -507,12 +601,20 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "React workbench presentation with no filesystem, policy, or runtime authority.",
-      "not": ["The Electron native shell", "The Rust desktop host"],
-      "outputs_to": ["workspace://Development/cache/bun", "workspace://Development/build/ui"],
-      "paired_with": ["optimus-electron", "optimus-tauri", "optimus-desktop"],
+      "not": [
+        "The Electron native shell",
+        "The Rust desktop host"
+      ],
+      "outputs_to": [
+        "workspace://Development/cache/bun",
+        "workspace://Development/build/ui"
+      ],
+      "paired_with": [
+        "optimus-tauri",
+        "optimus-desktop"
+      ],
       "safe_to_delete": false
     },
-
     {
       "id": "optimus-agent",
       "path": "crates/optimus-agent",
@@ -525,8 +627,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Typed specialist registry, invocation contracts, and durable invocation ledger.",
-      "not": ["Optimus Agent the whole product", "A coding agent developing Optimus"],
-      "paired_with": ["optimus-workflow", "optimus-kernel"],
+      "not": [
+        "Optimus Agent the whole product",
+        "A coding agent developing Optimus"
+      ],
+      "paired_with": [
+        "optimus-workflow",
+        "optimus-kernel"
+      ],
       "safe_to_delete": false
     },
     {
@@ -541,8 +649,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Content-addressed product artifact storage and typed handoffs.",
-      "not": ["Development screenshots or test evidence", "Repository build output"],
-      "outputs_to": ["runtime://OPTIMUS_HOME/artifacts"],
+      "not": [
+        "Development screenshots or test evidence",
+        "Repository build output"
+      ],
+      "outputs_to": [
+        "runtime://OPTIMUS_HOME/artifacts"
+      ],
       "safe_to_delete": false
     },
     {
@@ -558,7 +671,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Optional CDP browser backend enabled by the kernel default feature.",
-      "not": ["Electron Preview WebContentsView", "A development browser-testing harness"],
+      "not": [
+        "Electron Preview WebContentsView",
+        "A development browser-testing harness"
+      ],
       "safe_to_delete": false
     },
     {
@@ -573,9 +689,16 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Offline integrity, trajectory, replay, and evaluation-report library used by the CLI.",
-      "not": ["Top-level evaluation definitions", "Generated persona transcripts"],
-      "outputs_to": ["workspace://Development/evidence/evals"],
-      "paired_with": ["evaluation-definitions"],
+      "not": [
+        "Top-level evaluation definitions",
+        "Generated persona transcripts"
+      ],
+      "outputs_to": [
+        "workspace://Development/evidence/evals"
+      ],
+      "paired_with": [
+        "evaluation-definitions"
+      ],
       "safe_to_delete": false
     },
     {
@@ -590,7 +713,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Job, node, effect, and transition domain contracts.",
-      "not": ["The durable store", "The effect executor"],
+      "not": [
+        "The durable store",
+        "The effect executor"
+      ],
       "safe_to_delete": false
     },
     {
@@ -605,8 +731,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Shared surface IPC method registry and domain dispatch authority.",
-      "not": ["The desktop binary", "The model-turn kernel"],
-      "paired_with": ["optimus-desktop", "optimus-tui"],
+      "not": [
+        "The desktop binary",
+        "The model-turn kernel"
+      ],
+      "paired_with": [
+        "optimus-desktop",
+        "optimus-tui"
+      ],
       "safe_to_delete": false
     },
     {
@@ -621,8 +753,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Product turn loop, sessions, model routing, credentials, tool dispatch, and runtime composition.",
-      "not": ["The durable effect executor", "A single giant agent prompt"],
-      "paired_with": ["optimus-agent", "optimus-runtime"],
+      "not": [
+        "The durable effect executor",
+        "A single giant agent prompt"
+      ],
+      "paired_with": [
+        "optimus-agent",
+        "optimus-runtime"
+      ],
       "safe_to_delete": false
     },
     {
@@ -637,8 +775,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Evidence-native semantic memory and bitemporal claim ledger.",
-      "not": ["Engineering Memory", "Session state", "Developer documentation"],
-      "outputs_to": ["runtime://OPTIMUS_HOME/memory.sqlite"],
+      "not": [
+        "Engineering Memory",
+        "Session state",
+        "Developer documentation"
+      ],
+      "outputs_to": [
+        "runtime://OPTIMUS_HOME/memory.sqlite"
+      ],
       "safe_to_delete": false
     },
     {
@@ -653,7 +797,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Gateway, cron, channel adapter, and operator service authority.",
-      "not": ["The CLI parser", "The desktop host"],
+      "not": [
+        "The CLI parser",
+        "The desktop host"
+      ],
       "safe_to_delete": false
     },
     {
@@ -668,7 +815,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Canonical tool and capability descriptor schema and pack catalog.",
-      "not": ["Runtime procedural skills", "A duplicate kernel tool list"],
+      "not": [
+        "Runtime procedural skills",
+        "A duplicate kernel tool list"
+      ],
       "safe_to_delete": false
     },
     {
@@ -683,7 +833,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Capability, autonomy-profile, and approval policy authority.",
-      "not": ["Developer instructions", "Runtime effect execution"],
+      "not": [
+        "Developer instructions",
+        "Runtime effect execution"
+      ],
       "safe_to_delete": false
     },
     {
@@ -698,8 +851,14 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.",
-      "not": ["The model-turn kernel", "The workflow schema alone"],
-      "paired_with": ["optimus-kernel", "optimus-policy"],
+      "not": [
+        "The model-turn kernel",
+        "The workflow schema alone"
+      ],
+      "paired_with": [
+        "optimus-kernel",
+        "optimus-policy"
+      ],
       "safe_to_delete": false
     },
     {
@@ -714,8 +873,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Installed procedural-skill registry, lifecycle, and permission closure.",
-      "not": ["Repository developer procedures", "The skills top-level directory"],
-      "paired_with": ["developer-skills"],
+      "not": [
+        "Repository developer procedures",
+        "The skills top-level directory"
+      ],
+      "paired_with": [
+        "developer-skills"
+      ],
       "safe_to_delete": false
     },
     {
@@ -730,8 +894,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "SQLite Work Graph, ordered events, approvals, and durable projections.",
-      "not": ["Semantic memory", "The graph domain types alone"],
-      "outputs_to": ["runtime://OPTIMUS_HOME/optimus.db"],
+      "not": [
+        "Semantic memory",
+        "The graph domain types alone"
+      ],
+      "outputs_to": [
+        "runtime://OPTIMUS_HOME/optimus.db"
+      ],
       "safe_to_delete": false
     },
     {
@@ -746,11 +915,16 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Workflow contracts, durable DAG run ledger, and built-in workflow verticals.",
-      "not": ["Specialist invocation alone", "Effect execution itself"],
-      "paired_with": ["optimus-agent", "optimus-runtime"],
+      "not": [
+        "Specialist invocation alone",
+        "Effect execution itself"
+      ],
+      "paired_with": [
+        "optimus-agent",
+        "optimus-runtime"
+      ],
       "safe_to_delete": false
     },
-
     {
       "id": "docs-authority-evaluation",
       "path": "evals/docs-authority",
@@ -762,8 +936,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Fresh-agent questions that verify current documentation authority routes correctly.",
-      "not": ["Documentation itself", "Generated search transcripts"],
-      "outputs_to": ["workspace://Development/evidence/evals/docs-authority"],
+      "not": [
+        "Documentation itself",
+        "Generated search transcripts"
+      ],
+      "outputs_to": [
+        "workspace://Development/evidence/evals/docs-authority"
+      ],
       "safe_to_delete": false
     },
     {
@@ -777,8 +956,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Permanent regression cases for repository, product, development, and component confusion.",
-      "not": ["Generated agent conversations", "Product persona testing"],
-      "outputs_to": ["workspace://Development/evidence/evals/repository-orientation"],
+      "not": [
+        "Generated agent conversations",
+        "Product persona testing"
+      ],
+      "outputs_to": [
+        "workspace://Development/evidence/evals/repository-orientation"
+      ],
       "safe_to_delete": false
     },
     {
@@ -792,8 +976,13 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Versioned personas, journeys, and scoring definitions for general-purpose Optimus testing.",
-      "not": ["Generated persona transcripts", "A product specialization roadmap"],
-      "outputs_to": ["workspace://Development/evidence/synthetic-user-lab"],
+      "not": [
+        "Generated persona transcripts",
+        "A product specialization roadmap"
+      ],
+      "outputs_to": [
+        "workspace://Development/evidence/synthetic-user-lab"
+      ],
       "safe_to_delete": false
     },
     {
@@ -807,7 +996,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Developer procedure for installed native UI and live-surface verification.",
-      "not": ["An installed Optimus runtime skill", "A product browser tool"],
+      "not": [
+        "An installed Optimus runtime skill",
+        "A product browser tool"
+      ],
       "safe_to_delete": false
     },
     {
@@ -821,7 +1013,10 @@
       "repository_role": "required",
       "retention": "essential",
       "summary": "Developer procedure for source-backed Engineering Memory regeneration and validation.",
-      "not": ["Runtime semantic memory", "An installed Optimus product skill"],
+      "not": [
+        "Runtime semantic memory",
+        "An installed Optimus product skill"
+      ],
       "safe_to_delete": false
     }
   ]

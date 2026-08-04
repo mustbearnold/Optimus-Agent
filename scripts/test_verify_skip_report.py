@@ -12,19 +12,19 @@ import verify_skip_report as vsr
 
 class ParseTest(unittest.TestCase):
     def test_reads_name_and_reason(self) -> None:
-        raw = 'electron e2e\tbun install in workspace\n'
-        self.assertEqual(vsr.parse(raw), [('electron e2e', 'bun install in workspace')])
+        raw = 'tauri launch acceptance\tno display and no xvfb-run\n'
+        self.assertEqual(vsr.parse(raw), [('tauri launch acceptance', 'no display and no xvfb-run')])
 
     def test_preserves_order(self) -> None:
         raw = 'tui e2e\ttmux not installed\nplaywright\tbunx playwright install chromium\n'
         self.assertEqual([name for name, _ in vsr.parse(raw)], ['tui e2e', 'playwright'])
 
     def test_collapses_a_gate_named_twice(self) -> None:
-        # `electron e2e` reaches `skip` from four separate branches in
+        # a display-gated tier can reach `skip` from more than one branch in
         # verify.sh; naming it twice would read as two distinct holes.
         raw = (
-            'electron e2e\tbun install in workspace\n'
-            'electron e2e\tno display and no xvfb-run\n'
+            'tauri launch acceptance\tbun install in workspace\n'
+            'tauri launch acceptance\tno display and no xvfb-run\n'
         )
         self.assertEqual(len(vsr.parse(raw)), 1)
 
@@ -41,15 +41,15 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(vsr.render([]), '')
 
     def test_never_says_clean(self) -> None:
-        block = vsr.render([('electron e2e', 'bun install in workspace')])
+        block = vsr.render([('tauri launch acceptance', 'no display and no xvfb-run')])
         self.assertNotIn('clean', block.lower())
 
     def test_names_every_gate_and_its_reason(self) -> None:
         block = vsr.render([
-            ('electron e2e', 'bun install in workspace'),
+            ('tauri launch acceptance', 'no display and no xvfb-run'),
             ('tui e2e', 'tmux not installed'),
         ])
-        for text in ('electron e2e', 'bun install in workspace', 'tui e2e', 'tmux not installed'):
+        for text in ('tauri launch acceptance', 'no display and no xvfb-run', 'tui e2e', 'tmux not installed'):
             self.assertIn(text, block)
 
     def test_counts_agree_with_the_list(self) -> None:

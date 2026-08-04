@@ -208,7 +208,7 @@
     "scripts/rebuild-install-relaunch.sh",
     "docs/decisions/0038-ui-ipc-architecture.md"
    ],
-   "trajectory": "playwright:shell multi-pane IA; program P29 install default Electron+React",
+   "trajectory": "playwright:shell multi-pane IA; program P29 install default Tauri+React",
    "owner_ticket": "PF-02"
   },
   {
@@ -324,7 +324,7 @@
     "crates/optimus-kernel/src/browser.rs",
     "crates/optimus-browser/src/lib.rs",
     "apps/optimus-ui/src/components/workspace/BrowserSurface.tsx",
-    "apps/optimus-electron/test/preview-security.test.cjs",
+    "apps/optimus-desktop/e2e/07-vantage-design.spec.js",
     "docs/architecture/product-complete-p23-verification.md"
    ],
    "trajectory": null,

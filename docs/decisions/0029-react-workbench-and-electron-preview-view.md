@@ -10,7 +10,6 @@ review_by: 2026-10-31
 knowledge_type: decision
 covers:
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
   - apps/optimus-desktop/src/server.rs
   - crates/optimus-host/src/**
   - docs/contracts/desktop-ipc-methods.md
@@ -20,8 +19,6 @@ depends_on:
 validated_by:
   - apps/optimus-ui/src/**/*.test.ts
   - apps/optimus-ui/src/**/*.test.tsx
-  - apps/optimus-electron/test/*.test.cjs
-  - apps/optimus-electron/e2e/*.spec.cjs
 ---
 
 # ADR-0029: React workbench and Electron preview view

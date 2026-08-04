@@ -10,12 +10,12 @@ review_by: 2026-10-31
 knowledge_type: design-state-matrix
 covers:
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
+  - apps/optimus-tauri/src/**
 depends_on:
   - docs/design/codex-convergence-experience-contract.md
 validated_by:
   - apps/optimus-ui/src/**/*.test.ts
-  - apps/optimus-electron/e2e/*.spec.cjs
+  - apps/optimus-desktop/e2e/**
 ---
 
 # Codex-converged Optimus state matrix

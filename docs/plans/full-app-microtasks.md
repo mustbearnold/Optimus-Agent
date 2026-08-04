@@ -15,7 +15,6 @@ owns:
   - scripts/check-parity-ledger.py
 watches:
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
   - apps/optimus-desktop/**
   - apps/optimus-cli/**
   - crates/optimus-kernel/**

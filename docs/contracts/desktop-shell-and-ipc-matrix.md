@@ -4,20 +4,20 @@ doc_type: reference
 plane: current
 status: current
 authority: canonical
-summary: Install authority: scripts/rebuild-install-relaunch.sh stages Tauri as the primary entry and keeps Electron and Wry as explicit rollback shells.
-reviewed_on: 2026-07-31
+summary: Install authority: scripts/rebuild-install-relaunch.sh stages Tauri + React as the desktop entry and keeps Wry as the legacy rollback shell.
+reviewed_on: 2026-08-05
 review_by: 2026-10-31
 knowledge_type: contract
 owns:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py
   - crates/optimus-host/src/router.rs
-  - apps/optimus-electron/main.cjs
+  - apps/optimus-tauri/src/main.rs
   - apps/optimus-ui/src/ipc/contracts.ts
   - docs/contracts/desktop-ipc-methods.md
 covers:
   - scripts/check-desktop-ipc-matrix.py
-  - apps/optimus-electron/main.cjs
+  - apps/optimus-tauri/src/main.rs
   - apps/optimus-ui/src/ipc/contracts.ts
 depends_on:
   - docs/contracts/desktop-ipc-methods.md
@@ -26,10 +26,9 @@ depends_on:
 validated_by:
   - scripts/test_desktop_ipc_matrix.py
   - crates/optimus-host/src/router.rs
-  - apps/optimus-electron/test/ipc-allowlist.test.cjs
 ---
 
-# Desktop shell authority and IPC matrix (Phase 4)
+# Desktop shell authority and IPC matrix
 
 ## Default shell (truth freeze)
 
@@ -37,24 +36,23 @@ validated_by:
 |---|---|
 | **Tauri + React** (`apps/optimus-tauri` + `apps/optimus-ui`) | **Default installed desktop** and repository daily path |
 | **Rust host** (`optimus-desktop --host-only`) | Authority: IPC registry, sessions, SmartDeny, chat streams |
-| **Electron + React** (`apps/optimus-electron`) | **Browser-preview rollback** while Tauri parity is completed |
 | **Wry/Tao** (`optimus-desktop` native window) | **Legacy rollback only** (desktop action `LegacyWry`) |
 
 Install authority: `scripts/rebuild-install-relaunch.sh` stages Tauri as the
-primary entry and keeps Electron and Wry as explicit rollback actions.
+desktop entry and keeps Wry as the legacy rollback action. Electron is retired.
 
 ## IPC ownership matrix
 
 | Channel | Owner | Critical methods / affordances |
 |---|---|---|
 | Host registry `METHOD_DOMAINS` | `optimus-desktop` router | Full frozen method set |
-| Electron `DESKTOP_METHODS` | `main.cjs` invoke allowlist | Subset of registry for renderer `invoke` |
-| React `DesktopMethod` | `optimus-ui` contracts | **Must equal** Electron allowlist |
-| Chat SSE | Electron main + host `/api/chat/stream` | start / cancel / subscribe (not `invoke`) |
-| Window / pick folder | Preload dedicated channels | Not in `DESKTOP_METHODS` |
-| `project_root_stage_native` | Electron main only | Never in renderer allowlist |
+| React `DesktopMethod` | `optimus-ui` contracts | Renderer surface: every method must exist in the host registry |
+| Tauri bridge `host_invoke` | `apps/optimus-tauri` command | Forwards any registry method; unknown methods fail in the host |
+| Chat stream | Tauri `chat_start`/`chat_cancel` commands + host `/api/chat/stream` | start / cancel / subscribe (not `host_invoke`) |
+| Window / pick folder | Tauri `window_action` / `pick_folder` commands | Not in `DesktopMethod` |
+| `project_root_stage_native` | Rust host + shell internal | Never in the renderer surface |
 
-### Critical invoke paths (must stay on all three parse surfaces)
+### Critical invoke paths (must stay on the renderer surface and host registry)
 
 `ping`, `doctor`, `sessions`, `new_session`, `get_session`, `delete_session`,
 `rename_session`, `chat_approval_resolve`, `project_scopes_list`,
@@ -74,10 +72,11 @@ python3 scripts/test_desktop_ipc_matrix.py
 
 | Name | What it is | Authority |
 |---|---|---|
-| **Preview browser** | Electron sandboxed `WebContentsView` in the workbench | User navigation/annotations; no agent cookies/history claim |
-| **Agent browser tools** | Kernel `browser_*` effectors (HTTP SSRF-safe / CDP when available) | Agent automation; separate state from preview |
+| **Agent browser tools** | Kernel `browser_*` effectors (HTTP SSRF-safe / CDP when available) | Agent automation; renderer calls them as ordinary host methods |
 
-UI surfaces should say **Preview browser**, never claim shared session with agent tools.
+The Electron `WebContentsView` preview is retired with Electron; the workbench
+Browser surface is the kernel browser effector. UI copy should never claim
+shared session state with agent tools it does not own.
 
 ## Renderer non-authority
 

@@ -11,8 +11,6 @@ knowledge_type: decision
 covers:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py
-  - apps/optimus-electron/main.cjs
-  - apps/optimus-electron/preload.cjs
   - apps/optimus-ui/src/ipc/contracts.ts
   - crates/optimus-host/src/router.rs
   - scripts/rebuild-install-relaunch.sh
@@ -23,8 +21,6 @@ depends_on:
 validated_by:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py
-  - apps/optimus-electron/test/preview-security.test.cjs
-  - apps/optimus-electron/test/browser-policy.test.cjs
   - apps/optimus-ui/src/state/conversationStore.test.ts
 ---
 

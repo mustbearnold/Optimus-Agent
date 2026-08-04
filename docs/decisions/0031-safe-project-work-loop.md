@@ -15,7 +15,6 @@ covers:
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-host/src/**
-  - apps/optimus-electron/main.cjs
   - apps/optimus-ui/src/**
 depends_on:
   - docs/decisions/0018-fail-closed-runtime-safety.md

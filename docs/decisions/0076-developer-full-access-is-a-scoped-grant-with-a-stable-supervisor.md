@@ -34,7 +34,6 @@ validated_by:
   - apps/optimus-tauri/src/main.rs
   - crates/optimus-runtime/src/command_envelope.rs
   - apps/optimus-ui/src/components/workbench/Composer.test.tsx
-  - apps/optimus-electron/test/ipc-allowlist.test.cjs
   - crates/optimus-kernel/tests/tool_coverage.rs
 ---
 

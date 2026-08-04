@@ -29,7 +29,7 @@ watches:
   - crates/optimus-store/src/**
   - crates/optimus-graph/src/**
   - apps/optimus-desktop/src/**
-  - apps/optimus-electron/**
+  - apps/optimus-tauri/src/**
   - apps/optimus-ui/src/ipc/**
 covers:
   - crates/optimus-store/src/lib.rs
@@ -204,25 +204,17 @@ it does not replace executable enforcement.
 - **Remaining boundary:** effect execution and durable success are at-least-once.
 - **Owner:** runtime campaign/work-graph boundary.
 
-### C-17 Native preview annotation and overlay isolation
+### C-17 Browser annotation and overlay isolation
 
-- **State:** Confirmed current behaviour for the Electron user-preview path
-  (program P23 / ADR-0040).
-- **Evidence:** remote content runs in a sandboxed `WebContentsView` without a
-  Node preload; permissions, downloads, popups, insecure remote HTTP, and
-  privileged schemes are denied. Annotation is user-triggered and one-shot,
-  consumes the selected click, length-bounds every returned string, omits HTML
-  and selectors, supports cancellation/expiry, and lands in a **notes gallery**;
-  the composer receives the note only after explicit **Add to prompt**.
-- **Evidence:** compiled Electron tests prove the child view is hidden while
-  renderer Settings is open and restored afterward, preventing native pixels
-  from covering approval/settings controls.
+- **State:** Retired with the Electron user-preview path (program P23 /
+  ADR-0040). The workbench Browser surface drives the kernel `browser_*`
+  effector (CDP when available); there is no shell-owned native preview.
 - **Evidence:** React `BrowserSurface` tests prove gallery capture without
   auto-inject and Add to prompt injection path.
-- **Boundary:** this is the user preview, not the Rust agent Browser effector;
-  cookies, history, storage partition, and automation identity are not shared
-  (SharedBrowserContract).
-- **Owner:** Electron main/preload plus React Browser surface.
+- **Boundary:** renderer browser activity is the Rust agent Browser effector;
+  cookies, history, and automation identity are not shared beyond its bounded
+  state.
+- **Owner:** React Browser surface over the Tauri bridge.
 
 ## Priority 1
 

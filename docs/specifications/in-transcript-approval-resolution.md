@@ -12,7 +12,7 @@ covers:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-kernel/src/execution.rs
   - crates/optimus-host/src/**
-  - apps/optimus-electron/**
+  - apps/optimus-tauri/src/**
   - apps/optimus-ui/src/**
 depends_on:
   - docs/decisions/0031-safe-project-work-loop.md
@@ -94,7 +94,7 @@ text and control labels carry the meaning.
 - Kernel: pause leaves one active turn and running execution; exact approval
   executes once; denial executes zero times; changed identities and duplicate
   decisions fail closed; replay reconstructs the same terminal tool state.
-- Desktop/Electron: only the allowlisted bounded resolver crosses the bridge;
+- Desktop/Tauri: only the typed bridge resolver crosses the shell boundary;
   project authority is reopened from Rust-owned scope; presentation responses
   omit provider protocol messages.
 - React: controls appear only for typed bound approval events; pending/error

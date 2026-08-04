@@ -20,7 +20,6 @@ validated_by:
   - crates/optimus-kernel/src/browser.rs
   - crates/optimus-kernel/src/web_search.rs
   - apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx
-  - apps/optimus-electron/test/preview-security.test.cjs
 ---
 
 # Product-complete program P23 verification

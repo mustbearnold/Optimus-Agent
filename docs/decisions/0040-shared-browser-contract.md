@@ -12,7 +12,6 @@ covers:
   - crates/optimus-kernel/src/browser_coord.rs
   - crates/optimus-kernel/src/browser.rs
   - apps/optimus-ui/src/components/workspace/BrowserSurface.tsx
-  - apps/optimus-electron/**
   - docs/maps/security-and-approvals.md
 depends_on:
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
@@ -22,7 +21,6 @@ validated_by:
   - crates/optimus-kernel/src/browser_coord.rs
   - crates/optimus-kernel/src/browser.rs
   - apps/optimus-ui/src/components/workspace/BrowserSurface.test.tsx
-  - apps/optimus-electron/test/preview-security.test.cjs
 ---
 
 # ADR-0040: SharedBrowserContract (coordinated, not merged trust)

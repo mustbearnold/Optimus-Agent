@@ -331,29 +331,14 @@ in_dir() {
   run "$name" bash -c "cd '$dir' && $cmd"
 }
 
-# Electron opens real windows, so the e2e tier needs a display. Wrap in xvfb-run
-# when there is none (headless agents, CI) and leave a real session alone so its
-# native paint stays authentic.
-electron_e2e_command() {
-  if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
-    printf 'bunx playwright test'
-  elif command -v xvfb-run >/dev/null 2>&1; then
-    # xvfb-run's default server is 640x480x8 — too small for the workbench
-    # window, so layout assertions (execution dock height) fail headless.
-    printf 'xvfb-run -a -s "-screen 0 1920x1080x24" bunx playwright test'
-  else
-    printf ''
-  fi
-}
-
 tier_ui() {
-  # Unit suites share an initial phase. Native Electron gets its own phase:
-  # running it beside another Chromium stack can starve the renderer event loop
-  # long enough for a click to sit unconsumed even though the identical flow is
-  # consistently sub-three-seconds on an idle host.
+  # Unit suites share an initial phase. The browser-driven suites run one at a
+  # time afterwards: they all drive Chromium/PTY scheduling, and running them
+  # side by side can starve a renderer event loop long enough for a click to sit
+  # unconsumed even though the identical flow is consistently sub-three-seconds
+  # on an idle host.
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "bun run test"
-  spawn_dir "optimus-electron"  apps/optimus-electron "bun run test"
 
   # The terminal face gets the same treatment as the desktop: the real binary,
   # driven end to end, deterministically (offline provider, temp home). These
@@ -363,13 +348,16 @@ tier_ui() {
   # layout failure.
   if command -v tmux >/dev/null 2>&1; then
     reap
+    # The Tauri binary embeds the React bundle at compile time, so the UI
+    # build must precede the shell build.
+    run "build react ui" bun run --cwd apps/optimus-ui build
     run "build optimus cli" cargo build -p optimus-cli
     run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
     run "tui e2e" python3 scripts/tui_e2e.py
     run "tui feature matrix" python3 scripts/tui_feature_matrix.py
     # Launch acceptance for the Tauri desktop shell: supervised launch,
     # readiness marker, windowed surface, and stable process. Requires a
-    # display like the electron e2e tier below.
+    # display like the TUI tiers above.
     if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
       if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
         run "tauri launch acceptance" xvfb-run -a python3 scripts/check-tauri-launch.py
@@ -379,7 +367,7 @@ tier_ui() {
     else
       skip "tauri launch acceptance" "no display and no xvfb-run"
     fi
-    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
+    if [ -d node_modules ] && (bunx playwright --version >/dev/null 2>&1); then
       run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "bun install in workspace root"
@@ -388,7 +376,7 @@ tier_ui() {
     # Geometry invariants for the React shell. Self-tests its own rules first,
     # so a rule that stops detecting its defect fails the gate rather than
     # reporting a clean shell.
-    if [ -d apps/optimus-electron/node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
+    if [ -d node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
       run "ui layout audit" node scripts/ui_layout_audit.cjs
       # Same rules, the engine the product ships: WebKitGTK. Skips itself when
       # the introspection bindings are absent.
@@ -415,52 +403,19 @@ tier_ui() {
     playwright_ready=0
   fi
 
-  local electron_ready=1
-  if [ ! -d apps/optimus-electron/node_modules ]; then
-    skip "electron e2e" "bun install in workspace root"
-    electron_ready=0
-  elif ! (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
-    skip "electron e2e" "bunx playwright install chromium"
-    electron_ready=0
-  elif [ ! -d apps/optimus-ui/node_modules ]; then
-    skip "electron e2e" "bun install in workspace root"
-    electron_ready=0
-  elif [ -z "$(electron_e2e_command)" ]; then
-    skip "electron e2e" "no display and no xvfb-run"
-    electron_ready=0
-  fi
-
-  if [ "$playwright_ready" = 1 ] || [ "$electron_ready" = 1 ]; then
+  if [ "$playwright_ready" = 1 ]; then
     run "build desktop host" cargo build -p optimus-desktop
   fi
   [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "bunx playwright test"
-  reap
-
-  # The bundle is gitignored, so it is never checked out, never updated by a
-  # merge, and never invalidated by a rebase -- the gate would otherwise test
-  # whichever JavaScript happened to be sitting on disk (#107). That reads both
-  # ways: a stale bundle fails a branch that changed nothing near it, and an
-  # unbuilt edit passes while CI, which builds from scratch, does not. Built
-  # here for the same reason the host is built above.
-  if [ "$electron_ready" = 1 ]; then
-    if ! run "build react ui" bun run --cwd apps/optimus-ui build; then
-      # A failed build leaves the *previous* bundle in place, so running the
-      # gate now would assert against code nobody wrote. The build failure is
-      # already the report; a second, misleading one adds nothing.
-      electron_ready=0
-    fi
-  fi
-  [ "$electron_ready" = 1 ] && spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
   reap
 }
 
 # --- tier: all ---------------------------------------------------------------
 # Running every gate serially leaves most cores idle, while launching the Rust,
-# browser, Electron, DOM, and real-terminal suites all at once can starve their
+# browser, DOM, and real-terminal suites all at once can starve their
 # event loops badly enough to manufacture input and timeout failures. Build the
-# host first, run static/compile/Rust work as one parallel phase, run the UI
-# suites as a second parallel phase, then give native Electron a final isolated
-# phase. Each phase still reaps in stable order.
+# host first, run static/compile/Rust work as one parallel phase, then run the
+# UI suites as a second parallel phase. Each phase still reaps in stable order.
 #
 # Concurrent cargo invocations serialise on the target-dir lock by themselves, so
 # fmt/check/clippy/nextest queue rather than corrupt anything — they simply stop
@@ -468,7 +423,7 @@ tier_ui() {
 tier_all() {
   # The one true ordering constraint: Playwright spawns this binary per worker.
   local host_built=0
-  if [ -d apps/optimus-desktop/node_modules ] || [ -d apps/optimus-electron/node_modules ]; then
+  if [ -d apps/optimus-desktop/node_modules ]; then
     section "build"
     run "build desktop host" cargo build -p optimus-desktop
     host_built=1
@@ -545,20 +500,22 @@ tier_all() {
 
   spawn_section "ui suites"
   spawn_dir "optimus-ui vitest" apps/optimus-ui       "bun run test"
-  spawn_dir "optimus-electron"  apps/optimus-electron "bun run test"
 
   # Terminal face, same standard as the desktop: real binary, deterministic
   # pty. Reap the browser/unit jobs first, then keep all three terminal suites
   # serial for the same tmux/event-loop reason as tier_ui above.
   if command -v tmux >/dev/null 2>&1; then
     reap
+    # The Tauri binary embeds the React bundle at compile time, so the UI
+    # build must precede the shell build.
+    run "build react ui" bun run --cwd apps/optimus-ui build
     run "build optimus cli" cargo build -p optimus-cli
     run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
     run "tui e2e" python3 scripts/tui_e2e.py
     run "tui feature matrix" python3 scripts/tui_feature_matrix.py
     # Launch acceptance for the Tauri desktop shell: supervised launch,
     # readiness marker, windowed surface, and stable process. Requires a
-    # display like the electron e2e tier below.
+    # display like the TUI tiers above.
     if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
       if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
         run "tauri launch acceptance" xvfb-run -a python3 scripts/check-tauri-launch.py
@@ -568,7 +525,7 @@ tier_all() {
     else
       skip "tauri launch acceptance" "no display and no xvfb-run"
     fi
-    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
+    if [ -d node_modules ] && (bunx playwright --version >/dev/null 2>&1); then
       run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "bun install in workspace root"
@@ -577,7 +534,7 @@ tier_all() {
     # Geometry invariants for the React shell. Self-tests its own rules first,
     # so a rule that stops detecting its defect fails the gate rather than
     # reporting a clean shell.
-    if [ -d apps/optimus-electron/node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
+    if [ -d node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
       run "ui layout audit" node scripts/ui_layout_audit.cjs
       # Same rules, the engine the product ships: WebKitGTK. Skips itself when
       # the introspection bindings are absent.
@@ -596,27 +553,6 @@ tier_all() {
     spawn_dir "playwright" apps/optimus-desktop "bunx playwright test"
   else
     skip "playwright" "bun install + bunx playwright install chromium"
-  fi
-
-  # Electron embeds a full Chromium renderer. Reap the other browser and DOM
-  # drivers before launching it so the acceptance test measures application
-  # behavior, not scheduler starvation from competing browser processes.
-  reap
-
-  if [ "$host_built" != 1 ]; then
-    skip "electron e2e" "bun install in workspace root"
-  elif [ ! -d apps/optimus-ui/node_modules ]; then
-    skip "electron e2e" "bun install in workspace root"
-  elif [ -z "$(electron_e2e_command)" ]; then
-    skip "electron e2e" "no display and no xvfb-run"
-  else
-    # Same reason as the ui tier: the bundle is gitignored, so building it is
-    # the only way this gate is testing the source it was handed (#107). A
-    # failed build stands as its own report -- asserting against the bundle it
-    # did not replace would only add a second, misleading failure.
-    if run "build react ui" bun run --cwd apps/optimus-ui build; then
-      spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
-    fi
   fi
 
   reap

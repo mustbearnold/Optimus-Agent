@@ -51,19 +51,13 @@ class DesktopIpcMatrixTests(unittest.TestCase):
         self.assertIn("jobs_list", critical)
         self.assertNotIn("project_root_stage_native", critical)
 
-    def test_main_only_not_on_renderer_allowlists(self) -> None:
-        electron = set(
-            self.mod.parse_electron_allowlist(
-                ROOT / "apps/optimus-electron/main.cjs"
-            )
-        )
+    def test_main_only_not_on_renderer_surface(self) -> None:
         react = set(
             self.mod.parse_react_desktop_methods(
                 ROOT / "apps/optimus-ui/src/ipc/contracts.ts"
             )
         )
         for method in self.mod.MAIN_ONLY_METHODS:
-            self.assertNotIn(method, electron)
             self.assertNotIn(method, react)
             self.assertIn(method, self.mod.HOST_NON_INVOKE_CHANNELS)
 
@@ -73,27 +67,23 @@ class DesktopIpcMatrixTests(unittest.TestCase):
                 ROOT / "crates/optimus-host/src/router.rs"
             )
         )
-        electron = set(
-            self.mod.parse_electron_allowlist(
-                ROOT / "apps/optimus-electron/main.cjs"
+        react = set(
+            self.mod.parse_react_desktop_methods(
+                ROOT / "apps/optimus-ui/src/ipc/contracts.ts"
             )
         )
-        self.assertEqual(rust - electron, rust & self.mod.HOST_NON_INVOKE_CHANNELS)
-        self.assertFalse(rust - electron - self.mod.HOST_NON_INVOKE_CHANNELS)
+        self.assertEqual(rust - react, rust & self.mod.HOST_NON_INVOKE_CHANNELS)
+        self.assertFalse(rust - react - self.mod.HOST_NON_INVOKE_CHANNELS)
 
     def test_parsers_return_sorted_unique_critical_subset(self) -> None:
         rust = self.mod.parse_rust_registry(
             ROOT / "crates/optimus-host/src/router.rs"
         )
-        electron = self.mod.parse_electron_allowlist(
-            ROOT / "apps/optimus-electron/main.cjs"
-        )
         react = self.mod.parse_react_desktop_methods(
             ROOT / "apps/optimus-ui/src/ipc/contracts.ts"
         )
         self.assertTrue(set(self.mod.CRITICAL_INVOKE_METHODS).issubset(set(rust)))
-        self.assertEqual(set(electron), set(react))
-        self.assertTrue(set(electron).issubset(set(rust)))
+        self.assertTrue(set(react).issubset(set(rust)))
 
 
 if __name__ == "__main__":

@@ -44,14 +44,16 @@
       }
     },
     {
-      "id": "electron-is-shell",
-      "question": "Which component owns the native Electron shell and preview host?",
-      "path": "apps/optimus-electron",
-      "component": "optimus-electron",
+      "id": "tauri-is-primary-shell",
+      "question": "Which component is the primary desktop shell?",
+      "path": "apps/optimus-tauri",
+      "component": "optimus-tauri",
       "facts": {
         "concern": "product-interface",
-        "distribution": "bundled"
-      }
+        "distribution": "binary",
+        "lifecycle": "primary"
+      },
+      "forbidden": ["rollback-only"]
     },
     {
       "id": "react-is-presentation",

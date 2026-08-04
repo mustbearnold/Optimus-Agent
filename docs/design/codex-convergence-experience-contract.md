@@ -10,14 +10,14 @@ review_by: 2026-10-31
 knowledge_type: design-contract
 covers:
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
+  - apps/optimus-tauri/src/**
 depends_on:
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
   - docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md
 validated_by:
   - apps/optimus-ui/src/**/*.test.ts
   - apps/optimus-ui/src/**/*.test.tsx
-  - apps/optimus-electron/e2e/*.spec.cjs
+  - apps/optimus-desktop/e2e/**
 ---
 
 # Codex-converged Optimus experience contract
@@ -43,7 +43,7 @@ validated_by:
 - **Done:** exactly one terminal run state; evidence and approvals remain
   inspectable; presentation state survives renderer restart.
 - **Quality method:** focused component tests, responsive browser contracts,
-  compiled Electron native-view tests, and Engineering Memory validation.
+  desktop e2e suites, and Engineering Memory validation.
 - **Partial usefulness:** partial assistant text, tool activity, artifacts, and
   terminal output survive cancellation/failure when the owning backend does.
 
@@ -62,9 +62,9 @@ validated_by:
 
 | Capability | Owner/tool | Input | Output | Known limit |
 |---|---|---|---|---|
-| Chat/run | Rust desktop via bounded Electron bridge | Session, message, provider settings | Ordered stream and one terminal outcome | One foreground run; no refresh resume |
+| Chat/run | Rust desktop via the Tauri bridge | Session, message, provider settings | Ordered stream and one terminal outcome | One foreground run; no refresh resume |
 | Local project catalog | React local storage v2 | Name, `rootPaths[]`, primary root | Presentation grouping and session assignment | Not runtime permission authority |
-| Preview browser | Electron `WebContentsView` | HTTPS or loopback URL | Native user-facing page | Separate from Rust agent Browser state |
+| Preview browser | Kernel `browser_*` effector (CDP when available) | HTTPS or loopback URL | Bounded navigation/click/reload state | Separate from agent tool cookies/history |
 | Annotation | Explicit one-shot native capture | User-selected page element | Bounded role/label/URL/rect note | No HTML, selector, or cross-page automation |
 | Terminal/effects | Rust `term_run` and approvals | Exact command/effect | Durable job/status/output | High-risk effects can wait for approval |
 | Files/artifacts | Rust desktop methods | Allowlisted paths/artifact IDs | Read/evidence surfaces | Existing runtime policy remains authoritative |

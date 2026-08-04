@@ -10,7 +10,6 @@ review_by: 2026-10-31
 knowledge_type: decision
 covers:
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
   - docs/design/codex-convergence-*.md
   - docs/specifications/react-workbench-electron-preview-cutover.md
 depends_on:
@@ -19,8 +18,6 @@ depends_on:
 validated_by:
   - apps/optimus-ui/src/**/*.test.ts
   - apps/optimus-ui/src/**/*.test.tsx
-  - apps/optimus-electron/e2e/react-browser-contract.spec.cjs
-  - apps/optimus-electron/e2e/compiled-shell.spec.cjs
 ---
 
 # ADR-0030: Codex-measured shell and multi-folder projects

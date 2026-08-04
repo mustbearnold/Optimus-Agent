@@ -18,7 +18,7 @@ Ubuntu is the primary desktop target. Windows remains supported through platform
 
 The daily-use path includes:
 
-- **Default desktop:** Electron + React workbench over a Rust host (`optimus-desktop --host-only`)
+- **Default desktop:** Tauri + React workbench over a Rust host (`optimus-desktop --host-only`)
 - **Legacy rollback:** Wry/Tao native shell (WebKitGTK on Ubuntu / WebView2 on Windows)
 - Durable Rust runtime and SQLite state
 - Local command capture with approval controls
@@ -136,7 +136,7 @@ Narrower tiers for the inner loop:
 just gates    # static gates + fmt        (~1s)
 just check    # + compile and clippy      (~35s)
 just test     # + Rust tests              (~60s)
-just ui       # Vitest, Electron, Playwright
+just ui       # Vitest, Playwright, TUI e2e
 ```
 
 [`scripts/verify.sh`](scripts/verify.sh) is the single source of truth. The
@@ -160,7 +160,7 @@ Emoji provides a compact visual label for each workspace area.
 ```text
 💻 apps/optimus-cli          jobs, skills, packs, chat, sessions, auth, vertical
 🖥️ apps/optimus-desktop      Rust host (--host-only) + legacy Wry shell
-🖥️ apps/optimus-electron     Default Electron shell (React workbench)
+🖥️ apps/optimus-tauri      Primary Tauri v2 desktop shell (React workbench)
 🎨 apps/optimus-ui           React + Vite SPA (default workbench UI)
 🧠 crates/optimus-kernel     turns, providers, sessions (re-exports peels)
 🤖 crates/optimus-agent      specialist contracts, registry, invocations
@@ -186,7 +186,7 @@ do not use raw history-changing Git, pull requests, issues, or `gh`.
 Artifact identity planes (`P##` ≠ task id ≠ `ADR-NNNN` ≠ grade) are defined in
 [artifact-naming.md](docs/contributing/artifact-naming.md).
 
-### Default desktop (Electron + React)
+### Default desktop (Tauri + React)
 
 ```bash
 cargo build -p optimus-desktop
@@ -195,10 +195,9 @@ bun run --cwd apps/optimus-ui build
 bun run --cwd apps/optimus-tauri dev         # primary React + Tauri workbench
 ```
 
-Electron rollback: `bun run --cwd apps/optimus-electron dev`
-Legacy Wry native shell: `cargo run -p optimus-desktop` (no Electron).
+Legacy Wry native shell: `cargo run -p optimus-desktop` (no Tauri).
 
-See `apps/optimus-electron/README.md`, ADR-0028, and the IPC matrix contract.
+See ADR-0028, ADR-0029, and the IPC matrix contract.
 
 ## Windows
 

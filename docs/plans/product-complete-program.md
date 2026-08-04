@@ -23,7 +23,6 @@ watches:
   - crates/optimus-kernel/src/lib.rs
   - crates/optimus-ops/src/gateway.rs
   - apps/optimus-ui/**
-  - apps/optimus-electron/**
 covers:
   - docs/plans/product-complete-program.md
 depends_on:

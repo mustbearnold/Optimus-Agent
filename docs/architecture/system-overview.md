@@ -93,7 +93,7 @@ from both Optimus root surfaces.
 **Confirmed current behaviour**
 
 ```text
-CLI, legacy Wry Desktop, or Electron React workbench
+CLI, legacy Wry Desktop, or Tauri React workbench
         (bounded preload -> authenticated loopback Rust host)
                          |
                          v
@@ -124,16 +124,16 @@ implemented `optimus-control-plane` or `optimus-orchestrator` package.
 | Component | State | Current responsibility |
 |---|---|---|
 | `apps/optimus-cli` | Confirmed current behaviour | CLI for jobs, approvals, skills, packs, chat, sessions, auth, cron, browser, gateway, evals, and campaigns. It also hosts a loopback webhook gateway. |
-| `apps/optimus-desktop` | Confirmed current behaviour | Rust host (`--host-only`) for Electron + legacy Wry/Tao shell (WebKitGTK / WebView2), frozen IPC registry, bounded worker queues, inline legacy UI, and loopback HTTP. |
-| `apps/optimus-electron` | Confirmed current behaviour | **Default installed** React shell; main authenticates host IPC, context-isolated preload, chat AbortControllers, sandboxed preview `WebContentsView`, bounded annotations; `OPTIMUS_ELECTRON_UI=legacy` and Wry install action remain rollback. |
-| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench; typed `DesktopMethod` transport matching Electron allowlist; multi-folder presentation with Rust scope authority; Preview browser distinct from agent `browser_*` tools. |
+| `apps/optimus-desktop` | Confirmed current behaviour | Rust host (`--host-only`) for the Tauri shell + legacy Wry/Tao shell (WebKitGTK / WebView2), frozen IPC registry, bounded worker queues, inline legacy UI, and loopback HTTP. |
+| `apps/optimus-tauri` | Confirmed current behaviour | **Default installed** React shell; Tauri commands bridge the frozen IPC registry, bounded chat streams with cancellation, window chrome, and native folder selection; embeds the built workbench. |
+| `apps/optimus-ui` | Confirmed current behaviour | React 19 workbench; typed `DesktopMethod` transport (Tauri bridge); multi-folder presentation with Rust scope authority; Browser surface drives the kernel `browser_*` effector. |
 | `crates/optimus-kernel` | Confirmed current behaviour | Provider-agnostic turn loop, strict tool dispatch, sessions, execution manifests, credential protection, canonical routing, browser/search effectors, and filesystem sandbox. Re-exports agent/workflow/artifacts/ops for surfaces. |
 | `crates/optimus-agent` | Confirmed current behaviour | Versioned specialist descriptors, immutable registry, durable invocation/cancellation/retry/terminal ledger, effect provenance links. |
 | `crates/optimus-workflow` | Confirmed current behaviour | Workflow definitions/registry, durable DAG `WorkflowRunStore`, built-in specialist verticals and registered-definition executor. |
 | `crates/optimus-artifacts` | Confirmed current behaviour | Content-addressed handoff/workbench artifact store under `{home}/artifacts`. |
 | `crates/optimus-ops` | Confirmed current behaviour | Operator services: durable local gateway delivery authority and cron schedule store. Kernel re-exports for surface convenience; does not own the turn loop. |
 | `crates/optimus-eval` | Confirmed current behaviour | Offline integrity/trajectory harnesses, versioned evaluation reports/baselines, and zero-effect fixture replay. Depends on kernel; kernel does not depend on eval. |
-| `crates/optimus-browser` | Confirmed current behaviour | Optional CDP browser backend for agent tools; not the Electron Preview `WebContentsView`. |
+| `crates/optimus-browser` | Confirmed current behaviour | Optional CDP browser backend for agent tools and the workbench Browser surface. |
 | `crates/optimus-packs` | Confirmed current behaviour | Canonical pack/tool descriptors, provider-visible input schemas, tool policy/invocation identity, availability, validation, and schema-token budgets. |
 | `crates/optimus-runtime` | Confirmed current behaviour | Durable ordered jobs, effect intents/receipts, bounded command execution, exact-action SmartDeny approvals, cancellation, crash recovery, output capture, and leased ordered campaigns. |
 | `crates/optimus-graph` | Confirmed current behaviour | Job/node/effect domain and state-transition helpers. |
@@ -455,33 +455,24 @@ derived from Work Graph jobs in the same SQLite database.
 **Confirmed current behaviour:** native desktop uses Wry IPC on a custom origin.
 HTTP mode and the webhook gateway bind to `127.0.0.1`.
 
-**Confirmed current behaviour:** the Electron production renderer loads built
-relative assets from `optimus-app://ui/`. Its context-isolated preload exposes a
-bounded method/chat/Browser/window contract; the Rust bearer token remains in
-Electron main. Main validates that calls originate from the owning Optimus
-renderer, caps serialized requests, allowlists method names, and permits one
-foreground SSE stream.
+**Confirmed current behaviour:** the Tauri production renderer loads built
+relative assets embedded in the shell binary. The Tauri bridge (`host_invoke`)
+forwards typed methods to the Rust host, which owns the bearer token and every
+durable effect; the shell adds bounded chat streams, window chrome, and native
+folder selection. The renderer never receives `OPTIMUS_HTTP_TOKEN`.
 
 **Confirmed current behaviour (P15):** IPC matrix gate requires host registry ⊇
-Electron `DESKTOP_METHODS` = React `DesktopMethod`; every host method is
-invoke-allowlisted or classified non-invoke/main-only. Critical invokes include
-approvals, project scopes, sessions, fs, settings, `term_run`, and `jobs_list`.
-`project_root_stage_native` stays main-only. See ADR-0038.
+React `DesktopMethod` (the renderer surface over the Tauri bridge); every host
+method is renderer-callable or classified non-invoke/main-only. Critical
+invokes include approvals, project scopes, sessions, fs, settings, `term_run`,
+and `jobs_list`. `project_root_stage_native` stays main-only. See ADR-0038.
 
-**Confirmed current behaviour:** the user-facing Electron preview is a
-main-owned sandboxed `WebContentsView` (`nodeIntegration: false`,
-`contextIsolation: true`, `sandbox: true`, separate partition). It accepts HTTPS
-and loopback HTTP, denies remote insecure HTTP, privileged/non-web schemes,
-permissions, downloads, and new windows, and is physically aligned to a
-React-measured content hole. This preview is not the Rust agent `browser_*`
-effector and no shared cookies, history, or automation target is claimed.
-
-**Confirmed current behaviour:** explicit native annotation mode captures one
-clicked element and returns bounded URL/title/tag/role/label/text/rectangle
-context; it consumes the click and supports Escape, surface-change, and timeout
-cancellation. It does not return HTML or selectors. Renderer overlays suspend
-the child view before Settings, project-source management, or task UI appears,
-then restore it at settled bounds after close.
+**Confirmed current behaviour:** the workbench Browser surface drives the
+kernel `browser_*` effector (HTTP SSRF-safe, CDP when available). The
+Electron-era `WebContentsView` preview and its native annotation mode are
+retired with Electron; the agent browser tools own all renderer browser
+activity and no shared cookies, history, or automation target is claimed
+beyond the effector's own bounded state.
 
 **Confirmed current behaviour:** the React project catalog can group several
 folder paths under one local project identity and nominate one primary root.

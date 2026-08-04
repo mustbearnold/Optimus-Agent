@@ -11,7 +11,6 @@ knowledge_type: decision
 covers:
   - crates/optimus-host/src/lib.rs
   - crates/optimus-host/src/router.rs
-  - apps/optimus-electron/main.cjs
   - apps/optimus-tui/src/main.rs
 depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md
