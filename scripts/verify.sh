@@ -267,6 +267,7 @@ tier_gates() {
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
   spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
+  spawn "test_tui_feature_matrix"    python3 scripts/test_tui_feature_matrix.py
   spawn "test_verify_gate_parity"    python3 scripts/test_verify_gate_parity.py
   spawn "test_lockfile_discipline"   python3 scripts/test_lockfile_discipline.py
   reap
@@ -475,6 +476,7 @@ tier_all() {
   spawn "test_optimus_version"       python3 scripts/test_optimus_version.py
   spawn "test_rebuild_install"       python3 scripts/test_rebuild_install_safety.py
   spawn "test_verify_skip_report"    python3 scripts/test_verify_skip_report.py
+  spawn "test_tui_feature_matrix"    python3 scripts/test_tui_feature_matrix.py
   spawn "test_verify_gate_parity"    python3 scripts/test_verify_gate_parity.py
   spawn "test_lockfile_discipline"   python3 scripts/test_lockfile_discipline.py
 

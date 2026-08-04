@@ -323,14 +323,38 @@ def main_text(lines: list[str]) -> str:
 
 
 def composer_text(lines: list[str]) -> str:
+    """Extract the composer box's own columns.
+
+    Row-anchored extraction (first ``╭`` line -> first ``╰`` line) leaks
+    sidebar content whenever the composer's bottom border shares a screen row
+    with another panel's text (e.g. a session named like the draft). Anchor to
+    the box's columns instead: the top border fixes the left/right extent, and
+    content rows are sliced between the border columns.
+    """
     top = next((index for index, line in enumerate(lines) if "╭" in line), -1)
     if top < 0:
         return ""
+    top_line = lines[top]
+    left = top_line.index("╭")
+    if "╮" not in top_line:
+        # Torn top border: fall back to the row-range extraction.
+        bottom = next(
+            (index for index in range(top + 1, len(lines)) if "╰" in lines[index]),
+            len(lines),
+        )
+        return normalized(lines[top : bottom + 1])
+    right = top_line.index("╮")
     bottom = next(
         (index for index in range(top + 1, len(lines)) if "╰" in lines[index]),
         len(lines),
     )
-    return normalized(lines[top : bottom + 1])
+    parts: list[str] = []
+    for line in lines[top : bottom + 1]:
+        if "╰" in line or "╭" in line:
+            parts.append(line[left : right + 1])
+        else:
+            parts.append(line[left + 1 : right])
+    return normalized(parts)
 
 
 def busy_visible(lines: list[str]) -> bool:

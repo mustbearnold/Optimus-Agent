@@ -487,31 +487,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "fe41d4cdef0ff5281b0271a00274824dcab1e957f75cc381f2dc02c56dbd93f9",
+      "binding_sha256": "1212790e50a26f0eb97e4c931dbab9d22259f9890a970c3c94e210149ef43d37",
       "document_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "1e7190c95bb3f8fe8068222e1d9733c572f92ab1feeeaccab8e87a3b7a37fbf5",
+      "binding_sha256": "8859891da439877ff4f282a2a2c7a17a9e471b606fb51f1e4abf0ab9abcc0c79",
       "document_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "9e94b6f8ac929c1acae421bdbdaecdcb7b41147747467ad89fab428885679d2c",
+      "binding_sha256": "a0756e0699baa39a7f647a71dbea3631c404a4dec259e79ababd165dd0a479d2",
       "document_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "6c074f32f54fa60eadb480b76b285953f15e168e61505045a4bbd2d39581be89",
+      "binding_sha256": "8be6399aea93b71d1e0ee9d5376a13d44593c855ee614204befedb56a7ad21d3",
       "document_sha256": "f969702a05605695ac75b397d8789b022be4e5856b9779606cb20d6952195221",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 8
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "c55b364043f7cdd41a27a26e3c1d327712995a04ae51f08173d8140901a5f378",
+      "binding_sha256": "7ef7a320e34b108ef15ed037ea2dd8fb128d10f97f10284ae265b88b91b01265",
       "document_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 7
@@ -649,7 +649,7 @@
       "resolved_files": 0
     },
     "project-knowledge": {
-      "binding_sha256": "169d9a7b6d78713c05201882766b694b1e9d6809bb85b251c44db47e865e50ed",
+      "binding_sha256": "cbe628241e431c236d8d2cb469f454cddf8872a00d373bb919b96ea4ee679191",
       "document_sha256": "54eb85a6e5dbbbb34f047a0562abe21eaa32bfbf6d7790aeeedc8132b50eb22c",
       "path": "docs/project-knowledge.md",
       "resolved_files": 12
