@@ -364,8 +364,21 @@ tier_ui() {
   if command -v tmux >/dev/null 2>&1; then
     reap
     run "build optimus cli" cargo build -p optimus-cli
+    run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
     run "tui e2e" python3 scripts/tui_e2e.py
     run "tui feature matrix" python3 scripts/tui_feature_matrix.py
+    # Launch acceptance for the Tauri desktop shell: supervised launch,
+    # readiness marker, windowed surface, and stable process. Requires a
+    # display like the electron e2e tier below.
+    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
+      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+        run "tauri launch acceptance" xvfb-run -a python3 scripts/check-tauri-launch.py
+      else
+        run "tauri launch acceptance" python3 scripts/check-tauri-launch.py
+      fi
+    else
+      skip "tauri launch acceptance" "no display and no xvfb-run"
+    fi
     if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
       run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
     else
@@ -540,8 +553,21 @@ tier_all() {
   if command -v tmux >/dev/null 2>&1; then
     reap
     run "build optimus cli" cargo build -p optimus-cli
+    run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
     run "tui e2e" python3 scripts/tui_e2e.py
     run "tui feature matrix" python3 scripts/tui_feature_matrix.py
+    # Launch acceptance for the Tauri desktop shell: supervised launch,
+    # readiness marker, windowed surface, and stable process. Requires a
+    # display like the electron e2e tier below.
+    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
+      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+        run "tauri launch acceptance" xvfb-run -a python3 scripts/check-tauri-launch.py
+      else
+        run "tauri launch acceptance" python3 scripts/check-tauri-launch.py
+      fi
+    else
+      skip "tauri launch acceptance" "no display and no xvfb-run"
+    fi
     if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
       run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
     else
