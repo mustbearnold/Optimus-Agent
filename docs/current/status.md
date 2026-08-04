@@ -67,13 +67,15 @@ tests outrank this summary whenever they disagree.
 
 ## Development status
 
-Repository changes use assigned `Development/worktrees/*` checkouts and reach
-main only through `just land`. GitHub issues, pull requests, `gh`, and manual Git
-history commands are not the current repository-development workflow. These
-development rules do not become Optimus product behaviour.
+Repository changes are developed directly on `main`: zero linked worktrees,
+zero feature branches, enforced by `.githooks/` (pre-commit, post-checkout,
+reference-transaction). Delivery is a verified Conventional Commit on `main`.
+GitHub issues, pull requests, `gh`, and manual Git history commands are not the
+current repository-development workflow. These development rules do not become
+Optimus product behaviour.
 
-The clean landed view is `Repository/`; it contains every reproducible GitHub
-asset, including source, tests, evaluation definitions, docs, and build logic.
-Generated runs and caches belong in `Development/`. The executable
+The repository root is the complete reproducible GitHub content, including
+source, tests, evaluation definitions, docs, and build logic. Machine-local
+development data lives in `Development/` (git-excluded). The executable
 [component authority](../repository-components.md), `just orient`, and
 `just explain-path` prevent new or stale paths from becoming anonymous clutter.

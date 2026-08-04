@@ -391,12 +391,10 @@ def explain(raw: str, *, as_json: bool = False) -> None:
 
 def orient() -> None:
     payload = catalog_payload()
-    wrapper = workspace_root()
     print("OPTIMUS DEVELOPMENT ORIENTATION")
-    print("VIEW: assigned development worktree")
+    print("MODE: main-only direct development (zero worktrees, zero branches)")
     print(f"EDITABLE: {ROOT}")
-    print(f"REPOSITORY VIEW: {wrapper / 'Repository'} (clean landed GitHub content; do not edit)")
-    print(f"DEVELOPMENT STATE: {wrapper / 'Development'} (worktrees, evidence, caches, records)")
+    print(f"DEVELOPMENT STATE: {ROOT / 'Development'} (machine-local data; git-excluded)")
     print("PRODUCT INSTRUCTIONS: OPTIMUS_AGENTS.md")
     print("DEVELOPER INSTRUCTIONS: AGENTS.md")
     print("CURRENT STATUS: docs/current/status.md")

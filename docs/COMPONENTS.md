@@ -8,6 +8,7 @@ This is the generated human view of `docs/repository-components.json`.
 | `.` | Root manifests, product and developer constitutions, landing documentation, and licenses. | `primary` | `repository-only` | no |
 | `.config` | Versioned nextest configuration used by repository verification. | `supporting` | `repository-only` | no |
 | `.engineering-memory` | Ignored generated Engineering Memory cache derived from repository source and docs. | `generated` | `generated-local` | yes |
+| `.githooks` | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. | `primary` | `repository-only` | no |
 | `AGENTS.md` | Mandatory law for humans and coding agents developing Optimus Agent. | `primary` | `repository-only` | no |
 | `CLAUDE.md` | Thin Claude Code adapter that redirects development sessions to AGENTS.md. | `supporting` | `repository-only` | no |
 | `DESIGN.md` | Accepted design contract referenced by architecture decisions and interface fixtures. | `supporting` | `repository-only` | no |
@@ -45,22 +46,18 @@ This is the generated human view of `docs/repository-components.json`.
 | `evals/docs-authority` | Fresh-agent questions that verify current documentation authority routes correctly. | `supporting` | `repository-only` | no |
 | `evals/repository-orientation` | Permanent regression cases for repository, product, development, and component confusion. | `primary` | `repository-only` | no |
 | `evals/synthetic-user-lab` | Versioned personas, journeys, and scoring definitions for general-purpose Optimus testing. | `primary` | `repository-only` | no |
-| `local` | Compatibility or worktree-local path for generated evidence, tools, caches, and delivery state. | `generated` | `generated-local` | no |
-| `scripts` | Deterministic repository gates, managed delivery, generation, installation, and diagnostics. | `primary` | `repository-only` | no |
+| `scripts` | Deterministic repository gates, generation, installation, and diagnostics. | `primary` | `repository-only` | no |
 | `skills` | Focused procedures for coding agents developing and verifying Optimus Agent. | `supporting` | `repository-only` | no |
 | `skills/optimus-native-ui-testing` | Developer procedure for installed native UI and live-surface verification. | `supporting` | `repository-only` | no |
 | `skills/update-engineering-memory` | Developer procedure for source-backed Engineering Memory regeneration and validation. | `supporting` | `repository-only` | no |
 | `spikes/001-leptos-wry-csr` | Retired standalone Leptos and Wry experiment preserved only as a compact historical verdict. | `historical` | `none` | yes |
 | `target` | Ignored Cargo build cache and compiled development output. | `generated` | `generated-local` | yes |
-| `workspace://Development` | Machine-local worktrees, delivery records, evidence, caches, tools, and archives. | `generated` | `generated-local` | no |
+| `workspace://Development` | Machine-local development data: evidence, caches, tools, archives, and historical delivery records. | `generated` | `generated-local` | no |
 | `workspace://Development/Archive` | Recoverable pre-migration and historical local snapshots awaiting explicit retention decisions. | `historical` | `generated-local` | no |
-| `workspace://Development/git` | Shared Git object database and linked-worktree registrations for managed delivery. | `primary` | `generated-local` | no |
 | `workspace://Development/land` | Managed checkpoints, land receipts, recovery refs, locks, and verification evidence. | `primary` | `generated-local` | no |
 | `workspace://Development/reference` | Machine-local external reference material used for comparison and development research. | `supporting` | `generated-local` | no |
 | `workspace://Development/t` | Disposable development scratch and short-lived temporary files. | `generated` | `generated-local` | yes |
 | `workspace://Development/tmp` | Large temporary and raw evidence area requiring per-child retention review before cleanup. | `generated` | `generated-local` | no |
 | `workspace://Development/tools` | Machine-local bundled development tools and browser payloads required by managed gates. | `supporting` | `generated-local` | no |
-| `workspace://Development/worktrees` | Isolated active coding-agent checkouts; stale instances require managed recovery-aware retirement. | `generated` | `generated-local` | no |
-| `workspace://Repository` | Clean read-only view of the exact content landed on GitHub main. | `generated` | `none` | no |
 
 Use `just explain-path <path>` for misconceptions, pairings, and output destinations.

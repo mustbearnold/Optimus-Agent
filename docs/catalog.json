@@ -55,6 +55,23 @@
       "summary": "Ignored generated Engineering Memory cache derived from repository source and docs."
     },
     {
+      "concern": "delivery-control",
+      "distribution": "repository-only",
+      "id": "development-hooks",
+      "lifecycle": "primary",
+      "not": [
+        "A bypassable ceremony",
+        "Product runtime code"
+      ],
+      "parent": "repository-root",
+      "path": ".githooks",
+      "repository_role": "required",
+      "retention": "essential",
+      "safe_to_delete": false,
+      "storage_plane": "repository",
+      "summary": "Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused."
+    },
+    {
       "concern": "development-tooling",
       "distribution": "repository-only",
       "id": "developer-instructions",
@@ -833,27 +850,6 @@
       "summary": "Versioned personas, journeys, and scoring definitions for general-purpose Optimus testing."
     },
     {
-      "concern": "evidence",
-      "distribution": "generated-local",
-      "id": "worktree-local-state",
-      "lifecycle": "generated",
-      "not": [
-        "Versioned GitHub content",
-        "Installed Optimus runtime state"
-      ],
-      "optional_path": true,
-      "outputs_to": [
-        "workspace://Development"
-      ],
-      "parent": "repository-root",
-      "path": "local",
-      "repository_role": "generated",
-      "retention": "conditional",
-      "safe_to_delete": false,
-      "storage_plane": "development",
-      "summary": "Compatibility or worktree-local path for generated evidence, tools, caches, and delivery state."
-    },
-    {
       "concern": "development-tooling",
       "distribution": "repository-only",
       "id": "repository-automation",
@@ -872,7 +868,7 @@
       "retention": "essential",
       "safe_to_delete": false,
       "storage_plane": "repository",
-      "summary": "Deterministic repository gates, managed delivery, generation, installation, and diagnostics."
+      "summary": "Deterministic repository gates, generation, installation, and diagnostics."
     },
     {
       "concern": "development-tooling",
@@ -992,7 +988,7 @@
       "retention": "conditional",
       "safe_to_delete": false,
       "storage_plane": "development",
-      "summary": "Machine-local worktrees, delivery records, evidence, caches, tools, and archives."
+      "summary": "Machine-local development data: evidence, caches, tools, archives, and historical delivery records."
     },
     {
       "concern": "evidence",
@@ -1010,23 +1006,6 @@
       "safe_to_delete": false,
       "storage_plane": "development",
       "summary": "Recoverable pre-migration and historical local snapshots awaiting explicit retention decisions."
-    },
-    {
-      "concern": "delivery-control",
-      "distribution": "generated-local",
-      "id": "development-git-control",
-      "lifecycle": "primary",
-      "not": [
-        "Disposable cache",
-        "A user-editable source checkout"
-      ],
-      "parent": "workspace-development-state",
-      "path": "workspace://Development/git",
-      "repository_role": "external",
-      "retention": "essential",
-      "safe_to_delete": false,
-      "storage_plane": "development",
-      "summary": "Shared Git object database and linked-worktree registrations for managed delivery."
     },
     {
       "concern": "evidence",
@@ -1112,39 +1091,6 @@
       "safe_to_delete": false,
       "storage_plane": "development",
       "summary": "Machine-local bundled development tools and browser payloads required by managed gates."
-    },
-    {
-      "concern": "development-tooling",
-      "distribution": "generated-local",
-      "id": "development-worktrees",
-      "lifecycle": "generated",
-      "not": [
-        "Permanent source archives",
-        "Remote branches"
-      ],
-      "parent": "workspace-development-state",
-      "path": "workspace://Development/worktrees",
-      "repository_role": "external",
-      "retention": "conditional",
-      "safe_to_delete": false,
-      "storage_plane": "development",
-      "summary": "Isolated active coding-agent checkouts; stale instances require managed recovery-aware retirement."
-    },
-    {
-      "concern": "workspace-view",
-      "distribution": "none",
-      "id": "workspace-repository-view",
-      "lifecycle": "generated",
-      "not": [
-        "The assigned coding-agent worktree",
-        "Runtime-only source code"
-      ],
-      "path": "workspace://Repository",
-      "repository_role": "external",
-      "retention": "regenerable",
-      "safe_to_delete": false,
-      "storage_plane": "repository",
-      "summary": "Clean read-only view of the exact content landed on GitHub main."
     }
   ],
   "default_planes": [
@@ -1155,7 +1101,7 @@
   "documents": [
     {
       "authority": "canonical",
-      "content_sha256": "06f42811fb783916f8d447aaf4ed39860342d5c25b628730b6bf7919a042b381",
+      "content_sha256": "038ba58b96efde9cb5cbb7dbede65587f27a1d0ce53fe61e19e37d5ab86c8329",
       "headings": [],
       "id": "development-instructions",
       "path": "AGENTS.md",
@@ -1197,7 +1143,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "aa258e9de5278a07e67c4ea52704ef34434832f16f14e3777fdd3659ab38c37e",
+      "content_sha256": "39bb8088a2ad01236e78c23f1d368a55a4b2ee642f316fc7d482b874f6af4f5f",
       "headings": [
         "Optimus Agent documentation",
         "Start with the answer you need",
@@ -2687,7 +2633,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "9ecf223a3eb3cf8f579850d5719f979ef8372e0e6a095852fa4ce48c1ab6a770",
+      "content_sha256": "9c97c17a0ded8c286465c35f6c150cc2dd8d2f744c18a2ee876bd24c5957eaf4",
       "headings": [
         "Contributing to Optimus Agent"
       ],
@@ -2697,7 +2643,7 @@
       "review_by": "2026-10-31",
       "reviewed_on": "2026-07-31",
       "status": "current",
-      "summary": "Developer navigation for managed delivery, artifact naming, and safe project hygiene.",
+      "summary": "Developer navigation for artifact naming and safe project hygiene.",
       "title": "Contributing to Optimus Agent",
       "type": "how-to"
     },
@@ -2744,31 +2690,6 @@
       "type": "history"
     },
     {
-      "authority": "canonical",
-      "content_sha256": "b77329ee5e9075fd9ef02a735011428e4603665566af0f7aa441e5ef5405a208",
-      "headings": [
-        "Managed delivery",
-        "Public commands",
-        "Checkpoints",
-        "Undo",
-        "Land",
-        "Records and refusal",
-        "Remote branch retirement",
-        "Worktree creation and provisioning",
-        "Worktree retirement",
-        "Trust boundary and prerequisites"
-      ],
-      "id": "contributing-managed-delivery",
-      "path": "docs/contributing/managed-delivery.md",
-      "plane": "current",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "This is a developer control-plane workflow. It does not change Optimus Agent runtime permissions, approval policy, prompts, or product behaviour.",
-      "title": "Managed delivery",
-      "type": "how-to"
-    },
-    {
       "authority": "supporting",
       "content_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "headings": [
@@ -2804,7 +2725,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "85f52b88ab2d990a425086e736777d0307f28a5c730913a169cdbc9debddd216",
+      "content_sha256": "a348747c432145e6fe9eee46407d6ab1719b9f8e1bf0954a01247942d83be174",
       "headings": [
         "Current Optimus Agent roadmap",
         "North star",
@@ -2824,7 +2745,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "e7756d1f9e030830d883421f125e8d82239db4ded6cd3f2dfb8d381d37a21f67",
+      "content_sha256": "c573ee3e72428562812b41b8f4830f3b60ed6a717ca0dd30d9bda46a57baf0a0",
       "headings": [
         "Optimus Agent today",
         "Confirmed current behaviour",
@@ -4490,8 +4411,8 @@
       "type": "decision"
     },
     {
-      "authority": "canonical",
-      "content_sha256": "884b3139138cbe5fa1ee6b9bfe4f98853ce80130247222247f67d3c1efabb9e1",
+      "authority": "record",
+      "content_sha256": "f81bba1cac6b18888344c32adf14a43de6b0f3e3d8a44df50caecc9b3eb0e4fc",
       "headings": [
         "ADR-0062: Source and Development are separate workspace planes",
         "Context",
@@ -4513,10 +4434,10 @@
       "id": "decision-0062-source-and-development-are-separate-workspace-planes",
       "path": "docs/decisions/0062-source-and-development-are-separate-workspace-planes.md",
       "plane": "decision",
-      "review_by": "2026-10-31",
+      "review_by": "never",
       "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "Decision record for ADR-0062: Source and Development are separate workspace planes, including its context, consequences, and current documentary status.",
+      "status": "historical",
+      "summary": "Decision record for ADR-0062: Source and Development are separate workspace planes. Superseded 2026-08-04 by the owner directive establishing main-only direct development on the flattened repository root (AGENTS.md).",
       "title": "ADR-0062: Source and Development are separate workspace planes",
       "type": "decision"
     },
@@ -6408,7 +6329,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "e8b025e4a057c43a61cb7bd82aab025f8af94943fd621f5677d412208dbba5b4",
+      "content_sha256": "c8f2cc55bee3f536f2185c1d037fa9dc8027288f4f1f53f798ae4b088621a7ee",
       "headings": [
         "Repository component authority",
         "Agent startup",
@@ -7300,7 +7221,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "2b57d05f002cc137faa3d5a05258bcfb3f626f0e9c283439f075a21ab571fdd3",
+  "documents_sha256": "eb77f3a1a1e798af02a92941c4e0dd8c2faaead1e789a9e75ab4d78ac72d7566",
   "routes": [
     {
       "id": "docs.navigation",
@@ -7408,8 +7329,7 @@
         "development-instructions"
       ],
       "supporting": [
-        "docs-home",
-        "contributing-managed-delivery"
+        "docs-home"
       ]
     },
     {
@@ -7432,20 +7352,17 @@
     {
       "id": "development.delivery",
       "keywords": [
-        "checkpoint",
-        "land",
         "delivery",
         "save progress",
         "commit",
         "main",
-        "managed git"
+        "main-only",
+        "push"
       ],
       "primary": [
-        "contributing-managed-delivery"
-      ],
-      "supporting": [
         "development-instructions"
-      ]
+      ],
+      "supporting": []
     },
     {
       "id": "development.workspace",
@@ -7456,14 +7373,14 @@
         "workspace",
         "worktree",
         "project folder",
-        "separate planes",
-        "wrapper"
+        "machine-local",
+        "git-excluded"
       ],
       "primary": [
-        "decision-0062-source-and-development-are-separate-workspace-planes"
+        "development-instructions"
       ],
       "supporting": [
-        "development-instructions"
+        "decision-0062-source-and-development-are-separate-workspace-planes"
       ]
     },
     {
@@ -7646,8 +7563,7 @@
         "development-instructions"
       ],
       "supporting": [
-        "repository-readme",
-        "contributing-managed-delivery"
+        "repository-readme"
       ]
     }
   ],

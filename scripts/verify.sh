@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Single source of truth for Optimus local gates.
 #
-# Every caller — humans, coding agents, managed land, and the justfile —
+# Every caller — humans, coding agents, and the justfile —
 # runs this script. There is no second list of commands to drift out of sync.
 #
 # Usage: scripts/verify.sh [tier]
@@ -10,7 +10,7 @@
 #   check   gates + cargo check + clippy              (~35s)
 #   test    check + cargo test                        (~60s)
 #   ui      JS unit suites + Playwright               (~2min)
-#   all     every tier above (default; managed land gate)
+#   all     every tier above (default; release gate)
 #   live    real-model smoke: real Codex through the host and the TUI pty.
 #           Spends tokens and needs a real credential, so it is NOT in `all`;
 #           it is the gate for releases and for changes to live surfaces.
@@ -26,7 +26,7 @@ cd "$ROOT" || exit 1
 
 TIER="${1:-all}"
 
-# Reuse the repository-managed Playwright payload when this linked worktree has
+# Reuse the repository-managed Playwright payload when this checkout has
 # one. CI and ordinary clones fall back to Playwright's default cache. Keeping
 # this path discovery here makes every gate caller see the same browser rather
 # than reporting dozens of assertion failures caused by one missing executable.
@@ -255,13 +255,8 @@ tier_gates() {
   spawn "test_managed_project_cleanup" python3 scripts/test_managed_project_cleanup.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
-  spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
-  spawn "test_worktree_retirement"   python3 scripts/test_managed_worktree_retirement.py
-  spawn "test_worktree_provision"    python3 scripts/test_managed_worktree_provision.py
   spawn "test_perf_harness"          python3 scripts/test_perf_harness.py
-  spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
-  spawn "test_workspace_layout"      python3 scripts/test_workspace_layout.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_synthetic_user_lab"    python3 scripts/test_synthetic_user_lab.py
   spawn "test_synthetic_simulator"   python3 scripts/test_synthetic_user_simulator.py
@@ -498,13 +493,8 @@ tier_all() {
   spawn "test_managed_project_cleanup" python3 scripts/test_managed_project_cleanup.py
   spawn "test_impact_select"         python3 scripts/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/test_instruction_planes.py
-  spawn "test_managed_delivery"      python3 scripts/test_managed_delivery.py
-  spawn "test_worktree_retirement"   python3 scripts/test_managed_worktree_retirement.py
-  spawn "test_worktree_provision"    python3 scripts/test_managed_worktree_provision.py
   spawn "test_perf_harness"          python3 scripts/test_perf_harness.py
-  spawn "test_branch_retirement"     python3 scripts/test_managed_branch_retirement.py
   spawn "test_project_hygiene"       python3 scripts/test_project_hygiene.py
-  spawn "test_workspace_layout"      python3 scripts/test_workspace_layout.py
   spawn "test_live_smoke"            python3 scripts/test_live_smoke.py
   spawn "test_synthetic_user_lab"    python3 scripts/test_synthetic_user_lab.py
   spawn "test_synthetic_simulator"   python3 scripts/test_synthetic_user_simulator.py

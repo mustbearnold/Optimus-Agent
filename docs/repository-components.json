@@ -2,19 +2,6 @@
   "schema_version": 1,
   "components": [
     {
-      "id": "workspace-repository-view",
-      "path": "workspace://Repository",
-      "storage_plane": "repository",
-      "concern": "workspace-view",
-      "distribution": "none",
-      "lifecycle": "generated",
-      "repository_role": "external",
-      "retention": "regenerable",
-      "summary": "Clean read-only view of the exact content landed on GitHub main.",
-      "not": ["The assigned coding-agent worktree", "Runtime-only source code"],
-      "safe_to_delete": false
-    },
-    {
       "id": "workspace-development-state",
       "path": "workspace://Development",
       "storage_plane": "development",
@@ -23,22 +10,8 @@
       "lifecycle": "generated",
       "repository_role": "external",
       "retention": "conditional",
-      "summary": "Machine-local worktrees, delivery records, evidence, caches, tools, and archives.",
+      "summary": "Machine-local development data: evidence, caches, tools, archives, and historical delivery records.",
       "not": ["The GitHub repository", "Optimus product runtime state"],
-      "safe_to_delete": false
-    },
-    {
-      "id": "development-git-control",
-      "path": "workspace://Development/git",
-      "parent": "workspace-development-state",
-      "storage_plane": "development",
-      "concern": "delivery-control",
-      "distribution": "generated-local",
-      "lifecycle": "primary",
-      "repository_role": "external",
-      "retention": "essential",
-      "summary": "Shared Git object database and linked-worktree registrations for managed delivery.",
-      "not": ["Disposable cache", "A user-editable source checkout"],
       "safe_to_delete": false
     },
     {
@@ -53,20 +26,6 @@
       "retention": "essential",
       "summary": "Managed checkpoints, land receipts, recovery refs, locks, and verification evidence.",
       "not": ["Temporary build cache", "GitHub repository content"],
-      "safe_to_delete": false
-    },
-    {
-      "id": "development-worktrees",
-      "path": "workspace://Development/worktrees",
-      "parent": "workspace-development-state",
-      "storage_plane": "development",
-      "concern": "development-tooling",
-      "distribution": "generated-local",
-      "lifecycle": "generated",
-      "repository_role": "external",
-      "retention": "conditional",
-      "summary": "Isolated active coding-agent checkouts; stale instances require managed recovery-aware retirement.",
-      "not": ["Permanent source archives", "Remote branches"],
       "safe_to_delete": false
     },
     {
@@ -150,6 +109,20 @@
       "retention": "essential",
       "summary": "Root manifests, product and developer constitutions, landing documentation, and licenses.",
       "not": ["A runtime-only source directory", "A place for local evidence or caches"],
+      "safe_to_delete": false
+    },
+    {
+      "id": "development-hooks",
+      "path": ".githooks",
+      "parent": "repository-root",
+      "storage_plane": "repository",
+      "concern": "delivery-control",
+      "distribution": "repository-only",
+      "lifecycle": "primary",
+      "repository_role": "required",
+      "retention": "essential",
+      "summary": "Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused.",
+      "not": ["A bypassable ceremony", "Product runtime code"],
       "safe_to_delete": false
     },
     {
@@ -264,22 +237,6 @@
       "not": ["Runtime semantic memory", "Authored repository truth"],
       "outputs_to": ["workspace://Development/cache/engineering-memory"],
       "safe_to_delete": true
-    },
-    {
-      "id": "worktree-local-state",
-      "path": "local",
-      "parent": "repository-root",
-      "optional_path": true,
-      "storage_plane": "development",
-      "concern": "evidence",
-      "distribution": "generated-local",
-      "lifecycle": "generated",
-      "repository_role": "generated",
-      "retention": "conditional",
-      "summary": "Compatibility or worktree-local path for generated evidence, tools, caches, and delivery state.",
-      "not": ["Versioned GitHub content", "Installed Optimus runtime state"],
-      "outputs_to": ["workspace://Development"],
-      "safe_to_delete": false
     },
     {
       "id": "cargo-build-cache",
@@ -427,7 +384,7 @@
       "lifecycle": "primary",
       "repository_role": "required",
       "retention": "essential",
-      "summary": "Deterministic repository gates, managed delivery, generation, installation, and diagnostics.",
+      "summary": "Deterministic repository gates, generation, installation, and diagnostics.",
       "not": ["Runtime agent tools", "Ad-hoc commands agents may bypass"],
       "outputs_to": ["workspace://Development/land", "workspace://Development/evidence"],
       "safe_to_delete": false

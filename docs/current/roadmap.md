@@ -68,7 +68,7 @@ At this review point, the highest-confidence cross-domain needs are:
   into useful general orchestration;
 - keep the governed component database, documentation, and Engineering Memory
   smaller and more semantically reliable than the history they preserve;
-- retire disposable development worktrees and generated output continuously so
+- retire disposable generated output and machine-local data continuously so
   they never masquerade as current repository content.
 
 Named programs under `docs/plans/` are historical or supporting implementation

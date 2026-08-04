@@ -5,7 +5,7 @@
 #
 #   just            list recipes
 #   just check      static gates + compile        (~35s, the inner loop)
-#   just verify     everything                    (managed land gate)
+#   just verify     everything                    (release gate)
 
 set shell := ["bash", "-uc"]
 
@@ -36,63 +36,9 @@ tui-layout:
     cargo build -p optimus-cli
     bun scripts/tui_layout_playwright.cjs
 
-# Every tier. Managed land runs this with skips forbidden.
+# Every tier. Run this before pushing; skips are forbidden.
 verify:
     @bash scripts/verify.sh all
-
-# --- managed delivery --------------------------------------------------------
-
-# Save every non-ignored source change without moving HEAD or the task branch.
-checkpoint label:
-    @python3 scripts/managed_delivery.py checkpoint {{quote(label)}}
-
-# Restore a named checkpoint in this worktree. Creates a safety checkpoint first.
-undo label:
-    @python3 scripts/managed_delivery.py undo {{quote(label)}}
-
-# Verify, generate the commit and fast-forward remote main. The flag-shaped
-# arguments are positional here so the public invocation stays explicit while
-# every shell interpolation remains separately quoted.
-land task_id model_flag model effort_flag effort:
-    @python3 scripts/managed_delivery.py land {{quote(task_id)}} {{quote(model_flag)}} {{quote(model)}} {{quote(effort_flag)}} {{quote(effort)}}
-
-# Classify every remote branch against main and print the immutable plan digest.
-branch-retirement-plan superseded_json="{}":
-    @python3 scripts/managed_branch_retirement.py plan --superseded-json {{quote(superseded_json)}}
-
-# Delete the exact reviewed plan atomically. Every branch is protected by its
-# observed SHA; main is never included in the push.
-retire-branches plan_sha256 superseded_json="{}":
-    @python3 scripts/managed_branch_retirement.py execute {{quote(plan_sha256)}} --superseded-json {{quote(superseded_json)}}
-
-# Preview the one-time Repository/Development workspace migration.
-workspace-layout-report:
-    @python3 scripts/workspace_layout.py report
-
-# Apply the reviewed migration without raw Git or broad deletion.
-workspace-layout-apply:
-    @python3 scripts/workspace_layout.py apply
-
-# Synchronize local main identities and the clean Repository view to live GitHub main.
-workspace-repository-sync:
-    @python3 scripts/workspace_layout.py sync
-
-# Create an assigned worktree that answers plain git and can land: branch,
-# per-worktree config, Bun workspace dependencies, and a readiness table.
-worktree-new name:
-    @python3 scripts/managed_worktree_provision.py new {{quote(name)}}
-
-# Repair and report this worktree's land readiness (config, deps, host tools).
-setup-worktree:
-    @python3 scripts/managed_worktree_provision.py ready
-
-# Produce an exact, recovery-aware plan for every stale worktree except this one.
-worktree-retirement-plan:
-    @python3 scripts/managed_worktree_retirement.py plan
-
-# Preserve dirty trees, retire the exact reviewed worktrees, and prune dead registrations.
-retire-worktrees plan_sha256:
-    @python3 scripts/managed_worktree_retirement.py execute {{quote(plan_sha256)}}
 
 # Bounded startup card for every coding agent.
 orient:

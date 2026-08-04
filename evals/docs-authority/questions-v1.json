@@ -27,12 +27,12 @@
     },
     {
       "id": "managed-delivery",
-      "question": "How do I save progress and land a finished task to main with checkpoint and land?",
+      "question": "How does the delivery policy commit work to main?",
       "route": "development.delivery"
     },
     {
       "id": "workspace-planes",
-      "question": "Why are Repository and Development separate in the project folder and where do worktrees belong?",
+      "question": "Where does machine-local development data live and can it ever be tracked in Git?",
       "route": "development.workspace"
     },
     {

@@ -106,13 +106,14 @@
     },
     {
       "id": "repository-is-complete-content",
-      "question": "Is Repository only runtime source code?",
-      "path": "workspace://Repository",
-      "component": "workspace-repository-view",
+      "question": "Is the repository root only runtime source code?",
+      "path": ".",
+      "component": "repository-root",
       "facts": {
         "storage_plane": "repository",
-        "repository_role": "external"
-      }
+        "repository_role": "required"
+      },
+      "forbidden": ["worktree", "wrapper"]
     }
   ]
 }

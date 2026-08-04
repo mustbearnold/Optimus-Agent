@@ -24,7 +24,7 @@ supporting detail or history, never hidden authority.
 | How the system works | [System overview](architecture/system-overview.md) |
 | How coding agents develop Optimus | [Development law](../AGENTS.md) |
 | How Optimus behaves for users | [Runtime constitution](../OPTIMUS_AGENTS.md) |
-| How changes reach main | [Managed delivery](contributing/managed-delivery.md) |
+| How changes reach main | [Main-only delivery](../AGENTS.md) |
 | What a path is, whether it ships, or whether it can be removed | [Repository components](repository-components.md) |
 | What changed when, what is stale, or what should be cleaned up | [Temporal project knowledge](project-knowledge.md) |
 | Which decision governs something | [Decision index](decisions/README.md) |

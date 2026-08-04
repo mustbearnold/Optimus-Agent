@@ -2,23 +2,19 @@
 doc_id: decision-0062-source-and-development-are-separate-workspace-planes
 doc_type: decision
 plane: decision
-status: current
-authority: canonical
-summary: Decision record for ADR-0062: Source and Development are separate workspace planes, including its context, consequences, and current documentary status.
+status: historical
+authority: record
+summary: Decision record for ADR-0062: Source and Development are separate workspace planes. Superseded 2026-08-04 by the owner directive establishing main-only direct development on the flattened repository root (AGENTS.md).
 reviewed_on: 2026-07-31
-review_by: 2026-10-31
+review_by: never
 knowledge_type: decision
 covers:
   - AGENTS.md
   - justfile
-  - scripts/workspace_layout.py
-  - scripts/managed_delivery.py
   - scripts/project_hygiene.py
 depends_on:
   - docs/decisions/0052-isolated-durable-engineering-runs.md
 validated_by:
-  - scripts/test_workspace_layout.py
-  - scripts/test_managed_delivery.py
   - scripts/test_project_hygiene.py
 ---
 

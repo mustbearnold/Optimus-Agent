@@ -126,8 +126,7 @@
         "development-instructions"
       ],
       "supporting": [
-        "docs-home",
-        "contributing-managed-delivery"
+        "docs-home"
       ]
     },
     {
@@ -150,20 +149,17 @@
     {
       "id": "development.delivery",
       "keywords": [
-        "checkpoint",
-        "land",
         "delivery",
         "save progress",
         "commit",
         "main",
-        "managed git"
+        "main-only",
+        "push"
       ],
       "primary": [
-        "contributing-managed-delivery"
-      ],
-      "supporting": [
         "development-instructions"
-      ]
+      ],
+      "supporting": []
     },
     {
       "id": "development.workspace",
@@ -174,14 +170,14 @@
         "workspace",
         "worktree",
         "project folder",
-        "separate planes",
-        "wrapper"
+        "machine-local",
+        "git-excluded"
       ],
       "primary": [
-        "decision-0062-source-and-development-are-separate-workspace-planes"
+        "development-instructions"
       ],
       "supporting": [
-        "development-instructions"
+        "decision-0062-source-and-development-are-separate-workspace-planes"
       ]
     },
     {
@@ -364,8 +360,7 @@
         "development-instructions"
       ],
       "supporting": [
-        "repository-readme",
-        "contributing-managed-delivery"
+        "repository-readme"
       ]
     }
   ],

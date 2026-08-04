@@ -227,7 +227,7 @@ If a proposed name collapses two planes, **stop and rename** before commit.
 13. VCS changes go only through the managed delivery commands below. Publishing,
     installing, or deploying outside that Git delivery remains task-scoped.
 
-## Managed autonomous delivery (mandatory)
+## Main-only delivery (mandatory)
 
 Standing delivery contract (owner directive, 2026-08-04 — supersedes the
 2026-07-31 managed-delivery rules):

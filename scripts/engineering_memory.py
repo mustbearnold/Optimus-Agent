@@ -74,6 +74,11 @@ EXCLUDED_PARTS = {
     # Hashing it made the staleness gate unsatisfiable on any clean clone — CI
     # has no .optimus, so every baseline generated locally read as stale there.
     ".optimus",
+    # Machine-local development data (git-excluded via .git/info/exclude):
+    # evidence, caches, tools, archives, and historical delivery records.
+    # Hashing it made Engineering Memory depend on local state and crashed on
+    # dangling Electron singleton symlinks left by compiled-workbench runs.
+    "Development",
     # Agent tooling keeps full repo copies under .claude/worktrees. Hashing them
     # made 65.8% of the tree agent scratch: every worktree touch marked the whole
     # subsystem stale, and the walk cost ~2.9x what the real source costs.

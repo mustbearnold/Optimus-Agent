@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,7 +24,7 @@ class InstructionPlaneTest(unittest.TestCase):
             "AGENTS.md": (
                 "# Development\nInstruction-plane firewall\n"
                 "A request about **how a coding agent should develop Optimus** is not product.\n"
-                "Managed autonomous delivery\n"
+                "Main-only development\n"
             ),
             "OPTIMUS_AGENTS.md": (
                 "# Optimus Agent runtime constitution\n"
@@ -34,11 +35,10 @@ class InstructionPlaneTest(unittest.TestCase):
                 "Development requests are not product requirements.\n"
             ),
             "CLAUDE.md": "# Claude Code compatibility\n\n@AGENTS.md\n",
-            "justfile": (
-                "checkpoint label:\n"
-                "undo label:\n"
-                "land task_id model_flag model effort_flag effort:\n"
-            ),
+            "justfile": "verify:\n\techo ok\n",
+            ".githooks/pre-commit": "commits are only allowed on 'main'\n",
+            ".githooks/post-checkout": "this repository is main-only\n",
+            ".githooks/reference-transaction": "this repository is main-only\n",
             "docs/contributing/github-conventions.md": (
                 "This repository no longer uses GitHub issues.\n"
             ),
@@ -71,6 +71,16 @@ class InstructionPlaneTest(unittest.TestCase):
             any("stale development instruction" in item for item in instruction_planes.findings(self.root))
         )
 
+    def test_rejects_worktree_ceremony_resurgence(self) -> None:
+        path = self.root / "AGENTS.md"
+        path.write_text(
+            path.read_text(encoding="utf-8") + "Development/worktrees\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(
+            any("stale development instruction" in item for item in instruction_planes.findings(self.root))
+        )
+
     def test_rejects_development_agents_embedded_in_product(self) -> None:
         path = self.root / "crates/optimus-kernel/src/lib.rs"
         path.write_text(
@@ -87,16 +97,29 @@ class InstructionPlaneTest(unittest.TestCase):
             any("OPTIMUS_AGENTS.md" in item for item in instruction_planes.findings(self.root))
         )
 
-    def test_rejects_missing_managed_delivery_recipe(self) -> None:
-        (self.root / "justfile").write_text("checkpoint label:\n", encoding="utf-8")
+    def test_rejects_missing_main_only_enforcement(self) -> None:
+        (self.root / ".githooks/pre-commit").unlink()
         self.assertTrue(
-            any("justfile" in item for item in instruction_planes.findings(self.root))
+            any(".githooks/pre-commit" in item for item in instruction_planes.findings(self.root))
         )
 
-    def test_rejects_provider_specific_repository_state(self) -> None:
+    def test_ignores_untracked_provider_state_on_disk(self) -> None:
         (self.root / ".claude").mkdir()
+        (self.root / ".claude" / "settings.local.json").write_text("{}", encoding="utf-8")
+        self.assertEqual(instruction_planes.findings(self.root), [])
+
+    def test_rejects_tracked_provider_specific_state(self) -> None:
+        (self.root / ".claude").mkdir()
+        (self.root / ".claude" / "settings.local.json").write_text("{}", encoding="utf-8")
+        subprocess.run(["git", "init", "-q"], cwd=self.root, check=True)
+        subprocess.run(
+            ["git", "add", "-f", ".claude/settings.local.json"], cwd=self.root, check=True
+        )
         self.assertTrue(
-            any(".claude" in item for item in instruction_planes.findings(self.root))
+            any(
+                "must not be tracked" in item
+                for item in instruction_planes.findings(self.root)
+            )
         )
 
 
