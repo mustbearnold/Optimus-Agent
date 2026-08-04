@@ -10,7 +10,7 @@ review_by: 2026-11-01
 knowledge_type: decision
 covers:
   - scripts/project_knowledge.py
-  - docs/project-knowledge.md
+  - specs/009-project-knowledge/project-knowledge.md
   - docs/repository-components.json
 depends_on:
   - docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md

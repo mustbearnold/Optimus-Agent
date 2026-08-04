@@ -21,7 +21,6 @@ covers:
   - scripts/test_engineering_memory.py
 depends_on:
   - docs/decisions/0018-fail-closed-runtime-safety.md
-  - docs/contracts/high-risk-contracts.md
 validated_by:
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-runtime/src/campaign.rs

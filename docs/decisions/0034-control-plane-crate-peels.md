@@ -20,7 +20,6 @@ depends_on:
   - docs/decisions/0001-kernel-and-work-graph.md
   - docs/decisions/0022-versioned-agent-and-workflow-contracts.md
   - docs/decisions/0033-multi-agent-dag-execution.md
-  - docs/plans/s-plus-plus-plus-program.md
 validated_by:
   - scripts/check-crate-layers.py
   - crates/optimus-kernel/tests/agent_contracts.rs

@@ -11,12 +11,11 @@ knowledge_type: decision
 covers:
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
-  - docs/engineering-memory/README.md
+  - docs/runbooks/engineering-memory.md
   - skills/update-engineering-memory/**
   - AGENTS.md
 depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
-  - docs/specifications/git-stable-engineering-memory.md
 validated_by:
   - scripts/test_engineering_memory.py
 ---

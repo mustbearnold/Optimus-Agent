@@ -1103,7 +1103,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "0063f96c39df88aba34b8f581aec2a4ba6aa8b7aef83c51084b116abf6d62659",
+      "content_sha256": "45f789c3600137debc59f3582b08cc895a535fc597473fd85b64026c8d07e159",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
@@ -1676,7 +1676,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "d374f3f1fcc8bd6b72abb735ef2527342d47e00676e251a9fc6d2a03fbcf1df6",
+      "content_sha256": "e4a1a395870032fa60f48fa7cffc7c0d324b611acbec1400db7a264ec3d297d1",
       "headings": [
         "ADR-0018: Fail-closed runtime path and campaign decoding",
         "Context",
@@ -1709,7 +1709,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "2cf6d5179f5390d89728eccf8da4714cb89f407447e8e67312a5d983a590f8ce",
+      "content_sha256": "014996c9c05d568e2a4bc44f8d4802974b1c869704660e7323045627b45a962b",
       "headings": [
         "ADR-0019: Capability files and unified campaign authority",
         "Context",
@@ -1741,7 +1741,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "297f16ce48239f7230d0487b1a46a5076579e2e115581f018cf1f9259eacb09e",
+      "content_sha256": "d44bd3453f9ff8af53683670bb641bf755dc074c07ec7a53ba36bed42e7f9987",
       "headings": [
         "ADR-0020: Work Graph integrity and loopback security",
         "Context",
@@ -1795,7 +1795,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "b6b7550a38de2897b5f0de1c7872d8a2eab3f6a6ad462efb23f77cfa01cb4678",
+      "content_sha256": "2747885aa1fe437f0a87e4ed18f28df56fbc748a57593eeb6049b62a2de774a1",
       "headings": [
         "ADR-0022: Versioned agent and workflow contracts",
         "Context",
@@ -1821,7 +1821,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "8290e48606409a7f9dc8d10be30b4abe0f7be7362e453a7041da8c28ac699bec",
+      "content_sha256": "c1157153fbe1879b3266066f037ac8912c853b0f596ab5987aa1af8d8d5b7edf",
       "headings": [
         "ADR-0023: Fixture-only replay, causal traces, routing telemetry, and versioned evaluation",
         "Context",
@@ -1884,7 +1884,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "3d54531bbf6918b002214031fddcb193971c54bfb64d2402a0df68413ae64937",
+      "content_sha256": "391345db173889b39c99497c4bc07ee2e6a3f8ffc5e71745790a83f6ad22c002",
       "headings": [
         "ADR-0025: Artifact workbench and owned presentation state",
         "Context",
@@ -1941,7 +1941,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "192261a5cd8384eafa5aade90315d7e5ae18050502ea6fdf1ad19e0e2a8569ca",
+      "content_sha256": "640b3b6adf372b7d46f207479342bdecd8fa05839174014e17048945e2fae6ea",
       "headings": [
         "ADR-0027: Settings-driven work isolation modes",
         "Context",
@@ -1994,7 +1994,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "613536bcaf89d6fc413e62367f83667d58343f8e9fc99e3fb136f138a11b36db",
+      "content_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "headings": [
         "ADR-0029: React workbench and Electron preview view",
         "Context",
@@ -2028,7 +2028,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "09f6ef95e5287135bfa1cb05ecc2b39fb6704bb3f573668678d54e6f7abe44ae",
+      "content_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "headings": [
         "ADR-0030: Codex-measured shell and multi-folder projects",
         "Context",
@@ -2090,7 +2090,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "8c361418e4d79c1d596de7e95f44385d86cae955fcee56d6c60792b61b7c4271",
+      "content_sha256": "678410e166552def093553c4bc5193b5169ec6d2098b83998d8439b4f9e742cd",
       "headings": [
         "ADR-0032: Compact Engineering Memory facts and budgeted agent lenses",
         "Context",
@@ -2119,7 +2119,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "be89d17b571e7ac3b6cc7ac80f64f29370148181ad856cbd1dabcd2b1b2db218",
+      "content_sha256": "16efb77e7cc131cdb3e901be02e7245bb61eb2c5a66940cade72ecd3acc7b334",
       "headings": [
         "ADR-0033: Multi-agent DAG execution (P10)",
         "Context",
@@ -2145,7 +2145,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "91511f1bee4a4365ddb706e9ba236e4a027ef12953f7dfe9473a7e308f8518b4",
+      "content_sha256": "986d4253a854362af10f9ca81b882512a65c92d313be950758398f81d153e687",
       "headings": [
         "ADR-0034: Control-plane crate peels (P11)",
         "Context",
@@ -2172,7 +2172,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "dd26b79c5818e77e4165720c3320bedbac7ea2b30bbea9151110cce20eb227fc",
+      "content_sha256": "6655d0ba6b9d255ddb447c547568bcc63b5f6088926f2c485e724d03d5d35cf3",
       "headings": [
         "ADR-0035: Command capability envelope + Unrestricted break-glass (P12)",
         "Context",
@@ -2199,7 +2199,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "64049241147036fa34817da24a615204558f6e2d6d562a46a0418b99d8a2c2ea",
+      "content_sha256": "e8d0627a2d8495b21d05601ce8e407630a550db460a15cd0ed711f438b2f6a23",
       "headings": [
         "ADR-0036: Domain modularity — single catalog and memory planes (P13)",
         "Context",
@@ -2226,7 +2226,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "fb3c1298d1a55c559a164321013a5f6a41a86337e5e3669154bdb92a0804afa8",
+      "content_sha256": "241abb42c9dbf8601b0b6e571f474da3d1653a8daf0a30abb299e4d01818922f",
       "headings": [
         "ADR-0037: Local causal export (not OTLP) — P14",
         "Context",
@@ -2253,7 +2253,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "c1442c585bab8ef4721896606d8c36a5565a50328c2a4f958c9d79a9f95bff41",
+      "content_sha256": "293384aae9525ce35c86a3a543fc274fe271505a9edfbe37de099dbdb14bacad",
       "headings": [
         "ADR-0038: UI IPC architecture completeness (P15)",
         "Context",
@@ -2280,7 +2280,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "bc88ad6d4fb2fa1117f5c3aa7918ef012a9d5460ac4fb00aaddf13a71c3ad4de",
+      "content_sha256": "776ed3073eccdf904ae89db6bd0622c553525b606e4785a3595d87ad0f0d258c",
       "headings": [
         "ADR-0039: Files-mutate effect taxonomy (program P22)",
         "Context",
@@ -2307,7 +2307,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "ac9e92f67da63f0599131a4219d6e0e15b7a7e6e8b14b087d8ffd0011401f61f",
+      "content_sha256": "dcba785a342de6c8860bd698fbed001b65865d717434b1ac9d728b70dd4048b2",
       "headings": [
         "ADR-0040: SharedBrowserContract (coordinated, not merged trust)",
         "Context",
@@ -2390,7 +2390,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "fb44151bc0ad1441c46fbf3a0cc86d78012803b6f3d8578fb16032230f413562",
+      "content_sha256": "83e6ee28830708eba2219a8ad9567793c37820958f3732bf16d71a1227fc8e1f",
       "headings": [
         "ADR-0043: No auto-updater channel at product-complete",
         "Context",
@@ -2417,7 +2417,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "fdf28e24ae95f1b01db5ebcc9dbefa69f088d3aff78812f3f40470def045492f",
+      "content_sha256": "284bdc1f6856deeebd4368895f14c6bebd07393e3acdf336f15f432da300faf2",
       "headings": [
         "ADR-0044: Bounded project trust and capability broker",
         "Context",
@@ -2566,7 +2566,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "133cf880d4d8b44a176b9a2d5cf41ef7cae47df7b6ea66cca5de0f0c48550d21",
+      "content_sha256": "b9005a59953ad3ce5a2d58dca7f4df33715adbe5b926b59fd0fc34c138bd11c2",
       "headings": [
         "ADR-0049: The module-size law is measured honestly, and does not tax splitting",
         "Context",
@@ -2592,7 +2592,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "330acf1907bde2bfa7dd9b46ff96c4312dbed7ca0290b26d7178c3af231c2698",
+      "content_sha256": "05e8dea4ced41a882b6dee843e49d163612f4b21fce77708960ca615eb217cc6",
       "headings": [
         "ADR-0050: Overlays come from Radix via shadcn/ui, not from hand-written CSS",
         "Context",
@@ -2644,7 +2644,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "1d8cf1470c07346fe3d662c6e65c8d43a4092c60b81f3efa2e19d99f4f012f15",
+      "content_sha256": "8e318684b075d56f859b165209560f59dd2fc28adf258db31e83c98c38d5f6c1",
       "headings": [
         "ADR-0052: Engineering runs are isolated, phased, and resumable",
         "Context",
@@ -2678,7 +2678,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "1601de2ac3e51dd983043efeaa96e4d422b5ea762ef8a2b4afa33e012a2451a9",
+      "content_sha256": "d6e47af8e49aeedcd11dde23d32c868a42a2d65f266c70340cfd14af5ce7df6b",
       "headings": [
         "ADR-0053: A repository is asked, not assumed",
         "Context",
@@ -2704,7 +2704,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "cf6db2ab6df65b98f95d10e6df35fe7d9ab89ff60584193d3d73a2083d2484b6",
+      "content_sha256": "1ffd8b9a51273e6527a5d8f16eb45c73b346e050dcbee11a42a2fb3da7e32193",
       "headings": [
         "ADR-0054: A test selector may only ever over-select",
         "Context",
@@ -2730,7 +2730,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "093f7f401323e8e0aea05a6e65c425481f592400f8d4ab9e69446e9f2b9d52a3",
+      "content_sha256": "f7583950dea3035f6dd80b0a64459dcb456bc91856f821ddc5031c6c70d72e43",
       "headings": [
         "ADR-0055: A fix is proven at the commit it fixes, or it is not proven",
         "Context",
@@ -2756,7 +2756,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "c94c407027d493f9239221a6d3d4e1b96e58755549da9f3f3b16b5a655b06100",
+      "content_sha256": "caeba6b223d5947fdb6f7c299ab7e275890f7c0b10a0660b388fbbdbaa0a5918",
       "headings": [
         "ADR-0056: A reviewer that wrote the patch is not a reviewer",
         "Context",
@@ -2782,7 +2782,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "bb64b57b26e4d4bc22d0d56f9ae9b633d6367d2f2eb5a91a30dc119cd9d2be61",
+      "content_sha256": "e0a087d0ec240a227d52156437a1f949b22038c94b0fc7a0ccf468d1dfe789be",
       "headings": [
         "ADR-0057: An issue earns its way into a run, or is refused in the reporter's own words",
         "Context",
@@ -2808,7 +2808,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "bfae7efbacf93989a3a377552e48b0a5b20ec4ff499d04e72b4603b04d6607b5",
+      "content_sha256": "a69e7a04201acc40ee9fe0f89a36bc2a15585c0d41ae8f5a262b32f75ca51c4a",
       "headings": [
         "ADR-0058: A run publishes the sentence a human approved, and nothing else",
         "Context",
@@ -2835,7 +2835,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "82335997ed968a9ea10ee1c021c461cbb41a87387b24674b7f4758175e48119c",
+      "content_sha256": "863740a9a132e639d213fabe070a30c57920638718307ee83884b4407b3ca7dc",
       "headings": [
         "ADR-0059: Standard autonomy is consequence-bounded",
         "Context",
@@ -2892,7 +2892,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "ee80ffd15add51f53203901a513a41994b766b23ab7fdc335ad5b6ce866cf60d",
+      "content_sha256": "aaa9d427b93f0b0d6d56942eaf3b24f322684ac12f1f8eba0205fb0ac577468d",
       "headings": [
         "ADR-0061: Generated Engineering Memory is a disposable cache",
         "Context",
@@ -2952,7 +2952,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
+      "content_sha256": "8413f0f387158e8a2d54fd6a52e58aa45ee067967da52aba2cb5310975e82c09",
       "headings": [
         "ADR-0063: Documentation is a governed authority plane",
         "Context",
@@ -2979,7 +2979,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "e96e777722a9cd086113850b595d6c122df1ea5ef2868de52cb9599047d5bf28",
+      "content_sha256": "d006046d9882c2651cc37b0c0c6fa4c422add3edcaed61681752217a897d659e",
       "headings": [
         "ADR-0064: Temporal project knowledge is derived provenance",
         "Context",
@@ -3006,7 +3006,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "53725e699983711943c89754b96619f7d2be5430166cc05788c1203bf48d94e1",
+      "content_sha256": "fb9b62f27655d2bca5b727d91074b82ee08f6c90306e10dffac8fdbc5aa81a38",
       "headings": [
         "ADR-0065: Temporal project knowledge is an embedded database",
         "Context",
@@ -3032,7 +3032,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "744b629bde96e3ad6c6fb86802fc73c82fecc83db080f60649419ea571bd3dd0",
+      "content_sha256": "898cb20c6392dc4a991f850b1fe347aadb0f9cb209a225b56939ca88156ffa23",
       "headings": [
         "ADR-0066: Temporal project knowledge is a code-aware interval graph",
         "Context",
@@ -3053,7 +3053,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "a0ad1ead87056ccaf610762d2506d9aa686e0b3d0430d625a3322a866bf96f5c",
+      "content_sha256": "3289e1a8e9bc1554f501ce24c641bd684cd1da7f994dd8d66801c72ac27a74c0",
       "headings": [
         "ADR-0067: Managed cleanup fingerprints symlinks without following",
         "Context",
@@ -3074,7 +3074,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "f969702a05605695ac75b397d8789b022be4e5856b9779606cb20d6952195221",
+      "content_sha256": "b1c5e08f32aa1e703acd84d80f8bfded68a0ef08f08c1f425b13ffdc20810db9",
       "headings": [
         "ADR-0068: A catalog row must dispatch or not exist",
         "Context",
@@ -3095,7 +3095,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "b80b02192331c85f5268d4dcfc9089ad77a87e2de7f0b7d60b6c131b710010b6",
+      "content_sha256": "6bd09ee395f5c705ce3eb8e6e6b0d363e0783272a6a64d23c507bf907410993d",
       "headings": [
         "ADR-0069: Release is measured against Optimus, not Hermes",
         "Context",
@@ -3116,7 +3116,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "8f0a554815593d64296a773a27dd561133b95308b90c2f76841e4d67a9188094",
+      "content_sha256": "3301f7c53224f371c3c1d0ffd00705f23111235128baf1d1ddbed52307c26878",
       "headings": [
         "ADR-0070: An outbound send is a durable obligation",
         "Context",
@@ -3362,7 +3362,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "42e858c88bd29d84a0ec9fee111f5631876a34881c8f3c866bf098a104c29928",
+      "content_sha256": "3e78e67fbfcb9c0610197b7d2bf86d0c5eaf4face2ec9dd561303f0d10a53d41",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -3518,7 +3518,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "851099729234791a490e46a4fb8957d4a7a59ebdbfbfc546b8a5617f2d65dc12",
+      "content_sha256": "7110f45d09e474adb2588cf984c64f0db5ac82bdadb5fd500cdea09258ca1379",
       "headings": [
         "002 — Host IPC",
         "Purpose",
@@ -3540,7 +3540,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "5424ef91b989c3f75713ccef58de27f3451a6465e10061ec508c400bd881b37d",
+      "content_sha256": "64540d8ecd02fb1c74be3f1b7c5b7ab490dc410ed402f199001b5f6416f2af38",
       "headings": [
         "003 — Kernel turns",
         "Purpose",
@@ -3562,7 +3562,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "52e07e390ee5b33e55322ab0278e00ec4b8b48f8784809ae171c139586da508c",
+      "content_sha256": "f58986c0460b1769463b6b01fc22ec5c7a4cb1a1ef0594fb2c610c7d12114544",
       "headings": [
         "004 — Runtime effects",
         "Purpose",
@@ -3584,7 +3584,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "334af1a497df08792150bf6adc10fbdcaf6aa6e1c922e76875548428e09dea93",
+      "content_sha256": "5e4b6de2b0d0b67056f3d0212a871e9d4be49625703e686eb9c89fab55c1f484",
       "headings": [
         "005 — Agents, workflows, artifacts",
         "Purpose",
@@ -3713,7 +3713,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "6ee9485c1619dee447edb76153a741a9a0ec59f593b74ef4e7bb6e1dba2f6507",
+      "content_sha256": "d36938fb0229b8ac79407afe83f96c15bb61e2e648b9e376fc9fb43bca208293",
       "headings": [
         "010 — Surfaces: TUI and CLI",
         "Purpose",
@@ -3813,7 +3813,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "00b27f964304c162e9786c2c4e7cd42b12d37190bb16653e87ded983d0825f80",
+      "content_sha256": "b125298cad36a678ee49f94188090c09b271421fc53754cee276e218ec62cb43",
       "headings": [
         "Conventions — Optimus Agent",
         "Documents (Markdown)",
@@ -3840,7 +3840,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "88be54eb730d3d449491c04f9754b50a70da6c5e876a761a3ccfbf794a4e8a67",
+  "documents_sha256": "2acc90358535642ff2ae1743bc1d7b48582c3f57896916e760a1b0bbf52fa5bd",
   "routes": [
     {
       "id": "docs.navigation",

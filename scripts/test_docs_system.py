@@ -224,6 +224,56 @@ class DocsSystemTests(unittest.TestCase):
         self.assertEqual(resolved, 1)
         self.assertEqual(len(digest), 64)
 
+    def test_dead_frontmatter_binding_is_rejected(self) -> None:
+        # Regression (2026-08-05): the SDD layout retired ~110 docs while 27
+        # ADRs still named their old paths in owns/covers/depends_on/
+        # validated_by. Historical records never enter change-impact, so the
+        # dead bindings passed every gate silently. validate_bindings makes
+        # the ADR-0062 precedent machine-enforced.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            survivor = root / "specs" / "002-host-ipc" / "spec.md"
+            survivor.parent.mkdir(parents=True)
+            survivor.write_text("---\n---\n", encoding="utf-8")
+            alive = docs.Document(
+                Path("alive.md"),
+                "docs/decisions/0001-alive.md",
+                {
+                    "doc_id": "decisions-0001-alive",
+                    "status": "historical",
+                    "depends_on": ["specs/002-host-ipc/spec.md"],
+                },
+                "Alive",
+                ("Alive",),
+                "ab" * 32,
+            )
+            dead_doc = docs.Document(
+                Path("dead.md"),
+                "docs/decisions/0002-dead.md",
+                {
+                    "doc_id": "decisions-0002-dead",
+                    "status": "historical",
+                    "depends_on": ["docs/plans/retired-program.md"],
+                },
+                "Dead",
+                ("Dead",),
+                "cd" * 32,
+            )
+            with (
+                mock.patch.object(docs, "ROOT", root),
+                mock.patch.object(
+                    docs,
+                    "candidate_repository_files",
+                    return_value=("specs/002-host-ipc/spec.md",),
+                ),
+            ):
+                docs.validate_bindings([alive])
+                with self.assertRaises(docs.DocsError) as caught:
+                    docs.validate_bindings([alive, dead_doc])
+                message = str(caught.exception)
+                self.assertIn("docs/decisions/0002-dead.md", message)
+                self.assertIn("docs/plans/retired-program.md", message)
+
 
 if __name__ == "__main__":
     unittest.main()

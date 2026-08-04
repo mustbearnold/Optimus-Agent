@@ -12,7 +12,6 @@ covers:
   - apps/optimus-ui/**
   - apps/optimus-desktop/src/server.rs
   - crates/optimus-host/src/**
-  - docs/contracts/desktop-ipc-methods.md
 depends_on:
   - docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md
   - docs/decisions/0028-electron-react-shell-rust-host.md

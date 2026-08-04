@@ -18,7 +18,6 @@ covers:
 depends_on:
   - docs/decisions/0001-kernel-and-work-graph.md
   - docs/decisions/0022-versioned-agent-and-workflow-contracts.md
-  - docs/plans/s-plus-plus-plus-program.md
 validated_by:
   - crates/optimus-kernel/tests/specialist_vertical.rs
   - crates/optimus-kernel/tests/workflow_dag.rs

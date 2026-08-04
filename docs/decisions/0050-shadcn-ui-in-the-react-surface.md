@@ -12,7 +12,7 @@ covers:
   - apps/optimus-ui/src/tailwind.css
   - apps/optimus-ui/vite.config.ts
   - apps/optimus-ui/components.json
-  - apps/optimus-ui/src/components/ui
+  - apps/optimus-ui/src/components/ui/**
 depends_on:
   - docs/decisions/0045-agent-host-and-surface-transports.md
 validated_by:

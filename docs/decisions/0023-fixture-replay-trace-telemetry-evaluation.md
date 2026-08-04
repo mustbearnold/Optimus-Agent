@@ -23,7 +23,6 @@ covers:
 depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - docs/decisions/0022-versioned-agent-and-workflow-contracts.md
-  - docs/contracts/high-risk-contracts.md
 validated_by:
   - crates/optimus-eval/tests/replay_contracts.rs
   - crates/optimus-kernel/tests/trace_contracts.rs

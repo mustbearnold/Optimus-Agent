@@ -16,10 +16,9 @@ covers:
   - apps/optimus-desktop/ui/vantage.css
   - apps/optimus-desktop/e2e/02-shell-and-composer.spec.js
   - apps/optimus-desktop/e2e/07-vantage-design.spec.js
-  - docs/design/optimus-vantage-2027/*
+  - specs/001-desktop-shell/assets/**
 depends_on:
   - docs/decisions/0014-native-webview-ipc-mode.md
-  - docs/specifications/phase-20-cdp-preview-browser.md
 validated_by:
   - apps/optimus-desktop/e2e/06-preview-browser.spec.js
   - apps/optimus-desktop/e2e/07-vantage-design.spec.js

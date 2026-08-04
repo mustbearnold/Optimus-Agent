@@ -10,8 +10,6 @@ review_by: 2026-10-31
 knowledge_type: decision
 covers:
   - apps/optimus-ui/**
-  - docs/design/codex-convergence-*.md
-  - docs/specifications/react-workbench-electron-preview-cutover.md
 depends_on:
   - docs/decisions/0027-settings-driven-work-isolation.md
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md

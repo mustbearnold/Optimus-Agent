@@ -13,7 +13,6 @@ depends_on:
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
-  - docs/plans/github-engineer-program.md
 ---
 
 # ADR-0053: A repository is asked, not assumed

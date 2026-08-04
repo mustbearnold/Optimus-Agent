@@ -19,7 +19,6 @@ depends_on:
 validated_by:
   - crates/optimus-kernel/tests/**
   - evals/**
-  - crates/optimus-browser/tests/**
 ---
 
 # 003 — Kernel turns

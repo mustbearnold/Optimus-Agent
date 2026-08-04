@@ -20,7 +20,6 @@ depends_on:
   - docs/decisions/0005-skills-2.md
   - docs/decisions/0016-canonical-tool-contract.md
   - docs/decisions/0017-engineering-memory-separation.md
-  - docs/plans/s-plus-plus-plus-program.md
 validated_by:
   - crates/optimus-kernel/tests/domain_modularity.rs
   - crates/optimus-packs/tests/packs_budget.rs

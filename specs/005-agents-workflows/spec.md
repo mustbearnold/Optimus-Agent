@@ -13,9 +13,6 @@ covers:
   - crates/optimus-workflow/src/**
   - crates/optimus-artifacts/src/**
 validated_by:
-  - crates/optimus-agent/tests/**
-  - crates/optimus-workflow/tests/**
-  - crates/optimus-artifacts/tests/**
 ---
 
 # 005 — Agents, workflows, artifacts

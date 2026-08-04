@@ -19,7 +19,6 @@ depends_on:
   - docs/decisions/0031-safe-project-work-loop.md
   - docs/decisions/0035-command-capability-envelope.md
   - docs/decisions/0036-domain-modularity-single-catalog.md
-  - docs/plans/product-complete-program.md
 validated_by:
   - crates/optimus-runtime/tests/path_confinement.rs
   - crates/optimus-runtime/tests/approvals_surface.rs

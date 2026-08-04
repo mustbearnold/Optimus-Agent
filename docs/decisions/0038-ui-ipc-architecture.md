@@ -17,7 +17,6 @@ covers:
 depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
-  - docs/plans/s-plus-plus-plus-program.md
 validated_by:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py

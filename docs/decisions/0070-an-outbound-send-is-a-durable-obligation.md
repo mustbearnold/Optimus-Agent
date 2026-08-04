@@ -15,7 +15,6 @@ covers:
   - crates/optimus-ops/src/telegram.rs
 depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
-  - docs/plans/competitive-bottleneck-audit.md
 validated_by:
   - crates/optimus-ops/src/gateway/outbound_ledger.rs
   - crates/optimus-ops/src/telegram.rs

@@ -18,7 +18,6 @@ depends_on:
   - docs/decisions/0033-multi-agent-dag-execution.md
   - docs/decisions/0035-command-capability-envelope.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
-  - docs/plans/github-engineer-program.md
 validated_by:
   - crates/optimus-kernel/tests/dev_run_containment.rs
 ---

@@ -15,7 +15,6 @@ covers:
 depends_on:
   - docs/decisions/0035-command-capability-envelope.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
-  - docs/plans/reliability-autonomy-program.md
 validated_by:
   - crates/optimus-policy/tests/command_classification.rs
   - crates/optimus-runtime/tests/project_trust_profile.rs

@@ -24,7 +24,6 @@ depends_on:
   - docs/decisions/0035-command-capability-envelope.md
   - docs/decisions/0018-fail-closed-runtime-safety.md
   - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
-  - docs/plans/reliability-autonomy-program.md
 validated_by:
   - crates/optimus-policy/src/lib.rs
   - crates/optimus-policy/tests/command_classification.rs

@@ -15,7 +15,6 @@ covers:
 depends_on:
   - docs/decisions/0021-owned-execution-and-causal-delivery.md
   - docs/decisions/0023-fixture-replay-trace-telemetry-evaluation.md
-  - docs/plans/s-plus-plus-plus-program.md
 validated_by:
   - crates/optimus-kernel/tests/causal_trace.rs
   - scripts/check-observability-gate.py

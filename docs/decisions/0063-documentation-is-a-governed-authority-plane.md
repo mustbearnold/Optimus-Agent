@@ -9,8 +9,6 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - docs/README.md
-  - docs/current/**
   - docs/authority-routes.json
   - docs/catalog.json
   - docs/verification-lock.json

@@ -13,8 +13,6 @@ covers:
   - docs/architecture/optimus-version.json
 depends_on:
   - docs/decisions/0024-hermes-parity-version-gate.md
-  - docs/architecture/north-star-2026-07.md
-  - docs/plans/competitive-bottleneck-audit.md
 validated_by:
   - scripts/test_optimus_version.py
   - scripts/verify.sh

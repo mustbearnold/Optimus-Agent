@@ -15,7 +15,7 @@ covers:
   - apps/optimus-desktop/ui/app.js
 depends_on:
   - docs/decisions/0018-fail-closed-runtime-safety.md
-  - docs/architecture/system-overview.md
+  - docs/architecture.md
 validated_by:
   - crates/optimus-kernel/src/product_settings.rs
   - crates/optimus-host/src/system.rs

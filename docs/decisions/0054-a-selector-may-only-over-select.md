@@ -15,7 +15,6 @@ depends_on:
   - docs/decisions/0049-module-size-is-measured-honestly.md
   - docs/decisions/0052-isolated-durable-engineering-runs.md
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
-  - docs/plans/github-engineer-program.md
 validated_by:
   - scripts/test_impact_select.py
 ---

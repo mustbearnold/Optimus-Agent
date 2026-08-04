@@ -18,7 +18,6 @@ validated_by:
   - scripts/check-desktop-ipc-matrix.py
   - scripts/test_desktop_ipc_matrix.py
   - apps/optimus-desktop/e2e/**
-  - apps/optimus-ui/src/ipc/**/*.test.ts
 ---
 
 # 002 — Host IPC

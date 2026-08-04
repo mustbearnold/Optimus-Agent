@@ -19,7 +19,6 @@ depends_on:
 
 validated_by:
   - crates/optimus-runtime/tests/**
-  - crates/optimus-graph/tests/**
   - crates/optimus-kernel/tests/dev_run_containment.rs
 ---
 

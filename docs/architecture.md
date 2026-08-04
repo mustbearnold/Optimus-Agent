@@ -19,11 +19,7 @@ owns:
   - crates/optimus-skills/src/lib.rs
   - apps/optimus-cli/src/main.rs
   - apps/optimus-desktop/src/main.rs
-  - docs/maps/repository-and-ownership.md
-  - docs/maps/memory-and-retrieval.md
-  - docs/maps/model-routing.md
-  - docs/maps/security-and-approvals.md
-  - docs/maps/observability-and-evaluations.md
+  - specs/004-runtime-effects/spec.md
 watches:
   - apps/optimus-cli/src/**
   - apps/optimus-desktop/src/**

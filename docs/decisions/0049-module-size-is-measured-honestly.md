@@ -13,7 +13,7 @@ covers:
   - docs/architecture/module-size-baseline.json
   - AGENTS.md
 depends_on:
-  - docs/architecture/optimus-exceeds-hermes.md
+  - docs/architecture.md
 validated_by:
   - scripts/test_module_size.py
 ---

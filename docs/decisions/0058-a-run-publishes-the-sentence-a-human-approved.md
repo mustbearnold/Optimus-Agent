@@ -13,7 +13,6 @@ depends_on:
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
   - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
-  - docs/plans/github-engineer-program.md
 ---
 
 # ADR-0058: A run publishes the sentence a human approved, and nothing else

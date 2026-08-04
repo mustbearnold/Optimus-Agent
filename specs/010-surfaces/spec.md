@@ -15,7 +15,6 @@ validated_by:
   - scripts/tui_e2e.py
   - scripts/tui_feature_matrix.py
   - scripts/tui_layout_playwright.cjs
-  - crates/optimus-cli/tests/**
 ---
 
 # 010 — Surfaces: TUI and CLI

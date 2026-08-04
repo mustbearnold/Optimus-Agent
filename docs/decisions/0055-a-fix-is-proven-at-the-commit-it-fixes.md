@@ -13,7 +13,6 @@ depends_on:
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
-  - docs/plans/github-engineer-program.md
 ---
 
 # ADR-0055: A fix is proven at the commit it fixes, or it is not proven

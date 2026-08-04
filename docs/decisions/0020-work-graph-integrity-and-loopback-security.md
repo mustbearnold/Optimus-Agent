@@ -26,7 +26,6 @@ covers:
   - apps/optimus-desktop/e2e/support.js
 depends_on:
   - docs/decisions/0019-capability-files-and-unified-campaign-authority.md
-  - docs/contracts/high-risk-contracts.md
 validated_by:
   - crates/optimus-store/src/lib.rs
   - crates/optimus-runtime/src/campaign.rs
@@ -36,7 +35,7 @@ validated_by:
   - crates/optimus-runtime/tests/crash_resume.rs
   - apps/optimus-cli/tests/gateway_http.rs
   - apps/optimus-desktop/src/server.rs
-  - apps/optimus-desktop/e2e
+  - apps/optimus-desktop/e2e/**
 ---
 
 # ADR-0020: Work Graph integrity and loopback security

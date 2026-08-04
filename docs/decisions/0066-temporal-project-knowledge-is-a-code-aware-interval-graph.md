@@ -13,7 +13,7 @@ covers:
   - scripts/project_knowledge_code.py
   - scripts/project_knowledge_db.py
   - scripts/test_project_knowledge.py
-  - docs/project-knowledge.md
+  - specs/009-project-knowledge/project-knowledge.md
 depends_on:
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md
   - docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md

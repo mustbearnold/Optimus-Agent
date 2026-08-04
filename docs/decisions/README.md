@@ -11,7 +11,7 @@ knowledge_type: decision-index
 covers:
   - docs/decisions/*.md
 depends_on:
-  - docs/architecture/system-overview.md
+  - docs/architecture.md
 validated_by:
   - scripts/test_engineering_memory.py
 ---
@@ -24,7 +24,7 @@ implemented.
 
 **Identity:** `ADR-NNNN` is the **decision** plane only. It is never equal to
 program phase `P##`, a managed-land task id, or a delivery SHA. See
-[artifact-naming.md](../../specs/011-developer-tooling/spec.md).
+[artifact-naming.md](../../specs/conventions.md).
 
 | ID | Decision | Documentary status | Implementation interpretation |
 |---|---|---|---|

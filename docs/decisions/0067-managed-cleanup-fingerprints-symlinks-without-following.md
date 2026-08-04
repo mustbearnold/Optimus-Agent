@@ -14,7 +14,7 @@ covers:
 depends_on:
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md
   - docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md
-  - docs/project-knowledge.md
+  - specs/009-project-knowledge/project-knowledge.md
 validated_by:
   - scripts/test_managed_project_cleanup.py
   - scripts/verify.sh

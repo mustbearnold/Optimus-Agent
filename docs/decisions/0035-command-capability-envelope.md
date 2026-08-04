@@ -22,7 +22,6 @@ depends_on:
   - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
   - docs/decisions/0027-settings-driven-work-isolation.md
   - docs/decisions/0031-safe-project-work-loop.md
-  - docs/plans/s-plus-plus-plus-program.md
 validated_by:
   - crates/optimus-runtime/tests/command_envelope.rs
   - crates/optimus-runtime/tests/path_confinement.rs

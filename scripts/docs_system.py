@@ -677,11 +677,34 @@ def check_generated(documents: list[Document], routes: dict[str, Any]) -> None:
         raise DocsError("generated docs/CATALOG.md is stale; run just docs-generate")
 
 
+def validate_bindings(documents: list[Document]) -> None:
+    """Every frontmatter binding (owns/covers/depends_on/validated_by) must
+    resolve to at least one real file. Dead bindings rot silently for
+    historical records (they never enter change-impact), so they must be
+    caught here — regression: the SDD layout retired ~110 docs while 27 ADRs
+    still named their old paths (2026-08-05)."""
+    errors: list[str] = []
+    for document in documents:
+        for key in ("owns", "covers", "depends_on", "validated_by"):
+            value = document.metadata.get(key, [])
+            if not isinstance(value, list):
+                continue
+            for pattern in value:
+                pattern = str(pattern)
+                if not glob_files(pattern):
+                    errors.append(
+                        f"{document.relative}: {key} binding resolves no files: {pattern}"
+                    )
+    if errors:
+        raise DocsError("\n".join(errors))
+
+
 def validate_all(documents: list[Document], routes: dict[str, Any]) -> dict[str, Any]:
     ontology = repository_ontology.check()
     entries = [document.entry() for document in documents] + special_entries()
     validate_routes(entries, routes)
     validate_links(documents)
+    validate_bindings(documents)
     validate_lock(documents)
     check_generated(documents, routes)
     result = benchmark(catalog_payload(documents, routes), routes)

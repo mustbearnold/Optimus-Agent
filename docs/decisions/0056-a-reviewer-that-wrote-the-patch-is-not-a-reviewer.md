@@ -13,7 +13,6 @@ depends_on:
   - docs/decisions/0053-a-repository-is-asked-not-assumed.md
   - docs/decisions/0055-a-fix-is-proven-at-the-commit-it-fixes.md
   - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
-  - docs/plans/github-engineer-program.md
 ---
 
 # ADR-0056: A reviewer that wrote the patch is not a reviewer

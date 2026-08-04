@@ -12,7 +12,7 @@ covers:
   - scripts/project_knowledge.py
   - scripts/project_knowledge_db.py
   - scripts/test_project_knowledge.py
-  - docs/project-knowledge.md
+  - specs/009-project-knowledge/project-knowledge.md
 depends_on:
   - docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md
   - docs/decisions/0064-temporal-project-knowledge-is-derived-provenance.md

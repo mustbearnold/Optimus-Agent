@@ -14,7 +14,6 @@ depends_on:
   - docs/decisions/0054-a-selector-may-only-over-select.md
   - docs/decisions/0056-a-reviewer-that-wrote-the-patch-is-not-a-reviewer.md
   - docs/decisions/0073-an-unreachable-vertical-is-archived-not-carried.md
-  - docs/plans/github-engineer-program.md
 ---
 
 # ADR-0057: An issue earns its way into a run, or is refused in the reporter's own words

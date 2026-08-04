@@ -11,7 +11,7 @@ knowledge_type: decision
 covers:
   - scripts/rebuild-install-relaunch.sh
   - crates/optimus-host/src/system.rs
-  - docs/architecture/desktop-install-relaunch.md
+  - docs/runbooks/install-relaunch.md
 depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md
   - docs/decisions/0038-ui-ipc-architecture.md

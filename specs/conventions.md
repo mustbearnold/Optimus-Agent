@@ -11,7 +11,6 @@ knowledge_type: specification
 covers:
   - scripts/verify.sh
   - justfile
-  - .editorconfig
   - .config/**
 depends_on:
   - specs/constitution.md

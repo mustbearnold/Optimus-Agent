@@ -9,8 +9,6 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - crates/optimus-kernel/src/agent.rs
-  - crates/optimus-kernel/src/workflow.rs
   - crates/optimus-eval/src/eval.rs
   - crates/optimus-kernel/tests/agent_contracts.rs
   - crates/optimus-kernel/tests/workflow_contracts.rs

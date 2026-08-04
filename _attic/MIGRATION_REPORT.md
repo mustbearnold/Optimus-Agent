@@ -203,3 +203,18 @@ break the canonical Tauri structure. No duplicate documents or code found.
 9. **`sota-scorecard.md` was initially merged, then restored** — it is
    machine-validated gate data (check-parity-ledger.py reads it), not prose;
    it stays at `docs/architecture/sota-scorecard.md` beside the ledger JSON.
+10. **ADR frontmatter bindings cleanup (follow-up, owner-raised)** — the
+    Phase 3 lock sync preserved ADR frontmatter verbatim, leaving 181 dead
+    binding paths (27 ADRs naming retired contracts/plans/maps/design docs,
+    plus two directory bindings). Historical records never enter
+    change-impact, so every gate passed silently. Fixed wholesale per the
+    ADR-0062 precedent: re-pointed moved targets, dropped retired ones,
+    directory bindings → `/**` globs. **New gate:** `validate_bindings` in
+    `scripts/docs_system.py` now rejects any `owns/covers/depends_on/
+    validated_by` binding that resolves no files — pinned by
+    `test_dead_frontmatter_binding_is_rejected` in `scripts/test_docs_system.py`
+    (regression test per repo law). The design mockups were verified to have
+    moved with Phase 3 (`specs/001-desktop-shell/assets/`, commit 52d32b7).
+11. **`specs/conventions.md` dropped a `.editorconfig` claim** — no such
+    file exists (the claim came from a retired doc); the covers entry and
+    prose now match reality.

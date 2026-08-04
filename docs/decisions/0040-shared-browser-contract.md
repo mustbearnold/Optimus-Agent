@@ -12,7 +12,7 @@ covers:
   - crates/optimus-kernel/src/browser_coord.rs
   - crates/optimus-kernel/src/browser.rs
   - apps/optimus-ui/src/components/workspace/BrowserSurface.tsx
-  - docs/maps/security-and-approvals.md
+  - specs/004-runtime-effects/spec.md
 depends_on:
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
   - docs/decisions/0015-preview-browser-cdp.md

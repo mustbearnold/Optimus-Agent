@@ -15,7 +15,6 @@ covers:
   - docs/architecture/parity-capability-ledger.json
 depends_on:
   - docs/decisions/0036-domain-modularity-single-catalog.md
-  - docs/plans/competitive-bottleneck-audit.md
 validated_by:
   - crates/optimus-kernel/tests/tool_coverage.rs
   - scripts/check-tool-coverage.py

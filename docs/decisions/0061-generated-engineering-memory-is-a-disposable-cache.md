@@ -11,8 +11,7 @@ knowledge_type: decision
 covers:
   - scripts/engineering_memory.py
   - scripts/test_engineering_memory.py
-  - docs/engineering-memory/README.md
-  - docs/plans/engineering-memory-phases.md
+  - docs/runbooks/engineering-memory.md
   - .gitignore
 depends_on:
   - docs/decisions/0017-engineering-memory-separation.md
