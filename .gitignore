@@ -1,5 +1,4 @@
 /target
-/local/
 /.engineering-memory/
 **/node_modules/
 **/test-results/
@@ -11,8 +10,17 @@ apps/optimus-ui/dist/
 *.pyc
 **/*.rs.bk
 .DS_Store
+Thumbs.db
 *.pdb
 Cargo.lock.bak
+*.log
+*.tmp
+*.cache
+*~
+*.swp
+.idea/
+.vscode/
+coverage/
 
 # A runtime home the TUI creates when run from the tree. Holds auth.json.
 /.optimus/

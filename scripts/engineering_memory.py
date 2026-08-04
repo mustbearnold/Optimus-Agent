@@ -79,6 +79,9 @@ EXCLUDED_PARTS = {
     # Hashing it made Engineering Memory depend on local state and crashed on
     # dangling Electron singleton symlinks left by compiled-workbench runs.
     "Development",
+    # SDD migration quarantine: docs and records awaiting a human fate
+    # decision. Excluded so atticked files never enter the knowledge graph.
+    "_attic",
     # Agent tooling keeps full repo copies under .claude/worktrees. Hashing them
     # made 65.8% of the tree agent scratch: every worktree touch marked the whole
     # subsystem stale, and the walk cost ~2.9x what the real source costs.

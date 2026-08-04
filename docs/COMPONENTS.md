@@ -12,6 +12,7 @@ This is the generated human view of `docs/repository-components.json`.
 | `AGENTS.md` | Mandatory law for humans and coding agents developing Optimus Agent. | `primary` | `repository-only` | no |
 | `DESIGN.md` | Accepted design contract referenced by architecture decisions and interface fixtures. | `supporting` | `repository-only` | no |
 | `OPTIMUS_AGENTS.md` | Compile-time embedded constitution loaded into installed Optimus product sessions. | `primary` | `embedded` | no |
+| `_attic` | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. | `historical` | `repository-only` | yes |
 | `apps` | Product binaries, terminal surface, native host, desktop shell, and React interface. | `primary` | `repository-only` | no |
 | `apps/optimus-cli` | Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch. | `primary` | `binary` | no |
 | `apps/optimus-desktop` | Rust desktop authority and IPC/HTTP host, plus the still-required Windows Wry surface. | `primary` | `binary` | no |

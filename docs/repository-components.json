@@ -1018,6 +1018,23 @@
         "An installed Optimus product skill"
       ],
       "safe_to_delete": false
+    },
+    {
+      "id": "sdd-quarantine-attic",
+      "path": "_attic",
+      "parent": "repository-root",
+      "storage_plane": "repository",
+      "concern": "delivery-control",
+      "distribution": "repository-only",
+      "lifecycle": "historical",
+      "repository_role": "historical",
+      "retention": "conditional",
+      "summary": "SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision.",
+      "not": [
+        "A runtime data directory",
+        "A place for build output"
+      ],
+      "safe_to_delete": true
     }
   ]
 }
