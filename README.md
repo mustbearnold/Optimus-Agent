@@ -52,12 +52,12 @@ Install a current stable Rust toolchain if `cargo` is not already available:
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-Playwright UI tests also require Node.js, npm, and the pinned Chromium payload:
+Playwright UI tests use Bun and the pinned Chromium payload:
 
 ```bash
 cd apps/optimus-desktop
-npm ci
-npx playwright install chromium
+bun install --frozen-lockfile
+bunx playwright install chromium
 cd ../..
 ```
 
@@ -190,12 +190,12 @@ Artifact identity planes (`P##` ≠ task id ≠ `ADR-NNNN` ≠ grade) are define
 
 ```bash
 cargo build -p optimus-desktop
-npm --prefix apps/optimus-ui install && npm --prefix apps/optimus-ui run build
-npm --prefix apps/optimus-electron install
-npm --prefix apps/optimus-electron run dev   # React workbench + Rust host
+bun install --frozen-lockfile
+bun run --cwd apps/optimus-ui build
+bun run --cwd apps/optimus-tauri dev         # primary React + Tauri workbench
 ```
 
-Legacy HTML-in-Electron rollback: `npm --prefix apps/optimus-electron run dev:legacy-html`  
+Electron rollback: `bun run --cwd apps/optimus-electron dev`
 Legacy Wry native shell: `cargo run -p optimus-desktop` (no Electron).
 
 See `apps/optimus-electron/README.md`, ADR-0028, and the IPC matrix contract.

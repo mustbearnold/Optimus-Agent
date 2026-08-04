@@ -4,7 +4,7 @@ doc_type: reference
 plane: current
 status: current
 authority: canonical
-summary: Install authority: scripts/rebuild-install-relaunch.sh stages Electron as the primary entry and keeps Wry as a secondary action.
+summary: Install authority: scripts/rebuild-install-relaunch.sh stages Tauri as the primary entry and keeps Electron and Wry as explicit rollback shells.
 reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: contract
@@ -35,12 +35,13 @@ validated_by:
 
 | Surface | Role |
 |---|---|
-| **Electron + React** (`apps/optimus-electron` + `apps/optimus-ui`) | **Default installed desktop** and repository daily path |
+| **Tauri + React** (`apps/optimus-tauri` + `apps/optimus-ui`) | **Default installed desktop** and repository daily path |
 | **Rust host** (`optimus-desktop --host-only`) | Authority: IPC registry, sessions, SmartDeny, chat streams |
+| **Electron + React** (`apps/optimus-electron`) | **Browser-preview rollback** while Tauri parity is completed |
 | **Wry/Tao** (`optimus-desktop` native window) | **Legacy rollback only** (desktop action `LegacyWry`) |
 
-Install authority: `scripts/rebuild-install-relaunch.sh` stages Electron as the
-primary entry and keeps Wry as a secondary action.
+Install authority: `scripts/rebuild-install-relaunch.sh` stages Tauri as the
+primary entry and keeps Electron and Wry as explicit rollback actions.
 
 ## IPC ownership matrix
 

@@ -17,6 +17,7 @@ import type {
 import { Icon, type IconName } from '../chrome/Icon';
 import { CronWorkbench } from '../cron/CronWorkbench';
 import { DeveloperAccessPanel } from './DeveloperAccessPanel';
+import { ProviderKeysPanel } from './ProviderKeysPanel';
 
 const fallback: ProductSettings = {
   work_isolation: 'shared',
@@ -64,6 +65,7 @@ export function SettingsDialog({
   transport,
   theme,
   projects,
+  sessionId,
   onTheme,
   onManageProject,
   onDeveloperAccess,
@@ -73,6 +75,7 @@ export function SettingsDialog({
   transport: OptimusTransport;
   theme: 'dark' | 'light';
   projects: Project[];
+  sessionId?: string | null;
   onTheme: (theme: 'dark' | 'light') => void;
   onManageProject: (project: Project) => void;
   onDeveloperAccess?: (value: DeveloperAccess) => void;
@@ -337,6 +340,7 @@ export function SettingsDialog({
                   <DeveloperAccessPanel
                     transport={transport}
                     projects={projects}
+                    sessionId={sessionId}
                     value={settings.developer_access}
                     onValue={(value) => {
                       setSettings((current) => ({ ...current, developer_access: value }));
@@ -376,14 +380,22 @@ export function SettingsDialog({
             ) : null}
 
             {active === 'authentication' ? (
-              <SettingsGroup title="Credentials">
-                <SettingRow title="Credential state" description={String(auth.mode || (auth.present ? 'Available' : 'Not configured'))}>
-                  <button type="button" onClick={() => void transport.invoke('auth_import_cli')}>Import CLI auth</button>
-                </SettingRow>
-                <SettingRow title="Hermes import" description="Imports compatible credentials only; Hermes files remain read-only.">
-                  <button type="button" onClick={() => void transport.invoke('auth_import_hermes')}>Import</button>
-                </SettingRow>
-              </SettingsGroup>
+              <>
+                <SettingsGroup title="Credentials">
+                  <SettingRow title="Credential state" description={String(auth.mode || (auth.present ? 'Available' : 'Not configured'))}>
+                    <button type="button" onClick={() => void transport.invoke('auth_import_cli')}>Import CLI auth</button>
+                  </SettingRow>
+                  <SettingRow title="Hermes import" description="Imports compatible credentials only; Hermes files remain read-only.">
+                    <button type="button" onClick={() => void transport.invoke('auth_import_hermes')}>Import</button>
+                  </SettingRow>
+                </SettingsGroup>
+                <SettingsGroup title="Model provider keys">
+                  <ProviderKeysPanel
+                    transport={transport}
+                    active={open && active === 'authentication'}
+                  />
+                </SettingsGroup>
+              </>
             ) : null}
 
             {active === 'accessibility' ? (

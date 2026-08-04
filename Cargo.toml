@@ -19,6 +19,7 @@ members = [
     "apps/optimus-cli",
     "apps/optimus-tui",
     "apps/optimus-desktop",
+    "apps/optimus-tauri",
 ]
 default-members = [
     "crates/optimus-store",

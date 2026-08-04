@@ -48,6 +48,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "optimus-skills",
                 "optimus-tui",
                 "optimus-store",
+                "optimus-tauri",
                 "optimus-workflow",
             },
         )
@@ -55,8 +56,8 @@ class EngineeringMemoryTests(unittest.TestCase):
     def test_canonical_tool_catalog_is_reconciled(self) -> None:
         registry = EM.parse_tool_catalog()
         tools = registry["tools"]
-        self.assertEqual(len(tools), 22)
-        self.assertEqual(len({row["id"] for row in tools}), 22)
+        self.assertEqual(len(tools), 23)
+        self.assertEqual(len({row["id"] for row in tools}), 23)
         available = {row["id"] for row in tools if row["available"]}
         self.assertEqual(
             available,
@@ -74,6 +75,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "read_file",
                 "rename_path",
                 "search_content",
+                "self_development",
                 "skill_resolve",
                 "terminal",
                 "vision_analyze",
@@ -315,7 +317,7 @@ class EngineeringMemoryTests(unittest.TestCase):
         )
         self.assertEqual(
             binding["tool_catalog_sha256"],
-            EM.sha256_file(ROOT / "crates/optimus-packs/src/lib.rs"),
+            EM.sha256_file(ROOT / "crates/optimus-packs/src/catalog.rs"),
         )
         self.assertEqual(
             binding["route_policy_sha256"],

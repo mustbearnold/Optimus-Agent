@@ -337,6 +337,7 @@ impl Kernel {
             content: result_json,
             tool_call_id: Some(call.id.clone()),
             name: Some(call.name.clone()),
+            reasoning_content: None,
         });
         // No assistant message is written here. Whatever is said about this
         // outcome is the agent's to say, once it has seen the result — the

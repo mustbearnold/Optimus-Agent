@@ -225,27 +225,30 @@
       "concern": "product-interface",
       "distribution": "bundled",
       "id": "optimus-electron",
-      "lifecycle": "primary",
+      "lifecycle": "rollback-only",
       "not": [
         "The React interface",
         "The Rust filesystem and policy authority"
       ],
       "outputs_to": [
-        "workspace://Development/cache/npm",
+        "workspace://Development/cache/bun",
         "workspace://Development/evidence/playwright"
       ],
       "package": "optimus-electron",
       "paired_with": [
         "optimus-desktop",
+        "optimus-tauri",
         "optimus-ui"
       ],
       "parent": "applications",
       "path": "apps/optimus-electron",
+      "removal_when": "Tauri browser-preview, input, install, and rollback acceptance passes on the supported desktop targets.",
       "repository_role": "required",
       "retention": "essential",
+      "review_by": "2026-10-31",
       "safe_to_delete": false,
       "storage_plane": "repository",
-      "summary": "Linux native desktop shell, process supervisor, preload boundary, and preview host."
+      "summary": "Electron desktop rollback shell, process supervisor, preload boundary, and preview host retained during Tauri parity work."
     },
     {
       "concern": "development-tooling",
@@ -267,6 +270,31 @@
       "safe_to_delete": true,
       "storage_plane": "development",
       "summary": "Ignored npm dependencies installed for Electron development and tests."
+    },
+    {
+      "concern": "product-interface",
+      "default_member": false,
+      "distribution": "binary",
+      "id": "optimus-tauri",
+      "lifecycle": "primary",
+      "not": [
+        "The browser-preview implementation",
+        "The Rust policy and execution authority"
+      ],
+      "npm_package": "optimus-tauri",
+      "package": "optimus-tauri",
+      "paired_with": [
+        "optimus-ui",
+        "optimus-host",
+        "optimus-electron"
+      ],
+      "parent": "applications",
+      "path": "apps/optimus-tauri",
+      "repository_role": "required",
+      "retention": "essential",
+      "safe_to_delete": false,
+      "storage_plane": "repository",
+      "summary": "Primary Tauri v2 desktop shell that calls the Rust host directly and renders the React workbench."
     },
     {
       "concern": "product-interface",
@@ -300,12 +328,13 @@
         "The Rust desktop host"
       ],
       "outputs_to": [
-        "workspace://Development/cache/npm",
+        "workspace://Development/cache/bun",
         "workspace://Development/build/ui"
       ],
       "package": "optimus-ui",
       "paired_with": [
         "optimus-electron",
+        "optimus-tauri",
         "optimus-desktop"
       ],
       "parent": "applications",
@@ -1154,7 +1183,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "50942dbef4bfed364fc1821da8337dba213ab9e98d46c741a89837e20a06ff46",
+      "content_sha256": "b12551ca24bb660524d42cb0ac49173b782dd655fb794012124a02daade57ec5",
       "headings": [],
       "id": "repository-readme",
       "path": "README.md",
@@ -1339,7 +1368,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "931d27f3bef20bbc18e333c071c92c35b558d922656160c9bc4a2e815f143126",
+      "content_sha256": "3b05cfe1702764fa933e91fe19618f3c307c92c76bcde4bfb468889b486a0032",
       "headings": [
         "Desktop install and relaunch convention",
         "Default shell",
@@ -1359,7 +1388,7 @@
       "review_by": "2026-10-31",
       "reviewed_on": "2026-07-31",
       "status": "current",
-      "summary": "Confirmed current behaviour: the installer stages Electron + React as the primary desktop entry and keeps the Wry/Tao binary as a desktop-action rollback (LegacyWry). The Rust host (optimus-desktop --host-only) remains authority for IPC...",
+      "summary": "Confirmed current behaviour: the installer stages Tauri + React as the primary desktop entry and keeps Electron and Wry as explicit rollback shells during preview parity work.",
       "title": "Desktop install and relaunch convention",
       "type": "explanation"
     },
@@ -2571,7 +2600,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "f722e3bfffa0f14e3c964d6c72b577d3c7d698412ed463ab677e4f27b4535be2",
+      "content_sha256": "e99701d1b32c2e7da6365128cd0971d5ebe29490352e0be449a8404d1ffee284",
       "headings": [
         "Desktop IPC method inventory (frozen for shell migration)",
         "Registry methods (`ipc/router.rs`)",
@@ -2599,7 +2628,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "6418cf4440016448f9894a3bd4cfdb8e0a29f98271290f93935326b64d33157f",
+      "content_sha256": "c48ef8c2b5840aa7bad41a9d205f4e628d767c0402185fb80832d30b6e659984",
       "headings": [
         "Desktop shell authority and IPC matrix (Phase 4)",
         "Default shell (truth freeze)",
@@ -2614,7 +2643,7 @@
       "review_by": "2026-10-31",
       "reviewed_on": "2026-07-31",
       "status": "current",
-      "summary": "Install authority: scripts/rebuild-install-relaunch.sh stages Electron as the primary entry and keeps Wry as a secondary action.",
+      "summary": "Install authority: scripts/rebuild-install-relaunch.sh stages Tauri as the primary entry and keeps Electron and Wry as explicit rollback shells.",
       "title": "Desktop shell authority and IPC matrix (Phase 4)",
       "type": "reference"
     },
@@ -4159,9 +4188,9 @@
     },
     {
       "authority": "record",
-      "content_sha256": "59e42e6384ebae28e9f0a21609ca3c99506e7b6ba16be2b15bb1ab8aeab18e06",
+      "content_sha256": "dd5698da4bdd4401573d6622019ac387a53802352b7912cf0d172c61461696cf",
       "headings": [
-        "ADR-0051: Electron now, Tauri when the preview leaves the shell",
+        "ADR-0051: Tauri primary, Electron rollback during preview parity",
         "Context",
         "Decision",
         "Alternatives considered",
@@ -4180,7 +4209,7 @@
       "reviewed_on": "2026-07-31",
       "status": "current",
       "summary": "- Date: 2026-07-29 - Program: program P30+ (TUI + core foundation)",
-      "title": "ADR-0051: Electron now, Tauri when the preview leaves the shell",
+      "title": "ADR-0051: Tauri primary, Electron rollback during preview parity",
       "type": "decision"
     },
     {
@@ -4615,7 +4644,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "3e41cea54a5e15f45d9268df3119c299ed5c22fb7d6a34e24797e3fa737fca5b",
+      "content_sha256": "f969702a05605695ac75b397d8789b022be4e5856b9779606cb20d6952195221",
       "headings": [
         "ADR-0068: A catalog row must dispatch or not exist",
         "Context",
@@ -4828,7 +4857,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "cc43ab6c608ba5723028cdd8c3295ae6f7680d1681b5157751d6bce9b1280f62",
+      "content_sha256": "2bb607eb29d8ea47ada847a0165f9bb059a5c7cb2228a327d56694fe6a99006b",
       "headings": [
         "ADR-0076: Developer Full Access is a scoped grant with a stable supervisor",
         "Context",
@@ -4846,7 +4875,7 @@
       "path": "docs/decisions/0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor.md",
       "plane": "decision",
       "review_by": "2026-11-03",
-      "reviewed_on": "2026-08-03",
+      "reviewed_on": "2026-08-04",
       "status": "current",
       "summary": "Developer Full Access is an explicit, revocable local capability grant with a selected path scope and independent toggles; self-rebuilds run through a stable supervisor that health-checks, logs, stops, and restores a separate development instance.",
       "title": "ADR-0076: Developer Full Access is a scoped grant with a stable supervisor",
@@ -4880,7 +4909,30 @@
     },
     {
       "authority": "record",
-      "content_sha256": "3d67948f1096aecbbfe0c69a89ef52f0d73b13fff65bda31e30741906ae49e3c",
+      "content_sha256": "ed54d86125c607fe72a28798b8f0f22e8bdbaefa7d67a07aa28e5dd58df1f9d5",
+      "headings": [
+        "ADR-0078: A transcript is a provider contract, and an unreachable toggle asks",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons"
+      ],
+      "id": "decisions-0078-a-transcript-is-a-provider-contract-and-an-unreachable-toggle-asks",
+      "path": "docs/decisions/0078-a-transcript-is-a-provider-contract-and-an-unreachable-toggle-asks.md",
+      "plane": "decision",
+      "review_by": "2026-11-04",
+      "reviewed_on": "2026-08-04",
+      "status": "current",
+      "summary": "Stored transcripts are repaired to the tool-call pairing every provider requires, provider rejections carry the provider's own reason, and a Developer Full Access capability the user cannot enable asks for approval instead of denying with impossible advice.",
+      "title": "ADR-0078: A transcript is a provider contract, and an unreachable toggle asks",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "06b6a18c7b5fd73be2193b11a9fbec12b4aec41172439668954c6b4433cd57e1",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -5621,7 +5673,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "259b69e535d07aa566082591209bb43d62e1686f1b62896f6f60547114a5064d",
+      "content_sha256": "277f05896af340cd583a072c308836052b6e263283fd70013e3f7a863d76dbc1",
       "headings": [
         "Model-routing map",
         "Current conclusion",
@@ -5636,7 +5688,7 @@
       "path": "docs/maps/model-routing.md",
       "plane": "current",
       "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
+      "reviewed_on": "2026-08-03",
       "status": "current",
       "summary": "Confirmed current behaviour: Optimus implements a canonical typed route resolver for provider/model ownership, required capabilities, privacy, bounded cost, explicit fallback, readiness-based Auto selection, and durable decision...",
       "title": "Model-routing map",
@@ -6420,7 +6472,7 @@
     },
     {
       "authority": "historical",
-      "content_sha256": "40a8fb9c780015aa781bcba369b59ad43885df99ed3f4ca369e2c70db32fa8cc",
+      "content_sha256": "2e6a5b67c76f8e896e67af4f2b4c77b3277e18d6aec2bfb7c169b2abdc70b540",
       "headings": [
         "Authoritative offline candidate binding",
         "Problem and outcome",
@@ -7248,7 +7300,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "f176a0f4698097e46f2c7d23756f961b9cc964c769f9c14d3dc6af0d9efa5511",
+  "documents_sha256": "2b57d05f002cc137faa3d5a05258bcfb3f626f0e9c283439f075a21ab571fdd3",
   "routes": [
     {
       "id": "docs.navigation",

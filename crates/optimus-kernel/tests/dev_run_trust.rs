@@ -98,10 +98,12 @@ fn run_write(kernel: &mut Kernel) -> Result<(), String> {
                 name: "write_file".into(),
                 arguments: json!({ "path": PROOF, "contents": "granted\n" }),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("written".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     kernel

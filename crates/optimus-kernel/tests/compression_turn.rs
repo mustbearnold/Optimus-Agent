@@ -28,12 +28,14 @@ fn turn_compresses_bloated_history() {
             content: format!("padding user {i} {}", "p".repeat(80)),
             tool_call_id: None,
             name: None,
+            reasoning_content: None,
         });
         k.messages.push(optimus_kernel::Message {
             role: optimus_kernel::Role::Assistant,
             content: format!("padding assistant {i} {}", "q".repeat(80)),
             tool_call_id: None,
             name: None,
+            reasoning_content: None,
         });
     }
     let before = estimate_chars(&k.messages);
@@ -42,6 +44,7 @@ fn turn_compresses_bloated_history() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("ok after compress".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
     let result = k.turn(&mut model, "final question").unwrap();
     assert!(result.compressed);

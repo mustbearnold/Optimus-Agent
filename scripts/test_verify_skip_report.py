@@ -12,18 +12,18 @@ import verify_skip_report as vsr
 
 class ParseTest(unittest.TestCase):
     def test_reads_name_and_reason(self) -> None:
-        raw = 'electron e2e\tnpm ci in apps/optimus-electron\n'
-        self.assertEqual(vsr.parse(raw), [('electron e2e', 'npm ci in apps/optimus-electron')])
+        raw = 'electron e2e\tbun install in workspace\n'
+        self.assertEqual(vsr.parse(raw), [('electron e2e', 'bun install in workspace')])
 
     def test_preserves_order(self) -> None:
-        raw = 'tui e2e\ttmux not installed\nplaywright\tnpx playwright install chromium\n'
+        raw = 'tui e2e\ttmux not installed\nplaywright\tbunx playwright install chromium\n'
         self.assertEqual([name for name, _ in vsr.parse(raw)], ['tui e2e', 'playwright'])
 
     def test_collapses_a_gate_named_twice(self) -> None:
         # `electron e2e` reaches `skip` from four separate branches in
         # verify.sh; naming it twice would read as two distinct holes.
         raw = (
-            'electron e2e\tnpm ci in apps/optimus-electron\n'
+            'electron e2e\tbun install in workspace\n'
             'electron e2e\tno display and no xvfb-run\n'
         )
         self.assertEqual(len(vsr.parse(raw)), 1)
@@ -41,15 +41,15 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(vsr.render([]), '')
 
     def test_never_says_clean(self) -> None:
-        block = vsr.render([('electron e2e', 'npm ci in apps/optimus-electron')])
+        block = vsr.render([('electron e2e', 'bun install in workspace')])
         self.assertNotIn('clean', block.lower())
 
     def test_names_every_gate_and_its_reason(self) -> None:
         block = vsr.render([
-            ('electron e2e', 'npm ci in apps/optimus-electron'),
+            ('electron e2e', 'bun install in workspace'),
             ('tui e2e', 'tmux not installed'),
         ])
-        for text in ('electron e2e', 'npm ci in apps/optimus-electron', 'tui e2e', 'tmux not installed'):
+        for text in ('electron e2e', 'bun install in workspace', 'tui e2e', 'tmux not installed'):
             self.assertIn(text, block)
 
     def test_counts_agree_with_the_list(self) -> None:

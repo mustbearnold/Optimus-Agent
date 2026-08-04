@@ -163,6 +163,7 @@ mod tests {
         ScriptedModel::new(vec![CompletionResponse {
             text: Some(text.into()),
             tool_calls: Vec::new(),
+            reasoning_content: None,
         }])
     }
 

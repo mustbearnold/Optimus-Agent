@@ -350,7 +350,7 @@ test('chat pane scrolls and composer controls exist', async ({ page }) => {
   await expect(page.locator('#model')).toBeAttached();
   await expect(page.locator('#thinkingLevel')).toBeAttached();
   const levels = await page.locator('#thinkingLevel option').allTextContents();
-  for (const need of ['low', 'medium', 'high', 'xhigh', 'max', 'ultra']) {
+  for (const need of ['auto', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']) {
     expect(levels.join(' ')).toContain(need);
   }
   const models = await page.locator('#model option').allTextContents();
@@ -363,7 +363,7 @@ test('chat pane scrolls and composer controls exist', async ({ page }) => {
   await expect(page.locator('#cddPortal.open')).toBeVisible();
   await expect(page.locator('#cddPortal button[data-kind="think-on"]')).toBeVisible();
   await expect(page.locator('#cddPortal button[data-kind="think-fast"]')).toBeVisible();
-  await expect(page.locator('#cddPortal button[data-kind="think-level"]')).toHaveCount(8);
+  await expect(page.locator('#cddPortal button[data-kind="think-level"]')).toHaveCount(9);
   // portal is above the think chip
   const above = await page.evaluate(() => {
     const p = document.getElementById('cddPortal').getBoundingClientRect();

@@ -56,8 +56,18 @@ export function ProjectsRail(props: Props) {
     () => props.sessions.filter(matchesScope),
     [matchesScope, props.sessions]
   );
+  // Pinned sits above Projects and is deliberately not filtered by project:
+  // pinning is the user saying "keep this one reachable", which a project scope
+  // should not hide. Without this section the pin action in the row menu
+  // changed a flag and produced no visible effect anywhere.
+  const pinnedSessions = useMemo(
+    () => props.sessions.filter((session) => session.pinned && !session.archived),
+    [props.sessions]
+  );
+  // Pinned rows are listed in their own band, so repeating them here would show
+  // the same chat twice in one rail.
   const recentSessions = useMemo(
-    () => scopedSessions.filter((session) => !projectForSession(session)),
+    () => scopedSessions.filter((session) => !projectForSession(session) && !session.pinned),
     [projectForSession, scopedSessions]
   );
   const archivedSessions = useMemo(
@@ -369,6 +379,8 @@ export function ProjectsRail(props: Props) {
           ref={projectMenuTriggerRef}
           type="button"
           className="project-scope-trigger"
+          aria-label={projectScopeLabel}
+          title={projectScopeLabel}
           aria-expanded={projectMenuOpen}
           aria-haspopup="menu"
           onClick={() => setProjectMenuOpen((open) => !open)}
@@ -441,7 +453,36 @@ export function ProjectsRail(props: Props) {
             </div>
           </section>
         ) : (
+          // Three bands, top to bottom: Pinned, Projects, Recent Chats. The
+          // search box and project-scope control sit above them in the rail
+          // header, so the top third is "how do I find something", the middle
+          // third is the organised tree, and the bottom third is history.
           <>
+            <section className="rail-section pinned-section" data-testid="pinned-section" aria-labelledby="pinned-heading">
+              <div className="rail-section-heading" id="pinned-heading">
+                <span>Pinned</span>
+              </div>
+              <div className="session-stack pinned-session-stack">
+                {pinnedSessions.length
+                  ? pinnedSessions.map(renderSession)
+                  : <div className="rail-empty">Pin a chat to keep it here</div>}
+              </div>
+            </section>
+
+            <section className="rail-section projects-section" data-testid="projects-section" aria-labelledby="projects-heading">
+              <div className="rail-section-heading" id="projects-heading">
+                <span>Projects</span>
+                <button type="button" aria-label="Create project folder" title="Create project folder" onClick={props.onAddProject}>
+                  <Icon name="project" />
+                </button>
+              </div>
+              <div className="project-stack">
+                {props.projects.length
+                  ? props.projects.map(renderProject)
+                  : <div className="rail-empty">Add a project to organize chats</div>}
+              </div>
+            </section>
+
             <section className="rail-section recent-section" data-testid="recent-chats-section" aria-labelledby="recent-chats-heading">
               <div className="rail-section-heading" id="recent-chats-heading">
                 <span>Recent Chats</span>
@@ -462,27 +503,29 @@ export function ProjectsRail(props: Props) {
                   if (id) props.onAssign(id, null);
                 }}
               >
-                {recentSessions.length ? recentSessions.map(renderSession) : <div className="rail-empty">No recent chats</div>}
+                {recentSessions.length
+                  ? recentSessions.map(renderSession)
+                  : (
+                    <div className="rail-empty">
+                      {scopedProject
+                        ? `Chats in ${scopedProject.name} are listed under Projects`
+                        : 'No recent chats'}
+                    </div>
+                  )}
               </div>
-            </section>
-
-            <section className="rail-section projects-section" data-testid="projects-section" aria-labelledby="projects-heading">
-              <div className="rail-section-heading" id="projects-heading">
-                <span>Projects</span>
-                <button type="button" aria-label="Create project folder" title="Create project folder" onClick={props.onAddProject}>
-                  <Icon name="project" />
-                </button>
-              </div>
-              {props.projects.length
-                ? props.projects.map(renderProject)
-                : <div className="rail-empty">Add a project to organize chats</div>}
             </section>
           </>
         )}
       </div>
 
       <div className="rail-footer">
-        <button type="button" className="rail-settings-button" onClick={props.onSettings}>
+        <button
+          type="button"
+          className="rail-settings-button"
+          aria-label="Settings"
+          title="Settings"
+          onClick={props.onSettings}
+        >
           <Icon name="settings" />
           <span>Settings</span>
         </button>

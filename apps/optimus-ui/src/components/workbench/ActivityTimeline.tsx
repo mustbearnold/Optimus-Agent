@@ -18,7 +18,13 @@ export function ActivityTimeline({
   onApprovalDecision?: ApprovalDecisionHandler;
 }) {
   const summary = summarizeTools(tools);
-  const failed = tools.some((tool) => isFailed(tool.status));
+  const failedCount = tools.filter((tool) => isFailed(tool.status)).length;
+  // A group is failed when the group failed. One denied call among twenty that
+  // succeeded is a partial outcome, and calling it `is-failed` is what made the
+  // collapsed header report a whole step as failed while every call after it
+  // worked.
+  const failed = failedCount > 0 && failedCount === tools.length;
+  const partiallyFailed = failedCount > 0 && !failed;
   const attention = tools.some((tool) => isAttention(tool.status));
   const running = tools.some((tool) => isActive(tool.status));
   const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
@@ -34,7 +40,7 @@ export function ActivityTimeline({
 
   return (
     <div
-      className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}
+      className={`activity-timeline${running ? ' is-running' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}${partiallyFailed ? ' has-failure' : ''}`}
       data-open={open ? 'true' : 'false'}
       data-tool-count={tools.length}
       aria-label="Tool activity"
@@ -46,7 +52,9 @@ export function ActivityTimeline({
         aria-controls={rowsId}
         onClick={() => setOpen((current) => !current)}
       >
-        <Icon name={failed || attention ? 'warning' : 'source'} />
+        {/* A partial failure still earns the warning mark — it is the summary
+            text, not the icon, that was claiming more than happened. */}
+        <Icon name={failed || partiallyFailed || attention ? 'warning' : 'source'} />
         <span>{summary}</span>
         <Icon className="activity-chevron" name="chevron" />
       </button>
@@ -181,17 +189,23 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Unable to submit this approval decision.';
 }
 
+// The collapsed header is the only thing most steps are ever read by, so it has
+// to say what actually happened. "— failed" for a group where one call was
+// denied and twenty succeeded is not a summary of that group, and the reader has
+// no way to tell it from a step where nothing worked.
 function summarizeTools(tools: ToolActivity[]) {
   const running = tools.some((tool) => isActive(tool.status));
-  const failed = tools.some((tool) => isFailed(tool.status));
+  const failedCount = tools.filter((tool) => isFailed(tool.status)).length;
+  const allFailed = failedCount > 0 && failedCount === tools.length;
   const categories = [...new Set(tools.map((tool) => categorizeTool(tool.name)))];
   if (tools.some((tool) => tool.status === 'awaiting_approval')) return 'Approval required';
   if (running) {
     const summary = formatList(categories.map((category) => summaryPhrase(category, true)));
-    return failed ? `${summary} — another tool failed` : summary;
+    return failedCount ? `${summary} — ${failedCount} failed so far` : summary;
   }
   const summary = formatList(categories.map((category) => summaryPhrase(category, false)));
-  if (failed) return `${summary} — failed`;
+  if (allFailed) return `${summary} — failed`;
+  if (failedCount) return `${summary} — ${failedCount} of ${tools.length} failed`;
   if (tools.some((tool) => tool.status === 'ambiguous')) return `${summary} — outcome unknown`;
   if (tools.every((tool) => tool.status === 'cancelled')) return `${summary} — cancelled`;
   if (tools.every((tool) => tool.status === 'suppressed')) {

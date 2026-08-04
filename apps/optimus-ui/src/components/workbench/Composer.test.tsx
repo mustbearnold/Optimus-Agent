@@ -209,6 +209,40 @@ describe('Composer', () => {
     ).toEqual(['', 'gpt-4.1', 'gpt-4o']);
   });
 
+  it('exposes DeepSeek V4 models and Auto above every reasoning budget', async () => {
+    const user = userEvent.setup();
+    render(
+      <Composer
+        value=""
+        runStatus="idle"
+        disabled={false}
+        isRunOwner={false}
+        settings={{ ...settings, provider: 'deepseek', model: 'deepseek-v4-flash', thinking: 'auto' }}
+        onChange={() => undefined}
+        onSettings={() => undefined}
+        onSend={() => undefined}
+        onStop={() => undefined}
+      />
+    );
+    await user.click(screen.getByRole('button', { name: 'Model and run settings' }));
+    const popover = screen.getByRole('dialog', { name: 'Model and run settings' });
+    expect(within(popover).getByLabelText('Provider')).toHaveValue('deepseek');
+    expect(within(popover).getByLabelText('Model').querySelectorAll('option')).toHaveLength(3);
+    expect(within(popover).getByLabelText('Model')).toHaveValue('deepseek-v4-flash');
+    const thinking = within(popover).getByLabelText('Thinking level');
+    expect(Array.from(thinking.querySelectorAll('option')).map((option) => option.value)).toEqual([
+      'auto',
+      'minimal',
+      'low',
+      'medium',
+      'high',
+      'xhigh',
+      'max',
+      'ultra',
+    ]);
+    expect(thinking).toHaveValue('auto');
+  });
+
   it('marks only the selected Unrestricted host control for flame styling', () => {
     render(
       <Composer

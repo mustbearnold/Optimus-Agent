@@ -25,6 +25,10 @@ export function WorkbenchStatusBar({ status, statusText, settings, developerAcce
           : status === 'cancelled'
             ? 'Cancelled'
             : 'Ready';
+  // A terminal run reports its own name as the detail ("Completed"), which the
+  // state label already says. Rendering both produced "Completed Completed".
+  const detail =
+    statusText.trim().toLowerCase() === stateLabel.toLowerCase() ? '' : statusText;
   const model = settings.model || (settings.provider === 'offline' ? 'Offline' : 'Auto');
   const thinking = settings.thinking ? capitalize(settings.thinking) : 'High';
   const access = developerAccess?.enabled
@@ -36,14 +40,14 @@ export function WorkbenchStatusBar({ status, statusText, settings, developerAcce
       <span className={`workbench-status-state${busy ? ' is-working' : ''}${attention ? ' is-attention' : ''}${failed ? ' is-failed' : ''}`}>
         <span className="workbench-status-dot" aria-hidden="true" />
         <span>{stateLabel}</span>
-        {statusText ? <span className="workbench-status-detail" title={statusText}>{statusText}</span> : null}
+        {detail ? <span className="workbench-status-detail" title={detail}>{detail}</span> : null}
       </span>
       <span className="workbench-status-spacer" />
       <span className="workbench-status-segment" title={project?.primaryRoot || 'No project folder'}>
         <Icon name="folder" />
         <span>{project?.name || 'Local session'}</span>
       </span>
-      <span className="workbench-status-segment" title={`Model · ${model}`}>
+      <span className="workbench-status-segment workbench-status-primary" title={`Model · ${model}`}>
         <Icon name="agent" />
         <span>{model}</span>
       </span>

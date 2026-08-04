@@ -3,6 +3,7 @@ import type { RunStatus } from '../../ipc/contracts';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import {
   PROVIDER_MODELS,
+  REASONING_LEVELS,
   type ComposerProvider,
   type ComposerSettings,
 } from '../../state/composerStore';
@@ -100,10 +101,14 @@ export function Composer({
   const [accessOpen, setAccessOpen] = useState(false);
   const busy = ['submitting', 'working', 'awaiting_approval', 'cancelling'].includes(runStatus);
   const thinkingLabel = {
+    auto: 'Auto',
+    minimal: 'Minimal',
     low: 'Low',
     medium: 'Medium',
     high: 'High',
     xhigh: 'Extra high',
+    max: 'Max',
+    ultra: 'Ultra',
   }[settings.thinking] || settings.thinking;
   const modelLabel = visibleModelLabel(settings.model);
 
@@ -313,6 +318,7 @@ export function Composer({
                         <option value="auto">Auto</option>
                         <option value="offline">Offline</option>
                         <option value="codex">Codex</option>
+                        <option value="deepseek">DeepSeek</option>
                         <option value="open-ai-compat">OpenAI compatible</option>
                       </select>
                     </label>
@@ -336,10 +342,11 @@ export function Composer({
                         value={settings.thinking}
                         onChange={(event) => onSettings({ ...settings, thinking: event.target.value })}
                       >
-                        <option value="low">Low effort</option>
-                        <option value="medium">Medium effort</option>
-                        <option value="high">High effort</option>
-                        <option value="xhigh">Extra high</option>
+                        {REASONING_LEVELS.map(({ value, label }) => (
+                          <option value={value} key={value}>
+                            {label}
+                          </option>
+                        ))}
                       </select>
                     </label>
                     <button
@@ -379,6 +386,8 @@ export function Composer({
 
 function visibleModelLabel(model: string) {
   if (!model) return 'Auto';
+  if (model === 'deepseek-v4-flash') return 'DeepSeek V4 Flash';
+  if (model === 'deepseek-v4-pro') return 'DeepSeek V4 Pro';
   const match = /^gpt-(\d+(?:\.\d+)*)(?:-([a-z0-9]+))?$/i.exec(model);
   if (!match) return model;
   const [, version, name] = match;

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /*
  * Layout oracle for the native terminal face.
  *
@@ -66,10 +66,34 @@ function captureAnsi(session) {
 }
 
 async function waitFor(session, rows, predicate, description) {
-  const deadline = Date.now() + 15_000;
+  // The full gate runs browser, Electron, and PTY suites concurrently. Keep
+  // polling responsive, but allow slow CI hosts to schedule the real TUI.
+  const deadline = Date.now() + 30_000;
   let frame = capture(session, rows);
   while (Date.now() < deadline) {
     if (predicate(frame)) return frame;
+    await sleep(80);
+    frame = capture(session, rows);
+  }
+  throw new Error(`${description}\n${renderFrame(frame)}`);
+}
+
+// Like `waitFor`, but the matching frame must also be stable: two captures
+// in a row return the same cells. A capture that lands mid-repaint — the
+// reopen of the sidebar repaints the whole screen — returns a torn frame
+// whose geometry fails assertions a settled frame passes. At idle nothing
+// repaints, so stability is reached within one extra capture.
+async function waitForSettled(session, rows, predicate, description) {
+  const deadline = Date.now() + 30_000;
+  let frame = capture(session, rows);
+  while (Date.now() < deadline) {
+    if (predicate(frame)) {
+      await sleep(80);
+      const settled = capture(session, rows);
+      if (settled.join("\n") === frame.join("\n")) return frame;
+      frame = settled;
+      continue;
+    }
     await sleep(80);
     frame = capture(session, rows);
   }
@@ -89,6 +113,20 @@ function composerGeometry(lines, cols) {
   const right = lines[top].lastIndexOf("╮");
   assert(right > left, `composer right border is missing at ${cols} columns\n${renderFrame(lines)}`);
   return { top, bottom, left, right, status: bottom + 1, help: bottom + 2 };
+}
+
+// The busy state is identified by the status rail's marker, never by a phase
+// label: the kernel replaces the initial "working" label with the first
+// "model step N" status milliseconds after submit, so a predicate that waits
+// for the label races a sub-millisecond window and only passes on slow hosts.
+// The ◌ marker and the absence of "ready" hold for the whole turn.
+function isBusy(lines) {
+  const top = lines.findIndex((line) => line.includes("╭"));
+  if (top < 0) return false;
+  const bottom = lines.findIndex((line, index) => index > top && line.includes("╰"));
+  if (bottom < 0 || bottom + 1 >= lines.length) return false;
+  const rail = lines[bottom + 1];
+  return rail.includes("◌") && !rail.includes("ready");
 }
 
 function sidebarGeometry(lines) {
@@ -325,7 +363,8 @@ function assertBusyFrame(frame, cols, rows, geometry, label) {
   const joined = frame.join(" ").replace(/\s+/g, " ");
   assert(joined.includes("layout ping"), `${label}: busy turn prompt is missing\n${renderFrame(frame)}`);
   assert(joined.includes("Ctrl-C"), `${label}: busy interrupt affordance is missing\n${renderFrame(frame)}`);
-  assert(frame[geometry.status].includes("working"), `${label}: busy status is missing\n${renderFrame(frame)}`);
+  assert(frame[geometry.status].includes("◌"), `${label}: busy status marker is missing\n${renderFrame(frame)}`);
+  assert(!frame[geometry.status].includes("ready"), `${label}: busy status rail still shows ready\n${renderFrame(frame)}`);
   if (cols >= 47) {
     assert(frame[geometry.help].includes("Ctrl-C:stop"), `${label}: full busy help rail`);
   } else if (cols >= 39) {
@@ -430,7 +469,7 @@ async function checkViewport(browser, binary, cols, rows) {
       assert(initialSidebar.open, `${cols}x${rows}: sidebar interaction needs an open rail`);
       sendMouse(session, "down", initialSidebar.divider, Math.floor(rows / 2));
       sendMouse(session, "drag", initialSidebar.divider + 6, Math.floor(rows / 2));
-      const resized = await waitFor(
+      const resized = await waitForSettled(
         session,
         rows,
         (frame) => sidebarGeometry(frame).divider === initialSidebar.divider + 6,
@@ -459,7 +498,7 @@ async function checkViewport(browser, binary, cols, rows) {
       sendMouse(session, "up", 6, Math.floor(rows / 2));
 
       sendMouse(session, "down", 0, 0);
-      idle = await waitFor(
+      idle = await waitForSettled(
         session,
         rows,
         (frame) => sidebarGeometry(frame).open,
@@ -507,7 +546,10 @@ async function checkViewport(browser, binary, cols, rows) {
     const busy = await waitFor(
       session,
       rows,
-      (frame) => frame.join("\n").includes("Ctrl-C to interrupt") && frame.join("\n").includes("working"),
+      // Wait for the busy state itself, not a phase label: the initial
+      // "working" is replaced by "model step N" milliseconds after submit, so
+      // waiting for that literal only succeeds on slow hosts.
+      (frame) => frame.join("\n").includes("Ctrl-C to interrupt") && isBusy(frame),
       `${cols}x${rows}: busy turn never became visible`,
     );
     const busyGeometry = composerGeometry(busy, cols);

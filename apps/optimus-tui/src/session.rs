@@ -329,6 +329,7 @@ impl TuiSession {
                 content,
                 tool_call_id,
                 name,
+                ..
             } = message;
             // The kernel's system prompt is runtime context, not conversation
             // history. Reopening it would dump internal instructions into the

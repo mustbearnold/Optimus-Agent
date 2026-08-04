@@ -46,10 +46,15 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             "optimus-desktop",
             binary_version,
         )
+        fake_binary(
+            target / "release" / "optimus-agent",
+            "optimus-agent",
+            binary_version,
+        )
         if desktop_script is not None:
-            desktop = target / "release" / "optimus-desktop"
-            desktop.write_text(desktop_script, encoding="utf-8")
-            desktop.chmod(desktop.stat().st_mode | stat.S_IXUSR)
+            tauri = target / "release" / "optimus-agent"
+            tauri.write_text(desktop_script, encoding="utf-8")
+            tauri.chmod(tauri.stat().st_mode | stat.S_IXUSR)
         fake_binary(target / "release" / "optimus", "optimus", binary_version)
         electron_dist = root / "electron-dist"
         electron_dist.mkdir()
@@ -238,8 +243,8 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             ]
             self.assertEqual(release_checks, [release_checks[0], release_checks[0]])
 
-    def test_no_build_installs_self_contained_react_electron_shell(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="optimus-installer-electron-") as tmp:
+    def test_no_build_installs_tauri_primary_with_electron_rollback(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="optimus-installer-tauri-") as tmp:
             root = Path(tmp)
 
             result = self.run_installer(root)
@@ -247,6 +252,7 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout)
             install = root / "data" / "optimus-agent"
             launcher = install / "bin" / "optimus-desktop"
+            tauri = install / "bin" / "optimus-agent-tauri"
             host = install / "bin" / "optimus-desktop-host"
             electron = install / "app-bundle" / "electron" / "optimus-agent"
             packaged_app = install / "app-bundle" / "electron" / "resources" / "app"
@@ -254,6 +260,8 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
 
             self.assertTrue(launcher.is_file())
             self.assertTrue(os.access(launcher, os.X_OK))
+            self.assertTrue(tauri.is_file())
+            self.assertTrue(os.access(tauri, os.X_OK))
             self.assertTrue(host.is_file())
             self.assertTrue(electron.is_file())
             self.assertTrue((packaged_app / "main.cjs").is_file())
@@ -269,9 +277,14 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
                 ).strip(),
                 "optimus-desktop 0.1.0",
             )
+            self.assertEqual(
+                subprocess.check_output([str(tauri), "--version"], text=True).strip(),
+                "optimus-agent 0.1.0",
+            )
             entry = desktop_entry.read_text(encoding="utf-8")
             self.assertIn(f'Exec="{launcher}"', entry)
-            self.assertIn("X-Optimus-UI=react-electron", entry)
+            self.assertIn("X-Optimus-UI=react-tauri", entry)
+            self.assertIn("ElectronRollback", entry)
 
     def test_install_rejects_binary_changed_after_first_version_validation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="optimus-installer-artifact-race-") as tmp:
@@ -282,7 +295,7 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
                 'count=$(cat "$count_file" 2>/dev/null || printf 0)\n'
                 'count=$((count + 1))\n'
                 'printf "%s\\n" "$count" > "$count_file"\n'
-                "printf 'optimus-desktop 0.1.0\\n'\n"
+                "printf 'optimus-agent 0.1.0\\n'\n"
                 'if [ "$count" -ge 2 ]; then\n'
                 "  printf '#!/bin/sh\\nprintf malicious\\n' > \"$0\"\n"
                 '  chmod 755 "$0"\n'
@@ -295,6 +308,9 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertIn("changed after version validation", result.stdout)
             self.assertFalse(
                 (root / "data" / "optimus-agent" / "bin" / "optimus-desktop").exists()
+            )
+            self.assertFalse(
+                (root / "data" / "optimus-agent" / "bin" / "optimus-agent-tauri").exists()
             )
 
 

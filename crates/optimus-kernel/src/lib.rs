@@ -34,6 +34,7 @@ mod product_settings;
 mod profile;
 mod project_authority;
 mod project_trust;
+mod provider_keys;
 mod routing;
 mod scripted;
 mod security_denial;
@@ -42,9 +43,11 @@ mod skill_index;
 mod system_prompt;
 mod telemetry;
 mod tool_dispatch;
+mod tool_pairing;
 mod tool_report;
 mod trace;
 mod turn_loop;
+mod turn_recovery;
 mod vision;
 mod web_search;
 
@@ -93,7 +96,7 @@ pub use codex_oauth::{
 };
 pub use codex_responses::{from_codex_responses_response, from_codex_responses_sse};
 pub use compress::{estimate_chars, CompressionConfig, COMPRESSED_MARKER};
-pub use config::KernelConfig;
+pub use config::{KernelConfig, SelfDevelopmentHandler};
 pub use credential::{
     atomic_write_user_only, harden_user_only, verify_user_only, CredentialProtector,
     SystemCredentialProtector,
@@ -117,7 +120,8 @@ pub use network_policy::{
     EgressError,
 };
 pub use openai_compat::{
-    from_openai_response, to_openai_request, OpenAiCompatConfig, OpenAiCompatModel,
+    from_openai_response, to_deepseek_request, to_openai_request, DeepseekModel,
+    OpenAiCompatConfig, OpenAiCompatModel,
 };
 pub use optimus_agent::{
     AgentArtifactRef, AgentBudget, AgentContextRef, AgentDescriptor, AgentError, AgentFailure,
@@ -174,12 +178,15 @@ pub use project_authority::{
     ProjectAuthorityStore, ProjectRootSelection, ProjectScope, PROJECT_AUTHORITY_VERSION,
 };
 pub use project_trust::{ProjectTrustGrant, ProjectTrustStore, PROJECT_TRUST_VERSION};
+pub use provider_keys::{
+    ProviderKeySource, ProviderKeyStatus, ProviderKeyStore, DEEPSEEK_PROVIDER,
+};
 pub use routing::{
     is_known_codex_model, provider_catalog, provider_catalog_status, resolve_route,
     resolve_route_traced, route_decision_count, sanitize_codex_oauth_model, ModelCapability,
     ModelId, PrivacyPolicy, ProviderCatalogStatus, ProviderConnectState, ProviderDescriptor,
     ProviderId, RouteDecision, RouteRequest, RouteSurface, RouteTelemetryPolicy,
-    CODEX_MODEL_CATALOG, DEFAULT_CODEX_MODEL,
+    CODEX_MODEL_CATALOG, DEEPSEEK_MODEL_CATALOG, DEFAULT_CODEX_MODEL, DEFAULT_DEEPSEEK_MODEL,
 };
 pub use scripted::ScriptedModel;
 pub use security_denial::{classify_security_denial, kernel_or_security_code, SecurityDenialCode};
@@ -529,14 +536,24 @@ impl Kernel {
                     &packs,
                     &skills.list(false).unwrap_or_default(),
                     command_fs_envelope,
+                    config.self_development.is_some(),
                 ),
                 tool_call_id: None,
                 name: None,
+                reasoning_content: None,
             };
             let messages = vec![system];
             sessions.save(id, "session", &pack_names(&packs), &messages)?;
             (id, "session".into(), messages)
         };
+        turn_recovery::settle_manifestless_turn(
+            &sessions,
+            &executions,
+            session_id,
+            &session_title,
+            &pack_names(&packs),
+            &messages,
+        )?;
 
         Ok(Self {
             config,
@@ -676,6 +693,7 @@ impl Kernel {
             content: user_text.into(),
             tool_call_id: None,
             name: None,
+            reasoning_content: None,
         });
         // Refresh system prompt pack waist note on each turn start (new segment).
         if let Some(sys) = self.messages.first_mut() {
@@ -685,18 +703,13 @@ impl Kernel {
                     &self.packs,
                     &idx,
                     self.runtime.command_fs_envelope(),
+                    self.config.self_development.is_some(),
                 );
             }
         }
 
-        let turn_id = self.sessions.begin_turn(
-            self.session_id,
-            &self.session_title,
-            &pack_names(&self.packs),
-            &self.messages,
-            start_message_count,
-        )?;
-        let execution = self.begin_execution_manifest(turn_id, model, user_text)?;
+        let (turn_id, execution) =
+            self.begin_recorded_execution(model, user_text, start_message_count)?;
         self.run_recorded_turn(model, sink, cancellation, turn_id, execution)
     }
 

@@ -61,19 +61,119 @@ test('wide 1600x1000 renders the dense three-surface workbench', async ({ page }
   expect(newSessionBox.x).toBeGreaterThanOrEqual(searchBox.x + searchBox.width);
   await expect(page.getByLabel('Message Optimus')).toBeVisible();
   await expect(page.locator('.message').first()).toBeVisible();
+  await expect(page.getByTestId('prompt-history')).toHaveCount(0);
   await assertComposerInsideViewport(page);
   expect(errors).toEqual([]);
 });
 
-test('medium 960x760 preserves controls without a three-column overflow', async ({ page }) => {
+test('project rail toggles and drag-resizes in both directions without overflow', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1280, height: 840 });
+  await page.goto(URL);
+
+  const rail = page.getByRole('complementary', { name: 'Projects and sessions' });
+  await expect(rail).not.toHaveClass(/is-collapsed/);
+  await page.getByRole('button', { name: 'Close project rail', exact: true }).click();
+  await expect(rail).toHaveClass(/is-collapsed/);
+  await page.getByRole('button', { name: 'Open project rail', exact: true }).click();
+  await expect(rail).not.toHaveClass(/is-collapsed/);
+
+  const separator = page.getByRole('separator', { name: 'Resize project rail' });
+  const openBox = await separator.boundingBox();
+  expect(openBox).not.toBeNull();
+  await page.mouse.move(openBox.x + 1, openBox.y + 80);
+  await page.mouse.down();
+  await page.mouse.move(openBox.x - 180, openBox.y + 80, { steps: 8 });
+  await page.mouse.up();
+  await expect(rail).toHaveClass(/is-collapsed/);
+
+  const collapsedBox = await separator.boundingBox();
+  expect(collapsedBox).not.toBeNull();
+  await page.mouse.move(collapsedBox.x + 1, collapsedBox.y + 80);
+  await page.mouse.down();
+  await page.mouse.move(collapsedBox.x + 210, collapsedBox.y + 80, { steps: 8 });
+  await page.mouse.up();
+  await expect(rail).not.toHaveClass(/is-collapsed/);
+
+  const overflow = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+  expect(overflow.documentWidth).toBeLessThanOrEqual(overflow.viewportWidth);
+  expect(errors).toEqual([]);
+});
+
+// Regression guard for the pinned-rail breakpoints. The rail toggle test above
+// runs at 1280px, above both `max-width: 1099px` (codex-shell.css) and
+// `max-width: 959px` (styles.css), so it stayed green while every window
+// narrower than 1100px had a rail that would not open or close. Walk the widths
+// on both sides of each boundary and require real movement, not just the class.
+for (const width of [1100, 1099, 1000, 960, 959, 940]) {
+  test(`project rail opens and closes at ${width}px`, async ({ page }) => {
+    const errors = collectErrors(page);
+    await page.setViewportSize({ width, height: 840 });
+    await page.goto(URL);
+
+    const rail = page.getByRole('complementary', { name: 'Projects and sessions' });
+    await expect(rail).not.toHaveClass(/is-collapsed/);
+    expect((await rail.boundingBox()).width).toBe(240);
+
+    await page.getByRole('button', { name: 'Close project rail', exact: true }).click();
+    await expect(rail).toHaveClass(/is-collapsed/);
+    expect((await rail.boundingBox()).width).toBe(52);
+
+    await page.getByRole('button', { name: 'Open project rail', exact: true }).click();
+    await expect(rail).not.toHaveClass(/is-collapsed/);
+    expect((await rail.boundingBox()).width).toBe(240);
+
+    await assertNoHorizontalOverflow(page);
+    expect(errors).toEqual([]);
+  });
+}
+
+// This test used to assert the medium rail was always 52px wide, which is what
+// a `--rail-width: 52px !important` breakpoint produced. That override outranked
+// the width React writes from `leftCollapsed`, so below 1100px the rail was a
+// permanently pinned strip: the toggle still swapped its class and its
+// "Open/Close project rail" label, but nothing moved. The rail width belongs to
+// the layout state at every size, so the medium contract is now that the rail
+// opens at 240px, still collapses to 52px on demand, and neither state overflows.
+test('medium 960x760 keeps the rail collapsible without a three-column overflow', async ({ page }) => {
   const errors = collectErrors(page);
   await page.setViewportSize({ width: 960, height: 760 });
   await page.goto(URL);
   await openWorkspace(page);
-  const rail = await page.getByRole('complementary', { name: 'Projects and sessions' }).boundingBox();
-  const workspace = await page.getByRole('complementary', { name: 'Evidence workspace' }).boundingBox();
-  expect(rail.width).toBe(52);
-  expect(workspace.width).toBeGreaterThanOrEqual(360);
+
+  const railRegion = page.getByRole('complementary', { name: 'Projects and sessions' });
+  const workspaceRegion = page.getByRole('complementary', { name: 'Evidence workspace' });
+
+  await expect(railRegion).not.toHaveClass(/is-collapsed/);
+  expect((await railRegion.boundingBox()).width).toBe(240);
+  expect((await workspaceRegion.boundingBox()).width).toBeGreaterThanOrEqual(360);
+  await assertNoHorizontalOverflow(page);
+  await assertComposerInsideViewport(page);
+
+  await page.getByRole('button', { name: 'Close project rail', exact: true }).click();
+  await expect(railRegion).toHaveClass(/is-collapsed/);
+  expect((await railRegion.boundingBox()).width).toBe(52);
+  expect((await workspaceRegion.boundingBox()).width).toBeGreaterThanOrEqual(360);
+
+  // Only the icon-only rail must hide its labels; an open rail is meant to read.
+  const railTextLeak = await railRegion.evaluate((element) => (
+    Array.from(element.querySelectorAll('span,small,input,kbd'))
+      .map((node) => {
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return { text: node.textContent?.trim() || '', width: rect.width, display: style.display };
+      })
+      .filter((item) => item.text && item.width > 5 && item.display !== 'none')
+  ));
+  expect(railTextLeak).toEqual([]);
+
+  await page.getByRole('button', { name: 'Open project rail', exact: true }).click();
+  await expect(railRegion).not.toHaveClass(/is-collapsed/);
+  expect((await railRegion.boundingBox()).width).toBe(240);
+
   await assertNoHorizontalOverflow(page);
   await assertComposerInsideViewport(page);
   expect(errors).toEqual([]);
@@ -147,6 +247,24 @@ test('composer access menu is opaque over transcript content', async ({ page }) 
   });
   expect(surface.alpha).toBe(1);
   expect(surface.image).toBe('none');
+  expect(errors).toEqual([]);
+});
+
+test('run settings expose DeepSeek V4 and Auto reasoning without a prompt rail', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 840, height: 800 });
+  await page.goto(URL);
+  await expect(page.getByTestId('prompt-history')).toHaveCount(0);
+  const settings = await openRunSettings(page);
+  const provider = settings.getByLabel('Provider');
+  await expect(provider.locator('option[value="deepseek"]')).toHaveCount(1);
+  await provider.selectOption('deepseek');
+  const models = settings.getByLabel('Model');
+  await expect(models.locator('option')).toHaveCount(3);
+  await expect(models.locator('option[value="deepseek-v4-flash"]')).toHaveCount(1);
+  const thinking = settings.getByLabel('Thinking level');
+  await expect(thinking.locator('option').first()).toHaveAttribute('value', 'auto');
+  await expect(thinking.locator('option')).toHaveCount(8);
   expect(errors).toEqual([]);
 });
 
@@ -493,7 +611,7 @@ async function assertWorkSurfaceContrast(page) {
   expect(contract.ancestors.filter((item) => item.opacity !== '1')).toEqual([]);
 }
 
-test('projects, prompt history, tool groups, and square geometry work together', async ({ page }) => {
+test('projects, tool groups, and square geometry work together', async ({ page }) => {
   const errors = collectErrors(page);
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto(URL);
@@ -514,13 +632,8 @@ test('projects, prompt history, tool groups, and square geometry work together',
   const project = page.locator('[data-project-id="p-shell"]');
   await expect(project).toBeVisible();
   await expect(project.locator('[data-session-id="fixture-assess"]')).toHaveCount(1);
-  await expect(page.getByTestId('prompt-history')).toBeVisible();
-  await expect(page.locator('.prompt-history-item')).toHaveCount(2);
-
-  const secondPrompt = page.locator('.prompt-history-item[data-prompt-id="fixture-assess:persisted:2"]');
-  await expect(secondPrompt).toHaveCount(1);
-  await secondPrompt.click();
-  await expect(secondPrompt).toHaveAttribute('aria-current', 'true');
+  await expect(page.getByTestId('prompt-history')).toHaveCount(0);
+  await expect(page.locator('.prompt-history-item')).toHaveCount(0);
 
   const looseSession = page.locator('.session-row[data-session-id="fixture-runtime"]');
   await expect(looseSession).toHaveCount(1);
@@ -546,7 +659,7 @@ test('projects, prompt history, tool groups, and square geometry work together',
   await expect(toolGroup.getByRole('region', { name: 'Technical details for read_file' })).toBeVisible();
 
   const radii = await page.evaluate(() => Array.from(document.querySelectorAll(
-    '.app-stage, .composer-card, .project-group, .session-row, .prompt-history-item, .activity-timeline'
+    '.app-stage, .composer-card, .project-group, .session-row, .activity-timeline'
   )).map((element) => ({
     className: typeof element.className === 'string' ? element.className : element.tagName,
     radius: getComputedStyle(element).borderRadius,

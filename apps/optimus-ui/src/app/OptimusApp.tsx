@@ -43,6 +43,7 @@ import {
 import {
   defaultLayout,
   loadLayout,
+  railResizePatch,
   saveLayout,
   type AppRoute,
   type CompactSurface,
@@ -68,7 +69,6 @@ import { ProjectsRail } from '../components/projects/ProjectsRail';
 import { ProjectSourcesDialog } from '../components/projects/ProjectSourcesDialog';
 import { SettingsDialog } from '../components/settings/SettingsDialog';
 import { Composer } from '../components/workbench/Composer';
-import { PromptHistoryRail } from '../components/workbench/PromptHistoryRail';
 import { SessionBar } from '../components/workbench/SessionBar';
 import { Transcript } from '../components/workbench/Transcript';
 import { WorkbenchStatusBar } from '../components/workbench/WorkbenchStatusBar';
@@ -180,10 +180,14 @@ export function OptimusApp() {
       // The host serves IPC requests in order. Keep the initial workbench
       // refresh to the small, interactive set so New thread is not queued
       // behind diagnostics and campaign inventory on a busy machine.
-      const [sessionsResult, approvalResult, scopeResult] = await Promise.all([
+      const startupContext = transport.kind === 'tauri'
+        ? transport.invoke<{ session_id?: string | null }>('startup_context')
+        : Promise.resolve({ session_id: null });
+      const [sessionsResult, approvalResult, scopeResult, startupResult] = await Promise.all([
         transport.invoke<{ sessions?: SessionMeta[] } | SessionMeta[]>('sessions'),
         transport.invoke<{ pending?: Approval[] }>('approvals_list'),
         transport.invoke<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list'),
+        startupContext,
       ]);
       if (!alive()) return;
       const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
@@ -202,6 +206,8 @@ export function OptimusApp() {
           id:
             state.selectedSessionId && nextSessions.some((session) => session.id === state.selectedSessionId)
               ? state.selectedSessionId
+              : startupResult.session_id && nextSessions.some((session) => session.id === startupResult.session_id)
+                ? startupResult.session_id
               : nextSessions[0]?.id || null,
         });
       }
@@ -393,21 +399,27 @@ export function OptimusApp() {
     }
   };
 
-  const resolveTranscriptApproval = async (
-    binding: ToolApprovalBinding,
-    decision: 'approve' | 'deny'
-  ) => {
-    const sessionId = state.selectedSessionId;
-    if (!sessionId) throw new Error('Select the session that owns this approval.');
-    const projectId = assignments[sessionId];
-    await transport.invoke(
-      'chat_approval_resolve',
-      approvalResolutionParams(sessionId, binding, decision, projectId)
-    );
-    const detail = await transport.invoke<SessionDetail>('get_session', { id: sessionId });
-    conversationStore.load(detail);
-    await refreshRuntime();
-  };
+  // Stable identity, because this reaches every message in the transcript.
+  // `MessageRow` is memoised, so a new function here changed a prop on all of
+  // them and re-rendered the whole conversation — re-parsing every markdown
+  // body — on each keystroke in the composer, which shares this component's
+  // state. Typing into a long chat was doing the work of rendering that chat
+  // from scratch, per character.
+  const resolveTranscriptApproval = useCallback(
+    async (binding: ToolApprovalBinding, decision: 'approve' | 'deny') => {
+      const sessionId = state.selectedSessionId;
+      if (!sessionId) throw new Error('Select the session that owns this approval.');
+      const projectId = assignments[sessionId];
+      await transport.invoke(
+        'chat_approval_resolve',
+        approvalResolutionParams(sessionId, binding, decision, projectId)
+      );
+      const detail = await transport.invoke<SessionDetail>('get_session', { id: sessionId });
+      conversationStore.load(detail);
+      await refreshRuntime();
+    },
+    [state.selectedSessionId, assignments, refreshRuntime]
+  );
 
   const beginResize = (
     event: ReactPointerEvent<HTMLDivElement>,
@@ -417,11 +429,20 @@ export function OptimusApp() {
     const startX = event.clientX;
     const startY = event.clientY;
     const original = state.layout;
+    const resizeTarget = event.currentTarget;
     draggingLayout.current = true;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is unavailable in a few embedded WebView test hosts;
+      // the window-level listeners below still provide the drag path.
+    }
     const move = (nextEvent: PointerEvent) => {
       if (lane === 'rail') {
-        dispatch({ type: 'patch-layout', patch: { leftWidth: clamp(original.leftWidth + nextEvent.clientX - startX, 200, 400) } });
+        dispatch({
+          type: 'patch-layout',
+          patch: railResizePatch(original.leftWidth, original.leftCollapsed, startX, nextEvent.clientX),
+        });
       } else if (lane === 'workspace') {
         dispatch({ type: 'patch-layout', patch: { workspaceWidth: clamp(original.workspaceWidth + startX - nextEvent.clientX, 360, 1200) } });
       } else {
@@ -432,10 +453,18 @@ export function OptimusApp() {
       draggingLayout.current = false;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      resizeTarget.removeEventListener('pointermove', move as EventListener);
+      resizeTarget.removeEventListener('pointerup', up as EventListener);
+      resizeTarget.removeEventListener('pointercancel', up as EventListener);
       requestAnimationFrame(() => saveLayout(latestLayout.current));
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up, { once: true });
+    window.addEventListener('pointercancel', up, { once: true });
+    resizeTarget.addEventListener('pointermove', move as EventListener);
+    resizeTarget.addEventListener('pointerup', up as EventListener, { once: true });
+    resizeTarget.addEventListener('pointercancel', up as EventListener, { once: true });
   };
 
   const resizeWithKeyboard = (
@@ -450,7 +479,15 @@ export function OptimusApp() {
       if (event.key === 'ArrowRight') value = current.leftWidth + step;
       if (event.key === 'Home') value = 200;
       if (event.key === 'End') value = 400;
-      if (value !== null) dispatch({ type: 'patch-layout', patch: { leftWidth: clamp(value, 200, 400) } });
+      if (value !== null) {
+        dispatch({
+          type: 'patch-layout',
+          patch: {
+            leftWidth: clamp(value, 200, 400),
+            leftCollapsed: current.leftCollapsed ? event.key !== 'ArrowLeft' : false,
+          },
+        });
+      }
     } else if (lane === 'workspace') {
       if (event.key === 'ArrowLeft') value = current.workspaceWidth + step;
       if (event.key === 'ArrowRight') value = current.workspaceWidth - step;
@@ -480,6 +517,7 @@ export function OptimusApp() {
     <ErrorBoundary>
       <div className="optimus-app" style={style} data-compact-surface={state.layout.compactSurface}>
         <TopBar
+          railCollapsed={state.layout.leftCollapsed}
           workspaceOpen={workspaceVisible}
           workspaceMaximized={workspaceMaximized}
           executionOpen={state.layout.executionOpen}
@@ -687,6 +725,7 @@ export function OptimusApp() {
           transport={transport}
           theme={state.theme}
           projects={projects}
+          sessionId={state.selectedSessionId}
           onTheme={(theme) => dispatch({ type: 'theme', theme })}
           onManageProject={(project) => setSourceProjectId(project.id)}
           onDeveloperAccess={setDeveloperAccess}
@@ -839,28 +878,15 @@ const WorkbenchChat = memo(function WorkbenchChat({
   // should repaint the conversation, not the rail, browser, and window chrome.
   const conversation = useConversation(sessionId);
   const isRunOwner = activeRunSessionId === sessionId;
-  const [activePromptId, setActivePromptId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (activePromptId && !conversation.messages.some((message) => message.id === activePromptId)) {
-      setActivePromptId(null);
-    }
-  }, [activePromptId, conversation.messages]);
 
   return (
     <>
       <SessionBar title={title} project={project} showSeparator={showSeparator} />
       <div className="workbench-conversation-row">
-        <PromptHistoryRail
-          messages={conversation.messages}
-          activePromptId={activePromptId}
-          onSelect={setActivePromptId}
-        />
         <Transcript
           messages={conversation.messages}
           status={conversation.status}
           statusText={conversation.statusText}
-          promptNavigationId={activePromptId}
           onStarter={onStarter}
           onApprovalDecision={onApprovalDecision}
         />

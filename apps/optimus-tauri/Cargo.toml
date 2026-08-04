@@ -1,0 +1,27 @@
+[package]
+name = "optimus-tauri"
+description = "Primary Tauri desktop shell for Optimus Agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]
+
+[[bin]]
+name = "optimus-agent"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+optimus-host.workspace = true
+optimus-kernel.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+dirs = "6"
+tauri = { version = "2.11.5", features = [] }

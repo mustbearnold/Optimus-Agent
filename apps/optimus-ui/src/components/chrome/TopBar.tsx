@@ -1,6 +1,7 @@
 import { Icon, type IconName } from './Icon';
 
 type Props = {
+  railCollapsed: boolean;
   workspaceOpen: boolean;
   workspaceMaximized: boolean;
   executionOpen: boolean;
@@ -58,6 +59,7 @@ function WindowControlIcon({ action }: { action: 'minimize' | 'maximize' | 'clos
 }
 
 export function TopBar({
+  railCollapsed,
   workspaceOpen,
   workspaceMaximized,
   executionOpen,
@@ -71,7 +73,13 @@ export function TopBar({
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <ToolbarButton icon="sidebar" label="Toggle project rail" iconOnly onClick={onToggleRail} />
+        <ToolbarButton
+          icon="sidebar"
+          label={railCollapsed ? 'Open project rail' : 'Close project rail'}
+          pressed={!railCollapsed}
+          iconOnly
+          onClick={onToggleRail}
+        />
         <button
           type="button"
           className="topbar-product-mark"
@@ -82,6 +90,7 @@ export function TopBar({
           <span>Optimus</span>
           <Icon name="chevron" />
         </button>
+        <span className="topbar-drag-fill" data-tauri-drag-region aria-hidden="true" />
       </div>
       <nav className="topbar-actions" aria-label="Workbench controls">
         <ToolbarButton

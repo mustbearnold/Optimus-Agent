@@ -56,7 +56,7 @@ async function main() {
     if (fs.existsSync(path.join(UI_DIR, 'package.json'))) {
       console.error(`[dev] starting Vite UI on :${UI_PORT}`);
       const vite = spawn(
-        process.platform === 'win32' ? 'npm.cmd' : 'npm',
+        'bun',
         ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(UI_PORT)],
         { cwd: UI_DIR, stdio: 'inherit', env: { ...process.env } }
       );

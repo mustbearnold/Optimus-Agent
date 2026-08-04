@@ -63,12 +63,90 @@ describe('motion contract', () => {
     expect(css).not.toMatch(/\.session-row(?:\.is-active|:hover)[^{]*\{[^}]*background:\s*linear-gradient/s);
   });
 
+  // The rail is a history list, so its row height decides how much history is
+  // reachable without scrolling. Every line in a row has a stated line-height so
+  // the height is the sum of its content rather than a number someone liked, and
+  // the assertion is that sum — a row that grows again has to say why.
+  it('sizes chat rows to the lines they carry instead of padding them out', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    // `.session-worktree` and friends are declared more than once. Joining every
+    // block for a selector and reading the last value is what the cascade does.
+    // Comments are stripped first so the selector boundary is a real one and a
+    // rule that happens to follow prose is not skipped.
+    const declarations = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const rule = (selector: string) =>
+      [
+        ...declarations.matchAll(
+          new RegExp(`(?:^|\\})\\s*${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 'g')
+        ),
+      ]
+        .map((match) => match[1])
+        .join(';');
+    const px = (declarations: string, property: string) =>
+      Number(
+        [...declarations.matchAll(new RegExp(`(?:^|[;{\\s])${property}:\\s*(-?\\d+)px`, 'g'))].at(-1)?.[1] ??
+          NaN
+      );
+
+    const assigned = rule('.session-select');
+    const lines =
+      px(rule('.session-card-meta'), 'line-height') +
+      px(rule('.project-rail .session-row .session-title'), 'line-height') +
+      px(rule('.session-worktree'), 'line-height');
+    const gaps = px(assigned, 'gap') * 2;
+    const padding = Number([...assigned.matchAll(/padding:\s*(\d+)px/g)].at(-1)?.[1] ?? NaN) * 2;
+    expect(px(assigned, 'height')).toBe(lines + gaps + padding);
+
+    // A recent chat is a single title line, and that band holds the most rows.
+    const unassigned = rule('.session-row.is-unassigned .session-select');
+    expect(px(unassigned, 'height')).toBeLessThanOrEqual(32);
+    expect(px(unassigned, 'height')).toBeGreaterThanOrEqual(
+      px(rule('.project-rail .session-row .session-title'), 'line-height')
+    );
+  });
+
   it('keeps project and settings labels readable without outlining the search field', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     expect(css).toMatch(/\.rail-search:focus-within\s*\{[^}]*box-shadow:\s*none/s);
     expect(css).toMatch(/\.session-card-meta\s*\{[^}]*color:\s*var\(--text-2\)[^}]*font-size:\s*14px[^}]*font-weight:\s*500/s);
     expect(css).toMatch(/\.session-card-meta > svg\s*\{[^}]*width:\s*16px[^}]*height:\s*16px/s);
     expect(css).toMatch(/\.rail-footer \.rail-settings-button\s*\{[^}]*color:\s*var\(--text-2\)[^}]*font-size:\s*14px[^}]*font-weight:\s*500/s);
+  });
+
+  it('does not leak recent session titles into the icon-only rail', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    expect(css).toMatch(/\.project-rail\.is-collapsed \.recent-section,[\s\S]*?\.project-rail\.is-collapsed \.archived-section,[\s\S]*?display:\s*none/s);
+    expect(css).toMatch(/\.project-rail\.is-collapsed \.rail-primary,\s*\.project-rail\.is-collapsed \.rail-scroll\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/\.project-rail\.is-collapsed \.rail-project-scope\s*\{[^}]*grid-template-columns:\s*36px/s);
+    expect(css).toMatch(/\.project-rail\.is-collapsed \.rail-project-scope \.project-scope-trigger span,[\s\S]*?display:\s*none/s);
+    expect(css).toMatch(/\.project-rail\.is-collapsed \.project-drop-hint\s*\{[^}]*display:\s*none/s);
+  });
+
+  it('keeps the collapsed rail self-contained and the composer on the work surface', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    expect(css).toMatch(/\.project-rail\.is-collapsed\s*\{[^}]*width:\s*52px[^}]*min-width:\s*52px[^}]*max-width:\s*52px[^}]*overflow:\s*hidden/s);
+    expect(css).toMatch(/\.project-rail\.is-collapsed \.rail-primary,\s*\.project-rail\.is-collapsed \.rail-scroll\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/\.composer-shell\s*\{[^}]*background:\s*var\(--work-pane-bg\)/s);
+    expect(css).toMatch(/\.composer-card\s*\{[^}]*background:\s*var\(--work-pane-bg\)[^}]*border-color:\s*var\(--border\)/s);
+    const focusRule = [...css.matchAll(/\.composer-card:focus-within\s*\{([^}]*)\}/g)].at(-1)?.[1] || '';
+    expect(focusRule).toContain('border-color: var(--border-strong)');
+    expect(focusRule).not.toContain('var(--accent)');
+  });
+
+  it('leaves the responsive rail width under the layout state controller', () => {
+    // Regression: a breakpoint in styles.css (<=959px) and another in
+    // codex-shell.css (<=1099px) both pinned `--rail-width: 52px !important`,
+    // which outranks the inline width React writes from `leftCollapsed`. The
+    // toggle kept flipping its class and its "Open/Close project rail" label
+    // while the rail stayed a 52px strip, so on any window narrower than
+    // 1100px the left panel simply would not open or close. No stylesheet may
+    // force the rail width again — the layout state is the only owner.
+    for (const file of ['src/styles.css', 'src/codex-shell.css', 'src/workbench-shell.css']) {
+      const css = readFileSync(resolve(process.cwd(), file), 'utf8');
+      expect(css, `${file} must not force --rail-width`).not.toMatch(
+        /--rail-width\s*:[^;]*!important/
+      );
+    }
   });
 
   it('renders shared icons with sharp square stroke geometry', () => {
@@ -128,6 +206,10 @@ describe('motion contract', () => {
     expect(css).toMatch(/--radius:\s*0px/);
     expect(css).toMatch(/--radius-lg:\s*0px/);
     expect(css).toMatch(/\.activity-detail\s*\{/);
-    expect(css).toMatch(/\.prompt-history-rail\s*\{/);
+    expect(css).not.toContain('prompt-history-rail');
+    expect(css).toMatch(/scrollbar-width:\s*none\s*!important/);
+    expect(css).toMatch(/::-webkit-scrollbar\s*\{[^}]*width:\s*0\s*!important/s);
+    expect(css).not.toMatch(/scrollbar-width:\s*(?:thin|auto)/i);
+    expect(css).not.toMatch(/scrollbar-color\s*:/i);
   });
 });

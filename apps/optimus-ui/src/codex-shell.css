@@ -406,7 +406,6 @@ svg {
 
 .rail-scroll {
   padding: 2px 8px 14px;
-  scrollbar-color: var(--border-strong) transparent;
 }
 
 .rail-section {
@@ -1318,31 +1317,6 @@ svg {
 }
 
 @media (max-width: 1099px) {
-  .optimus-app {
-    --rail-width: 52px !important;
-  }
-
-  .project-rail .rail-primary,
-  .project-rail .rail-section-heading,
-  .project-rail .project-heading button:first-child span,
-  .project-rail .project-heading button:not(:first-child),
-  .project-rail .project-sessions,
-  .project-rail .rail-nav span,
-  .project-rail .rail-footer span {
-    display: none;
-  }
-
-  .project-rail .rail-nav {
-    padding: 8px 7px;
-  }
-
-  .project-rail .rail-nav button,
-  .project-rail .rail-footer button {
-    width: 36px;
-    justify-content: center;
-    padding: 0;
-  }
-
   .surface-row {
     grid-template-columns: minmax(350px, 1fr) 1px minmax(360px, var(--workspace-width));
   }

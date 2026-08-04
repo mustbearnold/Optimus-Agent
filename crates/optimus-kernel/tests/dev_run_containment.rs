@@ -83,6 +83,7 @@ fn tool_step(name: &str, arguments: Value) -> CompletionResponse {
             name: name.into(),
             arguments,
         }],
+        reasoning_content: None,
     }
 }
 
@@ -90,6 +91,7 @@ fn done(text: &str) -> CompletionResponse {
     CompletionResponse {
         text: Some(text.into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }
 }
 

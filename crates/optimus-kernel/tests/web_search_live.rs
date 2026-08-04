@@ -26,10 +26,12 @@ fn kernel_web_search_tool_via_scripted_turn() {
                 name: "web_search".into(),
                 arguments: json!({"query": "Rust programming language", "limit": 2}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("search complete".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     model.stream_chunks = false;

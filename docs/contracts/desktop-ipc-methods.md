@@ -36,6 +36,11 @@ HTTP stream: `POST /api/chat/stream` SSE with the same event shapes.
 ### System
 `ping`, `doctor`, `auth_status`, `auth_import_hermes`, `auth_import_cli`, `settings_get`, `settings_set`
 
+Key-based provider credentials: `provider_keys_status`, `provider_key_set`,
+`provider_key_clear`. Codex is absent by design — it authenticates through OAuth
+and is reported by `auth_status`. `provider_keys_status` never returns a key,
+only presence, origin (`stored` or `environment`), and a masked tail.
+
 ### Sessions
 `sessions`, `new_session`, `get_session`, `delete_session`, `rename_session`,
 `session_search`, `archive_session`, `pin_session`
@@ -100,7 +105,12 @@ receipt, turn, and execution manifest before returning a presentation-safe
 summary. The caller must reload `get_session` for the canonical projection.
 
 ### OS / window
-`window_minimize`, `window_maximize`, `window_close`, `window_drag`, `window_outer_position`, `window_set_outer_position`, `pick_folder`, `open_path`, `open_url`
+`window_minimize`, `window_maximize`, `window_close`, `window_drag`, `window_outer_position`, `window_set_outer_position`, `pick_folder`, `open_path`, `open_url`, `startup_context`
+
+`startup_context` reports the session a supervised launch handed to this
+window. The Tauri shell answers it from its own launch options and never
+reaches the host; every other shell starts with no handoff, so the host
+answers `{ "session_id": null, "handoff": false }`.
 
 `pick_folder` stages the native selection as a short-lived, single-use project
 root grant and returns its opaque token. Electron main exchanges the native

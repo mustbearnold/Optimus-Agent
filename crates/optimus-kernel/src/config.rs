@@ -1,7 +1,16 @@
 use optimus_memory::{Sensitivity, TrustDomain, WriteContext};
 use optimus_packs::PackBudgetConfig;
+use serde_json::Value;
+use std::path::Path;
 
 use crate::CompressionConfig;
+
+/// Host-owned bridge for the agent-facing self-development tool.
+///
+/// The kernel never constructs a command or widens a path through this hook;
+/// the host callback must route into its already-enforced Developer Full Access
+/// supervisor. `None` keeps the affordance out of model tool schemas.
+pub type SelfDevelopmentHandler = fn(&Path, &Value) -> Result<String, String>;
 
 #[derive(Debug, Clone)]
 pub struct KernelConfig {
@@ -11,7 +20,8 @@ pub struct KernelConfig {
     pub pack_budget: PackBudgetConfig,
     pub memory_ctx: WriteContext,
     pub compression: CompressionConfig,
-    /// Reasoning effort: low|medium|high|xhigh|max|ultra (None or "off" = omit).
+    /// Reasoning effort: auto/None lets the provider choose; off disables
+    /// reasoning where the provider supports an explicit disabled mode.
     pub thinking_level: Option<String>,
     pub fast_mode: bool,
     /// SmartDeny by default; unrestricted is an explicit user/test choice.
@@ -23,6 +33,8 @@ pub struct KernelConfig {
     /// Optional in-memory override for the persisted Developer Full Access
     /// grant. None means load the product setting, not “allow everything”.
     pub developer_access: Option<optimus_policy::DeveloperAccessGrant>,
+    /// Optional host-owned self-development supervisor bridge.
+    pub self_development: Option<SelfDevelopmentHandler>,
 }
 
 impl Default for KernelConfig {
@@ -47,6 +59,7 @@ impl Default for KernelConfig {
             autonomy_profile: optimus_graph::AutonomyProfile::ReviewChanges,
             command_fs_envelope: None,
             developer_access: None,
+            self_development: None,
         }
     }
 }

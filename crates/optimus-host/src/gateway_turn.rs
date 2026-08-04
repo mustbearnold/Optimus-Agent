@@ -25,9 +25,9 @@
 use std::path::PathBuf;
 
 use optimus_kernel::{
-    drain_one, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, DrainResult, InboundMessage,
-    Kernel, KernelConfig, KernelError, OpenAiCompatConfig, OpenAiCompatModel, ProviderId,
-    RouteRequest, RouteSurface, ScriptedModel, SessionStore, TurnResult,
+    drain_one, CodexOAuthConfig, CodexOAuthModel, CompletionResponse, DeepseekModel, DrainResult,
+    InboundMessage, Kernel, KernelConfig, KernelError, OpenAiCompatConfig, OpenAiCompatModel,
+    ProviderId, RouteRequest, RouteSurface, ScriptedModel, SessionStore, TurnResult,
 };
 use optimus_runtime::RuntimeError;
 use uuid::Uuid;
@@ -81,6 +81,7 @@ pub fn gateway_turn(
             let mut model = ScriptedModel::new(vec![CompletionResponse {
                 text: Some(format!("[gateway:{}] {}", message.channel, message.text)),
                 tool_calls: vec![],
+                reasoning_content: None,
             }]);
             model.stream_chunks = false;
             kernel.turn(&mut model, &message.text)
@@ -97,6 +98,15 @@ pub fn gateway_turn(
                 route.model.as_str(),
             );
             let mut model = OpenAiCompatModel::new(config);
+            kernel.turn(&mut model, &message.text)
+        }
+        ProviderId::Deepseek => {
+            let config =
+                OpenAiCompatConfig::from_deepseek_home(home).map_err(|error| error.to_string())?;
+            let mut model = DeepseekModel::new(OpenAiCompatConfig {
+                model: route.model.as_str().into(),
+                ..config
+            });
             kernel.turn(&mut model, &message.text)
         }
     };

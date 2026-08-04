@@ -257,7 +257,7 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
         })
         .with_url(NATIVE_WEBVIEW_URL)
         .with_navigation_handler(|url| native_navigation_allowed(&url))
-        .with_new_window_req_handler(|_| false)
+        .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
         .with_initialization_script(BRIDGE_JS)
         .with_ipc_handler(move |req: Request<String>| {
             let body = req.body().clone();
@@ -310,7 +310,7 @@ fn run_webview(home: PathBuf) -> wry::Result<()> {
             }
             allowed
         })
-        .with_new_window_req_handler(|_| false)
+        .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
         .with_ipc_handler({
             let proxy = proxy.clone();
             move |req: Request<String>| {

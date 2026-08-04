@@ -22,12 +22,18 @@ pub const CODEX_MODEL_CATALOG: &[(&str, &str)] = &[
     ("gpt-5.3-codex-spark", "GPT-5.3 Codex Spark"),
 ];
 pub const DEFAULT_CODEX_MODEL: &str = "gpt-5.6-terra";
+pub const DEEPSEEK_MODEL_CATALOG: &[(&str, &str)] = &[
+    ("deepseek-v4-flash", "DeepSeek V4 Flash"),
+    ("deepseek-v4-pro", "DeepSeek V4 Pro"),
+];
+pub const DEFAULT_DEEPSEEK_MODEL: &str = "deepseek-v4-flash";
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "kebab-case")]
 pub enum ProviderId {
     Offline,
     Codex,
+    Deepseek,
     OpenAiCompat,
 }
 
@@ -36,6 +42,7 @@ impl ProviderId {
         match value.trim().to_ascii_lowercase().as_str() {
             "offline" => Some(Self::Offline),
             "codex" | "codex-oauth" => Some(Self::Codex),
+            "deepseek" | "deepseek-api" => Some(Self::Deepseek),
             // `open-ai-compat` is the serde kebab-case form that
             // `providers_catalog` puts on the wire; a surface must be able to
             // send back the id it was given.
@@ -50,6 +57,7 @@ impl ProviderId {
         match self {
             Self::Offline => "offline",
             Self::Codex => "codex",
+            Self::Deepseek => "deepseek",
             Self::OpenAiCompat => "openai-compat",
         }
     }
@@ -268,6 +276,23 @@ pub fn provider_catalog() -> Vec<ProviderDescriptor> {
             estimated_cost_microunits: 10,
         },
         ProviderDescriptor {
+            id: ProviderId::Deepseek,
+            default_model: ModelId(DEFAULT_DEEPSEEK_MODEL.into()),
+            models: DEEPSEEK_MODEL_CATALOG
+                .iter()
+                .map(|(id, _)| ModelId((*id).into()))
+                .collect(),
+            capabilities: [
+                ModelCapability::Text,
+                ModelCapability::Tools,
+                ModelCapability::Reasoning,
+            ]
+            .into_iter()
+            .collect(),
+            remote: true,
+            estimated_cost_microunits: 4,
+        },
+        ProviderDescriptor {
             id: ProviderId::OpenAiCompat,
             default_model: ModelId("gpt-4.1".into()),
             models: vec![ModelId("gpt-4.1".into()), ModelId("gpt-4o".into())],
@@ -285,13 +310,16 @@ pub fn provider_catalog() -> Vec<ProviderDescriptor> {
     ]
 }
 
-/// Live catalog with connect state (Codex credentials, openai-compat env, offline always up).
+/// Live catalog with connect state (Codex credentials, provider env keys, offline always up).
 pub fn provider_catalog_status(home: impl AsRef<Path>) -> Vec<ProviderCatalogStatus> {
     let home = home.as_ref();
     let codex_status = crate::CodexAuthStore::open(home)
         .ok()
         .and_then(|store| store.status().ok());
     let openai_key = std::env::var("OPTIMUS_API_KEY")
+        .ok()
+        .filter(|v| !v.trim().is_empty());
+    let deepseek_key = std::env::var("DEEPSEEK_API_KEY")
         .ok()
         .filter(|v| !v.trim().is_empty());
     provider_catalog()
@@ -303,6 +331,19 @@ pub fn provider_catalog_status(home: impl AsRef<Path>) -> Vec<ProviderCatalogSta
                     "local scripted provider".into(),
                 ),
                 ProviderId::Codex => codex_connection(codex_status.as_ref()),
+                ProviderId::Deepseek => {
+                    if deepseek_key.is_some() {
+                        (
+                            ProviderConnectState::Connected,
+                            "DEEPSEEK_API_KEY present".into(),
+                        )
+                    } else {
+                        (
+                            ProviderConnectState::Disconnected,
+                            "DEEPSEEK_API_KEY unset".into(),
+                        )
+                    }
+                }
                 ProviderId::OpenAiCompat => {
                     if openai_key.is_some() {
                         (
@@ -373,6 +414,7 @@ pub fn sanitize_codex_oauth_model(model: &str) -> String {
 fn automatic_provider_order(statuses: &[ProviderCatalogStatus]) -> Vec<ProviderId> {
     [
         ProviderId::Codex,
+        ProviderId::Deepseek,
         ProviderId::OpenAiCompat,
         ProviderId::Offline,
     ]
@@ -759,6 +801,10 @@ mod tests {
         );
         assert_eq!(ProviderId::parse("codex-oauth"), Some(ProviderId::Codex));
         assert_eq!(
+            ProviderId::parse("deepseek-api"),
+            Some(ProviderId::Deepseek)
+        );
+        assert_eq!(
             ProviderId::parse("auto"),
             None,
             "auto is a selector, never a concrete provider identity"
@@ -767,9 +813,10 @@ mod tests {
     }
 
     #[test]
-    fn automatic_selection_prefers_connected_codex_then_openai_then_offline() {
+    fn automatic_selection_prefers_codex_then_deepseek_then_openai_then_offline() {
         let _lock = ENV_LOCK.lock().unwrap();
         let _key = EnvVarGuard::remove("OPTIMUS_API_KEY");
+        let _deepseek_key = EnvVarGuard::remove("DEEPSEEK_API_KEY");
         let directory = tempdir().unwrap();
         let mut statuses = provider_catalog_status(directory.path());
 
@@ -788,6 +835,19 @@ mod tests {
         );
         statuses
             .iter_mut()
+            .find(|status| status.id == ProviderId::Deepseek)
+            .unwrap()
+            .connect = ProviderConnectState::Connected;
+        assert_eq!(
+            automatic_provider_order(&statuses),
+            vec![
+                ProviderId::Deepseek,
+                ProviderId::OpenAiCompat,
+                ProviderId::Offline
+            ]
+        );
+        statuses
+            .iter_mut()
             .find(|status| status.id == ProviderId::Codex)
             .unwrap()
             .connect = ProviderConnectState::Connected;
@@ -795,6 +855,7 @@ mod tests {
             automatic_provider_order(&statuses),
             vec![
                 ProviderId::Codex,
+                ProviderId::Deepseek,
                 ProviderId::OpenAiCompat,
                 ProviderId::Offline
             ]
@@ -835,6 +896,7 @@ mod tests {
     fn automatic_fresh_home_selects_and_persists_concrete_offline_default() {
         let _lock = ENV_LOCK.lock().unwrap();
         let _key = EnvVarGuard::remove("OPTIMUS_API_KEY");
+        let _deepseek_key = EnvVarGuard::remove("DEEPSEEK_API_KEY");
         let directory = tempdir().unwrap();
         let request = RouteRequest::standard(RouteSurface::Desktop, "auto", None);
 
@@ -875,6 +937,7 @@ mod tests {
     fn automatic_openai_readiness_matches_the_adapter_environment() {
         let _lock = ENV_LOCK.lock().unwrap();
         let _key = EnvVarGuard::remove("OPTIMUS_API_KEY");
+        let _deepseek_key = EnvVarGuard::remove("DEEPSEEK_API_KEY");
         let _irrelevant_base =
             EnvVarGuard::set("OPTIMUS_OPENAI_BASE_URL", "https://wrong.example/v1");
         let directory = tempdir().unwrap();
@@ -886,6 +949,13 @@ mod tests {
             .unwrap();
         assert_eq!(openai.connect, ProviderConnectState::Disconnected);
         assert_eq!(openai.connect_detail, "OPTIMUS_API_KEY unset");
+
+        let deepseek = disconnected
+            .iter()
+            .find(|status| status.id == ProviderId::Deepseek)
+            .unwrap();
+        assert_eq!(deepseek.connect, ProviderConnectState::Disconnected);
+        assert_eq!(deepseek.connect_detail, "DEEPSEEK_API_KEY unset");
 
         let _configured_key = EnvVarGuard::set("OPTIMUS_API_KEY", "test-key");
         let connected = provider_catalog_status(directory.path());
@@ -996,5 +1066,10 @@ mod tests {
         assert!(codex.supports_streaming);
         assert!(codex.supports_vision);
         assert_eq!(codex.connect, ProviderConnectState::Disconnected);
+        let deepseek = rows.iter().find(|r| r.id == ProviderId::Deepseek).unwrap();
+        assert_eq!(deepseek.models.len(), 2);
+        assert!(deepseek.capabilities.contains(&ModelCapability::Reasoning));
+        assert!(deepseek.supports_tools);
+        assert!(!deepseek.supports_vision);
     }
 }

@@ -4,7 +4,7 @@
 Two gaps kept costing land attempts (observed 2026-08-01): `git worktree add`
 against the bare store never writes the per-worktree `config.worktree`, so
 plain git in the new checkout fails with "must be run in a work tree"; and a
-fresh checkout has no `node_modules`, so the land gate refuses on forbidden
+fresh checkout has no Bun workspace install, so the land gate refuses on forbidden
 UI-suite skips. `new` creates a worktree with both handled; `ready` repairs
 and reports an existing one.
 """
@@ -80,27 +80,38 @@ def write_worktree_config(checkout: Path) -> bool:
 
 
 def ensure_node_modules(root_checkout: Path, rows: list[tuple[str, str]]) -> bool:
+    # One Bun workspace install covers every app, but only apps that actually
+    # ship a package.json can be pending — and a checkout with no workspace
+    # manifest (a bare fixture, or a trimmed tree) has nothing to install at
+    # all. Running `bun install` there fails on the missing lockfile and would
+    # report a provisioning failure for a repository that is simply JS-free.
+    pending = [
+        app
+        for app in APP_DIRS
+        if (root_checkout / app / "package.json").is_file()
+        and not (root_checkout / app / "node_modules").is_dir()
+    ]
+    if pending and (root_checkout / "package.json").is_file():
+        installed = subprocess.run(
+            ["bun", "install", "--frozen-lockfile"],
+            cwd=root_checkout,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if installed.returncode != 0:
+            detail = (installed.stderr or installed.stdout).strip().splitlines()
+            rows.append(("bun workspace", f"FAILED ({detail[-1] if detail else 'bun install'})"))
+            return False
     ok = True
     for app in APP_DIRS:
         app_dir = root_checkout / app
         if not (app_dir / "package.json").is_file():
             rows.append((app, "skip (no package.json)"))
-            continue
-        if (app_dir / "node_modules").is_dir():
-            rows.append((app, "ok"))
-            continue
-        installed = subprocess.run(
-            ["npm", "ci", "--no-audit", "--no-fund"],
-            cwd=app_dir,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if installed.returncode == 0 and (app_dir / "node_modules").is_dir():
-            rows.append((app, "installed"))
+        elif (app_dir / "node_modules").is_dir():
+            rows.append((app, "installed" if app in pending else "ok"))
         else:
-            detail = (installed.stderr or installed.stdout).strip().splitlines()
-            rows.append((app, f"FAILED ({detail[-1] if detail else 'npm ci'})"))
+            rows.append((app, "FAILED (Bun workspace link missing)"))
             ok = False
     return ok
 
@@ -116,7 +127,7 @@ def system_rows(root: Path) -> list[tuple[str, str]]:
         Path.home() / ".cache" / "ms-playwright",
     ]
     found = any(path.is_dir() and any(path.glob("chromium*")) for path in browsers)
-    rows.append(("chromium", "ok" if found else "missing (npx playwright install chromium)"))
+    rows.append(("chromium", "ok" if found else "missing (bunx playwright install chromium)"))
     return rows
 
 

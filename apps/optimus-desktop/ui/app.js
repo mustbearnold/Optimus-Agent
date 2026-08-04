@@ -2412,6 +2412,7 @@
     if (model === '') return true;
     if (provider === 'auto') return false;
     if (provider === 'offline') return model === 'offline-scripted';
+    if (provider === 'deepseek') return model === 'deepseek-v4-flash' || model === 'deepseek-v4-pro';
     if (provider === 'open-ai-compat') return model === 'gpt-4.1' || model === 'gpt-4o';
     return model.startsWith('gpt-5.');
   }

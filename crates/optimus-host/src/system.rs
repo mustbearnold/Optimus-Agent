@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use optimus_kernel::{open_cron, CodexAuthStore, ProductSettings};
+use optimus_kernel::{open_cron, CodexAuthStore, ProductSettings, ProviderKeyStore};
 use optimus_packs::CapabilitySession;
 use optimus_runtime::{CampaignStatus, CampaignStore};
 use serde_json::json;
@@ -18,6 +18,9 @@ pub(super) fn owns(method: &str) -> bool {
             | "auth_status"
             | "auth_import_hermes"
             | "auth_import_cli"
+            | "provider_keys_status"
+            | "provider_key_set"
+            | "provider_key_clear"
             | "settings_get"
             | "settings_set"
     )
@@ -44,8 +47,100 @@ pub(super) fn handle(
             let msg = store.import_from_codex_cli().map_err(|e| e.to_string())?;
             Ok(json!({ "message": msg, "auth": auth_status_json(home) }))
         }
+        "provider_keys_status" => Ok(json!({ "providers": provider_keys_json(home) })),
+        "provider_key_set" => provider_key_set(home, params),
+        "provider_key_clear" => provider_key_clear(home, params),
         _ => Err(format!("unknown method: {method}")),
     }
+}
+
+/// Providers that authenticate with a pasted API key. Codex is absent by
+/// design: it authenticates through OAuth and is reported by `auth_status`.
+const KEY_PROVIDERS: &[(&str, &str, &str)] = &[(
+    optimus_kernel::DEEPSEEK_PROVIDER,
+    "DeepSeek",
+    "DEEPSEEK_API_KEY",
+)];
+
+fn provider_label(provider: &str) -> Option<(&'static str, &'static str)> {
+    KEY_PROVIDERS
+        .iter()
+        .find(|(id, _, _)| *id == provider)
+        .map(|(_, label, env_key)| (*label, *env_key))
+}
+
+fn requested_provider(params: &serde_json::Value) -> Result<String, String> {
+    let provider = params
+        .get("provider")
+        .and_then(|value| value.as_str())
+        .unwrap_or(optimus_kernel::DEEPSEEK_PROVIDER)
+        .trim()
+        .to_ascii_lowercase();
+    if provider_label(&provider).is_none() {
+        return Err(format!("unsupported key provider: {provider}"));
+    }
+    Ok(provider)
+}
+
+fn provider_key_set(
+    home: &PathBuf,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let provider = requested_provider(&params)?;
+    let api_key = params
+        .get("api_key")
+        .and_then(|value| value.as_str())
+        .unwrap_or_default();
+    let base_url = params.get("base_url").and_then(|value| value.as_str());
+    let store = ProviderKeyStore::open(home).map_err(|e| e.to_string())?;
+    store
+        .set_key(&provider, api_key, base_url)
+        .map_err(|e| e.to_string())?;
+    Ok(json!({ "providers": provider_keys_json(home) }))
+}
+
+fn provider_key_clear(
+    home: &PathBuf,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let provider = requested_provider(&params)?;
+    let store = ProviderKeyStore::open(home).map_err(|e| e.to_string())?;
+    store.clear_key(&provider).map_err(|e| e.to_string())?;
+    Ok(json!({ "providers": provider_keys_json(home) }))
+}
+
+/// Never returns a key — only whether one exists, where it came from, and a
+/// masked tail so the user can recognise which key is stored.
+pub fn provider_keys_json(home: &PathBuf) -> serde_json::Value {
+    let store = match ProviderKeyStore::open(home) {
+        Ok(store) => store,
+        Err(error) => return json!([{ "error": error.to_string() }]),
+    };
+    let entries: Vec<_> = KEY_PROVIDERS
+        .iter()
+        .map(
+            |(provider, label, env_key)| match store.status(provider, env_key) {
+                Ok(status) => json!({
+                    "provider": status.provider,
+                    "label": label,
+                    "env_var": env_key,
+                    "present": status.present,
+                    "source": status.source.as_str(),
+                    "hint": status.hint,
+                    "base_url": status.base_url,
+                }),
+                Err(error) => json!({
+                    "provider": provider,
+                    "label": label,
+                    "env_var": env_key,
+                    "present": false,
+                    "source": "none",
+                    "error": error.to_string(),
+                }),
+            },
+        )
+        .collect();
+    json!(entries)
 }
 
 fn settings_get(home: &PathBuf) -> Result<serde_json::Value, String> {
@@ -247,10 +342,10 @@ struct ShellModeReport {
 }
 
 /// Canonical product shell token (matches install-meta `desktop_shell`).
-const SHELL_REACT_ELECTRON: &str = "react-electron";
+const SHELL_REACT_TAURI: &str = "react-tauri";
 
 fn detect_shell_mode(install: &InstallMetaReport) -> ShellModeReport {
-    // Prefer process env (Electron host sets OPTIMUS_DESKTOP_SHELL=electron|wry),
+    // Prefer process env (rollback Electron/Wry set OPTIMUS_DESKTOP_SHELL),
     // then install-meta, then product default. Token is always product vocabulary.
     let env_shell = std::env::var("OPTIMUS_DESKTOP_SHELL")
         .ok()
@@ -258,17 +353,17 @@ fn detect_shell_mode(install: &InstallMetaReport) -> ShellModeReport {
     let mode = match env_shell.as_deref() {
         Some("wry") | Some("legacy_wry") | Some("legacy-wry") => "legacy_wry".to_string(),
         Some("electron") | Some("react-electron") | Some("electron_react") => {
-            SHELL_REACT_ELECTRON.into()
+            "react-electron".into()
         }
         _ => install
             .desktop_shell
             .clone()
             .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| SHELL_REACT_ELECTRON.into()),
+            .unwrap_or_else(|| SHELL_REACT_TAURI.into()),
     };
-    let default_shell = mode == SHELL_REACT_ELECTRON;
+    let default_shell = mode == SHELL_REACT_TAURI;
     let label = if default_shell {
-        "Electron + React (default)".into()
+        "Tauri + React (default)".into()
     } else {
         format!("Shell mode: {mode}")
     };
@@ -349,6 +444,16 @@ pub fn auth_status_json(home: &PathBuf) -> serde_json::Value {
 mod tests {
     use super::{doctor_json, settings_get, settings_set};
     use serde_json::json;
+    use std::sync::{Mutex, OnceLock};
+
+    static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        ENV_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .expect("system test environment lock must not be poisoned")
+    }
 
     #[test]
     fn doctor_preview_browser_matches_chrome_detection() {
@@ -377,6 +482,7 @@ mod tests {
 
     #[test]
     fn settings_get_set_round_trip_and_doctor_fields() {
+        let _env = env_lock();
         let dir = tempfile::tempdir().expect("temp home");
         let home = dir.path().to_path_buf();
         let got = settings_get(&home).unwrap();
@@ -410,7 +516,7 @@ mod tests {
         assert_eq!(doc["allow_concurrent_projects"], true);
         assert_eq!(doc["isolation_enforcement_active"], false);
         assert_eq!(doc["product_fs_enforced"], false);
-        assert_eq!(doc["shell_mode"], "react-electron");
+        assert_eq!(doc["shell_mode"], "react-tauri");
         assert_eq!(doc["shell_default"], true);
         assert_eq!(doc["updater_channel"], "none");
         assert_eq!(doc["phase"], "product-complete");
@@ -439,6 +545,7 @@ mod tests {
 
     #[test]
     fn doctor_install_metadata_respects_xdg_data_home() {
+        let _env = env_lock();
         let dir = tempfile::tempdir().expect("temp xdg");
         let data = dir.path().join("share");
         let root = data.join("optimus-agent");

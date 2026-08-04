@@ -108,6 +108,7 @@ fn tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity() {
         let mut model = ScriptedModel::new(vec![
             CompletionResponse {
                 text: None,
+                reasoning_content: None,
                 tool_calls: vec![ToolCall {
                     id: "causal-write".into(),
                     name: "write_file".into(),
@@ -116,6 +117,7 @@ fn tool_manifest_runtime_agent_and_workflow_share_exact_causal_identity() {
             },
             CompletionResponse {
                 text: Some("done".into()),
+                reasoning_content: None,
                 tool_calls: vec![],
             },
         ]);
@@ -229,6 +231,7 @@ fn session_and_agent_terminal_outcomes_agree_after_independent_reopen() {
         let messages = vec![Message {
             role: Role::User,
             content: "accepted".into(),
+            reasoning_content: None,
             tool_call_id: None,
             name: None,
         }];

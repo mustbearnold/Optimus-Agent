@@ -57,10 +57,12 @@ fn successful_turn_is_reconstructible_by_trace_and_manifest_id() {
                 name: "write_file".into(),
                 arguments: json!({"path":"note.txt","contents":"causal"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("wrote note".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     let result = kernel.turn(&mut model, "write a note").unwrap();
@@ -159,10 +161,12 @@ fn causal_export_is_versioned_store_backed_and_redacts_home() {
                 name: "write_file".into(),
                 arguments: json!({"path":"export.txt","contents":"p14"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("done".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     let result = kernel.turn(&mut model, "export me").unwrap();

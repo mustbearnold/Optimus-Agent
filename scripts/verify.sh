@@ -184,11 +184,11 @@ spawn() {
 
 # spawn_dir <name> <dir> <shell-command>
 # Background twin of `in_dir`: these suites resolve config and test globs
-# relative to cwd, so `npm --prefix` is not enough.
+# relative to cwd, so each Bun command runs from its package directory.
 spawn_dir() {
   local name="$1" dir="$2" cmd="$3"
   if [ ! -d "$dir/node_modules" ]; then
-    skip "$name" "npm ci in $dir"
+    skip "$name" "bun install in workspace root"
     return
   fi
   spawn "$name" bash -c "cd '$dir' && $cmd"
@@ -311,25 +311,24 @@ tier_live() {
     cargo test -p optimus-kernel --test tool_coverage -- --ignored
   # leg 3 — desktop face: playwright drives the real optimus-desktop binary
   # over its HTTP shell against the credentialed home (the #82 contract:
-  # boots on codex, real model answers a nonce). cd, not npm --prefix:
+  # boots on codex, real model answers a nonce). Run from the package cwd:
   # playwright resolves its config from cwd (see the ui-tier note).
   if [ ! -x target/debug/optimus-desktop ]; then
     run "build optimus desktop" cargo build -p optimus-desktop
   fi
   run "live desktop (codex)" bash -c \
-    'cd apps/optimus-desktop && OPTIMUS_E2E_HOME="${OPTIMUS_LIVE_HOME:-$HOME/.local/share/optimus}" npx playwright test --config=playwright.live.config.js'
+    'cd apps/optimus-desktop && OPTIMUS_E2E_HOME="${OPTIMUS_LIVE_HOME:-$HOME/.local/share/optimus}" bunx playwright test --config=playwright.live.config.js'
 }
 
 # --- tier: ui ----------------------------------------------------------------
 # in_dir <name> <dir> <shell-command>
 # Runs from <dir>. These suites resolve their config and test globs relative to
-# the working directory, so `npm --prefix` is not enough — it sets the package
-# root but leaves cwd at the repo root, which makes Playwright pick up the
-# wrong project's config.
+# the working directory, so each Bun command runs from the package cwd and
+# Playwright cannot pick up another package's config.
 in_dir() {
   local name="$1" dir="$2" cmd="$3"
   if [ ! -d "$dir/node_modules" ]; then
-    skip "$name" "npm ci in $dir"
+    skip "$name" "bun install in workspace root"
     return
   fi
   run "$name" bash -c "cd '$dir' && $cmd"
@@ -340,11 +339,11 @@ in_dir() {
 # native paint stays authentic.
 electron_e2e_command() {
   if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
-    printf 'npx playwright test'
+    printf 'bunx playwright test'
   elif command -v xvfb-run >/dev/null 2>&1; then
     # xvfb-run's default server is 640x480x8 — too small for the workbench
     # window, so layout assertions (execution dock height) fail headless.
-    printf 'xvfb-run -a -s "-screen 0 1920x1080x24" npx playwright test'
+    printf 'xvfb-run -a -s "-screen 0 1920x1080x24" bunx playwright test'
   else
     printf ''
   fi
@@ -356,8 +355,8 @@ tier_ui() {
   # long enough for a click to sit unconsumed even though the identical flow is
   # consistently sub-three-seconds on an idle host.
   spawn_section "ui suites"
-  spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
-  spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
+  spawn_dir "optimus-ui vitest" apps/optimus-ui       "bun run test"
+  spawn_dir "optimus-electron"  apps/optimus-electron "bun run test"
 
   # The terminal face gets the same treatment as the desktop: the real binary,
   # driven end to end, deterministically (offline provider, temp home). These
@@ -370,10 +369,23 @@ tier_ui() {
     run "build optimus cli" cargo build -p optimus-cli
     run "tui e2e" python3 scripts/tui_e2e.py
     run "tui feature matrix" python3 scripts/tui_feature_matrix.py
-    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
-      run "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
+    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
+      run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
     else
-      skip "tui layout (playwright)" "npm ci in apps/optimus-electron"
+      skip "tui layout (playwright)" "bun install in workspace root"
+    fi
+
+    # Geometry invariants for the React shell. Self-tests its own rules first,
+    # so a rule that stops detecting its defect fails the gate rather than
+    # reporting a clean shell.
+    if [ -d apps/optimus-electron/node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
+      run "ui layout audit" node scripts/ui_layout_audit.cjs
+      # Same rules, the engine the product ships: WebKitGTK. Skips itself when
+      # the introspection bindings are absent.
+      run "ui layout audit (webkit)" python3 scripts/ui_layout_audit_webkit.py
+    else
+      skip "ui layout audit" "bun install + bun run --cwd apps/optimus-ui build"
+      skip "ui layout audit (webkit)" "bun install + bun run --cwd apps/optimus-ui build"
     fi
   else
     skip "tui e2e" "tmux not installed"
@@ -386,22 +398,22 @@ tier_ui() {
   # `cargo check` from the compile tier does not produce one.
   local playwright_ready=1
   if [ ! -d apps/optimus-desktop/node_modules ]; then
-    skip "playwright" "npm ci in apps/optimus-desktop"
+    skip "playwright" "bun install in workspace root"
     playwright_ready=0
-  elif ! (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
-    skip "playwright" "npx playwright install chromium"
+  elif ! (cd apps/optimus-desktop && bunx playwright --version >/dev/null 2>&1); then
+    skip "playwright" "bunx playwright install chromium"
     playwright_ready=0
   fi
 
   local electron_ready=1
   if [ ! -d apps/optimus-electron/node_modules ]; then
-    skip "electron e2e" "npm ci in apps/optimus-electron"
+    skip "electron e2e" "bun install in workspace root"
     electron_ready=0
-  elif ! (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
-    skip "electron e2e" "npx playwright install chromium"
+  elif ! (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
+    skip "electron e2e" "bunx playwright install chromium"
     electron_ready=0
   elif [ ! -d apps/optimus-ui/node_modules ]; then
-    skip "electron e2e" "npm ci in apps/optimus-ui"
+    skip "electron e2e" "bun install in workspace root"
     electron_ready=0
   elif [ -z "$(electron_e2e_command)" ]; then
     skip "electron e2e" "no display and no xvfb-run"
@@ -411,7 +423,7 @@ tier_ui() {
   if [ "$playwright_ready" = 1 ] || [ "$electron_ready" = 1 ]; then
     run "build desktop host" cargo build -p optimus-desktop
   fi
-  [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
+  [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "bunx playwright test"
   reap
 
   # The bundle is gitignored, so it is never checked out, never updated by a
@@ -421,7 +433,7 @@ tier_ui() {
   # unbuilt edit passes while CI, which builds from scratch, does not. Built
   # here for the same reason the host is built above.
   if [ "$electron_ready" = 1 ]; then
-    if ! run "build react ui" npm --prefix apps/optimus-ui run build; then
+    if ! run "build react ui" bun run --cwd apps/optimus-ui build; then
       # A failed build leaves the *previous* bundle in place, so running the
       # gate now would assert against code nobody wrote. The build failure is
       # already the report; a second, misleading one adds nothing.
@@ -525,8 +537,8 @@ tier_all() {
   reap
 
   spawn_section "ui suites"
-  spawn_dir "optimus-ui vitest" apps/optimus-ui       "npm test"
-  spawn_dir "optimus-electron"  apps/optimus-electron "npm test"
+  spawn_dir "optimus-ui vitest" apps/optimus-ui       "bun run test"
+  spawn_dir "optimus-electron"  apps/optimus-electron "bun run test"
 
   # Terminal face, same standard as the desktop: real binary, deterministic
   # pty. Reap the browser/unit jobs first, then keep all three terminal suites
@@ -536,10 +548,23 @@ tier_all() {
     run "build optimus cli" cargo build -p optimus-cli
     run "tui e2e" python3 scripts/tui_e2e.py
     run "tui feature matrix" python3 scripts/tui_feature_matrix.py
-    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && npx playwright --version >/dev/null 2>&1); then
-      run "tui layout (playwright)" node scripts/tui_layout_playwright.cjs
+    if [ -d apps/optimus-electron/node_modules ] && (cd apps/optimus-electron && bunx playwright --version >/dev/null 2>&1); then
+      run "tui layout (playwright)" bun scripts/tui_layout_playwright.cjs
     else
-      skip "tui layout (playwright)" "npm ci in apps/optimus-electron"
+      skip "tui layout (playwright)" "bun install in workspace root"
+    fi
+
+    # Geometry invariants for the React shell. Self-tests its own rules first,
+    # so a rule that stops detecting its defect fails the gate rather than
+    # reporting a clean shell.
+    if [ -d apps/optimus-electron/node_modules ] && [ -f apps/optimus-ui/dist/index.html ]; then
+      run "ui layout audit" node scripts/ui_layout_audit.cjs
+      # Same rules, the engine the product ships: WebKitGTK. Skips itself when
+      # the introspection bindings are absent.
+      run "ui layout audit (webkit)" python3 scripts/ui_layout_audit_webkit.py
+    else
+      skip "ui layout audit" "bun install + bun run --cwd apps/optimus-ui build"
+      skip "ui layout audit (webkit)" "bun install + bun run --cwd apps/optimus-ui build"
     fi
   else
     skip "tui e2e" "tmux not installed"
@@ -547,10 +572,10 @@ tier_all() {
     skip "tui layout (playwright)" "tmux not installed"
   fi
 
-  if [ "$host_built" = 1 ] && (cd apps/optimus-desktop && npx playwright --version >/dev/null 2>&1); then
-    spawn_dir "playwright" apps/optimus-desktop "npx playwright test"
+  if [ "$host_built" = 1 ] && (cd apps/optimus-desktop && bunx playwright --version >/dev/null 2>&1); then
+    spawn_dir "playwright" apps/optimus-desktop "bunx playwright test"
   else
-    skip "playwright" "npm ci + npx playwright install chromium in apps/optimus-desktop"
+    skip "playwright" "bun install + bunx playwright install chromium"
   fi
 
   # Electron embeds a full Chromium renderer. Reap the other browser and DOM
@@ -559,9 +584,9 @@ tier_all() {
   reap
 
   if [ "$host_built" != 1 ]; then
-    skip "electron e2e" "npm ci in apps/optimus-electron"
+    skip "electron e2e" "bun install in workspace root"
   elif [ ! -d apps/optimus-ui/node_modules ]; then
-    skip "electron e2e" "npm ci in apps/optimus-ui"
+    skip "electron e2e" "bun install in workspace root"
   elif [ -z "$(electron_e2e_command)" ]; then
     skip "electron e2e" "no display and no xvfb-run"
   else
@@ -569,7 +594,7 @@ tier_all() {
     # the only way this gate is testing the source it was handed (#107). A
     # failed build stands as its own report -- asserting against the bundle it
     # did not replace would only add a second, misleading failure.
-    if run "build react ui" npm --prefix apps/optimus-ui run build; then
+    if run "build react ui" bun run --cwd apps/optimus-ui build; then
       spawn_dir "electron e2e" apps/optimus-electron "$(electron_e2e_command)"
     fi
   fi

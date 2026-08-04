@@ -4,6 +4,9 @@ export type DesktopMethod =
   | 'auth_status'
   | 'auth_import_hermes'
   | 'auth_import_cli'
+  | 'provider_keys_status'
+  | 'provider_key_set'
+  | 'provider_key_clear'
   | 'settings_get'
   | 'settings_set'
   | 'developer_access_get'
@@ -11,11 +14,13 @@ export type DesktopMethod =
   | 'developer_access_revoke'
   | 'developer_supervisor_status'
   | 'developer_supervisor_launch'
+  | 'developer_supervisor_build_launch'
   | 'developer_supervisor_stop'
   | 'developer_supervisor_restart'
   | 'developer_supervisor_rollback'
   | 'developer_supervisor_log'
   | 'developer_emergency_stop'
+  | 'startup_context'
   | 'sessions'
   | 'new_session'
   | 'get_session'
@@ -171,13 +176,22 @@ export type DeveloperSupervisorStatus = {
   pid?: number | null;
   port?: number | null;
   binary?: string | null;
+  surface?: string | null;
   workspace?: string | null;
   child_home?: string | null;
+  handoff_session_id?: string | null;
   log_path?: string;
   started_unix?: number | null;
   last_error?: string | null;
   emergency_stopped?: boolean;
   previous_available?: boolean;
+  build?: {
+    binary?: string;
+    surface?: string;
+    workspace?: string;
+    profile?: string;
+    log_path?: string;
+  };
 };
 
 export type PackTool = {
@@ -397,7 +411,7 @@ export type StreamEvent =
 export type ChatRequest = {
   session: string;
   message: string;
-  provider: 'auto' | 'offline' | 'codex' | 'open-ai-compat';
+  provider: 'auto' | 'offline' | 'codex' | 'deepseek' | 'open-ai-compat';
   model?: string;
   thinking_level?: string;
   fast?: boolean;
@@ -477,7 +491,7 @@ export type ProjectRuntimeScope = {
 };
 
 export interface OptimusTransport {
-  readonly kind: 'electron' | 'http' | 'fixture';
+  readonly kind: 'tauri' | 'electron' | 'http' | 'fixture';
   invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
   chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle;
   windowAction(action: 'minimize' | 'maximize' | 'close'): Promise<unknown>;
@@ -527,5 +541,7 @@ export type OptimusElectronBridge = {
 declare global {
   interface Window {
     optimusElectron?: OptimusElectronBridge;
+    __TAURI_INTERNALS__?: unknown;
+    __TAURI__?: unknown;
   }
 }

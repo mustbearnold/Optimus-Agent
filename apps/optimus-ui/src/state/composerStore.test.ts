@@ -6,6 +6,7 @@ import {
   modelOverride,
   offlineComposer,
   PROVIDER_MODELS,
+  REASONING_LEVELS,
   restoredAccess,
   saveComposer,
 } from './composerStore';
@@ -120,8 +121,39 @@ describe('composer Auto persistence and resolution', () => {
     expect(PROVIDER_MODELS).toEqual(expect.objectContaining({
       auto: [],
       offline: ['offline-scripted'],
+      deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro'],
       'open-ai-compat': ['gpt-4.1', 'gpt-4o'],
     }));
+    expect(REASONING_LEVELS.map(({ value }) => value)).toEqual([
+      'auto',
+      'minimal',
+      'low',
+      'medium',
+      'high',
+      'xhigh',
+      'max',
+      'ultra',
+    ]);
+  });
+
+  it('persists DeepSeek V4 model ownership and Auto reasoning', () => {
+    saveComposer(
+      {
+        provider: 'deepseek',
+        model: 'deepseek-v4-pro',
+        thinking: 'auto',
+        access: 'standard',
+        fast: false,
+      },
+      true
+    );
+    expect(loadComposer()?.settings).toEqual({
+      provider: 'deepseek',
+      model: 'deepseek-v4-pro',
+      thinking: 'auto',
+      access: 'standard',
+      fast: false,
+    });
   });
 
   it('returns only real explicit model overrides', () => {

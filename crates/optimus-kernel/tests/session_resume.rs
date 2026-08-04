@@ -69,10 +69,12 @@ fn session_survives_process_reopen() {
                     name: "activate_pack".into(),
                     arguments: json!({"name": "browser"}),
                 }],
+                reasoning_content: None,
             },
             CompletionResponse {
                 text: Some("browser on".into()),
                 tool_calls: vec![],
+                reasoning_content: None,
             },
         ]);
         k.turn(&mut model, "enable browser please").unwrap();
@@ -152,10 +154,12 @@ fn durable_tool_message_is_bound_to_terminal_effect_attempt() {
                 name: "write_file".into(),
                 arguments: json!({"path":"causal.txt","contents":"linked"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("done".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -197,10 +201,12 @@ fn missing_tool_message_is_repaired_from_effect_link_on_reopen() {
                 name: "write_file".into(),
                 arguments: json!({"path":"repair-me.txt","contents":"durable"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("done".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     kernel
@@ -261,10 +267,12 @@ fn conflicting_effect_link_rolls_back_session_snapshot() {
                 name: "write_file".into(),
                 arguments: json!({"path":"causal.txt","contents":"linked"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("done".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     kernel.turn(&mut model, "write with provenance").unwrap();
@@ -277,6 +285,7 @@ fn conflicting_effect_link_rolls_back_session_snapshot() {
         content: "must roll back".into(),
         tool_call_id: None,
         name: None,
+        reasoning_content: None,
     }];
 
     let error = store
@@ -345,6 +354,7 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
         content: "resume this once".into(),
         tool_call_id: None,
         name: None,
+        reasoning_content: None,
     });
     let store = SessionStore::open(directory.path().join("sessions.db")).unwrap();
     let turn_id = store
@@ -379,6 +389,7 @@ fn interrupted_turn_resumes_without_duplicating_user_segment() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("continued".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
     let result = resumed.resume_pending_turn(&mut model).unwrap();
 
@@ -421,6 +432,7 @@ fn resume_rejects_terminal_traced_manifest_before_model_execution() {
         content: "must not rerun".into(),
         tool_call_id: None,
         name: None,
+        reasoning_content: None,
     });
     let sessions = SessionStore::open(directory.path().join("sessions.db")).unwrap();
     let turn_id = sessions
@@ -458,6 +470,7 @@ fn resume_rejects_terminal_traced_manifest_before_model_execution() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("should not run".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
 
     assert!(resumed.resume_pending_turn(&mut model).is_err());
@@ -484,6 +497,7 @@ fn resume_rejects_untraced_manifest_before_model_execution() {
         content: "missing trace".into(),
         tool_call_id: None,
         name: None,
+        reasoning_content: None,
     });
     let sessions = SessionStore::open(directory.path().join("sessions.db")).unwrap();
     let turn_id = sessions
@@ -516,6 +530,7 @@ fn resume_rejects_untraced_manifest_before_model_execution() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("should not run".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
 
     assert!(resumed.resume_pending_turn(&mut model).is_err());
@@ -547,6 +562,7 @@ fn kernel_turn_persists_versioned_manifest_and_replay_report() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("manifest complete".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
 
     kernel.turn(&mut model, "record this execution").unwrap();
@@ -601,10 +617,12 @@ fn missing_tool_messages_for_two_effect_links_are_both_repaired() {
                     arguments: json!({"path":"b.txt","contents":"B"}),
                 },
             ],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("done".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     kernel.turn(&mut model, "two durable writes").unwrap();

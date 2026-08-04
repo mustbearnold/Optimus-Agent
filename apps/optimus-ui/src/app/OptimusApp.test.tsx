@@ -75,6 +75,18 @@ describe('OptimusApp fixture contract', () => {
     await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Optimus' }));
     expect(screen.getByRole('log', { name: 'Conversation' })).toBeInTheDocument();
 
+    const projectRail = screen.getByRole('complementary', { name: 'Projects and sessions' });
+    const closeRail = within(topbar as HTMLElement).getByRole('button', { name: 'Close project rail' });
+    expect(projectRail).not.toHaveClass('is-collapsed');
+    await user.click(closeRail);
+    expect(projectRail).toHaveClass('is-collapsed');
+    expect(within(topbar as HTMLElement).getByRole('button', { name: 'Open project rail' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+    await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Open project rail' }));
+    expect(projectRail).not.toHaveClass('is-collapsed');
+
     await user.click(within(topbar as HTMLElement).getByRole('button', { name: 'Maximize workspace' }));
     expect(container.querySelector('.surface-row')).toHaveClass('is-workspace-maximized');
     expect(await within(topbar as HTMLElement).findByRole('button', { name: 'Restore workspace' })).toBeInTheDocument();
@@ -287,4 +299,5 @@ describe('OptimusApp fixture contract', () => {
     await user.keyboard('{End}');
     expect(execution).toHaveAttribute('aria-valuenow', '520');
   });
+
 });

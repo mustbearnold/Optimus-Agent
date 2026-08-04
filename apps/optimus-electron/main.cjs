@@ -55,6 +55,10 @@ const DESKTOP_METHODS = new Set([
   'auth_status',
   'auth_import_hermes',
   'auth_import_cli',
+  'provider_keys_status',
+  'provider_key_set',
+  'provider_key_clear',
+  'startup_context',
   'settings_get',
   'settings_set',
   'developer_access_get',
@@ -62,6 +66,7 @@ const DESKTOP_METHODS = new Set([
   'developer_access_revoke',
   'developer_supervisor_status',
   'developer_supervisor_launch',
+  'developer_supervisor_build_launch',
   'developer_supervisor_stop',
   'developer_supervisor_restart',
   'developer_supervisor_rollback',
@@ -274,7 +279,7 @@ function registerUiProtocol() {
       target = path.join(UI_DIST, 'index.html');
     }
     if (!fs.existsSync(target)) {
-      return new Response('React assets missing. Run npm --prefix apps/optimus-ui run build.', {
+      return new Response('React assets missing. Run bun run --cwd apps/optimus-ui build.', {
         status: 503,
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       });

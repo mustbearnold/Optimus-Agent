@@ -552,6 +552,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             user: "ping".into(),
             steps: vec![CompletionResponse {
                 text: Some("pong".into()),
+                reasoning_content: None,
                 tool_calls: vec![],
             }],
             expect_tools: vec![],
@@ -565,6 +566,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             steps: vec![
                 CompletionResponse {
                     text: None,
+                    reasoning_content: None,
                     tool_calls: vec![ToolCall {
                         id: "t1".into(),
                         name: "memory_recall".into(),
@@ -576,6 +578,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
                 },
                 CompletionResponse {
                     text: Some("You prefer helix.".into()),
+                    reasoning_content: None,
                     tool_calls: vec![],
                 },
             ],
@@ -590,6 +593,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             steps: vec![
                 CompletionResponse {
                     text: None,
+                    reasoning_content: None,
                     tool_calls: vec![ToolCall {
                         id: "a1".into(),
                         name: "activate_pack".into(),
@@ -598,6 +602,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
                 },
                 CompletionResponse {
                     text: Some("browser pack ready".into()),
+                    reasoning_content: None,
                     tool_calls: vec![],
                 },
             ],
@@ -612,6 +617,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
             steps: vec![
                 CompletionResponse {
                     text: None,
+                    reasoning_content: None,
                     tool_calls: vec![ToolCall {
                         id: "w1".into(),
                         name: "write_file".into(),
@@ -623,6 +629,7 @@ pub fn builtin_suite() -> Vec<EvalCase> {
                 },
                 CompletionResponse {
                     text: Some("wrote notes/eval.txt".into()),
+                    reasoning_content: None,
                     tool_calls: vec![],
                 },
             ],

@@ -22,6 +22,10 @@ pub struct Message {
     pub tool_call_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// DeepSeek V4 requires assistant reasoning to be replayed with a tool call.
+    /// This remains optional so older persisted sessions deserialize unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning_content: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -43,8 +47,11 @@ pub struct CompletionRequest {
     pub fast_mode: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct CompletionResponse {
     pub text: Option<String>,
     pub tool_calls: Vec<ToolCall>,
+    /// Provider-private reasoning that must be carried into a follow-up tool turn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning_content: Option<String>,
 }

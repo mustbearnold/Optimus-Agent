@@ -5,7 +5,7 @@ plane: current
 status: current
 authority: canonical
 summary: Confirmed current behaviour: Optimus implements a canonical typed route resolver for provider/model ownership, required capabilities, privacy, bounded cost, explicit fallback, readiness-based Auto selection, and durable decision...
-reviewed_on: 2026-07-31
+reviewed_on: 2026-08-03
 review_by: 2026-10-31
 knowledge_type: model-routing-map
 covers:
@@ -21,6 +21,7 @@ depends_on:
   - docs/decisions/0013-provider-tool-protocol.md
 validated_by:
   - crates/optimus-kernel/tests/codex_oauth.rs
+  - crates/optimus-kernel/tests/openai_http.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - crates/optimus-eval/tests/integrity_integration.rs
   - apps/optimus-cli/tests/chat_auto.rs
@@ -51,22 +52,28 @@ a second router.
 |---|---|---|---|---|
 | `offline` / `ScriptedModel` | Confirmed current behaviour | In-process scripted responses | Native `CompletionResponse` | No provider fallback; deterministic test/offline use. |
 | OpenAI-compatible | Confirmed current behaviour | `OPTIMUS_API_BASE`, `OPTIMUS_MODEL`, `OPTIMUS_API_KEY`; 120-second default HTTP timeout | Strict chat-completions function calls with canonical descriptors | No provider/model fallback. Cooperative cancellation is checked before/after its synchronous request. |
+| DeepSeek V4 | Confirmed current behaviour | `DEEPSEEK_API_BASE` (default `https://api.deepseek.com`), `DEEPSEEK_MODEL` (default `deepseek-v4-flash`), `DEEPSEEK_API_KEY` | Chat Completions tools; assistant `reasoning_content` is replayed on tool-follow-up requests | No provider/model fallback. The adapter is non-streaming and uses the shared synchronous HTTP boundary. |
 | Codex OAuth | Confirmed current behaviour | Optimus `auth.json`, imported Hermes/Codex credentials, compiled endpoint/catalog | Strict Responses JSON/SSE function-call parsing | One adapter retry after HTTP failure; cancellable SSE reads poll at 250 ms after stream open. No provider fallback. |
 
 ## Codex model catalog
 
-**Confirmed current behaviour:** the compiled catalog exposes `gpt-5.6-terra`,
-`gpt-5.6-luna`, and `gpt-5.6-sol`, with aliases `terra`, `luna`, and `sol`.
-Unknown model IDs are sanitized to `gpt-5.6-terra`. Reasoning effort is
-normalized per catalog entry; fast mode is a request flag, not a separate
-provider.
+**Confirmed current behaviour:** the compiled Codex catalog exposes
+`gpt-5.6-terra`, `gpt-5.6-luna`, and `gpt-5.6-sol`, with aliases `terra`,
+`luna`, and `sol`. Unknown model IDs are sanitized to `gpt-5.6-terra`.
+DeepSeek has a separate two-model catalog: `deepseek-v4-flash` and
+`deepseek-v4-pro`. Reasoning effort is normalized per provider; `Auto` omits a
+provider-specific override, while explicit UI budgets map to the provider's
+supported values. Fast mode is a request flag, not a separate provider.
 
 **Confirmed current behaviour:** OpenAI-compatible model names are environment
 strings and are not resolved through the Codex catalog.
 
 **Confirmed current behaviour:** kernel normalization produces reasoning effort
-and fast-mode fields for every provider request. Codex maps those controls into
-its request; the OpenAI-compatible request mapper currently omits both.
+and fast-mode fields for every provider request. Codex maps explicit effort
+into `reasoning.effort` and omits it for `Auto`; DeepSeek maps the common UI
+levels to `low`, `high`, or `max` and omits `thinking` for `Auto`. DeepSeek's
+tool loop carries response `reasoning_content` into the next assistant tool
+message because its API requires that replay.
 
 ## Selection by surface
 
@@ -83,8 +90,8 @@ construction and transport remain surface-owned.
 
 **Confirmed current behaviour:** `auto` is a requested selection, never a
 `ProviderId` or `ModelId`. At turn start it selects the first connected
-policy-eligible provider in the fixed order Codex OAuth, configured
-OpenAI-compatible, then offline. Codex credentials that are already expiring
+policy-eligible provider in the fixed order Codex OAuth, configured DeepSeek,
+configured OpenAI-compatible, then offline. Codex credentials that are already expiring
 without refresh capability are not considered connected. No model override
 means the selected provider's canonical default. Decisions persist the
 requested `auto` value and the concrete selected provider/model. New explicit

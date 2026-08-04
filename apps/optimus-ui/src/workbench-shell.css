@@ -164,6 +164,15 @@ select:focus-visible,
   padding-left: 4px;
 }
 
+/* Tauri drag hit-testing belongs only to this empty stretch. Keeping the
+   interactive rail/product controls outside the drag region prevents native
+   window dragging from swallowing their click events. */
+.topbar-drag-fill {
+  min-width: 12px;
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
 .topbar-product-mark {
   height: 32px;
   display: inline-flex;
@@ -206,6 +215,17 @@ select:focus-visible,
 
 .toolbar-button[aria-pressed="true"] {
   box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* The pressed inset above outranks the global button:focus-visible ring by
+   specificity, which left keyboard focus invisible on exactly the pressed
+   toggle. Found by the layout audit's focus check; the ring and the inset
+   compose instead of competing. */
+.toolbar-button[aria-pressed="true"]:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px var(--border),
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
 }
 
 .topbar-actions {
@@ -457,22 +477,30 @@ select:focus-visible,
   background: var(--session-card);
 }
 
+/* Row height is set by the three lines it carries — project, title, worktree —
+   plus breathing room, not by a round number. 84px gave a 54px stack 30px of
+   padding, so a rail of chats read as a stack of cards and a third of the
+   history that fit on screen was empty space. The status pill is absolutely
+   positioned and never contributes height. */
 .session-select {
   position: static;
   min-width: 0;
-  height: 84px;
+  height: 64px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 4px;
-  padding: 7px 10px;
+  gap: 1px;
+  padding: 4px 10px;
   border-radius: 0;
   text-align: left;
 }
 
+/* A recent chat is one line of title. 42px around a 19px line is the same
+   spare-height problem an order of magnitude smaller, and this is the band with
+   the most rows in it. */
 .session-row.is-unassigned .session-select {
-  height: 42px;
+  height: 32px;
   gap: 0;
   padding-block: 0;
 }
@@ -496,7 +524,7 @@ select:focus-visible,
   color: var(--text-2);
   font-size: 14px;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 18px;
   padding-right: 96px;
 }
 
@@ -569,6 +597,7 @@ select:focus-visible,
   color: var(--faint);
   font-size: 15px;
   font-weight: 450;
+  line-height: 20px;
   letter-spacing: -0.01em;
 }
 
@@ -579,6 +608,7 @@ select:focus-visible,
 .session-worktree {
   color: var(--faint);
   font-size: 12px;
+  line-height: 16px;
 }
 
 .session-row.is-unassigned .session-state {
@@ -691,9 +721,32 @@ select:focus-visible,
   padding: 42px 28px 30px;
 }
 
+/* The transcript keeps up to 200 messages mounted, and every scroll event that
+   measures the scroller had to lay all of them out first. `content-visibility`
+   lets the browser skip layout and paint for the ones off screen, and the `auto`
+   form of `contain-intrinsic-size` remembers each message's real height once it
+   has been rendered, so the scrollbar does not jump as they come in and out.
+   This is containment, not an effect — no compositing layer, nothing blurred. */
 .message {
   margin-bottom: 30px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 140px;
+  /* Explicitly cleared, not merely omitted: `styles.css` sets `message-in` on
+     `.message` in the same cascade layer, and leaving it to apply here would
+     animate history back in every time it re-entered the viewport, because
+     content that has been skipped starts its animation when it stops being
+     skipped. Only the newest message is arriving; the rest are already there. */
+  animation: none;
+}
+
+.message:last-child {
   animation: message-in 160ms var(--ease-out);
+}
+
+/* Scrolling the transcript must never chain to the window and drag the whole
+   shell, which reads as the scroll "sticking" at either end. */
+.transcript {
+  overscroll-behavior: contain;
 }
 
 .message-body {
@@ -810,7 +863,7 @@ select:focus-visible,
      decision plus a new captured baseline, not a token edit. */
   width: min(calc(100% - 40px), 736px);
   padding: 8px 0 18px;
-  background: linear-gradient(180deg, transparent 0, var(--work-pane-bg) 25px);
+  background: var(--work-pane-bg);
 }
 
 .composer-card {
@@ -841,18 +894,29 @@ select:focus-visible,
   color: var(--faint);
 }
 
+/* The access and model controls are persistent state, not primary actions, so
+   they read as small chips tucked into the composer's bottom-left corner
+   rather than a full-height toolbar competing with the prompt. */
 .composer-controls {
-  min-height: 42px;
-  gap: 6px;
-  padding: 5px 7px 7px 11px;
+  min-height: 28px;
+  gap: 3px;
+  padding: 0 6px 4px 5px;
 }
 
 .composer-access-trigger,
 .composer-settings-trigger {
-  height: 29px;
-  padding-inline: 8px;
-  border-radius: 8px;
+  height: 22px;
+  padding-inline: 6px;
+  gap: 5px;
+  border-radius: 6px;
   color: var(--muted);
+  font-size: 11px;
+}
+
+.composer-access-trigger > svg,
+.composer-settings-trigger > svg {
+  width: 13px;
+  height: 13px;
 }
 
 .composer-access-trigger:hover,
@@ -978,10 +1042,6 @@ select:focus-visible,
   .app-body {
     padding-left: 0;
   }
-
-  .project-rail .rail-nav {
-    padding-inline: 8px;
-  }
 }
 
 @media (max-width: 899px) {
@@ -1103,6 +1163,11 @@ select:focus-visible,
   min-width: 0;
   min-height: 28px;
   flex: 0 0 28px;
+  /* The bar shrinks with the work column, not the window — opening the
+     evidence workspace narrows it while the viewport is unchanged, so the
+     drop-out below has to query this element, not the screen. */
+  container-type: inline-size;
+  container-name: statusbar;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -1112,13 +1177,20 @@ select:focus-visible,
   color: var(--muted);
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   font-size: 10px;
-  line-height: 1;
+  /* `line-height: 1` gave 10px glyphs a 10px box, so descenders in "Developer"
+     and "repository" sat on the box edge. The bar is 28px tall — there is room
+     for real leading. */
+  line-height: 1.4;
 }
 
 .workbench-status-state,
+/* A segment either reads or it is not shown. Left shrinkable, the four
+   segments compressed together until "Auto" rendered in 8px of an 23px word
+   and "Standard" in 21px of 43 — four ellipses that tell the user nothing. */
 .workbench-status-segment {
   min-width: 0;
   height: 22px;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1166,6 +1238,26 @@ select:focus-visible,
 .workbench-status-detail {
   max-width: 28ch;
   color: var(--faint);
+}
+
+/* Shed the least important segment first, so what remains is always legible
+   rather than four competing ellipses. */
+@container statusbar (max-width: 620px) {
+  .workbench-status-secondary {
+    display: none;
+  }
+}
+
+@container statusbar (max-width: 430px) {
+  .workbench-status-detail {
+    display: none;
+  }
+}
+
+@container statusbar (max-width: 340px) {
+  .workbench-status-segment:not(.workbench-status-primary) {
+    display: none;
+  }
 }
 
 .workbench-status-segment {
@@ -1285,6 +1377,75 @@ body,
   border-right: 1px solid var(--border);
 }
 
+.project-rail.is-collapsed {
+  width: 52px;
+  min-width: 52px;
+  max-width: 52px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.project-rail.is-collapsed .rail-primary,
+.project-rail.is-collapsed .rail-scroll {
+  display: none;
+}
+
+.project-rail.is-collapsed .rail-project-scope {
+  flex: 0 0 42px;
+  grid-template-columns: 36px;
+  justify-content: center;
+  padding: 5px 7px;
+}
+
+.project-rail.is-collapsed .rail-footer {
+  flex: 0 0 44px;
+  justify-content: center;
+  margin-top: auto;
+  padding-inline: 7px;
+}
+
+.project-rail.is-collapsed .rail-settings-button {
+  width: 36px;
+  justify-content: center;
+  padding: 0;
+}
+
+.project-rail.is-collapsed:has(.project-scope-menu) {
+  overflow: visible;
+}
+
+.project-rail.is-collapsed .project-scope-menu {
+  top: 0;
+  right: auto;
+  left: calc(100% + 7px);
+  width: 220px;
+}
+
+.project-rail.is-collapsed .recent-section,
+.project-rail.is-collapsed .archived-section,
+.project-rail.is-collapsed .rail-empty,
+.project-rail.is-collapsed .project-drop-hint {
+  display: none;
+}
+
+.project-rail.is-collapsed .rail-project-scope {
+  grid-template-columns: 36px;
+  justify-content: center;
+  padding-inline: 7px;
+}
+
+.project-rail.is-collapsed .rail-project-scope .project-scope-trigger {
+  width: 36px;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.project-rail.is-collapsed .rail-project-scope .project-scope-trigger span,
+.project-rail.is-collapsed .rail-project-scope .project-scope-trigger > svg:last-child,
+.project-rail.is-collapsed .rail-project-scope > button[aria-label="Add project"] {
+  display: none;
+}
+
 .rail-section-heading {
   display: flex;
   min-height: 30px;
@@ -1315,14 +1476,60 @@ body,
   background: var(--hover);
 }
 
+/* Three equal bands below the search and project-scope controls: Pinned,
+   Projects, Recent Chats. Each band scrolls inside itself so a long project
+   tree can never push history off the bottom of the rail, and the rail as a
+   whole never scrolls — the three headings stay where the user left them. */
 .rail-scroll {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 4px 8px 12px;
-  scrollbar-color: var(--border-strong) #080808;
+  overflow: hidden;
 }
 
+/* A third is the ceiling, not the quota. Forcing every band to exactly 33%
+   left a short Projects list sitting above 143px of dead rail, which reads as
+   a rendering fault rather than a layout. Bands shrink to their content and
+   only start scrolling once they would exceed a third. */
+.rail-scroll > .rail-section {
+  flex: 0 1 auto;
+  max-height: 33.333%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Recent Chats keeps the bottom band even when the two above it are short. */
+.rail-scroll > .recent-section {
+  margin-top: auto;
+}
+
+.rail-scroll > .rail-section > .rail-section-heading {
+  flex: 0 0 auto;
+}
+
+.rail-scroll > .rail-section > .session-stack,
+.rail-scroll > .rail-section > .project-stack {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Three scrollers stacked in one rail: without this, reaching the end of one
+     band hands the gesture to the next and the list appears to jump bands
+     mid-flick. */
+  overscroll-behavior: contain;
+}
+
+.pinned-section,
 .recent-section,
 .projects-section {
   margin-top: 6px;
+}
+
+.pinned-section {
+  margin-top: 0;
 }
 
 .recent-session-stack,
@@ -1426,10 +1633,15 @@ body,
   display: grid;
 }
 
+/* The densest card in the rail: project name, run state, title, and worktree.
+   A fixed 38px could not hold four rows, so the title and worktree were
+   compressed to 9px and 7px boxes and their glyphs sliced. Content decides the
+   height; 38px is only the floor. */
 .project-sessions .session-row .session-select {
-  height: 38px;
+  height: auto;
+  min-height: 38px;
   gap: 2px;
-  padding: 4px 8px;
+  padding: 6px 8px;
 }
 
 .project-sessions .session-row .session-card-meta {
@@ -1475,9 +1687,21 @@ body,
   cursor: grabbing;
 }
 
+/* Content-driven, not a fixed 44px. A plain chat row is one line and still
+   measures 44px; a project-assigned row stacks project name, run state, title,
+   and worktree, and a fixed height cut the last two off mid-glyph. */
 .session-select {
-  height: 44px;
+  height: auto;
+  min-height: 44px;
+  padding-block: 6px;
   padding-inline: 9px;
+}
+
+/* Flex items shrink by default, so a card that was one line too short did not
+   spill — it compressed its own rows, rendering a 15px title inside a 9px box
+   and slicing the glyphs. The card grows; the text keeps its leading. */
+.session-select > * {
+  flex-shrink: 0;
 }
 
 .project-rail .session-row .session-title {
@@ -1511,98 +1735,6 @@ body,
   flex: 1 1 auto;
   display: flex;
   overflow: hidden;
-}
-
-.prompt-history-rail {
-  min-width: 0;
-  width: clamp(132px, 18%, 190px);
-  flex: 0 0 clamp(132px, 18%, 190px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-right: 1px solid var(--border);
-  background: #0a0a0a;
-}
-
-.prompt-history-heading {
-  min-height: 34px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.prompt-history-heading svg {
-  width: 13px;
-  height: 13px;
-  color: var(--faint);
-}
-
-.prompt-history-heading small {
-  margin-left: auto;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.prompt-history-list {
-  min-height: 0;
-  display: grid;
-  align-content: start;
-  gap: 1px;
-  overflow: auto;
-  padding: 6px;
-}
-
-.prompt-history-item {
-  min-width: 0;
-  min-height: 36px;
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  align-items: start;
-  gap: 6px;
-  padding: 7px 6px;
-  border-left: 2px solid transparent;
-  color: var(--muted);
-  background: transparent;
-  text-align: left;
-  transition: color 110ms linear, background-color 110ms linear, border-color 110ms linear;
-}
-
-.prompt-history-item:hover,
-.prompt-history-item.is-active {
-  color: var(--text);
-  border-left-color: var(--accent);
-  background: var(--selected);
-}
-
-.prompt-history-index {
-  color: var(--faint);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-}
-
-.prompt-history-label {
-  min-width: 0;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow-wrap: anywhere;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.prompt-history-empty {
-  margin: 8px 4px;
-  color: var(--faint);
-  font-size: 10px;
-  line-height: 1.45;
 }
 
 .transcript {
@@ -1718,36 +1850,45 @@ body,
 }
 
 .composer-card {
-  background: #101010;
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  background: var(--work-pane-bg);
+  border-color: var(--border);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .composer-card:focus-within {
-  box-shadow: inset 0 0 0 1px var(--accent);
+  border-color: var(--border-strong);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 @media (max-width: 800px) {
-  .prompt-history-rail {
-    width: 122px;
-    flex-basis: 122px;
-  }
-
   .transcript-inner {
     padding-inline: 16px;
   }
 }
 
 @media (max-width: 620px) {
-  .prompt-history-rail {
-    display: none;
+  .transcript-inner {
+    padding-inline: 12px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .project-toggle > svg:first-child,
   .session-row,
-  .prompt-history-item,
   .activity-heading {
     transition: none;
   }
+}
+
+/* Scroll surfaces remain interactive without visible scrollbar chrome. */
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none;
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { defaultLayout, loadLayout, saveLayout } from './layoutStore';
+import { defaultLayout, loadLayout, railResizePatch, saveLayout } from './layoutStore';
 
 describe('layout persistence', () => {
   beforeEach(() => localStorage.clear());
@@ -33,5 +33,27 @@ describe('layout persistence', () => {
     const value = { ...defaultLayout, leftWidth: 280, workspaceTab: 'artifacts' as const };
     saveLayout(value);
     expect(loadLayout()).toEqual(value);
+  });
+
+  it('collapses only after a left drag crosses the rail threshold', () => {
+    expect(railResizePatch(240, false, 240, 130)).toEqual({
+      leftWidth: 200,
+      leftCollapsed: false,
+    });
+    expect(railResizePatch(240, false, 240, 90)).toEqual({
+      leftWidth: 240,
+      leftCollapsed: true,
+    });
+  });
+
+  it('reopens a collapsed rail from its 52px hit area and rejects invalid pointer data', () => {
+    expect(railResizePatch(240, true, 52, 252)).toEqual({
+      leftWidth: 252,
+      leftCollapsed: false,
+    });
+    expect(railResizePatch(240, false, Number.NaN, 90)).toEqual({
+      leftWidth: 240,
+      leftCollapsed: false,
+    });
   });
 });

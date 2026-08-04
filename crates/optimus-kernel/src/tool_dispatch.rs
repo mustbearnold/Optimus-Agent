@@ -39,7 +39,15 @@ impl Kernel {
     }
 
     pub(crate) fn tool_schemas(&self) -> Vec<ToolSchema> {
-        self.packs.loaded_tools().into_iter().cloned().collect()
+        self.packs
+            .loaded_tools()
+            .into_iter()
+            .filter(|tool| {
+                tool.invocation != ToolInvocation::SelfDevelopment
+                    || self.config.self_development.is_some()
+            })
+            .cloned()
+            .collect()
     }
 
     pub(crate) fn effect_link_for_tool_result(
@@ -101,6 +109,7 @@ impl Kernel {
                             &self.packs,
                             &self.skills.list(false).unwrap_or_default(),
                             self.runtime.command_fs_envelope(),
+                            self.config.self_development.is_some(),
                         );
                     }
                 }
@@ -421,6 +430,15 @@ impl Kernel {
                     "timed_out": capture.as_ref().map(|c| c.timed_out).unwrap_or(false),
                 })
                 .to_string())
+            }
+            ToolInvocation::SelfDevelopment => {
+                let handler = self.config.self_development.ok_or_else(|| {
+                    KernelError::Tool(
+                        "self_development is unavailable without an active host supervisor grant"
+                            .into(),
+                    )
+                })?;
+                handler(self.home(), &call.arguments).map_err(KernelError::Tool)
             }
             ToolInvocation::BrowserNavigate
             | ToolInvocation::BrowserSnapshot

@@ -165,6 +165,7 @@ ICON_DIR="$DATA_HOME/icons/hicolor/scalable/apps"
 DESKTOP_FILE="$APPLICATIONS_DIR/optimus-agent.desktop"
 ICON_FILE="$ICON_DIR/optimus-agent.svg"
 INSTALLED_DESKTOP="$INSTALL_ROOT/bin/optimus-desktop"
+INSTALLED_TAURI="$INSTALL_ROOT/bin/optimus-agent-tauri"
 INSTALLED_HOST="$INSTALL_ROOT/bin/optimus-desktop-host"
 INSTALLED_CLI="$INSTALL_ROOT/bin/optimus"
 APP_BUNDLE="$INSTALL_ROOT/app-bundle"
@@ -177,6 +178,7 @@ INSTALL_MARKER_VALUE=""
 EXISTING_INSTALL_OWNED=false
 BUILD_DIR="$CARGO_TARGET_DIR/$PROFILE_DIR"
 BUILT_DESKTOP="$BUILD_DIR/optimus-desktop"
+BUILT_TAURI="$BUILD_DIR/optimus-agent"
 BUILT_CLI="$BUILD_DIR/optimus"
 
 [[ -f "$ROOT/Cargo.toml" ]] || fail "repository root not found: $ROOT"
@@ -263,8 +265,7 @@ INSTALL_MARKER_VALUE="$INSTALL_MARKER_PREFIX:$INSTALL_ID"
 
 if [[ "$NO_BUILD" == false ]]; then
   require_command cargo
-  require_command node
-  require_command npm
+  require_command bun
   require_command pkg-config
   # auto_generate_cdp (via headless_chrome) invokes rustfmt from its build
   # script. Resolve the real toolchain binary because the rustup proxy can be
@@ -481,7 +482,7 @@ process_is_installed_electron_main() {
 process_is_installed_app() {
   local pid="$1" exe
   exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-  [[ "$exe" == "$INSTALLED_DESKTOP" || "$exe" == "$INSTALLED_HOST" ]] \
+  [[ "$exe" == "$INSTALLED_DESKTOP" || "$exe" == "$INSTALLED_TAURI" || "$exe" == "$INSTALLED_HOST" ]] \
     && return 0
   process_is_installed_electron_main "$pid"
 }
@@ -593,10 +594,10 @@ print(status["features"]["total"])
 }
 
 verify_built_versions() {
-  version_line="$("$BUILT_DESKTOP" --version)"
+  version_line="$("$BUILT_TAURI" --version)"
   version="${version_line##* }"
   [[ "$version" == "$PRODUCT_VERSION" ]] \
-    || fail "built desktop version $version does not match policy version $PRODUCT_VERSION"
+    || fail "built Tauri desktop version $version does not match policy version $PRODUCT_VERSION"
   cli_version_line="$("$BUILT_CLI" --version)"
   cli_version="${cli_version_line##* }"
   [[ "$cli_version" == "$PRODUCT_VERSION" ]] \
@@ -606,15 +607,16 @@ verify_built_versions() {
 check_release_policy "Checking Optimus/Hermes version policy"
 
 if [[ "$NO_BUILD" == false ]]; then
-  step "Building optimus-desktop and optimus-cli ($PROFILE)"
-  build_args=(build -p optimus-desktop -p optimus-cli)
+  step "Building React production assets with Bun"
+  (cd "$ROOT" && bun run --cwd apps/optimus-ui build)
+  step "Building Tauri desktop, rollback host, and optimus-cli ($PROFILE)"
+  build_args=(build -p optimus-tauri -p optimus-desktop -p optimus-cli --features optimus-tauri/custom-protocol)
   [[ "$PROFILE" == "release" ]] && build_args+=(--release)
   (cd "$ROOT" && cargo "${build_args[@]}")
-  step "Building React production assets"
-  (cd "$ROOT" && npm --prefix apps/optimus-ui run build)
 fi
 
 [[ -x "$BUILT_DESKTOP" ]] || fail "missing built binary: $BUILT_DESKTOP"
+[[ -x "$BUILT_TAURI" ]] || fail "missing built Tauri binary: $BUILT_TAURI"
 if [[ ! -x "$BUILT_CLI" && -x "$BUILD_DIR/optimus-cli" ]]; then
   BUILT_CLI="$BUILD_DIR/optimus-cli"
 fi
@@ -622,6 +624,7 @@ fi
 
 verify_built_versions
 BUILT_DESKTOP_SHA256="$(file_sha256 "$BUILT_DESKTOP")"
+BUILT_TAURI_SHA256="$(file_sha256 "$BUILT_TAURI")"
 BUILT_CLI_SHA256="$(file_sha256 "$BUILT_CLI")"
 validate_electron_sources
 ELECTRON_VERSION="$(tr -d '\r\n' <"$ELECTRON_DIST_SOURCE/version")"
@@ -642,6 +645,8 @@ check_release_policy "Rechecking Optimus/Hermes version policy"
 verify_built_versions
 [[ "$(file_sha256 "$BUILT_DESKTOP")" == "$BUILT_DESKTOP_SHA256" ]] \
   || fail "built desktop changed after version validation"
+[[ "$(file_sha256 "$BUILT_TAURI")" == "$BUILT_TAURI_SHA256" ]] \
+  || fail "built Tauri desktop changed after version validation"
 [[ "$(file_sha256 "$BUILT_CLI")" == "$BUILT_CLI_SHA256" ]] \
   || fail "built CLI changed after version validation"
 validate_lexical_install_paths
@@ -656,18 +661,21 @@ installed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 step "Installing binaries"
 mkdir -p "$INSTALL_ROOT/bin" "$APPLICATIONS_DIR" "$ICON_DIR" "$BIN_HOME"
 atomic_install_file "$BUILT_DESKTOP" "$INSTALLED_HOST" 0755 "$BUILT_DESKTOP_SHA256"
+atomic_install_file "$BUILT_TAURI" "$INSTALLED_TAURI" 0755 "$BUILT_TAURI_SHA256"
 atomic_install_file "$BUILT_CLI" "$INSTALLED_CLI" 0755 "$BUILT_CLI_SHA256"
 ln -sfn optimus "$INSTALL_ROOT/bin/optimus-cli"
 ln -sfn "$INSTALLED_CLI" "$BIN_HOME/optimus"
 ln -sfn "$INSTALLED_CLI" "$BIN_HOME/optimus-cli"
 publish_electron_bundle
 printf '  %s\n' "$INSTALLED_HOST"
+printf '  %s\n' "$INSTALLED_TAURI"
 printf '  %s\n' "$INSTALLED_ELECTRON"
 printf '  %s\n' "$INSTALLED_CLI"
 
 atomic_install_file "$ROOT/assets/optimus-agent.svg" "$ICON_FILE" 0644
 
 printf -v q_install_root '%q' "$INSTALL_ROOT"
+printf -v q_installed_tauri '%q' "$INSTALLED_TAURI"
 printf -v q_installed_host '%q' "$INSTALLED_HOST"
 printf -v q_installed_electron '%q' "$INSTALLED_ELECTRON"
 printf -v q_installed_electron_app '%q' "$INSTALLED_ELECTRON_APP"
@@ -678,6 +686,7 @@ atomic_write_file "$INSTALLED_DESKTOP" 0755 <<EOF
 #!/usr/bin/env bash
 set -Eeuo pipefail
 INSTALL_ROOT=$q_install_root
+TAURI_BINARY=$q_installed_tauri
 HOST_BINARY=$q_installed_host
 ELECTRON_BINARY=$q_installed_electron
 ELECTRON_APP=$q_installed_electron_app
@@ -692,7 +701,24 @@ case "\${1:-}" in
     ;;
 esac
 
-case "\${OPTIMUS_DESKTOP_SHELL:-electron}" in
+case "\${OPTIMUS_DESKTOP_SHELL:-tauri}" in
+  tauri)
+    [[ -x "\$TAURI_BINARY" ]] || {
+      printf 'Installed Optimus Tauri application is incomplete: %s\n' "\$INSTALL_ROOT" >&2
+      exit 1
+    }
+    export OPTIMUS_HOME="\${OPTIMUS_HOME:-\$DEFAULT_OPTIMUS_HOME}"
+    # On Linux with both Wayland and XWayland available, WebKitGTK can create
+    # a live process without a visible surface on this GBM stack. Pin the
+    # installed shell to the verified X11/software-compositing path.
+    if [[ -n "\${DISPLAY:-}" ]]; then
+      export GDK_BACKEND=x11
+      export WINIT_UNIX_BACKEND=x11
+    fi
+    export WEBKIT_DISABLE_COMPOSITING_MODE=1
+    exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
+    exec "\$TAURI_BINARY" "\$@"
+    ;;
   electron)
     [[ -x "\$ELECTRON_BINARY" && -f "\$ELECTRON_APP/main.cjs" && -f "\$ELECTRON_APP/host-discovery.cjs" && -f "\$UI_DIST/index.html" ]] || {
       printf 'Installed Optimus Electron application is incomplete: %s\\n' "\$INSTALL_ROOT" >&2
@@ -762,8 +788,8 @@ Keywords=AI;Agent;Assistant;Automation;
 StartupNotify=true
 StartupWMClass=optimus-agent
 X-Optimus-Install-ID=$INSTALL_ID
-X-Optimus-UI=react-electron
-Actions=OpenData;LegacyWry;
+X-Optimus-UI=react-tauri
+Actions=OpenData;ElectronRollback;LegacyWry;
 
 [Desktop Action OpenData]
 Name=Open Optimus data folder
@@ -772,12 +798,16 @@ Exec=xdg-open $(desktop_quote "$DATA_HOME/optimus")
 [Desktop Action LegacyWry]
 Name=Launch legacy Wry shell
 Exec=env OPTIMUS_DESKTOP_SHELL=wry $(desktop_quote "$INSTALLED_DESKTOP")
+
+[Desktop Action ElectronRollback]
+Name=Launch Electron rollback shell
+Exec=env OPTIMUS_DESKTOP_SHELL=electron $(desktop_quote "$INSTALLED_DESKTOP")
 EOF
 
 atomic_write_file "$INSTALL_ROOT/VERSION.txt" 0644 <<EOF
 Optimus Agent $version
 profile=$PROFILE
-shell=react-electron
+shell=react-tauri
 electron=$ELECTRON_VERSION
 installed=$installed_at
 source=$ROOT
@@ -811,7 +841,7 @@ atomic_write_file "$INSTALL_ROOT/install-meta.json" 0644 <<EOF
   "hermes_parity_status": "$(json_escape "$HERMES_PARITY_STATUS")",
   "hermes_feature_contracts": $HERMES_FEATURE_CONTRACTS,
   "configuration": "$(json_escape "$PROFILE")",
-  "desktop_shell": "react-electron",
+  "desktop_shell": "react-tauri",
   "electron_version": "$(json_escape "$ELECTRON_VERSION")",
   "installed_at": "$(json_escape "$installed_at")",
   "install_id": "$(json_escape "$INSTALL_ID")",
@@ -819,6 +849,7 @@ atomic_write_file "$INSTALL_ROOT/install-meta.json" 0644 <<EOF
   "source_repo": "$(json_escape "$ROOT")",
   "cargo_target": "$(json_escape "$CARGO_TARGET_DIR")",
   "desktop_binary": "$(json_escape "$INSTALLED_DESKTOP")",
+  "tauri_binary": "$(json_escape "$INSTALLED_TAURI")",
   "host_binary": "$(json_escape "$INSTALLED_HOST")",
   "electron_binary": "$(json_escape "$INSTALLED_ELECTRON")",
   "electron_app": "$(json_escape "$INSTALLED_ELECTRON_APP")",
@@ -839,6 +870,7 @@ printf -v q_install_root '%q' "$INSTALL_ROOT"
 printf -v q_install_marker '%q' "$INSTALL_MARKER"
 printf -v q_install_marker_value '%q' "$INSTALL_MARKER_VALUE"
 printf -v q_desktop '%q' "$INSTALLED_DESKTOP"
+printf -v q_tauri '%q' "$INSTALLED_TAURI"
 printf -v q_host '%q' "$INSTALLED_HOST"
 printf -v q_electron '%q' "$INSTALLED_ELECTRON"
 printf -v q_desktop_file '%q' "$DESKTOP_FILE"
@@ -856,6 +888,7 @@ INSTALL_ROOT=$q_install_root
 INSTALL_MARKER=$q_install_marker
 INSTALL_MARKER_VALUE=$q_install_marker_value
 DESKTOP_BINARY=$q_desktop
+TAURI_BINARY=$q_tauri
 HOST_BINARY=$q_host
 ELECTRON_BINARY=$q_electron
 DESKTOP_FILE=$q_desktop_file
@@ -904,7 +937,7 @@ process_is_electron_main() {
 process_is_installed_app() {
   local pid="$1" exe
   exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-  [[ "$exe" == "$HOST_BINARY" ]] && return 0
+  [[ "$exe" == "$TAURI_BINARY" || "$exe" == "$HOST_BINARY" ]] && return 0
   process_is_electron_main "$pid"
 }
 
@@ -1000,8 +1033,9 @@ Optimus Agent - native Linux user install
 ==========================================
 Install root: $INSTALL_ROOT
 Desktop entry: $DESKTOP_FILE
-Desktop shell: React + Electron $ELECTRON_VERSION
-Rust host: $INSTALLED_HOST
+Desktop shell: React + Tauri
+Tauri binary: $INSTALLED_TAURI
+Rust rollback host: $INSTALLED_HOST
 
 Launch:
   - Open the application menu and choose Optimus Agent
@@ -1009,6 +1043,9 @@ Launch:
 
 Legacy Wry rollback:
   OPTIMUS_DESKTOP_SHELL=wry $INSTALLED_DESKTOP
+
+Electron rollback:
+  OPTIMUS_DESKTOP_SHELL=electron $INSTALLED_DESKTOP
 
 CLI:
   $BIN_HOME/optimus --help
@@ -1045,7 +1082,7 @@ launch_installed() {
 
   local identity="" pid=""
   for _ in {1..100}; do
-    identity="$(find_installed_electron_pids | head -n 1 || true)"
+    identity="$(find_installed_pids | head -n 1 || true)"
     if [[ -n "$identity" ]]; then
       pid="${identity%%:*}"
       break
@@ -1060,15 +1097,15 @@ launch_installed() {
   local ready=false
   for _ in {1..150}; do
     if tail -c "+$((log_offset + 1))" "$log_file" 2>/dev/null \
-      | grep -Fq '[optimus-electron] ready ui=react'; then
+      | grep -Fq '[optimus-tauri] ready ui=react'; then
       ready=true
       break
     fi
-    process_is_installed_electron_main "$pid" || break
+    process_matches_identity "$identity" || break
     sleep 0.1
   done
   if [[ "$ready" != true ]]; then
-    printf 'Installed Electron shell did not report ready. Log: %s\n' "$log_file" >&2
+    printf 'Installed Tauri shell did not report ready. Log: %s\n' "$log_file" >&2
     tail -n 40 "$log_file" >&2
     return 1
   fi

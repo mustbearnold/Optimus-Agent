@@ -344,6 +344,7 @@ mod tests {
             content: "receipt".into(),
             tool_call_id: Some("call-1".into()),
             name: Some("read_file".into()),
+            reasoning_content: None,
         });
         messages.push(Message {
             role: Role::Assistant,

@@ -1,6 +1,6 @@
 //! Every advertised tool, executed through the real dispatch path.
 //!
-//! The registry classifies 22 tools; 18 dispatch and 4 are declared
+//! The registry classifies 23 tools; 19 dispatch and 4 are declared
 //! scaffolds. Before this suite, three dispatchable tools (`delete_path`,
 //! `rename_path`, `patch_file`) had no test anywhere that executed them, and
 //! nothing failed when a tool shipped untested — coverage was whatever the
@@ -27,7 +27,7 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 /// Dispatchable tools this suite executes through a real turn.
-const DISPATCHABLE_EXERCISED: [&str; 18] = [
+const DISPATCHABLE_EXERCISED: [&str; 19] = [
     "read_file",
     "search_content",
     "find_files",
@@ -38,6 +38,7 @@ const DISPATCHABLE_EXERCISED: [&str; 18] = [
     "rename_path",
     "patch_file",
     "terminal",
+    "self_development",
     "web_search",
     "memory_recall",
     "skill_resolve",
@@ -61,10 +62,20 @@ fn open_kernel(home: &std::path::Path) -> Kernel {
         home,
         KernelConfig {
             effect_policy: PolicyMode::Unrestricted,
+            self_development: Some(fake_self_development),
             ..KernelConfig::default()
         },
     )
     .expect("kernel must open on a fresh home")
+}
+
+fn fake_self_development(_home: &std::path::Path, params: &Value) -> Result<String, String> {
+    Ok(json!({
+        "ok": true,
+        "supervisor": "healthy",
+        "received": params,
+    })
+    .to_string())
 }
 
 fn tool_step(id: &str, name: &str, arguments: Value) -> CompletionResponse {
@@ -75,6 +86,7 @@ fn tool_step(id: &str, name: &str, arguments: Value) -> CompletionResponse {
             name: name.into(),
             arguments,
         }],
+        reasoning_content: None,
     }
 }
 
@@ -82,6 +94,7 @@ fn done(text: &str) -> CompletionResponse {
     CompletionResponse {
         text: Some(text.into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }
 }
 
@@ -147,6 +160,61 @@ fn the_coverage_ledger_matches_the_registry_exactly() {
         DISPATCHABLE_EXERCISED.len(),
         "ALL_DISPATCHABLE and the exercised ledger must move together"
     );
+}
+
+#[test]
+fn self_development_dispatches_through_the_real_turn_path() {
+    let dir = tempdir().unwrap();
+    let mut kernel = open_kernel(dir.path());
+    let mut model = scripted(vec![
+        tool_step(
+            "self-dev-1",
+            "self_development",
+            json!({"surface":"desktop","port":17866}),
+        ),
+        done("development instance is healthy"),
+    ]);
+
+    let result = kernel
+        .turn(&mut model, "build and launch the development copy")
+        .expect("self-development tool must dispatch through Kernel::turn");
+
+    let invoked: Vec<&str> = result
+        .invoked_tools
+        .iter()
+        .map(|tool| tool.as_str())
+        .collect();
+    assert_eq!(invoked, vec!["self_development"]);
+    let evidence = evidence_shown_to_model(&model);
+    assert!(
+        evidence.contains("\"supervisor\":\"healthy\""),
+        "{evidence}"
+    );
+    assert!(evidence.contains("\"surface\":\"desktop\""), "{evidence}");
+}
+
+#[test]
+fn self_development_is_not_advertised_without_the_host_bridge() {
+    let dir = tempdir().unwrap();
+    let mut kernel = Kernel::open(
+        dir.path(),
+        KernelConfig {
+            effect_policy: PolicyMode::Unrestricted,
+            ..KernelConfig::default()
+        },
+    )
+    .unwrap();
+    let mut model = scripted(vec![done("ordinary session")]);
+
+    kernel
+        .turn(&mut model, "answer without developer mode")
+        .expect("ordinary session must still complete");
+    let advertised: Vec<&str> = model.seen[0]
+        .tools
+        .iter()
+        .map(|tool| tool.id.as_str())
+        .collect();
+    assert!(!advertised.contains(&"self_development"), "{advertised:?}");
 }
 
 // ---------------------------------------------------------------------------

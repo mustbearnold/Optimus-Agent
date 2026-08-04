@@ -10,6 +10,7 @@ review_by: 2026-11-01
 knowledge_type: decision
 covers:
   - crates/optimus-packs/src/lib.rs
+  - crates/optimus-packs/src/catalog.rs
   - scripts/check-tool-coverage.py
   - docs/architecture/parity-capability-ledger.json
 depends_on:

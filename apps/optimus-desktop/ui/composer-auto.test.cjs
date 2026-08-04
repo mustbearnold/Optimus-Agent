@@ -38,8 +38,21 @@ test('Wry migrates unchosen legacy Offline residue without rewriting explicit ch
 
 test('Wry uses canonical provider ids and provider-owned model choices', () => {
   assert.match(html, /<option value="open-ai-compat">OpenAI compatible<\/option>/);
+  assert.match(html, /<option value="deepseek">DeepSeek<\/option>/);
+  assert.match(html, /<option value="deepseek-v4-flash">DeepSeek V4 Flash<\/option>/);
+  assert.match(html, /<option value="deepseek-v4-pro">DeepSeek V4 Pro<\/option>/);
+  assert.match(html, /<option value="auto">auto<\/option>/);
   assert.doesNotMatch(html, /<option value="openai_compat">/);
   assert.match(app, /c\.provider === 'openai_compat' \? 'open-ai-compat' : c\.provider/);
   assert.match(app, /provider === 'offline'\) return model === 'offline-scripted'/);
+  assert.match(app, /provider === 'deepseek'\) return model === 'deepseek-v4-flash' \|\| model === 'deepseek-v4-pro'/);
   assert.match(app, /provider === 'open-ai-compat'\) return model === 'gpt-4\.1' \|\| model === 'gpt-4o'/);
+});
+
+test('Wry keeps scrolling available without rendering scrollbar chrome', () => {
+  const css = fs.readFileSync(path.join(uiDir, 'style.css'), 'utf8');
+  assert.match(css, /scrollbar-width:none!important/);
+  assert.match(css, /::-webkit-scrollbar\{width:0!important;height:0!important;display:none\}/);
+  assert.doesNotMatch(css, /scrollbar-width:(?:thin|auto)/);
+  assert.doesNotMatch(css, /::-webkit-scrollbar\{width:(?:[1-9]|\d{2,})/);
 });

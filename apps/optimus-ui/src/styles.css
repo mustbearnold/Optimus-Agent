@@ -63,6 +63,20 @@
   box-sizing: border-box;
 }
 
+/* Scrolling remains available to wheel, trackpad, keyboard, and assistive
+   technology users; scrollbar chrome is intentionally not part of the UI. */
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none;
+}
+
 html,
 body,
 #root {
@@ -460,8 +474,6 @@ code {
   flex: 1;
   padding: 4px 5px 12px;
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
 }
 
 .rail-section {
@@ -1911,8 +1923,6 @@ code {
   min-height: 0;
   flex: 1;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
 }
 
 .transcript-inner {
@@ -3682,6 +3692,71 @@ code {
   accent-color: var(--accent);
 }
 
+/* Key-based provider credentials. The key field is write-only: the host only
+   ever returns presence and a masked tail, never the stored key. */
+.settings-row.provider-key-row > .settings-row-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.provider-key-row .settings-row-text label {
+  font-size: 12px;
+}
+
+.provider-key-row .settings-row-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.settings-row.provider-key-row > .provider-key-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.provider-key-controls input {
+  width: 220px;
+  min-height: 29px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+}
+
+.provider-key-controls input:focus-visible {
+  border-color: var(--border-strong);
+  outline: none;
+}
+
+.provider-key-controls button {
+  min-height: 29px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.provider-key-controls button:disabled {
+  opacity: 0.6;
+}
+
+.provider-key-message {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.provider-key-message.is-error {
+  color: var(--warning);
+}
+
 .settings-callout {
   margin-top: 9px;
   color: var(--warning);
@@ -3844,10 +3919,9 @@ code {
 }
 
 @media (max-width: 959px) {
-  .optimus-app {
-    --rail-width: 52px !important;
-  }
-
+  /* The React layout state owns the rail width. A breakpoint may change the
+     available composition, but it must not make an open rail render as a
+     52px strip while its toggle still says "Close project rail". */
   .project-rail .rail-primary,
   .project-rail .rail-section-heading,
   .project-rail .project-heading button:first-child span,

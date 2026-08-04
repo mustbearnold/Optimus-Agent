@@ -10,7 +10,7 @@ module.exports = defineConfig({
   reporter: [['list']],
   outputDir: '../../local/tmp/electron-playwright-output',
   webServer: {
-    command: 'npm --prefix ../optimus-ui run preview -- --host 127.0.0.1 --port 4174',
+    command: 'bun run --cwd ../optimus-ui preview -- --host 127.0.0.1 --port 4174',
     url: 'http://127.0.0.1:4174',
     reuseExistingServer: true,
     timeout: 30_000,

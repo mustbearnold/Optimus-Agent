@@ -34,7 +34,7 @@ ui:
 # terminal frame across wide, normal, and narrow workbench sizes.
 tui-layout:
     cargo build -p optimus-cli
-    node scripts/tui_layout_playwright.cjs
+    bun scripts/tui_layout_playwright.cjs
 
 # Every tier. Managed land runs this with skips forbidden.
 verify:
@@ -78,7 +78,7 @@ workspace-repository-sync:
     @python3 scripts/workspace_layout.py sync
 
 # Create an assigned worktree that answers plain git and can land: branch,
-# per-worktree config, npm deps, and a readiness table.
+# per-worktree config, Bun workspace dependencies, and a readiness table.
 worktree-new name:
     @python3 scripts/managed_worktree_provision.py new {{quote(name)}}
 
@@ -167,6 +167,18 @@ test-changed:
 live:
     @bash scripts/verify.sh live
 
+# Build and exercise the real scoped self-development supervisor lifecycle.
+self-development:
+    cargo build --locked -p optimus-desktop --bin optimus-desktop
+    @python3 scripts/test_self_development.py
+
+# Build and exercise the real windowed Tauri child through the stable host.
+self-development-desktop:
+    bun run --cwd apps/optimus-ui build
+    cargo build --locked -p optimus-tauri --bin optimus-agent --features optimus-tauri/custom-protocol
+    cargo build --locked -p optimus-desktop --bin optimus-desktop
+    @python3 scripts/test_self_development.py --surface desktop
+
 # --- performance baseline (informational until ADR-0069 is accepted) ----------
 
 # Measure one or all perf scenarios offline (quick 5x2; pass a scenario id).
@@ -193,12 +205,12 @@ build:
 
 # Release build of the shipped binaries.
 build-release:
-    cargo build --release -p optimus-desktop -p optimus-cli
+    cargo build --release -p optimus-tauri -p optimus-desktop -p optimus-cli --features optimus-tauri/custom-protocol
 
 # Default desktop: React workbench over the Rust host.
 dev:
-    npm --prefix apps/optimus-ui run build
-    npm --prefix apps/optimus-electron run dev
+    bun run --cwd apps/optimus-ui build
+    bun run --cwd apps/optimus-electron dev
 
 # Rust host in browser-testable HTTP mode on :8787.
 serve:
@@ -291,12 +303,10 @@ install:
 
 # --- setup -------------------------------------------------------------------
 
-# Install npm dependencies for all JS surfaces.
-setup-npm:
-    npm --prefix apps/optimus-ui ci
-    npm --prefix apps/optimus-electron ci
-    npm --prefix apps/optimus-desktop ci
-    npm --prefix apps/optimus-desktop exec -- playwright install chromium
+# Install the Bun workspace and browser dependency from the frozen lockfile.
+setup-bun:
+    bun install --frozen-lockfile
+    bunx playwright install chromium
 
 # One-time setup for a fresh clone.
-setup: setup-npm
+setup: setup-bun

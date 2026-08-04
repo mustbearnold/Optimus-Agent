@@ -4,9 +4,7 @@
 //! rows go and what colour they are.
 
 use ratatui::prelude::*;
-use ratatui::widgets::{
-    Block, List, ListItem, ListState, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
-};
+use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph};
 
 mod composer;
 #[path = "view/sidebar.rs"]
@@ -81,7 +79,6 @@ pub fn draw(frame: &mut Frame, session: &TuiSession) {
         .map(|row| paint_with_hover(row, session.hovered_block))
         .collect();
     frame.render_widget(Paragraph::new(lines).scroll((offset, 0)), areas.transcript);
-    draw_scrollbar(frame, areas.transcript, rows.len(), height, offset as usize);
 
     let composer_title = session
         .workbench
@@ -505,28 +502,6 @@ fn draw_help(frame: &mut Frame, area: Rect, session: &TuiSession) {
         ));
     }
     frame.render_widget(Paragraph::new(Line::from(spans)), area);
-}
-
-/// The track on the transcript's right border.
-///
-/// Drawn only when there is something to scroll: a full-height thumb on a short
-/// transcript would suggest history that is not there.
-fn draw_scrollbar(frame: &mut Frame, block: Rect, rows: usize, height: usize, offset: usize) {
-    if rows <= height {
-        return;
-    }
-    let mut state = ScrollbarState::new(rows.saturating_sub(height)).position(offset);
-    frame.render_stateful_widget(
-        Scrollbar::new(ScrollbarOrientation::VerticalRight)
-            .begin_symbol(None)
-            .end_symbol(None)
-            .track_symbol(Some("│"))
-            .thumb_symbol("█"),
-        // The track runs through the flat viewport; the same rows
-        // `mouse::regions` hit-tests.
-        block,
-        &mut state,
-    );
 }
 
 /// Centred overlay. Drawn last so it sits above the transcript, and `Clear`ed
@@ -1043,7 +1018,19 @@ mod tests {
             ],
         );
         row.block = Some(id);
+        let plain = paint_with_hover(&row, None);
         let line = paint_with_hover(&row, Some(id));
+        let plain_text = plain
+            .spans
+            .iter()
+            .map(|span| span.content.as_ref())
+            .collect::<String>();
+        let hovered_text = line
+            .spans
+            .iter()
+            .map(|span| span.content.as_ref())
+            .collect::<String>();
+        assert_eq!(hovered_text, plain_text, "hover must not change row text");
         assert_eq!(line.spans[0].style.bg, Some(HOVER_BACKGROUND));
         assert_eq!(line.spans[1].style.bg, None);
         assert!(line
@@ -1372,91 +1359,6 @@ mod tests {
                 bottom,
                 composer - 1,
                 "the list must close on the row above the composer at {height}: {screen:?}"
-            );
-        }
-    }
-
-    /// The rightmost column of each row, which is where the track is drawn.
-    fn track_edge(screen: &[String], column: u16) -> Vec<char> {
-        screen
-            .iter()
-            .map(|row| row.chars().nth(usize::from(column)).unwrap_or(' '))
-            .collect()
-    }
-
-    #[test]
-    fn a_transcript_taller_than_the_pane_grows_a_scrollbar() {
-        let lines: Vec<(Role, &str)> = (0..30).map(|_| (Role::Assistant, "row")).collect();
-        let (_dir, session) = session_with(&lines);
-        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
-        let edge = track_edge(&render(&session, 40, 14), track.x);
-        assert!(edge.contains(&'█'), "no thumb was painted: {edge:?}");
-    }
-
-    #[test]
-    fn a_short_transcript_gets_no_scrollbar_at_all() {
-        let (_dir, session) = session_with(&[(Role::Assistant, "just one")]);
-        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
-        let edge = track_edge(&render(&session, 40, 14), track.x);
-        assert!(
-            !edge.contains(&'█'),
-            "a thumb would imply history that is not there: {edge:?}"
-        );
-    }
-
-    #[test]
-    fn the_flat_scrollbar_has_no_pane_corners_to_compete_with_content() {
-        let lines: Vec<(Role, &str)> = (0..30).map(|_| (Role::Assistant, "row")).collect();
-        let (_dir, session) = session_with(&lines);
-        let screen = render(&session, 40, 14);
-        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
-        let edge = track_edge(&screen, track.x);
-        assert_ne!(edge[0], '┐', "the context rail is flat: {}", screen[0]);
-        assert_ne!(edge[9], '┘', "the transcript is flat: {}", screen[9]);
-        assert!(
-            edge.contains(&'█'),
-            "the track still needs a visible thumb: {edge:?}"
-        );
-    }
-
-    #[test]
-    fn the_thumb_rides_up_the_track_as_the_transcript_scrolls_back() {
-        let lines: Vec<(Role, &str)> = (0..40).map(|_| (Role::Assistant, "row")).collect();
-        let (_dir, mut session) = session_with(&lines);
-        let track = mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
-        let at_tail = track_edge(&render(&session, 40, 14), track.x)
-            .iter()
-            .position(|c| *c == '█')
-            .expect("thumb at the tail");
-        session.scroll_back = 30;
-        let scrolled = track_edge(&render(&session, 40, 14), track.x)
-            .iter()
-            .position(|c| *c == '█')
-            .expect("thumb after scrolling");
-        assert!(
-            scrolled < at_tail,
-            "scrolling into history must move the thumb up: {scrolled} vs {at_tail}"
-        );
-    }
-
-    /// The renderer and the hit-test have to agree on where the track is, or a
-    /// drag moves a bar the user is not pointing at.
-    #[test]
-    fn the_painted_track_is_the_column_the_hit_test_reads() {
-        let lines: Vec<(Role, &str)> = (0..30).map(|_| (Role::Assistant, "row")).collect();
-        let (_dir, session) = session_with(&lines);
-        let screen = render(&session, 40, 14);
-        let track = crate::mouse::regions(Rect::new(0, 0, 40, 14), 3).track;
-        let painted: Vec<usize> = screen
-            .iter()
-            .enumerate()
-            .filter(|(_, row)| row.chars().nth(usize::from(track.x)) == Some('█'))
-            .map(|(y, _)| y)
-            .collect();
-        for y in painted {
-            assert!(
-                y >= usize::from(track.y) && y < usize::from(track.y + track.height),
-                "row {y} is painted outside the track {track:?}"
             );
         }
     }

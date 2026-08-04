@@ -418,7 +418,7 @@ def build_priority2_candidate_binding() -> dict[str, str]:
     records = {record["path"]: record["sha256"] for record in repository["files"]}
     authorities = {
         "contract_sha256": "crates/optimus-eval/src/evaluation.rs",
-        "tool_catalog_sha256": "crates/optimus-packs/src/lib.rs",
+        "tool_catalog_sha256": "crates/optimus-packs/src/catalog.rs",
         "route_policy_sha256": "crates/optimus-kernel/src/routing.rs",
     }
     missing = sorted(path for path in authorities.values() if path not in records)
@@ -620,6 +620,16 @@ def tool_operational_metadata(tool_id: str, policy: str, available: bool) -> dic
     elif tool_id == "terminal":
         timeout = {"status": "confirmed_current_behaviour", "seconds": 30, "source": "JobBudget::default"}
         approval = {"status": "required", "scope": "job", "policy": "SmartDeny"}
+    elif tool_id == "self_development":
+        # Not a per-call prompt: the tool is only exposed at all when a
+        # persisted Developer Full Access grant is active, which is a stronger
+        # and earlier gate than an in-turn approval.
+        timeout = {"status": "unknown_or_unresolved", "seconds": None}
+        approval = {
+            "status": "required",
+            "scope": "developer_full_access_grant",
+            "policy": "DeveloperAccessGrant",
+        }
     elif policy in {"network_read", "browser"}:
         timeout = {"status": "confirmed_current_behaviour", "seconds": 30, "note": "effector-specific upper bound"}
         approval = {"status": "not_required_current_policy"}
@@ -657,10 +667,10 @@ def tool_operational_metadata(tool_id: str, policy: str, available: bool) -> dic
 
 
 def parse_tool_catalog() -> dict[str, Any]:
-    path = ROOT / "crates/optimus-packs/src/lib.rs"
+    path = ROOT / "crates/optimus-packs/src/catalog.rs"
     text = path.read_text(encoding="utf-8")
     start = text.find("pub fn builtin_catalog")
-    end = text.find("pub struct CapabilitySession")
+    end = text.find("fn object_schema")
     if start < 0 or end < 0 or end <= start:
         raise MemoryError("cannot locate builtin_catalog boundaries")
     catalog = text[start:end]
@@ -753,7 +763,7 @@ def parse_tool_catalog() -> dict[str, Any]:
                 },
                 "schema_tokens": int(desc_match.group(2)),
                 "validated_by": source_test_hits(tool_id),
-                "source": "crates/optimus-packs/src/lib.rs",
+                "source": "crates/optimus-packs/src/catalog.rs",
                 **tool_operational_metadata(tool_id, policy, True),
             }
             tools.append(record)
@@ -779,7 +789,7 @@ def parse_tool_catalog() -> dict[str, Any]:
                 "output_schema": None,
                 "schema_tokens": 0,
                 "validated_by": source_test_hits(tool_id),
-                "source": "crates/optimus-packs/src/lib.rs",
+                "source": "crates/optimus-packs/src/catalog.rs",
                 **tool_operational_metadata(tool_id, policy, False),
             }
             tools.append(record)
@@ -801,7 +811,7 @@ def parse_tool_catalog() -> dict[str, Any]:
             )
     return {
         **generated_header(),
-        "canonical_source": "crates/optimus-packs/src/lib.rs",
+        "canonical_source": "crates/optimus-packs/src/catalog.rs",
         "canonical_type": "optimus_packs::ToolDesc",
         "packs": packs,
         "tools": sorted(tools, key=lambda item: item["id"]),

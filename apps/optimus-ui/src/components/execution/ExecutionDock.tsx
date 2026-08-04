@@ -22,7 +22,7 @@ export function ExecutionDock({
   onState: (approvals: Approval[], jobs: Job[]) => void;
 }) {
   const [tab, setTab] = useState<'terminal' | 'approvals' | 'jobs'>('terminal');
-  const [command, setCommand] = useState('npm --prefix apps/optimus-ui run test');
+  const [command, setCommand] = useState('bun run --cwd apps/optimus-ui test');
   const [terminal, setTerminal] = useState<TerminalResult | null>(null);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);

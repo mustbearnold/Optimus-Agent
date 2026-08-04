@@ -8,26 +8,25 @@ outcomes remain owned by `optimus-desktop --host-only`.
 
 ```bash
 cargo build -p optimus-desktop
-npm --prefix apps/optimus-ui install
-npm --prefix apps/optimus-electron install
+bun install --frozen-lockfile
 ```
 
 ## Development
 
 ```bash
 # Default: React Vite renderer plus the Rust host
-npm --prefix apps/optimus-electron run dev
+bun run --cwd apps/optimus-electron dev
 
 # Explicit rollback surface
-npm --prefix apps/optimus-electron run dev:legacy-html
+bun run --cwd apps/optimus-electron dev:legacy-html
 ```
 
 Production-like repository proof first builds relative assets and then launches
 Electron without a Vite URL:
 
 ```bash
-npm --prefix apps/optimus-ui run build
-npm --prefix apps/optimus-electron start
+bun run --cwd apps/optimus-ui build
+bun run --cwd apps/optimus-electron start
 ```
 
 This is not an installed-app or packaging command.
@@ -66,10 +65,10 @@ new windows. It is the user-facing preview, not the Rust agent Browser effector.
 ## Verification
 
 ```bash
-npm --prefix apps/optimus-ui run test
-npm --prefix apps/optimus-ui run build
-npm --prefix apps/optimus-electron run check
-xvfb-run -a npm --prefix apps/optimus-electron run test:e2e
+bun run --cwd apps/optimus-ui test
+bun run --cwd apps/optimus-ui build
+bun run --cwd apps/optimus-electron check
+xvfb-run -a bun run --cwd apps/optimus-electron test:e2e
 ```
 
 The Playwright project includes deterministic React browser contracts and a

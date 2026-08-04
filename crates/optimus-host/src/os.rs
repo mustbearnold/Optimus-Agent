@@ -22,6 +22,7 @@ pub(super) fn owns(method: &str) -> bool {
             | "project_root_stage_native"
             | "open_path"
             | "open_url"
+            | "startup_context"
     )
 }
 
@@ -40,6 +41,10 @@ pub(super) fn handle(
         | "window_set_outer_position" => {
             Ok(json!({ "ok": true, "mode": "http-stub", "x": 0, "y": 0 }))
         }
+        // The Tauri shell answers this from its supervised launch options and
+        // never reaches the host. Every other shell starts with no handoff, so
+        // the honest host answer is "no session was handed to me".
+        "startup_context" => Ok(json!({ "session_id": null, "handoff": false })),
         "pick_folder" => pick_folder(),
         "project_root_stage_native" => stage_native_project_root(home, params),
         "open_path" => open_path_in_os(params),

@@ -1,5 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Message, RunStatus } from '../../ipc/contracts';
+import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
 import { ActivityTimeline, type ApprovalDecisionHandler } from './ActivityTimeline';
 import { RichText } from './RichText';
@@ -54,14 +55,12 @@ export function Transcript({
   messages,
   status,
   statusText,
-  promptNavigationId,
   onStarter,
   onApprovalDecision,
 }: {
   messages: Message[];
   status: RunStatus;
   statusText: string;
-  promptNavigationId?: string | null;
   onStarter: (text: string) => void;
   onApprovalDecision?: ApprovalDecisionHandler;
 }) {
@@ -85,10 +84,17 @@ export function Transcript({
     return completeSentences?.at(-1)?.trim() || statusText;
   }, [messages, status, statusText]);
 
+  // Streaming changes `statusText` many times a second, and each change wrote
+  // `scrollTop` straight from an effect — a layout write landing in the middle of
+  // the frame the compositor was already scrolling. Batched into the frame's
+  // scroll lane it happens once per frame, after the reads.
   useEffect(() => {
-    const node = scroller.current;
-    if (!node || !following) return;
-    node.scrollTop = node.scrollHeight;
+    if (!following) return;
+    frameCoordinator.scheduleKeyed('scroll', 'transcript-follow', () => {
+      const node = scroller.current;
+      if (!node) return;
+      node.scrollTop = node.scrollHeight;
+    });
   }, [following, messages.length, statusText]);
 
   useLayoutEffect(() => {
@@ -98,28 +104,19 @@ export function Transcript({
     prependHeight.current = null;
   }, [visibleCount]);
 
-  useEffect(() => {
-    if (!promptNavigationId) return;
-    const targetIndex = messages.findIndex((message) => message.id === promptNavigationId);
-    if (targetIndex < 0) return;
-    if (targetIndex < messages.length - visibleCount) {
-      setVisibleCount(messages.length);
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => {
-      const target = Array.from(
-        scroller.current?.querySelectorAll<HTMLElement>('[data-message-id]') || []
-      ).find((element) => element.dataset.messageId === promptNavigationId);
-      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [messages.length, promptNavigationId, visibleCount]);
-
+  // `scroll` fires far more often than once a frame, and reading `scrollHeight`
+  // forces the browser to lay the whole transcript out before it can answer.
+  // Doing that per event — then setting state, which schedules the write above,
+  // which invalidates the layout the next event reads — is read/write thrash on
+  // the one interaction that has to stay at frame rate. One coalesced read per
+  // frame, and state is only touched when the answer actually changes.
   const onScroll = () => {
-    const node = scroller.current;
-    if (!node) return;
-    const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
-    setFollowing(distance < 72);
+    frameCoordinator.scheduleKeyed('layout-read', 'transcript-following', () => {
+      const node = scroller.current;
+      if (!node) return;
+      const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
+      setFollowing((current) => (current === distance < 72 ? current : distance < 72));
+    });
   };
 
   return (

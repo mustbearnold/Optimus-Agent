@@ -1,0 +1,24 @@
+{
+  "name": "optimus-agent-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "bun@1.3.14",
+  "workspaces": [
+    "apps/optimus-ui",
+    "apps/optimus-electron",
+    "apps/optimus-desktop",
+    "apps/optimus-tauri"
+  ],
+  "trustedDependencies": [
+    "electron"
+  ],
+  "scripts": {
+    "test:ui": "bun run --cwd apps/optimus-ui test",
+    "test:electron": "bun run --cwd apps/optimus-electron test",
+    "build:ui": "bun run --cwd apps/optimus-ui build",
+    "dev:tauri": "bun run --cwd apps/optimus-tauri dev",
+    "build:tauri": "bun run --cwd apps/optimus-tauri build",
+    "test:e2e": "bun run --cwd apps/optimus-desktop test:e2e",
+    "test:electron:e2e": "bun run --cwd apps/optimus-electron test:e2e"
+  }
+}

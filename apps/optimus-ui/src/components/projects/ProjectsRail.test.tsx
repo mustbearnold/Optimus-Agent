@@ -326,6 +326,78 @@ describe('ProjectsRail session actions', () => {
     expect(screen.getByRole('menuitem', { name: 'Unarchive session' })).toBeInTheDocument();
   });
 
+  it('stacks the rail as Pinned, then Projects, then Recent Chats', () => {
+    const { container } = render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[
+          { id: 'kept', title: 'Kept session', pinned: true },
+          { id: 'linked', title: 'Linked session' },
+          { id: 'loose', title: 'Loose session' },
+        ]}
+        projects={[{ id: 'project-1', name: 'Alpha', rootPaths: ['/alpha'] }]}
+        assignments={{ linked: 'project-1' }}
+        expanded={{ 'project-1': true }}
+        selectedSessionId="linked"
+        sessionIndicators={{}}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={vi.fn()}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+
+    const order = Array.from(container.querySelectorAll('.rail-section')).map((section) =>
+      section.getAttribute('data-testid')
+    );
+    expect(order).toEqual(['pinned-section', 'projects-section', 'recent-chats-section']);
+
+    // Pinning previously changed a flag and showed nothing anywhere.
+    expect(screen.getByTestId('pinned-section')).toHaveTextContent('Kept session');
+  });
+
+  it('tells a project-scoped rail where its chats went instead of claiming there are none', () => {
+    render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[{ id: 'linked', title: 'Linked session' }]}
+        projects={[{ id: 'project-1', name: 'Alpha', rootPaths: ['/alpha'] }]}
+        assignments={{ linked: 'project-1' }}
+        expanded={{ 'project-1': true }}
+        selectedSessionId="linked"
+        sessionIndicators={{}}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={vi.fn()}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+
+    // Scope the rail to the project; every in-scope chat then belongs to it, so
+    // Recent Chats is structurally empty and must not read as "you have none".
+    fireEvent.click(screen.getByRole('button', { name: 'All projects' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: /Alpha/ }));
+    expect(screen.getByTestId('recent-chats-section')).toHaveTextContent(
+      'Chats in Alpha are listed under Projects'
+    );
+  });
+
   it('renders Recent Chats separately from nested project sessions and accepts a drop', () => {
     const onAssign = vi.fn();
     const { container } = render(

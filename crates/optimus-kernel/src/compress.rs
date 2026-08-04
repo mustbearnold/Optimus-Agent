@@ -1,5 +1,6 @@
 //! Extractive context compression (no aux LLM).
 
+use crate::tool_pairing::drop_orphan_results;
 use crate::{Message, Role};
 
 pub const COMPRESSED_MARKER: &str = "[context_compressed";
@@ -83,6 +84,10 @@ pub fn compress_messages(messages: &mut Vec<Message>, cfg: &CompressionConfig) -
     if tail_start <= sys_end {
         return clamped;
     }
+    let tail_start = tail_start_on_group_boundary(messages, tail_start);
+    if tail_start <= sys_end {
+        return clamped;
+    }
 
     let mut middle: Vec<Message> = messages.drain(sys_end..tail_start).collect();
     if middle.is_empty() {
@@ -117,6 +122,7 @@ pub fn compress_messages(messages: &mut Vec<Message>, cfg: &CompressionConfig) -
             content: summary,
             tool_call_id: None,
             name: Some("context_compressor".into()),
+            reasoning_content: None,
         },
     );
     // After the summary, before the tail: the position it held relative to the
@@ -124,7 +130,38 @@ pub fn compress_messages(messages: &mut Vec<Message>, cfg: &CompressionConfig) -
     if let Some(request) = pinned {
         messages.insert(sys_end + 1, request);
     }
+    // The boundary above is chosen so this finds nothing. It runs anyway because
+    // an invalid transcript is not a degraded turn but a dead session — the
+    // history is saved, so every later turn replays it and is rejected again.
+    // Orphans only: compression must not answer a call that is parked on an
+    // approval the user has not given yet.
+    drop_orphan_results(messages);
     true
+}
+
+/// Move a positional tail boundary forward until it no longer splits a group.
+///
+/// The tail is the last `keep_tail` messages, counted from the end, which is a
+/// position and not a structure. Land it between an assistant message carrying
+/// `tool_calls` and the `tool` messages answering it, and compression summarises
+/// the parent while the tail keeps the orphans — a transcript every
+/// OpenAI-compatible provider rejects.
+///
+/// Forward rather than backward. Pulling the parent in instead would also drag
+/// in the sibling results that sit before the boundary, and each of those is
+/// bounded only by `max_tool_result_chars`, so the verbatim tail could outgrow
+/// the whole budget — the churn
+/// `the_verbatim_tail_alone_cannot_exceed_the_budget` exists to prevent. Moving
+/// forward only ever shrinks the tail, and dropping a result whose parent is
+/// already being dropped is the coherent half of that choice.
+///
+/// A parent that lands on the boundary needs no adjustment: its results follow
+/// it, so they are inside the tail already.
+fn tail_start_on_group_boundary(messages: &[Message], mut tail_start: usize) -> usize {
+    while tail_start < messages.len() && messages[tail_start].role == Role::Tool {
+        tail_start += 1;
+    }
+    tail_start
 }
 
 /// Whether this is a summary this module wrote, rather than something the user
@@ -211,6 +248,7 @@ mod tests {
             content: content.into(),
             tool_call_id: None,
             name: None,
+            reasoning_content: None,
         }
     }
 
@@ -405,6 +443,83 @@ mod tests {
             cfg.max_tool_result_chars,
             cfg.max_message_chars
         );
+    }
+
+    fn tool_call_group(ids: &[&str]) -> Vec<Message> {
+        let calls: Vec<_> = ids
+            .iter()
+            .map(|id| serde_json::json!({"id": id, "name": "terminal", "arguments": {}}))
+            .collect();
+        let mut group = vec![msg(
+            Role::Assistant,
+            &serde_json::to_string(&calls).unwrap(),
+        )];
+        group.extend(ids.iter().map(|id| Message {
+            role: Role::Tool,
+            content: format!("result {id} {}", "r".repeat(400)),
+            tool_call_id: Some((*id).into()),
+            name: Some("terminal".into()),
+            reasoning_content: None,
+        }));
+        group
+    }
+
+    #[test]
+    fn the_tail_never_begins_with_a_result_whose_call_was_summarised_away() {
+        // The live failure. The cut is positional, so it landed inside a tool
+        // group: the assistant message carrying `tool_calls` went into the
+        // summary and its `tool` results stayed in the tail. DeepSeek answered
+        // the next request `status code 400`, and because the transcript is
+        // saved, so did every request after it — the session was unusable.
+        let mut m = vec![msg(Role::System, "SYS"), msg(Role::User, "THE ASK")];
+        for _ in 0..12 {
+            m.extend(tool_call_group(&["a", "b", "c"]));
+        }
+        let cfg = CompressionConfig {
+            enabled: true,
+            max_message_chars: 500,
+            // Lands mid-group: a group is 4 messages, so a 6-message tail cuts
+            // one in half whatever the history length.
+            keep_tail_messages: 6,
+            snippet_chars: 40,
+            max_tool_result_chars: 20_000,
+        };
+        assert!(compress_messages(&mut m, &cfg));
+
+        assert!(
+            crate::tool_pairing::is_well_paired(&m),
+            "compression must not leave a transcript a provider will reject"
+        );
+        assert!(
+            m[1].content.contains(COMPRESSED_MARKER),
+            "the summary must still be written"
+        );
+    }
+
+    #[test]
+    fn every_tail_size_leaves_a_transcript_a_provider_accepts() {
+        // The boundary is a position and the group is a structure, so which
+        // sizes collide is arithmetic. Checking one is checking the arithmetic
+        // that happened to be used; the invariant is that none of them can.
+        for keep_tail in 1..=12 {
+            let mut m = vec![msg(Role::System, "SYS"), msg(Role::User, "THE ASK")];
+            for _ in 0..10 {
+                m.extend(tool_call_group(&["a", "b"]));
+                m.push(msg(Role::Assistant, &format!("prose {}", "p".repeat(200))));
+            }
+            let cfg = CompressionConfig {
+                enabled: true,
+                max_message_chars: 500,
+                keep_tail_messages: keep_tail,
+                snippet_chars: 40,
+                max_tool_result_chars: 20_000,
+            };
+            compress_messages(&mut m, &cfg);
+            assert!(
+                crate::tool_pairing::is_well_paired(&m),
+                "keep_tail_messages = {keep_tail} produced an invalid transcript"
+            );
+        }
     }
 
     #[test]

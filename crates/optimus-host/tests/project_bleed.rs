@@ -154,10 +154,12 @@ fn n_projects_in_one_core_zero_bleed() {
                         "contents": format!("bleed-proof-{index}"),
                     }),
                 }],
+                reasoning_content: None,
             },
             CompletionResponse {
                 text: Some("written".into()),
                 tool_calls: vec![],
+                reasoning_content: None,
             },
         ]);
         kernel

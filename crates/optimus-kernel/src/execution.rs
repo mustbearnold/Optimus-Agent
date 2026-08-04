@@ -943,6 +943,7 @@ mod tests {
                 &CompletionResponse {
                     text: Some("answer".into()),
                     tool_calls: vec![],
+                    reasoning_content: None,
                 },
                 17,
                 Some(&usage),

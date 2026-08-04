@@ -16,6 +16,7 @@ fn browser_navigate_example_com() {
                 name: "activate_pack".into(),
                 arguments: json!({"name": "browser"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: None,
@@ -24,10 +25,12 @@ fn browser_navigate_example_com() {
                 name: "browser_navigate".into(),
                 arguments: json!({"url": "https://example.com/"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("saw example".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     // Chunk streaming not needed

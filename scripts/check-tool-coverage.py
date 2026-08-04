@@ -30,12 +30,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INVOCATION_RS = ROOT / "crates" / "optimus-packs" / "src" / "invocation.rs"
-PACKS_LIB_RS = ROOT / "crates" / "optimus-packs" / "src" / "lib.rs"
+PACKS_CATALOG_RS = ROOT / "crates" / "optimus-packs" / "src" / "catalog.rs"
 COVERAGE_RS = ROOT / "crates" / "optimus-kernel" / "tests" / "tool_coverage.rs"
 
 # Dispatchable tools are meant to grow. The pin makes each arrival an explicit
 # act — move it together with the coverage ledger, in the same commit.
-PINNED_DISPATCHABLE = 18
+PINNED_DISPATCHABLE = 19
 
 # The declared scaffolds that remain. This set may only shrink — do NOT add
 # entries. ADR-0068 §1 holds that a catalog row exists only when its tool
@@ -130,7 +130,7 @@ def evaluate(
 
 def main() -> int:
     dispatchable = parse_dispatchable(INVOCATION_RS.read_text())
-    unavailable = parse_unavailable(PACKS_LIB_RS.read_text())
+    unavailable = parse_unavailable(PACKS_CATALOG_RS.read_text())
     coverage_source = COVERAGE_RS.read_text() if COVERAGE_RS.exists() else ""
     exercised = parse_ledger(coverage_source, "DISPATCHABLE_EXERCISED")
     refused = parse_ledger(coverage_source, "UNAVAILABLE_REFUSED")

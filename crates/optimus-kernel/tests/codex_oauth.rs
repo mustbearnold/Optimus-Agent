@@ -246,6 +246,7 @@ fn codex_responses_http_roundtrip() {
                 content: "hi".into(),
                 tool_call_id: None,
                 name: None,
+                reasoning_content: None,
             }],
             tools: vec![CapabilitySession::with_defaults()
                 .resolve_loaded_tool("read_file")
@@ -276,6 +277,7 @@ fn codex_streaming_records_completed_usage() {
                     content: "hi".into(),
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: None,
                 }],
                 tools: vec![],
                 ..Default::default()
@@ -321,6 +323,7 @@ fn production_streaming_rejects_malformed_completed_tool_call() {
                     content: "hi".into(),
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: None,
                 }],
                 tools: vec![],
                 ..Default::default()
@@ -367,6 +370,7 @@ fn production_streaming_validates_completed_output_after_item_call() {
                     content: "hi".into(),
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: None,
                 }],
                 tools: vec![],
                 ..Default::default()
@@ -397,6 +401,7 @@ fn production_streaming_rejects_no_space_malformed_and_empty_sse() {
                         content: "hi".into(),
                         tool_call_id: None,
                         name: None,
+                        reasoning_content: None,
                     }],
                     tools: vec![],
                     ..Default::default()
@@ -429,6 +434,7 @@ fn responses_mapper_unit() {
                 content: "x".into(),
                 tool_call_id: None,
                 name: None,
+                reasoning_content: None,
             }],
             tools: vec![],
             ..Default::default()

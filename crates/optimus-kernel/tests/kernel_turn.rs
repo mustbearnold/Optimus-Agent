@@ -77,10 +77,12 @@ fn tool_stream_events_keep_runtime_identity_and_validated_outcome() {
                 name: "memory_recall".into(),
                 arguments: json!({"subject":"user","predicate":"editor"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("You prefer helix.".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     let mut events = Vec::new();
@@ -135,6 +137,7 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
             name: "write_file".into(),
             arguments: json!({"path":"src/proof.txt","contents":"safe"}),
         }],
+        reasoning_content: None,
     }]);
     let mut events = Vec::new();
 
@@ -323,6 +326,7 @@ fn project_write_emits_exact_approval_lifecycle_before_any_effect() {
     let mut answer = ScriptedModel::new(vec![CompletionResponse {
         text: Some("Wrote src/proof.txt.".into()),
         tool_calls: Vec::new(),
+        reasoning_content: None,
     }]);
     let resumed = kernel.resume_pending_turn(&mut answer).unwrap();
     assert_eq!(resumed.assistant_text, "Wrote src/proof.txt.");
@@ -392,6 +396,7 @@ fn an_approved_action_is_timed_from_settlement_not_from_the_card_appearing() {
             name: "write_file".into(),
             arguments: json!({"path":"timed.txt","contents":"ok"}),
         }],
+        reasoning_content: None,
     }]);
     let mut events = Vec::new();
     assert!(kernel
@@ -453,6 +458,7 @@ fn project_write_denial_never_executes_and_settles_cancelled_once() {
             name: "write_file".into(),
             arguments: json!({"path":"denied.txt","contents":"must-not-exist"}),
         }],
+        reasoning_content: None,
     }]);
     let mut events = Vec::new();
     assert!(matches!(
@@ -538,6 +544,7 @@ fn project_write_denial_never_executes_and_settles_cancelled_once() {
     let mut answer = ScriptedModel::new(vec![CompletionResponse {
         text: Some("Understood, I will not write that file.".into()),
         tool_calls: Vec::new(),
+        reasoning_content: None,
     }]);
     let resumed = kernel.resume_pending_turn(&mut answer).unwrap();
     assert_eq!(
@@ -638,6 +645,7 @@ fn successful_turn_returns_exact_persisted_root_trace() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("pong".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
 
     let result = kernel.turn(&mut model, "ping").unwrap();
@@ -665,10 +673,12 @@ fn turn_recalls_memory_then_answers() {
                 name: "memory_recall".into(),
                 arguments: json!({"subject":"user","predicate":"prefers_editor"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("You prefer helix.".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -705,10 +715,12 @@ fn activate_pack_increases_tools_and_tokens() {
                 name: "activate_pack".into(),
                 arguments: json!({"name":"browser"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("browser ready".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -765,10 +777,12 @@ fn activate_pack_schema_budget_returns_typed_tool_outcome_not_turn_abort() {
                 name: "activate_pack".into(),
                 arguments: json!({"name": "browser"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("stayed on core after budget deny".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -817,10 +831,12 @@ fn activate_pack_on_demand_limit_returns_typed_tool_outcome_not_turn_abort() {
                 name: "activate_pack".into(),
                 arguments: json!({"name": "browser"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("stayed on core after pack limit".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -857,6 +873,7 @@ fn desktop_pack_lists_workspace_without_terminal() {
                 name: "activate_pack".into(),
                 arguments: json!({"name":"desktop"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: None,
@@ -865,10 +882,12 @@ fn desktop_pack_lists_workspace_without_terminal() {
                 name: "read_file".into(),
                 arguments: json!({"path":"alpha.txt"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("alpha-content".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -891,6 +910,7 @@ fn model_context_includes_host_provided_current_utc_date() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: Some("ok".into()),
         tool_calls: vec![],
+        reasoning_content: None,
     }]);
 
     kernel.turn(&mut model, "what is current?").unwrap();
@@ -920,10 +940,12 @@ fn skill_resolve_returns_body() {
                 name: "skill_resolve".into(),
                 arguments: json!({"name":"win-temp"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("Use Local/Temp.".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -954,10 +976,12 @@ fn write_file_tool_uses_durable_job() {
                 name: "write_file".into(),
                 arguments: json!({"path":"note.txt","contents":"hi\n"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("wrote note".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     k.turn(&mut model, "write a note").unwrap();
@@ -995,10 +1019,12 @@ fn valid_tool_execution_error_becomes_canonical_failed_outcome() {
                 name: "read_file".into(),
                 arguments: json!({"path":"missing.txt"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("file unavailable".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -1031,6 +1057,7 @@ fn max_steps_trips() {
                 name: "memory_recall".into(),
                 arguments: json!({}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: None,
@@ -1039,10 +1066,12 @@ fn max_steps_trips() {
                 name: "memory_recall".into(),
                 arguments: json!({}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("never".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     let mut events = Vec::new();
@@ -1081,10 +1110,12 @@ fn tool_call_execution_budget_suppresses_overflow_and_forces_synthesis() {
                     arguments: json!({"name":"browser"}),
                 },
             ],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("Browser tools are ready.".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     let mut events = Vec::new();
@@ -1127,6 +1158,7 @@ fn hard_tool_call_ceiling_rejects_before_dispatch() {
     let mut model = ScriptedModel::new(vec![CompletionResponse {
         text: None,
         tool_calls: calls,
+        reasoning_content: None,
     }]);
 
     let error = kernel.turn(&mut model, "too many calls").unwrap_err();
@@ -1153,6 +1185,7 @@ fn repeated_read_only_evidence_call_is_suppressed_and_forces_timed_synthesis() {
                 name: "memory_recall".into(),
                 arguments: json!({"subject":"user","predicate":"editor"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: None,
@@ -1161,10 +1194,12 @@ fn repeated_read_only_evidence_call_is_suppressed_and_forces_timed_synthesis() {
                 name: "memory_recall".into(),
                 arguments: json!({"predicate":"editor","subject":"user"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("No matching preference was found.".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     let mut events = Vec::new();
@@ -1238,6 +1273,7 @@ fn terminal_tool_requires_approval_before_process_effect() {
             name: "terminal".into(),
             arguments: json!({"program":"cmd","args":["/C",command]}),
         }],
+        reasoning_content: None,
     }]);
     let error = k.turn(&mut model, "run a command").unwrap_err();
     assert!(
@@ -1264,6 +1300,7 @@ fn browser_tools_http_effector_when_pack_active() {
                 name: "activate_pack".into(),
                 arguments: json!({"name":"browser"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: None,
@@ -1272,10 +1309,12 @@ fn browser_tools_http_effector_when_pack_active() {
                 name: "browser_navigate".into(),
                 arguments: json!({"url":"https://example.com"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("browser page noted".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     model.stream_chunks = false;
@@ -1305,6 +1344,7 @@ fn same_response_activation_cannot_authorize_unadvertised_sibling_call() {
                 arguments: json!({"url":"https://example.com"}),
             },
         ],
+        reasoning_content: None,
     }]);
     assert!(matches!(
         k.turn(&mut model, "activate and browse in one response")
@@ -1326,6 +1366,7 @@ fn unknown_tool_fails_closed() {
             name: "does_not_exist".into(),
             arguments: json!({}),
         }],
+        reasoning_content: None,
     }]);
     assert!(matches!(
         k.turn(&mut model, "call an unknown tool").unwrap_err(),
@@ -1344,6 +1385,7 @@ fn known_but_unloaded_tool_fails_closed_before_effect() {
             name: "browser_navigate".into(),
             arguments: json!({"url":"https://example.com"}),
         }],
+        reasoning_content: None,
     }]);
     assert!(matches!(
         k.turn(&mut model, "bypass pack activation").unwrap_err(),
@@ -1365,6 +1407,7 @@ fn deactivated_tool_fails_closed_before_effect() {
             name: "browser_navigate".into(),
             arguments: json!({"url":"https://example.com"}),
         }],
+        reasoning_content: None,
     }]);
     assert!(matches!(
         k.turn(&mut model, "use a deactivated tool").unwrap_err(),
@@ -1395,6 +1438,7 @@ fn descriptorless_legacy_aliases_cannot_invoke_effects() {
                 name: name.into(),
                 arguments,
             }],
+            reasoning_content: None,
         }]);
         assert!(matches!(
             k.turn(&mut model, "invoke an undeclared alias").unwrap_err(),
@@ -1426,6 +1470,7 @@ fn call_identity_batch_prevalidation_blocks_all_effects() {
                     arguments: json!({"subject":"user"}),
                 },
             ],
+            reasoning_content: None,
         }]);
         assert!(matches!(
             k.turn(&mut model, "send an invalid sibling call").unwrap_err(),
@@ -1448,6 +1493,7 @@ fn canonical_schema_rejects_extra_runtime_arguments() {
             name: "read_file".into(),
             arguments: json!({"path":"safe.txt","escape":true}),
         }],
+        reasoning_content: None,
     }]);
     assert!(matches!(
         k.turn(&mut model, "send invalid arguments").unwrap_err(),
@@ -1475,6 +1521,7 @@ fn read_file_uses_workspace_sandbox_and_denies_secrets() {
                 name: "read_file".into(),
                 arguments: json!({"path":path}),
             }],
+            reasoning_content: None,
         }]);
         assert!(matches!(
             k.turn(&mut model, "read a denied path").unwrap_err(),
@@ -1518,10 +1565,12 @@ fn standard_profile_threads_through_the_turn_and_writes_without_a_pause() {
                 name: "write_file".into(),
                 arguments: json!({"path":"src/standard.txt","contents":"auto-approved"}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("written".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -1562,6 +1611,7 @@ fn the_core_pack_can_search_find_and_list_without_a_terminal() {
             name: name.into(),
             arguments,
         }],
+        reasoning_content: None,
     };
     let mut model = ScriptedModel::new(vec![
         call("s1", "search_content", json!({"pattern": "needle"})),
@@ -1570,6 +1620,7 @@ fn the_core_pack_can_search_find_and_list_without_a_terminal() {
         CompletionResponse {
             text: Some("found it".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
 
@@ -1622,10 +1673,12 @@ fn read_file_can_return_one_slice_instead_of_the_whole_file() {
                 name: "read_file".into(),
                 arguments: json!({"path": "long.txt", "offset": 100, "limit": 3}),
             }],
+            reasoning_content: None,
         },
         CompletionResponse {
             text: Some("read".into()),
             tool_calls: vec![],
+            reasoning_content: None,
         },
     ]);
     kernel.turn(&mut model, "read the middle").unwrap();

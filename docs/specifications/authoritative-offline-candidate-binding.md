@@ -44,7 +44,7 @@ the current source tree, and its output works directly with `optimus eval report
 ## Scope
 
 - Derive `contract_sha256` from canonical `evaluation.rs` source bytes.
-- Derive `tool_catalog_sha256` from canonical `optimus-packs/src/lib.rs` bytes.
+- Derive `tool_catalog_sha256` from canonical `optimus-packs/src/catalog.rs` bytes.
 - Derive `route_policy_sha256` from canonical `routing.rs` bytes.
 - Fix provider/model to `offline` / `offline-scripted` for this executor.
 - Accept only an explicit valid source-tree SHA-256 in the public constructor.

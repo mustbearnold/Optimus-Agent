@@ -1,22 +1,19 @@
 //! OpenAI Codex OAuth: token store, refresh, device login, Responses API provider.
 
-use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-
-use fs2::FileExt;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-
 use crate::codex_responses::from_codex_responses_response;
 use crate::{
     atomic_write_user_only, completion_usage_from_value, CancellationToken, CompletionRequest,
     CompletionResponse, CompletionUsage, CredentialProtector, KernelError, ModelProvider, Result,
     Role, SystemCredentialProtector, ToolCall, ToolSchema,
 };
-
+use fs2::FileExt;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::fs::{self, File, OpenOptions};
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 pub const CODEX_OAUTH_CLIENT_ID: &str = "app_EMoamEEZ73f0CkXaXp7hrann";
 pub const CODEX_OAUTH_TOKEN_URL: &str = "https://auth.openai.com/oauth/token";
 pub const CODEX_OAUTH_ISSUER: &str = "https://auth.openai.com";
@@ -24,7 +21,6 @@ pub const DEFAULT_CODEX_BASE_URL: &str = "https://chatgpt.com/backend-api/codex"
 const REFRESH_SKEW_SECS: u64 = 120;
 pub(crate) const USER_AGENT: &str = "codex_cli_rs/0.0.0 (Optimus Agent)";
 const ORIGINATOR: &str = "codex_cli_rs";
-
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CodexTokens {
     pub access_token: String,
@@ -34,7 +30,6 @@ pub struct CodexTokens {
     #[serde(default)]
     pub id_token: Option<String>,
 }
-
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct AuthFile {
     version: u32,
@@ -754,6 +749,7 @@ impl ModelProvider for CodexOAuthModel {
                 Some(text_buf)
             },
             tool_calls,
+            reasoning_content: None,
         })
     }
 }
@@ -910,7 +906,11 @@ pub fn to_codex_responses_request(request: &CompletionRequest, model: &str) -> V
         body["tools"] = Value::Array(tools);
         body["tool_choice"] = json!("auto");
     }
-    if let Some(effort) = request.reasoning_effort.as_deref() {
+    if let Some(effort) = request
+        .reasoning_effort
+        .as_deref()
+        .filter(|effort| !matches!(*effort, "off" | "none" | "false" | "0"))
+    {
         // ChatGPT Codex OAuth accepts nested reasoning.effort only.
         body["reasoning"] = json!({ "effort": effort });
     }
@@ -1176,12 +1176,14 @@ mod tests {
                     content: "sys".into(),
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: None,
                 },
                 Message {
                     role: Role::User,
                     content: "hi".into(),
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: None,
                 },
             ],
             tools: vec![CapabilitySession::with_defaults()

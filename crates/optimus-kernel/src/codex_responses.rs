@@ -99,6 +99,7 @@ pub fn from_codex_responses_sse(stream: &str) -> Result<CompletionResponse> {
             Some(text_buf)
         },
         tool_calls,
+        reasoning_content: None,
     })
 }
 
@@ -179,5 +180,9 @@ pub fn from_codex_responses_response(value: &Value) -> Result<CompletionResponse
             "Codex responses: empty text and no tool_calls".into(),
         ));
     }
-    Ok(CompletionResponse { text, tool_calls })
+    Ok(CompletionResponse {
+        text,
+        tool_calls,
+        reasoning_content: None,
+    })
 }

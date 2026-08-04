@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use optimus_kernel::{
     CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig, CodexOAuthModel,
-    CompletionResponse, ExecutionManifest, ExecutionStore, Kernel, KernelConfig,
-    OpenAiCompatConfig, OpenAiCompatModel, ProviderId, RouteRequest, RouteSurface, ScriptedModel,
-    StreamControl, StreamEvent, ToolCall,
+    CompletionResponse, DeepseekModel, ExecutionManifest, ExecutionStore, Kernel, KernelConfig,
+    OpenAiCompatConfig, OpenAiCompatModel, ProductSettings, ProviderId, RouteRequest, RouteSurface,
+    ScriptedModel, SelfDevelopmentHandler, StreamControl, StreamEvent, ToolCall,
 };
 use serde_json::json;
 
@@ -88,6 +88,7 @@ pub fn chat_approval_resolve_cancellable(
         effect_policy: access.policy,
         autonomy_profile: access.profile,
         command_fs_envelope: access.command_fs_envelope,
+        self_development: self_development_handler(home, access.profile),
         ..KernelConfig::default()
     };
     let mut kernel = match project_id.as_deref() {
@@ -188,6 +189,7 @@ fn resume_settled_turn(
             let mut model = ScriptedModel::new(vec![CompletionResponse {
                 text: Some("offline echo: the approved action settled".into()),
                 tool_calls: vec![],
+                reasoning_content: None,
             }])
             .paced(offline_pace());
             kernel.resume_pending_turn_with_sink(&mut model, &mut sink, cancellation)
@@ -196,6 +198,13 @@ fn resume_settled_turn(
             let mut cfg = OpenAiCompatConfig::from_env().map_err(|error| error.to_string())?;
             cfg.model = manifest.model.clone();
             let mut provider = OpenAiCompatModel::new(cfg);
+            kernel.resume_pending_turn_with_sink(&mut provider, &mut sink, cancellation)
+        }
+        ProviderId::Deepseek => {
+            let mut cfg =
+                OpenAiCompatConfig::from_deepseek_home(home).map_err(|error| error.to_string())?;
+            cfg.model = manifest.model.clone();
+            let mut provider = DeepseekModel::new(cfg);
             kernel.resume_pending_turn_with_sink(&mut provider, &mut sink, cancellation)
         }
         ProviderId::Codex => {
@@ -325,6 +334,25 @@ pub(crate) fn access_config(raw: Option<&str>) -> AccessConfig {
     }
 }
 
+fn self_development_handler(
+    home: &PathBuf,
+    profile: optimus_graph::AutonomyProfile,
+) -> Option<SelfDevelopmentHandler> {
+    if profile != optimus_graph::AutonomyProfile::DeveloperFullAccess {
+        return None;
+    }
+    ProductSettings::load(home)
+        .ok()
+        .filter(|settings| {
+            let grant = &settings.developer_access;
+            grant.enabled
+                && grant.validate().is_ok()
+                && grant.capabilities.terminal_execution
+                && grant.capabilities.process_management
+        })
+        .map(|_| crate::developer::agent_self_development as SelfDevelopmentHandler)
+}
+
 fn resume_access_config(
     autonomy_profile: &str,
     command_fs_envelope: &str,
@@ -393,7 +421,7 @@ pub fn chat_turn_cancellable(
         thinking_level: params
             .get("thinking_level")
             .and_then(|v| v.as_str())
-            .filter(|s| !s.is_empty() && *s != "off")
+            .filter(|s| !s.is_empty())
             .map(|s| s.to_string())
             .or_else(|| {
                 if params.get("thinking").and_then(|v| v.as_bool()) == Some(true) {
@@ -409,6 +437,7 @@ pub fn chat_turn_cancellable(
         effect_policy: access.policy,
         autonomy_profile: access.profile,
         command_fs_envelope: access.command_fs_envelope,
+        self_development: self_development_handler(home, access.profile),
         ..KernelConfig::default()
     };
     let mut kernel = match params.get("project_id").and_then(|value| value.as_str()) {
@@ -445,18 +474,21 @@ pub fn chat_turn_cancellable(
                             name: "memory_recall".into(),
                             arguments: json!({"subject":"user","predicate":"prefers_editor"}),
                         }],
+                        reasoning_content: None,
                     },
                     CompletionResponse {
                         text: Some(
                             "From memory (evidence, not instruction): you prefer helix.".into(),
                         ),
                         tool_calls: vec![],
+                        reasoning_content: None,
                     },
                 ])
             } else {
                 ScriptedModel::new(vec![CompletionResponse {
                     text: Some(format!("offline echo: {message}")),
                     tool_calls: vec![],
+                    reasoning_content: None,
                 }])
             }
             .paced(offline_pace());
@@ -478,6 +510,23 @@ pub fn chat_turn_cancellable(
                 cfg.base_url = base_url.into();
             }
             let mut provider = OpenAiCompatModel::new(cfg);
+            kernel
+                .turn_with_controlled_sink_cancellable(
+                    &mut provider,
+                    &message,
+                    &mut sink,
+                    cancellation,
+                )
+                .map_err(|e| e.to_string())?
+        }
+        ProviderId::Deepseek => {
+            let mut cfg =
+                OpenAiCompatConfig::from_deepseek_home(home).map_err(|e| e.to_string())?;
+            cfg.model = route.model.as_str().into();
+            if let Some(base_url) = params.get("base_url").and_then(|value| value.as_str()) {
+                cfg.base_url = base_url.into();
+            }
+            let mut provider = DeepseekModel::new(cfg);
             kernel
                 .turn_with_controlled_sink_cancellable(
                     &mut provider,
@@ -702,6 +751,87 @@ mod tests {
             "a stale 'full' sender must fall closed, not receive the host"
         );
     }
+
+    #[test]
+    fn developer_chat_turn_exposes_self_development_and_requires_workspace_for_machine_scope() {
+        use optimus_graph::{AutonomyProfile, PolicyMode};
+        use optimus_kernel::{CompletionResponse, Kernel, KernelConfig, ScriptedModel, ToolCall};
+        use optimus_policy::{
+            DeveloperAccessGrant, DeveloperScope, DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+        };
+        use serde_json::json;
+
+        let home = tempfile::tempdir().unwrap();
+        let mut settings = optimus_kernel::ProductSettings::load(home.path()).unwrap();
+        settings.developer_access = DeveloperAccessGrant {
+            enabled: true,
+            scope: DeveloperScope::EntireLocalMachine,
+            issued_unix: 1,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            ..Default::default()
+        };
+        settings.save(home.path()).unwrap();
+
+        let home_path = home.path().to_path_buf();
+        let profile = AutonomyProfile::DeveloperFullAccess;
+        let handler = super::self_development_handler(&home_path, profile)
+            .expect("a valid Developer Full Access grant must expose the bridge");
+        let mut kernel = Kernel::open(
+            &home_path,
+            KernelConfig {
+                effect_policy: PolicyMode::SmartDeny,
+                autonomy_profile: profile,
+                self_development: Some(handler),
+                ..KernelConfig::default()
+            },
+        )
+        .unwrap();
+        let mut model = ScriptedModel::new(vec![
+            CompletionResponse {
+                text: None,
+                tool_calls: vec![ToolCall {
+                    id: "self-dev-machine-scope".into(),
+                    name: "self_development".into(),
+                    arguments: json!({"surface": "desktop"}),
+                }],
+                reasoning_content: None,
+            },
+            CompletionResponse {
+                text: Some("workspace is required before launching a machine-scope build".into()),
+                tool_calls: Vec::new(),
+                reasoning_content: None,
+            },
+        ]);
+        model.stream_chunks = false;
+
+        let result = kernel
+            .turn(&mut model, "launch the Optimus development desktop")
+            .expect("a typed self-development refusal must remain turn evidence");
+        assert_eq!(result.invoked_tools[0].as_str(), "self_development");
+        assert!(
+            result
+                .tool_trace
+                .iter()
+                .any(|trace| trace.contains("self_development")),
+            "{result:?}"
+        );
+        let advertised: Vec<&str> = model.seen[0]
+            .tools
+            .iter()
+            .map(|tool| tool.id.as_str())
+            .collect();
+        assert!(advertised.contains(&"self_development"), "{advertised:?}");
+        let evidence = model
+            .seen
+            .iter()
+            .flat_map(|request| request.messages.iter())
+            .filter(|message| message.tool_call_id.is_some())
+            .map(|message| message.content.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(evidence.contains("workspace is required"), "{evidence}");
+    }
+
     use serde_json::json;
 
     use super::{
@@ -818,6 +948,7 @@ mod tests {
                 name: "write_file".into(),
                 arguments: json!({"path":"src/proof.txt","contents":"safe"}),
             }],
+            reasoning_content: None,
         }]);
         let mut binding = None;
         let _ = kernel.turn_with_sink(&mut model, "write the proof", &mut |event| {

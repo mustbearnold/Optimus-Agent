@@ -34,10 +34,22 @@ const METHOD_DOMAINS: &[(&str, Domain, Option<ScopePolicy>)] = &[
     ("window_outer_position", Domain::Os, None),
     ("window_set_outer_position", Domain::Os, None),
     ("pick_folder", Domain::Os, None),
+    ("startup_context", Domain::Os, Some(ScopePolicy::Host)),
     ("project_root_stage_native", Domain::Os, None),
     ("auth_status", Domain::System, None),
     ("auth_import_hermes", Domain::System, None),
     ("auth_import_cli", Domain::System, None),
+    (
+        "provider_keys_status",
+        Domain::System,
+        Some(ScopePolicy::Host),
+    ),
+    ("provider_key_set", Domain::System, Some(ScopePolicy::Host)),
+    (
+        "provider_key_clear",
+        Domain::System,
+        Some(ScopePolicy::Host),
+    ),
     ("settings_get", Domain::System, None),
     ("settings_set", Domain::System, None),
     (
@@ -62,6 +74,11 @@ const METHOD_DOMAINS: &[(&str, Domain, Option<ScopePolicy>)] = &[
     ),
     (
         "developer_supervisor_launch",
+        Domain::Developer,
+        Some(ScopePolicy::Host),
+    ),
+    (
+        "developer_supervisor_build_launch",
         Domain::Developer,
         Some(ScopePolicy::Host),
     ),
@@ -232,10 +249,22 @@ mod tests {
         ("window_outer_position", Domain::Os, None),
         ("window_set_outer_position", Domain::Os, None),
         ("pick_folder", Domain::Os, None),
+        ("startup_context", Domain::Os, Some(ScopePolicy::Host)),
         ("project_root_stage_native", Domain::Os, None),
         ("auth_status", Domain::System, None),
         ("auth_import_hermes", Domain::System, None),
         ("auth_import_cli", Domain::System, None),
+        (
+            "provider_keys_status",
+            Domain::System,
+            Some(ScopePolicy::Host),
+        ),
+        ("provider_key_set", Domain::System, Some(ScopePolicy::Host)),
+        (
+            "provider_key_clear",
+            Domain::System,
+            Some(ScopePolicy::Host),
+        ),
         ("settings_get", Domain::System, None),
         ("settings_set", Domain::System, None),
         (
@@ -260,6 +289,11 @@ mod tests {
         ),
         (
             "developer_supervisor_launch",
+            Domain::Developer,
+            Some(ScopePolicy::Host),
+        ),
+        (
+            "developer_supervisor_build_launch",
             Domain::Developer,
             Some(ScopePolicy::Host),
         ),

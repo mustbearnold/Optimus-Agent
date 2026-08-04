@@ -171,13 +171,28 @@ impl Kernel {
                 normalize_thinking_level(self.config.thinking_level.as_deref()),
                 self.config.fast_mode,
             );
+            let thinking_effort = effort.clone();
             let mut request_messages = self.messages.clone();
+            // Last line of defence before the wire. Compression and session load
+            // both keep the durable transcript paired, but a provider rejects an
+            // unpaired one outright — DeepSeek with a bare `status code 400` that
+            // names no message — and the rejection repeats on every later turn.
+            // Repairing the outgoing copy costs one pass and cannot strand a
+            // session, so no route into this function can produce that failure.
+            if !tool_pairing::is_well_paired(&request_messages) {
+                let repair = tool_pairing::repair_tool_pairing(&mut request_messages);
+                sink(StreamEvent::Status(format!(
+                    "repaired transcript before model call: dropped {} unmatched tool results, answered {} unfinished tool calls",
+                    repair.dropped_orphan_results, repair.synthesized_results
+                )));
+            }
             if synthesis_only {
                 request_messages.push(Message {
                     role: Role::System,
                     content: "Tool-loop guard active: synthesis-only step. Answer from the evidence already present and do not request more tools.".into(),
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: None,
                 });
             }
             let req = CompletionRequest {
@@ -189,7 +204,10 @@ impl Kernel {
             let recorded_request = req.clone();
             sink(StreamEvent::Status(format!("model step {steps}")));
             // program P24: thinking stream is separate from assistant TextDelta.
-            if let Some(level) = self.config.thinking_level.as_deref() {
+            if let Some(level) = thinking_effort
+                .as_deref()
+                .filter(|level| !matches!(*level, "off" | "none" | "false" | "0"))
+            {
                 sink(StreamEvent::ThinkingDelta(format!(
                     "Reasoning effort: {level} (step {steps})\n"
                 )));
@@ -330,6 +348,7 @@ impl Kernel {
                     content: serde_json::to_string(&resp.tool_calls)?,
                     tool_call_id: None,
                     name: None,
+                    reasoning_content: resp.reasoning_content,
                 });
                 let execution_budget = self.config.max_tool_calls_per_step.max(1);
                 for (call_index, call) in resp.tool_calls.into_iter().enumerate() {
@@ -602,6 +621,7 @@ impl Kernel {
                         content: result,
                         tool_call_id: Some(call.id),
                         name: Some(call.name),
+                        reasoning_content: None,
                     });
                     self.sessions.save_with_effect_links(
                         self.session_id,
@@ -623,6 +643,7 @@ impl Kernel {
                 content: text.clone(),
                 tool_call_id: None,
                 name: None,
+                reasoning_content: None,
             });
             // Final compress before persist if tool-heavy turn blew past threshold.
             if compress::compress_messages(&mut self.messages, &self.config.compression) {

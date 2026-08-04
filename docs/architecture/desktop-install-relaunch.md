@@ -4,7 +4,7 @@ doc_type: explanation
 plane: current
 status: current
 authority: supporting
-summary: Confirmed current behaviour: the installer stages Electron + React as the primary desktop entry and keeps the Wry/Tao binary as a desktop-action rollback (LegacyWry). The Rust host (optimus-desktop --host-only) remains authority for IPC...
+summary: Confirmed current behaviour: the installer stages Tauri + React as the primary desktop entry and keeps Electron and Wry as explicit rollback shells during preview parity work.
 reviewed_on: 2026-07-31
 review_by: 2026-10-31
 ---
@@ -13,10 +13,11 @@ review_by: 2026-10-31
 
 ## Default shell
 
-**Confirmed current behaviour:** the installer stages **Electron + React** as the
-primary desktop entry and keeps the **Wry/Tao** binary as a desktop-action
-rollback (`LegacyWry`). The Rust host (`optimus-desktop --host-only`) remains
-authority for IPC and durable effects. See
+**Confirmed current behaviour:** the installer stages **Tauri + React** as the
+primary desktop entry, keeps **Electron** as an explicit rollback during
+browser-preview parity work, and retains the **Wry/Tao** binary as a legacy
+rollback (`LegacyWry`). The Rust host remains authority for IPC and durable
+effects. See
 [desktop-shell-and-ipc-matrix.md](../contracts/desktop-shell-and-ipc-matrix.md).
 
 **Program P29:** there is **no in-app auto-updater** (ADR-0043). Upgrade path is
@@ -25,7 +26,7 @@ re-run `scripts/rebuild-install-relaunch.sh`. Doctor reports
 
 ## Rule
 
-After rebuilding the host and Electron app, install and relaunch the stable user
+After rebuilding the host and Tauri app, install and relaunch the stable user
 copy before calling the desktop ready.
 
 Do not leave the user on an older binary from a Cargo target directory.
@@ -50,7 +51,7 @@ bash scripts/rebuild-install-relaunch.sh --dev --no-build --no-relaunch
 The script is a native Linux workflow. It:
 
 1. Checks Cargo, GTK 3, WebKitGTK 4.1, and build prerequisites.
-2. Builds `optimus-desktop` and `optimus-cli`.
+2. Builds `optimus-tauri`, the rollback host, and `optimus-cli`.
 3. Stops only an Optimus process running from the stable install path.
 4. Atomically replaces both installed binaries.
 5. Creates CLI symlinks, an XDG desktop entry, and an SVG icon.
@@ -74,12 +75,12 @@ sudo apt-get install -y \
   desktop-file-utils
 ```
 
-Playwright verification also needs Node.js, npm, and Chromium:
+Playwright verification uses Bun and Chromium:
 
 ```bash
 cd apps/optimus-desktop
-npm ci
-npx playwright install chromium
+bun install --frozen-lockfile
+bunx playwright install chromium
 ```
 
 ## Ubuntu install layout
@@ -91,6 +92,7 @@ Default paths:
   .optimus-agent-install
   bin/
     optimus-desktop
+    optimus-agent-tauri
     optimus
     optimus-cli -> optimus
   VERSION.txt

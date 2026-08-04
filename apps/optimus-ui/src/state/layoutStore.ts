@@ -36,6 +36,25 @@ const clamp = (value: unknown, min: number, max: number, fallback: number) => {
   return Math.round(Math.min(max, Math.max(min, number)));
 };
 
+export const RAIL_COLLAPSE_THRESHOLD = 120;
+
+export function railResizePatch(
+  storedWidth: number,
+  collapsed: boolean,
+  startClientX: number,
+  nextClientX: number,
+): Pick<LayoutState, 'leftWidth' | 'leftCollapsed'> {
+  if (!Number.isFinite(startClientX) || !Number.isFinite(nextClientX)) {
+    return { leftWidth: clamp(storedWidth, 200, 400, defaultLayout.leftWidth), leftCollapsed: collapsed };
+  }
+  const activeWidth = collapsed ? 52 : clamp(storedWidth, 200, 400, defaultLayout.leftWidth);
+  const rawWidth = activeWidth + nextClientX - startClientX;
+  if (rawWidth <= RAIL_COLLAPSE_THRESHOLD) {
+    return { leftWidth: clamp(storedWidth, 200, 400, defaultLayout.leftWidth), leftCollapsed: true };
+  }
+  return { leftWidth: clamp(rawWidth, 200, 400, defaultLayout.leftWidth), leftCollapsed: false };
+}
+
 export function loadLayout(): LayoutState {
   try {
     const value = JSON.parse(localStorage.getItem(KEY) || '{}') as Partial<LayoutState>;

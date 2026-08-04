@@ -7,7 +7,8 @@ use std::thread;
 use std::time::Duration;
 
 use optimus_kernel::{
-    CompletionRequest, Message, ModelProvider, OpenAiCompatConfig, OpenAiCompatModel, Role,
+    CompletionRequest, DeepseekModel, Message, ModelProvider, OpenAiCompatConfig,
+    OpenAiCompatModel, Role,
 };
 use optimus_packs::CapabilitySession;
 use serde_json::json;
@@ -116,6 +117,7 @@ fn openai_compat_http_roundtrip() {
                 content: "hi".into(),
                 tool_call_id: None,
                 name: None,
+                reasoning_content: None,
             }],
             tools: vec![CapabilitySession::with_defaults()
                 .resolve_loaded_tool("memory_recall")
@@ -156,6 +158,7 @@ fn openai_compat_http_error_surface() {
                 content: "hi".into(),
                 tool_call_id: None,
                 name: None,
+                reasoning_content: None,
             }],
             tools: vec![],
             ..Default::default()
@@ -169,5 +172,44 @@ fn openai_compat_http_error_surface() {
             || msg.contains("error"),
         "{msg}"
     );
+    handle.join().unwrap();
+}
+
+#[test]
+fn deepseek_http_roundtrip_preserves_reasoning_content() {
+    let body = json!({
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "content": "deepseek-ok",
+                "reasoning_content": "private-step"
+            }
+        }]
+    })
+    .to_string();
+    let (base, handle) = spawn_mock(200, body);
+    let mut model = DeepseekModel {
+        config: OpenAiCompatConfig {
+            base_url: base,
+            api_key: "test-key".into(),
+            model: "deepseek-v4-flash".into(),
+            organization: None,
+            timeout_secs: 5,
+        },
+        completions_url_override: None,
+        last_usage: None,
+    };
+    assert_eq!(
+        model.identity(),
+        ("deepseek".to_string(), "deepseek-v4-flash".to_string())
+    );
+    let response = model
+        .complete(CompletionRequest {
+            reasoning_effort: Some("xhigh".into()),
+            ..Default::default()
+        })
+        .expect("complete");
+    assert_eq!(response.text.as_deref(), Some("deepseek-ok"));
+    assert_eq!(response.reasoning_content.as_deref(), Some("private-step"));
     handle.join().unwrap();
 }

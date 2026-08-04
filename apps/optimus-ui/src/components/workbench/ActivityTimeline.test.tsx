@@ -42,4 +42,45 @@ describe('ActivityTimeline', () => {
     expect(readRow).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('region', { name: 'Technical details for read_file' })).toHaveTextContent('read-1');
   });
+
+  const failedCall = (id: string): ToolActivity => ({
+    id,
+    runId: 'run-1',
+    callId: id,
+    name: 'terminal',
+    detail: 'policy denied',
+    status: 'failed',
+    durationMs: 17,
+  });
+
+  it('does not report a whole step as failed when only one call failed', () => {
+    // Observed live: a step opened with one denied `terminal` call and then read
+    // and searched twenty times without a single failure. The collapsed header
+    // said "Ran a command, Read files, and searched — failed", which is the only
+    // line most steps are ever read by.
+    render(<ActivityTimeline tools={[failedCall('term-1'), ...tools]} />);
+
+    const group = screen.getByLabelText('Tool activity');
+    expect(group).not.toHaveClass('is-failed');
+    expect(group).toHaveClass('has-failure');
+    expect(screen.getByRole('button', { name: /1 of 3 failed/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /— failed/ })).toBeNull();
+  });
+
+  it('still reports a step as failed when every call in it failed', () => {
+    render(<ActivityTimeline tools={[failedCall('term-1'), failedCall('term-2')]} />);
+
+    expect(screen.getByLabelText('Tool activity')).toHaveClass('is-failed');
+    expect(screen.getByRole('button', { name: /Ran a command — failed/ })).toBeInTheDocument();
+  });
+
+  it('counts the failures so far while other calls are still running', () => {
+    render(
+      <ActivityTimeline
+        tools={[failedCall('term-1'), { ...tools[0]!, status: 'running' }]}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /1 failed so far/ })).toBeInTheDocument();
+  });
 });

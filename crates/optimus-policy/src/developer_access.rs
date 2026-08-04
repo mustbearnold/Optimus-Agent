@@ -9,7 +9,10 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ActionTarget, CapabilityId, Reversibility};
+use crate::{
+    ActionRequest, ActionTarget, AuthorityDecision, AutonomyProfile, CapabilityBroker,
+    CapabilityId, RecoveryAction, Reversibility,
+};
 
 /// Bump when the confirmation wording or meaning of a grant changes.
 pub const DEVELOPER_ACCESS_CONFIRMATION_VERSION: u32 = 1;
@@ -178,6 +181,57 @@ impl DeveloperCapabilities {
             CapabilityId::CommerceSpend => false,
         }
     }
+
+    /// The toggle a capability answers to, named as the settings UI names it.
+    ///
+    /// A denial that says "enable the capability" without saying which one leaves
+    /// the user to guess across eight switches.
+    pub fn governing_toggle(capability: CapabilityId) -> &'static str {
+        match capability {
+            CapabilityId::FsProjectRead
+            | CapabilityId::FsProjectWrite
+            | CapabilityId::FsProjectRename
+            | CapabilityId::FsProjectDelete
+            | CapabilityId::GitLocalRead
+            | CapabilityId::GitLocalWrite => "Workspace files",
+            CapabilityId::ProcessProjectExecute => "Terminal execution and Process management",
+            CapabilityId::ProcessProjectServe => "Process management",
+            CapabilityId::PackageSync | CapabilityId::PackageAdd => {
+                "Terminal execution and Package installation"
+            }
+            CapabilityId::NetworkPublicRead
+            | CapabilityId::NetworkRegistryRead
+            | CapabilityId::NetworkLocalhostOwned
+            | CapabilityId::NetworkPrivate
+            | CapabilityId::BrowserPublicRead
+            | CapabilityId::BrowserLocalhostOwned => "Network access",
+            CapabilityId::CredentialUse | CapabilityId::CredentialReadRaw => "Secrets",
+            CapabilityId::GitRemotePush
+            | CapabilityId::GitRemotePullRequest
+            | CapabilityId::ExternalSend
+            | CapabilityId::ExternalPublish
+            | CapabilityId::ExternalDeploy
+            | CapabilityId::DataRemoteWrite
+            | CapabilityId::DataRemoteDelete => "External services",
+            CapabilityId::SystemModify => "Production systems",
+            CapabilityId::CommerceSpend => "Spending",
+        }
+    }
+
+    /// Whether the user could turn this capability on and retry.
+    ///
+    /// Production systems and spending are fences this mode does not open:
+    /// [`DeveloperAccessGrant::validate`] refuses a grant that claims production
+    /// access, and the settings UI never offers the switch (ADR-0076). Telling
+    /// the user to enable one of those is advice they cannot take, so the broker
+    /// must not answer with it — see
+    /// [`crate::CapabilityBroker::decide`], which asks for these instead.
+    pub fn is_user_enablable(capability: CapabilityId) -> bool {
+        !matches!(
+            capability,
+            CapabilityId::SystemModify | CapabilityId::CommerceSpend
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -305,6 +359,104 @@ fn normalize_path(path: &Path) -> PathBuf {
         }
     }
     normalized
+}
+
+/// The Developer Full Access branch of [`CapabilityBroker::decide`].
+///
+/// It lives beside the grant it reads rather than in the broker's match, so the
+/// data model and the decision that interprets it move together. Split out of
+/// `lib.rs` under architectural law 21.
+impl CapabilityBroker {
+    pub(crate) fn decide_developer_full_access(
+        &self,
+        request: &ActionRequest,
+        grant: Option<&DeveloperAccessGrant>,
+    ) -> AuthorityDecision {
+        let Some(grant) = grant else {
+            return AuthorityDecision::Deny {
+                code: "developer_access_not_enabled".into(),
+                reason: "Developer Full Access requires an active local grant.".into(),
+                recovery: Some(RecoveryAction {
+                    label: "Enable Developer Full Access".into(),
+                    detail: "Confirm a scope and capability toggles in Optimus settings first."
+                        .into(),
+                }),
+            };
+        };
+        if let Err(reason) = grant.validate() {
+            return AuthorityDecision::Deny {
+                code: "developer_access_invalid".into(),
+                reason,
+                recovery: Some(RecoveryAction {
+                    label: "Review Developer Full Access".into(),
+                    detail: "Revoke and enable the mode again with a valid scope.".into(),
+                }),
+            };
+        }
+        // Out of scope is the boundary the user drew, and the advice for it is
+        // advice they can act on: widen the scope or work inside it.
+        if !grant.scope.allows_target(&request.target) {
+            return AuthorityDecision::Deny {
+                code: "developer_access_scope_or_capability".into(),
+                reason: format!(
+                    "Developer Full Access does not grant {} outside {}.",
+                    request.capability.as_str(),
+                    grant.scope.label()
+                ),
+                recovery: Some(RecoveryAction {
+                    label: "Adjust the Developer Full Access scope".into(),
+                    detail: "Select a scope that contains this target, or work inside the active \
+                             scope."
+                        .into(),
+                }),
+            };
+        }
+        if !grant.capabilities.allows(request.capability) {
+            // A toggle the user cannot reach is not a decision they declined.
+            // `Production systems` is refused by `DeveloperAccessGrant::validate`
+            // and never offered by the UI (ADR-0076), yet `OpaqueShell` — any
+            // `sh -c` — maps onto it, so the most ordinary development command
+            // came back denied with "enable the capability", which was
+            // impossible. Worse, the same command *asks* when no grant exists:
+            // turning the mode on removed an approval path instead of adding
+            // one. Asking restores that path without widening anything, and the
+            // broker still authorizes the exact effect.
+            if !DeveloperCapabilities::is_user_enablable(request.capability) {
+                return self.ask(
+                    request,
+                    "developer_access_needs_explicit_authority",
+                    "Developer Full Access does not cover this capability, so it needs your \
+                     approval for this exact action.",
+                );
+            }
+            return AuthorityDecision::Deny {
+                code: "developer_access_scope_or_capability".into(),
+                reason: format!(
+                    "Developer Full Access does not grant {}.",
+                    request.capability.as_str()
+                ),
+                recovery: Some(RecoveryAction {
+                    label: "Adjust the Developer Full Access grant".into(),
+                    detail: format!(
+                        "Turn on {} in Developer Full Access settings.",
+                        DeveloperCapabilities::governing_toggle(request.capability)
+                    ),
+                }),
+            };
+        }
+        if grant.should_pause(request.capability, request.reversibility) {
+            return self.ask(
+                request,
+                "developer_pause_before_destructive",
+                "Developer Full Access is active, but pause before destructive actions is enabled.",
+            );
+        }
+        self.allow(
+            AutonomyProfile::DeveloperFullAccess,
+            request,
+            "developer_full_access_grant",
+        )
+    }
 }
 
 #[cfg(test)]

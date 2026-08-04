@@ -440,7 +440,7 @@ pub fn priority2_offline_candidate_binding(
         source_tree_sha256: source_tree_sha256.into(),
         contract_sha256: canonical_source_digest(include_str!("evaluation.rs")),
         tool_catalog_sha256: canonical_source_digest(include_str!(
-            "../../optimus-packs/src/lib.rs"
+            "../../optimus-packs/src/catalog.rs"
         )),
         route_policy_sha256: canonical_source_digest(include_str!(
             "../../optimus-kernel/src/routing.rs"

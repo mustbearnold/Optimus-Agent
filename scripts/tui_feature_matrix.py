@@ -333,6 +333,18 @@ def composer_text(lines: list[str]) -> str:
     return normalized(lines[top : bottom + 1])
 
 
+def busy_visible(lines: list[str]) -> bool:
+    """The busy state, identified by the status-rail marker, not a phase label.
+
+    The kernel replaces the initial "working" label with the first "model step
+    N" status milliseconds after submit, so waiting for that literal races a
+    sub-millisecond window and only passes on slow hosts.  The ◌ marker and
+    the absence of "turn · ready" hold for the entire turn.
+    """
+    text = normalized(lines)
+    return "◌" in text and "turn · ready" not in text
+
+
 def seed_projects(home: Path, count: int = 4) -> None:
     """Create valid already-authorized scopes, as a desktop picker would.
 
@@ -464,6 +476,31 @@ class Case:
         while len(lines) < self.rows:
             lines.append("")
         return lines[: self.rows]
+
+    def settled_capture(self, timeout: float = 1.0) -> list[str]:
+        """Capture after the terminal has produced two identical frames.
+
+        A burst of wheel events can still be queued after the semantic target
+        first becomes visible.  Comparing that in-flight frame with a later
+        hover frame falsely reports a layout mutation, even though hover only
+        changes styles.  Waiting for two consecutive snapshots drains the
+        input/render queue without imposing a fixed sleep on every assertion.
+        """
+
+        frame = self.capture()
+        deadline = time.monotonic() + timeout
+        identical = 0
+        while time.monotonic() < deadline:
+            time.sleep(0.06)
+            next_frame = self.capture()
+            if next_frame == frame:
+                identical += 1
+                if identical >= 2:
+                    return next_frame
+            else:
+                identical = 0
+            frame = next_frame
+        return frame
 
     def wait(
         self,
@@ -1568,7 +1605,7 @@ def streaming_and_cancel(audit: Audit, case: Case) -> None:
     case.launch()
     try:
         case.type_submit("cancel this deliberately")
-        busy = case.wait_text("working", 8)
+        busy = case.wait(busy_visible, 8, "busy state visible")
         audit.check(any(BRAILLE.intersection(line) for line in busy), "spinner missing", case)
 
         first = next(
@@ -1623,7 +1660,7 @@ def streaming_and_cancel(audit: Audit, case: Case) -> None:
         )
 
         case.type_submit("busy session guard")
-        case.wait_text("working", 8)
+        case.wait(busy_visible, 8, "busy session guard turn is busy")
         case.mouse("left-down", 4, 3)
         guard = case.wait_text("stop the current turn before starting a new session", 8)
         audit.check(
@@ -1638,7 +1675,7 @@ def streaming_and_cancel(audit: Audit, case: Case) -> None:
 
 
 def scroll_and_inspect(audit: Audit, case: Case) -> None:
-    audit.begin("transcript-scrollbar-wheel-hover-and-inspect")
+    audit.begin("transcript-scroll-wheel-hover-and-inspect")
     case.launch()
     try:
         for index in range(12):
@@ -1681,20 +1718,12 @@ def scroll_and_inspect(audit: Audit, case: Case) -> None:
         for _ in range(30):
             case.mouse("wheel-up", 70, 8)
         case.wait(lambda lines: "scroll-00" in main_text(lines), 5, "wheel reached head")
-        frame = case.capture()
-        composer_top = next(index for index, line in enumerate(frame) if "╭" in line)
-        composer_right = frame[composer_top].rfind("╮")
-        audit.check(composer_right > 0, "scrollbar track coordinate missing", case)
-        case.mouse("left-down", composer_right, 2)
-        case.mouse("drag", composer_right, composer_top - 1)
-        case.mouse("left-up", composer_right, composer_top - 1)
-        case.wait(lambda lines: "scroll-11" in main_text(lines), 5, "scrollbar drag to tail")
 
-        plain_before_hover = normalized(case.capture())
+        plain_before_hover = normalized(case.settled_capture())
         case.mouse("move", 70, 7)
-        time.sleep(0.15)
+        hovered = normalized(case.settled_capture())
         audit.check(
-            normalized(case.capture()) == plain_before_hover,
+            hovered == plain_before_hover,
             "hover changed terminal text or layout",
             case,
         )
@@ -1975,7 +2004,7 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.wait(
             lambda lines: "persistence-session" in composer_text(lines),
             5,
-            "persisted prompt history",
+            "persisted composer recall",
         )
         case.keys("Escape")
     finally:

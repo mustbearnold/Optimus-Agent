@@ -469,61 +469,6 @@ impl CapabilityBroker {
         }
     }
 
-    fn decide_developer_full_access(
-        &self,
-        request: &ActionRequest,
-        grant: Option<&DeveloperAccessGrant>,
-    ) -> AuthorityDecision {
-        let Some(grant) = grant else {
-            return AuthorityDecision::Deny {
-                code: "developer_access_not_enabled".into(),
-                reason: "Developer Full Access requires an active local grant.".into(),
-                recovery: Some(RecoveryAction {
-                    label: "Enable Developer Full Access".into(),
-                    detail: "Confirm a scope and capability toggles in Optimus settings first."
-                        .into(),
-                }),
-            };
-        };
-        if let Err(reason) = grant.validate() {
-            return AuthorityDecision::Deny {
-                code: "developer_access_invalid".into(),
-                reason,
-                recovery: Some(RecoveryAction {
-                    label: "Review Developer Full Access".into(),
-                    detail: "Revoke and enable the mode again with a valid scope.".into(),
-                }),
-            };
-        }
-        if !grant.allows(request.capability, &request.target) {
-            return AuthorityDecision::Deny {
-                code: "developer_access_scope_or_capability".into(),
-                reason: format!(
-                    "Developer Full Access does not grant {} in the selected scope.",
-                    request.capability.as_str()
-                ),
-                recovery: Some(RecoveryAction {
-                    label: "Adjust the Developer Full Access grant".into(),
-                    detail:
-                        "Enable the capability and ensure the target is inside the active scope."
-                            .into(),
-                }),
-            };
-        }
-        if grant.should_pause(request.capability, request.reversibility) {
-            return self.ask(
-                request,
-                "developer_pause_before_destructive",
-                "Developer Full Access is active, but pause before destructive actions is enabled.",
-            );
-        }
-        self.allow(
-            AutonomyProfile::DeveloperFullAccess,
-            request,
-            "developer_full_access_grant",
-        )
-    }
-
     fn decide_standard(&self, request: &ActionRequest) -> AuthorityDecision {
         if request.capability.is_external_or_sensitive()
             || matches!(
@@ -923,6 +868,99 @@ mod tests {
                 ..
             } if code == "developer_access_scope_or_capability"
         ));
+    }
+
+    #[test]
+    fn developer_full_access_never_answers_with_a_toggle_the_user_cannot_reach() {
+        // Observed live: every `terminal` call in a self-development session came
+        // back "Developer Full Access does not grant system.modify in the
+        // selected scope", advising the user to enable the capability. They
+        // could not: `system.modify` answers to `production_systems`, `validate`
+        // refuses any grant that sets it, and the UI never offers the switch
+        // (ADR-0076). The mode meant for self-development made the most ordinary
+        // development command impossible.
+        let mut request = req(CapabilityId::SystemModify);
+        request.externality = Externality::HostSystem;
+        request.target.absolute_path = Some("/tmp/project/run.sh".into());
+        let grant = DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/tmp/project".into(),
+                root_hash: None,
+            },
+            ..Default::default()
+        };
+        assert!(grant.validate().is_ok());
+        assert!(
+            !grant.capabilities.production_systems,
+            "a valid grant can never claim production systems"
+        );
+        request.developer_access = Some(grant);
+
+        let decision = CapabilityBroker.decide(AutonomyProfile::DeveloperFullAccess, &request);
+        assert!(
+            decision.is_ask(),
+            "an unreachable toggle must ask, not deny: {decision:?}"
+        );
+
+        // And asking is not a widening: without the grant at all, the hard fence
+        // already asks for this exact request. Turning the mode on must never
+        // remove an approval path that existed without it.
+        request.developer_access = None;
+        assert!(CapabilityBroker
+            .decide(AutonomyProfile::DeveloperFullAccess, &request)
+            .is_ask());
+    }
+
+    #[test]
+    fn a_reachable_toggle_still_denies_and_names_the_switch_to_turn_on() {
+        let mut request = req(CapabilityId::ExternalSend);
+        request.target.absolute_path = Some("/tmp/project/file".into());
+        request.developer_access = Some(DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/tmp/project".into(),
+                root_hash: None,
+            },
+            ..Default::default()
+        });
+
+        let AuthorityDecision::Deny { recovery, .. } =
+            CapabilityBroker.decide(AutonomyProfile::DeveloperFullAccess, &request)
+        else {
+            panic!("a toggle the user can turn on stays a denial");
+        };
+        assert_eq!(
+            recovery.expect("a denial must say what to do").detail,
+            "Turn on External services in Developer Full Access settings."
+        );
+    }
+
+    #[test]
+    fn leaving_the_granted_scope_is_denied_and_says_so() {
+        let mut request = req(CapabilityId::FsProjectWrite);
+        request.target.absolute_path = Some("/tmp/elsewhere/file".into());
+        request.developer_access = Some(DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/tmp/project".into(),
+                root_hash: None,
+            },
+            ..Default::default()
+        });
+
+        let AuthorityDecision::Deny { reason, .. } =
+            CapabilityBroker.decide(AutonomyProfile::DeveloperFullAccess, &request)
+        else {
+            panic!("the granted scope is a boundary, not a prompt");
+        };
+        assert!(reason.contains("Selected repository"), "{reason}");
     }
 
     #[test]

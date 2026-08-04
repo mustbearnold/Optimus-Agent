@@ -22,6 +22,7 @@ pub enum ToolInvocation {
     RenamePath,
     PatchFile,
     Terminal,
+    SelfDevelopment,
     WebSearch,
     MemoryRecall,
     SkillResolve,
@@ -95,6 +96,7 @@ impl ToolInvocation {
         Self::RenamePath,
         Self::PatchFile,
         Self::Terminal,
+        Self::SelfDevelopment,
         Self::WebSearch,
         Self::MemoryRecall,
         Self::SkillResolve,
@@ -121,6 +123,7 @@ impl ToolInvocation {
             Self::RenamePath => Some("rename_path"),
             Self::PatchFile => Some("patch_file"),
             Self::Terminal => Some("terminal"),
+            Self::SelfDevelopment => Some("self_development"),
             Self::WebSearch => Some("web_search"),
             Self::MemoryRecall => Some("memory_recall"),
             Self::SkillResolve => Some("skill_resolve"),
@@ -149,6 +152,7 @@ impl ToolInvocation {
             Self::RenamePath => Some(ToolPolicy::WorkspaceWrite),
             Self::PatchFile => Some(ToolPolicy::WorkspaceWrite),
             Self::Terminal => Some(ToolPolicy::Process),
+            Self::SelfDevelopment => Some(ToolPolicy::Process),
             Self::WebSearch => Some(ToolPolicy::NetworkRead),
             Self::MemoryRecall => Some(ToolPolicy::MemoryRead),
             Self::SkillResolve => Some(ToolPolicy::SkillRead),
@@ -177,9 +181,11 @@ impl ToolInvocation {
             | Self::DeletePath
             | Self::RenamePath
             | Self::PatchFile => ReplayClass::Convergent,
-            Self::Terminal | Self::WebSearch | Self::BrowserNavigate | Self::BrowserClick => {
-                ReplayClass::ExternalNondeterministic
-            }
+            Self::Terminal
+            | Self::SelfDevelopment
+            | Self::WebSearch
+            | Self::BrowserNavigate
+            | Self::BrowserClick => ReplayClass::ExternalNondeterministic,
             // A vision sub-call is a model completion: same inputs may phrase
             // the analysis differently, and no external state is mutated.
             Self::VisionAnalyze => ReplayClass::ModelNondeterministic,
@@ -204,7 +210,8 @@ impl ToolInvocation {
                 | Self::DeletePath
                 | Self::RenamePath
                 | Self::PatchFile
-                | Self::Terminal => ToolCancellation::Terminal,
+                | Self::Terminal
+                | Self::SelfDevelopment => ToolCancellation::Terminal,
                 _ => ToolCancellation::Unsupported,
             },
             observability: ToolObservability {
@@ -218,6 +225,7 @@ impl ToolInvocation {
                         | Self::RenamePath
                         | Self::PatchFile
                         | Self::Terminal
+                        | Self::SelfDevelopment
                 ),
             },
         }

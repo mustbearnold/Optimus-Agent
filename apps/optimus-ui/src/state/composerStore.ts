@@ -3,7 +3,7 @@
 // Resolution happens at send/display time, so authentication may change the
 // concrete route without overwriting the durable Auto choice.
 
-export type ComposerProvider = 'auto' | 'offline' | 'codex' | 'open-ai-compat';
+export type ComposerProvider = 'auto' | 'offline' | 'codex' | 'deepseek' | 'open-ai-compat';
 
 export type ComposerSettings = {
   provider: ComposerProvider;
@@ -28,8 +28,26 @@ const PROVIDERS: ReadonlyArray<ComposerProvider> = [
   'auto',
   'offline',
   'codex',
+  'deepseek',
   'open-ai-compat',
 ];
+
+export const REASONING_LEVELS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'minimal', label: 'Minimal effort' },
+  { value: 'low', label: 'Low effort' },
+  { value: 'medium', label: 'Medium effort' },
+  { value: 'high', label: 'High effort' },
+  { value: 'xhigh', label: 'Extra high' },
+  { value: 'max', label: 'Max effort' },
+  { value: 'ultra', label: 'Ultra effort' },
+] as const;
+export type ReasoningLevel = (typeof REASONING_LEVELS)[number]['value'];
+const REASONING_VALUES = new Set<ReasoningLevel>(REASONING_LEVELS.map(({ value }) => value));
+
+function isReasoningLevel(value: unknown): value is ReasoningLevel {
+  return typeof value === 'string' && REASONING_VALUES.has(value as ReasoningLevel);
+}
 
 // Mirrors the canonical provider catalog in optimus-kernel/src/routing.rs.
 // The empty option rendered by Composer is Model Auto and is deliberately not
@@ -46,6 +64,7 @@ export const PROVIDER_MODELS: Readonly<Record<ComposerProvider, readonly string[
     'gpt-5.4-mini',
     'gpt-5.3-codex-spark',
   ],
+  deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro'],
   'open-ai-compat': ['gpt-4.1', 'gpt-4o'],
 };
 
@@ -142,7 +161,7 @@ export function loadComposer(): StoredComposer | null {
       settings: {
         provider,
         model,
-        thinking: typeof parsed.thinking === 'string' ? parsed.thinking : 'high',
+        thinking: isReasoningLevel(parsed.thinking) ? parsed.thinking : 'high',
         access: restoredAccess(parsed.access),
         fast: parsed.fast === true,
       },

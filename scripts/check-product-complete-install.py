@@ -26,7 +26,8 @@ def main() -> int:
         fail("missing rebuild-install-relaunch.sh")
     text = script.read_text(encoding="utf-8", errors="replace")
     for token in (
-        "react-electron",
+        "react-tauri",
+        "optimus-agent-tauri",
         "optimus-agent.desktop",
         "Electron",
         "desktop_shell",
@@ -41,8 +42,11 @@ def main() -> int:
     install_doc = ROOT / "docs" / "architecture" / "desktop-install-relaunch.md"
     if not install_doc.is_file():
         fail("missing desktop-install-relaunch.md")
-    if "Electron + React" not in install_doc.read_text(encoding="utf-8", errors="replace"):
-        fail("install doc must declare Electron + React default")
+    install_doc_text = install_doc.read_text(encoding="utf-8", errors="replace")
+    if "Tauri + React" not in install_doc_text:
+        fail("install doc must declare Tauri + React default")
+    if "Electron" not in install_doc_text:
+        fail("install doc must retain Electron as an explicit rollback")
 
     # Optional: probe existing user install (read-only), respecting XDG_DATA_HOME
     # the same way rebuild-install-relaunch.sh does.
@@ -75,12 +79,12 @@ def main() -> int:
         if "optimus-desktop" not in de:
             fail("desktop entry does not reference optimus-desktop")
         shell = meta.get("desktop_shell")
-        if shell and shell != "react-electron":
-            fail(f"install-meta desktop_shell must be react-electron, got {shell!r}")
-        if "X-Optimus-UI=react-electron" not in de and "react-electron" not in de:
-            # Accept either explicit key or documented shell token in entry extras.
-            if "Electron" not in de and "optimus-desktop" not in de:
-                fail("desktop entry does not evidence Electron/React default shell")
+        if shell and shell != "react-tauri":
+            fail(f"install-meta desktop_shell must be react-tauri, got {shell!r}")
+        if "X-Optimus-UI=react-tauri" not in de:
+            fail("desktop entry does not evidence Tauri/React default shell")
+        if "ElectronRollback" not in de:
+            fail("desktop entry does not expose the Electron rollback action")
         status["desktop_entry_ok"] = True
     print("PRODUCT_COMPLETE_INSTALL_OK", json.dumps(status, sort_keys=True))
     return 0

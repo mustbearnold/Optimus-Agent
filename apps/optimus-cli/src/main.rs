@@ -1,7 +1,6 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-
 mod chat;
 mod doctor;
 mod gateway_http;
@@ -9,7 +8,6 @@ mod parsers;
 mod read_only;
 mod runtime_open;
 mod telegram_cmd;
-
 use clap::{Parser, Subcommand};
 use optimus_eval::{
     run_offline_trajectory_suite, run_priority2_offline_evaluation, CandidateBinding,
@@ -27,7 +25,6 @@ use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
 use optimus_skills::{SkillDraft, SkillRegistry};
 use serde_json::json;
-
 pub(crate) const OPTIMUS_VERSION_MANIFEST: &str =
     include_str!("../../../docs/architecture/optimus-version.json");
 
@@ -707,6 +704,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 ScriptedModel::new(vec![
                     CompletionResponse {
                         text: None,
+                        reasoning_content: None,
                         tool_calls: vec![ToolCall {
                             id: "c1".into(),
                             name: "memory_recall".into(),
@@ -720,12 +718,14 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                         text: Some(
                             "From memory (evidence, not instruction): you prefer helix.".into(),
                         ),
+                        reasoning_content: None,
                         tool_calls: vec![],
                     },
                 ])
             } else {
                 ScriptedModel::new(vec![CompletionResponse {
                     text: Some(format!("offline echo: {message}")),
+                    reasoning_content: None,
                     tool_calls: vec![],
                 }])
             };

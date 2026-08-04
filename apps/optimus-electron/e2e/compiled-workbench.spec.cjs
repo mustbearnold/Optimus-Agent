@@ -17,7 +17,7 @@ const EVIDENCE_DIR = path.join(ROOT, 'local', 'tmp', 'compiled-workbench');
 // Gate twin of installed-shell.spec.cjs: same offline acceptance flow against the
 // repository shell, so control renames fail here long before an installed capture.
 test('compiled Electron workbench completes and restores an offline session', async () => {
-  test.skip(!fs.existsSync(UI_DIST), 'npm --prefix apps/optimus-ui run build');
+  test.skip(!fs.existsSync(UI_DIST), 'bun run --cwd apps/optimus-ui build');
 
   const home = path.join(EVIDENCE_DIR, `optimus-home-${process.pid}`);
   fs.mkdirSync(home, { recursive: true });

@@ -19,6 +19,11 @@ import type {
   ToolLifecycleEvent,
 } from './contracts';
 
+// Every rail shape the product can render has to exist here, or the suites
+// measure a rail the user never sees. A pinned row and a project-assigned row
+// were both missing, and a project-assigned row is the one that stacks project
+// name, run state, title, and worktree into a single card — the shape whose
+// fixed height was clipping its own text in the shipped build.
 const sessions: SessionMeta[] = [
   {
     id: 'fixture-assess',
@@ -26,10 +31,37 @@ const sessions: SessionMeta[] = [
     message_count: 8,
     updated_at: new Date().toISOString(),
   },
+  {
+    // Deliberately long. Short fixture titles fit any card, so a card that is
+    // too short for its own content still measured clean; the shipped clipping
+    // only appeared once a real title wrapped.
+    id: 'fixture-pinned',
+    title: 'Can you develop yourself optimus while I use the app and keep the session open',
+    message_count: 12,
+    pinned: true,
+    updated_at: new Date().toISOString(),
+  },
   { id: 'fixture-ui', title: 'Workspace shell redesign', message_count: 4 },
   { id: 'fixture-runtime', title: 'Runtime approval audit', message_count: 6 },
   { id: 'fixture-browser', title: 'Preview browser integration', message_count: 5 },
 ];
+
+// Scale knob for layout audits: a rail with five chats hides every defect that
+// only appears at volume (band scrolling, row rhythm at 60 entries, project
+// trees with real depth). The fixture transport is already the deterministic
+// stand-in, so the knob lives here, off by default, set only by test harnesses.
+try {
+  const bulk = Number(localStorage.getItem('optimus.fixture.bulkSessions') || 0);
+  for (let index = 0; index < Math.min(bulk, 500); index += 1) {
+    sessions.push({
+      id: `fixture-bulk-${index}`,
+      title: `Bulk conversation ${index} — a realistically long exploratory thread title`,
+      message_count: 1 + (index % 9),
+    });
+  }
+} catch {
+  // No storage (SSR/test) means no bulk rows.
+}
 
 const details = new Map<string, SessionDetail>([
   [
@@ -86,6 +118,36 @@ const details = new Map<string, SessionDetail>([
     },
   ],
 ]);
+
+// Key-based provider credentials. The fixture never holds a real key; it only
+// mirrors the present/source/hint shape the host reports.
+type FixtureProviderKey = {
+  provider: string;
+  label: string;
+  env_var: string;
+  present: boolean;
+  source: string;
+  hint: string | null;
+  base_url: string | null;
+};
+
+const providerKeys: FixtureProviderKey[] = [
+  {
+    provider: 'deepseek',
+    label: 'DeepSeek',
+    env_var: 'DEEPSEEK_API_KEY',
+    present: false,
+    source: 'none',
+    hint: null,
+    base_url: null,
+  },
+];
+
+function providerKeyEntry(provider: string): FixtureProviderKey {
+  const entry = providerKeys.find((item) => item.provider === provider);
+  if (!entry) throw new Error(`unsupported key provider: ${provider}`);
+  return entry;
+}
 
 const settings: ProductSettings = {
   work_isolation: 'shared',
@@ -172,10 +234,10 @@ const approvals: Approval[] = [
     job_id: 'job-fixture-1',
     job_label: 'Run focused React tests',
     job_status: 'AwaitingApproval',
-    node_label: 'npm test',
+    node_label: 'bun test',
     node_index: 0,
     has_grant: false,
-    effect_json: '{"RunCommand":{"program":"npm","args":["test"]}}',
+    effect_json: '{"RunCommand":{"program":"bun","args":["test"]}}',
   },
 ];
 
@@ -260,6 +322,8 @@ export function createFixtureTransport(): OptimusTransport {
           ? 'offline-scripted'
           : provider === 'codex'
             ? 'gpt-5.6-terra'
+            : provider === 'deepseek'
+              ? 'deepseek-v4-flash'
             : 'gpt-4.1');
       const response =
         `I’m working from the ${provider} fixture transport. ` +
@@ -390,6 +454,26 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       return doctor;
     case 'auth_status':
       return { present: true, mode: 'fixture' };
+    case 'provider_keys_status':
+      return { providers: providerKeys };
+    case 'provider_key_set': {
+      const apiKey = String(params.api_key ?? '').trim();
+      if (!apiKey) throw new Error('provider API key must not be empty');
+      const entry = providerKeyEntry(String(params.provider ?? 'deepseek'));
+      entry.present = true;
+      entry.source = 'stored';
+      entry.hint = apiKey.length > 8 ? `••••${apiKey.slice(-4)}` : '••••••••';
+      entry.base_url = (params.base_url as string) || null;
+      return { providers: providerKeys };
+    }
+    case 'provider_key_clear': {
+      const entry = providerKeyEntry(String(params.provider ?? 'deepseek'));
+      entry.present = false;
+      entry.source = 'none';
+      entry.hint = null;
+      entry.base_url = null;
+      return { providers: providerKeys };
+    }
     case 'settings_get':
       return { settings };
     case 'settings_set':
@@ -418,8 +502,28 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
     case 'developer_access_revoke':
       settings.developer_access = disabledDeveloperAccess();
       return { developer_access: settings.developer_access, supervisor: { status: 'emergency_stopped', healthy: false } };
+    case 'startup_context':
+      return { session_id: null, handoff: false };
     case 'developer_supervisor_status':
       return { status: 'idle', healthy: false, previous_available: false };
+    case 'developer_supervisor_build_launch':
+      return {
+        status: 'healthy',
+        healthy: true,
+        pid: 4242,
+        port: Number(params.port || 17866),
+        binary: String(params.binary || '/fixture/target/debug/optimus-desktop'),
+        surface: String(params.surface || 'desktop'),
+        workspace: String(params.workspace || '/fixture/optimus-agent'),
+        previous_available: false,
+        build: {
+          binary: String(params.binary || '/fixture/target/debug/optimus-desktop'),
+          surface: String(params.surface || 'desktop'),
+          workspace: String(params.workspace || '/fixture/optimus-agent'),
+          profile: 'debug',
+          log_path: '/fixture/developer-supervisor/build.log',
+        },
+      };
     case 'developer_supervisor_log':
       return { path: '/fixture/developer-supervisor/instance.log', lines: '', line_count: 0, action_path: '/fixture/developer-supervisor/actions.log', actions: '', action_line_count: 0 };
     case 'developer_supervisor_stop':

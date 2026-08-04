@@ -24,7 +24,7 @@ validated_by:
   - scripts/check-module-size.py
 ---
 
-# ADR-0051: Electron now, Tauri when the preview leaves the shell
+# ADR-0051: Tauri primary, Electron rollback during preview parity
 
 - **Status:** Proposed
 - **Date:** 2026-07-29
@@ -84,11 +84,16 @@ only thing welding the product to Electron.
 
 ## Decision
 
-**1. Electron remains the shell today.** For one reason, stated so it can
-expire: the preview is in-process today, and porting 243 lines of
-`WebContentsView` bounds arithmetic across WebKitGTK, WebView2, and WKWebView
-— the flakiest subsystem, against three engines, while ADR-0028's migration
-is still unfinished — is three half-migrations at once.
+**1. Tauri v2 is now the primary desktop shell.** The first operational slice
+uses the existing Rust host directly through Tauri commands, keeps the React
+workbench unchanged, and installs the Tauri binary as the default desktop
+entry. Electron remains available as a named rollback shell until
+browser-preview parity is complete.
+
+The Tauri shell owns the window, invokes the transport-neutral
+`optimus-host` registry, streams chat events through a typed Tauri `Channel`,
+and keeps cancellation in Rust. It does not spawn Node or an intermediate HTTP
+host for normal IPC.
 
 **2. The preview returns to the ADR-0015 design: out of process, via CDP.**
 The already-running `optimus-browser` Chromium renders preview content;
@@ -101,11 +106,11 @@ which stays in the tree so the numbers can be re-taken on other hardware.
 The remaining gate for production is fidelity, not latency: scroll momentum,
 drag, and IME through CDP input forwarding.
 
-**3. When the preview leaves the shell, the shell swap to Tauri v2 is
-scheduled work, not a hypothetical.** At that point the shell is supervision,
-window chrome, IPC wiring, and a pixel surface — all portable — and the 2026
-default applies with no surviving exception. Ordered strictly behind #106;
-two migrations do not run at once.
+**3. Browser-preview parity is the remaining migration slice.** The primary
+Tauri workbench currently leaves the Electron-only embedded preview surface on
+the rollback path. The next slice moves preview rendering to the accepted
+out-of-process CDP/screencast design, then adds the equivalent Tauri browser
+surface and input forwarding before Electron is removed.
 
 **4. Shells hold no product logic.** ADR-0045 moved the method registry out
 of `apps/optimus-desktop` for this reason; the same boundary now covers the
@@ -119,10 +124,9 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 
 ## Alternatives considered
 
-- **Switch to Tauri v2 now.** Rejected for now — not on the agent-browser
-  argument (checked, false), but because it ports the preview's in-process
-  geometry to three webview engines before the preview is engine-agnostic,
-  concurrently with #106. Sequenced instead of refused: see step 3.
+- **Switch to Tauri v2 after preview parity.** Rejected as the sequencing
+  choice after the user explicitly requested Tauri now. Electron remains the
+  reversible fallback while the preview contract is completed.
 - **Stay Electron permanently.** Rejected. The first draft's justification
   was half wrong, and the surviving half is temporary by design. A shell
   choice held for a reason that expired is how a 2027 codebase acquires a
@@ -162,8 +166,9 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 - **Input fidelity gaps** (IME, scroll momentum, drag) may not survive CDP
   forwarding. Unmeasured; this is the remaining gate for step 2, checked
   during implementation, not assumed.
-- **Three migrations in flight** if sequencing is ignored. Steps are ordered:
-  #106, then preview-out-of-process, then shell swap.
+- **Two shell paths during preview parity.** The installer records Tauri as
+  primary and keeps Electron explicitly selectable as rollback; this is
+  removed only after the Tauri preview gate passes.
 - **The policy/mechanism boundary will be argued at the margin.** Recorded
   here so the argument happens against a written line.
 
@@ -205,6 +210,8 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 ## Relevant code
 
 - `apps/optimus-electron/main.cjs`
+- `apps/optimus-tauri/src/main.rs`
+- `apps/optimus-tauri/tauri.conf.json`
 - `crates/optimus-browser/src/lib.rs`
 - `crates/optimus-browser/examples/screencast_spike.rs`
 - `crates/optimus-kernel/src/browser_coord.rs`

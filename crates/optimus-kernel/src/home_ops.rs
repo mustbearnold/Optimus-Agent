@@ -22,6 +22,7 @@ fn execute_cron_job(home: &Path, job: &CronJob, route: &RouteDecision) -> Result
             let mut model = ScriptedModel::new(vec![CompletionResponse {
                 text: Some(format!("[cron:{}] {}", job.name, job.prompt)),
                 tool_calls: vec![],
+                reasoning_content: None,
             }]);
             let result = kernel.turn(&mut model, &job.prompt)?;
             Ok(format!(
@@ -45,6 +46,19 @@ fn execute_cron_job(home: &Path, job: &CronJob, route: &RouteDecision) -> Result
             let config =
                 apply_resolved_openai_model(OpenAiCompatConfig::from_env()?, route.model.as_str());
             let mut model = OpenAiCompatModel::new(config);
+            let result = kernel.turn(&mut model, &job.prompt)?;
+            Ok(format!(
+                "ok steps={} text={}",
+                result.steps,
+                summarize(&result.assistant_text)
+            ))
+        }
+        ProviderId::Deepseek => {
+            let config = OpenAiCompatConfig::from_deepseek_env()?;
+            let mut model = DeepseekModel::new(OpenAiCompatConfig {
+                model: route.model.as_str().into(),
+                ..config
+            });
             let result = kernel.turn(&mut model, &job.prompt)?;
             Ok(format!(
                 "ok steps={} text={}",

@@ -25,11 +25,12 @@ const capabilityKeys = Object.keys(capabilityLabels) as Array<keyof DeveloperCap
 type Props = {
   transport: OptimusTransport;
   projects: Project[];
+  sessionId?: string | null;
   value?: DeveloperAccess;
   onValue: (value: DeveloperAccess) => void;
 };
 
-export function DeveloperAccessPanel({ transport, projects, value, onValue }: Props) {
+export function DeveloperAccessPanel({ transport, projects, sessionId, value, onValue }: Props) {
   const [grant, setGrant] = useState<DeveloperAccess>(() => value || disabledAccess());
   const [supervisor, setSupervisor] = useState<DeveloperSupervisorStatus | null>(null);
   const [logs, setLogs] = useState('');
@@ -40,6 +41,7 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
   const [port, setPort] = useState('17866');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [buildLogs, setBuildLogs] = useState('');
 
   useEffect(() => {
     if (value) setGrant(value);
@@ -54,6 +56,7 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
           setGrant(result.developer_access);
           const root = scopeRoots(result.developer_access.scope)[0] || '';
           setWorkspace(root);
+          if (root) setBinary(`${root}/target/debug/optimus-desktop`);
         }
         if (result.supervisor) setSupervisor(result.supervisor);
       })
@@ -81,6 +84,7 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
       : { kind: 'selected_repository', root: picked.path };
     updateGrant({ scope });
     setWorkspace(picked.path);
+    if (!binary) setBinary(`${picked.path}/target/debug/optimus-desktop`);
   };
   const setScopeKind = (kind: DeveloperScope['kind']) => {
     if (kind === 'entire_local_machine') {
@@ -133,16 +137,22 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
       setBusy(false);
     }
   };
-  const supervisorAction = async (method: 'developer_supervisor_launch' | 'developer_supervisor_stop' | 'developer_supervisor_restart' | 'developer_supervisor_rollback' | 'developer_emergency_stop') => {
+  const supervisorAction = async (method: 'developer_supervisor_launch' | 'developer_supervisor_build_launch' | 'developer_supervisor_stop' | 'developer_supervisor_restart' | 'developer_supervisor_rollback' | 'developer_emergency_stop') => {
     setBusy(true);
     setMessage('');
     try {
       const params = method === 'developer_supervisor_launch'
-        ? { binary, workspace: workspace || selectedRoots[0] || '', port: Number(port) }
-        : {};
+        ? { binary, workspace: workspace || selectedRoots[0] || '', port: Number(port), ...(sessionId ? { session_id: sessionId } : {}) }
+        : method === 'developer_supervisor_build_launch'
+          ? { workspace: workspace || selectedRoots[0] || '', port: Number(port), surface: 'desktop', ...(sessionId ? { session_id: sessionId } : {}) }
+          : {};
       const result = await transport.invoke<DeveloperSupervisorStatus>(method, params);
       setSupervisor(result);
-      setMessage(method === 'developer_emergency_stop' ? 'Emergency stop sent to the development instance.' : `Supervisor ${result.status}.`);
+      setMessage(method === 'developer_emergency_stop'
+        ? 'Emergency stop sent to the development instance.'
+        : method === 'developer_supervisor_build_launch'
+          ? `Development desktop build completed${sessionId ? '; selected session handed off' : ''}; supervisor ${result.status}.`
+          : `Supervisor ${result.status}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -150,9 +160,10 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
     }
   };
   const refreshLog = async () => {
-    const result = await transport.invoke<{ lines?: string; actions?: string }>('developer_supervisor_log', { lines: 120 });
+    const result = await transport.invoke<{ lines?: string; actions?: string; build?: string }>('developer_supervisor_log', { lines: 120 });
     setLogs(result.lines || '');
     setActionLogs(result.actions || '');
+    setBuildLogs(result.build || '');
   };
 
   return (
@@ -229,7 +240,9 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
             <label><span>Workspace</span><input value={workspace} onChange={(event) => setWorkspace(event.target.value)} placeholder={selectedRoots[0] || '/path/to/repository'} /></label>
             <label><span>Port</span><input value={port} inputMode="numeric" onChange={(event) => setPort(event.target.value)} /></label>
           </div>
+          <p className="developer-handoff-note">{sessionId ? 'The selected session will be opened in the separate development window after its health check passes.' : 'Select a session in the workbench to carry it into the separate development window.'}</p>
           <div className="developer-supervisor-actions">
+            <button type="button" className="primary-action" disabled={busy || !(workspace || selectedRoots[0])} onClick={() => void supervisorAction('developer_supervisor_build_launch')}>Build + launch development desktop</button>
             <button type="button" className="primary-action" disabled={busy || !binary || !(workspace || selectedRoots[0])} onClick={() => void supervisorAction('developer_supervisor_launch')}>Launch development copy</button>
             <button type="button" disabled={busy} onClick={() => void supervisorAction('developer_supervisor_restart')}>Restart</button>
             <button type="button" disabled={busy || !supervisor?.previous_available} onClick={() => void supervisorAction('developer_supervisor_rollback')}>Rollback</button>
@@ -238,8 +251,9 @@ export function DeveloperAccessPanel({ transport, projects, value, onValue }: Pr
             <button type="button" disabled={busy} onClick={() => void refreshLog()}>View live logs</button>
           </div>
           {supervisor?.last_error ? <div className="developer-warning"><Icon name="warning" /><span>{supervisor.last_error}</span></div> : null}
-          {logs || actionLogs ? <div className="developer-log-stack">
+          {logs || actionLogs || buildLogs ? <div className="developer-log-stack">
             {actionLogs ? <div><span className="developer-log-label">Live action log</span><pre className="developer-log" aria-label="Developer Full Access action log">{actionLogs}</pre></div> : null}
+            {buildLogs ? <div><span className="developer-log-label">Development build log</span><pre className="developer-log" aria-label="Development build log">{buildLogs}</pre></div> : null}
             {logs ? <div><span className="developer-log-label">Development instance log</span><pre className="developer-log" aria-label="Development supervisor log">{logs}</pre></div> : null}
           </div> : null}
         </section>

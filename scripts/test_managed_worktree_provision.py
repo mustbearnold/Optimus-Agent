@@ -126,19 +126,23 @@ class WorktreeProvisionTests(unittest.TestCase):
         )
         self.assertEqual(repaired.returncode, 0, repaired.stderr)
 
-    def test_ready_installs_missing_node_modules_via_npm_ci(self) -> None:
-        app = self.fixture.caller / "apps" / "optimus-ui"
-        app.mkdir(parents=True)
-        (app / "package.json").write_text("{}\n", encoding="utf-8")
+    def test_ready_installs_missing_node_modules_via_bun_workspace(self) -> None:
+        for name in WP.APP_DIRS:
+            app = self.fixture.caller / name
+            app.mkdir(parents=True)
+            (app / "package.json").write_text("{}\n", encoding="utf-8")
+        (self.fixture.caller / "package.json").write_text("{}\n", encoding="utf-8")
+        (self.fixture.caller / "bun.lock").write_text("{}\n", encoding="utf-8")
 
         shim_dir = Path(self.temporary.name) / "bin"
         shim_dir.mkdir()
-        log = Path(self.temporary.name) / "npm-calls.log"
-        shim = shim_dir / "npm"
+        log = Path(self.temporary.name) / "bun-calls.log"
+        shim = shim_dir / "bun"
         shim.write_text(
             "#!/usr/bin/env bash\n"
             f"echo \"$PWD $*\" >> '{log}'\n"
-            "mkdir -p node_modules\n",
+            + "\n".join(f"mkdir -p '{self.fixture.caller / name / 'node_modules'}'" for name in WP.APP_DIRS)
+            + "\n",
             encoding="utf-8",
         )
         shim.chmod(shim.stat().st_mode | stat.S_IEXEC)
@@ -150,9 +154,9 @@ class WorktreeProvisionTests(unittest.TestCase):
         finally:
             os.environ["PATH"] = previous
 
-        self.assertIn("ci --no-audit --no-fund", log.read_text(encoding="utf-8"))
-        self.assertTrue((app / "node_modules").is_dir())
-        # A second pass finds everything present and runs npm not at all.
+        self.assertIn("install --frozen-lockfile", log.read_text(encoding="utf-8"))
+        self.assertTrue(all((self.fixture.caller / name / "node_modules").is_dir() for name in WP.APP_DIRS))
+        # A second pass finds everything present and runs Bun not at all.
         log.unlink()
         self.assertTrue(WP.ready(self.fixture.caller, include_system=False))
         self.assertFalse(log.exists())
