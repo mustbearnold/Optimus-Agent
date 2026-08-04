@@ -109,7 +109,7 @@
       "resolved_files": 5
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "2676d0844d513901280bb8d14e56d128ba355163ae420820f28ae640452ece68",
+      "binding_sha256": "716235c2055b9e0f4e0b0d835aa5a3e1e85359c6f85862b25c014778d94fd38b",
       "document_sha256": "962a88226e983eb2ceca68f375161ec8076479a2f68f183f4fac73b2f0f88a83",
       "path": "docs/contributing/project-hygiene.md",
       "resolved_files": 3
@@ -121,14 +121,14 @@
       "resolved_files": 0
     },
     "current-roadmap": {
-      "binding_sha256": "282ebb1cc3fbaf834da889fabd8f58ab7b86ea5628431fa3f77a2cd2c707fd15",
+      "binding_sha256": "b63df41d83a5683464a4b81dcc49c7f38b5c3cb1709cf09a1b5c22b71d795915",
       "document_sha256": "a348747c432145e6fe9eee46407d6ab1719b9f8e1bf0954a01247942d83be174",
       "path": "docs/current/roadmap.md",
       "resolved_files": 5
     },
     "current-status": {
-      "binding_sha256": "c08bc5f665e2691d6da51cb0ea41302356cb4753483317b2ca742c0de9f4e054",
-      "document_sha256": "c573ee3e72428562812b41b8f4830f3b60ed6a717ca0dd30d9bda46a57baf0a0",
+      "binding_sha256": "8c151e6350aeb48a6b28543f2617c537e587543c34d3a25a2c78a5df4de08611",
+      "document_sha256": "ed8b2a501fd98e4559de4caf228d713879a1f8b83ef98fa218184874bfca2170",
       "path": "docs/current/status.md",
       "resolved_files": 440
     },
@@ -451,7 +451,7 @@
       "resolved_files": 11
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "13ca6492dbd7b6268ed974d5ff04c88abda31cde7b8ca39c67066ce6ffb7785a",
+      "binding_sha256": "9f667f707f996ec5f9d241d3a1419c566a6c83e174d447cf58d319c30f5bda15",
       "document_sha256": "cf6db2ab6df65b98f95d10e6df35fe7d9ab89ff60584193d3d73a2083d2484b6",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 7
@@ -475,7 +475,7 @@
       "resolved_files": 7
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "98ce2a3de8f74743d4464e04f9bccc19a806138b92f48921eb92b7e4e5eff5dc",
+      "binding_sha256": "b40ab8ee9fd3befac7e5238802974cbf0964b561b6f6237362a175224d640366",
       "document_sha256": "f81b867ce70ec30ecc8a7bebf7a604b0c3b1aedb435d53239da92c3d9168833e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 11

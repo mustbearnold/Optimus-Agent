@@ -153,10 +153,9 @@ build:
 build-release:
     cargo build --release -p optimus-tauri -p optimus-desktop -p optimus-cli --features optimus-tauri/custom-protocol
 
-# Default desktop: React workbench over the Rust host.
+# Default desktop: Tauri v2 shell over the Rust host, React workbench.
 dev:
-    bun run --cwd apps/optimus-ui build
-    bun run --cwd apps/optimus-electron dev
+    bun run --cwd apps/optimus-tauri dev
 
 # Rust host in browser-testable HTTP mode on :8787.
 serve:

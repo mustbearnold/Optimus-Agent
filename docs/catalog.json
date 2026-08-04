@@ -2725,7 +2725,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "c573ee3e72428562812b41b8f4830f3b60ed6a717ca0dd30d9bda46a57baf0a0",
+      "content_sha256": "ed8b2a501fd98e4559de4caf228d713879a1f8b83ef98fa218184874bfca2170",
       "headings": [
         "Optimus Agent today",
         "Confirmed current behaviour",
@@ -7201,7 +7201,7 @@
       "type": "history"
     }
   ],
-  "documents_sha256": "a00d09e22b979365c76260e0b30c4fc1ba86fb30243ee50f7725979dc03d7cd1",
+  "documents_sha256": "43e3f1dfa6ac9a6c7e75bcb1041dd72ca63e1b72fae2451473815814f852aad2",
   "routes": [
     {
       "id": "docs.navigation",

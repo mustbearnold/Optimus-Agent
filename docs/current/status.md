@@ -36,7 +36,7 @@ capabilities; they do not redefine the product.
 
 ## Confirmed current behaviour
 
-- Native TUI, Electron/React desktop, legacy Wry shell, and CLI surfaces use a
+- Native TUI, Tauri/React desktop, legacy Wry shell, and CLI surfaces use a
   Rust host and provider-agnostic kernel.
 - Codex OAuth, OpenAI-compatible providers, deterministic offline models, Auto
   routing, durable sessions, streamed lifecycle events, and cancellation seams
