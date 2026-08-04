@@ -16,10 +16,7 @@
  */
 
 const path = require("node:path");
-const { chromium } = require(path.join(
-  __dirname,
-  "../apps/optimus-electron/node_modules/playwright"
-));
+const { chromium } = require("playwright");
 
 const URL = process.env.OPTIMUS_UI_URL || "http://127.0.0.1:4174/";
 

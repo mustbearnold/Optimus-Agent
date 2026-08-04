@@ -34,7 +34,6 @@ class InstructionPlaneTest(unittest.TestCase):
                 "## Instruction authority\n"
                 "Development requests are not product requirements.\n"
             ),
-            "CLAUDE.md": "# Claude Code compatibility\n\n@AGENTS.md\n",
             "justfile": "verify:\n\techo ok\n",
             ".githooks/pre-commit": "commits are only allowed on 'main'\n",
             ".githooks/post-checkout": "this repository is main-only\n",

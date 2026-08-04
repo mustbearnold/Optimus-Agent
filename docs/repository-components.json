@@ -194,21 +194,6 @@
       "safe_to_delete": false
     },
     {
-      "id": "claude-development-adapter",
-      "path": "CLAUDE.md",
-      "parent": "repository-root",
-      "storage_plane": "repository",
-      "concern": "development-tooling",
-      "distribution": "repository-only",
-      "lifecycle": "supporting",
-      "repository_role": "required",
-      "retention": "essential",
-      "summary": "Thin Claude Code adapter that redirects development sessions to AGENTS.md.",
-      "not": ["A second instruction authority", "A product runtime constitution"],
-      "paired_with": ["developer-instructions"],
-      "safe_to_delete": false
-    },
-    {
       "id": "accepted-design-contract",
       "path": "DESIGN.md",
       "parent": "repository-root",

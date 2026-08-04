@@ -92,26 +92,6 @@
       "summary": "Mandatory law for humans and coding agents developing Optimus Agent."
     },
     {
-      "concern": "development-tooling",
-      "distribution": "repository-only",
-      "id": "claude-development-adapter",
-      "lifecycle": "supporting",
-      "not": [
-        "A second instruction authority",
-        "A product runtime constitution"
-      ],
-      "paired_with": [
-        "developer-instructions"
-      ],
-      "parent": "repository-root",
-      "path": "CLAUDE.md",
-      "repository_role": "required",
-      "retention": "essential",
-      "safe_to_delete": false,
-      "storage_plane": "repository",
-      "summary": "Thin Claude Code adapter that redirects development sessions to AGENTS.md."
-    },
-    {
       "concern": "knowledge",
       "distribution": "repository-only",
       "id": "accepted-design-contract",

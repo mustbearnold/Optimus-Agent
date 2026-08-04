@@ -49,7 +49,6 @@ def findings(root: Path = ROOT) -> list[str]:
     system_prompt = read(root, "crates/optimus-kernel/src/system_prompt.rs")
     github = read(root, "docs/contributing/github-conventions.md")
     justfile = read(root, "justfile")
-    claude = read(root, "CLAUDE.md")
     pre_commit = read(root, ".githooks/pre-commit")
     post_checkout = read(root, ".githooks/post-checkout")
     reference_transaction = read(root, ".githooks/reference-transaction")
@@ -82,7 +81,6 @@ def findings(root: Path = ROOT) -> list[str]:
         (".githooks/pre-commit", pre_commit, "only allowed on 'main'"),
         (".githooks/post-checkout", post_checkout, "main-only"),
         (".githooks/reference-transaction", reference_transaction, "main-only"),
-        ("CLAUDE.md", claude, "@AGENTS.md"),
     )
     for relative, text, marker in required:
         if marker not in text:

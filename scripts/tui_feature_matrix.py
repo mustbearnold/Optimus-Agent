@@ -571,9 +571,13 @@ class Case:
                 )
             time.sleep(0.06)
         self.keys("Enter")
+        # The offline provider is paced at OPTIMUS_OFFLINE_LATENCY_MS (3000ms)
+        # so busy states are visible; under host load a synthetic Enter can sit
+        # unconsumed for several seconds before the pane accepts it. 15s keeps
+        # the acceptance proof while absorbing the injected latency.
         self.wait(
             lambda lines: expected not in composer_text(lines),
-            5,
+            15,
             f"submit accepted {expected!r}",
         )
 

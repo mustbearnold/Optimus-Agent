@@ -8,11 +8,11 @@ module.exports = defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [['list'], ['html', { open: 'never', outputFolder: '../../local/tmp/playwright-report' }]],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: '../../Development/tmp/playwright-report' }]],
   use: {
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
   },
-  outputDir: '../../local/tmp/playwright-output',
+  outputDir: '../../Development/tmp/playwright-output',
 });

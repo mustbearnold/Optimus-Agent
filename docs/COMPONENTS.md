@@ -10,7 +10,6 @@ This is the generated human view of `docs/repository-components.json`.
 | `.engineering-memory` | Ignored generated Engineering Memory cache derived from repository source and docs. | `generated` | `generated-local` | yes |
 | `.githooks` | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. | `primary` | `repository-only` | no |
 | `AGENTS.md` | Mandatory law for humans and coding agents developing Optimus Agent. | `primary` | `repository-only` | no |
-| `CLAUDE.md` | Thin Claude Code adapter that redirects development sessions to AGENTS.md. | `supporting` | `repository-only` | no |
 | `DESIGN.md` | Accepted design contract referenced by architecture decisions and interface fixtures. | `supporting` | `repository-only` | no |
 | `OPTIMUS_AGENTS.md` | Compile-time embedded constitution loaded into installed Optimus product sessions. | `primary` | `embedded` | no |
 | `apps` | Product binaries, terminal surface, native host, desktop shell, and React interface. | `primary` | `repository-only` | no |

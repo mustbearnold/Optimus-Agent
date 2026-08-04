@@ -12,6 +12,9 @@
   "trustedDependencies": [
     "electron"
   ],
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
   "scripts": {
     "test:ui": "bun run --cwd apps/optimus-ui test",
     "test:electron": "bun run --cwd apps/optimus-electron test",

@@ -32,7 +32,7 @@ TIER="${1:-all}"
 # than reporting dozens of assertion failures caused by one missing executable.
 if [ -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]; then
   for browser_cache in \
-    "$ROOT/local/tools/playwright-browsers" \
+    "$ROOT/Development/tools/playwright-browsers" \
     "$ROOT/../../tools/playwright-browsers"
   do
     if [ -d "$browser_cache" ]; then
@@ -55,7 +55,7 @@ fi
 
 if ! command -v tmux >/dev/null 2>&1; then
   for tmux_bin_dir in \
-    "$ROOT/local/tools/tmux-root/usr/bin" \
+    "$ROOT/Development/tools/tmux-root/usr/bin" \
     "$ROOT/../../tools/tmux-root/usr/bin"
   do
     if [ -x "$tmux_bin_dir/tmux" ]; then

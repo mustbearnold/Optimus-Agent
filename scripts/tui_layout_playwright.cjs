@@ -15,14 +15,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const { chromium } = require(path.join(
-  __dirname,
-  "..",
-  "apps",
-  "optimus-electron",
-  "node_modules",
-  "playwright",
-));
+const { chromium } = require("playwright");
 
 const ROOT = path.resolve(__dirname, "..");
 const DEFAULT_BINARY = path.join(ROOT, "target", "debug", "optimus");
