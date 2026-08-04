@@ -218,3 +218,16 @@ break the canonical Tauri structure. No duplicate documents or code found.
 11. **`specs/conventions.md` dropped a `.editorconfig` claim** — no such
     file exists (the claim came from a retired doc); the covers entry and
     prose now match reality.
+12. **Folder/file consolidation (follow-up, owner-requested)** — `scripts/`
+    reorganized from 69 flat files into `scripts/gates/` (16 check-* gates),
+    `scripts/tests/` (25 self-tests + 3 .cjs UI drivers), `scripts/tools/`
+    (21 generators/utilities); `verify.sh` + the two installers stay at the
+    root. Every reference was re-pointed: verify.sh call sites (both tiers),
+    justfile, AGENTS.md, docs frontmatter bindings (47 files), EM internals,
+    the installers (.sh and .ps1), the Rust eval-report integration test,
+    test loaders (`with_name`/`spec_from_file_location` → sibling dirs),
+    `__file__`-based ROOT depths (parents[1]→parents[2]), and the .cjs
+    drivers' `__dirname` paths. KDE `.directory` cruft deleted. Verify 61/61.
+    `evals/`, `docs/architecture/` data files, and `assets/` (canonical icon)
+    reviewed and deliberately kept in place — they are gate-referenced data,
+    not clutter.
