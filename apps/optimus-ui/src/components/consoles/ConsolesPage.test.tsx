@@ -46,6 +46,7 @@ function transport(): OptimusTransport {
     kind: 'fixture',
     invoke,
     chat: vi.fn(),
+    chatApprovalResolve: vi.fn(),
     windowAction: vi.fn(),
     pickFolder: vi.fn(),
     openPath: vi.fn(),

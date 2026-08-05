@@ -107,6 +107,9 @@ function transportWithBrowser(
     chat: () => {
       throw new Error('not used');
     },
+    chatApprovalResolve: () => {
+      throw new Error('not used');
+    },
     windowAction: async () => ({}),
     pickFolder: async () => ({ ok: false }),
     openPath: async () => ({}),
