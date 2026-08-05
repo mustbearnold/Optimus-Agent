@@ -770,10 +770,13 @@ fn validate_sha256(value: &str) -> Result<()> {
     Ok(())
 }
 
+/// Trim `value` and cap it at `max` characters. Whitespace-only values fall
+/// back to `fallback`, which is likewise trimmed and capped so the returned
+/// string never exceeds `max` characters.
 fn sanitize_field(value: &str, max: usize, fallback: &str) -> String {
     let trimmed = value.trim();
     if trimmed.is_empty() {
-        return fallback.to_string();
+        return fallback.trim().chars().take(max).collect();
     }
     trimmed.chars().take(max).collect()
 }
@@ -1053,5 +1056,25 @@ mod tests {
         assert!(store.export_file(&a.sha256, Some(".env")).is_err());
         assert!(store.export_file(&a.sha256, Some("auth.json")).is_err());
         assert!(store.export_file(&a.sha256, Some("key.pem")).is_err());
+    }
+
+    #[test]
+    fn sanitize_field_caps_fallback_too() {
+        // Regression: whitespace-only values used to return the fallback
+        // untruncated, so a long fallback violated the `max` length contract.
+        assert_eq!(
+            sanitize_field("   ", 8, "application/octet-stream"),
+            "applicat"
+        );
+        assert_eq!(sanitize_field("", 3, "application/octet-stream"), "app");
+        assert_eq!(
+            sanitize_field("", 64, "application/octet-stream"),
+            "application/octet-stream"
+        );
+        // Normal values keep their existing behaviour.
+        assert_eq!(sanitize_field("  note  ", 16, "artifact"), "note");
+        assert_eq!(sanitize_field("a very long label", 5, "artifact"), "a ver");
+        // Multi-byte characters are capped on char boundaries, not bytes.
+        assert_eq!(sanitize_field("日本語のラベル", 3, "artifact"), "日本語");
     }
 }
