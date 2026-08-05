@@ -59,7 +59,7 @@ function captureAnsi(session) {
 }
 
 async function waitFor(session, rows, predicate, description) {
-  // The full gate runs browser, Electron, and PTY suites concurrently. Keep
+  // The full gate runs browser, TUI, and PTY suites concurrently. Keep
   // polling responsive, but allow slow CI hosts to schedule the real TUI.
   const deadline = Date.now() + 30_000;
   let frame = capture(session, rows);

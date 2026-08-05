@@ -161,7 +161,7 @@ dev:
 serve:
     cargo run -p optimus-desktop -- --http 8787
 
-# Legacy Wry native shell (no Electron).
+# Legacy Wry native shell.
 dev-legacy:
     cargo run -p optimus-desktop
 

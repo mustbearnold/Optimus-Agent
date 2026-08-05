@@ -313,7 +313,7 @@ export function SettingsDialog({
             {active === 'browser' ? (
               <>
                 <SettingsGroup title="Preview">
-                  <SettingRow title="Native preview panel" description="Sandboxed Electron child view with permission and popup denial.">
+                  <SettingRow title="Native preview panel" description="Sandboxed webview child view with permission and popup denial.">
                     <span className="state-chip is-ready">Enabled</span>
                   </SettingRow>
                   <SettingRow title="Page annotations" description="Select one element and attach only its bounded role, label, URL, and geometry.">
@@ -406,7 +406,7 @@ export function SettingsDialog({
                 <SettingRow title="Keyboard navigation" description="Roving tabs, visible focus, and modal focus containment are enabled.">
                   <span className="state-chip is-ready">Enabled</span>
                 </SettingRow>
-                <SettingRow title="Zoom" description="Native Electron zoom controls are not exposed in this build.">
+                <SettingRow title="Zoom" description="Native zoom controls are not exposed in this build.">
                   <button type="button" disabled>Not available</button>
                 </SettingRow>
               </SettingsGroup>

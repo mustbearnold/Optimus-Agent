@@ -1754,7 +1754,7 @@ Full policy: the merged Versioning section above.
 | Parity ledger rollup | `python3 scripts/gates/check-parity-ledger.py` | ✅ | ✅ | ✅ | Evidence paths must exist; `parity`/`win` need trajectory |
 | Architecture marks claim hygiene | `python3 scripts/gates/check-architecture-marks.py` | ✅ | ✅ | optional | Fails if a mark is graded **S+++** without done phase / required paths |
 | Observability | `python3 scripts/gates/check-observability-gate.py` | ✅ when touching kernel/runtime/packs/eval | recommended | optional | Cargo integrity + causal/export surface |
-| Desktop IPC matrix | `python3 scripts/gates/check-desktop-ipc-matrix.py` | ✅ when touching desktop/electron/ui | recommended | optional | Host ⊇ Electron = React classification |
+| Desktop IPC matrix | `python3 scripts/gates/check-desktop-ipc-matrix.py` | ✅ when touching desktop/tauri/ui | recommended | optional | Host ⊇ React = Tauri classification |
 | Domain modularity | `python3 scripts/gates/check-domain-modularity.py` | ✅ when touching packs/kernel/store | recommended | optional | Single `ToolDesc` catalog / plane separation |
 | Crate layers | `python3 scripts/gates/check-crate-layers.py` | ✅ when touching crate graph | recommended | optional | Control-plane peel deps |
 | Engineering Memory | `python3 scripts/tools/engineering_memory.py check` (+ `generate` / `validate` when stale) | ✅ | ✅ | optional | Generated maps must not be hand-edited |
@@ -1839,8 +1839,9 @@ architecture quality grade sheet. For modular architecture grades (S+++ climb)
 see [architecture-marks.md](runbooks/architecture-marks.md). For current topology and
 Confirmed behaviour see [system-overview.md](architecture.md).
 
-**Default product shell (Confirmed):** Electron + React over Rust host; Legacy
-Wry optional. Do not read “tao+wry Windows desktop shell” below as the default
+**Default product shell (Confirmed):** Tauri + React over Rust host
+(exclusively — no Electron, no Wry rollback since 2026-08-05, spec-012).
+Do not read “tao+wry Windows desktop shell” below as the default
 install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  

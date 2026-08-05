@@ -65,7 +65,7 @@ not auto-promote or re-prove marks.
 | Control-plane modularity | **S+++** | Peels: `optimus-eval`, `optimus-ops`, `optimus-agent`, `optimus-workflow` (defs+DAG+verticals), `optimus-artifacts`. Kernel turn waist with re-exports. Layer lint: `scripts/gates/check-crate-layers.py`. Residual: HTTP browser facade in kernel; CDP in `optimus-browser`. |
 | Multi-agent readiness | **S+++** | Two specialists (`workspace_writer`, `workspace_reader`); three registered workflows including `write_then_read_handoff` DAG; durable `WorkflowRunStore`; parent cancel tree. P12 closed the command-FS residual that blocked S+++ after P10. Still registered-only (no open-ended model spawn — out of P10 scope). |
 | Observability / eval | **S+++** | Offline integrity gate; store-backed causal reconstruction (`trace show` / `load_causal_turn`); versioned local export `optimus.causal.v1` (`trace export`) with home redaction; stable security-denial codes; cancel terminals reconstructible without logs. OTLP deferred (ADR-0037). |
-| UI architecture | **S+++** | Electron + React default install; Wry optional. IPC matrix: host ⊇ Electron = React; every host method classified invoke vs non-invoke; expanded critical set (approvals, scopes, term_run, jobs, sessions). Preview WebContentsView sandboxed (static tests). Renderer cannot mint `project_root_stage_native`. Cancel via host stream. |
+| UI architecture | **S+++** | Tauri + React exclusive install (no Electron, no Wry rollback). IPC matrix: host ⊇ React = Tauri; every host method classified invoke vs non-invoke; expanded critical set (approvals, scopes, term_run, jobs, sessions). Preview webview sandboxed (static tests). Renderer cannot mint `project_root_stage_native`. Cancel via host stream. |
 | Doc / claim hygiene | **S+++** | ADR-0016 A/B aliases; ownership map matches crate graph; sota-scorecard shell banner; blueprint banners; system-overview debt honest; EM refresh on P16. |
 | Release / parity gating | **S+++** | Fail-closed version + parity ledger; operator pre-merge vs pre-release matrix; `check-architecture-marks.py` blocks S+++ greenwash; architecture S+++ does not require Hermes `gate` PASS. |
 
@@ -73,12 +73,14 @@ not auto-promote or re-prove marks.
 
 **Confirmed current behaviour:**
 
-- **Default install / daily desktop:** Electron + React workbench (`apps/optimus-electron` + `apps/optimus-ui`) over `optimus-desktop --host-only` (Rust host).
-- **Legacy rollback:** Wry/Tao shell (`optimus-desktop` native window) via desktop action / `LegacyWry` path.
-- **Repository-level default shell for development:** Electron React (see ADR-0028).
+- **Default install / daily desktop:** Tauri + React workbench (`apps/optimus-tauri` + `apps/optimus-ui`) over `optimus-desktop --host-only` (Rust host).
+- **Legacy rollback:** retired 2026-08-05 (spec-012) — no Wry/Tao shell is
+  staged by either installer; the `LegacyWry` action and
+  `OPTIMUS_DESKTOP_SHELL` dispatch are gone.
+- **Repository-level default shell for development:** Tauri React (see ADR-0028, spec-001).
 - **HTTP mode on the host:** development/Playwright only, not the installed daily path.
 
-Installer authority: `scripts/rebuild-install-relaunch.sh` stages Electron as the primary desktop entry and exposes Legacy Wry as a secondary action.
+Installer authority: `scripts/rebuild-install-relaunch.sh` stages Tauri as the primary desktop entry; no Electron path exists (ElectronRollback is forbidden by `check-product-complete-install.py`).
 
 ## S+++ exit criteria (by mark)
 

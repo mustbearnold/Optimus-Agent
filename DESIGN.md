@@ -160,14 +160,14 @@ components:
 ### Implementation status — 2026-07-23
 
 - **Confirmed current behaviour:** the React renderer implements the Vantage
-  workbench and is the repository-level default Electron surface. Rust still
+  workbench and is the repository-level default Tauri surface. Rust still
   owns sessions, settings, jobs, approvals, tools, artifacts, files,
   cancellation, and terminal outcomes.
 - **Confirmed current behaviour:** production React assets load through
   `optimus-app://ui/`; the renderer uses a context-isolated preload and does not
   receive the Rust bearer token.
 - **Confirmed current behaviour:** React owns Browser chrome and geometry while
-  Electron owns a sandboxed native `WebContentsView`. The user preview and Rust
+  the Tauri webview hosts the sandboxed preview surface. The user preview and Rust
   agent Browser remain separate capability paths.
 - **Confirmed current behaviour:** the empty work surface uses compact,
   outcome-oriented starter rows rather than a generic card grid. Capabilities

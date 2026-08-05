@@ -18,11 +18,11 @@ One line per known-but-unspecced capability or gap. Items move into a
 `specs/NNN-<slug>/spec.md` when work starts (SDD loop: no code without a spec).
 
 - ~~Windows Tauri packaging~~ → `specs/012-windows-tauri-packaging/spec.md`
-  (spec'd 2026-08-05; ontology `desktop-wry-fallback` removal_when 2026-10-31).
-- Renderer-pixel evidence under Tauri: there is no playwright-class driver for
-  the WebKitGTK webview; document the evidence ceiling (launch gate +
-  transport unit tests + desktop e2e + webkit layout audit) as the accepted
-  bar or adopt a WebKit driver.
+  (implemented 2026-08-05; `desktop-wry-fallback` ontology row removed,
+  both installers stage Tauri exclusively).
+- Renderer-pixel evidence under Tauri: the evidence ceiling (launch gate +
+  transport unit tests + desktop e2e + webkit layout audit) is recorded in
+  spec-001; a WebKitGTK playwright-class driver would raise it (open).
 - Historical docs fate: `_attic/` holds plans, evidence, lessons, history,
   verification records, marks, and historical specifications — decide per
   item (keep as docs/decisions-style records, or delete; git preserves all).

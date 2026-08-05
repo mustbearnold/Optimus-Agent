@@ -172,9 +172,8 @@
       "id": "desktop.stack",
       "keywords": [
         "desktop",
-        "Electron",
+        "Tauri",
         "React",
-        "Wry",
         "IPC",
         "shell",
         "host",

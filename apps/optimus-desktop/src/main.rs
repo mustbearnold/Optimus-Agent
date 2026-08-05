@@ -1,4 +1,4 @@
-//! Optimus desktop shell — native Wry webview, HTTP host (Playwright / Electron).
+//! Optimus desktop shell — native Wry webview, HTTP host (Playwright / external shells).
 
 mod bridge;
 mod host_runtime;
@@ -30,7 +30,7 @@ use crate::preview_embed::{navigation_allowed as preview_nav_allowed, EmbedBound
 use crate::server::{run_http_server, HttpSecurity};
 use optimus_host::{pick_folder_dialog, IpcEnvelope, IpcReply};
 
-/// Default loopback port for `--host-only` (Electron / external shells).
+/// Default loopback port for `--host-only` (external shells).
 const DEFAULT_HOST_PORT: u16 = 17865;
 
 // Wry translates custom schemes to an HTTP `.localhost` origin only on
@@ -64,7 +64,7 @@ struct Cli {
     #[arg(long)]
     http: Option<u16>,
 
-    /// Headless Rust host for Electron (and other shells). No Wry window.
+    /// Headless Rust host for external shells. No Wry window.
     /// Uses OPTIMUS_HTTP_TOKEN (or generates one) and binds loopback HTTP+IPC.
     #[arg(long, conflicts_with = "http")]
     host_only: bool,
@@ -74,7 +74,7 @@ struct Cli {
     host_port: u16,
 
     /// Explicitly enable the HTTP UI/API surface (required for `--http` tests;
-    /// implied by `--host-only` for the Electron product path).
+    /// implied by `--host-only` for the external-shell path).
     #[arg(long)]
     development_http: bool,
 }
@@ -165,7 +165,7 @@ fn main() -> wry::Result<()> {
                 std::process::exit(3);
             }
             eprintln!("[optimus-desktop] host-only mode on 127.0.0.1:{port}");
-            // Electron parent reads this line to pair Authorization.
+            // External shell parent reads this line to pair Authorization.
             if std::env::var_os("OPTIMUS_SUPPRESS_TOKEN_LOG").is_none() {
                 eprintln!("[optimus-desktop] OPTIMUS_HTTP_TOKEN={token}");
             }

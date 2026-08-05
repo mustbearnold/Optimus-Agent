@@ -102,7 +102,7 @@ function transportWithBrowser(
   annotate: NonNullable<OptimusTransport['browser']>['annotate']
 ): OptimusTransport {
   return {
-    kind: 'electron',
+    kind: 'tauri',
     invoke: async () => ({}) as never,
     chat: () => {
       throw new Error('not used');

@@ -185,8 +185,8 @@ function disabledDeveloperAccess(): DeveloperAccess {
 const doctor: Doctor = {
   version: '0.1.0',
   home: '/home/dev/.local/share/optimus',
-  phase: 'electron-react-workbench',
-  browser: 'electron-webcontents-view',
+  phase: 'product-complete',
+  browser: 'cdp',
   preview_browser: true,
   streaming: true,
   files: true,

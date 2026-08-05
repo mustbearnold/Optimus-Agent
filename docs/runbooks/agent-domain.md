@@ -43,7 +43,7 @@ ADRs live in **`docs/decisions/`**, not `docs/adr/`.
 │   ├── 0046-approving-resumes-the-turn.md
 │   └── 0049-module-size-is-measured-honestly.md
 ├── crates/                       ← library crates
-└── apps/                         ← binaries (tui, desktop, cli, electron, ui)
+└── apps/                         ← binaries (tui, desktop, tauri, cli, ui)
 ```
 
 Numbering is a zero-padded four-digit sequence with a kebab-case slug. Take the

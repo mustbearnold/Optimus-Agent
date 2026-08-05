@@ -4,8 +4,8 @@ doc_type: explanation
 plane: current
 status: current
 authority: supporting
-summary: Confirmed current behaviour: the installer stages Tauri + React as the desktop entry and keeps Wry as the legacy rollback shell.
-reviewed_on: 2026-07-31
+summary: Confirmed current behaviour: both installers stage the Tauri shell + React + CLI exclusively over the Rust host; the Wry native shell remains the documented legacy rollback until the spec-012 deadline (2026-10-31). Windows depends on the WebView2 runtime.
+reviewed_on: 2026-08-05
 review_by: 2026-10-31
 ---
 
@@ -13,9 +13,13 @@ review_by: 2026-10-31
 
 ## Default shell
 
-**Confirmed current behaviour:** the installer stages **Tauri + React** as the
-desktop entry and retains the **Wry/Tao** binary as a legacy
-rollback (`LegacyWry`). The Rust host remains authority for IPC and durable
+**Confirmed current behaviour:** the desktop product is **exclusively
+Tauri**. Both installers (`rebuild-install-relaunch.sh` and
+`rebuild-install-relaunch.ps1`) stage the **Tauri + React** shell, the Rust
+host, and the CLI; the pre-Tauri shell has no path in the installer. The
+**Wry native shell** remains available as a documented legacy rollback via
+`OPTIMUS_DESKTOP_SHELL=wry` until the spec-012 retirement (2026-10-31). The
+Rust host remains authority for IPC and durable
 effects. See
 [desktop-shell-and-ipc-matrix.md](../../specs/001-desktop-shell/spec.md).
 
@@ -50,9 +54,10 @@ bash scripts/rebuild-install-relaunch.sh --dev --no-build --no-relaunch
 The script is a native Linux workflow. It:
 
 1. Checks Cargo, GTK 3, WebKitGTK 4.1, and build prerequisites.
-2. Builds `optimus-tauri`, the rollback host, and `optimus-cli`.
+2. Builds `optimus-tauri` and `optimus-cli` (React assets first — the Tauri
+   binary embeds `frontendDist` at compile time).
 3. Stops only an Optimus process running from the stable install path.
-4. Atomically replaces both installed binaries.
+4. Atomically replaces the installed binaries.
 5. Creates CLI symlinks, an XDG desktop entry, and an SVG icon.
 6. Writes version and install metadata.
 7. Writes an ownership marker and generates a marker-gated scoped uninstaller.
@@ -187,13 +192,36 @@ The Windows install remains under:
 %LOCALAPPDATA%\Programs\OptimusAgent\
 ```
 
+The staged desktop application is the Tauri shell
+(`optimus-agent-tauri.exe`) plus the CLI (`optimus.exe` /
+`optimus-cli.exe`); the legacy Wry desktop backend is not staged (spec-012).
+
+### Windows WebView2 runtime requirement
+
+Tauri on Windows renders through the **WebView2 runtime** (the OS webview,
+not the retired Wry shell). The installer's README-INSTALL.txt records the
+dependency; the runtime itself is an Evergreen install and is not bundled by
+this installer (bootstrapper choice is an open question, see spec-012).
+
+Smoke-launch the staged Tauri binary after a Windows install:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\OptimusAgent\optimus-agent-tauri.exe" --version
+```
+
+The Windows evidence bar (spec-012 R4): installer contract tests
+(`test_rebuild_install_safety.py`, cross-platform) plus the smoke launch
+above. There is no Windows CI host on the development machine, so the
+cross-platform contract tests are the executable floor; the Linux xdotool
+window check has no Windows equivalent in the gate suite.
+
 The default Windows Cargo target is outside the repository at
 `%LOCALAPPDATA%\OptimusAgent\cargo-target`. The installer rejects reparse points
 in existing install, Start Menu, Desktop, and target-path components. Binary and
 metadata publication uses random same-directory `CreateNew` files, verifies each
 temporary has one hard link, then performs a non-overwriting rename. Existing
 shortcuts are replaced or removed only when their resolved target is the owned
-installed desktop binary.
+installed desktop binary (`optimus-agent-tauri.exe`).
 
 ## Agent checklist
 

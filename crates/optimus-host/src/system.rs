@@ -345,22 +345,15 @@ struct ShellModeReport {
 const SHELL_REACT_TAURI: &str = "react-tauri";
 
 fn detect_shell_mode(install: &InstallMetaReport) -> ShellModeReport {
-    // Prefer process env (rollback Electron/Wry set OPTIMUS_DESKTOP_SHELL),
-    // then install-meta, then product default. Token is always product vocabulary.
-    let env_shell = std::env::var("OPTIMUS_DESKTOP_SHELL")
-        .ok()
-        .map(|s| s.trim().to_ascii_lowercase());
-    let mode = match env_shell.as_deref() {
-        Some("wry") | Some("legacy_wry") | Some("legacy-wry") => "legacy_wry".to_string(),
-        Some("electron") | Some("react-electron") | Some("electron_react") => {
-            "react-electron".into()
-        }
-        _ => install
-            .desktop_shell
-            .clone()
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| SHELL_REACT_TAURI.into()),
-    };
+    // The product shell is exclusively Tauri: the mode comes from install-meta
+    // (written by the installer), defaulting to react-tauri. The old
+    // OPTIMUS_DESKTOP_SHELL env dispatch and the Electron/Wry rollback tokens
+    // are retired — no env value may select a shell mode.
+    let mode = install
+        .desktop_shell
+        .clone()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| SHELL_REACT_TAURI.into());
     let default_shell = mode == SHELL_REACT_TAURI;
     let label = if default_shell {
         "Tauri + React (default)".into()
@@ -554,7 +547,7 @@ mod tests {
             root.join("install-meta.json"),
             r#"{
               "version": "0.1.0-test",
-              "desktop_shell": "react-electron",
+              "desktop_shell": "react-tauri",
               "install_root": "ignored"
             }"#,
         )
@@ -566,12 +559,63 @@ mod tests {
         std::fs::create_dir_all(&home).unwrap();
         let doc = doctor_json(&home);
         assert_eq!(doc["install_present"], true);
-        assert_eq!(doc["install_shell"], "react-electron");
+        assert_eq!(doc["install_shell"], "react-tauri");
         assert_eq!(doc["install_version"], "0.1.0-test");
-        assert_eq!(doc["shell_mode"], "react-electron");
+        assert_eq!(doc["shell_mode"], "react-tauri");
         match prev {
             Some(v) => std::env::set_var("XDG_DATA_HOME", v),
             None => std::env::remove_var("XDG_DATA_HOME"),
+        }
+    }
+
+    #[test]
+    fn legacy_shell_env_tokens_are_ignored() {
+        // Regression (2026-08-05, pair review): the host used to map
+        // OPTIMUS_DESKTOP_SHELL=electron|react-electron|wry to rollback shell
+        // modes. Electron and the Wry rollback are retired; no env token may
+        // select a shell mode — the probe falls back to the install-meta
+        // product default.
+        let _env = env_lock();
+        let dir = tempfile::tempdir().expect("temp xdg");
+        let data = dir.path().join("share");
+        let root = data.join("optimus-agent");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("install-meta.json"),
+            r#"{
+              "version": "0.1.0-test",
+              "desktop_shell": "react-tauri",
+              "install_root": "ignored"
+            }"#,
+        )
+        .unwrap();
+        // SAFETY: test-local env for install probe; restored after.
+        let prev = std::env::var_os("XDG_DATA_HOME");
+        let prev_shell = std::env::var_os("OPTIMUS_DESKTOP_SHELL");
+        std::env::set_var("XDG_DATA_HOME", &data);
+        for token in [
+            "electron",
+            "react-electron",
+            "electron_react",
+            "wry",
+            "legacy_wry",
+        ] {
+            std::env::set_var("OPTIMUS_DESKTOP_SHELL", token);
+            let home = dir.path().join("product-home");
+            std::fs::create_dir_all(&home).unwrap();
+            let doc = doctor_json(&home);
+            assert_eq!(
+                doc["shell_mode"], "react-tauri",
+                "env token {token:?} must not select a shell mode"
+            );
+        }
+        match prev {
+            Some(v) => std::env::set_var("XDG_DATA_HOME", v),
+            None => std::env::remove_var("XDG_DATA_HOME"),
+        }
+        match prev_shell {
+            Some(v) => std::env::set_var("OPTIMUS_DESKTOP_SHELL", v),
+            None => std::env::remove_var("OPTIMUS_DESKTOP_SHELL"),
         }
     }
 }

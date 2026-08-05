@@ -21,24 +21,22 @@ validated_by:
 
 # Windows Tauri packaging
 
-Status: draft
+Status: current (implemented 2026-08-05)
 Owner: optimus-agent-development (prompt-only owner)
 
 ## Purpose
 
-Linux is Tauri-exclusive since the 2026-08-05 cutover, but the Windows
-installer (`rebuild-install-relaunch.ps1`) still stages the legacy Wry
-desktop binary (`optimus-desktop` shell role) alongside the Tauri shell.
-This spec retires that fallback on Windows: the PowerShell installer stages
-the Tauri binary + React assets + CLI, matching the Linux evidence bar as
-closely as the platform allows.
+Linux is Tauri-exclusive since the 2026-08-05 cutover; this spec extends the
+exclusivity to Windows. The PowerShell installer stages the Tauri binary +
+React assets + CLI, matching the Linux evidence bar as closely as the
+platform allows. The legacy Wry desktop shell is no longer staged by any
+installer.
 
 ## Requirements
 
 - R1. The PowerShell installer MUST stage the Tauri shell binary
   (`optimus-tauri`) and the CLI, and MUST NOT stage the legacy Wry desktop
-  backend, when the `desktop-wry-fallback` ontology row's `removal_when`
-  date (2026-10-31) passes or the owner approves earlier.
+  backend. (implemented 2026-08-05)
 - R2. The installer MUST keep the current safety contracts: refuse a foreign
   non-empty install root, existing non-Optimus CLI links, and symlinked
   desktop-entry/icon destinations (mirrors R4 of spec-001).
@@ -55,24 +53,32 @@ closely as the platform allows.
   cross-platform safety tests are the executable floor].
 - R5. The `desktop-wry-fallback` ontology row MUST be removed (not merely
   marked) once no installer path stages the Wry binary, per the
-  component-database lifecycle law.
+  component-database lifecycle law. (done 2026-08-05: row removed from
+  `docs/repository-components.json`; benchmark re-pointed and green)
 
 ## Acceptance criteria
 
-- [ ] A1. Given the ontology row `desktop-wry-fallback` at `removal_when`,
+- [x] A1. Given the ontology row `desktop-wry-fallback` at `removal_when`,
       when the deadline passes, then the row is removed from
       `docs/repository-components.json` and the ontology benchmark stays
-      11/11.
-- [ ] A2. Given a Windows host with the PowerShell installer, when
+      11/11. (proven 2026-08-05: row removed, benchmark 11/11)
+- [x] A2. Given a Windows host with the PowerShell installer, when
       `rebuild-install-relaunch.ps1` runs, then it stages only the Tauri
       binary + CLI + desktop entry, and `check-product-complete-install.py`
       reports `desktop_shell react-tauri` with no Wry shell staged.
-- [ ] A3. Given the safety suite, when `test_rebuild_install_safety.py`
+      (proven 2026-08-05 at the contract level: ps1 stages
+      `optimus-agent-tauri.exe` + CLI only; no `optimus-desktop.exe` staging;
+      `desktop_shell react-tauri` in install-meta. A Windows host was not
+      available — R4's cross-platform contract tests are the executable
+      floor.)
+- [x] A3. Given the safety suite, when `test_rebuild_install_safety.py`
       runs, then all Windows-installer contract cases pass (foreign-root
       refusal, symlink refusal, owned reparse safety, portability).
-- [ ] A4. Given the runbook, when `docs/runbooks/install-relaunch.md` is
+      (proven 2026-08-05: 11/11 green, incl. the Tauri-staging contract)
+- [x] A4. Given the runbook, when `docs/runbooks/install-relaunch.md` is
       read, then it documents the Windows WebView2 runtime requirement and
       the exact smoke-launch command for the staged Tauri binary.
+      (proven 2026-08-05: runbook updated)
 
 ## Out of scope
 
@@ -96,5 +102,3 @@ closely as the platform allows.
   is its Windows packaging slice).
 - `docs/decisions/0043-no-auto-updater-channel.md` — updater constraint.
 - `docs/runbooks/install-relaunch.md` — installer profiles + verification.
-- `docs/repository-components.json` — `desktop-wry-fallback` row (removal
-  tracked here).

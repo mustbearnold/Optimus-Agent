@@ -18,8 +18,9 @@ architecture quality grade sheet. For modular architecture grades (S+++ climb)
 see [architecture-marks.md](../runbooks/architecture-marks.md). For current topology and
 Confirmed behaviour see [system-overview.md](../architecture.md).
 
-**Default product shell (Confirmed):** Electron + React over Rust host; Legacy
-Wry optional. Do not read “tao+wry Windows desktop shell” below as the default
+**Default product shell (Confirmed):** Tauri + React over Rust host
+(exclusively — no Electron, no Wry rollback since 2026-08-05, spec-012).
+Do not read “tao+wry Windows desktop shell” below as the default
 install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  
@@ -52,7 +53,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Codex OAuth Responses provider
 - Streaming desktop chat
 - Durable session reopen
-- Electron + React default desktop shell (Wry legacy optional)
+- Tauri + React exclusive desktop shell (Wry legacy retired)
 - Sandboxed Files list/read
 - Bounded terminal job stream
 - Sequential durable write/command campaigns
@@ -72,7 +73,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Skills/memory/packs consoles + redacted logs + command palette (program P26)
 - Gateway outbox receipts, ambiguous-send recovery, mock Telegram adapter, messaging UI (program P28; external EO residual)
 - Provider catalog + ordered failover, pack-gated MCP mock, signed packs (program P27)
-- Product ship path: Electron install default, doctor shell/isolation/gateway/packs, ADR-0043 no auto-updater (program P29)
+- Product ship path: Tauri install default, doctor shell/isolation/gateway/packs, ADR-0043 no auto-updater (program P29)
 - S7: profile homes, leased child agents, CUA pack scaffold, Hermes importers
 - Track Z: offline comparative runner, surface/media/breadth scaffolds, Discord/Slack mock adapters
 
@@ -92,10 +93,14 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 
 ## Current architecture truth
 
-- **Default installed desktop:** Electron + React workbench over Rust `optimus-desktop --host-only` (ADR-0028). Not Tauri.
-- **Legacy rollback:** tao + wry native shell (WebKitGTK / WebView2) via install “Legacy Wry” action.
-- Native Wry IPC: ADR-0014 custom-protocol path; host HTTP mode is a test / Electron transport path.
-- Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available) is separate from the Electron sandboxed preview `WebContentsView`.
+- **Default installed desktop:** Tauri + React workbench over Rust host
+  (ADR-0028 lineage; Tauri-exclusive since 2026-08-05, spec-012).
+- **Legacy rollback:** retired — no Wry/tao shell is staged by either
+  installer; the `LegacyWry` action was removed.
+- Native IPC: Tauri bridge (host_invoke) + ADR-0014 custom-protocol path;
+  host HTTP mode is a test / external-shell transport path.
+- Browser: agent `browser_*` effector (HTTP SSRF-safe; CDP when available)
+  is separate from the Tauri/React preview webview.
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns: sequential WriteFile/RunCommand plus leased child-agent coordinator (S7)
 - Gateway: SQLite authority + config-gated live Telegram long-poll (`optimus gateway telegram run`) + Telegram mock + Discord/Slack mock enqueue (live Discord/Slack residual)

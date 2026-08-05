@@ -491,7 +491,7 @@ export type ProjectRuntimeScope = {
 };
 
 export interface OptimusTransport {
-  readonly kind: 'tauri' | 'electron' | 'http' | 'fixture';
+  readonly kind: 'tauri' | 'http' | 'fixture';
   invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
   chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle;
   windowAction(action: 'minimize' | 'maximize' | 'close'): Promise<unknown>;

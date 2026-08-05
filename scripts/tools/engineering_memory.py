@@ -77,7 +77,7 @@ EXCLUDED_PARTS = {
     # Machine-local development data (git-excluded via .git/info/exclude):
     # evidence, caches, tools, archives, and historical delivery records.
     # Hashing it made Engineering Memory depend on local state and crashed on
-    # dangling Electron singleton symlinks left by compiled-workbench runs.
+    # dangling singleton symlinks left by compiled-workbench runs.
     "Development",
     # SDD migration quarantine: docs and records awaiting a human fate
     # decision. Excluded so atticked files never enter the knowledge graph.
