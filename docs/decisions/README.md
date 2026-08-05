@@ -105,6 +105,7 @@ program phase `P##`, a managed-land task id, or a delivery SHA. See
 | 0076 | Developer Full Access is a scoped grant with a stable supervisor | Accepted | Explicit local scope and capability toggles are enforced by the broker; a separate authenticated development instance is health-checked, logged, stoppable, restartable, and rollback-capable so rebuilding cannot replace the current control channel. |
 | 0077 | Verified progress per token is the development objective | Accepted | Optimus optimizes verified progress per model token by pairing exact wall-clock action timing with provider-reported usage, compact structured context, targeted verification, and explicit unknown accounting. |
 | 0078 | A transcript is a provider contract, and an unreachable toggle asks | Accepted | Tool-call pairing is repaired wherever history is stored and once more before the wire, provider rejections carry the provider's own reason, and a Developer Full Access capability no valid grant can enable asks for the exact action instead of denying with advice the user cannot follow. |
+| 0079 | Keep Bun as the JS/TS package manager for the flat monorepo | Accepted | The Bun package-manager law stays as gate-pinned in check-lockfile-discipline; pnpm's strict-isolation, dedup, and workspace-protocol benefits target internal dependency graphs this three-package workspace does not have. |
 
 ## Known documentary debt
 

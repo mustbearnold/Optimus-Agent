@@ -474,11 +474,17 @@
       "path": "docs/decisions/0078-a-transcript-is-a-provider-contract-and-an-unreachable-toggle-asks.md",
       "resolved_files": 12
     },
+    "decisions-0079-keep-bun-as-the-js-package-manager": {
+      "binding_sha256": "90ef9dd907e0f51d2dfab5d01dcc637f8885259282c7454abf051335ff20f985",
+      "document_sha256": "a63634cf6d597c8369a736b5a3fe058f146965910ae0e742d209f6f7be49d176",
+      "path": "docs/decisions/0079-keep-bun-as-the-js-package-manager.md",
+      "resolved_files": 7
+    },
     "decisions-readme": {
-      "binding_sha256": "47a14ac044d01d5fdd5fac84a09e38539c3b0271bfda82cb25581047283c5650",
-      "document_sha256": "5381bab6a0c83c067db0caf2bf238948732528e5f44c1758be3453a2ef9b87ac",
+      "binding_sha256": "442246d105ac4d334ed55839f95b67551725efe32b9229417aca06ee2d397803",
+      "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
-      "resolved_files": 83
+      "resolved_files": 84
     },
     "engineering-memory-readme": {
       "binding_sha256": "4257c09036dbb35d1c0222a1fabedaa2e5aa76eb30b8dc888745e998efe1de37",
@@ -577,10 +583,10 @@
       "resolved_files": 24
     },
     "specs-constitution": {
-      "binding_sha256": "e83ca3625643e45292437972d19b02b98b9cc1e2893152b91a96d0ec10dfe1d7",
+      "binding_sha256": "5688b2c24e619d2a5ecc28d64b7ce9eb01d93b29c75c2db26b5bdfe469cfe092",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
-      "resolved_files": 108
+      "resolved_files": 109
     },
     "specs-conventions": {
       "binding_sha256": "ebec6d4cecb4183ff098cfa308397a66e67820ab97c85bc1382d545e10afc21a",

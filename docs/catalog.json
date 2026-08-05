@@ -3362,7 +3362,30 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5381bab6a0c83c067db0caf2bf238948732528e5f44c1758be3453a2ef9b87ac",
+      "content_sha256": "a63634cf6d597c8369a736b5a3fe058f146965910ae0e742d209f6f7be49d176",
+      "headings": [
+        "ADR-0079: Keep Bun as the JS/TS package manager for the flat monorepo",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons"
+      ],
+      "id": "decisions-0079-keep-bun-as-the-js-package-manager",
+      "path": "docs/decisions/0079-keep-bun-as-the-js-package-manager.md",
+      "plane": "decision",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "The JS/TS workspace stays on Bun. pnpm is not adopted: its monorepo advantages — strict non-hoisted isolation, content-addressed store dedup, workspace protocol — all target internal dependency graphs, and this flat three-package workspace has none, while adoption would force a spec amendment, a gate rewrite, and a second tool alongside the bun runtime.",
+      "title": "ADR-0079: Keep Bun as the JS/TS package manager for the flat monorepo",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
         "Known documentary debt"
@@ -3864,7 +3887,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "238622f554c1e7b563a89e9203d59abe70be87d982e1a892da5589c5c365b5e0",
+  "documents_sha256": "72c9536ab5a480ad2c5fc0de1a95f08cac7a818a541ab5b0ee103ca0d51efd77",
   "routes": [
     {
       "id": "docs.navigation",
