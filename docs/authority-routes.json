@@ -584,6 +584,25 @@
       "supporting": [
         "architecture-self-development"
       ]
+    },
+    {
+      "id": "specs.014-self-build-reliability",
+      "keywords": [
+        "self-build reliability",
+        "toolchain bind tier",
+        "approval resolution",
+        "resume_error",
+        "session consent",
+        "capability grants",
+        "effort shaping",
+        "tool-loop guard",
+        "latency shaping",
+        "tool-to-tool gap",
+        "still_pending"
+      ],
+      "primary": [
+        "spec-014-self-build-reliability"
+      ]
     }
   ],
   "schema_version": 1
