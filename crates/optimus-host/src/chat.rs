@@ -89,6 +89,7 @@ pub fn chat_approval_resolve_cancellable(
         autonomy_profile: access.profile,
         command_fs_envelope: access.command_fs_envelope,
         self_development: self_development_handler(home, access.profile),
+        max_steps: turn_max_steps(access.profile),
         ..KernelConfig::default()
     };
     let mut kernel = match project_id.as_deref() {
@@ -353,6 +354,22 @@ fn self_development_handler(
         .map(|_| crate::developer::agent_self_development as SelfDevelopmentHandler)
 }
 
+/// Model-step budget for one turn, by autonomy profile.
+///
+/// The standard surface keeps the ADR-0047 pin (32 model steps). Developer
+/// Full Access turns are the product's own self-development surface
+/// (spec-014): real improvement work — inspect, edit, test, commit — runs
+/// through dozens of model round-trips plus approval pauses, and the 32-step
+/// ceiling starved those turns mid-task. The full-access profile gets
+/// headroom; the guard still exists, it just measures the right surface.
+fn turn_max_steps(profile: optimus_graph::AutonomyProfile) -> u32 {
+    match profile {
+        optimus_graph::AutonomyProfile::DeveloperFullAccess
+        | optimus_graph::AutonomyProfile::UnrestrictedHost => 160,
+        _ => 32,
+    }
+}
+
 fn resume_access_config(
     autonomy_profile: &str,
     command_fs_envelope: &str,
@@ -434,6 +451,7 @@ pub fn chat_turn_cancellable(
             .get("fast")
             .and_then(|v| v.as_bool())
             .unwrap_or(false),
+        max_steps: turn_max_steps(access.profile),
         effect_policy: access.policy,
         autonomy_profile: access.profile,
         command_fs_envelope: access.command_fs_envelope,
@@ -633,6 +651,25 @@ mod tests {
             assert_eq!(access.policy, PolicyMode::SmartDeny);
             assert_eq!(access.command_fs_envelope, None);
         }
+    }
+
+    #[test]
+    fn developer_full_access_turns_get_a_larger_step_budget() {
+        // ADR-0047 pins the standard surface at 32 model steps. The product's
+        // own self-development surface (spec-014, Developer Full Access) runs
+        // real improvement work through dozens of steps plus approval pauses;
+        // the ceiling must not starve those turns mid-task.
+        use optimus_graph::AutonomyProfile;
+        assert_eq!(
+            super::turn_max_steps(AutonomyProfile::DeveloperFullAccess),
+            160
+        );
+        assert_eq!(
+            super::turn_max_steps(AutonomyProfile::UnrestrictedHost),
+            160
+        );
+        assert_eq!(super::turn_max_steps(AutonomyProfile::ReviewChanges), 32);
+        assert_eq!(super::turn_max_steps(AutonomyProfile::Standard), 32);
     }
 
     #[test]

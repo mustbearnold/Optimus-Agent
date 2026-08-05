@@ -390,4 +390,28 @@ mod tests {
         assert_eq!(repair.dropped_orphan_results, 1);
         assert!(is_well_paired(&messages));
     }
+
+    #[test]
+    fn a_paused_approval_call_is_synthesised_on_resume_transcripts() {
+        // The approval-pause shape (live 2026-08-05, deepseek 400): the last
+        // assistant message asked for two calls; one result was written
+        // before the pause; the approved call's result lands after the
+        // resume — so the outgoing request must synthesise an answer for the
+        // still-open call, or the provider rejects it with
+        // "insufficient tool messages following tool_calls message".
+        let mut messages = vec![
+            msg(Role::System, "SYS"),
+            msg(Role::User, "ask"),
+            calls(&["call_00", "call_01"]),
+            result("call_00"),
+        ];
+        assert!(!is_well_paired(&messages));
+        let repair = repair_tool_pairing(&mut messages);
+        assert_eq!(repair.synthesized_results, 1);
+        assert_eq!(repair.dropped_orphan_results, 0);
+        assert!(is_well_paired(&messages));
+        let last = messages.last().expect("synthesised result appended");
+        assert_eq!(last.role, Role::Tool);
+        assert_eq!(last.tool_call_id.as_deref(), Some("call_01"));
+    }
 }
