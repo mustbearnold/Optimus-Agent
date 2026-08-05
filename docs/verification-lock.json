@@ -7,7 +7,7 @@
       "resolved_files": 0
     },
     "architecture-architecture-marks": {
-      "binding_sha256": "6e5ae77419e2752929635b45f6c125da261c8cc9400fc8cefe8dfd4bd7c687d5",
+      "binding_sha256": "7ed5580a1024f7d506d77e465bd481ac002a0f98ce4b20144c4fe75e121caad3",
       "document_sha256": "acf6fe11602172d8e8de3f8c6b91415803719150d28e5b629038cfa9121299f3",
       "path": "docs/runbooks/architecture-marks.md",
       "resolved_files": 8
@@ -20,13 +20,13 @@
     },
     "architecture-sota-scorecard": {
       "binding_sha256": null,
-      "document_sha256": "ea33132dd379f8279fb388c492fea2035c682f2afc7925f8021a0b9a758525f9",
+      "document_sha256": "4a411b32be6d6d69c84a86fade41a54a464d39fa67aae5f97de58946ed7c22f0",
       "path": "docs/architecture/sota-scorecard.md",
       "resolved_files": 0
     },
     "architecture-system-overview": {
       "binding_sha256": "91d1b5ac5d3f7d7ab88448e36d359859d9a3131fbc7586e8f81d474bf6f905e3",
-      "document_sha256": "34ead9f1b7400f34f9dffcbed3bbbb40fc785f3130bd72ccc6c446c530664696",
+      "document_sha256": "45f482d7f58a00f262f80013167201d58878cd9275c53be20ee4fa853272d9b3",
       "path": "docs/architecture.md",
       "resolved_files": 20
     },
@@ -205,7 +205,7 @@
       "resolved_files": 5
     },
     "decisions-0027-settings-driven-work-isolation": {
-      "binding_sha256": "a600964403fa292ec17d93fb07508b11b3af9bcb14b46d9d6b3bcd808e1c2fd2",
+      "binding_sha256": "e17ec8beb565e1884ca047df63a5602e8b0c7d0669618a68e7ee165e72b8b7d5",
       "document_sha256": "640b3b6adf372b7d46f207479342bdecd8fa05839174014e17048945e2fae6ea",
       "path": "docs/decisions/0027-settings-driven-work-isolation.md",
       "resolved_files": 6
@@ -337,7 +337,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "352afc9df558b5eab79748c9fb045a60350e476305ac956c6b7dfb216f5b5c0a",
+      "binding_sha256": "b46bf02cec1537d9add35d8c8470bc05e1dd1a7b9f41bc246cd9c97cc3c3db54",
       "document_sha256": "ce6b80d3ad533d63106d7e7e979595ef22c201a45ae24161d7b998ab32169a08",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -475,7 +475,7 @@
       "resolved_files": 12
     },
     "decisions-readme": {
-      "binding_sha256": "7a815d545af26bec15df5c853b7394c3965f46986821588b5435442cef2b17e1",
+      "binding_sha256": "47a14ac044d01d5fdd5fac84a09e38539c3b0271bfda82cb25581047283c5650",
       "document_sha256": "5381bab6a0c83c067db0caf2bf238948732528e5f44c1758be3453a2ef9b87ac",
       "path": "docs/decisions/README.md",
       "resolved_files": 83
