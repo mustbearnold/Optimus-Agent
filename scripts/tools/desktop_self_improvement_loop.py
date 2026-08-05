@@ -626,7 +626,7 @@ def main() -> int:
     parser.add_argument("--workspace", type=Path, default=ROOT)
     parser.add_argument("--source-home", type=Path, default=DEFAULT_SOURCE_HOME)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--timeout", type=float, default=600)
+    parser.add_argument("--timeout", type=float, default=1200)
     parser.add_argument("--ocr-model", default="qwen3.5:9b")
     parser.add_argument("--ocr-endpoint", default="http://127.0.0.1:11434")
     args = parser.parse_args()
