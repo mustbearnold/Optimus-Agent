@@ -3775,7 +3775,29 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "cafa99616186b90eb6818164d6c867426c39d54e94cb4562d74207af006de6ed",
+      "content_sha256": "0ea4e554874b7fc114f0481ac8f15bc85fff8af5fd7a4cac71b0ac2de3592f1d",
+      "headings": [
+        "Windows Tauri packaging",
+        "Purpose",
+        "Requirements",
+        "Acceptance criteria",
+        "Out of scope",
+        "Open questions",
+        "Links"
+      ],
+      "id": "spec-012-windows-tauri-packaging",
+      "path": "specs/012-windows-tauri-packaging/spec.md",
+      "plane": "work",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "Windows packaging for the Tauri shell — the PowerShell installer stages the Tauri binary and the Wry/WebView2 desktop backend is retired.",
+      "title": "Windows Tauri packaging",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "08d3fa8fd67dfb36e3e041f7ef19359bf53c2b26557cb1925cd3113648e5efde",
       "headings": [
         "BACKLOG",
         "From the retired roadmap (2026-08-05)"
@@ -3840,7 +3862,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "492580e35ffc6cfa21e9482e3416a02b86811c676f8df3eb70c33eb5cd630303",
+  "documents_sha256": "cf93b98f5f27d207fcaa49b84e931f6d52e9d87153fb9dabab1c0df496e7dc5e",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4375,6 +4397,20 @@
       ],
       "primary": [
         "specs-conventions"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.012-windows-tauri-packaging",
+      "keywords": [
+        "windows",
+        "powershell installer",
+        "tauri packaging",
+        "webview2",
+        "wry fallback"
+      ],
+      "primary": [
+        "spec-012-windows-tauri-packaging"
       ],
       "supporting": []
     }

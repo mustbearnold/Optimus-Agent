@@ -555,6 +555,20 @@
         "specs-conventions"
       ],
       "supporting": []
+    },
+    {
+      "id": "specs.012-windows-tauri-packaging",
+      "keywords": [
+        "windows",
+        "powershell installer",
+        "tauri packaging",
+        "webview2",
+        "wry fallback"
+      ],
+      "primary": [
+        "spec-012-windows-tauri-packaging"
+      ],
+      "supporting": []
     }
   ],
   "schema_version": 1

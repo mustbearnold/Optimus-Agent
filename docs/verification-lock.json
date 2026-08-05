@@ -379,7 +379,7 @@
       "resolved_files": 6
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "37d98729130b763aa76914d008487481f6fb1dc45419c88350988c34db3c990b",
+      "binding_sha256": "164d247e5d609a98473ddd636c7eb3eef841db64c42f5cb657654dec3a7a3958",
       "document_sha256": "bc881dac3827d478f9269881830af38dc4a942d6a65e8de14e87922d6e76de9e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 7
@@ -564,17 +564,23 @@
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 78
     },
+    "spec-012-windows-tauri-packaging": {
+      "binding_sha256": "e38d39a1b79c783954f0622e454327e4236a81b59970314d2fd8aea483b6d1ea",
+      "document_sha256": "0ea4e554874b7fc114f0481ac8f15bc85fff8af5fd7a4cac71b0ac2de3592f1d",
+      "path": "specs/012-windows-tauri-packaging/spec.md",
+      "resolved_files": 6
+    },
     "specs-backlog": {
-      "binding_sha256": "e60b00b443a621a2ba38e44d4065c4f70a2f6612fa3bebec394934e1ed152343",
-      "document_sha256": "cafa99616186b90eb6818164d6c867426c39d54e94cb4562d74207af006de6ed",
+      "binding_sha256": "b91b8f908b00e6c535541340490431b37f697fcbeb4de740a05392f952d4ff9d",
+      "document_sha256": "08d3fa8fd67dfb36e3e041f7ef19359bf53c2b26557cb1925cd3113648e5efde",
       "path": "specs/BACKLOG.md",
-      "resolved_files": 23
+      "resolved_files": 24
     },
     "specs-constitution": {
-      "binding_sha256": "a1c99e4cf674b8d1fd3f295c7b27d1eef63646af9908be994fafc417e0e7310b",
+      "binding_sha256": "2f2c91a43ed9ca926607e08c8c7529d497eec415f1ed79e999b0eb6d1a6c2c4b",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
-      "resolved_files": 107
+      "resolved_files": 108
     },
     "specs-conventions": {
       "binding_sha256": "c340b1ed7ac19fc71d9b60d0376a6559a30af62e1d1dc9e49d603b47cc8bfce8",

@@ -17,9 +17,8 @@ covers:
 One line per known-but-unspecced capability or gap. Items move into a
 `specs/NNN-<slug>/spec.md` when work starts (SDD loop: no code without a spec).
 
-- Windows Tauri packaging: port the PowerShell installer to the Tauri binary
-  and retire the Wry/WebView2 desktop backend (ontology
-  `desktop-wry-fallback`, review_by 2026-10-31).
+- ~~Windows Tauri packaging~~ → `specs/012-windows-tauri-packaging/spec.md`
+  (spec'd 2026-08-05; ontology `desktop-wry-fallback` removal_when 2026-10-31).
 - Renderer-pixel evidence under Tauri: there is no playwright-class driver for
   the WebKitGTK webview; document the evidence ceiling (launch gate +
   transport unit tests + desktop e2e + webkit layout audit) as the accepted
