@@ -217,25 +217,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "2e4ffe8cf9323325507e9ff19c1fa9346933411ad1460a35a8af14d8e5aaf80f",
+      "binding_sha256": "f86ca085eae7f299b78c384a6bb0281eb4830a89107bc01ff551f53aa1fbdae9",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 114
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "c2b4e2f0b559d3ac90659493ea447aa8e6424321f1d92fc095929089a36608a6",
+      "binding_sha256": "d86e4e548afc5bf2abb2a47879597b7eb524d4a3121aa27bef6149a37a074e33",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 113
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "f9e1b1871bf264f0f0ae7d45f910ce939e112e18f1ced763e164aec8e7fdee11",
+      "binding_sha256": "b89774b5bd74afe41f6803d95762ac1fa216204721876210c1163db533c78145",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 92
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "ca231905c40bad3d218b7c24ca4b2308baef83ec434fc847faefc476a111bb27",
+      "binding_sha256": "f2b044378a8d66baf6ea0af5e23bacadbb20c0c4bd6408adf7618c27855b7acc",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 115
@@ -289,7 +289,7 @@
       "resolved_files": 12
     },
     "decisions-0040-shared-browser-contract": {
-      "binding_sha256": "026d247f35b4775c440382984a30aa5bdbee909ccbeecfa17e6e0450a76845d2",
+      "binding_sha256": "64a800b6460a05ddc58e61e4bb8dfc1c9a084c89e0a39fd44335a91e57e4e646",
       "document_sha256": "dcba785a342de6c8860bd698fbed001b65865d717434b1ac9d728b70dd4048b2",
       "path": "docs/decisions/0040-shared-browser-contract.md",
       "resolved_files": 8
@@ -511,7 +511,7 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "1cbd9dc022894dd91b0070a6e4e6d87b0eddc571589897044984c200462d1d24",
+      "binding_sha256": "52d94c339bd68400d07b29595097452a1610dad8ee4918180b65dca27e57cb59",
       "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 100
@@ -583,7 +583,7 @@
       "resolved_files": 6
     },
     "spec-013-self-development": {
-      "binding_sha256": "45b444e63704806b421a59a19ef1b89364f406efccb34950e2632adce01147df",
+      "binding_sha256": "59e8bb26ccf5d231288ebca05f6f3b6c01d89e5a6c54c825868bc2b027a32d89",
       "document_sha256": "fc6b85d488bd10838b2783bfa2d4a5c3a71529368f962e22d03cecfb741870aa",
       "path": "specs/013-self-development/spec.md",
       "resolved_files": 20
