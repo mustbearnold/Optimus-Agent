@@ -215,7 +215,9 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
         "uv" => match sub {
             "tool" => CommandClass::HostInstall,
             "sync" | "lock" => CommandClass::PackageSync,
-            "add" | "remove" | "pip" => CommandClass::PackageAdd,
+            // `uv pip ...` subcommands draw the same sync/add split pip draws.
+            "pip" => uv_pip_class(args),
+            "add" | "remove" => CommandClass::PackageAdd,
             _ => CommandClass::ProjectExecute,
         },
 
@@ -241,8 +243,11 @@ pub fn capability_for_command(program: &str, args: &[String]) -> CapabilityId {
 
 /// `pip install -r requirements.txt` names a file, not a package.
 fn requirements_only(args: &[String]) -> bool {
+    requirements_only_iter(args.iter().map(String::as_str))
+}
+
+fn requirements_only_iter<'a>(mut iter: impl Iterator<Item = &'a str>) -> bool {
     let mut saw_requirement = false;
-    let mut iter = args.iter().map(String::as_str).peekable();
     while let Some(arg) = iter.next() {
         match arg {
             "-r" | "--requirement" => {
@@ -256,6 +261,28 @@ fn requirements_only(args: &[String]) -> bool {
         }
     }
     saw_requirement
+}
+
+/// Classify the `uv pip` subcommand family with the same sync/add split pip
+/// draws. The `pip` subcommand is itself a bare positional, so it (and any
+/// leading global flags) is skipped first; anything unrecognized falls back to
+/// `PackageAdd`, never a mis-grant.
+fn uv_pip_class(args: &[String]) -> CommandClass {
+    let mut iter = args
+        .iter()
+        .map(String::as_str)
+        .skip_while(|arg| arg.starts_with('-'));
+    if iter.next() != Some("pip") {
+        return CommandClass::PackageAdd;
+    }
+    match iter.next() {
+        // `uv pip sync` reproduces an environment from an existing file.
+        Some("sync") => CommandClass::PackageSync,
+        // `uv pip install -r requirements.txt` names a file already in the
+        // repository, not a new package choice.
+        Some("install") if requirements_only_iter(iter) => CommandClass::PackageSync,
+        _ => CommandClass::PackageAdd,
+    }
 }
 
 /// Find a git subcommand after global options such as `-C <path>`.
@@ -418,6 +445,53 @@ mod tests {
         assert_eq!(
             class("pip", &["install", "requests"]),
             CommandClass::PackageAdd
+        );
+    }
+
+    #[test]
+    fn uv_pip_requirements_files_are_a_sync_but_a_named_package_is_not() {
+        // `uv pip install -r` is the same act as `pip install -r`: it names a
+        // file already in the repository, so it must not be recorded as a new
+        // dependency choice.
+        assert_eq!(
+            class("uv", &["pip", "install", "-r", "requirements.txt"]),
+            CommandClass::PackageSync
+        );
+        assert_eq!(
+            class(
+                "uv",
+                &["pip", "install", "--requirement", "requirements.txt"]
+            ),
+            CommandClass::PackageSync
+        );
+        assert_eq!(
+            class(
+                "uv",
+                &["--quiet", "pip", "install", "-r", "requirements.txt"]
+            ),
+            CommandClass::PackageSync,
+            "a global flag before the pip subcommand must not change the act"
+        );
+        assert_eq!(
+            class("uv", &["pip", "install", "requests"]),
+            CommandClass::PackageAdd
+        );
+        assert_eq!(
+            class("uv", &["pip", "install"]),
+            CommandClass::PackageAdd,
+            "a bare uv pip install chooses nothing new either way"
+        );
+        assert_eq!(
+            class(
+                "uv",
+                &["pip", "install", "requests", "-r", "requirements.txt"]
+            ),
+            CommandClass::PackageAdd,
+            "a named package alongside the file is still an add"
+        );
+        assert_eq!(
+            class("uv", &["pip", "sync", "requirements.txt"]),
+            CommandClass::PackageSync
         );
     }
 

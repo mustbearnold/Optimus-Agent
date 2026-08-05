@@ -283,6 +283,26 @@ fn a_lockfile_sync_and_a_new_dependency_are_no_longer_the_same_request() {
 }
 
 #[test]
+fn uv_pip_requirement_files_are_recorded_as_a_sync_like_pip() {
+    // Regression: `uv pip install -r requirements.txt` was recorded as
+    // `PackageAdd` (a new dependency choice) while the identical pip act was
+    // `PackageSync`. The recorded capability must match what the command does.
+    let sync = request("uv", &["pip", "install", "-r", "requirements.txt"]);
+    assert_eq!(sync.capability, CapabilityId::PackageSync);
+    assert_eq!(sync.externality, Externality::PublicNetwork);
+
+    let pip_sync = request("pip", &["install", "-r", "requirements.txt"]);
+    assert_eq!(
+        sync.capability, pip_sync.capability,
+        "uv and pip must record the same act the same way"
+    );
+
+    let add = request("uv", &["pip", "install", "requests"]);
+    assert_eq!(add.capability, CapabilityId::PackageAdd);
+    assert_ne!(sync.capability, add.capability);
+}
+
+#[test]
 fn read_only_still_refuses_every_command_class() {
     for (program, args) in [
         ("cargo", vec!["test"]),
