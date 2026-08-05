@@ -211,28 +211,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "9027b7efbad2a035ef28431d05d99472803340e2f3ea404275f2872ed9e7a106",
+      "binding_sha256": "461ac5160fc55f70fcf003db5451337d1aaa6ce0b38173e0b8632ee741e7f132",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 116
+      "resolved_files": 114
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "28cf488937172446c0dfbbc732905c2fe739eed0885db9efe702d7e6b0293260",
+      "binding_sha256": "d66471f518ab3482fde98171f099ef1f44bf3c4b15aade51a48cdc66d1de45ee",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 115
+      "resolved_files": 113
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "7de329a19f0c50bc34b234719a0c4c9198c0233dadd3979a68d3130da0ebadd9",
+      "binding_sha256": "d5d631a16dca220ce47ffcdcb5af9407ab2a961cd2f800a20110ae49b2575516",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 94
+      "resolved_files": 92
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "9fd0793bf44f3b945c7f1d0e2ec86e0ee9aa123d905a2b76302f5822cf76b849",
+      "binding_sha256": "d377fb31255f06b3fca7f25d7c42771f3b0fdfb58693e3310be4c74c579f2656",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 117
+      "resolved_files": 115
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "27ba06af61b85e31abf7de4530ed7b20a0c98ad4db99265ba5233ca85f207ad1",
@@ -271,7 +271,7 @@
       "resolved_files": 6
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "ad56d1cae4fc1368a58490fd2acb109a152c487f6df63190766603a978c4e2c8",
+      "binding_sha256": "c978340a4429a0c331f6b12af0db7f51be4f10166403bfe8ee4a0a653e341f11",
       "document_sha256": "e43571206a59cebf0e30af9ea9dc83ff22690922ce7189da50d6546f09d93f71",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 8
@@ -499,16 +499,16 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "8d8d0eb9caf38127ba58ac159200b09850a63f55db98b250c902516a9ad9e0e8",
+      "binding_sha256": "12f3261f394a7a7c9103d55b6a128719a2cd6f24d9ab7551727d0c5657e3ced1",
       "document_sha256": "780c2f0591eb386c9314241f072c6f370de1deb9cefccd20e3da2e9ee02f7892",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 101
+      "resolved_files": 99
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "e55919ab70ced4f8550879066503d0166f474bb697495e55a456d7521d71ae60",
+      "binding_sha256": "47270919800cc55fd699a6ecb997a64f5273382d7f965ac2084cb66ad6e684fa",
       "document_sha256": "ac65ddbc98b948c68c4d4e74209dc2f18ee007680f499d6733068240e52ebc77",
       "path": "specs/002-host-ipc/spec.md",
-      "resolved_files": 42
+      "resolved_files": 40
     },
     "spec-003-kernel-turns": {
       "binding_sha256": "e6b80f3ede416a614fcc4eabf4275c65cd7078c19f48f138e2ac71418f41e17d",
@@ -565,13 +565,13 @@
       "resolved_files": 78
     },
     "specs-backlog": {
-      "binding_sha256": "5061e650f0dcbe28b34027010d7ee382cb613991061c6eb32cce69936384d953",
-      "document_sha256": "06a2cff9635cffe3214893ed7a0de9b260a05e7381e4c95e34a3b982582fcfe4",
+      "binding_sha256": "e60b00b443a621a2ba38e44d4065c4f70a2f6612fa3bebec394934e1ed152343",
+      "document_sha256": "cafa99616186b90eb6818164d6c867426c39d54e94cb4562d74207af006de6ed",
       "path": "specs/BACKLOG.md",
       "resolved_files": 23
     },
     "specs-constitution": {
-      "binding_sha256": "0584b7fa896c025d0ee05a9580645d05dc7d05b8bd14371b06a2c257abdbf111",
+      "binding_sha256": "a1c99e4cf674b8d1fd3f295c7b27d1eef63646af9908be994fafc417e0e7310b",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 107

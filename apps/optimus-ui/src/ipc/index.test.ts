@@ -6,7 +6,6 @@ describe('transport selection', () => {
   beforeEach(() => {
     window.__TAURI__ = {};
     delete window.__TAURI_INTERNALS__;
-    delete window.optimusElectron;
   });
 
   it('selects Tauri when the configured global bridge is present', () => {

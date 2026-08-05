@@ -511,36 +511,8 @@ export interface OptimusTransport {
   };
 }
 
-export type OptimusElectronBridge = {
-  isElectron: true;
-  hostInfo: () => Promise<{ baseUrl: string; token?: string; uiMode?: string }>;
-  invoke: <T>(method: DesktopMethod, params?: Record<string, unknown>) => Promise<T>;
-  chat: {
-    start: (request: ChatRequest) => Promise<{ streamId: number }>;
-    cancel: (streamId: number) => Promise<{ requested: boolean }>;
-    subscribe: (listener: (event: ChatEnvelope) => void) => () => void;
-  };
-  browser: {
-    setBounds: (bounds: BrowserBounds) => void;
-    setVisible: (visible: boolean) => void;
-    navigate: (url: string) => Promise<BrowserState>;
-    back: () => Promise<BrowserState>;
-    forward: () => Promise<BrowserState>;
-    reload: () => Promise<BrowserState>;
-    state: () => Promise<BrowserState>;
-    annotate: () => Promise<BrowserAnnotation>;
-    cancelAnnotation: () => Promise<{ cancelled: boolean }>;
-    subscribe: (listener: (state: BrowserState) => void) => () => void;
-  };
-  windowAction: (action: string) => Promise<unknown>;
-  pickFolder: () => Promise<ProjectRootSelection>;
-  openPath: (path: string) => Promise<unknown>;
-  openUrl: (url: string) => Promise<unknown>;
-};
-
 declare global {
   interface Window {
-    optimusElectron?: OptimusElectronBridge;
     __TAURI_INTERNALS__?: unknown;
     __TAURI__?: unknown;
   }

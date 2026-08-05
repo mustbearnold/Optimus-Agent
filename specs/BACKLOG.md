@@ -20,9 +20,6 @@ One line per known-but-unspecced capability or gap. Items move into a
 - Windows Tauri packaging: port the PowerShell installer to the Tauri binary
   and retire the Wry/WebView2 desktop backend (ontology
   `desktop-wry-fallback`, review_by 2026-10-31).
-- Remove the dead Electron-era transport branch in the React UI
-  (`apps/optimus-ui/src/ipc/electronTransport.ts`), keeping
-  `fixtureTransport` for tests.
 - Renderer-pixel evidence under Tauri: there is no playwright-class driver for
   the WebKitGTK webview; document the evidence ceiling (launch gate +
   transport unit tests + desktop e2e + webkit layout audit) as the accepted

@@ -3775,7 +3775,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "06a2cff9635cffe3214893ed7a0de9b260a05e7381e4c95e34a3b982582fcfe4",
+      "content_sha256": "cafa99616186b90eb6818164d6c867426c39d54e94cb4562d74207af006de6ed",
       "headings": [
         "BACKLOG",
         "From the retired roadmap (2026-08-05)"
@@ -3840,7 +3840,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "3e20788f05919c8239c999c58964a7a1c3b708bf7965f17586167601b9ecd435",
+  "documents_sha256": "492580e35ffc6cfa21e9482e3416a02b86811c676f8df3eb70c33eb5cd630303",
   "routes": [
     {
       "id": "docs.navigation",
