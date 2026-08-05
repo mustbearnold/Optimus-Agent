@@ -1103,7 +1103,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "34ead9f1b7400f34f9dffcbed3bbbb40fc785f3130bd72ccc6c446c530664696",
+      "content_sha256": "45f482d7f58a00f262f80013167201d58878cd9275c53be20ee4fa853272d9b3",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
@@ -1249,7 +1249,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "ea33132dd379f8279fb388c492fea2035c682f2afc7925f8021a0b9a758525f9",
+      "content_sha256": "4a411b32be6d6d69c84a86fade41a54a464d39fa67aae5f97de58946ed7c22f0",
       "headings": [
         "Optimus vs Hermes — evidence-backed SOTA scorecard",
         "Current ledger summary",
@@ -3864,7 +3864,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "2f48e1a6f4b6971ee55462c883f0527339d95cc0f420c91aa4aa6e58899a6dc7",
+  "documents_sha256": "dee7a879d029ec7600d79cb7bd3efb62a0536b7d66775569c2ec785230b3e0df",
   "routes": [
     {
       "id": "docs.navigation",

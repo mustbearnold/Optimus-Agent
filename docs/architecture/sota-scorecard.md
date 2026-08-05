@@ -20,8 +20,9 @@ Confirmed behaviour see [system-overview.md](../architecture.md).
 
 **Default product shell (Confirmed):** Tauri + React over Rust host
 (exclusively — no Electron, no Wry rollback since 2026-08-05, spec-012).
-Do not read “tao+wry Windows desktop shell” below as the default
-install path.
+The block below is the dated 2026-07-28 pre-cutover snapshot: treat its
+Electron/Wry default-shell claims as historical, not current — do not
+read them as the default install path.
 
 **Source of truth:** `docs/architecture/parity-capability-ledger.json`  
 **Validator:** `python scripts/gates/check-parity-ledger.py`  
