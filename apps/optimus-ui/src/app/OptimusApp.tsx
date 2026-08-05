@@ -410,10 +410,23 @@ export function OptimusApp() {
       const sessionId = state.selectedSessionId;
       if (!sessionId) throw new Error('Select the session that owns this approval.');
       const projectId = assignments[sessionId];
-      await transport.invoke(
-        'chat_approval_resolve',
-        approvalResolutionParams(sessionId, binding, decision, projectId)
+      // Settling resumes the paused turn (ADR-0046), so this is a streaming
+      // turn, not a request/response: the continuation's events must reach the
+      // transcript as they happen, and the handle must be cancellable. A
+      // blocking resolve left the button on "Approving…" with no feedback for
+      // the whole continuation and no way to stop it.
+      const handle = transport.chatApprovalResolve(
+        approvalResolutionParams(sessionId, binding, decision, projectId),
+        (event) => conversationStore.apply(sessionId, event)
       );
+      activeHandle.current = handle;
+      dispatch({ type: 'set-active-run', id: sessionId });
+      try {
+        await handle.done;
+      } finally {
+        if (activeHandle.current === handle) activeHandle.current = null;
+        if (alive()) dispatch({ type: 'set-active-run', id: null });
+      }
       const detail = await transport.invoke<SessionDetail>('get_session', { id: sessionId });
       conversationStore.load(detail);
       await refreshRuntime();

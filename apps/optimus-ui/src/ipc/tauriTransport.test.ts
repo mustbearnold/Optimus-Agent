@@ -54,6 +54,42 @@ describe('tauri transport', () => {
     });
   });
 
+  it('streams approval resolution and cancels by the same stream identity', async () => {
+    const received: string[] = [];
+    const transport = createTauriTransport();
+    const request = {
+      session_id: 'session-a',
+      run_id: 'run-1',
+      call_id: 'call-1',
+      job_id: 'job-1',
+      node_id: 'node-1',
+      node_index: 0,
+      effect_sha256: 'a'.repeat(64),
+      decision: 'approve' as const,
+    };
+    const handle = transport.chatApprovalResolve(request, (event) =>
+      received.push(event.type)
+    );
+
+    expect(mocks.invoke).toHaveBeenCalledWith(
+      'chat_approval_resolve_start',
+      expect.objectContaining({
+        streamId: handle.streamId,
+        params: request,
+        events: mocks.channels[0],
+      })
+    );
+    mocks.channels[0].onmessage({ type: 'status', text: 'Resolving approval…' });
+    mocks.channels[0].onmessage({ type: 'done' });
+    await handle.done;
+    expect(received).toEqual(['status', 'done']);
+
+    await handle.cancel();
+    expect(mocks.invoke).toHaveBeenLastCalledWith('chat_cancel', {
+      streamId: handle.streamId,
+    });
+  });
+
   it('normalizes Rust folder grants to the UI contract', async () => {
     mocks.invoke.mockResolvedValueOnce({
       ok: true,

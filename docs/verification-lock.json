@@ -175,7 +175,7 @@
       "resolved_files": 24
     },
     "decisions-0021-owned-execution-and-causal-delivery": {
-      "binding_sha256": "88427b2cda5448367949a89831301e8d2415ae73f4b9a53efdbf9687dcff9cf2",
+      "binding_sha256": "bccc20530761207f15b9b56d3e7f745707a732fb8d75f2bd2c04027a3ce2fb4c",
       "document_sha256": "4e26f83257506fb9f260a6d0954680f186361d6114656a57b68bb8af7e4f26cc",
       "path": "docs/decisions/0021-owned-execution-and-causal-delivery.md",
       "resolved_files": 27
@@ -217,25 +217,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "0975991010dfafa18c91e78e27a0749b492aff0d95a574ab8b05bcc6b85a53b3",
+      "binding_sha256": "2e4ffe8cf9323325507e9ff19c1fa9346933411ad1460a35a8af14d8e5aaf80f",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 114
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "c9ec38fa6e166bb1c5c7efc6206db5f304ac238aa480688082a953e81e1d28ad",
+      "binding_sha256": "c2b4e2f0b559d3ac90659493ea447aa8e6424321f1d92fc095929089a36608a6",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 113
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "bfc46d502be7e550bc7f3a419fe8329cef86620cd0b13f80067ee8a3f2bde099",
+      "binding_sha256": "f9e1b1871bf264f0f0ae7d45f910ce939e112e18f1ced763e164aec8e7fdee11",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 92
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "f9639b40bb831aed30fd4d49968a51c0b563600df465ed304780466b456d45f6",
+      "binding_sha256": "ca231905c40bad3d218b7c24ca4b2308baef83ec434fc847faefc476a111bb27",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 115
@@ -277,7 +277,7 @@
       "resolved_files": 6
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "3b180fd8d00e03096a3201684353e2cbc010d43352da0fe689aeb5174555c4a5",
+      "binding_sha256": "1fe8c2a132dc4cfba91c17060868f55e332d9ddd8ada090af8530a0054cb8bdf",
       "document_sha256": "e43571206a59cebf0e30af9ea9dc83ff22690922ce7189da50d6546f09d93f71",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 8
@@ -326,18 +326,18 @@
     },
     "decisions-0046-approval-resumes-the-turn": {
       "binding_sha256": "3f12023b919bf7c4d140f99c5e9509bb66c717080e0308e7fa0bd536c1c2e6a2",
-      "document_sha256": "2fbc37d6c738f10f4fb686b2c2ad7537c34cf1fb12c75de6a4147063ad40ea81",
+      "document_sha256": "a9df4a667bd81c6e2b90b7cd6c0cc4b99c7dff16550c1b1c25de3f55f95ad1a2",
       "path": "docs/decisions/0046-approval-resumes-the-turn.md",
       "resolved_files": 12
     },
     "decisions-0047-turn-step-budget": {
-      "binding_sha256": "011f5b801ce847a71c29adf62b99b76f4e393b774452362ab9c904ee1991448e",
+      "binding_sha256": "11118b5a69f0a4fe84e80135dfd29ecb1083aa34353b56b920506e10cc0a1d1b",
       "document_sha256": "5dcfd7f80fc7f5a03d19a54bd0243c4ccd7162cf5c1644654955b0ba985e46b9",
       "path": "docs/decisions/0047-turn-step-budget.md",
       "resolved_files": 7
     },
     "decisions-0048-context-and-page-result-budgets": {
-      "binding_sha256": "6eaaffc553e472dc195b200e9138fba198f2b5de79772cc09e53794334e1d740",
+      "binding_sha256": "a1a364034f2db943fff11b575b52be7b941ed7c3119ee2a7aa3e593c5662ff0c",
       "document_sha256": "f0b81707ec7d14f983816e1b61c01411d47cd30e358d2f63b1a9d5c10b6b6ffc",
       "path": "docs/decisions/0048-context-and-page-result-budgets.md",
       "resolved_files": 7
@@ -355,7 +355,7 @@
       "resolved_files": 10
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "622f7d4a4635a49510baefff6038cbb8a46c6f5430df71d68631cf559fd6cc21",
+      "binding_sha256": "35586526d73af4fdc9f076da204057a121e8c54dc424c8fe699134fee0cfa6a6",
       "document_sha256": "5ada950dc0432803f2181401d8c778d4f51ad7c831052586f3a68cd9ffcfa82b",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 10
@@ -457,13 +457,13 @@
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "fc6bbf24085e6adfd7cfdd3af97e54551a607a2d69bad39b3962f4d44e0a29fb",
+      "binding_sha256": "eb8e061ba5d0202fb1d71a9c670a7cbf94d82db6e49c264057fdb6dab1c37311",
       "document_sha256": "a143a046fed79e23a7c64e39e3816fb4b38e298c59628d184fc96629c8f9fc64",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21
     },
     "decisions-0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor": {
-      "binding_sha256": "8d52d78bc24464cb8fa5311585af3206c034b11fae625dc09a261aa6b7b1d7d9",
+      "binding_sha256": "81fa4fff44c75ab72d1e1feeaf1741cf679871f040ca396fdcaf06d134d3637d",
       "document_sha256": "d5e9212873bd49dcba728f7857fa68fb29fa4b2acfc4fe0f5a83f5158222daa4",
       "path": "docs/decisions/0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor.md",
       "resolved_files": 19
@@ -475,7 +475,7 @@
       "resolved_files": 18
     },
     "decisions-0078-a-transcript-is-a-provider-contract-and-an-unreachable-toggle-asks": {
-      "binding_sha256": "9bd300c1b14a967349432223b368e594e85517caaff9450e3a69455a70f50e7d",
+      "binding_sha256": "7b4a7223aa048b3fc3a3e71892f1147cf5fa45b3e9e5f358282e7c33b9a00882",
       "document_sha256": "ed54d86125c607fe72a28798b8f0f22e8bdbaefa7d67a07aa28e5dd58df1f9d5",
       "path": "docs/decisions/0078-a-transcript-is-a-provider-contract-and-an-unreachable-toggle-asks.md",
       "resolved_files": 12
@@ -487,7 +487,7 @@
       "resolved_files": 7
     },
     "decisions-readme": {
-      "binding_sha256": "442246d105ac4d334ed55839f95b67551725efe32b9229417aca06ee2d397803",
+      "binding_sha256": "32277ee637fe6eae5e503f333eef56f0895ae20ed3f551dd220397e188d05463",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 84
@@ -511,13 +511,13 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "e365f801b20930d84d7f065df21ba6fdcc4f513740075050bad85d6b93be2b6b",
+      "binding_sha256": "1cbd9dc022894dd91b0070a6e4e6d87b0eddc571589897044984c200462d1d24",
       "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 100
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "63068e8540d92f613b6ad4cbc5cf02c922a797ed58fa74c3fb794c9ab4e0e161",
+      "binding_sha256": "f6a3efe5f94e9f615f4d50b736e213d9826b6942d681eb1401bbd10808cc63c7",
       "document_sha256": "ac65ddbc98b948c68c4d4e74209dc2f18ee007680f499d6733068240e52ebc77",
       "path": "specs/002-host-ipc/spec.md",
       "resolved_files": 41
@@ -529,7 +529,7 @@
       "resolved_files": 78
     },
     "spec-004-runtime-effects": {
-      "binding_sha256": "f3cd6f074a6056d8f181e21c63e72e579d93733b2b0a3b02f4ec6676ed6a6267",
+      "binding_sha256": "5b32620d1706940a121e0fb4ba735ced6737c1c611c637cc4cc35b6e71bd945b",
       "document_sha256": "f58986c0460b1769463b6b01fc22ec5c7a4cb1a1ef0594fb2c610c7d12114544",
       "path": "specs/004-runtime-effects/spec.md",
       "resolved_files": 28
@@ -595,7 +595,7 @@
       "resolved_files": 25
     },
     "specs-constitution": {
-      "binding_sha256": "fa37352613a95f6d756982816bf4c3c6678c989f572b47b2392e0ab1bace7ffe",
+      "binding_sha256": "252becd1f4126fc7ae4d9b6ed227ac0b8045e5ad79b765118b2232ee5f6d2e80",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 110

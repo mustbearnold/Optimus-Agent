@@ -1,4 +1,5 @@
 import type {
+  ApprovalResolveRequest,
   ChatHandle,
   ChatRequest,
   DesktopMethod,
@@ -93,6 +94,26 @@ export function createHttpTransport(): OptimusTransport {
           if (!controller.signal.aborted) controller.abort();
           return { requested: true };
         },
+      };
+    },
+    // The HTTP host has no streaming resolve endpoint (the vanilla UI it serves
+    // renders no approval cards), so this is the blocking IPC round trip. The
+    // product desktop shell uses the Tauri streaming path instead.
+    chatApprovalResolve(
+      request: ApprovalResolveRequest,
+      onEvent: (event: StreamEvent) => void
+    ): ChatHandle {
+      const id = streamId++;
+      const done = (async () => {
+        const result = await this.invoke<{ status: string }>('chat_approval_resolve', {
+          ...request,
+        });
+        onEvent({ type: 'done', result });
+      })();
+      return {
+        streamId: id,
+        done,
+        cancel: async () => ({ requested: false }),
       };
     },
     windowAction: async () => ({ ok: true }),

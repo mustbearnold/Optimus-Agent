@@ -2479,7 +2479,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "2fbc37d6c738f10f4fb686b2c2ad7537c34cf1fb12c75de6a4147063ad40ea81",
+      "content_sha256": "a9df4a667bd81c6e2b90b7cd6c0cc4b99c7dff16550c1b1c25de3f55f95ad1a2",
       "headings": [
         "ADR-0046: Approving an exact action resumes the turn",
         "Context",
@@ -3930,7 +3930,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "b3574911e649e2a4b0880c7d7d84a1b75d4a858a4b6978928d759a2ba0b50b84",
+  "documents_sha256": "b840cbdfe0ba5105c412d829c86a1b6c8db95ee29b5919d45d81c82cfca6c6dc",
   "routes": [
     {
       "id": "docs.navigation",

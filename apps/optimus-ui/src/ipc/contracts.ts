@@ -425,6 +425,19 @@ export type ChatEnvelope = {
   event: StreamEvent;
 };
 
+/** The exact persisted approval binding a surface resolves (ADR-0046). */
+export type ApprovalResolveRequest = {
+  session_id: string;
+  run_id: string;
+  call_id: string;
+  job_id: string;
+  node_id: string;
+  node_index: number;
+  effect_sha256: string;
+  decision: 'approve' | 'deny';
+  project_id?: string;
+};
+
 export type ChatHandle = {
   streamId: number;
   done: Promise<void>;
@@ -494,6 +507,11 @@ export interface OptimusTransport {
   readonly kind: 'tauri' | 'http' | 'fixture';
   invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
   chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle;
+  /** Resolve a parked approval as a streaming turn; events arrive as they happen. */
+  chatApprovalResolve(
+    request: ApprovalResolveRequest,
+    onEvent: (event: StreamEvent) => void
+  ): ChatHandle;
   windowAction(action: 'minimize' | 'maximize' | 'close'): Promise<unknown>;
   pickFolder(): Promise<ProjectRootSelection>;
   openPath(path: string): Promise<unknown>;

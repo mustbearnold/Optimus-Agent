@@ -1,6 +1,7 @@
 import { Channel, invoke } from '@tauri-apps/api/core';
 
 import type {
+  ApprovalResolveRequest,
   ChatHandle,
   ChatRequest,
   DesktopMethod,
@@ -11,6 +12,38 @@ import type {
 
 let nextStreamId = 1;
 
+/** Open a Tauri event-channel stream and settle `done` on its terminal event. */
+function openStream(
+  method: 'chat_start' | 'chat_approval_resolve_start',
+  payload: Record<string, unknown>,
+  onEvent: (event: StreamEvent) => void
+): ChatHandle {
+  const streamId = nextStreamId++;
+  const events = new Channel<StreamEvent>();
+  let terminal = false;
+  let resolveDone: () => void = () => undefined;
+  let rejectDone: (reason?: unknown) => void = () => undefined;
+  const done = new Promise<void>((resolve, reject) => {
+    resolveDone = resolve;
+    rejectDone = reject;
+  });
+  events.onmessage = (event) => {
+    onEvent(event);
+    if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') {
+      terminal = true;
+      resolveDone();
+    }
+  };
+  void invoke(method, { streamId, ...payload, events }).catch((error) => {
+    if (!terminal) rejectDone(error);
+  });
+  return {
+    streamId,
+    done,
+    cancel: async () => invoke<{ requested: boolean }>('chat_cancel', { streamId }),
+  };
+}
+
 export function createTauriTransport(): OptimusTransport {
   return {
     kind: 'tauri',
@@ -18,30 +51,17 @@ export function createTauriTransport(): OptimusTransport {
       return invoke<T>('host_invoke', { method, params });
     },
     chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle {
-      const streamId = nextStreamId++;
-      const events = new Channel<StreamEvent>();
-      let terminal = false;
-      let resolveDone: () => void = () => undefined;
-      let rejectDone: (reason?: unknown) => void = () => undefined;
-      const done = new Promise<void>((resolve, reject) => {
-        resolveDone = resolve;
-        rejectDone = reject;
-      });
-      events.onmessage = (event) => {
-        onEvent(event);
-        if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') {
-          terminal = true;
-          resolveDone();
-        }
-      };
-      void invoke('chat_start', { streamId, request, events }).catch((error) => {
-        if (!terminal) rejectDone(error);
-      });
-      return {
-        streamId,
-        done,
-        cancel: async () => invoke<{ requested: boolean }>('chat_cancel', { streamId }),
-      };
+      return openStream('chat_start', { request }, onEvent);
+    },
+    // Settling an approval resumes the paused turn (ADR-0046), so this is a
+    // streaming turn like chat — the continuation must reach the workbench as
+    // it happens, and the handle must be cancellable, or the button stays on
+    // "Approving…" with no feedback for the whole continuation.
+    chatApprovalResolve(
+      request: ApprovalResolveRequest,
+      onEvent: (event: StreamEvent) => void
+    ): ChatHandle {
+      return openStream('chat_approval_resolve_start', { params: request }, onEvent);
     },
     windowAction(action) {
       return invoke('window_action', { action });

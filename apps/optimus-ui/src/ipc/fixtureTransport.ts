@@ -1,5 +1,6 @@
 import type {
   Approval,
+  ApprovalResolveRequest,
   ArtifactDetail,
   ArtifactRecord,
   BrowserState,
@@ -390,6 +391,87 @@ export function createFixtureTransport(): OptimusTransport {
         onEvent({
           type: 'done',
           result: { provider, model },
+        });
+      })();
+      return {
+        streamId: id,
+        done,
+        cancel: async () => {
+          cancelled = true;
+          return { requested: true };
+        },
+      };
+    },
+    // Mirrors the host's streaming resolve (ADR-0046): settle the exact call,
+    // then stream the resumed continuation until it parks or finishes. The
+    // workbench contract under test is that the decision is not a blocking
+    // request/response — events arrive as they happen and the handle cancels.
+    chatApprovalResolve(
+      request: ApprovalResolveRequest,
+      onEvent: (event: StreamEvent) => void
+    ): ChatHandle {
+      const id = streamId++;
+      let cancelled = false;
+      const decision = request.decision === 'deny' ? 'denied' : 'approved';
+      const settlement: ToolLifecycleEvent = {
+        type: 'tool',
+        schema_version: 1,
+        event_id: `${request.run_id}:${request.call_id}:${decision}`,
+        run_id: request.run_id,
+        call_id: request.call_id,
+        tool_id: 'terminal',
+        phase: decision === 'approved' ? 'succeeded' : 'cancelled',
+        summary:
+          decision === 'approved'
+            ? 'Approved exact action completed'
+            : 'Exact action denied',
+        duration_ms: 76,
+      };
+      const answer =
+        decision === 'approved'
+          ? 'The approved command ran. Looking at the result, the next milestone is the streaming approval continuation.'
+          : 'The exact action was denied. Nothing was executed.';
+      const chunks = answer.match(/.{1,9}/g) || [answer];
+      const done = (async () => {
+        const sessionId = request.session_id;
+        const detail = details.get(sessionId) || {
+          ...(sessions.find((session) => session.id === sessionId) || {
+            id: sessionId,
+            title: 'Session',
+          }),
+          messages: [],
+        };
+        onEvent({ type: 'status', text: 'Resolving approval…' });
+        await sleep(40);
+        onEvent(settlement);
+        detail.messages = detail.messages.map((message) => ({
+          ...message,
+          ...(message.tool_events
+            ? {
+                tool_events: message.tool_events.map((event) =>
+                  event.call_id === request.call_id ? settlement : event
+                ),
+              }
+            : {}),
+        }));
+        for (const chunk of chunks) {
+          if (cancelled) {
+            onEvent({ type: 'cancelled', error: 'cancelled by user' });
+            return;
+          }
+          onEvent({ type: 'delta', text: chunk });
+          await sleep(20);
+        }
+        detail.messages.push({ role: 'assistant', content: answer });
+        detail.run_status = 'succeeded';
+        detail.message_count = detail.messages.length;
+        details.set(sessionId, detail);
+        const session = sessions.find((candidate) => candidate.id === sessionId);
+        if (session) session.message_count = detail.messages.length;
+        onEvent({ type: 'timing', elapsed_ms: 120 });
+        onEvent({
+          type: 'done',
+          result: { status: decision, resume_error: null, assistant_text: answer },
         });
       })();
       return {

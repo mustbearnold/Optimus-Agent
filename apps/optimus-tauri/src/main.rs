@@ -119,6 +119,67 @@ fn chat_start(
     Ok(json!({ "streamId": stream_id }))
 }
 
+/// Resolve a parked chat approval as a streaming turn (ADR-0046).
+///
+/// Settling an approval resumes the paused turn, so the decision is not a
+/// request/response: the continuation's events must reach the surface as they
+/// arrive, and the user must be able to cancel a long continuation. This
+/// mirrors [`chat_start`] — same registry, same terminal-event contract — but
+/// drives `chat_approval_resolve_cancellable`, which settles the exact bound
+/// effect first and then streams the resumed turn. Without this path the
+/// workbench's "Approving…" button stayed stuck for the whole continuation:
+/// `host_invoke` ran the resolve as a blocking call with no events and no
+/// cancellation handle.
+#[tauri::command]
+fn chat_approval_resolve_start(
+    stream_id: u64,
+    params: Value,
+    events: Channel<Value>,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let cancellation = CancellationToken::new();
+    state
+        .cancellations
+        .lock()
+        .map_err(|_| "chat cancellation registry poisoned".to_string())?
+        .insert(stream_id, cancellation.clone());
+
+    let app = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut on_event = |event| {
+            let payload = optimus_host::stream_event_to_json(&event);
+            optimus_host::stream_delivery_control(events.send(payload).is_ok())
+        };
+        let outcome = optimus_host::chat_approval_resolve_cancellable(
+            &app.home,
+            params,
+            Some(&mut on_event),
+            &cancellation,
+        );
+        // A cancelled resolve is a cancelled resolve even when the settlement
+        // itself succeeded: the user stopped the continuation, and the UI must
+        // not read the terminal event as a completed turn.
+        let terminal = if cancellation.is_cancelled() {
+            let error = outcome
+                .as_ref()
+                .err()
+                .cloned()
+                .unwrap_or_else(|| "approval continuation cancelled".into());
+            json!({ "type": "cancelled", "error": error })
+        } else {
+            match outcome {
+                Ok(result) => json!({ "type": "done", "result": result }),
+                Err(error) => json!({ "type": "error", "error": error }),
+            }
+        };
+        let _ = events.send(terminal);
+        if let Ok(mut active) = app.cancellations.lock() {
+            active.remove(&stream_id);
+        }
+    });
+    Ok(json!({ "streamId": stream_id }))
+}
+
 #[tauri::command]
 fn chat_cancel(stream_id: u64, state: State<'_, AppState>) -> Result<Value, String> {
     let active = state
@@ -200,6 +261,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             host_invoke,
             chat_start,
+            chat_approval_resolve_start,
             chat_cancel,
             window_action,
             pick_folder

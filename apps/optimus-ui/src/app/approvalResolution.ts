@@ -1,10 +1,10 @@
-import type { ToolApprovalBinding } from '../ipc/contracts';
+import type { ApprovalResolveRequest, ToolApprovalBinding } from '../ipc/contracts';
 export function approvalResolutionParams(
   sessionId: string,
   binding: ToolApprovalBinding,
   decision: 'approve' | 'deny',
   projectId?: string
-): Record<string, unknown> {
+): ApprovalResolveRequest {
   return {
     session_id: sessionId,
     run_id: binding.run_id,

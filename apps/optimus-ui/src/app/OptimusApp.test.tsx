@@ -55,6 +55,35 @@ describe('OptimusApp fixture contract', () => {
     ).toBeInTheDocument();
   });
 
+  it('streams an approval continuation live instead of sticking on Approving…', async () => {
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+    await user.click(
+      await screen.findByRole('button', { name: /Assess Optimus Agent Project State/ })
+    );
+
+    // The parked command renders an approval card.
+    const approve = await screen.findByRole('button', { name: 'Approve and continue' });
+    await user.click(approve);
+
+    // The button flips to the in-flight label while the effect settles…
+    expect(await screen.findByRole('button', { name: 'Approving…' })).toBeInTheDocument();
+
+    // …and the resumed turn's answer streams into the transcript without any
+    // further clicks. The pre-fix desktop resolve ran the whole continuation
+    // as one invisible blocking call, so the button stayed on "Approving…"
+    // with no feedback and no way to stop it.
+    expect(
+      await screen.findByText(/The approved command ran/i, {}, { timeout: 5000 })
+    ).toBeInTheDocument();
+    // The settlement event closes the card: the decision is a stream, so the
+    // in-flight label is replaced by the settled row, never stuck forever.
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Approving…' })).not.toBeInTheDocument()
+    );
+    expect(screen.queryByRole('button', { name: 'Approve and continue' })).not.toBeInTheDocument();
+  });
+
   it('keeps the topbar focused on home, workspace expansion, terminal, and the right panel', async () => {
     const user = userEvent.setup();
     const { container } = render(<OptimusApp />);

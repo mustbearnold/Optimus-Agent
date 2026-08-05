@@ -182,7 +182,14 @@ impl NativeWorkers {
         method: String,
         params: serde_json::Value,
     ) -> Result<(), EnqueueError> {
-        if matches!(method.as_str(), "chat" | "chat_offline") {
+        // `chat_approval_resolve` is a streaming turn like `chat` (ADR-0046):
+        // it settles the effect and then runs the continuation, which can take
+        // minutes. It must not occupy the single IPC worker, or every other
+        // request — sessions, doctor, ready — queues behind the continuation.
+        if matches!(
+            method.as_str(),
+            "chat" | "chat_offline" | "chat_approval_resolve"
+        ) {
             map_enqueue(
                 self.chat_tx
                     .try_send(ChatWork::Request { id, method, params }),
@@ -345,9 +352,48 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        map_enqueue, ActiveStreams, EnqueueError, NativeWorkers, StreamRegistrationError,
-        ACTIVE_STREAM_CAPACITY, CHAT_QUEUE_CAPACITY, CHAT_WORKERS, IPC_QUEUE_CAPACITY,
+        map_enqueue, ActiveStreams, ChatWork, EnqueueError, IpcWork, NativeWorkers,
+        StreamRegistrationError, ACTIVE_STREAM_CAPACITY, CHAT_QUEUE_CAPACITY, CHAT_WORKERS,
+        IPC_QUEUE_CAPACITY,
     };
+
+    #[test]
+    fn approval_resolution_routes_to_chat_workers_not_the_single_ipc_worker() {
+        let (ipc_tx, ipc_rx) = mpsc::sync_channel(8);
+        let (chat_tx, chat_rx) = mpsc::sync_channel(8);
+        let workers = NativeWorkers {
+            ipc_tx,
+            chat_tx,
+            active_streams: ActiveStreams::default(),
+        };
+
+        workers
+            .enqueue_request(1, "doctor".into(), json!({}))
+            .expect("ipc admission");
+        workers
+            .enqueue_request(2, "chat_approval_resolve".into(), json!({}))
+            .expect("chat admission");
+        workers
+            .enqueue_request(3, "chat".into(), json!({}))
+            .expect("chat admission");
+
+        // `chat_approval_resolve` runs the resumed continuation (ADR-0046), so
+        // it must ride the chat queue like `chat` — the single IPC worker must
+        // stay free for sessions/doctor/ready while a continuation streams.
+        assert!(matches!(
+            ipc_rx.try_recv(),
+            Ok(IpcWork::Request { id: 1, .. })
+        ));
+        assert!(matches!(
+            chat_rx.try_recv(),
+            Ok(ChatWork::Request { id: 2, .. })
+        ));
+        assert!(matches!(
+            chat_rx.try_recv(),
+            Ok(ChatWork::Request { id: 3, .. })
+        ));
+        assert!(ipc_rx.try_recv().is_err());
+    }
 
     #[test]
     fn worker_and_queue_limits_are_bounded() {

@@ -29,6 +29,7 @@ validated_by:
 
 - **Status:** Accepted
 - **Accepted:** 2026-08-01 — delivered: `chat_approval.rs` and the TUI resolution path implement resume-on-decision and cite this ADR at each seam
+- **Delivered:** 2026-08-05 — desktop follow-up: the Tauri shell streams the resolve (`chat_approval_resolve_start`) and the React workbench consumes the continuation live and cancellably
 - **Date:** 2026-07-27
 - **Program:** program P30+ (TUI + core foundation)
 
@@ -155,7 +156,11 @@ provider-free and letting the caller resume preserves the split.
   displayed it must consume the streamed continuation instead.
 - The desktop's `resolveTranscriptApproval` reloads the transcript after the call
   returns. That still shows the right thing, just later — it will not stream. A
-  follow-up is needed to make it stream, and is out of scope here.
+  follow-up is needed to make it stream, and is out of scope here. *(Delivered
+  2026-08-05: the desktop resolve now streams through
+  `chat_approval_resolve_start` — the Tauri shell runs the settle+resume with an
+  event channel and a cancellable token, the workbench applies the continuation
+  events live, and the Stop control cancels the resolve.)*
 - Turn timings for an approved turn now include the paused wall-clock, because
   the turn genuinely was open that whole time.
 - Approval receipts stop appearing as assistant messages in the durable
