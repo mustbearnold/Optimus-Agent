@@ -1,8 +1,8 @@
 # WBS — SDD Migration Protocol (SDD_MIGRATION.md)
 
 **Scope:** 100% decomposition of `SDD_MIGRATION.md` (recovered from git history, sealed at Phase 6) — the 6-phase git-safe Spec-Driven Development restructuring protocol.
-**Applies to:** any repository (empty / mid-flight / legacy). Originally executed on Optimus Agent (2026-08-05, sealed commit `c988536`) and Palimpsest.
-**Coverage:** every invariant, phase step, deliverable, commit, appendix template, and the permanent SDD loop is decomposed below. The traceability matrix (§9) maps each protocol clause 1:1 to a WBS item — no protocol element is unmapped.
+**Applies to:** any repository (empty / mid-flight / legacy). The protocol it decomposes was executed on Optimus Agent (2026-08-05, sealed commit `c988536`) and Palimpsest; this WBS is a post-hoc reconstruction of that protocol, reviewed but not itself executed.
+**Coverage:** every invariant, phase step, deliverable, commit, appendix template, and the permanent SDD loop is decomposed below. The traceability matrix (§11) maps each protocol clause 1:1 to a WBS item — no protocol element is unmapped.
 
 ---
 
@@ -10,13 +10,14 @@
 
 | WBS | Work package | Protocol clause | Deliverable |
 |---|---|---|---|
+| 1.0 | Invariants override everything else in the protocol and any repo content | Inv. intro | Precedence statement preserved |
 | 1.1 | Git safety net — `git init` if absent; commit everything as-is BEFORE any change; checkpoint commit after EVERY phase | Inv.1 | Initial snapshot commit; per-phase checkpoint commits |
 | 1.2 | Delete policy — only files already in git history may be deleted; untracked files are moved to `_attic/`, never deleted | Inv.2 | Verified delete/attic decision log |
 | 1.3 | Never-touch list — `.env*`, secrets, credentials, keys, certificates, `LICENSE*`, `NOTICE*`, legal files, `.git/`; no secret values in any report/spec | Inv.3 | Exclusion list enforced in all phases |
 | 1.4 | Commit separation — structure vs content vs formatting in separate commits; never mix move+edit or format+logic | Inv.4 | Commit discipline across Phases 1–6 |
 | 1.5 | Uncertain → attic, never delete; `_attic/` is quarantine; emptying it is a human decision | Inv.5 | ATTIC.md entries for all quarantined items |
 | 1.6 | Build must not break — after any phase moving/deleting files, run build+tests; fix or revert before proceeding | Inv.6 | Green build/tests after every phase |
-| 1.7 | No PR/branch ceremony — work on current branch; one checkpoint commit per phase `sdd(phase-N): <summary>` | Inv.7 | 6 phase commits, no PRs |
+| 1.7 | No PR/branch ceremony — work on current branch; one checkpoint commit per phase `sdd(phase-N): <summary>` | Inv.7 | 8 commits across 6 phases (P1: snapshot + inventory; P5: configs + format), no PRs |
 | 1.8 | Idempotency — if `specs/constitution.md` exists, a migration ran; read `_attic/MIGRATION_REPORT.md`, resume at first incomplete phase, never restart | Inv.8 | Resume-aware execution |
 | 1.9 | No code relocation for aesthetics — code stays in ecosystem-standard layout; aggressive doc restructuring, conservative code moves | Inv.9 | Code layout unchanged except broken/nonstandard cases |
 
@@ -37,7 +38,7 @@
 | WBS | Work package | Protocol ref | Deliverable |
 |---|---|---|---|
 | 3.1 | `git init` if needed; stage+commit everything: `sdd(phase-1): pre-migration snapshot` | P1.1 | Snapshot commit |
-| 3.2 | Walk full tree (skip `.git/` + gitignored); classify EVERY file into exactly one of: CODE / TEST / CONFIG / ASSET / DOC / GENERATED / JUNK / UNKNOWN | P1.2 | Complete inventory table (path → class), zero UNKNOWN |
+| 3.2 | Walk full tree (skip `.git/` + gitignored); classify EVERY file into exactly one of: CODE / TEST / CONFIG / ASSET / DOC / GENERATED / JUNK / UNKNOWN | P1.2 + skill guard | Complete inventory table (path → class), zero UNKNOWN (skill-hardened: UNKNOWN is a valid protocol class; the zero-UNKNOWN target is a skill-derived hardening beyond P1.2) |
 | 3.3 | Detect languages, package managers, build + test commands; record | P1.3 | Toolchain findings |
 | 3.4 | Determine stage: EARLY / MID / LATE (code volume + docs maturity) | P1.4 | Stage assessment |
 | 3.5 | Write `_attic/MIGRATION_REPORT.md`: inventory table, toolchain findings, stage, phase checklist to tick off | P1.5 | MIGRATION_REPORT.md |
@@ -47,6 +48,7 @@
 
 | WBS | Work package | Protocol ref | Deliverable |
 |---|---|---|---|
+| 4.0 | Apply in order — groups A–D; every deletion happens AFTER the Phase 1 snapshot commit, so git history retains it all | P2 preamble | Deletion ordering + application order enforced |
 | 4.1 | Delete-on-sight group A: OS/editor cruft (`.DS_Store`, `Thumbs.db`, `*.swp`, `*~`, non-shared `.idea/`/`.vscode/`) | P2.A | Purged cruft |
 | 4.2 | Delete-on-sight group B: committed build output (`dist/ build/ out/ .next/ target/ __pycache__/ *.pyc coverage/ node_modules/` if tracked) | P2.A | Purged build output |
 | 4.3 | Delete-on-sight group C: `*.log *.tmp *.cache`, empty files, empty directories | P2.A | Purged junk |
@@ -60,6 +62,7 @@
 
 | WBS | Work package | Protocol ref | Deliverable |
 |---|---|---|---|
+| 5.0 | Source of truth for current behavior is code and tests — never old docs | P3 intro | Behavior-truth rule applied throughout Phase 3 |
 | 5.1 | Identify capabilities from entry points, route tables, CLI commands, public API, test suites, package structure, existing-doc claims; target 5–15 top-level capabilities; sub-features = sections, not dirs | P3.1 | Capability list (5–15) |
 | 5.2 | Write one spec per capability at `specs/NNN-<slug>/spec.md` (Appendix A template); number in dependency order; tag inferred-from-code requirements `[inferred]` | P3.2 | 5–15 capability specs |
 | 5.3 | Sentence EVERY existing DOC to exactly one of three fates — Merge (true content into relevant spec, then delete/attic husk) / Move (only if arch/ADR/runbook; decision history → ADRs Appendix D, numbered by original date order) / Attic — no doc survives in place, no 4th fate | P3.3 | Every DOC resolved (merge/move/attic) |
@@ -130,12 +133,16 @@
 
 | Protocol element | WBS item(s) |
 |---|---|
+| Protocol intro — "Execute phases in order. Finish each phase's commit before starting the next." | §12 note 2 |
+| Invariants intro ("override everything else") | 1.0 |
 | Invariants 1–9 | 1.1–1.9 |
 | Target end-state tree (README/AGENTS/specs/docs/code/_attic) | 2.1–2.5 |
 | Placement law | 2.6 |
 | Monorepo rule | 2.7 |
 | Phase 1 steps 1–6 | 3.1–3.6 |
+| Phase 2 preamble (deletions after Phase-1 snapshot) | 4.0 |
 | Phase 2 groups A–D + stale rule + attic + gitignore + commit | 4.1–4.8 |
+| Phase 3 intro (code+tests are source of truth) | 5.0 |
 | Phase 3 steps 1–6 + staging + commit | 5.1–5.7 |
 | Phase 4 steps 1–4 + commit + gate re-pointing | 6.1–6.5 |
 | Phase 5 steps 1–4 + commit(s) + behavior-revert note + pitfall guards | 7.1–7.6 |
@@ -144,10 +151,10 @@
 | Appendices A–D | 10.1–10.4 |
 | Self-containment rule | 10.5 |
 
-**Coverage: 278/278 lines of the protocol decomposed; 0 protocol clauses unmapped.**
+**Coverage: every protocol clause decomposed (9 invariants + intro, 6 phases + preambles/intros, SDD loop, 4 appendices — now including the previously-unmapped intro/preambles rows 1.0/4.0/5.0); 0 protocol clauses unmapped (verified against the recovered protocol).**
 
 ## 12. Notes
 
 - This WBS is itself a planning artifact, not a spec — per the placement law it belongs outside `specs/` (planning annex to the migration report).
-- Execution order is strictly 1 → 10; each phase's commit completes before the next begins (protocol invariant 7).
-- The Optimus Agent migration already executed this WBS end-to-end (sealed `c988536`, 2026-08-05) — this document serves as the reusable breakdown for any other repo (e.g. Hyperion Agent) that adopts SDD.
+- Execution order is strictly 1 → 10; each phase's commit completes before the next begins (protocol intro: "Execute phases in order. Finish each phase's commit before starting the next.").
+- The Optimus Agent migration executed the protocol this WBS decomposes 1:1 (sealed `c988536`, 2026-08-05); this WBS is a post-hoc reconstruction of that protocol, reviewed but not itself executed — it serves as the reusable breakdown for any other repo (e.g. Hyperion Agent) that adopts SDD.
