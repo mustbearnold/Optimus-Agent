@@ -568,6 +568,22 @@
         "spec-012-windows-tauri-packaging"
       ],
       "supporting": []
+    },
+    {
+      "id": "specs.013-self-development",
+      "keywords": [
+        "self-development",
+        "developer full access",
+        "development supervisor",
+        "self_development tool",
+        "session handoff"
+      ],
+      "primary": [
+        "spec-013-self-development"
+      ],
+      "supporting": [
+        "architecture-self-development"
+      ]
     }
   ],
   "schema_version": 1

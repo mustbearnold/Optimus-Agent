@@ -3519,6 +3519,27 @@
       "type": "how-to"
     },
     {
+      "authority": "supporting",
+      "content_sha256": "23561aedc4d082836fa5f7d9cce454307402869b29340516e73e9098de6aa148",
+      "headings": [
+        "Using Optimus for self-development",
+        "What this is",
+        "Enable Developer Full Access from the desktop app",
+        "Drive a self-development build",
+        "Agent-driven self-development",
+        "Acceptance"
+      ],
+      "id": "architecture-self-development",
+      "path": "docs/runbooks/self-development.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "How to use Optimus from the desktop app to develop Optimus itself — the Developer Full Access grant, the development supervisor, the self_development agent tool, session handoff, and the acceptance gates that prove the lifecycle.",
+      "title": "Using Optimus for self-development",
+      "type": "how-to"
+    },
+    {
       "authority": "canonical",
       "content_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "headings": [
@@ -3822,6 +3843,28 @@
     },
     {
       "authority": "canonical",
+      "content_sha256": "fc6b85d488bd10838b2783bfa2d4a5c3a71529368f962e22d03cecfb741870aa",
+      "headings": [
+        "Self-development",
+        "Purpose",
+        "Requirements",
+        "Acceptance criteria",
+        "Out of scope",
+        "Open questions",
+        "Links"
+      ],
+      "id": "spec-013-self-development",
+      "path": "specs/013-self-development/spec.md",
+      "plane": "work",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "The self-development vertical — Developer Full Access as an explicit scoped grant, the stable supervisor that builds and health-checks a separate development instance, the agent-facing self_development tool, session handoff, the desktop UI panel, and the gate wiring that proves the whole lifecycle.",
+      "title": "Self-development",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
       "content_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "headings": [
         "BACKLOG",
@@ -3887,7 +3930,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "72c9536ab5a480ad2c5fc0de1a95f08cac7a818a541ab5b0ee103ca0d51efd77",
+  "documents_sha256": "b3574911e649e2a4b0880c7d7d84a1b75d4a858a4b6978928d759a2ba0b50b84",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4437,6 +4480,22 @@
         "spec-012-windows-tauri-packaging"
       ],
       "supporting": []
+    },
+    {
+      "id": "specs.013-self-development",
+      "keywords": [
+        "self-development",
+        "developer full access",
+        "development supervisor",
+        "self_development tool",
+        "session handoff"
+      ],
+      "primary": [
+        "spec-013-self-development"
+      ],
+      "supporting": [
+        "architecture-self-development"
+      ]
     }
   ],
   "schema_version": 1

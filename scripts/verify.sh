@@ -368,6 +368,24 @@ tier_ui() {
     else
       skip "tauri launch acceptance" "no display and no xvfb-run"
     fi
+    # Self-development acceptance (spec-013): the real Developer Full Access
+    # lifecycle — grant enable, supervisor build+launch, handoff snapshot,
+    # failed-build preservation, restart, emergency stop, revoke — against
+    # the host-only binary, and against a windowed Tauri child when a
+    # display exists (same guard as the launch acceptance gate).
+    if [ ! -x target/debug/optimus-desktop ]; then
+      run "build self-development host" cargo build -p optimus-desktop
+    fi
+    run "self-development acceptance (host)" python3 scripts/tests/test_self_development.py
+    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
+      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+        run "self-development acceptance (desktop)" xvfb-run -a python3 scripts/tests/test_self_development.py --surface desktop
+      else
+        run "self-development acceptance (desktop)" python3 scripts/tests/test_self_development.py --surface desktop
+      fi
+    else
+      skip "self-development acceptance (desktop)" "no display and no xvfb-run"
+    fi
     if [ -d node_modules ] && (bunx playwright --version >/dev/null 2>&1); then
       run "tui layout (playwright)" bun scripts/tests/tui_layout_playwright.cjs
     else
@@ -390,6 +408,8 @@ tier_ui() {
     skip "tui e2e" "tmux not installed"
     skip "tui feature matrix" "tmux not installed"
     skip "tui layout (playwright)" "tmux not installed"
+    skip "self-development acceptance (host)" "tmux not installed"
+    skip "self-development acceptance (desktop)" "tmux not installed"
   fi
 
   # Playwright drives the real host binary (e2e/support.js spawns
@@ -527,6 +547,24 @@ tier_all() {
     else
       skip "tauri launch acceptance" "no display and no xvfb-run"
     fi
+    # Self-development acceptance (spec-013): the real Developer Full Access
+    # lifecycle — grant enable, supervisor build+launch, handoff snapshot,
+    # failed-build preservation, restart, emergency stop, revoke — against
+    # the host-only binary, and against a windowed Tauri child when a
+    # display exists (same guard as the launch acceptance gate).
+    if [ ! -x target/debug/optimus-desktop ]; then
+      run "build self-development host" cargo build -p optimus-desktop
+    fi
+    run "self-development acceptance (host)" python3 scripts/tests/test_self_development.py
+    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
+      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+        run "self-development acceptance (desktop)" xvfb-run -a python3 scripts/tests/test_self_development.py --surface desktop
+      else
+        run "self-development acceptance (desktop)" python3 scripts/tests/test_self_development.py --surface desktop
+      fi
+    else
+      skip "self-development acceptance (desktop)" "no display and no xvfb-run"
+    fi
     if [ -d node_modules ] && (bunx playwright --version >/dev/null 2>&1); then
       run "tui layout (playwright)" bun scripts/tests/tui_layout_playwright.cjs
     else
@@ -549,6 +587,8 @@ tier_all() {
     skip "tui e2e" "tmux not installed"
     skip "tui feature matrix" "tmux not installed"
     skip "tui layout (playwright)" "tmux not installed"
+    skip "self-development acceptance (host)" "tmux not installed"
+    skip "self-development acceptance (desktop)" "tmux not installed"
   fi
 
   if [ "$host_built" = 1 ] && (cd apps/optimus-desktop && bunx playwright --version >/dev/null 2>&1); then
