@@ -7,7 +7,7 @@ use optimus_kernel::{
     cancel_workflow_run, content_sha256, get_workflow_run, open_seeded_agent_registry,
     open_seeded_workflow_registry, open_workflow_run_store, run_read_file_handoff,
     run_registered_workflow, run_write_then_read_handoff, vertical_workspace,
-    write_then_read_handoff_workflow, AgentResultKind, ReadFileHandoffRequest, WorkflowDagRequest,
+    write_then_read_handoff_workflow, ReadFileHandoffRequest, WorkflowDagRequest,
     WorkflowRunStatus, WorkflowRunStore, WorkflowTerminalKind, WriteFileHandoffRequest,
     READ_FILE_HANDOFF_WORKFLOW_ID, READ_FILE_HANDOFF_WORKFLOW_VERSION, WORKSPACE_READER_ID,
     WORKSPACE_WRITER_ID, WRITE_THEN_READ_HANDOFF_WORKFLOW_ID,
@@ -279,12 +279,6 @@ fn handoff_artifact_sha_matches_workspace_bytes() {
             &content_sha256(body.as_bytes())
         );
     }
-}
-
-// silence unused import if AgentResultKind unused in this file
-#[allow(dead_code)]
-fn _touch_agent_result_kind() -> AgentResultKind {
-    AgentResultKind::Succeeded
 }
 
 #[test]

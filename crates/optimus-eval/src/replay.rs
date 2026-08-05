@@ -40,10 +40,6 @@ impl ReplayBundleId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
-
-    fn parse(value: &str) -> Result<Self> {
-        Ok(Self(Uuid::parse_str(value)?))
-    }
 }
 
 impl Default for ReplayBundleId {
@@ -499,9 +495,4 @@ impl ReplayStore {
         }
         Ok(report)
     }
-}
-
-#[allow(dead_code)]
-fn _parse_bundle_id(value: &str) -> Result<ReplayBundleId> {
-    ReplayBundleId::parse(value)
 }

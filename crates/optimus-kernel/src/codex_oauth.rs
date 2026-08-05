@@ -10,7 +10,6 @@ use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -1047,13 +1046,6 @@ fn decode_hex(value: &str) -> Result<Vec<u8>> {
             }
         })
         .collect()
-}
-
-// silence unused import warnings in some build modes
-#[allow(dead_code)]
-fn _touch_io() {
-    let _: fn(&mut dyn Read) = |_| {};
-    let _: fn(&mut dyn Write) = |_| {};
 }
 
 #[cfg(test)]

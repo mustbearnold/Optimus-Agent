@@ -7,7 +7,7 @@
 //! rectangle they were given.
 
 use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+use unicode_width::UnicodeWidthStr;
 
 /// Number of terminal cells occupied by `text`.
 pub(crate) fn cells(text: &str) -> usize {
@@ -81,13 +81,6 @@ pub(crate) fn fit_grapheme(grapheme: &str, limit: usize) -> String {
     } else {
         truncate(grapheme, limit)
     }
-}
-
-/// Width of the first scalar value, used only for marker classification where
-/// a complete grapheme is not needed.
-#[allow(dead_code)]
-pub(crate) fn char_cells(character: char) -> usize {
-    UnicodeWidthChar::width(character).unwrap_or(0)
 }
 
 #[cfg(test)]
