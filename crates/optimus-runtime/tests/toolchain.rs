@@ -144,12 +144,13 @@ fn rw_binds_precede_ro_binds() {
 fn capability_toggle_is_respected() {
     // Sanity: the terminal toggle is the one governing the toolchain tier.
     let home = PathBuf::from("/tmp/fake-home");
-    let mut caps = DeveloperCapabilities::default();
-    caps.terminal_execution = true;
     let grant = DeveloperAccessGrant {
         enabled: true,
         scope: selected_repo(&home),
-        capabilities: caps,
+        capabilities: DeveloperCapabilities {
+            terminal_execution: true,
+            ..Default::default()
+        },
         issued_unix: 1,
         ..Default::default()
     };

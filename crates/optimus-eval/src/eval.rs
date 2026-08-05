@@ -295,8 +295,11 @@ fn observe_smartdeny_approval(home: &Path) -> std::result::Result<(), &'static s
             nodes: vec![NodeSpec {
                 label: "command".into(),
                 effect: Effect::RunCommand {
-                    program: "cmd".into(),
-                    args: vec!["/C".into(), "echo forbidden>forbidden.txt".into()],
+                    // A visible program: the pre-card feasibility probe
+                    // (spec-014 R3) denies INVISIBLE programs before the
+                    // broker; this case exercises the SmartDeny ask itself.
+                    program: "sh".into(),
+                    args: vec!["-c".into(), "echo forbidden>forbidden.txt".into()],
                 },
             }],
         })

@@ -3,7 +3,6 @@
 //! programs to visible absolute paths, sets a bind-derived PATH, and probes
 //! before carding a doomed effect.
 
-use std::path::PathBuf;
 use std::sync::Mutex;
 
 use optimus_graph::{CommandFsEnvelope, Effect, JobSpec, NodeSpec, PolicyMode, RuntimeConfig};
@@ -60,7 +59,6 @@ fn confined_config() -> RuntimeConfig {
         policy: PolicyMode::SmartDeny,
         command_fs_envelope: CommandFsEnvelope::Confined,
         autonomy_profile: optimus_graph::AutonomyProfile::DeveloperFullAccess,
-        ..Default::default()
     }
 }
 

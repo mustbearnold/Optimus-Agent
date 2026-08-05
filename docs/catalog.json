@@ -3385,6 +3385,84 @@
     },
     {
       "authority": "record",
+      "content_sha256": "85375405d60a4fbbe90c56850341e2349ba3415b9fe0662945e35f8d945610b9",
+      "headings": [
+        "ADR-0080: Toolchain-aware command envelope for Developer Full Access",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons",
+        "Risks",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0080-toolchain-aware-command-envelope",
+      "path": "docs/decisions/0080-toolchain-aware-command-envelope.md",
+      "plane": "decision",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "Approved commands under Developer Full Access must actually run: the confined bwrap envelope gains a classed toolchain bind tier (rw non-secret caches, ro functional toolchains, credential/identity paths never bound under shared-net Confined), deterministic exec resolution (first present-and-visible PATH entry + bind-derived Environment=PATH, re-verified per turn at spawn), and a pre-card feasibility probe that denies doomed effects with actionable recovery instead of carding them.",
+      "title": "ADR-0080: Toolchain-aware command envelope for Developer Full Access",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
+      "headings": [
+        "ADR-0081: Truthful approval resolution and durable session consent",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons",
+        "Risks",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0081-truthful-approval-resolution-and-session-consent",
+      "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
+      "plane": "decision",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "Approval resolution becomes truthful and resumable: failed continuations surface as visible resume_error (done-payload forwarding, done-handler branching before terminalization, reload preservation, no error swallowing), multi-node re-parks settle the approved node and synthesize a fresh claimable binding ({base}:node{n}) with still_pending instead of erroring, synthetic per-node results are claimed on the provider wire via outgoing-copy claim synthesis, and durable session consent (capability_grants keyed on the transcript session id) removes routine approval friction while keeping per-exact-effect audit rows.",
+      "title": "ADR-0081: Truthful approval resolution and durable session consent",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "677acdf35f2be47f461b25e5304f5ca22593d0a16b904adb5d9fb3f1bc17d769",
+      "headings": [
+        "ADR-0082: Latency shaping for the tool loop",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons",
+        "Risks",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0082-latency-shaping-for-the-tool-loop",
+      "path": "docs/decisions/0082-latency-shaping-for-the-tool-loop.md",
+      "plane": "decision",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "The tool-to-tool gap is model round-trip dominated (non-streaming transport, high reasoning effort on every step, per-call persistence). Latency is shaped without degrading the final answer: per-provider reasoning-effort caps (first step keeps the user's choice, tool-loop and terminal steps cap at low, off is never upgraded, per-provider mapping pinned), one session save per model step with a mandatory flush choke point on every mid-step exit, a step-scoped tool-loop guard with a manifest-derived engagement counter surviving approval-resume, and a tool-to-tool gap breakdown in the execution dock.",
+      "title": "ADR-0082: Latency shaping for the tool loop",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -3865,6 +3943,25 @@
     },
     {
       "authority": "canonical",
+      "content_sha256": "b4d8f4c034e0b9c718bf5b22d40cbaae4846ad8463ed3659bc83c1ce20299aa4",
+      "headings": [
+        "Self-build reliability and responsiveness",
+        "Purpose",
+        "Requirements",
+        "Acceptance criteria"
+      ],
+      "id": "spec-014-self-build-reliability",
+      "path": "specs/014-self-build-reliability/spec.md",
+      "plane": "work",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "Self-build reliability and responsiveness — the toolchain-aware command envelope for Developer Full Access, pre-card feasibility probes, visible approval-resolution outcomes (resume_error surfacing, multi-node re-park with still_pending), durable session-scoped capability consent, and latency shaping (per-provider reasoning-effort caps, per-step persistence, tool-loop guard scoping, tool-to-tool gap observability).",
+      "title": "Self-build reliability and responsiveness",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
       "content_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "headings": [
         "BACKLOG",
@@ -3930,7 +4027,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "2f12810cdcf8279df248cc9c773ad1ee57a2ca9972bbceb4e7354c96f82876f6",
+  "documents_sha256": "c49292ff23b4e4f185ca9476354d0a41fbaadcd442ec4e7b3249d24ac6047584",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4495,6 +4592,25 @@
       ],
       "supporting": [
         "architecture-self-development"
+      ]
+    },
+    {
+      "id": "specs.014-self-build-reliability",
+      "keywords": [
+        "self-build reliability",
+        "toolchain bind tier",
+        "approval resolution",
+        "resume_error",
+        "session consent",
+        "capability grants",
+        "effort shaping",
+        "tool-loop guard",
+        "latency shaping",
+        "tool-to-tool gap",
+        "still_pending"
+      ],
+      "primary": [
+        "spec-014-self-build-reliability"
       ]
     }
   ],

@@ -50,6 +50,9 @@ depends_on:
   - specs/013-self-development/spec.md
 validated_by:
   - crates/optimus-runtime/tests/command_envelope.rs
+  - crates/optimus-runtime/tests/toolchain.rs
+  - crates/optimus-runtime/tests/toolchain_spawn.rs
+  - crates/optimus-eval/src/eval.rs
   - crates/optimus-kernel/tests/kernel_turn.rs
   - apps/optimus-ui/src/state/conversationStore.test.ts
   - apps/optimus-ui/src/ipc/tauriTransport.test.ts
