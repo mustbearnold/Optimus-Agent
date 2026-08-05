@@ -76,6 +76,18 @@ pub fn linux_bwrap_args_with_roots(
     envelope: CommandFsEnvelope,
     extra_roots: &[PathBuf],
 ) -> Vec<String> {
+    linux_bwrap_args_classed(workspace, envelope, extra_roots, &[])
+}
+
+/// Confined envelope with classed toolchain binds (spec-014 R1, ADR-0080).
+/// rw binds emit `--bind`, ro binds `--ro-bind`; a missing source is skipped
+/// defensively (bwrap aborts on a missing source).
+pub fn linux_bwrap_args_classed(
+    workspace: &Path,
+    envelope: CommandFsEnvelope,
+    extra_roots: &[PathBuf],
+    toolchain: &[(PathBuf, crate::toolchain::BindMode)],
+) -> Vec<String> {
     let mut args: Vec<String> = vec!["--die-with-parent".into(), "--unshare-pid".into()];
     let explicit_whole_machine_root = extra_roots.iter().any(|root| root == Path::new("/"));
     if envelope.linux_unshare_net() {
@@ -169,6 +181,20 @@ pub fn linux_bwrap_args_with_roots(
                 args.extend(["--bind".into(), root.clone(), root]);
             }
         }
+    }
+
+    // Classed toolchain binds land after the base profile: rw emits --bind,
+    // ro emits --ro-bind, and a missing source is skipped defensively.
+    for (path, mode) in toolchain {
+        if !path.exists() {
+            continue;
+        }
+        let flag = match mode {
+            crate::toolchain::BindMode::Rw => "--bind",
+            crate::toolchain::BindMode::Ro => "--ro-bind",
+        };
+        let rendered = path.to_string_lossy().into_owned();
+        args.extend([flag.into(), rendered.clone(), rendered]);
     }
 
     args.push("--chdir".into());

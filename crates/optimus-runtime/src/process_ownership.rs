@@ -451,6 +451,7 @@ pub(crate) fn linux_contained_command(
     workspace: &Path,
     envelope: CommandFsEnvelope,
     developer_roots: &[std::path::PathBuf],
+    sandbox: &crate::toolchain::CommandSandbox<'_>,
 ) -> (Command, String) {
     linux_contained_command_in_mode(
         program,
@@ -458,6 +459,7 @@ pub(crate) fn linux_contained_command(
         workspace,
         envelope,
         developer_roots,
+        sandbox,
         LinuxRunMode::WaitPiped,
     )
 }
@@ -480,6 +482,7 @@ pub(crate) fn linux_contained_serve_command(
         workspace,
         envelope,
         &[],
+        &crate::toolchain::CommandSandbox::default(),
         LinuxRunMode::Detached,
     )
 }
@@ -491,6 +494,7 @@ fn linux_contained_command_in_mode(
     workspace: &Path,
     envelope: CommandFsEnvelope,
     developer_roots: &[std::path::PathBuf],
+    sandbox: &crate::toolchain::CommandSandbox<'_>,
     mode: LinuxRunMode,
 ) -> (Command, String) {
     let sequence = NEXT_LINUX_UNIT_ID.fetch_add(1, AtomicOrdering::Relaxed);
@@ -517,11 +521,26 @@ fn linux_contained_command_in_mode(
             ]);
         }
     }
+    if !sandbox.bind_path.is_empty() {
+        // Bind-derived sandbox PATH (spec-014 R2, ADR-0080): the bwrap child
+        // resolves bare toolchain names the same way host-side normalization
+        // did. HOME is pinned to the open-time home of the bind set, never
+        // read from the ambient environment at spawn.
+        command.args([
+            "--property=Environment=PATH=".to_owned() + sandbox.bind_path,
+            "--property=Environment=HOME=".to_owned() + sandbox.home,
+        ]);
+    }
     command
         .arg(format!("--unit={unit_base}"))
         .arg("--")
         .arg("/usr/bin/bwrap");
-    for arg in command_envelope::linux_bwrap_args_with_roots(workspace, envelope, developer_roots) {
+    for arg in command_envelope::linux_bwrap_args_classed(
+        workspace,
+        envelope,
+        developer_roots,
+        sandbox.toolchain,
+    ) {
         command.arg(arg);
     }
     // UnrestrictedHost still binds host `/`; mask session bus + tmpfs the

@@ -15,6 +15,12 @@ pub(crate) struct DeveloperAccessState {
     pub grant: Option<optimus_policy::DeveloperAccessGrant>,
     pub roots: Vec<PathBuf>,
     pub dirs: Vec<(PathBuf, Dir)>,
+    /// Classed toolchain binds for the command envelope (spec-014 R1,
+    /// ADR-0080), computed once at open from the live grant and `$HOME`.
+    pub toolchain: Vec<(PathBuf, crate::toolchain::BindMode)>,
+    /// The home the toolchain binds were derived from; the sandbox HOME is
+    /// pinned to this at spawn so it can never diverge from the bind set.
+    pub home: PathBuf,
 }
 
 impl Runtime {
@@ -72,6 +78,15 @@ impl Runtime {
         let workspace_sha256 = Self::path_sha256(&workspace);
         let store_sha256 = Self::path_sha256(&fs::canonicalize(db_path)?);
         let owned_localhost_scope = format!("{workspace_sha256}:{store_sha256}");
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("/"));
+        let toolchain = crate::toolchain::toolchain_bind_list(
+            &home,
+            developer_access
+                .as_ref()
+                .unwrap_or(&optimus_policy::DeveloperAccessGrant::default()),
+        );
         Ok(Self {
             store,
             workspace,
@@ -81,6 +96,8 @@ impl Runtime {
                 grant: developer_access,
                 roots: developer_roots,
                 dirs: developer_dirs,
+                toolchain,
+                home,
             },
             owned_localhost: crate::owned_localhost::registry_for(
                 owned_localhost_scope.clone(),

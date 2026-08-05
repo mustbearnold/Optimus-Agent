@@ -6,6 +6,7 @@ mod effect_outcome;
 mod effect_preflight;
 mod owned_localhost;
 mod process_ownership;
+pub mod toolchain;
 mod workspace_identity;
 use process_ownership::*;
 
@@ -644,7 +645,7 @@ impl Runtime {
                 .action_has_valid_approval(job_id.0, node.id, &effect_hash, Self::now_unix()?)
                 .map_err(GraphError::from)?
         {
-            self.settle_high_risk_authority(job_id, node.id, node.idx, &effect, &effect_hash)?;
+            self.settle_with_probe(job_id, node.id, node.idx, &effect, &effect_hash)?;
         }
 
         mark_job_running(&self.store, job_id)?;
@@ -1128,130 +1129,6 @@ impl Runtime {
                 self.execute_project_serve(effect, timeout, attempt_id, job_id)
             }
         }
-    }
-
-    fn run_command_bounded(
-        &self,
-        program: &str,
-        args: &[String],
-        timeout: Duration,
-        job_id: JobId,
-    ) -> Result<CommandCapture> {
-        ensure_owned_command_containment(std::env::consts::OS)
-            .map_err(|error| RuntimeError::Effector(error.to_string()))?;
-        command_envelope::command_envelope_supported(
-            std::env::consts::OS,
-            self.config.command_fs_envelope,
-        )
-        .map_err(RuntimeError::Effector)?;
-        #[cfg(target_os = "linux")]
-        let (mut command, linux_unit) = linux_contained_command(
-            program,
-            args,
-            &self.workspace,
-            self.config.command_fs_envelope,
-            &self.developer.roots,
-        );
-        #[cfg(not(target_os = "linux"))]
-        let mut command = Command::new(program);
-        #[cfg(not(target_os = "linux"))]
-        command
-            .args(args)
-            .current_dir(&self.workspace)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-        sanitize_command_environment(&mut command);
-        #[cfg(target_os = "linux")]
-        let mut guard = KillOnDrop::spawn(&mut command, linux_unit)
-            .map_err(|e| RuntimeError::Effector(format!("spawn {program}: {e}")))?;
-        #[cfg(not(target_os = "linux"))]
-        let mut guard = KillOnDrop::spawn(&mut command, false)
-            .map_err(|e| RuntimeError::Effector(format!("spawn {program}: {e}")))?;
-
-        let child = guard.child.as_mut().expect("contained child is present");
-        let stdout_pipe = child.stdout.take();
-        let stderr_pipe = child.stderr.take();
-        let out_h = thread::spawn(move || read_limited(stdout_pipe));
-        let err_h = thread::spawn(move || read_limited(stderr_pipe));
-
-        let start = Instant::now();
-        let mut timed_out = false;
-        let mut cancelled = false;
-        let cleanup_error;
-        let wait_status = loop {
-            match guard.try_wait() {
-                Ok(Some(status)) => {
-                    #[cfg(windows)]
-                    {
-                        cleanup_error = guard.terminate_job_and_confirm_empty().err();
-                    }
-                    #[cfg(target_os = "linux")]
-                    {
-                        cleanup_error = guard.terminate_linux_unit_and_confirm_empty().err();
-                    }
-                    #[cfg(not(any(windows, target_os = "linux")))]
-                    {
-                        cleanup_error = None;
-                    }
-                    guard.child = None;
-                    break Some(status);
-                }
-                Ok(None) => {
-                    if self
-                        .store
-                        .job_cancellation_requested(job_id.0)
-                        .map_err(GraphError::from)?
-                    {
-                        cleanup_error = guard.kill_and_reap().err();
-                        cancelled = true;
-                        break None;
-                    }
-                    if start.elapsed() >= timeout {
-                        cleanup_error = guard.kill_and_reap().err();
-                        timed_out = true;
-                        break None;
-                    }
-                    thread::sleep(Duration::from_millis(20));
-                }
-                Err(e) => {
-                    let _ = guard.kill_and_reap();
-                    return Err(RuntimeError::Effector(format!("wait {program}: {e}")));
-                }
-            }
-        };
-
-        let (stdout, trunc_out) = out_h.join().unwrap_or_else(|_| (String::new(), false));
-        let (stderr, trunc_err) = err_h.join().unwrap_or_else(|_| (String::new(), false));
-
-        if let Some(error) = cleanup_error {
-            return Err(RuntimeError::Effector(format!(
-                "process-tree cleanup for {program} was not confirmed: {error}"
-            )));
-        }
-        if cancelled {
-            return Err(RuntimeError::Cancelled { job_id });
-        }
-
-        let exit_code = wait_status.and_then(|s| s.code());
-        let capture = CommandCapture {
-            stdout,
-            stderr,
-            exit_code,
-            truncated_stdout: trunc_out,
-            truncated_stderr: trunc_err,
-            timed_out,
-        };
-
-        if timed_out {
-            return Err(RuntimeError::CommandFailed {
-                exit_code: None,
-                capture,
-            });
-        }
-        if wait_status.map(|s| s.success()).unwrap_or(false) {
-            return Ok(capture);
-        }
-        Err(RuntimeError::CommandFailed { exit_code, capture })
     }
 
     /// Latest command_output event for a job (if any).
