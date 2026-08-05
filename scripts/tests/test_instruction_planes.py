@@ -25,6 +25,7 @@ class InstructionPlaneTest(unittest.TestCase):
                 "# Development\nInstruction-plane firewall\n"
                 "A request about **how a coding agent should develop Optimus** is not product.\n"
                 "Main-only development\n"
+                "Use `gh issue` to open tasks and resolve them with commits on main.\n"
             ),
             "OPTIMUS_AGENTS.md": (
                 "# Optimus Agent runtime constitution\n"
@@ -39,7 +40,7 @@ class InstructionPlaneTest(unittest.TestCase):
             ".githooks/post-checkout": "this repository is main-only\n",
             ".githooks/reference-transaction": "this repository is main-only\n",
             "docs/contributing/github-conventions.md": (
-                "This repository no longer uses GitHub issues.\n"
+                "Development tracks work in GitHub issues, resolved by commits on main.\n"
             ),
             "crates/optimus-kernel/src/lib.rs": (
                 'const X: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), '
@@ -97,6 +98,29 @@ class InstructionPlaneTest(unittest.TestCase):
         self.assertTrue(
             any("stale development instruction" in item for item in problems)
         )
+
+    def test_rejects_pull_request_ceremony_resurgence(self) -> None:
+        readme = self.root / "README.md"
+        readme.write_text(
+            readme.read_text(encoding="utf-8") + "\nOpen a PR with `gh pr create`.\n",
+            encoding="utf-8",
+        )
+        problems = instruction_planes.findings(self.root)
+        self.assertTrue(
+            any("stale development instruction" in item for item in problems)
+        )
+
+    def test_requires_gh_issue_task_plane_marker(self) -> None:
+        path = self.root / "AGENTS.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "Use `gh issue` to open tasks and resolve them with commits on main.",
+                "Development does not use issues.",
+            ),
+            encoding="utf-8",
+        )
+        problems = instruction_planes.findings(self.root)
+        self.assertTrue(any("missing instruction-plane marker" in item for item in problems))
 
     def test_rejects_development_agents_embedded_in_product(self) -> None:
         path = self.root / "crates/optimus-kernel/src/lib.rs"

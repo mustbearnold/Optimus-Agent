@@ -151,7 +151,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "23790bbb867ee6e167f06b7df094dbccad41f47b31f99decd1f2d4e56a131060",
+      "binding_sha256": "154e3f3063afafd1828d733f95b08917b94ba096d3f4ed973ce36bb08d366917",
       "document_sha256": "9d0b23fa1ebe91db1bd9af3073889d39e12f1533ea521b5a482796fe44fbdd64",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -205,7 +205,7 @@
       "resolved_files": 16
     },
     "decisions-0026-separate-development-and-runtime-agents": {
-      "binding_sha256": "ef7a684e8e468fbadf4e608bffda8433d03864381f62f11734bde1a02b07635c",
+      "binding_sha256": "b68429c4287db35b00da3ed0ab35b9ba823769aa2cea8f5704430d283b9dfcfd",
       "document_sha256": "48479242a324749b37582d686c2a8ffac4f5e958067d245161951f6408232331",
       "path": "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "resolved_files": 5
@@ -241,7 +241,7 @@
       "resolved_files": 115
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "e700898567093d9e4b81b65bde46bdad7af7c57fa00ec3ee782e8cdbc2e81834",
+      "binding_sha256": "e0a382903ee5a918c6e058ad1e95a8deaf1cc3f78a4165f4c4e01a2cc02f0014",
       "document_sha256": "fcbf540f8f7881a9d96e4caa563efb667ca9ccfeea9e476735bbfaa929844958",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 6
@@ -343,7 +343,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "b46bf02cec1537d9add35d8c8470bc05e1dd1a7b9f41bc246cd9c97cc3c3db54",
+      "binding_sha256": "47ad159ead85325e5b134e945bc4de749ccc54de56d9bb079e9c08aa11e0fa21",
       "document_sha256": "ce6b80d3ad533d63106d7e7e979595ef22c201a45ae24161d7b998ab32169a08",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -493,7 +493,7 @@
       "resolved_files": 84
     },
     "engineering-memory-readme": {
-      "binding_sha256": "4257c09036dbb35d1c0222a1fabedaa2e5aa76eb30b8dc888745e998efe1de37",
+      "binding_sha256": "8ad8f6cb41bc0d67eedcc003cf9b5fb11cb425695b3a0a3ee408a1a68a76cec6",
       "document_sha256": "aa883a8917daaf545f19d4f71b71fc604f8ede12f0c6910f25d04ae1d7f4e1b3",
       "path": "docs/runbooks/engineering-memory.md",
       "resolved_files": 9
@@ -505,7 +505,7 @@
       "resolved_files": 12
     },
     "repository-components": {
-      "binding_sha256": "4f5c2beaf4a29830a36c7683a6f6cfea12136ee9fd25cbcc4b829d036a803b1c",
+      "binding_sha256": "a6c087cf02c03c99f22921e7efe8f54b473dddd4d2bb2a98a4ff4f02270fba31",
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29
@@ -571,7 +571,7 @@
       "resolved_files": 43
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "22a60f56d3204c619e7ebcc94b625a84eabb39e79a08e5941dd36ce69af4be7b",
+      "binding_sha256": "61bd084e521a0bc9b6a57436e5a2a6a8fc61fb6943228303759aaddfe6609878",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 78
@@ -595,7 +595,7 @@
       "resolved_files": 25
     },
     "specs-constitution": {
-      "binding_sha256": "252becd1f4126fc7ae4d9b6ed227ac0b8045e5ad79b765118b2232ee5f6d2e80",
+      "binding_sha256": "af251d638e6ac5a4d04a01e3d6c3bcaa373da38cc9c4ff5f5269058c06442998",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 110

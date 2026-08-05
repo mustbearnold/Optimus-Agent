@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Fail closed when Optimus development and product instructions blur.
 
-Current development law (owner directive, 2026-08-04): main-only development.
-Zero linked worktrees, zero feature branches, enforced by `.githooks/`.
-This gate pins that law so stale ceremony cannot silently return.
+Current development law (owner directive, 2026-08-04, amended 2026-08-05):
+main-only development, zero linked worktrees, zero feature branches,
+enforced by `.githooks/`. Task plane (2026-08-05): GitHub issues opened
+with `gh issue` and resolved by verified commits on main pushed to
+`origin/main`, in parallel. This gate pins that law so stale ceremony
+cannot silently return.
 """
 
 from __future__ import annotations
@@ -56,6 +59,10 @@ def findings(root: Path = ROOT) -> list[str]:
         ("AGENTS.md", agents, "Instruction-plane firewall"),
         ("AGENTS.md", agents, "A request about **how a coding agent should develop Optimus**"),
         ("AGENTS.md", agents, "Main-only development"),
+        # Task-plane pin (owner directive 2026-08-05): GitHub issues opened
+        # with `gh issue` and resolved by commits on main are the delivery
+        # plane; this marker keeps the law from drifting back to "no issues".
+        ("AGENTS.md", agents, "gh issue"),
         ("OPTIMUS_AGENTS.md", runtime, "Optimus Agent runtime constitution"),
         ("OPTIMUS_AGENTS.md", runtime, "Do not translate instructions for developers"),
         ("README.md", readme, "## Instruction authority"),
@@ -87,7 +94,8 @@ def findings(root: Path = ROOT) -> list[str]:
         ("README.md", readme, "just checkpoint"),
         ("README.md", readme, "assigned isolated worktrees"),
         ("README.md", readme, "python3 scripts/github_pr_branch.py"),
-        ("README.md", readme, "gh issue"),
+        # Pull-request ceremony stays retired; only the issue plane is live.
+        ("README.md", readme, "gh pr"),
         ("AGENTS.md", agents, "owning issue"),
     )
     for relative, text, marker in forbidden:

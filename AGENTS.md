@@ -42,10 +42,13 @@ refused. Do not attempt to bypass these hooks.
 - Resolve the repository path with `readlink -f` / `pwd -P` before editing.
   If the active workspace is not the Optimus project root, stop.
 - Commit directly on `main`: small, verified, emoji-first Conventional
-  Commits (`<emoji> <type>(<scope>): <summary>`). Never run `gh`, pull
-  requests, issues, or GitHub workflow ceremony. Never run history-changing
-  Git commands. Delivery means verified commits on `main`, pushed to
-  `origin/main` when the user asks.
+  Commits (`<emoji> <type>(<scope>): <summary>`). `gh issue` is the task
+  plane: open issues and resolve them with verified commits on `main`,
+  pushed to `origin/main` — issues and commits run in parallel, local
+  commits and remote issue state advancing together. Never run `gh pr`,
+  pull requests, or other GitHub workflow ceremony. Never run
+  history-changing Git commands. Delivery means a verified commit on
+  `main` pushed to `origin/main`, closing the issue it resolves.
 - Allowed write scope: the repository tree plus the Optimus install/runtime
   paths only when a task explicitly requires install, relaunch, uninstall,
   or live desktop verification. Never edit sibling projects, other agents'
@@ -138,8 +141,10 @@ subordinate to this file, the main-only boundary, and direct-on-main delivery.
 
 ### Task records
 
-Repository development does not use GitHub issues or pull requests as an
-execution or delivery plane.
+Repository development tracks work in GitHub issues, opened with `gh issue`
+and resolved by verified commits on `main` pushed to `origin/main`. Issue
+and commit progress run in parallel — locally (commits) and remotely (issue
+state, pushed history). Pull requests remain outside the delivery plane.
 
 ### Domain docs
 
