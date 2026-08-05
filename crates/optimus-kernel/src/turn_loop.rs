@@ -314,6 +314,13 @@ impl Kernel {
                 // Validate the entire response against the exact schema set advertised for
                 // this model step before any sibling call can mutate state or perform effects.
                 let mut seen_call_ids = BTreeSet::new();
+                // A model can ask for a tool that is not advertised (LLM
+                // tool-name hallucination — deepseek does this rarely).
+                // That fails the CALL, not the turn: a synthetic "tool not
+                // found" outcome is fed back so the model reads it and
+                // retries with a real tool. A real user sees the agent
+                // recover; without this the whole turn died with pack_error.
+                let mut invalid_tool_ids: BTreeSet<String> = BTreeSet::new();
                 for call in &resp.tool_calls {
                     let provider_call_id = call.id.trim();
                     if provider_call_id.is_empty() {
@@ -329,15 +336,8 @@ impl Kernel {
                     }
                     let call_id = ToolId::new(&call.name);
                     if !advertised_tool_ids.contains(&call_id) {
-                        match self.packs.resolve_loaded_tool(&call.name) {
-                            Err(error @ PackError::UnknownTool(_))
-                            | Err(error @ PackError::ToolUnavailable(_)) => {
-                                return Err(error.into());
-                            }
-                            _ => {
-                                return Err(PackError::ToolNotAdvertised(call.name.clone()).into());
-                            }
-                        }
+                        invalid_tool_ids.insert(provider_call_id.to_string());
+                        continue;
                     }
                     self.packs
                         .resolve_loaded_tool(&call.name)?
@@ -353,7 +353,8 @@ impl Kernel {
                 let execution_budget = self.config.max_tool_calls_per_step.max(1);
                 for (call_index, call) in resp.tool_calls.into_iter().enumerate() {
                     check_cancellation(cancellation)?;
-                    let descriptor = self.packs.resolve_loaded_tool(&call.name)?.clone();
+                    let descriptor = self.packs.resolve_loaded_tool(&call.name).ok().cloned();
+                    let tool_invalid = invalid_tool_ids.contains(&call.id);
                     let over_budget = call_index >= execution_budget;
                     let duplicate = if over_budget {
                         false
@@ -379,7 +380,9 @@ impl Kernel {
                     let lifecycle = tool_lifecycle_event(
                         execution.manifest_id,
                         &call,
-                        descriptor.id.clone(),
+                        descriptor
+                            .as_ref()
+                            .map_or_else(|| ToolId::new(&call.name), |d| d.id.clone()),
                         ToolLifecyclePhase::Started,
                         if over_budget {
                             "Checking tool-call budget"
@@ -394,7 +397,28 @@ impl Kernel {
                     self.executions
                         .record_tool_lifecycle_event(execution.manifest_id, &lifecycle)?;
                     sink(StreamEvent::Tool(Box::new(lifecycle)));
-                    let (tool_id, mut outcome) = if suppressed {
+                    let (tool_id, mut outcome) = if tool_invalid {
+                        (
+                            ToolId::new(&call.name),
+                            ToolOutcome::failed(
+                                call.id.clone(),
+                                call.name.clone(),
+                                format!("tool not found: {}", call.name),
+                                ToolErrorDetail {
+                                    code: "tool_not_found".into(),
+                                    message:
+                                        "The requested tool is not available in this session. \
+                                              Read the tool list and retry with a valid tool."
+                                            .into(),
+                                    retryable: true,
+                                },
+                                optimus_packs::ReplayClass::ModelNondeterministic,
+                            ),
+                        )
+                    } else if suppressed {
+                        let descriptor = descriptor
+                            .as_ref()
+                            .expect("suppressed calls are validated tools");
                         (
                             descriptor.id.clone(),
                             ToolOutcome::failed(
@@ -420,6 +444,9 @@ impl Kernel {
                             ),
                         )
                     } else {
+                        let descriptor = descriptor
+                            .as_ref()
+                            .expect("dispatched calls are validated tools");
                         match self.dispatch_tool(&call) {
                             Ok((tool_id, result)) => {
                                 let summary =
@@ -559,7 +586,11 @@ impl Kernel {
                             receipt_sha256: effect.receipt_hash,
                         });
                     }
-                    descriptor.validate_outcome(&outcome)?;
+                    if !tool_invalid {
+                        if let Some(descriptor) = &descriptor {
+                            descriptor.validate_outcome(&outcome)?;
+                        }
+                    }
                     self.executions.record_tool_call(
                         execution.manifest_id,
                         &call,
@@ -606,7 +637,9 @@ impl Kernel {
                     let lifecycle = tool_lifecycle_event(
                         execution.manifest_id,
                         &call,
-                        descriptor.id.clone(),
+                        descriptor
+                            .as_ref()
+                            .map_or_else(|| ToolId::new(&call.name), |d| d.id.clone()),
                         phase,
                         outcome.summary.clone(),
                         Some(tool_duration_ms),

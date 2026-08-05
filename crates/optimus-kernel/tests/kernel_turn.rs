@@ -1266,26 +1266,37 @@ fn terminal_tool_requires_approval_before_process_effect() {
     let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
     let marker = dir.path().join("terminal-ran.txt");
     let command = format!("echo ran>\"{}\"", marker.display());
-    let mut model = ScriptedModel::new(vec![CompletionResponse {
-        text: None,
-        tool_calls: vec![ToolCall {
-            id: "t1".into(),
-            name: "terminal".into(),
-            arguments: json!({"program":"cmd","args":["/C",command]}),
-        }],
-        reasoning_content: None,
-    }]);
-    let error = k.turn(&mut model, "run a command").unwrap_err();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "t1".into(),
+                name: "terminal".into(),
+                arguments: json!({"program":"cmd","args":["/C",command]}),
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("no terminal in this session".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    // A default-config session advertises terminal but its command envelope
+    // cannot run `cmd` (not bound — spec-014 toolchain bind tier); the
+    // effect fails BEFORE it can run and the turn recovers. With a developer
+    // grant binding the toolchain the same call would pause for approval.
+    let result = k.turn(&mut model, "run a command").unwrap();
     assert!(
-        matches!(
-            error,
-            KernelError::Runtime(RuntimeError::NeedsApproval { .. })
-        ),
-        "unexpected error: {error:?}"
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("terminal ->") && t.contains("denied")),
+        "expected envelope denial, got: {:?}",
+        result.tool_trace
     );
-    assert_eq!(model.seen.len(), 1);
-    assert_eq!(k.runtime.list_pending_approvals().unwrap().len(), 1);
-    assert!(!marker.exists(), "command ran before explicit approval");
+    assert!(!marker.exists(), "command ran before any approval");
+    assert!(k.runtime.list_pending_approvals().unwrap().is_empty());
 }
 
 #[test]
@@ -1330,94 +1341,155 @@ fn browser_tools_http_effector_when_pack_active() {
 fn same_response_activation_cannot_authorize_unadvertised_sibling_call() {
     let dir = tempdir().unwrap();
     let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
-    let mut model = ScriptedModel::new(vec![CompletionResponse {
-        text: None,
-        tool_calls: vec![
-            ToolCall {
-                id: "activate".into(),
-                name: "activate_pack".into(),
-                arguments: json!({"name":"browser"}),
-            },
-            ToolCall {
-                id: "stale-browser".into(),
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![
+                ToolCall {
+                    id: "activate".into(),
+                    name: "activate_pack".into(),
+                    arguments: json!({"name":"browser"}),
+                },
+                ToolCall {
+                    id: "stale-browser".into(),
+                    name: "browser_navigate".into(),
+                    arguments: json!({"url":"https://example.com"}),
+                },
+            ],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("activation did not authorize the stale sibling".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    // The sibling call from the SAME response cannot ride on the activation:
+    // it fails the call synthetically (no effect, no authorization) while
+    // the turn recovers.
+    let result = k
+        .turn(&mut model, "activate and browse in one response")
+        .unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("browser_navigate -> tool not found")),
+        "expected synthetic not-found outcome, got: {:?}",
+        result.tool_trace
+    );
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("activate_pack")),
+        "the activation itself ran, got: {:?}",
+        result.tool_trace
+    );
+}
+
+#[test]
+fn unknown_tool_fails_the_call_and_the_turn_recovers() {
+    let dir = tempdir().unwrap();
+    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "bad-1".into(),
+                name: "does_not_exist".into(),
+                arguments: json!({}),
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("recovered with the tools that exist".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    // A hallucinated tool name fails the CALL with a synthetic "tool not
+    // found" outcome (the model reads it and retries with a real tool) — it
+    // no longer kills the whole turn with pack_error.
+    let result = k.turn(&mut model, "call an unknown tool").unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("does_not_exist -> tool not found")),
+        "expected synthetic not-found outcome, got: {:?}",
+        result.tool_trace
+    );
+}
+
+#[test]
+fn known_but_unloaded_tool_fails_the_call_before_effect() {
+    let dir = tempdir().unwrap();
+    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "bad-2".into(),
                 name: "browser_navigate".into(),
                 arguments: json!({"url":"https://example.com"}),
-            },
-        ],
-        reasoning_content: None,
-    }]);
-    assert!(matches!(
-        k.turn(&mut model, "activate and browse in one response")
-            .unwrap_err(),
-        KernelError::Packs(PackError::ToolNotAdvertised(tool))
-            if tool == "browser_navigate"
-    ));
-    assert_eq!(k.packs.loaded_packs(), vec![optimus_packs::PackId::Core]);
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("browser is not active".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    // The unadvertised call must not run an effect; it fails the call
+    // synthetically and the turn recovers.
+    let result = k.turn(&mut model, "bypass pack activation").unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("browser_navigate -> tool not found")),
+        "expected synthetic not-found outcome, got: {:?}",
+        result.tool_trace
+    );
 }
 
 #[test]
-fn unknown_tool_fails_closed() {
-    let dir = tempdir().unwrap();
-    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
-    let mut model = ScriptedModel::new(vec![CompletionResponse {
-        text: None,
-        tool_calls: vec![ToolCall {
-            id: "bad-1".into(),
-            name: "does_not_exist".into(),
-            arguments: json!({}),
-        }],
-        reasoning_content: None,
-    }]);
-    assert!(matches!(
-        k.turn(&mut model, "call an unknown tool").unwrap_err(),
-        KernelError::Packs(PackError::UnknownTool(name)) if name == "does_not_exist"
-    ));
-}
-
-#[test]
-fn known_but_unloaded_tool_fails_closed_before_effect() {
-    let dir = tempdir().unwrap();
-    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
-    let mut model = ScriptedModel::new(vec![CompletionResponse {
-        text: None,
-        tool_calls: vec![ToolCall {
-            id: "bad-2".into(),
-            name: "browser_navigate".into(),
-            arguments: json!({"url":"https://example.com"}),
-        }],
-        reasoning_content: None,
-    }]);
-    assert!(matches!(
-        k.turn(&mut model, "bypass pack activation").unwrap_err(),
-        KernelError::Packs(PackError::ToolNotAdvertised(tool))
-            if tool == "browser_navigate"
-    ));
-}
-
-#[test]
-fn deactivated_tool_fails_closed_before_effect() {
+fn deactivated_tool_fails_the_call_before_effect() {
     let dir = tempdir().unwrap();
     let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
     k.packs.activate(optimus_packs::PackId::Browser).unwrap();
     k.packs.deactivate(optimus_packs::PackId::Browser).unwrap();
-    let mut model = ScriptedModel::new(vec![CompletionResponse {
-        text: None,
-        tool_calls: vec![ToolCall {
-            id: "deactivated".into(),
-            name: "browser_navigate".into(),
-            arguments: json!({"url":"https://example.com"}),
-        }],
-        reasoning_content: None,
-    }]);
-    assert!(matches!(
-        k.turn(&mut model, "use a deactivated tool").unwrap_err(),
-        KernelError::Packs(PackError::ToolNotAdvertised(tool))
-            if tool == "browser_navigate"
-    ));
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "deactivated".into(),
+                name: "browser_navigate".into(),
+                arguments: json!({"url":"https://example.com"}),
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("browser stays off".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    let result = k.turn(&mut model, "use a deactivated tool").unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("browser_navigate -> tool not found")),
+        "expected synthetic not-found outcome, got: {:?}",
+        result.tool_trace
+    );
 }
 
 #[test]
-fn descriptorless_legacy_aliases_cannot_invoke_effects() {
+fn descriptorless_legacy_aliases_fail_the_call_without_effects() {
     for (name, arguments) in [
         ("need_capability", json!({"name":"browser"})),
         (
@@ -1431,19 +1503,31 @@ fn descriptorless_legacy_aliases_cannot_invoke_effects() {
     ] {
         let dir = tempdir().unwrap();
         let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
-        let mut model = ScriptedModel::new(vec![CompletionResponse {
-            text: None,
-            tool_calls: vec![ToolCall {
-                id: format!("alias-{name}"),
-                name: name.into(),
-                arguments,
-            }],
-            reasoning_content: None,
-        }]);
-        assert!(matches!(
-            k.turn(&mut model, "invoke an undeclared alias").unwrap_err(),
-            KernelError::Packs(PackError::UnknownTool(tool)) if tool == name
-        ));
+        let mut model = ScriptedModel::new(vec![
+            CompletionResponse {
+                text: None,
+                tool_calls: vec![ToolCall {
+                    id: format!("alias-{name}"),
+                    name: name.into(),
+                    arguments,
+                }],
+                reasoning_content: None,
+            },
+            CompletionResponse {
+                text: Some("no legacy aliases here".to_string()),
+                tool_calls: vec![],
+                reasoning_content: None,
+            },
+        ]);
+        let result = k.turn(&mut model, "invoke an undeclared alias").unwrap();
+        assert!(
+            result
+                .tool_trace
+                .iter()
+                .any(|t| t.contains(&format!("{name} -> tool not found"))),
+            "expected synthetic not-found outcome, got: {:?}",
+            result.tool_trace
+        );
         assert_eq!(k.packs.loaded_packs(), vec![optimus_packs::PackId::Core]);
         assert!(!k.workspace().join("alias-created.txt").exists());
         assert!(k.runtime.list_jobs_summary().unwrap().is_empty());

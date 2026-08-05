@@ -668,20 +668,26 @@ fn every_unavailable_tool_refuses_with_a_typed_error() {
         let mut kernel = open_kernel(dir.path());
         let mut model = scripted(vec![
             tool_step("t1", name, json!({})),
-            done("must never be consulted"),
+            done("recovered with a real tool"),
         ]);
-        let error = kernel
+        // Unadvertised scaffold tools refuse the CALL with a synthetic
+        // "tool not found" outcome that names the tool; the model reads it
+        // and retries with a real tool instead of the turn dying.
+        let result = kernel
             .turn(&mut model, "call a scaffold tool")
-            .expect_err(&format!("{name} must refuse — it has no implementation"));
-        let message = format!("{error}");
+            .unwrap_or_else(|error| panic!("{name} must fail the call, not the turn: {error}"));
         assert!(
-            message.contains(name),
-            "{name}'s refusal must name the tool so a user can act on it, got: {message}"
+            result
+                .tool_trace
+                .iter()
+                .any(|t| t.contains(&format!("{name} -> tool not found"))),
+            "{name}'s refusal must name the tool so a user can act on it, got: {:?}",
+            result.tool_trace
         );
         assert_eq!(
             model.seen.len(),
-            1,
-            "{name} must refuse at dispatch — the model gets no second step"
+            2,
+            "{name} must refuse the call and let the model recover"
         );
     }
 }

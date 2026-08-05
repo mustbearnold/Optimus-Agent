@@ -435,9 +435,14 @@ fn registered_agent_cannot_bypass_smart_deny() {
             }],
         })
         .unwrap();
+    // spec-014 R2 (toolchain bind tier, ADR-0080): the pre-card feasibility
+    // probe runs BEFORE the approval — `cmd` is not bound in the command
+    // envelope, so the effect is denied outright. Stronger than a pause:
+    // the command can never run, approved or not.
     assert!(matches!(
         runtime.run_next(job),
-        Err(RuntimeError::NeedsApproval { .. })
+        Err(RuntimeError::PolicyDenied { code, .. })
+            if code == "effect_not_runnable_in_envelope"
     ));
     assert!(!workspace.join("denied.txt").exists());
     assert!(runtime.latest_effect_outcome(job).unwrap().is_none());
