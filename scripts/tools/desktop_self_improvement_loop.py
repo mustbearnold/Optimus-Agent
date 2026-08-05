@@ -484,7 +484,10 @@ def self_turn_settled(home: Path, expected: int) -> bool:
     turns = traces["turns"]
     if len(turns) < expected:
         return False
-    return turns[expected - 1]["status"] == "succeeded"
+    # The approval-resume flow re-starts the turn (new session_turns row per
+    # continuation), so the LAST turn is the iteration's live one — a
+    # "succeeded" first turn with a running continuation is NOT settled.
+    return turns[-1]["status"] == "succeeded"
 
 
 def self_turn_status(home: Path, expected: int) -> str:
@@ -495,7 +498,7 @@ def self_turn_status(home: Path, expected: int) -> str:
     turns = traces["turns"]
     if len(turns) < expected:
         return "running"
-    return turns[expected - 1].get("status", "unknown")
+    return turns[-1].get("status", "unknown")
 
 
 def extract_timing_events(home: Path) -> list[dict[str, Any]]:
