@@ -3401,7 +3401,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "4c42403d1dc356260c46afcc866a4c2ad416600b25b3f76367f164ed8b8c0ed8",
+      "content_sha256": "acf6fe11602172d8e8de3f8c6b91415803719150d28e5b629038cfa9121299f3",
       "headings": [
         "Architecture marks (S+++ program)",
         "Grade scale",
@@ -3864,7 +3864,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "f918b803f62074c571aef3e68b873542b4bcc5751f0d92855219510dd1bfba6d",
+  "documents_sha256": "2f48e1a6f4b6971ee55462c883f0527339d95cc0f420c91aa4aa6e58899a6dc7",
   "routes": [
     {
       "id": "docs.navigation",

@@ -125,8 +125,10 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Tauri as the p
 
 ### UI (foundation floor)
 
-- One default install binary story; legacy shell optional.
-- Frozen IPC contract tested on host HTTP + Electron preload for critical methods.
+- One default install binary story; the Wry native shell is the only legacy
+  rollback (until spec-012's 2026-10-31 retirement).
+- Frozen IPC contract tested on host HTTP + the Tauri bridge for critical
+  methods.
 
 ### Doc / claim hygiene (foundation floor)
 

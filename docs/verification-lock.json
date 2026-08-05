@@ -7,8 +7,8 @@
       "resolved_files": 0
     },
     "architecture-architecture-marks": {
-      "binding_sha256": "261d93c4b6c0981576a73d3bbaee4a96b545b5be4347a7ee8cd1658ae9da2095",
-      "document_sha256": "4c42403d1dc356260c46afcc866a4c2ad416600b25b3f76367f164ed8b8c0ed8",
+      "binding_sha256": "6e5ae77419e2752929635b45f6c125da261c8cc9400fc8cefe8dfd4bd7c687d5",
+      "document_sha256": "acf6fe11602172d8e8de3f8c6b91415803719150d28e5b629038cfa9121299f3",
       "path": "docs/runbooks/architecture-marks.md",
       "resolved_files": 8
     },
