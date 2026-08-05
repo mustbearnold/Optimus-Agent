@@ -523,6 +523,14 @@ assert_regular_destination "$ICON_FILE"
 stop_installed_desktop
 installed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
+# The pre-Tauri product staged a bundled runtime under app-bundle/. The
+# Tauri-exclusive installer never creates it; prune a stale one from a
+# previously owned install so no pre-Tauri residue survives a reinstall.
+if [[ "$EXISTING_INSTALL_OWNED" == true && -d "$INSTALL_ROOT/app-bundle" ]]; then
+  step "Pruning stale pre-Tauri app-bundle"
+  rm -rf -- "$INSTALL_ROOT/app-bundle"
+fi
+
 step "Installing binaries"
 mkdir -p "$INSTALL_ROOT/bin" "$APPLICATIONS_DIR" "$ICON_DIR" "$BIN_HOME"
 atomic_install_file "$BUILT_TAURI" "$INSTALLED_TAURI" 0755 "$BUILT_TAURI_SHA256"

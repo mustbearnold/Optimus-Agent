@@ -265,6 +265,30 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertNotIn("host_binary", install_meta)
             self.assertEqual(install_meta["desktop_shell"], "react-tauri")
 
+    def test_reinstall_prunes_stale_pre_tauri_app_bundle(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="optimus-installer-prune-") as tmp:
+            root = Path(tmp)
+            install = root / "data" / "optimus-agent"
+
+            # Simulate a pre-Tauri owned install that still carries an
+            # app-bundle/ runtime staged by the retired product.
+            first = self.run_installer(root)
+            self.assertEqual(first.returncode, 0, first.stdout)
+            stale = install / "app-bundle" / "electron"
+            stale.mkdir(parents=True)
+            stale_runtime = stale / "optimus-agent"
+            stale_runtime.write_text("stale runtime", encoding="utf-8")
+            (install / ".optimus-agent-install").write_text(
+                MARKER, encoding="utf-8"
+            )
+            self.assertTrue(stale_runtime.is_file())
+
+            second = self.run_installer(root)
+
+            self.assertEqual(second.returncode, 0, second.stdout)
+            self.assertFalse((install / "app-bundle").exists())
+            self.assertIn("Pruning stale pre-Tauri app-bundle", second.stdout)
+
     def test_install_rejects_binary_changed_after_first_version_validation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="optimus-installer-artifact-race-") as tmp:
             root = Path(tmp)

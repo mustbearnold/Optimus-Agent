@@ -187,7 +187,7 @@
       "resolved_files": 14
     },
     "decisions-0024-hermes-parity-version-gate": {
-      "binding_sha256": "6e99a266914c9a40a06bc03463ecd0cb08e5a15eee0659c42afa1dc17fb54c47",
+      "binding_sha256": "b125ffe00117f35a95c9e138787c07ad923751dd1bfc9e1beff0cd6ccf91e289",
       "document_sha256": "464cd43ff6af5db11c0a62e334b4dab19e8e0373579b041a30817fb52d599a3d",
       "path": "docs/decisions/0024-hermes-parity-version-gate.md",
       "resolved_files": 13
@@ -271,7 +271,7 @@
       "resolved_files": 6
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "b6289b24784da8c0073d609426ed18e4573e9cb3c9d0c64b1c59a12a0d73f29c",
+      "binding_sha256": "3b180fd8d00e03096a3201684353e2cbc010d43352da0fe689aeb5174555c4a5",
       "document_sha256": "e43571206a59cebf0e30af9ea9dc83ff22690922ce7189da50d6546f09d93f71",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 8
@@ -301,7 +301,7 @@
       "resolved_files": 4
     },
     "decisions-0043-no-auto-updater-channel": {
-      "binding_sha256": "9e4d1e9f354a729fb8355f54882b49b0a3043cd607d9a030821babb2d9397140",
+      "binding_sha256": "01e95d6e600139a26508c245cd91ae9f1aad30d2e2cde58593377ae9fc5380b7",
       "document_sha256": "83e6ee28830708eba2219a8ad9567793c37820958f3732bf16d71a1227fc8e1f",
       "path": "docs/decisions/0043-no-auto-updater-channel.md",
       "resolved_files": 6
@@ -505,7 +505,7 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "a71db7602916d739a6883a42a43cf579a2b27fe53b77996061dc0d4ac0057437",
+      "binding_sha256": "ef061ed72c6aca62437bfe40ad33f5fb6571a490ebcea9528cc32548229fbfcb",
       "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 99
@@ -565,13 +565,13 @@
       "resolved_files": 43
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "1b206cdad1e2617fe45b68af46b0fe1fd2147d7dd50170416073e6362cff92ae",
+      "binding_sha256": "3770332afe3da31abfaac403e8cfe5ba3df963fb6d40ce3c2479dd99a0ae1e2c",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 78
     },
     "spec-012-windows-tauri-packaging": {
-      "binding_sha256": "37d416cf83bdebef2f8092a53b26209bec3a44937894ad1d592f6cb65f45ae1c",
+      "binding_sha256": "b1e0f276176be60081b7108342086215eaf74b8f900dd4a048e0289c2a587b11",
       "document_sha256": "2fc932c467138d99d25c6741c5880ef84b36024c5d0b2fdbbb5803aca5925c50",
       "path": "specs/012-windows-tauri-packaging/spec.md",
       "resolved_files": 6
