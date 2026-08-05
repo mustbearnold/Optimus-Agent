@@ -63,22 +63,43 @@ def ocr_qwen(
 ) -> str:
     """OCR a screenshot with the local qwen vision model (Ollama).
 
-    The model may be cold (reload) or transiently busy; the caller retries,
-    so a single stalled generate does not fail an otherwise clean turn.
+    Uses the OpenAI-compatible endpoint — the same path Hermes' aux vision
+    uses (proven 8/8 with qwen3.5:9b). `/api/generate` with this model
+    stalls (reasoning_effort must be top-level, and even then the response
+    comes back empty); `/v1/chat/completions` with `reasoning_effort: none`
+    and `max_tokens` returns text reliably.
     """
     payload = {
         "model": model,
-        "prompt": (
-            "OCR this screenshot of a desktop app. Reproduce every visible "
-            "text character-for-character, preserving order. Output only the "
-            "extracted text, no commentary."
-        ),
-        "images": [base64.b64encode(image_path.read_bytes()).decode()],
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "OCR this screenshot of a desktop app. Reproduce every visible "
+                            "text character-for-character, preserving order. Output only the "
+                            "extracted text, no commentary."
+                        ),
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "data:image/png;base64,"
+                            + base64.b64encode(image_path.read_bytes()).decode()
+                        },
+                    },
+                ],
+            }
+        ],
+        "reasoning_effort": "none",
+        "max_tokens": 2000,
         "stream": False,
-        "options": {"reasoning_effort": "none"},
     }
+    url = endpoint.rstrip("/") + "/v1/chat/completions"
     request = urllib.request.Request(
-        endpoint + "/api/generate",
+        url,
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
     )
@@ -86,8 +107,11 @@ def ocr_qwen(
         with urllib.request.urlopen(request, timeout=timeout) as resp:  # noqa: S310
             data = json.loads(resp.read())
     except OSError as exc:
-        raise EvidenceError(f"qwen OCR unavailable ({model} @ {endpoint}): {exc}") from exc
-    text = data.get("response", "")
+        raise EvidenceError(f"qwen OCR unavailable ({model} @ {url}): {exc}") from exc
+    try:
+        text = data["choices"][0]["message"]["content"] or ""
+    except (KeyError, IndexError, TypeError) as exc:
+        raise EvidenceError(f"qwen OCR unexpected response: {str(data)[:200]}") from exc
     if not text.strip():
         raise EvidenceError(f"qwen OCR returned empty text for {image_path.name}")
     return text
