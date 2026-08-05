@@ -255,12 +255,27 @@ fn requirements_only_iter<'a>(mut iter: impl Iterator<Item = &'a str>) -> bool {
                 iter.next();
             }
             "install" => {}
+            // Attached forms: `-rrequirements.txt` and
+            // `--requirement=requirements.txt` also name a file.
+            other if is_attached_requirement_flag(other) => {
+                saw_requirement = true;
+            }
             other if other.starts_with('-') => {}
             // A bare positional after `install` is a package name.
             _ => return false,
         }
     }
     saw_requirement
+}
+
+/// True for the attached-value forms of the requirement flag — e.g.
+/// `-rrequirements.txt` or `--requirement=requirements.txt` — which pip and uv
+/// accept exactly like `-r requirements.txt`.
+fn is_attached_requirement_flag(arg: &str) -> bool {
+    arg.starts_with("--requirement=")
+        || arg
+            .strip_prefix("-r")
+            .is_some_and(|rest| !rest.is_empty() && !rest.starts_with('-'))
 }
 
 /// Classify the `uv pip` subcommand family with the same sync/add split pip
@@ -445,6 +460,43 @@ mod tests {
         assert_eq!(
             class("pip", &["install", "requests"]),
             CommandClass::PackageAdd
+        );
+    }
+
+    #[test]
+    fn attached_requirement_flag_forms_are_still_a_sync() {
+        // Regression: pip and uv accept `-rrequirements.txt` and
+        // `--requirement=requirements.txt` (attached value) exactly like the
+        // separate-value form. They name a file already in the repository, so
+        // they must not be recorded as a new dependency choice.
+        assert_eq!(
+            class("pip", &["install", "-rrequirements.txt"]),
+            CommandClass::PackageSync
+        );
+        assert_eq!(
+            class("pip", &["install", "--requirement=requirements.txt"]),
+            CommandClass::PackageSync
+        );
+        assert_eq!(
+            class("uv", &["pip", "install", "-rrequirements.txt"]),
+            CommandClass::PackageSync
+        );
+        assert_eq!(
+            class("uv", &["pip", "install", "--requirement=requirements.txt"]),
+            CommandClass::PackageSync
+        );
+        // Unrelated flags that merely contain `-r` must not be confused with
+        // the requirement flag.
+        assert_eq!(
+            class("pip", &["install", "--root=/tmp/sandbox", "requests"]),
+            CommandClass::PackageAdd
+        );
+        assert_eq!(
+            class(
+                "pip",
+                &["install", "--require-hashes", "-r", "requirements.txt"]
+            ),
+            CommandClass::PackageSync
         );
     }
 
