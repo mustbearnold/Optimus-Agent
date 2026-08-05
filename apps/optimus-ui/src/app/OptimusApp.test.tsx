@@ -55,6 +55,20 @@ describe('OptimusApp fixture contract', () => {
     ).toBeInTheDocument();
   });
 
+  it('surfaces a rejected chat start with the real error, not Connection lost', async () => {
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+    const composer = await screen.findByLabelText('Message Optimus');
+    await user.type(composer, 'fixture chat error');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    // The configuration error ("No DeepSeek API key…") must reach the user;
+    // the pre-fix path flattened every non-abort rejection into the
+    // misleading "Connection lost · cancellation requested".
+    const matches = await screen.findAllByText(/No DeepSeek API key/i);
+    expect(matches.length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Connection lost/i)).not.toBeInTheDocument();
+  });
+
   it('streams an approval continuation live instead of sticking on Approving…', async () => {
     const user = userEvent.setup();
     render(<OptimusApp />);

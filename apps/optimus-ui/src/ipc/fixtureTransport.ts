@@ -316,6 +316,22 @@ export function createFixtureTransport(): OptimusTransport {
     chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle {
       const id = streamId++;
       let cancelled = false;
+      // Scenario: chat-start configuration errors reject the handle so the
+      // workbench must surface the real message (regression: a rejected chat
+      // start used to be flattened into "Connection lost").
+      if (request.message.includes('fixture chat error')) {
+        const done = (async () => {
+          await sleep(30);
+          throw new Error(
+            'No DeepSeek API key. Add one in Settings > Authentication, or set DEEPSEEK_API_KEY before launching.'
+          );
+        })();
+        return {
+          streamId: id,
+          done,
+          cancel: async () => ({ requested: true }),
+        };
+      }
       const provider = request.provider === 'auto' ? 'offline' : request.provider;
       const model =
         request.model ||

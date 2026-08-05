@@ -374,7 +374,11 @@ export function OptimusApp() {
       if (error instanceof DOMException && error.name === 'AbortError') {
         conversationStore.apply(sessionId, { type: 'cancelled', error: 'cancelled by user' });
       } else {
-        conversationStore.markDisconnected(sessionId);
+        // Surface the real cause (e.g. "No DeepSeek API key…") instead of a
+        // misleading "Connection lost" — a rejected chat start is a
+        // configuration error, not a transport loss.
+        const message = error instanceof Error ? error.message : String(error);
+        conversationStore.apply(sessionId, { type: 'error', error: message });
       }
     } finally {
       if (activeHandle.current === handle) {
