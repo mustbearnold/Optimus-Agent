@@ -75,27 +75,36 @@ MODEL = "deepseek-v4-flash"
 PROMPTS = [
     "Find one concrete way to improve this codebase and implement it now, "
     "with a regression test. Run the relevant tests to prove it. Keep the "
-    "change small and focused. CRITICAL: this acceptance run grades every "
-    "tool call — every command you run must SUCCEED on the first attempt. "
-    "Verify paths and flags before running (read the file, check the "
-    "command with --help) and never run a command that could fail.",
+    "change small and focused. You MUST make at least one real change to "
+    "the repository (code, test, or documentation) — if you find no code "
+    "improvement, add a regression test or fix stale documentation. "
+    "CRITICAL: this acceptance run grades every tool call — every command "
+    "you run must SUCCEED on the first attempt. Verify paths and flags "
+    "before running (read the file, check the command with --help) and "
+    "never run a command that could fail.",
     "Identify a small bug or papercut in this codebase, fix it now, and add "
-    "a regression test. Verify by running the relevant tests. CRITICAL: "
-    "this acceptance run grades every tool call — every command must "
-    "SUCCEED on the first attempt. Inspect before you run; never gamble on "
-    "a command that might fail.",
+    "a regression test. Verify by running the relevant tests. You MUST make "
+    "at least one real change to the repository. CRITICAL: this acceptance "
+    "run grades every tool call — every command must SUCCEED on the first "
+    "attempt. Inspect before you run; never gamble on a command that might "
+    "fail.",
     "Review the most recent changes for a latent bug, fix it with a "
-    "regression test, and prove it by running the tests. CRITICAL: this "
-    "acceptance run grades every tool call — every command you run must "
-    "SUCCEED the first time. Verify everything before executing.",
+    "regression test, and prove it by running the tests. You MUST make at "
+    "least one real change to the repository. CRITICAL: this acceptance run "
+    "grades every tool call — every command you run must SUCCEED the first "
+    "time. Verify everything before executing.",
     "Find stale or wrong documentation in one module and correct it now, "
-    "then verify nothing else broke. CRITICAL: this acceptance run grades "
-    "every tool call — every command must SUCCEED on the first attempt. "
-    "Check paths and flags before running anything.",
+    "then verify nothing else broke. If the documentation is accurate, "
+    "improve it (clarity, examples) — you MUST make at least one real "
+    "change to the repository. CRITICAL: this acceptance run grades every "
+    "tool call — every command must SUCCEED on the first attempt. Check "
+    "paths and flags before running anything.",
     "Find dead or duplicated code and remove it safely, then verify with "
-    "the relevant tests. CRITICAL: this acceptance run grades every tool "
-    "call — every command must SUCCEED on the first attempt. Inspect "
-    "before you run; no failed commands are allowed.",
+    "the relevant tests. If you find nothing to remove, add a regression "
+    "test for a gap you notice — you MUST make at least one real change to "
+    "the repository. CRITICAL: this acceptance run grades every tool call "
+    "— every command must SUCCEED on the first attempt. Inspect before you "
+    "run; no failed commands are allowed.",
 ]
 
 # Provider pin: same popover as the offline pin, but selects the real
@@ -202,7 +211,13 @@ def patch_settings_scope(home: Path, workspace: Path) -> None:
 
 
 def git_snapshot(workspace: Path) -> dict[str, Any]:
-    """HEAD + dirty-count baseline for one iteration."""
+    """HEAD + dirty-path set baseline for one iteration.
+
+    The dirty PATH SET (not the count) is the change signal: a prior
+    iteration's leftover WIP keeps the count non-zero, and an agent that
+    edits a different set of files at the same count must still count as
+    having made a change.
+    """
     def run(*args: str) -> str:
         result = subprocess.run(
             ["git", "-C", str(workspace), *args],
@@ -212,7 +227,7 @@ def git_snapshot(workspace: Path) -> dict[str, Any]:
 
     return {
         "head": run("rev-parse", "HEAD"),
-        "dirty": len([l for l in run("status", "--porcelain").splitlines() if l.strip()]),
+        "dirty": sorted(line for line in run("status", "--porcelain").splitlines() if line.strip()),
     }
 
 
