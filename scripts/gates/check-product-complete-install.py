@@ -33,10 +33,15 @@ def main() -> int:
     ):
         if token not in text:
             fail(f"install script missing expected token: {token}")
-    # Anti-resurgence: the installer is exclusively Tauri. Electron must not
-    # creep back into the staged/rollback paths.
-    if "Electron" in text:
-        fail("install script must not reference Electron (Tauri is exclusive)")
+    # Anti-resurgence: the installer is exclusively Tauri. Electron and the
+    # retired Wry rollback shell must not creep back into the staged/rollback
+    # paths (spec-001 R6/R7).
+    for token in ("Electron", "LegacyWry", "OPTIMUS_DESKTOP_SHELL", "optimus-desktop-host"):
+        if token in text:
+            fail(
+                f"install script must not reference {token} "
+                "(Tauri is exclusive; Wry rollback is retired)"
+            )
 
     adr = ROOT / "docs" / "decisions" / "0043-no-auto-updater-channel.md"
     if not adr.is_file():
@@ -86,8 +91,9 @@ def main() -> int:
             fail(f"install-meta desktop_shell must be react-tauri, got {shell!r}")
         if "X-Optimus-UI=react-tauri" not in de:
             fail("desktop entry does not evidence Tauri/React default shell")
-        if "ElectronRollback" in de:
-            fail("desktop entry must not expose an Electron rollback action")
+        for token in ("ElectronRollback", "LegacyWry", "OPTIMUS_DESKTOP_SHELL"):
+            if token in de:
+                fail(f"desktop entry must not expose a rollback shell action ({token})")
         status["desktop_entry_ok"] = True
     print("PRODUCT_COMPLETE_INSTALL_OK", json.dumps(status, sort_keys=True))
     return 0

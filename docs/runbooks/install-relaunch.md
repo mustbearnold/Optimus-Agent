@@ -4,7 +4,7 @@ doc_type: explanation
 plane: current
 status: current
 authority: supporting
-summary: Confirmed current behaviour: both installers stage the Tauri shell + React + CLI exclusively over the Rust host; the Wry native shell remains the documented legacy rollback until the spec-012 deadline (2026-10-31). Windows depends on the WebView2 runtime.
+summary: Confirmed current behaviour: the Linux installer stages the Tauri shell + React + CLI exclusively; the Wry shell and its OPTIMUS_DESKTOP_SHELL dispatch are retired from the installed product (spec-001 R6/R7). Windows packaging is tracked by spec-012 (deadline 2026-10-31). Windows depends on the WebView2 runtime.
 reviewed_on: 2026-08-05
 review_by: 2026-10-31
 ---
@@ -14,11 +14,12 @@ review_by: 2026-10-31
 ## Default shell
 
 **Confirmed current behaviour:** the desktop product is **exclusively
-Tauri**. Both installers (`rebuild-install-relaunch.sh` and
-`rebuild-install-relaunch.ps1`) stage the **Tauri + React** shell, the Rust
-host, and the CLI; the pre-Tauri shell has no path in the installer. The
-**Wry native shell** remains available as a documented legacy rollback via
-`OPTIMUS_DESKTOP_SHELL=wry` until the spec-012 retirement (2026-10-31). The
+Tauri** on Linux. The installer (`rebuild-install-relaunch.sh`) stages the
+**Tauri + React** shell and the CLI; the pre-Tauri shell has no path in the
+installer. The **Wry native shell** and its `OPTIMUS_DESKTOP_SHELL`
+dispatch are retired from the installed product (spec-001 R6/R7): there is
+no `LegacyWry` desktop action and no staged Wry binary. Windows packaging
+is tracked by spec-012 (deadline 2026-10-31). The
 Rust host remains authority for IPC and durable
 effects. See
 [desktop-shell-and-ipc-matrix.md](../../specs/001-desktop-shell/spec.md).

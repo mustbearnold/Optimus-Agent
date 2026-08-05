@@ -125,8 +125,10 @@ Installer authority: `scripts/rebuild-install-relaunch.sh` stages Tauri as the p
 
 ### UI (foundation floor)
 
-- One default install binary story; the Wry native shell is the only legacy
-  rollback (until spec-012's 2026-10-31 retirement).
+- One default install binary story; the Wry native shell is retired from the
+  installed product (no `LegacyWry` action, no `OPTIMUS_DESKTOP_SHELL`
+  dispatch; spec-001 R6/R7); the `desktop-wry-fallback` ontology row stays
+  rollback-only until spec-012's 2026-10-31 deadline.
 - Frozen IPC contract tested on host HTTP + the Tauri bridge for critical
   methods.
 

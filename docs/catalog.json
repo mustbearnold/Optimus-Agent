@@ -3401,7 +3401,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "acf6fe11602172d8e8de3f8c6b91415803719150d28e5b629038cfa9121299f3",
+      "content_sha256": "a702a39f70a3f0fa1ef2ae473cf570c06dd4c7e881c62c5b134f6dd079f2266e",
       "headings": [
         "Architecture marks (S+++ program)",
         "Grade scale",
@@ -3454,7 +3454,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "a284edddf8996b0067d293cfec04f7b690b741536434f39dc0dc8424a2d74896",
+      "content_sha256": "9f3923ab4a9328ecdd7c5461cb03b39ac86b3259569f7667aaf421f47d28a49b",
       "headings": [
         "Desktop install and relaunch convention",
         "Default shell",
@@ -3475,7 +3475,7 @@
       "review_by": "2026-10-31",
       "reviewed_on": "2026-08-05",
       "status": "current",
-      "summary": "Confirmed current behaviour: both installers stage the Tauri shell + React + CLI exclusively over the Rust host; the Wry native shell remains the documented legacy rollback until the spec-012 deadline (2026-10-31). Windows depends on the WebView2 runtime.",
+      "summary": "Confirmed current behaviour: the Linux installer stages the Tauri shell + React + CLI exclusively; the Wry shell and its OPTIMUS_DESKTOP_SHELL dispatch are retired from the installed product (spec-001 R6/R7). Windows packaging is tracked by spec-012 (deadline 2026-10-31). Windows depends on the WebView2 runtime.",
       "title": "Desktop install and relaunch convention",
       "type": "explanation"
     },
@@ -3799,7 +3799,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "b03e7c88728ea4b33c98c9405810353c8b41b7dc998e4de614ca757b324f742e",
+      "content_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "headings": [
         "BACKLOG",
         "From the retired roadmap (2026-08-05)"
@@ -3864,7 +3864,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "dee7a879d029ec7600d79cb7bd3efb62a0536b7d66775569c2ec785230b3e0df",
+  "documents_sha256": "238622f554c1e7b563a89e9203d59abe70be87d982e1a892da5589c5c365b5e0",
   "routes": [
     {
       "id": "docs.navigation",

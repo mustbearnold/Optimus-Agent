@@ -18,8 +18,9 @@ One line per known-but-unspecced capability or gap. Items move into a
 `specs/NNN-<slug>/spec.md` when work starts (SDD loop: no code without a spec).
 
 - ~~Windows Tauri packaging~~ → `specs/012-windows-tauri-packaging/spec.md`
-  (implemented 2026-08-05; `desktop-wry-fallback` ontology row removed,
-  both installers stage Tauri exclusively).
+  (implemented 2026-08-05; the `desktop-wry-fallback` ontology row stays
+  rollback-only until its spec-012 R5 removal deadline (2026-10-31); the
+  Linux installer stages Tauri exclusively).
 - Renderer-pixel evidence under Tauri: the evidence ceiling (launch gate +
   transport unit tests + desktop e2e + webkit layout audit) is recorded in
   spec-001; a WebKitGTK playwright-class driver would raise it (open).

@@ -7,14 +7,14 @@
       "resolved_files": 0
     },
     "architecture-architecture-marks": {
-      "binding_sha256": "7ed5580a1024f7d506d77e465bd481ac002a0f98ce4b20144c4fe75e121caad3",
-      "document_sha256": "acf6fe11602172d8e8de3f8c6b91415803719150d28e5b629038cfa9121299f3",
+      "binding_sha256": "cf08cdef5b574180210bca64cb633df9e8788cfbacf13bf08f40a8b7a9e947ac",
+      "document_sha256": "a702a39f70a3f0fa1ef2ae473cf570c06dd4c7e881c62c5b134f6dd079f2266e",
       "path": "docs/runbooks/architecture-marks.md",
       "resolved_files": 8
     },
     "architecture-desktop-install-relaunch": {
       "binding_sha256": null,
-      "document_sha256": "a284edddf8996b0067d293cfec04f7b690b741536434f39dc0dc8424a2d74896",
+      "document_sha256": "9f3923ab4a9328ecdd7c5461cb03b39ac86b3259569f7667aaf421f47d28a49b",
       "path": "docs/runbooks/install-relaunch.md",
       "resolved_files": 0
     },
@@ -187,7 +187,7 @@
       "resolved_files": 14
     },
     "decisions-0024-hermes-parity-version-gate": {
-      "binding_sha256": "bb26d051933d2fea8a7fe5aff18f81b8e9f7a533ae4e37651fd57d9809fab1ed",
+      "binding_sha256": "6e99a266914c9a40a06bc03463ecd0cb08e5a15eee0659c42afa1dc17fb54c47",
       "document_sha256": "464cd43ff6af5db11c0a62e334b4dab19e8e0373579b041a30817fb52d599a3d",
       "path": "docs/decisions/0024-hermes-parity-version-gate.md",
       "resolved_files": 13
@@ -271,7 +271,7 @@
       "resolved_files": 6
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "c1ba5a4fb4c2e21be0f7aee74a47a7257c9c0163af49c64c2e41b6af90426da4",
+      "binding_sha256": "b6289b24784da8c0073d609426ed18e4573e9cb3c9d0c64b1c59a12a0d73f29c",
       "document_sha256": "e43571206a59cebf0e30af9ea9dc83ff22690922ce7189da50d6546f09d93f71",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 8
@@ -301,7 +301,7 @@
       "resolved_files": 4
     },
     "decisions-0043-no-auto-updater-channel": {
-      "binding_sha256": "960b5ed6247ec2b46378508d469ff313f143eacbfce4da5eff5a67e8d614a78e",
+      "binding_sha256": "9e4d1e9f354a729fb8355f54882b49b0a3043cd607d9a030821babb2d9397140",
       "document_sha256": "83e6ee28830708eba2219a8ad9567793c37820958f3732bf16d71a1227fc8e1f",
       "path": "docs/decisions/0043-no-auto-updater-channel.md",
       "resolved_files": 6
@@ -499,7 +499,7 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "a9fc43f5db24194a82834b05ab75f6ac779720c2dc6af4a9db4b829c51426363",
+      "binding_sha256": "a71db7602916d739a6883a42a43cf579a2b27fe53b77996061dc0d4ac0057437",
       "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 99
@@ -559,25 +559,25 @@
       "resolved_files": 43
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "ab7b323418b0cfb1e7225d3809f8c85535a6b809d1b5795a2c9834c15a5e5881",
+      "binding_sha256": "1b206cdad1e2617fe45b68af46b0fe1fd2147d7dd50170416073e6362cff92ae",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 78
     },
     "spec-012-windows-tauri-packaging": {
-      "binding_sha256": "fe5528b22502226882325aa1b8b6aaa3fe992873d057cae7bf7c29f6bf9f1db5",
+      "binding_sha256": "37d416cf83bdebef2f8092a53b26209bec3a44937894ad1d592f6cb65f45ae1c",
       "document_sha256": "2fc932c467138d99d25c6741c5880ef84b36024c5d0b2fdbbb5803aca5925c50",
       "path": "specs/012-windows-tauri-packaging/spec.md",
       "resolved_files": 6
     },
     "specs-backlog": {
-      "binding_sha256": "717a252675a705e7aa10202444493b949ed3c6523c47721e9995dc65f0dd5f20",
-      "document_sha256": "b03e7c88728ea4b33c98c9405810353c8b41b7dc998e4de614ca757b324f742e",
+      "binding_sha256": "74cec7198c6d3ef3be971222cc45da0144d2c1c57935d6a2725f42a2d475f40c",
+      "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 24
     },
     "specs-constitution": {
-      "binding_sha256": "c221621c6f123173f2a1cae5ec18abbf5c41ef8e9b4db93d609056dbe2d884ce",
+      "binding_sha256": "e83ca3625643e45292437972d19b02b98b9cc1e2893152b91a96d0ec10dfe1d7",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 108

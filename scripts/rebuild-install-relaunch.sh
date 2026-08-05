@@ -156,14 +156,12 @@ DESKTOP_FILE="$APPLICATIONS_DIR/optimus-agent.desktop"
 ICON_FILE="$ICON_DIR/optimus-agent.svg"
 INSTALLED_DESKTOP="$INSTALL_ROOT/bin/optimus-desktop"
 INSTALLED_TAURI="$INSTALL_ROOT/bin/optimus-agent-tauri"
-INSTALLED_HOST="$INSTALL_ROOT/bin/optimus-desktop-host"
 INSTALLED_CLI="$INSTALL_ROOT/bin/optimus"
 INSTALL_MARKER="$INSTALL_ROOT/.optimus-agent-install"
 INSTALL_MARKER_PREFIX="optimus-agent-user-install-v1"
 INSTALL_MARKER_VALUE=""
 EXISTING_INSTALL_OWNED=false
 BUILD_DIR="$CARGO_TARGET_DIR/$PROFILE_DIR"
-BUILT_DESKTOP="$BUILD_DIR/optimus-desktop"
 BUILT_TAURI="$BUILD_DIR/optimus-agent"
 BUILT_CLI="$BUILD_DIR/optimus"
 
@@ -377,7 +375,7 @@ process_start_time() {
 process_is_installed_app() {
   local pid="$1" exe
   exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-  [[ "$exe" == "$INSTALLED_DESKTOP" || "$exe" == "$INSTALLED_TAURI" || "$exe" == "$INSTALLED_HOST" ]] \
+  [[ "$exe" == "$INSTALLED_DESKTOP" || "$exe" == "$INSTALLED_TAURI" ]] \
     && return 0
   return 1
 }
@@ -492,13 +490,12 @@ check_release_policy "Checking Optimus/Hermes version policy"
 if [[ "$NO_BUILD" == false ]]; then
   step "Building React production assets with Bun"
   (cd "$ROOT" && bun run --cwd apps/optimus-ui build)
-  step "Building Tauri desktop, rollback host, and optimus-cli ($PROFILE)"
-  build_args=(build -p optimus-tauri -p optimus-desktop -p optimus-cli --features optimus-tauri/custom-protocol)
+  step "Building Tauri desktop and optimus-cli ($PROFILE)"
+  build_args=(build -p optimus-tauri -p optimus-cli --features optimus-tauri/custom-protocol)
   [[ "$PROFILE" == "release" ]] && build_args+=(--release)
   (cd "$ROOT" && cargo "${build_args[@]}")
 fi
 
-[[ -x "$BUILT_DESKTOP" ]] || fail "missing built binary: $BUILT_DESKTOP"
 [[ -x "$BUILT_TAURI" ]] || fail "missing built Tauri binary: $BUILT_TAURI"
 if [[ ! -x "$BUILT_CLI" && -x "$BUILD_DIR/optimus-cli" ]]; then
   BUILT_CLI="$BUILD_DIR/optimus-cli"
@@ -506,7 +503,6 @@ fi
 [[ -x "$BUILT_CLI" ]] || fail "missing built binary: $BUILT_CLI"
 
 verify_built_versions
-BUILT_DESKTOP_SHA256="$(file_sha256 "$BUILT_DESKTOP")"
 BUILT_TAURI_SHA256="$(file_sha256 "$BUILT_TAURI")"
 BUILT_CLI_SHA256="$(file_sha256 "$BUILT_CLI")"
 
@@ -514,8 +510,6 @@ BUILT_CLI_SHA256="$(file_sha256 "$BUILT_CLI")"
 # before stopping or replacing the installed application.
 check_release_policy "Rechecking Optimus/Hermes version policy"
 verify_built_versions
-[[ "$(file_sha256 "$BUILT_DESKTOP")" == "$BUILT_DESKTOP_SHA256" ]] \
-  || fail "built desktop changed after version validation"
 [[ "$(file_sha256 "$BUILT_TAURI")" == "$BUILT_TAURI_SHA256" ]] \
   || fail "built Tauri desktop changed after version validation"
 [[ "$(file_sha256 "$BUILT_CLI")" == "$BUILT_CLI_SHA256" ]] \
@@ -531,13 +525,11 @@ installed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
 step "Installing binaries"
 mkdir -p "$INSTALL_ROOT/bin" "$APPLICATIONS_DIR" "$ICON_DIR" "$BIN_HOME"
-atomic_install_file "$BUILT_DESKTOP" "$INSTALLED_HOST" 0755 "$BUILT_DESKTOP_SHA256"
 atomic_install_file "$BUILT_TAURI" "$INSTALLED_TAURI" 0755 "$BUILT_TAURI_SHA256"
 atomic_install_file "$BUILT_CLI" "$INSTALLED_CLI" 0755 "$BUILT_CLI_SHA256"
 ln -sfn optimus "$INSTALL_ROOT/bin/optimus-cli"
 ln -sfn "$INSTALLED_CLI" "$BIN_HOME/optimus"
 ln -sfn "$INSTALLED_CLI" "$BIN_HOME/optimus-cli"
-printf '  %s\n' "$INSTALLED_HOST"
 printf '  %s\n' "$INSTALLED_TAURI"
 printf '  %s\n' "$INSTALLED_CLI"
 
@@ -545,7 +537,6 @@ atomic_install_file "$ROOT/assets/optimus-agent.svg" "$ICON_FILE" 0644
 
 printf -v q_install_root '%q' "$INSTALL_ROOT"
 printf -v q_installed_tauri '%q' "$INSTALLED_TAURI"
-printf -v q_installed_host '%q' "$INSTALLED_HOST"
 printf -v q_default_optimus_home '%q' "$DATA_HOME/optimus"
 printf -v q_product_version '%q' "$version"
 atomic_write_file "$INSTALLED_DESKTOP" 0755 <<EOF
@@ -553,7 +544,6 @@ atomic_write_file "$INSTALLED_DESKTOP" 0755 <<EOF
 set -Eeuo pipefail
 INSTALL_ROOT=$q_install_root
 TAURI_BINARY=$q_installed_tauri
-HOST_BINARY=$q_installed_host
 DEFAULT_OPTIMUS_HOME=$q_default_optimus_home
 PRODUCT_VERSION=$q_product_version
 
@@ -564,32 +554,21 @@ case "\${1:-}" in
     ;;
 esac
 
-case "\${OPTIMUS_DESKTOP_SHELL:-tauri}" in
-  tauri)
-    [[ -x "\$TAURI_BINARY" ]] || {
-      printf 'Installed Optimus Tauri application is incomplete: %s\n' "\$INSTALL_ROOT" >&2
-      exit 1
-    }
-    export OPTIMUS_HOME="\${OPTIMUS_HOME:-\$DEFAULT_OPTIMUS_HOME}"
-    # On Linux with both Wayland and XWayland available, WebKitGTK can create
-    # a live process without a visible surface on this GBM stack. Pin the
-    # installed shell to the verified X11/software-compositing path.
-    if [[ -n "\${DISPLAY:-}" ]]; then
-      export GDK_BACKEND=x11
-      export WINIT_UNIX_BACKEND=x11
-    fi
-    export WEBKIT_DISABLE_COMPOSITING_MODE=1
-    exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
-    exec "\$TAURI_BINARY" "\$@"
-    ;;
-  wry)
-    exec "\$HOST_BINARY" "\$@"
-    ;;
-  *)
-    printf 'Unknown OPTIMUS_DESKTOP_SHELL: %s\\n' "\$OPTIMUS_DESKTOP_SHELL" >&2
-    exit 2
-    ;;
-esac
+[[ -x "\$TAURI_BINARY" ]] || {
+  printf 'Installed Optimus Tauri application is incomplete: %s\n' "\$INSTALL_ROOT" >&2
+  exit 1
+}
+export OPTIMUS_HOME="\${OPTIMUS_HOME:-\$DEFAULT_OPTIMUS_HOME}"
+# On Linux with both Wayland and XWayland available, WebKitGTK can create
+# a live process without a visible surface on this GBM stack. Pin the
+# installed shell to the verified X11/software-compositing path.
+if [[ -n "\${DISPLAY:-}" ]]; then
+  export GDK_BACKEND=x11
+  export WINIT_UNIX_BACKEND=x11
+fi
+export WEBKIT_DISABLE_COMPOSITING_MODE=1
+exec >>"\$INSTALL_ROOT/optimus-desktop.log" 2>&1
+exec "\$TAURI_BINARY" "\$@"
 EOF
 
 desktop_quote() {
@@ -619,15 +598,11 @@ StartupNotify=true
 StartupWMClass=optimus-agent
 X-Optimus-Install-ID=$INSTALL_ID
 X-Optimus-UI=react-tauri
-Actions=OpenData;LegacyWry;
+Actions=OpenData;
 
 [Desktop Action OpenData]
 Name=Open Optimus data folder
 Exec=xdg-open $(desktop_quote "$DATA_HOME/optimus")
-
-[Desktop Action LegacyWry]
-Name=Launch legacy Wry shell
-Exec=env OPTIMUS_DESKTOP_SHELL=wry $(desktop_quote "$INSTALLED_DESKTOP")
 EOF
 
 atomic_write_file "$INSTALL_ROOT/VERSION.txt" 0644 <<EOF
@@ -674,7 +649,6 @@ atomic_write_file "$INSTALL_ROOT/install-meta.json" 0644 <<EOF
   "cargo_target": "$(json_escape "$CARGO_TARGET_DIR")",
   "desktop_binary": "$(json_escape "$INSTALLED_DESKTOP")",
   "tauri_binary": "$(json_escape "$INSTALLED_TAURI")",
-  "host_binary": "$(json_escape "$INSTALLED_HOST")",
   "cli_binary": "$(json_escape "$INSTALLED_CLI")",
   "desktop_entry": "$(json_escape "$DESKTOP_FILE")"
 }
@@ -691,7 +665,6 @@ printf -v q_install_marker '%q' "$INSTALL_MARKER"
 printf -v q_install_marker_value '%q' "$INSTALL_MARKER_VALUE"
 printf -v q_desktop '%q' "$INSTALLED_DESKTOP"
 printf -v q_tauri '%q' "$INSTALLED_TAURI"
-printf -v q_host '%q' "$INSTALLED_HOST"
 printf -v q_desktop_file '%q' "$DESKTOP_FILE"
 printf -v q_icon_file '%q' "$ICON_FILE"
 printf -v q_desktop_file_hash '%q' "$desktop_file_hash"
@@ -708,7 +681,6 @@ INSTALL_MARKER=$q_install_marker
 INSTALL_MARKER_VALUE=$q_install_marker_value
 DESKTOP_BINARY=$q_desktop
 TAURI_BINARY=$q_tauri
-HOST_BINARY=$q_host
 DESKTOP_FILE=$q_desktop_file
 ICON_FILE=$q_icon_file
 DESKTOP_FILE_HASH=$q_desktop_file_hash
@@ -745,7 +717,7 @@ process_start_time() {
 process_is_installed_app() {
   local pid="$1" exe
   exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-  [[ "$exe" == "$TAURI_BINARY" || "$exe" == "$HOST_BINARY" ]] && return 0
+  [[ "$exe" == "$TAURI_BINARY" ]] && return 0
   return 1
 }
 
@@ -843,14 +815,10 @@ Install root: $INSTALL_ROOT
 Desktop entry: $DESKTOP_FILE
 Desktop shell: React + Tauri
 Tauri binary: $INSTALLED_TAURI
-Rust rollback host: $INSTALLED_HOST
 
 Launch:
   - Open the application menu and choose Optimus Agent
   - $INSTALLED_DESKTOP
-
-Legacy Wry rollback:
-  OPTIMUS_DESKTOP_SHELL=wry $INSTALLED_DESKTOP
 
 CLI:
   $BIN_HOME/optimus --help

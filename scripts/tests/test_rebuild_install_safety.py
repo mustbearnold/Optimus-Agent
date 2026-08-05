@@ -229,12 +229,15 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertTrue(os.access(launcher, os.X_OK))
             self.assertTrue(tauri.is_file())
             self.assertTrue(os.access(tauri, os.X_OK))
-            self.assertTrue(host.is_file())
+            self.assertFalse(host.exists())
             self.assertFalse((install / "app-bundle").exists())
             launcher_source = launcher.read_text(encoding="utf-8")
             self.assertIn("GDK_BACKEND", launcher_source)
             self.assertIn("WEBKIT_DISABLE_COMPOSITING_MODE", launcher_source)
             self.assertNotIn("ELECTRON", launcher_source)
+            self.assertNotIn("OPTIMUS_DESKTOP_SHELL", launcher_source)
+            self.assertNotIn("LegacyWry", launcher_source)
+            self.assertNotIn("wry", launcher_source)
             self.assertEqual(
                 subprocess.check_output(
                     [str(launcher), "--version"],
@@ -250,9 +253,17 @@ class LinuxInstallerSafetyTest(unittest.TestCase):
             self.assertIn(f'Exec="{launcher}"', entry)
             self.assertIn("X-Optimus-UI=react-tauri", entry)
             self.assertNotIn("ElectronRollback", entry)
+            self.assertNotIn("LegacyWry", entry)
+            self.assertNotIn("OPTIMUS_DESKTOP_SHELL", entry)
+            self.assertNotIn("wry", entry)
             version_txt = (install / "VERSION.txt").read_text(encoding="utf-8")
             self.assertIn("shell=react-tauri", version_txt)
             self.assertNotIn("electron", version_txt)
+            install_meta = json.loads(
+                (install / "install-meta.json").read_text(encoding="utf-8")
+            )
+            self.assertNotIn("host_binary", install_meta)
+            self.assertEqual(install_meta["desktop_shell"], "react-tauri")
 
     def test_install_rejects_binary_changed_after_first_version_validation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="optimus-installer-artifact-race-") as tmp:
