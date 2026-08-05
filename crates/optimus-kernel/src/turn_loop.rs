@@ -7,6 +7,7 @@
 //! loop that drives it.
 
 use super::*;
+use std::collections::BTreeMap;
 use std::time::Instant;
 
 impl Kernel {
@@ -314,13 +315,14 @@ impl Kernel {
                 // Validate the entire response against the exact schema set advertised for
                 // this model step before any sibling call can mutate state or perform effects.
                 let mut seen_call_ids = BTreeSet::new();
-                // A model can ask for a tool that is not advertised (LLM
-                // tool-name hallucination — deepseek does this rarely).
-                // That fails the CALL, not the turn: a synthetic "tool not
-                // found" outcome is fed back so the model reads it and
-                // retries with a real tool. A real user sees the agent
-                // recover; without this the whole turn died with pack_error.
-                let mut invalid_tool_ids: BTreeSet<String> = BTreeSet::new();
+                // A model can ask for a tool that is not advertised or pass
+                // arguments that do not validate (LLM hallucination — deepseek
+                // does this rarely). Either failure kills the CALL, not the
+                // turn: a synthetic outcome (tool not found / invalid
+                // arguments) is fed back so the model reads it and retries
+                // with a real call. A real user sees the agent recover;
+                // without this the whole turn died with pack_error.
+                let mut invalid_tool_ids: BTreeMap<String, String> = BTreeMap::new();
                 for call in &resp.tool_calls {
                     let provider_call_id = call.id.trim();
                     if provider_call_id.is_empty() {
@@ -336,12 +338,19 @@ impl Kernel {
                     }
                     let call_id = ToolId::new(&call.name);
                     if !advertised_tool_ids.contains(&call_id) {
-                        invalid_tool_ids.insert(provider_call_id.to_string());
+                        invalid_tool_ids.insert(
+                            provider_call_id.to_string(),
+                            format!("tool not found: {}", call.name),
+                        );
                         continue;
                     }
-                    self.packs
-                        .resolve_loaded_tool(&call.name)?
-                        .validate_arguments(&call.arguments)?;
+                    let descriptor = self.packs.resolve_loaded_tool(&call.name)?;
+                    if let Err(error) = descriptor.validate_arguments(&call.arguments) {
+                        invalid_tool_ids.insert(
+                            provider_call_id.to_string(),
+                            format!("invalid arguments for {}: {error}", call.name),
+                        );
+                    }
                 }
                 self.messages.push(Message {
                     role: Role::Assistant,
@@ -354,7 +363,13 @@ impl Kernel {
                 for (call_index, call) in resp.tool_calls.into_iter().enumerate() {
                     check_cancellation(cancellation)?;
                     let descriptor = self.packs.resolve_loaded_tool(&call.name).ok().cloned();
-                    let tool_invalid = invalid_tool_ids.contains(&call.id);
+                    // invalid_tool_ids is keyed by the TRIMMED provider id
+                    // (the validation pass normalizes ids). A hallucinated
+                    // tool with a whitespace-padded id must still match here;
+                    // otherwise descriptor is None below and the turn dies on
+                    // the expect instead of recovering with the synthetic
+                    // "tool not found" outcome.
+                    let tool_invalid = invalid_tool_ids.contains_key(call.id.trim());
                     let over_budget = call_index >= execution_budget;
                     let duplicate = if over_budget {
                         false
@@ -398,18 +413,24 @@ impl Kernel {
                         .record_tool_lifecycle_event(execution.manifest_id, &lifecycle)?;
                     sink(StreamEvent::Tool(Box::new(lifecycle)));
                     let (tool_id, mut outcome) = if tool_invalid {
+                        let reason = invalid_tool_ids
+                            .get(&call.id)
+                            .cloned()
+                            .unwrap_or_else(|| format!("tool not found: {}", call.name));
+                        let code = if reason.starts_with("invalid arguments") {
+                            "invalid_arguments"
+                        } else {
+                            "tool_not_found"
+                        };
                         (
                             ToolId::new(&call.name),
                             ToolOutcome::failed(
                                 call.id.clone(),
                                 call.name.clone(),
-                                format!("tool not found: {}", call.name),
+                                reason.clone(),
                                 ToolErrorDetail {
-                                    code: "tool_not_found".into(),
-                                    message:
-                                        "The requested tool is not available in this session. \
-                                              Read the tool list and retry with a valid tool."
-                                            .into(),
+                                    code: code.into(),
+                                    message: reason,
                                     retryable: true,
                                 },
                                 optimus_packs::ReplayClass::ModelNondeterministic,
@@ -471,7 +492,7 @@ impl Kernel {
                             }
                             Err(KernelError::Packs(ref pack_error)) => (
                                 descriptor.id.clone(),
-                                pack_error_tool_outcome(&call, &descriptor, pack_error),
+                                pack_error_tool_outcome(&call, descriptor, pack_error),
                             ),
                             Err(
                                 error @ KernelError::Runtime(RuntimeError::NeedsApproval {
@@ -556,7 +577,7 @@ impl Kernel {
                             Err(error) if is_control_plane_tool_error(&error) => return Err(error),
                             Err(error) => (
                                 descriptor.id.clone(),
-                                dispatch_error_tool_outcome(&call, &descriptor, &error),
+                                dispatch_error_tool_outcome(&call, descriptor, &error),
                             ),
                         }
                     };

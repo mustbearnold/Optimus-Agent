@@ -634,16 +634,19 @@ fn invalid_arguments_are_refused_before_dispatch_names_included() {
     let mut kernel = open_kernel(dir.path());
     let mut model = scripted(vec![
         tool_step("t1", "web_search", json!({})),
-        done("never reached"),
+        done("recovered after fixing the arguments"),
     ]);
 
-    let error = kernel
+    // A schema-violating call refuses the CALL with the synthetic
+    // invalid_arguments outcome naming the tool; the model reads it and
+    // retries, so the turn recovers.
+    let result = kernel
         .turn(&mut model, "search with no query")
-        .expect_err("a schema-violating call must fail the step, typed");
-    let message = format!("{error}");
+        .expect("a schema-violating call must fail the call, not the turn");
+    let trace = format!("{:?}", result.tool_trace);
     assert!(
-        message.contains("web_search") || message.to_lowercase().contains("query"),
-        "the refusal must name the tool or the missing field, got: {message}"
+        trace.contains("invalid arguments") && trace.contains("web_search"),
+        "the refusal must name the tool and the invalid-arguments reason, got: {trace}"
     );
 
     // Nothing executed: no file effects, no jobs — the workspace is untouched.

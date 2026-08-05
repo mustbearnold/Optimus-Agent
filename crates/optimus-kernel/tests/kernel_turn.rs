@@ -1423,6 +1423,83 @@ fn unknown_tool_fails_the_call_and_the_turn_recovers() {
 }
 
 #[test]
+fn unknown_tool_with_whitespace_padded_id_still_fails_the_call_not_the_turn() {
+    let dir = tempdir().unwrap();
+    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: " bad-3 ".into(),
+                name: "does_not_exist".into(),
+                arguments: json!({}),
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("recovered with the tools that exist".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    // Regression: the validation pass normalizes (trims) provider call ids
+    // and keys the invalid-tool set with the trimmed id, but the execution
+    // pass used to look the RAW id back up. A hallucinated tool name with a
+    // whitespace-padded id therefore missed the set, reached the
+    // "dispatched calls are validated tools" expect with no descriptor, and
+    // panicked — killing the turn the synthetic "tool not found" path exists
+    // to save.
+    let result = k
+        .turn(&mut model, "call an unknown tool with a sloppy id")
+        .unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("does_not_exist -> tool not found")),
+        "expected synthetic not-found outcome, got: {:?}",
+        result.tool_trace
+    );
+}
+
+#[test]
+fn invalid_arguments_fail_the_call_and_the_turn_recovers() {
+    let dir = tempdir().unwrap();
+    let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "bad-args".into(),
+                name: "write_file".into(),
+                // write_file requires path + contents; a missing field must
+                // fail the call (invalid_arguments), not the turn.
+                arguments: json!({"path": "only-a-path.txt"}),
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("corrected the arguments".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    let result = k.turn(&mut model, "write with invalid arguments").unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("write_file -> invalid arguments")),
+        "expected synthetic invalid-arguments outcome, got: {:?}",
+        result.tool_trace
+    );
+    assert!(
+        !k.workspace().join("only-a-path.txt").exists(),
+        "invalid call must not mutate the workspace"
+    );
+}
+
+#[test]
 fn known_but_unloaded_tool_fails_the_call_before_effect() {
     let dir = tempdir().unwrap();
     let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
@@ -1570,19 +1647,33 @@ fn canonical_schema_rejects_extra_runtime_arguments() {
     let dir = tempdir().unwrap();
     let mut k = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
     std::fs::write(k.workspace().join("safe.txt"), "safe").unwrap();
-    let mut model = ScriptedModel::new(vec![CompletionResponse {
-        text: None,
-        tool_calls: vec![ToolCall {
-            id: "bad-args".into(),
-            name: "read_file".into(),
-            arguments: json!({"path":"safe.txt","escape":true}),
-        }],
-        reasoning_content: None,
-    }]);
-    assert!(matches!(
-        k.turn(&mut model, "send invalid arguments").unwrap_err(),
-        KernelError::Packs(PackError::InvalidArguments { tool, .. }) if tool == "read_file"
-    ));
+    let mut model = ScriptedModel::new(vec![
+        CompletionResponse {
+            text: None,
+            tool_calls: vec![ToolCall {
+                id: "bad-args".into(),
+                name: "read_file".into(),
+                arguments: json!({"path":"safe.txt","escape":true}),
+            }],
+            reasoning_content: None,
+        },
+        CompletionResponse {
+            text: Some("dropped the extra argument".to_string()),
+            tool_calls: vec![],
+            reasoning_content: None,
+        },
+    ]);
+    // Extra runtime arguments reject the CALL with the synthetic
+    // invalid_arguments outcome; the turn recovers.
+    let result = k.turn(&mut model, "send invalid arguments").unwrap();
+    assert!(
+        result
+            .tool_trace
+            .iter()
+            .any(|t| t.contains("read_file -> invalid arguments")),
+        "expected synthetic invalid-arguments outcome, got: {:?}",
+        result.tool_trace
+    );
 }
 
 #[test]
