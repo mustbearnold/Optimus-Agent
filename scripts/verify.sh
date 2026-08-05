@@ -260,6 +260,8 @@ tier_gates() {
   spawn "test_project_hygiene"       python3 scripts/tests/test_project_hygiene.py
   spawn "test_live_smoke"            python3 scripts/tests/test_live_smoke.py
   spawn "test_synthetic_user_lab"    python3 scripts/tests/test_synthetic_user_lab.py
+  spawn "test_desktop_task_suite"    python3 scripts/tests/test_desktop_task_suite.py
+  spawn "test_desktop_self_improvement_loop" python3 scripts/tests/test_desktop_self_improvement_loop.py
   spawn "test_synthetic_simulator"   python3 scripts/tests/test_synthetic_user_simulator.py
   spawn "test_tool_coverage_gate"    python3 scripts/tests/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/tests/test_module_size.py
@@ -391,6 +393,21 @@ tier_ui() {
     else
       skip "tui layout (playwright)" "bun install in workspace root"
     fi
+    # Desktop task suite (easy tier) + self-improvement loop gates. Both
+    # self-skip when their prerequisites (binary, websockets, display,
+    # credentials, ollama) are absent, so they stay hermetic everywhere.
+    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
+      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+        run "desktop task suite" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+        run "desktop self-improvement loop" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
+      else
+        run "desktop task suite" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+        run "desktop self-improvement loop" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
+      fi
+    else
+      skip "desktop task suite" "no display and no xvfb-run"
+      skip "desktop self-improvement loop" "no display and no xvfb-run"
+    fi
 
     # Geometry invariants for the React shell. Self-tests its own rules first,
     # so a rule that stops detecting its defect fails the gate rather than
@@ -489,6 +506,8 @@ tier_all() {
   spawn "test_project_hygiene"       python3 scripts/tests/test_project_hygiene.py
   spawn "test_live_smoke"            python3 scripts/tests/test_live_smoke.py
   spawn "test_synthetic_user_lab"    python3 scripts/tests/test_synthetic_user_lab.py
+  spawn "test_desktop_task_suite"    python3 scripts/tests/test_desktop_task_suite.py
+  spawn "test_desktop_self_improvement_loop" python3 scripts/tests/test_desktop_self_improvement_loop.py
   spawn "test_synthetic_simulator"   python3 scripts/tests/test_synthetic_user_simulator.py
   spawn "test_tool_coverage_gate"    python3 scripts/tests/test_tool_coverage_gate.py
   spawn "test_module_size"           python3 scripts/tests/test_module_size.py
@@ -569,6 +588,21 @@ tier_all() {
       run "tui layout (playwright)" bun scripts/tests/tui_layout_playwright.cjs
     else
       skip "tui layout (playwright)" "bun install in workspace root"
+    fi
+    # Desktop task suite (easy tier) + self-improvement loop gates. Both
+    # self-skip when their prerequisites (binary, websockets, display,
+    # credentials, ollama) are absent, so they stay hermetic everywhere.
+    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
+      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+        run "desktop task suite" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+        run "desktop self-improvement loop" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
+      else
+        run "desktop task suite" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+        run "desktop self-improvement loop" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
+      fi
+    else
+      skip "desktop task suite" "no display and no xvfb-run"
+      skip "desktop self-improvement loop" "no display and no xvfb-run"
     fi
 
     # Geometry invariants for the React shell. Self-tests its own rules first,
