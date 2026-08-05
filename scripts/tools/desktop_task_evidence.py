@@ -55,8 +55,17 @@ def capture_screen(path: Path, display: str | None = None) -> Path:
     return path
 
 
-def ocr_qwen(image_path: Path, model: str = "qwen3.5:9b", endpoint: str = "http://127.0.0.1:11434") -> str:
-    """OCR a screenshot with the local qwen vision model (Ollama)."""
+def ocr_qwen(
+    image_path: Path,
+    model: str = "qwen3.5:9b",
+    endpoint: str = "http://127.0.0.1:11434",
+    timeout: float = 180,
+) -> str:
+    """OCR a screenshot with the local qwen vision model (Ollama).
+
+    The model may be cold (reload) or transiently busy; the caller retries,
+    so a single stalled generate does not fail an otherwise clean turn.
+    """
     payload = {
         "model": model,
         "prompt": (
@@ -74,7 +83,7 @@ def ocr_qwen(image_path: Path, model: str = "qwen3.5:9b", endpoint: str = "http:
         headers={"Content-Type": "application/json"},
     )
     try:
-        with urllib.request.urlopen(request, timeout=600) as resp:  # noqa: S310
+        with urllib.request.urlopen(request, timeout=timeout) as resp:  # noqa: S310
             data = json.loads(resp.read())
     except OSError as exc:
         raise EvidenceError(f"qwen OCR unavailable ({model} @ {endpoint}): {exc}") from exc
@@ -109,8 +118,20 @@ class Evidence:
         return path
 
     def ocr(self, path: Path, required_terms: list[str]) -> dict[str, Any]:
-        """OCR `path` and check required terms; record and return the result."""
-        text = ocr_qwen(path, self.model, self.endpoint)
+        """OCR `path` and check required terms; record and return the result.
+
+        One retry per stalled generate (cold model reload / transient
+        busy) so an infra hiccup does not fail an otherwise clean turn.
+        """
+        attempts = 0
+        while True:
+            attempts += 1
+            try:
+                text = ocr_qwen(path, self.model, self.endpoint)
+                break
+            except EvidenceError:
+                if attempts >= 2:
+                    raise
         missing = [term for term in required_terms if not term_matches(term, text)]
         record = {"capture": str(path), "ocr": text, "missing_required_terms": missing}
         self.captures[-1]["ocr"] = record

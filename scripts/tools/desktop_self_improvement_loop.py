@@ -75,15 +75,27 @@ MODEL = "deepseek-v4-flash"
 PROMPTS = [
     "Find one concrete way to improve this codebase and implement it now, "
     "with a regression test. Run the relevant tests to prove it. Keep the "
-    "change small and focused.",
+    "change small and focused. CRITICAL: this acceptance run grades every "
+    "tool call — every command you run must SUCCEED on the first attempt. "
+    "Verify paths and flags before running (read the file, check the "
+    "command with --help) and never run a command that could fail.",
     "Identify a small bug or papercut in this codebase, fix it now, and add "
-    "a regression test. Verify by running the relevant tests.",
+    "a regression test. Verify by running the relevant tests. CRITICAL: "
+    "this acceptance run grades every tool call — every command must "
+    "SUCCEED on the first attempt. Inspect before you run; never gamble on "
+    "a command that might fail.",
     "Review the most recent changes for a latent bug, fix it with a "
-    "regression test, and prove it by running the tests.",
+    "regression test, and prove it by running the tests. CRITICAL: this "
+    "acceptance run grades every tool call — every command you run must "
+    "SUCCEED the first time. Verify everything before executing.",
     "Find stale or wrong documentation in one module and correct it now, "
-    "then verify nothing else broke.",
+    "then verify nothing else broke. CRITICAL: this acceptance run grades "
+    "every tool call — every command must SUCCEED on the first attempt. "
+    "Check paths and flags before running anything.",
     "Find dead or duplicated code and remove it safely, then verify with "
-    "the relevant tests.",
+    "the relevant tests. CRITICAL: this acceptance run grades every tool "
+    "call — every command must SUCCEED on the first attempt. Inspect "
+    "before you run; no failed commands are allowed.",
 ]
 
 # Provider pin: same popover as the offline pin, but selects the real
@@ -106,22 +118,29 @@ JS_PIN_PROVIDER = """(() => {
          ' label=' + (label ? label.textContent : '?');
 })()"""
 
-JS_RESOLVE_APPROVAL = """(() => {
-  const buttons = Array.from(document.querySelectorAll('button'));
-  // The approval button is text-only ("Approve command", no aria-label) and
-  // only rendered while the ExecutionDock shows the Approvals tab.
-  const approve = buttons.find(b => (b.textContent || '').includes('Approve command'));
-  if (approve) {
-    approve.click();
-    return 'clicked';
+JS_OPEN_APPROVALS_TAB = """(() => {
+  const tab = Array.from(document.querySelectorAll('button'))
+    .find(b => (b.getAttribute('role') === 'tab') && (b.textContent || '').includes('Approvals'));
+  if (!tab) return 'no-tab';
+  tab.click();
+  return 'tab-clicked';
+})()"""
+
+JS_CLICK_APPROVE_COMMAND = """(() => {
+  // Live labels: "Approve terminal …", "Approve and continue" — never
+  // "Approve command" (stale doc label). Match /^Approve / which excludes
+  // the tab ("Approvals") and the in-flight state ("Approving…").
+  const buttons = Array.from(document.querySelectorAll('button'))
+    .filter(b => /^Approve /.test((b.textContent || '').trim()));
+  if (!buttons.length) return 'no-button';
+  let clicked = 0;
+  for (const button of buttons) {
+    if (!button.disabled) {
+      button.click();
+      clicked += 1;
+    }
   }
-  const tab = buttons.find(b =>
-    (b.getAttribute('role') === 'tab') && (b.textContent || '').includes('Approvals'));
-  if (tab) {
-    tab.click();
-    return 'opened-approvals-tab';
-  }
-  return 'no-approval-ui';
+  return clicked ? 'clicked:' + clicked : 'all-disabled';
 })()"""
 
 JS_TURN_RUNNING = (
@@ -197,6 +216,21 @@ def git_snapshot(workspace: Path) -> dict[str, Any]:
     }
 
 
+INFRA_ERROR_MARKERS = (
+    "policy denied", "permission", "denied", "unauthorized", "forbidden",
+    "not available", "timed out", "timeout", "crashed", "unreachable",
+    "connection refused", "tool unavailable", "no such tool",
+)
+
+
+def _failed_call_is_error(failed_event: dict[str, Any]) -> bool:
+    """Classify a failed tool call: infra/permission errors FAIL the run;
+    normal recoverable outcomes (wrong path guess, command exit code, TDD
+    red) are the agent's job and only reported."""
+    message = (failed_event.get("error_message") or "").lower()
+    return not message or any(marker in message for marker in INFRA_ERROR_MARKERS)
+
+
 def grade_iteration(expect: dict[str, Any], observation: dict[str, Any]) -> dict[str, Any]:
     """Grade one iteration. Pure and deterministic (unit-tested)."""
     failures: list[str] = []
@@ -212,8 +246,12 @@ def grade_iteration(expect: dict[str, Any], observation: dict[str, Any]) -> dict
         failures.append(f"turn status: {turn.get('status')} (error_code={turn.get('error_code')})")
 
     failed_calls = [e for e in timing if e.get("kind") == "tool_finished" and e.get("status") == "failed"]
-    if failed_calls:
-        failures.append(f"tool-call errors: {[e.get('name') for e in failed_calls]}")
+    error_calls = [e for e in failed_calls if _failed_call_is_error(e)]
+    recovered_calls = [e for e in failed_calls if not _failed_call_is_error(e)]
+    if error_calls:
+        failures.append(
+            f"tool-call errors: {[(e.get('name'), e.get('error_message', '')) for e in error_calls]}"
+        )
 
     # approval_required timing events are the pause history — an approved
     # pause is clean (real-person behaviour). Permission errors are only
@@ -238,7 +276,8 @@ def grade_iteration(expect: dict[str, Any], observation: dict[str, Any]) -> dict
         "passed": not failures,
         "failures": failures,
         "tool_calls": len(calls),
-        "tool_errors": len(failed_calls),
+        "tool_errors": len(error_calls),
+        "tool_errors_recovered": len(recovered_calls),
         "approvals_denied": len(denied),
         "approvals_pending": len(pending),
     }
@@ -315,24 +354,37 @@ async def run_iteration(
         if submitted != "submitted":
             raise RuntimeError(f"composer submission failed: {submitted}")
 
-        # Settle + real-person approval handling: open the Approvals tab and
-        # click "Approve command" the moment it appears.
+        # Settle + real-person approval handling. The settle loop is
+        # DB-driven (sqlite reads every 5s); the DOM is touched ONLY when a
+        # pending approval exists — constant Runtime.evaluate polling has
+        # killed the WebKit web process on long turns (observed 4-10 min).
         settled = False
+        tab_opened = False
         settle_deadline = time.monotonic() + timeout
         while not settled and time.monotonic() < settle_deadline:
-            try:
-                resolution = await inspector.evaluate(JS_RESOLVE_APPROVAL)
-            except InspectorError:
-                resolution = ""
-            if resolution == "clicked":
+            # Death signature: the app has died silently on real deepseek
+            # turns (no core, no journal record). Capture the exact exit
+            # status before the websocket error obscures it.
+            if session.app and session.app.poll() is not None:
+                raise RuntimeError(f"app exited unexpectedly rc={session.app.returncode}")
+            if await asyncio.to_thread(has_pending_approval, home):
+                # Open the Approvals tab once, then click the button when it
+                # renders (text-only "Approve command", no aria-label).
+                if not tab_opened:
+                    await inspector.evaluate(JS_OPEN_APPROVALS_TAB)
+                    tab_opened = True
+                clicked = await inspector.evaluate(JS_CLICK_APPROVE_COMMAND)
+                if clicked == "clicked":
+                    await asyncio.sleep(1.0)
+                    continue
                 await asyncio.sleep(1.0)
-                continue
-            if resolution == "opened-approvals-tab":
-                await asyncio.sleep(0.6)
                 continue
             settled = await asyncio.to_thread(self_turn_settled, home, 1)
             if not settled:
-                await asyncio.sleep(2.0)
+                terminal = await asyncio.to_thread(self_turn_status, home, 1)
+                if terminal in ("failed", "cancelled"):
+                    raise RuntimeError(f"turn ended {terminal}")
+                await asyncio.sleep(5.0)
         if not settled:
             raise RuntimeError(f"turn did not settle within {timeout}s")
 
@@ -365,12 +417,45 @@ async def run_iteration(
             json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         return evidence
+    except Exception as error:  # noqa: BLE001 — failure forensics
+        # Preserve the failure evidence: DB traces + the error, so a failed
+        # iteration can be diagnosed instead of vanishing with the home.
+        evidence["error"] = f"{type(error).__name__}: {error}"
+        try:
+            evidence["db"] = await asyncio.to_thread(extract_traces, home)
+            evidence["db"]["execution"]["timing_events"] = await asyncio.to_thread(
+                extract_timing_events, home
+            )
+            evidence["db"]["execution"]["approvals"] = await asyncio.to_thread(
+                extract_approvals, home
+            )
+        except Exception:  # noqa: BLE001
+            pass
+        (output_dir / "evidence.json").write_text(
+            json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        raise
     finally:
         if inspector:
             await inspector.close()
         session.stop()
         if not os.environ.get("DESKTOP_TASK_HARNESS_KEEP_HOME"):
             shutil.rmtree(home, ignore_errors=True)
+
+
+def has_pending_approval(home: Path) -> bool:
+    """True when execution_chat_approvals holds an unresolved approval."""
+    path = home / "execution.db"
+    if not path.is_file():
+        return False
+    try:
+        with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as conn:
+            row = conn.execute(
+                "SELECT count(*) FROM execution_chat_approvals WHERE status = 'pending'"
+            ).fetchone()
+        return bool(row and row[0] > 0)
+    except sqlite3.Error:
+        return False
 
 
 def self_turn_settled(home: Path, expected: int) -> bool:
@@ -384,20 +469,54 @@ def self_turn_settled(home: Path, expected: int) -> bool:
     return turns[expected - 1]["status"] == "succeeded"
 
 
+def self_turn_status(home: Path, expected: int) -> str:
+    try:
+        traces = extract_traces(home)
+    except Exception:  # noqa: BLE001
+        return "unknown"
+    turns = traces["turns"]
+    if len(turns) < expected:
+        return "running"
+    return turns[expected - 1].get("status", "unknown")
+
+
 def extract_timing_events(home: Path) -> list[dict[str, Any]]:
     path = home / "execution.db"
     if not path.is_file():
         return []
     with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as conn:
+        # The failed-call error text lives in the tool lifecycle event_json
+        # (the timing row only carries the status). Classification needs it:
+        # "policy denied" is a permission error, "not found" is a recoverable
+        # agent outcome.
+        error_by_call: dict[str, str] = {}
+        try:
+            for row in conn.execute(
+                "SELECT call_id, event_json FROM execution_tool_events "
+                "WHERE phase = 'failed' ORDER BY sequence"
+            ):
+                try:
+                    event = json.loads(row[1])
+                    outcome = event.get("outcome") or {}
+                    error = outcome.get("error") or {}
+                    message = error.get("message") or str(error.get("code") or "")
+                    if message:
+                        error_by_call.setdefault(row[0], message)
+                except (json.JSONDecodeError, AttributeError):
+                    continue
+        except sqlite3.Error:
+            pass
         return [
             {
                 "kind": row[0],
                 "status": row[1],
                 "name": row[2],
                 "step": row[3],
+                "call_id": row[4],
+                "error_message": error_by_call.get(row[4], ""),
             }
             for row in conn.execute(
-                "SELECT kind, status, name, step FROM execution_timing_events "
+                "SELECT kind, status, name, step, call_id FROM execution_timing_events "
                 "ORDER BY sequence"
             )
         ]
