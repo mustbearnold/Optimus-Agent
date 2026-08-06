@@ -19,7 +19,7 @@ depends_on:
   - docs/decisions/0020-work-graph-integrity-and-loopback-security.md
   - docs/decisions/0044-bounded-project-trust-and-capability-broker.md
 validated_by:
-  - scripts/gates/check-desktop-ipc-matrix.py
+  - scripts/gates/check-surface-contract.py
   - scripts/gates/check-crate-layers.py
 ---
 

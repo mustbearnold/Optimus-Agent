@@ -304,13 +304,27 @@ const browserListeners = new Set<(state: BrowserState) => void>();
 const sleep = (milliseconds: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
 
-export function createFixtureTransport(): OptimusTransport {
+export function createFixtureTransport(): OptimusTransport & {
+  legacyInvoke<T>(method: string, params?: Record<string, unknown>): Promise<T>;
+} {
   let streamId = 1;
   return {
     kind: 'fixture',
     async invoke<T>(method: DesktopMethod, params: Record<string, unknown> = {}) {
       await sleep(35);
       const value = await fixtureInvoke(method, params);
+      return value as T;
+    },
+    // Named typed legacy shim (spec-015 A3): a STRING-typed invoke path for
+    // the superseded `chat_approval_resolve` member only (removed from the
+    // DesktopMethod union; exempted in the surface-contract gate as the
+    // HTTP-legacy bucket). Everything else delegates to the typed switch.
+    async legacyInvoke<T>(
+      method: string,
+      params: Record<string, unknown> = {}
+    ): Promise<T> {
+      await sleep(35);
+      const value = await fixtureLegacyInvoke(method, params);
       return value as T;
     },
     chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle {
@@ -546,6 +560,68 @@ export function createFixtureTransport(): OptimusTransport {
   };
 }
 
+/// The superseded `chat_approval_resolve` fixture behavior (spec-015 A3):
+/// resolves the parked approval card exactly as the old typed switch did.
+function fixtureResolveApproval(params: Record<string, unknown>): Record<string, unknown> {
+  const sessionId = String(params.session_id || '');
+  const detail = details.get(sessionId);
+  if (!detail) throw new Error('Approval session was not found.');
+  const decision = params.decision === 'deny' ? 'denied' : 'approved';
+  detail.run_status = 'succeeded';
+  detail.messages = detail.messages.map((message) => ({
+    ...message,
+    ...(message.tool_events
+      ? {
+          tool_events: message.tool_events.map((event) =>
+            event.call_id === params.call_id
+              ? {
+                  ...event,
+                  event_id: `${event.run_id}:${event.call_id}:${decision}`,
+                  phase: decision === 'approved' ? 'succeeded' : 'cancelled',
+                  summary:
+                    decision === 'approved'
+                      ? 'Approved exact action completed'
+                      : 'Exact action denied',
+                  approval: undefined,
+                }
+              : event
+          ),
+        }
+      : {}),
+  }));
+  detail.messages.push({
+    role: 'assistant',
+    content:
+      decision === 'approved'
+        ? 'Approved and completed the exact requested action.'
+        : 'Denied the exact requested action. Nothing was executed.',
+  });
+  return {
+    session_id: sessionId,
+    run_id: params.run_id,
+    call_id: params.call_id,
+    job_id: params.job_id,
+    node_id: params.node_id,
+    node_index: params.node_index,
+    effect_sha256: params.effect_sha256,
+    tool_id: 'terminal',
+    summary: 'Run the focused React verification command',
+    status: decision,
+  };
+}
+
+/// Named typed legacy shim dispatcher (spec-015 A3): the superseded
+/// `chat_approval_resolve` member is handled here (string-typed), everything
+/// else delegates to the typed `fixtureInvoke` switch.
+async function fixtureLegacyInvoke(method: string, params: Record<string, unknown>) {
+  switch (method) {
+    case 'chat_approval_resolve':
+      return fixtureResolveApproval(params);
+    default:
+      return fixtureInvoke(method as DesktopMethod, params);
+  }
+}
+
 async function fixtureInvoke(method: DesktopMethod, params: Record<string, unknown>) {
   switch (method) {
     case 'doctor':
@@ -679,53 +755,6 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       const session = sessions.find((item) => item.id === params.id);
       if (session) session.pinned = Boolean(params.pinned);
       return { id: params.id, pinned: Boolean(params.pinned) };
-    }
-    case 'chat_approval_resolve': {
-      const sessionId = String(params.session_id || '');
-      const detail = details.get(sessionId);
-      if (!detail) throw new Error('Approval session was not found.');
-      const decision = params.decision === 'deny' ? 'denied' : 'approved';
-      detail.run_status = 'succeeded';
-      detail.messages = detail.messages.map((message) => ({
-        ...message,
-        ...(message.tool_events
-          ? {
-              tool_events: message.tool_events.map((event) =>
-                event.call_id === params.call_id
-                  ? {
-                      ...event,
-                      event_id: `${event.run_id}:${event.call_id}:${decision}`,
-                      phase: decision === 'approved' ? 'succeeded' : 'cancelled',
-                      summary:
-                        decision === 'approved'
-                          ? 'Approved exact action completed'
-                          : 'Exact action denied',
-                      approval: undefined,
-                    }
-                  : event
-              ),
-            }
-          : {}),
-      }));
-      detail.messages.push({
-        role: 'assistant',
-        content:
-          decision === 'approved'
-            ? 'Approved and completed the exact requested action.'
-            : 'Denied the exact requested action. Nothing was executed.',
-      });
-      return {
-        session_id: sessionId,
-        run_id: params.run_id,
-        call_id: params.call_id,
-        job_id: params.job_id,
-        node_id: params.node_id,
-        node_index: params.node_index,
-        effect_sha256: params.effect_sha256,
-        tool_id: 'terminal',
-        summary: 'Run the focused React verification command',
-        status: decision,
-      };
     }
     case 'approvals_list':
       return { pending: approvals };

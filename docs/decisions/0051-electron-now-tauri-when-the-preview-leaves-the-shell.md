@@ -19,7 +19,7 @@ depends_on:
   - docs/decisions/0040-shared-browser-contract.md
   - docs/decisions/0045-agent-host-and-surface-transports.md
 validated_by:
-  - scripts/gates/check-desktop-ipc-matrix.py
+  - scripts/gates/check-surface-contract.py
   - scripts/gates/check-module-size.py
 ---
 

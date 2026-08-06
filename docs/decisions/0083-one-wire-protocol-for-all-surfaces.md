@@ -17,8 +17,12 @@ covers:
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-cli/src/main.rs
 validated_by:
-  - scripts/gates/check-desktop-ipc-matrix.py
-  - scripts/tests/test_desktop_ipc_matrix.py
+  - scripts/gates/check-surface-contract.py
+  - scripts/tests/test_surface_contract.py
+  - crates/optimus-host/tests/serve_protocol.rs
+  - apps/optimus-cli/tests/capability_probe.rs
+  - docs/architecture/surface-protocol.schema.json
+  - docs/architecture/surface-protocol.registry.json
 ---
 
 # ADR-0083: One wire protocol for all surfaces

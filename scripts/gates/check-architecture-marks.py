@@ -103,7 +103,7 @@ REQUIREMENTS: tuple[MarkRequirement, ...] = (
     MarkRequirement(
         name_prefixes=("UI architecture",),
         phases_done=("P15",),
-        required_paths=("scripts/gates/check-desktop-ipc-matrix.py",),
+        required_paths=("scripts/gates/check-surface-contract.py",),
         verification_any=(
             "_attic/architecture-records/s-plus-plus-plus-p15-verification.md",
         ),

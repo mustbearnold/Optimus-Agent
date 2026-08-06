@@ -192,6 +192,10 @@ modules:
 modules-ratchet:
     python3 scripts/gates/check-module-size.py --update
 
+# Regenerate the committed surface-protocol registry dump (spec-015 A5).
+surface-contract-dump:
+    python3 scripts/gates/check-surface-contract.py --update-dump
+
 # --- project systems ---------------------------------------------------------
 
 # Documentation authority, metadata, local links, staleness and retrieval.

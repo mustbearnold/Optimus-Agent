@@ -1754,7 +1754,7 @@ Full policy: the merged Versioning section above.
 | Parity ledger rollup | `python3 scripts/gates/check-parity-ledger.py` | ✅ | ✅ | ✅ | Evidence paths must exist; `parity`/`win` need trajectory |
 | Architecture marks claim hygiene | `python3 scripts/gates/check-architecture-marks.py` | ✅ | ✅ | optional | Fails if a mark is graded **S+++** without done phase / required paths |
 | Observability | `python3 scripts/gates/check-observability-gate.py` | ✅ when touching kernel/runtime/packs/eval | recommended | optional | Cargo integrity + causal/export surface |
-| Desktop IPC matrix | `python3 scripts/gates/check-desktop-ipc-matrix.py` | ✅ when touching desktop/tauri/ui | recommended | optional | Host ⊇ React = Tauri classification |
+| Surface contract | `python3 scripts/gates/check-surface-contract.py` | ✅ when touching desktop/tauri/ui | recommended | optional | Wire set ⊇ renderer union; schema + registry dump pinned (spec-015 A5) |
 | Domain modularity | `python3 scripts/gates/check-domain-modularity.py` | ✅ when touching packs/kernel/store | recommended | optional | Single `ToolDesc` catalog / plane separation |
 | Crate layers | `python3 scripts/gates/check-crate-layers.py` | ✅ when touching crate graph | recommended | optional | Control-plane peel deps |
 | Engineering Memory | `python3 scripts/tools/engineering_memory.py check` (+ `generate` / `validate` when stale) | ✅ | ✅ | optional | Generated maps must not be hand-edited |

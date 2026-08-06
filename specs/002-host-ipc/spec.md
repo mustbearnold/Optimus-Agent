@@ -15,8 +15,8 @@ covers:
   - apps/optimus-ui/src/ipc/**
   - apps/optimus-tauri/src/main.rs
 validated_by:
-  - scripts/gates/check-desktop-ipc-matrix.py
-  - scripts/tests/test_desktop_ipc_matrix.py
+  - scripts/gates/check-surface-contract.py
+  - scripts/tests/test_surface_contract.py
   - apps/optimus-desktop/e2e/**
 ---
 
@@ -53,7 +53,7 @@ folder picker) are explicit Tauri commands.
   HTTP mode is loopback and development-only.
 
 ## Acceptance criteria
-- [ ] A1. Given the current tree, when `scripts/gates/check-desktop-ipc-matrix.py` and its unit tests run, then they exit 0 with `DESKTOP_IPC_MATRIX_OK`.
+- [ ] A1. Given the current tree, when `scripts/gates/check-surface-contract.py` and its unit tests run, then they exit 0 with `SURFACE_CONTRACT_OK` (the surface-protocol gate, spec-015 A5).
 - [ ] A2. Given the critical path list, when the renderer surface and host registry are compared, then no critical method (approvals, scopes, sessions, fs, settings, `term_run`, `jobs_list`) is missing.
 - [ ] A3. Given the contract docs, when they are compared with the matrix gate output, then they match (no phantom methods or channels).
 
@@ -68,5 +68,5 @@ folder picker) are explicit Tauri commands.
 ## Links
 
 Code: crates/optimus-host, apps/optimus-desktop/src/bridge.rs ·
-Tests: check-desktop-ipc-matrix.py · ADRs: 0038, 0045 · Ontology:
+Tests: check-surface-contract.py · ADRs: 0038, 0045 · Ontology:
 optimus-host, optimus-ui

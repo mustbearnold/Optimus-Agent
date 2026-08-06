@@ -29,7 +29,9 @@ export type DesktopMethod =
   | 'session_search'
   | 'archive_session'
   | 'pin_session'
-  | 'chat_approval_resolve'
+  | 'chat_start'
+  | 'chat_cancel'
+  | 'chat_approval_resolve_start'
   | 'cron_list'
   | 'cron_add'
   | 'cron_tick'
@@ -395,7 +397,14 @@ export type TimingEvent = {
   type: 'timing';
   phase?: string;
   elapsed_ms?: number;
-  [key: string]: unknown;
+  /** The wire timing payload (spec-015): the kernel's timing fields. */
+  kind?: string | null;
+  status?: string | null;
+  step?: number | null;
+  call_id?: string | null;
+  name?: string | null;
+  duration_ms?: number | null;
+  suppressed?: boolean;
 };
 
 export type StreamEvent =

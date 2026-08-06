@@ -9,8 +9,8 @@ reviewed_on: 2026-07-31
 review_by: 2026-10-31
 knowledge_type: decision
 covers:
-  - scripts/gates/check-desktop-ipc-matrix.py
-  - scripts/tests/test_desktop_ipc_matrix.py
+  - scripts/gates/check-surface-contract.py
+  - scripts/tests/test_surface_contract.py
   - apps/optimus-ui/src/ipc/contracts.ts
   - crates/optimus-host/src/router.rs
   - scripts/rebuild-install-relaunch.sh
@@ -18,8 +18,8 @@ depends_on:
   - docs/decisions/0028-electron-react-shell-rust-host.md
   - docs/decisions/0029-react-workbench-and-electron-preview-view.md
 validated_by:
-  - scripts/gates/check-desktop-ipc-matrix.py
-  - scripts/tests/test_desktop_ipc_matrix.py
+  - scripts/gates/check-surface-contract.py
+  - scripts/tests/test_surface_contract.py
   - apps/optimus-ui/src/state/conversationStore.test.ts
 ---
 
@@ -90,16 +90,16 @@ The decision makes the invariant in the Decision section explicit and testable. 
 
 ## Evaluation evidence
 
-- `scripts/gates/check-desktop-ipc-matrix.py`
-- `scripts/tests/test_desktop_ipc_matrix.py`
+- `scripts/gates/check-surface-contract.py`
+- `scripts/tests/test_surface_contract.py`
 - `apps/optimus-electron/test/preview-security.test.cjs`
 - `apps/optimus-electron/test/browser-policy.test.cjs`
 - `apps/optimus-ui/src/state/conversationStore.test.ts`
 
 ## Relevant code
 
-- `scripts/gates/check-desktop-ipc-matrix.py`
-- `scripts/tests/test_desktop_ipc_matrix.py`
+- `scripts/gates/check-surface-contract.py`
+- `scripts/tests/test_surface_contract.py`
 - `apps/optimus-electron/main.cjs`
 - `apps/optimus-electron/preload.cjs`
 - `apps/optimus-ui/src/ipc/contracts.ts`
@@ -108,8 +108,8 @@ The decision makes the invariant in the Decision section explicit and testable. 
 
 ## Relevant tests
 
-- `scripts/gates/check-desktop-ipc-matrix.py`
-- `scripts/tests/test_desktop_ipc_matrix.py`
+- `scripts/gates/check-surface-contract.py`
+- `scripts/tests/test_surface_contract.py`
 - `apps/optimus-electron/test/preview-security.test.cjs`
 - `apps/optimus-electron/test/browser-policy.test.cjs`
 - `apps/optimus-ui/src/state/conversationStore.test.ts`

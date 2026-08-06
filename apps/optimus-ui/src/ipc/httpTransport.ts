@@ -21,7 +21,9 @@ export function hasHttpConfig() {
   return configFromQuery() !== null;
 }
 
-export function createHttpTransport(): OptimusTransport {
+export function createHttpTransport(): OptimusTransport & {
+  legacyInvoke<T>(method: string, params?: Record<string, unknown>): Promise<T>;
+} {
   const config = configFromQuery();
   if (!config) throw new Error('HTTP host pairing unavailable');
   let requestId = 1;
@@ -35,6 +37,20 @@ export function createHttpTransport(): OptimusTransport {
   return {
     kind: 'http',
     async invoke<T>(method: DesktopMethod, params: Record<string, unknown> = {}) {
+      return this.legacyInvoke<T>(method as string, params);
+    },
+    /**
+     * Named typed legacy shim (spec-015 A3): a STRING-typed invoke path for
+     * the superseded `chat_approval_resolve` member only (removed from the
+     * DesktopMethod union; exempted in the surface-contract gate as the
+     * HTTP-legacy bucket). Everything else dispatches through the typed
+     * union. The HTTP host is dev-only and has no streaming resolve
+     * endpoint, so this is the blocking IPC round trip.
+     */
+    async legacyInvoke<T>(
+      method: string,
+      params: Record<string, unknown> = {}
+    ): Promise<T> {
       const response = await fetch(`${config.baseUrl}/api/ipc`, {
         method: 'POST',
         headers: headers(),
@@ -98,16 +114,18 @@ export function createHttpTransport(): OptimusTransport {
     },
     // The HTTP host has no streaming resolve endpoint (the vanilla UI it serves
     // renders no approval cards), so this is the blocking IPC round trip. The
-    // product desktop shell uses the Tauri streaming path instead.
+    // product desktop shell uses the Tauri streaming path instead. The
+    // superseded member is reached through the named legacy shim (A3).
     chatApprovalResolve(
       request: ApprovalResolveRequest,
       onEvent: (event: StreamEvent) => void
     ): ChatHandle {
       const id = streamId++;
       const done = (async () => {
-        const result = await this.invoke<{ status: string }>('chat_approval_resolve', {
-          ...request,
-        });
+        const result = await this.legacyInvoke<{ status: string }>(
+          'chat_approval_resolve',
+          { ...request }
+        );
         onEvent({ type: 'done', result });
       })();
       return {

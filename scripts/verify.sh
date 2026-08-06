@@ -227,7 +227,7 @@ tier_gates() {
   spawn "crate-layers"               python3 scripts/gates/check-crate-layers.py
   spawn "domain-modularity"          python3 scripts/gates/check-domain-modularity.py
   spawn "instruction-planes"         python3 scripts/gates/check-instruction-planes.py
-  spawn "desktop-ipc-matrix"         python3 scripts/gates/check-desktop-ipc-matrix.py
+  spawn "surface-contract"           python3 scripts/gates/check-surface-contract.py
   spawn "autonomy-profiles"          python3 scripts/gates/check-autonomy-profiles.py
   spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
@@ -248,7 +248,7 @@ tier_gates() {
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/tests/test_architecture_marks.py
-  spawn "test_desktop_ipc_matrix"    python3 scripts/tests/test_desktop_ipc_matrix.py
+  spawn "test_surface_contract"      python3 scripts/tests/test_surface_contract.py
   spawn "test_engineering_memory"    python3 scripts/tests/test_engineering_memory.py
   spawn "test_docs_system"           python3 scripts/tests/test_docs_system.py
   spawn "test_repository_ontology"   python3 scripts/tests/test_repository_ontology.py
@@ -294,6 +294,11 @@ tier_test() {
   else
     run "cargo test" cargo test --workspace --all-targets -- --test-threads=1
   fi
+  # Pinned split suites (spec-015 A5): gate self-containment — the surface
+  # protocol conformance suite and the serve capability probe run by pinned
+  # command alongside the workspace tier (the double-run is harmless).
+  run "surface-protocol conformance" cargo test -p optimus-host --test serve_protocol
+  run "serve capability probe" cargo test -p optimus-cli --test capability_probe
 }
 
 # --- tier: live --------------------------------------------------------------
@@ -473,7 +478,7 @@ tier_all() {
   spawn "crate-layers"               python3 scripts/gates/check-crate-layers.py
   spawn "domain-modularity"          python3 scripts/gates/check-domain-modularity.py
   spawn "instruction-planes"         python3 scripts/gates/check-instruction-planes.py
-  spawn "desktop-ipc-matrix"         python3 scripts/gates/check-desktop-ipc-matrix.py
+  spawn "surface-contract"           python3 scripts/gates/check-surface-contract.py
   spawn "autonomy-profiles"          python3 scripts/gates/check-autonomy-profiles.py
   spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
@@ -494,7 +499,7 @@ tier_all() {
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/tests/test_architecture_marks.py
-  spawn "test_desktop_ipc_matrix"    python3 scripts/tests/test_desktop_ipc_matrix.py
+  spawn "test_surface_contract"      python3 scripts/tests/test_surface_contract.py
   spawn "test_engineering_memory"    python3 scripts/tests/test_engineering_memory.py
   spawn "test_docs_system"           python3 scripts/tests/test_docs_system.py
   spawn "test_repository_ontology"   python3 scripts/tests/test_repository_ontology.py
