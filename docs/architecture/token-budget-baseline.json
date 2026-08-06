@@ -23,7 +23,7 @@
       "note": "W4 lowers budget to 12,000"
     },
     "skill:optimus-agent-development/SKILL.md": {
-      "budget_bytes": 85272,
+      "budget_bytes": 87109,
       "target_bytes": 30000,
       "note": "W2 (owner-authorized) lowers to 30,000; skipped when no profile skill exists"
     }

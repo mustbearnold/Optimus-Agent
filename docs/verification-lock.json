@@ -37,7 +37,7 @@
       "resolved_files": 20
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "a4ee84e918261f3de10d5b6fb041c4df80ba6b46063cf0d209aadea1f9ee4e4a",
+      "binding_sha256": "11b7e898ba18fcb03a570e98a111c9600fafae962a46e4df9ad4073f619aeb5e",
       "document_sha256": "45b13ab7c0ad537149ed3d1212c6ff8fea5360702352d4bea2752457894c9541",
       "path": "docs/runbooks/project-hygiene.md",
       "resolved_files": 3
@@ -199,7 +199,7 @@
       "resolved_files": 13
     },
     "decisions-0025-artifact-workbench-and-owned-presentation-state": {
-      "binding_sha256": "0ac9b901a07c75f173f5c3105420370d7ce06be7f87790b79ad8c7daf447ecdd",
+      "binding_sha256": "cb9106b8c4afc7e501a9ad5cdf2ddcb9718b572ee5f95822a50b365106b16219",
       "document_sha256": "391345db173889b39c99497c4bc07ee2e6a3f8ffc5e71745790a83f6ad22c002",
       "path": "docs/decisions/0025-artifact-workbench-and-owned-presentation-state.md",
       "resolved_files": 16
@@ -361,7 +361,7 @@
       "resolved_files": 10
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "02736c23ca5d34e4757afdd557d446e628f022fe65e5b753e609884740e7c239",
+      "binding_sha256": "4aa61bf3ef6da0a146725509c73f59023c79ef11fb103aa2e80aed77362c5d82",
       "document_sha256": "312a8d2082506b419af27a8fa4d99f21c89cdce0eee0a605f14f5ea528610c89",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 6
@@ -481,7 +481,7 @@
       "resolved_files": 12
     },
     "decisions-0079-keep-bun-as-the-js-package-manager": {
-      "binding_sha256": "3d621720a2448f8e17fe6d97c839870df55b25bc21ad8907ccce0ed390ae34b2",
+      "binding_sha256": "e17cddfc70da8d9111fac1f83ac57e8289d13af1181c18d0f1d3d0d8fd98794e",
       "document_sha256": "a63634cf6d597c8369a736b5a3fe058f146965910ae0e742d209f6f7be49d176",
       "path": "docs/decisions/0079-keep-bun-as-the-js-package-manager.md",
       "resolved_files": 7
@@ -601,7 +601,7 @@
       "resolved_files": 44
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "b4e5cdad8cb995b10c02ee7a946fc1d09f1a7dedf501dcafc429d3192c409307",
+      "binding_sha256": "65537c2f2effd56c4db8ab92c588ca52b6632a43c2b0f1ed1f9b7d38a481c6bc",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 87
@@ -631,19 +631,19 @@
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "023a27425f0b77034f71125b234824f67808bda27a12fdb40272583eaa4f66c3",
+      "binding_sha256": "6c93f4b628c82e766973c841a5e770b71b6c01b805af2faaad044cfe9c6904bf",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "5108b64a97ad184eded02e374eda19822803a2462b56ae66440cb2849857d0d0",
+      "binding_sha256": "9bdd509640deef4202ad8bf6cb2f9f87933ad64d42f1521ad7a15732c473497c",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117
     },
     "specs-conventions": {
-      "binding_sha256": "a4cc3f59ad2854c5e49e612594fc37341e6347227850ca177d10924d37de2283",
+      "binding_sha256": "d4f8f8be60becea5cbd56a276b0284fc887c77c7412dafb974d9c836d77787bd",
       "document_sha256": "c816724ffcfb8379ed6edda866cfe407b0ed05ba0f7d59b39819b17b2e53d81f",
       "path": "specs/conventions.md",
       "resolved_files": 6
