@@ -217,28 +217,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "d632f31fe7673d2359a50b3df58a265e885b0b49935b127326ad24747939c653",
+      "binding_sha256": "5c4e8fd8ab9361701d7e132947dbe1aac646bed7622ea86b65a3c77b7cd533b3",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 120
+      "resolved_files": 122
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "c29adcb864438ad46fbfc363a6a70af8cfec6a095c4aea1168752ef537fa7b62",
+      "binding_sha256": "d91180219db102b5ae1f11edcfaf4a28aac3cd1234a62134ecd68e4fe32d0ee0",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 119
+      "resolved_files": 121
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "94123a83808be8228e3f83f87005859bb0ad8c1c511b69d22e4650d48d255fd9",
+      "binding_sha256": "c465ca0375344233c6e308001bd6dac16fcef37c48737aab25e6a8e736cf99a5",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 92
+      "resolved_files": 94
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "6ec7eaae2f230a646ab6eaedf547cb0fcd57a472098b4e98688958c4c0dba223",
+      "binding_sha256": "86a0017d1cb9969766cdd08f812099c351e1c421e3b90973bddab212ae35f810",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 121
+      "resolved_files": 123
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "e0a382903ee5a918c6e058ad1e95a8deaf1cc3f78a4165f4c4e01a2cc02f0014",
@@ -277,7 +277,7 @@
       "resolved_files": 6
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "0d3ddaaf4a7fb4f6d85ba49069beff03bf490c14e276bcc7c9d1e83e7c21c9bb",
+      "binding_sha256": "366982bd3201c963a20b89c11ec26d3296a46aefd3e12327f226a57cea609c56",
       "document_sha256": "efc4ff5b0b63afbb7d35ea0eacd5d7c1dfc4cc3476de237c3344588ade231b70",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 8
@@ -295,7 +295,7 @@
       "resolved_files": 8
     },
     "decisions-0041-mcp-ingress-pack-gated": {
-      "binding_sha256": "6650d4040f8cca1c57cd0716717e214a16fd4bd3d5a191e6333e4e4eb32fa8b7",
+      "binding_sha256": "c94140aec3aa7e5a07a1c3df76cb2ffc66a1a27701c24d710bba979e7f8b6704",
       "document_sha256": "ca3017cc0cf03f3a263c3e1b18e1ca71fe6c0e397fca144c9e092a5cf8225205",
       "path": "docs/decisions/0041-mcp-ingress-pack-gated.md",
       "resolved_files": 4
@@ -355,7 +355,7 @@
       "resolved_files": 10
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "2be275a40f570a5f363eb2d1067132f7b15b1b0b702dd7cc039b799c195d3313",
+      "binding_sha256": "2ef27584333c11c42e5acbb79d4a78d100a4039211e02fd84a885502c6c41a46",
       "document_sha256": "92342194fbd68c9ff9430df334932ae0d962a5f10e750d432628df75be6c8692",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 10
@@ -493,7 +493,7 @@
       "resolved_files": 5
     },
     "decisions-0081-truthful-approval-resolution-and-session-consent": {
-      "binding_sha256": "2ac116b2906e15a5a3bb4e35a3fcdc8bef5a7416ddec734b53b90968be453f4a",
+      "binding_sha256": "dda115695f4fe689bcf0a13e1185b894d646ef083e9e9280491f8f48e48ca93c",
       "document_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
       "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
       "resolved_files": 14
@@ -505,13 +505,13 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "1fd790d396fd197be99b541d394c18c5520532d4194f2a4ce336b9f39c0d7ba1",
+      "binding_sha256": "8ad0907d44b57f473c34b30c218efb477bd3601cfe877618aab6a671d2ccf7b5",
       "document_sha256": "33371fbd73ea2b44fb9926cc9847d85dd01a00576c1961bb4527efce71e535f3",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 13
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "2acafb80b72134b883284c58e80ba910943f0d84ed8c173a51df079624fb1a99",
+      "binding_sha256": "c31694e4b1fdccbecf00bd80841f891568a6d78a81993af6fc897de1facf1efe",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
@@ -541,16 +541,16 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "00d00e6c4d4888d3ff649647ea4a11a4970b8bbcab4e736aaa0cd34194926ba9",
+      "binding_sha256": "b1bee8e22e550eaf2bf57a6c169131a863c562dbec3ab5f6ffce8a7c299ac438",
       "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 100
+      "resolved_files": 102
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "ec5fb20d6e11b9c45480643bd8b4746d645419a3dd3a5b27c2dd7015412acb3c",
+      "binding_sha256": "3a67263baa3a0b29b9c9d74a4c6df9e22e55854eebe1fbce617c6396f66ebdb7",
       "document_sha256": "0384df26dba334f01d0d07437909434acaa9638972e7acaa6018e12d79ff5e72",
       "path": "specs/002-host-ipc/spec.md",
-      "resolved_files": 47
+      "resolved_files": 49
     },
     "spec-003-kernel-turns": {
       "binding_sha256": "56a916c9ee0068b9d50478e07359f7b12ce2cbd3e99b64431d17e0c67f1244a1",
@@ -577,7 +577,7 @@
       "resolved_files": 14
     },
     "spec-007-ops": {
-      "binding_sha256": "3ee61f5048951e6a0cdfea0ff500f047856e4ebe3dd47e06bc6ad3b6fbc30867",
+      "binding_sha256": "a8cbb2546d3216648ac81733b58c2b135080eb8b4231be5f58a3cc0d4a160a96",
       "document_sha256": "87f8b52f571cd8ea1201c90de4e39e41ee74a740a3879287ac7cfc84006bab93",
       "path": "specs/007-ops/spec.md",
       "resolved_files": 39
@@ -619,25 +619,25 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "7ea9aacbf192a8de003a7f43ef665329ff1568d688a54f1028001a9c8ff93cab",
+      "binding_sha256": "01ed2c31a5c58157f7b2d50f4df0cd9246bc07d93761d846edd8f9533eceff54",
       "document_sha256": "7e8ed546799aedf29ac97526fa3c3acef05811a5fac894677b4da494bfc5a574",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 45
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "9281f0364328bf98f4bd882e73bce96765d8a9cbd48c386bc76d4992b38f8daf",
-      "document_sha256": "46fe31aef9076bc39b0f0ae4ea3c1ade5afb1fd90607affe973707a7b0e19c85",
+      "binding_sha256": "96a7afe984c12e1d5021e7938148976573a121ec21ef12defcaaf7a6208c02c7",
+      "document_sha256": "492bdb5214260ef810ebb202bfb34220c4125c5361e06d33d12ee120a850f09b",
       "path": "specs/015-surface-protocol/spec.md",
-      "resolved_files": 40
+      "resolved_files": 41
     },
     "specs-backlog": {
-      "binding_sha256": "acdb97355d5ee4c8841d33a3229441b69cd927a2a931c8887359c714e64d490a",
+      "binding_sha256": "5243b6bc5101686cda79987651d76212d6829b5e04abd037a6f93e9f278ac30c",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "c3c1a32ba18b6dbd1e29f3699e047e3807b4f07ad86cd3d86c55e4305deea8fe",
+      "binding_sha256": "7d94e72ca977d5ab8364fa87a2b2c20a7040c990d9ead82a29591141fda0f3fb",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117
