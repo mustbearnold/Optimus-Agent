@@ -18,12 +18,15 @@ mod gateway_turn;
 mod home;
 mod messaging;
 mod os;
+mod record;
 mod router;
 mod runtime_ops;
 mod scheduling;
 mod scope;
+mod serve;
 mod sessions;
 mod system;
+mod ticket;
 
 pub use chat::{
     chat_approval_resolve, chat_approval_resolve_cancellable, chat_turn, chat_turn_cancellable,
@@ -33,9 +36,17 @@ pub use contract::{IpcEnvelope, IpcReply};
 pub use gateway_turn::{drain_gateway_once, gateway_turn, session_for_address};
 pub use home::resolve_home;
 pub use os::pick_folder_dialog;
+pub use record::{
+    healthy_record, healthy_serving_port, holder_refusal_diagnostic, read_record, record_path,
+    write_record, HostRuntimeRecord, RUNTIME_RECORD_FILE, TRANSPORT_HTTP, TRANSPORT_WS,
+};
 pub use router::handle_ipc;
+pub use serve::{
+    append_connection_log, run as serve_run, DEFAULT_HOST_PORT, EXIT_BIND_OR_SECURITY, EXIT_REFUSED,
+};
 pub use sessions::sessions_json;
 pub use system::{auth_status_json, doctor_json};
+pub use ticket::{dial_ticket, process_secret, PROCESS_SECRET_ENV, TICKET_ENV};
 
 #[cfg(test)]
 mod tests {

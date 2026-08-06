@@ -20,6 +20,7 @@ dirs = "6"
 rfd = "0.15"
 url = "2"
 libc.workspace = true
+tiny_http = "0.12"
 
 [dev-dependencies]
 tempfile.workspace = true

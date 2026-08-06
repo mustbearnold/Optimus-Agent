@@ -8,6 +8,7 @@ mod parsers;
 mod read_only;
 mod runtime_open;
 mod telegram_cmd;
+mod vertical_cmd;
 use clap::{Parser, Subcommand};
 use optimus_eval::{
     run_offline_trajectory_suite, run_priority2_offline_evaluation, CandidateBinding,
@@ -16,10 +17,8 @@ use optimus_eval::{
 use optimus_kernel::{
     acknowledge_delivery, enqueue, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
     list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn, open_cron,
-    open_seeded_agent_registry, open_seeded_workflow_registry, parse_causal_query,
-    run_read_file_handoff, run_write_file_handoff, run_write_then_read_handoff, tick_cron,
-    write_causal_export, BrowserSession, CodexAuthStore, CompletionResponse, Kernel, KernelConfig,
-    ReadFileHandoffRequest, ScriptedModel, ToolCall, WriteFileHandoffRequest,
+    parse_causal_query, tick_cron, write_causal_export, BrowserSession, CodexAuthStore,
+    CompletionResponse, Kernel, KernelConfig, ScriptedModel, ToolCall,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
@@ -168,6 +167,18 @@ enum Commands {
     Trace {
         #[command(subcommand)]
         cmd: TraceCmd,
+    },
+    /// Headless agent backend: one core per home, JSON-RPC 2.0 over stdio +
+    /// loopback WebSocket (spec-015, ADR-0083). The wire contract every
+    /// Optimus surface speaks; the packaged desktop app spawns this.
+    Serve {
+        /// Loopback port for the record + WS listener (default 17865)
+        #[arg(long, default_value_t = optimus_host::DEFAULT_HOST_PORT)]
+        port: u16,
+        /// Also serve the stdio carrier (spawned children). The ONLY mode
+        /// that reads stdin; plain serve never reads stdin at all.
+        #[arg(long)]
+        stdio: bool,
     },
 }
 
@@ -434,7 +445,7 @@ enum TraceCmd {
 }
 
 #[derive(Subcommand, Debug)]
-enum VerticalCmd {
+pub(crate) enum VerticalCmd {
     /// List seeded built-in specialists and workflows
     List,
     /// Run write_file_handoff → workspace_writer vertical
@@ -1371,137 +1382,12 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 Ok(())
             }
         },
-        Commands::Vertical { cmd } => {
-            match cmd {
-                VerticalCmd::List => {
-                    let agents = open_seeded_agent_registry(cli.home.join("agent-registry.db"))?;
-                    let workflows =
-                        open_seeded_workflow_registry(cli.home.join("workflow-registry.db"))?;
-                    println!("agents:");
-                    for agent in agents.list()? {
-                        println!(
-                            "  {}@{} — {}",
-                            agent.id.as_str(),
-                            agent.version.as_str(),
-                            agent.responsibility
-                        );
-                    }
-                    println!("workflows:");
-                    for workflow in workflows.list()? {
-                        println!(
-                            "  {}@{} — {}",
-                            workflow.id.as_str(),
-                            workflow.version.as_str(),
-                            workflow.description
-                        );
-                    }
-                }
-                VerticalCmd::WriteFile {
-                    path,
-                    contents,
-                    auto_grant,
-                    policy,
-                    json,
-                } => {
-                    let policy = parsers::parse_policy_mode(&policy)?;
-                    let report = run_write_file_handoff(
-                        &cli.home,
-                        WriteFileHandoffRequest {
-                            relative_path: path,
-                            contents,
-                            auto_grant,
-                            policy,
-                        },
-                    )?;
-                    if json {
-                        println!("{}", serde_json::to_string_pretty(&report)?);
-                    } else {
-                        println!(
-                            "workflow={}@{} terminal={:?} agent={}@{} invocation={}",
-                            report.workflow_id,
-                            report.workflow_version,
-                            report.workflow_terminal,
-                            report.agent_id,
-                            report.agent_version,
-                            report.invocation_id
-                        );
-                        if let Some(run_id) = report.run_id {
-                            println!("run={run_id}");
-                        }
-                        if let Some(job) = report.job_id {
-                            println!("job={job}");
-                        }
-                        println!("summary={}", report.agent_result.summary);
-                        if let Some(artifact) = report.artifact {
-                            println!("artifact={} bytes={}", artifact.sha256, artifact.size_bytes);
-                        }
-                    }
-                }
-                VerticalCmd::ReadFile { path, json } => {
-                    let report = run_read_file_handoff(
-                        &cli.home,
-                        ReadFileHandoffRequest {
-                            relative_path: path,
-                        },
-                    )?;
-                    if json {
-                        println!("{}", serde_json::to_string_pretty(&report)?);
-                    } else {
-                        println!(
-                            "workflow={}@{} status={:?} run={}",
-                            report.workflow_id,
-                            report.workflow_version,
-                            report.status,
-                            report.run_id
-                        );
-                        println!("summary={}", report.summary);
-                        for artifact in report.artifacts {
-                            println!("artifact={} bytes={}", artifact.sha256, artifact.size_bytes);
-                        }
-                    }
-                }
-                VerticalCmd::WriteThenRead {
-                    path,
-                    contents,
-                    auto_grant,
-                    policy,
-                    json,
-                } => {
-                    let policy = parsers::parse_policy_mode(&policy)?;
-                    let report = run_write_then_read_handoff(
-                        &cli.home,
-                        WriteFileHandoffRequest {
-                            relative_path: path,
-                            contents,
-                            auto_grant,
-                            policy,
-                        },
-                    )?;
-                    if json {
-                        println!("{}", serde_json::to_string_pretty(&report)?);
-                    } else {
-                        println!(
-                            "workflow={}@{} status={:?} run={} nodes={} children={}",
-                            report.workflow_id,
-                            report.workflow_version,
-                            report.status,
-                            report.run_id,
-                            report.nodes.len(),
-                            report.children.len()
-                        );
-                        for node in &report.nodes {
-                            println!(
-                                "  node={} status={} artifact={:?}",
-                                node.node_id,
-                                node.status.as_str(),
-                                node.artifact_sha256
-                            );
-                        }
-                        println!("summary={}", report.summary);
-                    }
-                }
-            }
-            Ok(())
+        Commands::Vertical { cmd } => vertical_cmd::run(&cli.home, cmd),
+        Commands::Serve { port, stdio } => {
+            // Headless backend: refuses (exit 3) on a healthily served home,
+            // exits 2 on bind/security/record-write failure, then serves
+            // forever (spec-015 A1). Never returns.
+            optimus_host::serve_run(&cli.home, port, stdio);
         }
     }
 }

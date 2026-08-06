@@ -168,7 +168,14 @@ pub fn run_http_server(
         // One core per home (C3): the bound host advertises itself so other
         // surfaces probe and attach instead of spawning. Best effort — a home
         // without a record just means the next surface falls back to a spawn.
-        if let Err(error) = crate::host_runtime::write_record(&home, port, &security.token) {
+        // Record v2/http (spec-015 A1): the surviving --host-only writer
+        // emits the same v2 shape serve emits, with the http transport label.
+        if let Err(error) = crate::host_runtime::write_record(
+            &home,
+            port,
+            &security.token,
+            optimus_host::TRANSPORT_HTTP,
+        ) {
             eprintln!("[optimus-desktop] could not advertise host runtime: {error}");
         }
     }
