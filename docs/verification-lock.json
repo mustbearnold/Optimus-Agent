@@ -217,13 +217,13 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "6ac321fe6ff0e41e69852071d80cbfa8879839f99ead06c62978e16b6dd3d958",
+      "binding_sha256": "ece4280ea8d43d75eec32d7250c8e26640eda042b8bc7eb6b221c5e444dd6065",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 124
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "7695786a122c6b6c69a974b00275629ffd35dd1cab22588a5a640a00643d36e7",
+      "binding_sha256": "c22eabd943916058ad08212d2b37f00a9028e7c445314a7734c90d6df7b2443c",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 123
@@ -235,7 +235,7 @@
       "resolved_files": 95
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "9ebca5fd6a1ee1f2b59d5432a977a25797a4d0ec0b9ed773f366993e21af1874",
+      "binding_sha256": "f6ebf6528046ab9e38584d196f2c1789b7c199b4dd01a7bdc29193ceb7318484",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 125
@@ -505,19 +505,19 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "df0654d82c62bb0f224eac2c406dd9683f362f97501baaf19503503bb97a2b75",
-      "document_sha256": "5f9507818a93a5ffdb3599f41d65ef3ee5d259555f79afc5f1ae8787e1514109",
+      "binding_sha256": "fccffb187dab8c7a2c79c37b55da39f2c6f2532d56af100bf1842936cf2f48c6",
+      "document_sha256": "ecd4065e35afe1f1978d29d5cd7bd566c84bebdbc4b3093bf70e828c9f002565",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 17
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "5f597f885fa168de6bb7db6d9d33f11146156fd9516f61e6e2461e85b433e6e2",
+      "binding_sha256": "6c3aca98ea5d22a4a526db5390b813c1e113e530eda3c536cb09317e63b42cbb",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
     },
     "decisions-readme": {
-      "binding_sha256": "1c9254259d8c3c8c0105a547041dd4e5eb86a7d79d90a3aeecf132015847b6d4",
+      "binding_sha256": "4e74e07b7d1a0a0ae1b17f9a508550f0a380be6aa1e9d5cd2a2e24b3decb4595",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 89
@@ -547,7 +547,7 @@
       "resolved_files": 105
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "f27d2c067fc94232f5c063cab831e93edc35958179dd810daf3472201a1c0ad9",
+      "binding_sha256": "2ebe0597df1345f988654f3be7d73adc899536c21d0d899fb6369dcb7450e263",
       "document_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "path": "specs/002-host-ipc/spec.md",
       "resolved_files": 51
@@ -625,19 +625,19 @@
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "dd36ce11b608acc8997fd759e8176575c0af3615d5627d82a2174bb3c5279fca",
-      "document_sha256": "9cd0839e09614b1b0b29e5336fd39cfd0a0e0c45fe01f31d0afd7e21ceac91e5",
+      "binding_sha256": "7c2b4ddcd694aecaac7492be66561e920b4379f557652104a5a572fd998ce475",
+      "document_sha256": "9433c88786cb8dc70fd153e4e7df544a4ec8c1507453ccc86e6b4163ed52093d",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "8fb9e1d106ac92e2d4e8e1de61884929999f701f6afff864009e636695548861",
+      "binding_sha256": "28168c67595961301121953053cd0fde3a4448638c33bcc0cb5cbb25820d74bf",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "6fbd1f0788b26d7d0b80ed0cb2e7e14f834a3fd855b06d9870777cd88179cf1f",
+      "binding_sha256": "d2037f44bd4c4710f234015d2d3f0b2403e3fc644b462939f1c038e9737660ca",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117

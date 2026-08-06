@@ -375,9 +375,9 @@ pub fn process_frame(state: &ServeState, conn: &Arc<Connection>, carrier: Carrie
     // Id-less frames are notifications: dropped, never dispatched, never
     // answered (R6). The drop rule governs frames WITHOUT an id member —
     // an id member that is present but not a u64 is a BAD id: `-32600`
-    // with `id:null` (R4). Credential-layer closes still apply, and those
-    // happen in the hello path before this function is reached for absent
-    // tickets.
+    // with `id:null` (R4). Credential-layer closes still apply to
+    // id-ful frames: an absent-ticket hello is closed in the hello
+    // handler below; id-less frames never reach it (dropped here).
     let id = match object.get("id") {
         None => return,
         Some(Value::Number(number)) => match number.as_u64() {

@@ -3463,7 +3463,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5f9507818a93a5ffdb3599f41d65ef3ee5d259555f79afc5f1ae8787e1514109",
+      "content_sha256": "ecd4065e35afe1f1978d29d5cd7bd566c84bebdbc4b3093bf70e828c9f002565",
       "headings": [
         "ADR-0083: One wire protocol for all surfaces",
         "Context",
@@ -4000,7 +4000,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "9cd0839e09614b1b0b29e5336fd39cfd0a0e0c45fe01f31d0afd7e21ceac91e5",
+      "content_sha256": "9433c88786cb8dc70fd153e4e7df544a4ec8c1507453ccc86e6b4163ed52093d",
       "headings": [
         "Surface protocol — one wire contract for CLI, TUI, and desktop",
         "Revision table",
@@ -4091,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "6da1646fe28ee9c4b8576f38b2bc097beb14125820cd3aebbbaa99580630b571",
+  "documents_sha256": "a4a55027df28588c12a704fd9e5bdb50b88b9371eb67ecebb510e3eb937cdd33",
   "routes": [
     {
       "id": "docs.navigation",

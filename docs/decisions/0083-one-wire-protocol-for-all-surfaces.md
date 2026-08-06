@@ -42,8 +42,8 @@ is remote messaging. Optimus built the second (`optimus-ops`) and never
 built the first." Today every surface embeds the runtime: the TUI links
 `optimus-host` in-process (`apps/optimus-tui/src/lib.rs:3-6`), the packaged
 Tauri shell links the host in-process with the renderer reaching it over
-`host_invoke` (`apps/optimus-tauri/src/main.rs:64`), and the CLI opens a
-`Kernel` directly (`apps/optimus-cli/src/main.rs:700`). The owner milestone
+`host_invoke` (`apps/optimus-tauri/src/main.rs:72`), and the CLI opens a
+`Kernel` directly (`apps/optimus-cli/src/main.rs:711`). The owner milestone
 (2026-08-05) directs the Hermes model: one protocol boundary covers CLI,
 TUI, and desktop; the protocol artifact captures the whole surface
 contract. The milestone's words "Electron" and "tui_gateway" describe the
@@ -51,7 +51,7 @@ Hermes reference model, not Optimus mandates — the packaged app is
 exclusively Tauri (spec-001) and the new artifact uses the `serve`/host
 vocabulary (ADR-0045's naming plane). The verb is deliberately distinct
 from the existing subcommand-scoped `cron serve`
-(`apps/optimus-cli/src/main.rs:257`) and `gateway serve` (`main.rs:327`).
+(`apps/optimus-cli/src/main.rs:855`) and `gateway serve` (`main.rs:1059`).
 
 ## Decision
 
