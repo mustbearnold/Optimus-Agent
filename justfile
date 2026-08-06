@@ -192,6 +192,18 @@ modules:
 modules-ratchet:
     python3 scripts/gates/check-module-size.py --update
 
+# Agent-facing token budgets (approved token-efficiency plan D-5): surfaces
+# may never exceed their baseline budget; re-baseline only after a
+# deliberate, committed growth wave.
+token-budget:
+    python3 scripts/gates/check-repo-token-budget.py
+
+token-budget-report:
+    python3 scripts/gates/check-repo-token-budget.py --report
+
+token-budget-update:
+    python3 scripts/gates/check-repo-token-budget.py --update
+
 # Regenerate the committed surface-protocol registry dump (spec-015 A5).
 surface-contract-dump:
     python3 scripts/gates/check-surface-contract.py --update-dump

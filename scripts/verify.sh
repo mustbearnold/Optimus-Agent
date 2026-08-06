@@ -240,6 +240,7 @@ tier_gates() {
   spawn "version-validate"           python3 scripts/tools/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/tools/optimus_version.py release-check
   spawn "lockfile-discipline"        python3 scripts/gates/check-lockfile-discipline.py
+  spawn "token-budget"               python3 scripts/gates/check-repo-token-budget.py
   spawn "engineering-memory"         python3 scripts/tools/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/tools/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/tools/docs_system.py check
@@ -272,6 +273,7 @@ tier_gates() {
   spawn "test_tui_feature_matrix"    python3 scripts/tests/test_tui_feature_matrix.py
   spawn "test_verify_gate_parity"    python3 scripts/tests/test_verify_gate_parity.py
   spawn "test_lockfile_discipline"   python3 scripts/tests/test_lockfile_discipline.py
+  spawn "test_repo_token_budget"     python3 scripts/tests/test_repo_token_budget.py
   reap
 }
 
@@ -491,6 +493,7 @@ tier_all() {
   spawn "version-validate"           python3 scripts/tools/optimus_version.py validate
   spawn "version-release-check"      python3 scripts/tools/optimus_version.py release-check
   spawn "lockfile-discipline"        python3 scripts/gates/check-lockfile-discipline.py
+  spawn "token-budget"               python3 scripts/gates/check-repo-token-budget.py
   spawn "engineering-memory"         python3 scripts/tools/engineering_memory.py check
   spawn "engineering-memory-valid"   python3 scripts/tools/engineering_memory.py validate
   spawn "documentation-contract"     python3 scripts/tools/docs_system.py check
@@ -523,6 +526,7 @@ tier_all() {
   spawn "test_tui_feature_matrix"    python3 scripts/tests/test_tui_feature_matrix.py
   spawn "test_verify_gate_parity"    python3 scripts/tests/test_verify_gate_parity.py
   spawn "test_lockfile_discipline"   python3 scripts/tests/test_lockfile_discipline.py
+  spawn "test_repo_token_budget"     python3 scripts/tests/test_repo_token_budget.py
 
   spawn_section "compile"
   spawn "cargo check" cargo check --workspace --all-targets

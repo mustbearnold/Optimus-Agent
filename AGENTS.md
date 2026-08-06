@@ -1,10 +1,9 @@
 # Optimus Agent engineering rules
 
-This file is the operational entry point for humans and coding agents working
-on the Optimus source tree. The repository's governing law is
-[`specs/constitution.md`](specs/constitution.md) (highest authority), with
-[`specs/conventions.md`](specs/conventions.md) second. Conflict order:
-constitution → conventions → specs → code comments.
+Operational entry point for humans and coding agents on the Optimus
+source tree. Governing law: [`specs/constitution.md`](specs/constitution.md)
+(highest authority), then [`specs/conventions.md`](specs/conventions.md).
+Conflict order: constitution → conventions → specs → code comments.
 
 This is a developer control artifact. The installed Optimus runtime must
 never mutate it. The product runtime constitution is
@@ -14,8 +13,8 @@ it is intentionally separate from this file.
 ## Instruction-plane firewall (mandatory)
 
 A request about **how a coding agent should develop Optimus** is not a product
-requirement. Development instructions about autonomy, orchestration, model
-selection, reasoning effort, permissions, tools, VCS, testing, or reporting
+requirement. Development instructions (autonomy, orchestration, model
+selection, reasoning effort, permissions, tools, VCS, testing, reporting)
 govern the agents changing this repository only. Never copy them into product
 prompts, policy defaults, UI behaviour, or runtime capabilities unless the
 user explicitly asks to change Optimus Agent itself.
@@ -23,7 +22,7 @@ user explicitly asks to change Optimus Agent itself.
 | User request | Plane | Meaning |
 |---|---|---|
 | "Work autonomously on Optimus" | Development | Make progress directly on `main` without repeatedly asking for routine choices. |
-| "Use agents/models appropriate to the task" | Development | The primary coding agent selects and orchestrates bounded engineering subtasks. |
+| "Use agents/models appropriate to the task" | Development | Primary agent selects and orchestrates bounded engineering subtasks. |
 | "Make Optimus more autonomous" | Product | Change runtime behaviour, with source, tests, docs, and safety review. |
 | "Change how Optimus asks for approval" | Product | Change the product policy/UX, not the coding-agent permission model. |
 
@@ -82,10 +81,10 @@ refused. Do not attempt to bypass these hooks.
 
 Label architecture claims as **Confirmed current behaviour**, **Inferred
 behaviour**, **Planned behaviour**, or **Unknown or unresolved behaviour**.
-Source code and executable tests outrank prose. ADRs preserve decisions and
-history; do not rewrite them to hide superseded reasoning. Do not claim
-specialist agents, model routing, cancellation, replay, GPU, or project
-integrations exist unless their real implementation and tests exist.
+Source code and executable tests outrank prose; ADRs are never rewritten to
+hide superseded reasoning. Do not claim specialist agents, model routing,
+cancellation, replay, GPU, or project integrations exist unless their real
+implementation and tests exist.
 
 ## Development workflow
 
@@ -141,10 +140,9 @@ subordinate to this file, the main-only boundary, and direct-on-main delivery.
 
 ### Task records
 
-Repository development tracks work in GitHub issues, opened with `gh issue`
-and resolved by verified commits on `main` pushed to `origin/main`. Issue
-and commit progress run in parallel — locally (commits) and remotely (issue
-state, pushed history). Pull requests remain outside the delivery plane.
+GitHub issues (`gh issue`) are the task plane, opened and resolved by
+verified commits on `main` pushed to `origin/main`; issue and commit progress
+run in parallel. Pull requests remain outside the delivery plane.
 
 ### Domain docs
 

@@ -1,0 +1,31 @@
+{
+  "comment": "Token-budget ratchet for agent-facing surfaces (approved plan Development/tmp/plan-token-efficiency-draft.md, D-5). budget_bytes is a ceiling: surfaces may never exceed it. target_bytes is the approved-plan destination, reached when the corresponding workstream lands. Re-baseline (--update) only after a deliberate, committed growth wave.",
+  "measure": "bytes (chars); est. tokens ~= bytes / 4",
+  "surfaces": {
+    "AGENTS.md": {
+      "budget_bytes": 8127,
+      "target_bytes": 6500,
+      "note": "W1 landed 2026-08-07: 8,315 -> 8,127 (-188 B, -2.3%). Target 6,500 is INFEASIBLE under D-3 preservation pins (21 laws + workflow steps + conventions list + firewall table + evidence labels + firewall adjudication kept verbatim); the pinned floor is ~8.1 KB. Revisit only if pins relax."
+    },
+    "CONTEXT.md": {
+      "budget_bytes": 1696,
+      "target_bytes": 2000,
+      "note": "leave as-is"
+    },
+    "docs/architecture.md": {
+      "budget_bytes": 100331,
+      "target_bytes": 45000,
+      "note": "W3 lowers budget to 45,000 when the split lands"
+    },
+    "skills/ (in-repo)": {
+      "budget_bytes": 19122,
+      "target_bytes": 12000,
+      "note": "W4 lowers budget to 12,000"
+    },
+    "skill:optimus-agent-development/SKILL.md": {
+      "budget_bytes": 85272,
+      "target_bytes": 30000,
+      "note": "W2 (owner-authorized) lowers to 30,000; skipped when no profile skill exists"
+    }
+  }
+}

@@ -1061,7 +1061,7 @@
   "documents": [
     {
       "authority": "canonical",
-      "content_sha256": "9450ae0c90f4e3fce2cef983f0b6f7ef6b30322c5b9cea90e31da11c2211c81a",
+      "content_sha256": "93d19b168813eb7a9eae81590b224ea90eb0598afa32a482042b59b926c17028",
       "headings": [],
       "id": "development-instructions",
       "path": "AGENTS.md",
@@ -4091,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "7c067c6cb5267e49a63a14253f744db2c6e90fb3fbbe83e0257f41a8e9b50316",
+  "documents_sha256": "fdb765b3ed1726b6df7e681e06d728b453d8ea7aea02c07632e8346b2c0f3321",
   "routes": [
     {
       "id": "docs.navigation",
