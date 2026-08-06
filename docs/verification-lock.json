@@ -217,16 +217,16 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "78640a052a43d56338e57222c96697f08a553d6ae477ee3a1aca58147630d9f7",
+      "binding_sha256": "c1979a55e7e44d46debf444c6bc38aa5c3251579338026206a897c26a5df23b7",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 117
+      "resolved_files": 120
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "4f63b6c2726d1e0a3bde50b409e5de833982e1e292d5c10ad288838137cffd34",
+      "binding_sha256": "5c9c6f2269ea6e27f0bb7fd3da42bf2442c5e5da1d90d6490dc09ff61f14a733",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 116
+      "resolved_files": 119
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
       "binding_sha256": "43e54ebc1faf4370aaffb69ee3f68c7eac2c45912ef82214ef24bc36cfde6c64",
@@ -235,10 +235,10 @@
       "resolved_files": 92
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "0cedb91a0e42b73cf287cbf6780450f7a11ea29cb21832e6e984908468568977",
+      "binding_sha256": "0f84b68e3006cb6cd4192dc8cefcce1f70d6f05a8ef78e9c13fea1d6cb531e75",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 118
+      "resolved_files": 121
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "e0a382903ee5a918c6e058ad1e95a8deaf1cc3f78a4165f4c4e01a2cc02f0014",
@@ -319,7 +319,7 @@
       "resolved_files": 18
     },
     "decisions-0045-agent-host-and-surface-transports": {
-      "binding_sha256": "da3d025007db2805404f5bd347eb9643391668768b1fe5482fcc3727417e55bf",
+      "binding_sha256": "7033cea618b9a2d166a5b358792dd25f347cbc7534a320f3c354b724bc515175",
       "document_sha256": "f88dd065069581d52b77d19c035cf8749ab139930600dc51c144d120a0bd064e",
       "path": "docs/decisions/0045-agent-host-and-surface-transports.md",
       "resolved_files": 10
@@ -505,7 +505,7 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "e88ee4080a029b75f4e017259ddc15f19b6eac341db8e7ef414b545bd322c377",
+      "binding_sha256": "aef8141425158df8b77fad57fa7d1b797cf9d305970c0dc6505e685571ece6e2",
       "document_sha256": "5da0898b04725551a2835e5ec602306a707f0e9768c059e84990f64c656ac412",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 9
@@ -535,7 +535,7 @@
       "resolved_files": 12
     },
     "repository-components": {
-      "binding_sha256": "f0ec81f4295e2ef86f148d6ad1fc3d535896b5a1ef5927f63693f7f8d088a960",
+      "binding_sha256": "857bac40bdae4d4bda57f7e189fd49880d9bd9dd906716a605a88d6b6090a30b",
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29
@@ -547,10 +547,10 @@
       "resolved_files": 100
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "b0f0b154e1d451b2fe4daa0c4674f900af044c1b5c7d5a4e02551ead2dabf078",
+      "binding_sha256": "50242a0bb8babe88d808ff8da503c94544c2eb53a0118456a20cb57645b112de",
       "document_sha256": "ac65ddbc98b948c68c4d4e74209dc2f18ee007680f499d6733068240e52ebc77",
       "path": "specs/002-host-ipc/spec.md",
-      "resolved_files": 44
+      "resolved_files": 47
     },
     "spec-003-kernel-turns": {
       "binding_sha256": "56a916c9ee0068b9d50478e07359f7b12ce2cbd3e99b64431d17e0c67f1244a1",
@@ -625,7 +625,7 @@
       "resolved_files": 45
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "370529286b59f22afb483a5d8e3ebab315eb2dd0791765536cc9cad9f5dfcafa",
+      "binding_sha256": "c0914eb6ca49e0fe9b1bbec6c1b92e546b96c5e50c9bd8cd1c634955da3a4fda",
       "document_sha256": "cb13db8cbae9787995db761de9c046479dc0eb607180a88fd07c4d4ce878ba8f",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 31
