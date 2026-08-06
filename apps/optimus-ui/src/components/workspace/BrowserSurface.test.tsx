@@ -96,6 +96,16 @@ describe('BrowserSurface annotations', () => {
       )
     );
   });
+
+  it('renders with a null transport without crashing (bootstrap window)', () => {
+    // Regression: the packaged renderer mounts with transport=null while the
+    // spec-015 A3 broker ticket is awaited (and permanently in the confirmed
+    // broker-absence terminal affordance). The mount-time state()/subscribe()
+    // access must not throw "null is not an object (evaluating 'l.browser')".
+    render(<BrowserSurface transport={null} active onAddToPrompt={vi.fn()} />);
+
+    expect(screen.getByLabelText('Preview browser')).toBeInTheDocument();
+  });
 });
 
 function transportWithBrowser(

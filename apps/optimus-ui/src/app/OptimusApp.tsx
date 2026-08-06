@@ -747,7 +747,7 @@ export function OptimusApp() {
                   <div className={`workspace-shell surface-${state.layout.compactSurface}`}>
                     <WorkspacePane
                       tab={state.layout.workspaceTab}
-                      transport={transport!}
+                      transport={transport}
                       suspended={browserSuspended}
                       onAddToPrompt={(text) => {
                         setAnnotation(text);

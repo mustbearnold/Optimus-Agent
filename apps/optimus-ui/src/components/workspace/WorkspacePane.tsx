@@ -22,7 +22,7 @@ export function WorkspacePane({
   onSelectTab,
 }: {
   tab: WorkspaceTab;
-  transport: OptimusTransport;
+  transport: OptimusTransport | null;
   suspended: boolean;
   onAddToPrompt: (text: string) => void;
   onSelectTab: (tab: WorkspaceTab) => void;

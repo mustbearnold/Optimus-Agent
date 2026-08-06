@@ -7,7 +7,7 @@ export function FilesSurface({
   transport,
   active,
 }: {
-  transport: OptimusTransport;
+  transport: OptimusTransport | null;
   active: boolean;
 }) {
   const [path, setPath] = useState('');
@@ -18,6 +18,7 @@ export function FilesSurface({
   const alive = useAlive();
 
   const load = useCallback(async (nextPath: string) => {
+    if (!transport) return;
     setLoading(true);
     setError('');
     try {
@@ -39,6 +40,7 @@ export function FilesSurface({
   }, [active, entries.length, error, load, loading]);
 
   const openEntry = async (entry: FsEntry) => {
+    if (!transport) return;
     const isDirectory = entry.is_dir || /dir/i.test(entry.kind || '');
     if (isDirectory) {
       await load(entry.path);

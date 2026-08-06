@@ -99,4 +99,13 @@ describe('ArtifactsSurface deletion', () => {
       })
     );
   });
+
+  it('renders with a null transport without crashing (bootstrap window)', () => {
+    // Regression: the packaged renderer mounts with transport=null while the
+    // spec-015 A3 broker ticket is awaited; the mount-time artifacts_list
+    // load must not throw.
+    render(<ArtifactsSurface transport={null} active />);
+
+    expect(screen.getByRole('region', { name: 'Artifacts' })).toBeInTheDocument();
+  });
 });

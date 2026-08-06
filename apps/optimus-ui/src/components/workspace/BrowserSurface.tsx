@@ -26,7 +26,7 @@ export function BrowserSurface({
   active,
   onAddToPrompt,
 }: {
-  transport: OptimusTransport;
+  transport: OptimusTransport | null;
   active: boolean;
   /** Explicit user action only — never auto-inject on annotate (ADR-0040 / ADR-0029 §9). */
   onAddToPrompt: (text: string) => void;
@@ -43,7 +43,7 @@ export function BrowserSurface({
   useEffect(() => {
     let alive = true;
     let unsubscribe: () => void = () => undefined;
-    if (transport.browser) {
+    if (transport?.browser) {
       transport.browser.state().then((next) => {
         if (!alive) return;
         setState(next);
@@ -63,19 +63,19 @@ export function BrowserSurface({
 
   useEffect(() => () => {
     if (annotationMode && state.native) {
-      void transport.browser?.cancelAnnotation();
+      void transport?.browser?.cancelAnnotation();
     }
   }, [annotationMode, state.native, transport]);
 
   useEffect(() => {
     if (active || !annotationMode) return;
     setAnnotationMode(false);
-    if (state.native) void transport.browser?.cancelAnnotation();
+    if (state.native) void transport?.browser?.cancelAnnotation();
   }, [active, annotationMode, state.native, transport]);
 
   useLayoutEffect(() => {
     const node = hole.current;
-    if (!node || !transport.browser || !active) return;
+    if (!node || !transport?.browser || !active) return;
     const sync = (reveal = false) => {
       frameCoordinator.schedule('native-geometry', () => {
         const rect = node.getBoundingClientRect();
@@ -88,9 +88,9 @@ export function BrowserSurface({
         const signature = `${bounds.x}:${bounds.y}:${bounds.width}:${bounds.height}`;
         if (signature !== lastBounds.current) {
           lastBounds.current = signature;
-          transport.browser?.setBounds(bounds);
+          transport?.browser?.setBounds(bounds);
         }
-        if (reveal) transport.browser?.setVisible(true);
+        if (reveal) transport?.browser?.setVisible(true);
       });
     };
     const observer = new ResizeObserver(() => sync());
@@ -104,7 +104,7 @@ export function BrowserSurface({
     syncGeometry.current = () => sync(true);
     sync(true);
     return () => {
-      transport.browser?.setVisible(false);
+      transport?.browser?.setVisible(false);
       observer.disconnect();
       window.removeEventListener('resize', onWindowResize);
       syncGeometry.current = null;
@@ -132,6 +132,7 @@ export function BrowserSurface({
     let url = address.trim();
     if (!url) return;
     if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = `https://${url}`;
+    if (!transport) return;
     try {
       if (transport.browser) {
         const next = await transport.browser.navigate(url);
@@ -161,11 +162,11 @@ export function BrowserSurface({
   const toggleAnnotation = async () => {
     if (annotationMode) {
       setAnnotationMode(false);
-      if (state.native) await transport.browser?.cancelAnnotation();
+      if (state.native) await transport?.browser?.cancelAnnotation();
       return;
     }
     setAnnotationMode(true);
-    if (!state.native || !transport.browser) return;
+    if (!state.native || !transport?.browser) return;
     try {
       const result = await transport.browser.annotate();
       if (!alive()) return;
@@ -185,7 +186,7 @@ export function BrowserSurface({
           type="button"
           aria-label="Back"
           disabled={!state.canGoBack}
-          onClick={() => transport.browser?.back().then((next) => { if (alive()) setState(next); })}
+          onClick={() => transport?.browser?.back().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="back" />
         </button>
@@ -193,14 +194,14 @@ export function BrowserSurface({
           type="button"
           aria-label="Forward"
           disabled={!state.canGoForward}
-          onClick={() => transport.browser?.forward().then((next) => { if (alive()) setState(next); })}
+          onClick={() => transport?.browser?.forward().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="forward" />
         </button>
         <button
           type="button"
           aria-label="Reload"
-          onClick={() => transport.browser?.reload().then((next) => { if (alive()) setState(next); })}
+          onClick={() => transport?.browser?.reload().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="reload" />
         </button>

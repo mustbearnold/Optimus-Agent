@@ -17,7 +17,7 @@ export function ArtifactsSurface({
   active,
   standalone = false,
 }: {
-  transport: OptimusTransport;
+  transport: OptimusTransport | null;
   active: boolean;
   standalone?: boolean;
 }) {
@@ -39,6 +39,7 @@ export function ArtifactsSurface({
   const confirmDeleteButton = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async () => {
+    if (!transport) return;
     setError('');
     try {
       const result = await transport.invoke<{ artifacts?: ArtifactRecord[] }>('artifacts_list');
@@ -80,7 +81,7 @@ export function ArtifactsSurface({
 
   // Lazy-load image thumbnails for gallery mode.
   useEffect(() => {
-    if (!active || !gallery) return;
+    if (!active || !gallery || !transport) return;
     let cancelled = false;
     const images = filtered.filter((a) => artifactKind(a.media_type) === 'image').slice(0, 24);
     void (async () => {
@@ -105,6 +106,7 @@ export function ArtifactsSurface({
   }, [active, gallery, filtered, thumbs, transport]);
 
   const open = async (artifact: ArtifactRecord) => {
+    if (!transport) return;
     try {
       const next = await transport.invoke<ArtifactDetail>('artifacts_get', { sha256: artifact.sha256 });
       if (!alive()) return;
@@ -116,7 +118,7 @@ export function ArtifactsSurface({
   };
 
   const removeMany = async (sha256s: string[]) => {
-    if (!sha256s.length) return;
+    if (!sha256s.length || !transport) return;
     await transport.invoke('artifacts_delete_many', { sha256s });
     if (!alive()) return;
     setSelected([]);
@@ -156,6 +158,7 @@ export function ArtifactsSurface({
   };
 
   const exportOne = async (sha256: string) => {
+    if (!transport) return;
     setError('');
     setStatus('');
     try {
@@ -172,7 +175,7 @@ export function ArtifactsSurface({
   };
 
   const exportZip = async (sha256s: string[]) => {
-    if (!sha256s.length) return;
+    if (!sha256s.length || !transport) return;
     setError('');
     setStatus('');
     try {

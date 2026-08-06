@@ -259,28 +259,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "ece4280ea8d43d75eec32d7250c8e26640eda042b8bc7eb6b221c5e444dd6065",
+      "binding_sha256": "51e760414f1a72b5481c266c426c2b4ae0a12db6795cf7de444b15b2c1373ca8",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 124
+      "resolved_files": 125
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "c22eabd943916058ad08212d2b37f00a9028e7c445314a7734c90d6df7b2443c",
+      "binding_sha256": "bfe4820f5fb793115c604c6744b550203076656d7329bc98e60589cbf93d2f12",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 123
+      "resolved_files": 124
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "f99d20573cd8e8d11bf76a9d2f9c8d290bc07c96f94569cb045a851f099b8a40",
+      "binding_sha256": "0390e2560cad78d1335580e7cb022afd754bb777a25e5956ad661c96b0c901ec",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 95
+      "resolved_files": 96
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "f6ebf6528046ab9e38584d196f2c1789b7c199b4dd01a7bdc29193ceb7318484",
+      "binding_sha256": "9a7d7477809f094e7b03400257a53dee8d70fbf58c978593831baca17f2832d3",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 125
+      "resolved_files": 126
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "e561a1b317addfb403a383a17eb26ad6477b8d2fdd890f891b286c1a162184a0",
@@ -331,7 +331,7 @@
       "resolved_files": 12
     },
     "decisions-0040-shared-browser-contract": {
-      "binding_sha256": "64a800b6460a05ddc58e61e4bb8dfc1c9a084c89e0a39fd44335a91e57e4e646",
+      "binding_sha256": "9cbbb8e31031ea4d83e0d5fa1602d4190129402fa2732818cf7688fc6b6b11cc",
       "document_sha256": "dcba785a342de6c8860bd698fbed001b65865d717434b1ac9d728b70dd4048b2",
       "path": "docs/decisions/0040-shared-browser-contract.md",
       "resolved_files": 8
@@ -397,7 +397,7 @@
       "resolved_files": 10
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "2ef27584333c11c42e5acbb79d4a78d100a4039211e02fd84a885502c6c41a46",
+      "binding_sha256": "609ec2f7def0dfb94c6cfe260e2404fc20ab3dc3bafb3484c3d5e486107794d6",
       "document_sha256": "92342194fbd68c9ff9430df334932ae0d962a5f10e750d432628df75be6c8692",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 10
@@ -535,7 +535,7 @@
       "resolved_files": 5
     },
     "decisions-0081-truthful-approval-resolution-and-session-consent": {
-      "binding_sha256": "5e42f15f51ecd1503201e77c3b7da9a17822d0611ebfcb9334b26adf8e7df85c",
+      "binding_sha256": "b513091da1077de7ea3c653b2c02fdbfc0b732e2d53e9b55082fd429de824970",
       "document_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
       "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
       "resolved_files": 14
@@ -589,10 +589,10 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "1c073455227ca638bd88cfcdd450dc164d37431352f7da7e784cf39d327896f9",
+      "binding_sha256": "abdc4e539370bcdce74949af2a0dac8ab52de92fe1474826ceb406c70a5bafc6",
       "document_sha256": "77bea388f2d67a0a84bd2db16f1e98da702872a8b0f97e3528abe2d6ec72cb0a",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 105
+      "resolved_files": 106
     },
     "spec-002-host-ipc": {
       "binding_sha256": "2ebe0597df1345f988654f3be7d73adc899536c21d0d899fb6369dcb7450e263",
@@ -667,7 +667,7 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "f2423870aa6e7bb29423f5801063e517a83320ad1424a5ec2576918cff6b6785",
+      "binding_sha256": "d224d575cbc83553ae0e2dd31d1066f264ae19d4f865eff5bff505bf23d19f4e",
       "document_sha256": "a407ffabb1a030f877b372f7c075337042b26f90fffe315c628011e36940f5b5",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
