@@ -7,16 +7,40 @@
       "resolved_files": 0
     },
     "architecture-architecture-marks": {
-      "binding_sha256": "1eb7ceb5f78a6c9d673e6237cb2fccd0b1eecf082bf219ba35d20da0eec3ca7d",
+      "binding_sha256": "45f3a1db52b9da3c872a6557d111834e2381d9aceab50c1e56f459be9e50f749",
       "document_sha256": "a702a39f70a3f0fa1ef2ae473cf570c06dd4c7e881c62c5b134f6dd079f2266e",
       "path": "docs/runbooks/architecture-marks.md",
       "resolved_files": 8
+    },
+    "architecture-control-plane-workflows": {
+      "binding_sha256": "d70c09df21b60f848fd02de519f6c773f484cc48d27c81b7fed8d78a7319b053",
+      "document_sha256": "a7a35b7cb7f49b3d75cb6cbca6e2c4df44d9aa6facc6b2d80d71b8224c960ea9",
+      "path": "docs/architecture/control-plane-and-workflows.md",
+      "resolved_files": 3
     },
     "architecture-desktop-install-relaunch": {
       "binding_sha256": null,
       "document_sha256": "9f3923ab4a9328ecdd7c5461cb03b39ac86b3259569f7667aaf421f47d28a49b",
       "path": "docs/runbooks/install-relaunch.md",
       "resolved_files": 0
+    },
+    "architecture-desktop-ops": {
+      "binding_sha256": "c0fc8a50f4599c45c2a63d558f26c605c7da70f665fdbade0950a7a5761d5dac",
+      "document_sha256": "411e834b1b4a0efce61bdfb5753fcdb6471007f5cb3a3bb077b20071092caec1",
+      "path": "docs/architecture/desktop-ops.md",
+      "resolved_files": 2
+    },
+    "architecture-exceeds-blueprint": {
+      "binding_sha256": "0fe3316eec56d3dadf6dfbb02663b37092a1459bccd635562c7e5154b33da9ad",
+      "document_sha256": "0c7cb54687ad09809bdf3f01ce80629faf3b010ab666e5b87d0eb789416aa4d7",
+      "path": "docs/architecture/exceeds-blueprint.md",
+      "resolved_files": 1
+    },
+    "architecture-security-observability": {
+      "binding_sha256": "c43df42b64886d793f3503fbef282ebb380942be9328bcd2730f09cbdd7f1062",
+      "document_sha256": "c3168a2f5a6a22f5da892708f07708cc58b45c2ca099e91263e2c5ba7bff2442",
+      "path": "docs/architecture/security-and-observability.md",
+      "resolved_files": 2
     },
     "architecture-self-development": {
       "binding_sha256": "989498df6433d9e1b651e4181d813216e5541d8e719a611d00881ccabad3f1bc",
@@ -30,11 +54,29 @@
       "path": "docs/architecture/sota-scorecard.md",
       "resolved_files": 0
     },
+    "architecture-state-memory": {
+      "binding_sha256": "b975478a79f99bbd2784f871d92f720405ae3f5aa847a30bc3ec7a7952f0b685",
+      "document_sha256": "0d1dcd429eb3d74373f249448ae016ed08fd1fa8ad4f3c695e440f1eea69b9cb",
+      "path": "docs/architecture/state-and-memory.md",
+      "resolved_files": 3
+    },
     "architecture-system-overview": {
       "binding_sha256": "71e7ecfccd7b794770f7582535a42e94ddc1b73acd8133cb3cdcdf3b830cce62",
-      "document_sha256": "ba7516a669da177a8c5dc39367f627f89fd27c2867c85fe6d0b803abea21d83a",
+      "document_sha256": "c1d9e0b3d46fdfade1beaf1ddbe0bc2b30677bc6f22afcb5ce81545818440930",
       "path": "docs/architecture.md",
       "resolved_files": 20
+    },
+    "architecture-tools-modularity": {
+      "binding_sha256": "400ef574927d773b15876be7c95143e18a0a37b54e85fc21b58dd522ca41ef34",
+      "document_sha256": "5dcfb4c18741dc46fbdcf8fb0e6f8c826b492da8c2563f33fa034f7b7c0a6081",
+      "path": "docs/architecture/tools-and-modularity.md",
+      "resolved_files": 1
+    },
+    "architecture-versioning-parity": {
+      "binding_sha256": "0eae69b88eb6c683368291265dc596985fb699f15451f37e21c0c8b54232727d",
+      "document_sha256": "21867f5e305dd959268ab09dacc9027b907a0a8c626bd44ba93e97ac896cc402",
+      "path": "docs/architecture/versioning-and-parity.md",
+      "resolved_files": 3
     },
     "contributing-project-hygiene": {
       "binding_sha256": "11b7e898ba18fcb03a570e98a111c9600fafae962a46e4df9ad4073f619aeb5e",
@@ -211,7 +253,7 @@
       "resolved_files": 5
     },
     "decisions-0027-settings-driven-work-isolation": {
-      "binding_sha256": "c1bd1108b89169bbed12aafcc3d2da755d9bc2270c568eec436ae3774134ec0d",
+      "binding_sha256": "91cf1696e37ad0b934406023c3631f8bdfde66acee578b29fa0b6aba21dddf6f",
       "document_sha256": "640b3b6adf372b7d46f207479342bdecd8fa05839174014e17048945e2fae6ea",
       "path": "docs/decisions/0027-settings-driven-work-isolation.md",
       "resolved_files": 6
@@ -343,7 +385,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "f31b6956eb006c6643f60ac74e747a6408f60aa8a91b54213a3044d492ef0a6a",
+      "binding_sha256": "acaa4d84e4113ad2702a00b393bbc2d8055e71bbe43784fdc67dd9dae39a11d4",
       "document_sha256": "ce6b80d3ad533d63106d7e7e979595ef22c201a45ae24161d7b998ab32169a08",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -385,7 +427,7 @@
       "resolved_files": 6
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "70fca2b8a2149115f030d5bf18905a0f0b80e197cd2c6cb7e17c2b7ad7c36dd4",
+      "binding_sha256": "291ea2809bea1ae02985834855247e4dfd31a1c8c2afaa65b06ba69dc98ee7a1",
       "document_sha256": "bc881dac3827d478f9269881830af38dc4a942d6a65e8de14e87922d6e76de9e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 7
@@ -517,7 +559,7 @@
       "resolved_files": 14
     },
     "decisions-readme": {
-      "binding_sha256": "4e74e07b7d1a0a0ae1b17f9a508550f0a380be6aa1e9d5cd2a2e24b3decb4595",
+      "binding_sha256": "c4bc698acca13b561d2888188ecd4319ea5718ab5b993200097b646cf294dd12",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 89

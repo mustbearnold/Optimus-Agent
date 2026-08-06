@@ -1103,25 +1103,49 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "ba7516a669da177a8c5dc39367f627f89fd27c2867c85fe6d0b803abea21d83a",
+      "content_sha256": "c1d9e0b3d46fdfade1beaf1ddbe0bc2b30677bc6f22afcb5ce81545818440930",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
         "Instruction planes",
         "Current topology",
         "Applications and packages",
+        "Architecture documents"
+      ],
+      "id": "architecture-system-overview",
+      "path": "docs/architecture.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "This document describes the repository as it exists now. The historical blueprint in optimus-exceeds-hermes.md remains useful product direction, but it contains planned components and is not proof of implementation.",
+      "title": "Optimus Agent system overview",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "a7a35b7cb7f49b3d75cb6cbca6e2c4df44d9aa6facc6b2d80d71b8224c960ea9",
+      "headings": [
+        "Control plane, workflows, and agent execution",
         "Control plane and orchestration",
         "Workflow runtime and terminal outcomes",
-        "Agent execution",
-        "Tool system",
-        "Domain modularity (P13 / ADR-0036)",
-        "State and persistence",
-        "Memory and retrieval",
-        "Model routing",
-        "Security and approvals",
-        "Events, observability, and replay",
-        "GPU and CPU fallback",
-        "Current architectural debt and open decisions",
+        "Agent execution"
+      ],
+      "id": "architecture-control-plane-workflows",
+      "path": "docs/architecture/control-plane-and-workflows.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "Control plane, durable workflow runtime, terminal outcomes, and agent execution — current behaviour.",
+      "title": "Control plane, workflows, and agent execution",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "411e834b1b4a0efce61bdfb5753fcdb6471007f5cb3a3bb077b20071092caec1",
+      "headings": [
+        "Desktop daily use and operations",
         "Daily use (desktop)",
         "Honest status",
         "Run",
@@ -1142,7 +1166,23 @@
         "Multi-DB schema inventory + quarantine",
         "Backup path set",
         "Crash / resume operator notes",
-        "Related",
+        "Related"
+      ],
+      "id": "architecture-desktop-ops",
+      "path": "docs/architecture/desktop-ops.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "Desktop daily use, run/build/streaming, durability and backup, doctor, crash/resume operations.",
+      "title": "Desktop daily use and operations",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "0c7cb54687ad09809bdf3f01ce80629faf3b010ab666e5b87d0eb789416aa4d7",
+      "headings": [
+        "Optimus exceeds Hermes (north-star blueprint)",
         "Optimus vs Hermes (measured)",
         "0. North star",
         "1. What Hermes gets right (keep / surpass)",
@@ -1195,7 +1235,104 @@
         "10. Competitive one-liner matrix",
         "11. First decisions to lock before code floods in",
         "12. Recommendation (label + rationale)",
-        "13. Immediate next actions",
+        "13. Immediate next actions"
+      ],
+      "id": "architecture-exceeds-blueprint",
+      "path": "docs/architecture/exceeds-blueprint.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "Historical north-star blueprint for exceeding Hermes; planned components, not proof of implementation.",
+      "title": "Optimus exceeds Hermes (north-star blueprint)",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "c3168a2f5a6a22f5da892708f07708cc58b45c2ca099e91263e2c5ba7bff2442",
+      "headings": [
+        "Security, observability, and architectural debt",
+        "Security and approvals",
+        "Events, observability, and replay",
+        "GPU and CPU fallback",
+        "Current architectural debt and open decisions"
+      ],
+      "id": "architecture-security-observability",
+      "path": "docs/architecture/security-and-observability.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "Security and approvals, events/observability/replay, GPU/CPU fallback, and architectural debt.",
+      "title": "Security, observability, and architectural debt",
+      "type": "explanation"
+    },
+    {
+      "authority": "supporting",
+      "content_sha256": "4a411b32be6d6d69c84a86fade41a54a464d39fa67aae5f97de58946ed7c22f0",
+      "headings": [
+        "Optimus vs Hermes — evidence-backed SOTA scorecard",
+        "Current ledger summary",
+        "Defensible wins",
+        "Implemented parity slices",
+        "Material partials",
+        "Leading product losses",
+        "Current architecture truth",
+        "Baseline commands of record",
+        "Honest statement"
+      ],
+      "id": "architecture-sota-scorecard",
+      "path": "docs/architecture/sota-scorecard.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
+      "title": "Optimus vs Hermes — evidence-backed SOTA scorecard",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "0d1dcd429eb3d74373f249448ae016ed08fd1fa8ad4f3c695e440f1eea69b9cb",
+      "headings": [
+        "State, memory, and model routing",
+        "State and persistence",
+        "Memory and retrieval",
+        "Model routing"
+      ],
+      "id": "architecture-state-memory",
+      "path": "docs/architecture/state-and-memory.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "State and persistence, memory/retrieval planes, and model routing — current behaviour.",
+      "title": "State, memory, and model routing",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "5dcfb4c18741dc46fbdcf8fb0e6f8c826b492da8c2563f33fa034f7b7c0a6081",
+      "headings": [
+        "Tool system and domain modularity",
+        "Tool system",
+        "Domain modularity (P13 / ADR-0036)"
+      ],
+      "id": "architecture-tools-modularity",
+      "path": "docs/architecture/tools-and-modularity.md",
+      "plane": "current",
+      "review_by": "2026-10-31",
+      "reviewed_on": "2026-07-31",
+      "status": "current",
+      "summary": "Tool system contract (ToolDesc) and domain modularity (P13 / ADR-0036) — current behaviour.",
+      "title": "Tool system and domain modularity",
+      "type": "explanation"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "21867f5e305dd959268ab09dacc9027b907a0a8c626bd44ba93e97ac896cc402",
+      "headings": [
+        "Versioning and parity",
         "Versioning",
         "Why there are two versions",
         "Non-negotiable parity invariant",
@@ -1237,38 +1374,14 @@
         "Baseline commands of record",
         "Honest statement"
       ],
-      "id": "architecture-system-overview",
-      "path": "docs/architecture.md",
+      "id": "architecture-versioning-parity",
+      "path": "docs/architecture/versioning-and-parity.md",
       "plane": "current",
       "review_by": "2026-10-31",
       "reviewed_on": "2026-07-31",
       "status": "current",
-      "summary": "This document describes the repository as it exists now. The historical blueprint in optimus-exceeds-hermes.md remains useful product direction, but it contains planned components and is not proof of implementation.",
-      "title": "Optimus Agent system overview",
-      "type": "explanation"
-    },
-    {
-      "authority": "supporting",
-      "content_sha256": "4a411b32be6d6d69c84a86fade41a54a464d39fa67aae5f97de58946ed7c22f0",
-      "headings": [
-        "Optimus vs Hermes — evidence-backed SOTA scorecard",
-        "Current ledger summary",
-        "Defensible wins",
-        "Implemented parity slices",
-        "Material partials",
-        "Leading product losses",
-        "Current architecture truth",
-        "Baseline commands of record",
-        "Honest statement"
-      ],
-      "id": "architecture-sota-scorecard",
-      "path": "docs/architecture/sota-scorecard.md",
-      "plane": "current",
-      "review_by": "2026-10-31",
-      "reviewed_on": "2026-07-31",
-      "status": "current",
-      "summary": "Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
-      "title": "Optimus vs Hermes — evidence-backed SOTA scorecard",
+      "summary": "Versioning, release/parity gates, SOTA scorecard, and honest current status.",
+      "title": "Versioning and parity",
       "type": "explanation"
     },
     {
@@ -4091,7 +4204,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "fdb765b3ed1726b6df7e681e06d728b453d8ea7aea02c07632e8346b2c0f3321",
+  "documents_sha256": "673b38a7b56af65e8ec14b7c8017e42e3edb51076bbf8b279f2847baf5ac7086",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4170,6 +4283,133 @@
       ],
       "primary": [
         "architecture-system-overview"
+      ],
+      "supporting": [
+        "architecture-control-plane-workflows",
+        "architecture-tools-modularity",
+        "architecture-state-memory",
+        "architecture-security-observability",
+        "architecture-desktop-ops",
+        "architecture-exceeds-blueprint",
+        "architecture-versioning-parity"
+      ]
+    },
+    {
+      "id": "architecture.control-plane",
+      "keywords": [
+        "control plane",
+        "orchestration",
+        "workflow runtime",
+        "terminal outcome",
+        "cancellation",
+        "retry",
+        "agent execution",
+        "specialist"
+      ],
+      "primary": [
+        "architecture-control-plane-workflows"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.tools-modularity",
+      "keywords": [
+        "tool system",
+        "ToolDesc",
+        "tool contract",
+        "domain modularity",
+        "packs",
+        "effector",
+        "P13"
+      ],
+      "primary": [
+        "architecture-tools-modularity"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.state-memory",
+      "keywords": [
+        "state",
+        "persistence",
+        "SQLite ledger",
+        "memory",
+        "retrieval",
+        "model routing",
+        "provider selection",
+        "context"
+      ],
+      "primary": [
+        "architecture-state-memory"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.security-observability",
+      "keywords": [
+        "security",
+        "approvals",
+        "SmartDeny",
+        "sandbox",
+        "events",
+        "observability",
+        "replay",
+        "GPU fallback",
+        "architectural debt"
+      ],
+      "primary": [
+        "architecture-security-observability"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.desktop-ops",
+      "keywords": [
+        "desktop daily use",
+        "launch",
+        "streaming",
+        "durability",
+        "backup",
+        "restore",
+        "doctor",
+        "crash resume",
+        "operator"
+      ],
+      "primary": [
+        "architecture-desktop-ops"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.blueprint",
+      "keywords": [
+        "north star",
+        "blueprint",
+        "exceeds Hermes",
+        "planned",
+        "roadmap",
+        "future direction",
+        "delivery plan",
+        "phases"
+      ],
+      "primary": [
+        "architecture-exceeds-blueprint"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.versioning-parity",
+      "keywords": [
+        "versioning",
+        "parity",
+        "release gate",
+        "scorecard",
+        "SOTA",
+        "honest status",
+        "baseline"
+      ],
+      "primary": [
+        "architecture-versioning-parity"
       ],
       "supporting": []
     },

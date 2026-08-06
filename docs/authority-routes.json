@@ -98,6 +98,133 @@
       "primary": [
         "architecture-system-overview"
       ],
+      "supporting": [
+        "architecture-control-plane-workflows",
+        "architecture-tools-modularity",
+        "architecture-state-memory",
+        "architecture-security-observability",
+        "architecture-desktop-ops",
+        "architecture-exceeds-blueprint",
+        "architecture-versioning-parity"
+      ]
+    },
+    {
+      "id": "architecture.control-plane",
+      "keywords": [
+        "control plane",
+        "orchestration",
+        "workflow runtime",
+        "terminal outcome",
+        "cancellation",
+        "retry",
+        "agent execution",
+        "specialist"
+      ],
+      "primary": [
+        "architecture-control-plane-workflows"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.tools-modularity",
+      "keywords": [
+        "tool system",
+        "ToolDesc",
+        "tool contract",
+        "domain modularity",
+        "packs",
+        "effector",
+        "P13"
+      ],
+      "primary": [
+        "architecture-tools-modularity"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.state-memory",
+      "keywords": [
+        "state",
+        "persistence",
+        "SQLite ledger",
+        "memory",
+        "retrieval",
+        "model routing",
+        "provider selection",
+        "context"
+      ],
+      "primary": [
+        "architecture-state-memory"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.security-observability",
+      "keywords": [
+        "security",
+        "approvals",
+        "SmartDeny",
+        "sandbox",
+        "events",
+        "observability",
+        "replay",
+        "GPU fallback",
+        "architectural debt"
+      ],
+      "primary": [
+        "architecture-security-observability"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.desktop-ops",
+      "keywords": [
+        "desktop daily use",
+        "launch",
+        "streaming",
+        "durability",
+        "backup",
+        "restore",
+        "doctor",
+        "crash resume",
+        "operator"
+      ],
+      "primary": [
+        "architecture-desktop-ops"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.blueprint",
+      "keywords": [
+        "north star",
+        "blueprint",
+        "exceeds Hermes",
+        "planned",
+        "roadmap",
+        "future direction",
+        "delivery plan",
+        "phases"
+      ],
+      "primary": [
+        "architecture-exceeds-blueprint"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.versioning-parity",
+      "keywords": [
+        "versioning",
+        "parity",
+        "release gate",
+        "scorecard",
+        "SOTA",
+        "honest status",
+        "baseline"
+      ],
+      "primary": [
+        "architecture-versioning-parity"
+      ],
       "supporting": []
     },
     {

@@ -13,9 +13,9 @@
       "note": "leave as-is"
     },
     "docs/architecture.md": {
-      "budget_bytes": 100331,
+      "budget_bytes": 9324,
       "target_bytes": 45000,
-      "note": "W3 lowers budget to 45,000 when the split lands"
+      "note": "W3 landed 2026-08-07: core 100,331 -> 9,324 B (split into 7 focused sub-docs under docs/architecture/; 1,810 lines moved verbatim). 45,000 was the plan ceiling; budget pins the landed core."
     },
     "skills/ (in-repo)": {
       "budget_bytes": 19122,
