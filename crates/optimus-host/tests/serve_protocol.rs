@@ -1072,10 +1072,20 @@ fn rate_limit_exhaustion_and_exempt_chat_cancel() {
             json!({ "jsonrpc": "2.0", "id": id, "method": "ping", "params": {} }),
         );
     }
-    for id in 0..600 {
-        let reply = recv(&mut ws);
-        assert_eq!(reply["id"], id);
-    }
+    // The pool dispatches CONCURRENTLY (R3, WORKER_COUNT=4): reply order is
+    // completion order, never request order — the spec orders only
+    // per-stream events (R6), so asserting FIFO here is wrong. Assert the
+    // id SET: all 600 accepted, exactly once each.
+    let mut ids: Vec<u64> = (0..600)
+        .map(|_| {
+            let reply = recv(&mut ws);
+            reply["id"]
+                .as_u64()
+                .unwrap_or_else(|| panic!("expected a reply with a numeric id, got {reply}"))
+        })
+        .collect();
+    ids.sort_unstable();
+    assert_eq!(ids, (0..600).collect::<Vec<u64>>());
     // The 601st is rejected with -32603 "rate limit exceeded" (request id,
     // connection stays open).
     send(

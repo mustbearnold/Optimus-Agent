@@ -505,13 +505,13 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "fccffb187dab8c7a2c79c37b55da39f2c6f2532d56af100bf1842936cf2f48c6",
+      "binding_sha256": "af9544098c0e985064e04573b662ae1cd5780a0542b6530532b56a7c09478bc4",
       "document_sha256": "ecd4065e35afe1f1978d29d5cd7bd566c84bebdbc4b3093bf70e828c9f002565",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 17
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "6c3aca98ea5d22a4a526db5390b813c1e113e530eda3c536cb09317e63b42cbb",
+      "binding_sha256": "4c60b1afa739f79d51a4a4a2f8a8ac61549ee41d5527dfc5d9833ac6711d32e6",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
@@ -625,19 +625,19 @@
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "7c2b4ddcd694aecaac7492be66561e920b4379f557652104a5a572fd998ce475",
-      "document_sha256": "9433c88786cb8dc70fd153e4e7df544a4ec8c1507453ccc86e6b4163ed52093d",
+      "binding_sha256": "f26e785b9044f0aaaf50b64a0dabc45eb2cae4cac0d6a7caf8842e3effafd3ae",
+      "document_sha256": "9b7f342cbec407c4ca0c487e7dabbedacf5e08fe1d49c1f9eee4b425c3570e2f",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "28168c67595961301121953053cd0fde3a4448638c33bcc0cb5cbb25820d74bf",
+      "binding_sha256": "f1cd74f40dd83a4d48fbbe96e0523bc8eaa0a64f575044aa1f2b9cc1562a3e61",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "d2037f44bd4c4710f234015d2d3f0b2403e3fc644b462939f1c038e9737660ca",
+      "binding_sha256": "f3ba17eb3cc941aa4d19a7241a63b351dd26c8effb8329ff848520e53a741f95",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117

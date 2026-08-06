@@ -4000,7 +4000,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "9433c88786cb8dc70fd153e4e7df544a4ec8c1507453ccc86e6b4163ed52093d",
+      "content_sha256": "9b7f342cbec407c4ca0c487e7dabbedacf5e08fe1d49c1f9eee4b425c3570e2f",
       "headings": [
         "Surface protocol — one wire contract for CLI, TUI, and desktop",
         "Revision table",
@@ -4091,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "a4a55027df28588c12a704fd9e5bdb50b88b9371eb67ecebb510e3eb937cdd33",
+  "documents_sha256": "91f7a5ecde84527f683323eb3e54f7d198062a005396a93e789792fa6803c644",
   "routes": [
     {
       "id": "docs.navigation",
