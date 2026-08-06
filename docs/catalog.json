@@ -3463,7 +3463,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "f7f51a5d717bcccd0ac1f21f283c366286eb9cebed9db2af0e3cc1dda778780d",
+      "content_sha256": "a7844c8c83e76660b8af5a8051c6a63ed06e330cdb5357481c3feac532f75fa0",
       "headings": [
         "ADR-0083: One wire protocol for all surfaces",
         "Context",
@@ -4091,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "d3e6b48b283c9c07b6626cef406898c66380d53af29e2212a7412a19c916615e",
+  "documents_sha256": "4a05287c042fc2ce1494a2df9fde73a39473b23d5fd9efd0ac909c4aa4af9352",
   "routes": [
     {
       "id": "docs.navigation",
