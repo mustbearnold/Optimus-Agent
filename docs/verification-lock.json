@@ -301,7 +301,7 @@
       "resolved_files": 22
     },
     "decisions-0035-command-capability-envelope": {
-      "binding_sha256": "1cff3f35e7dbed41ec2fb203400ca9949cdd1566e4fd94cf567fa56f591f95a9",
+      "binding_sha256": "b607139a6255c89b4aed4ca34adedd68dd6c266cf0f912700dd132aed859e94f",
       "document_sha256": "6655d0ba6b9d255ddb447c547568bcc63b5f6088926f2c485e724d03d5d35cf3",
       "path": "docs/decisions/0035-command-capability-envelope.md",
       "resolved_files": 15
@@ -601,7 +601,7 @@
       "resolved_files": 51
     },
     "spec-003-kernel-turns": {
-      "binding_sha256": "56a916c9ee0068b9d50478e07359f7b12ce2cbd3e99b64431d17e0c67f1244a1",
+      "binding_sha256": "2e0ce79b897690ec5eb52bcf1a1789d067cdcec0151b3bd61952aff5f818ae93",
       "document_sha256": "64540d8ecd02fb1c74be3f1b7c5b7ab490dc410ed402f199001b5f6416f2af38",
       "path": "specs/003-kernel-turns/spec.md",
       "resolved_files": 78
