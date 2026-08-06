@@ -179,7 +179,12 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
         },
 
         "npm" | "pnpm" | "yarn" | "bun" => match sub {
-            "install" | "i" | "add" | "ci" | "update" | "upgrade" if global => {
+            // Global uninstalls write the host-wide package store just like
+            // global installs; they must not answer to a project capability.
+            "install" | "i" | "add" | "ci" | "update" | "upgrade" | "uninstall" | "remove"
+            | "rm"
+                if global =>
+            {
                 CommandClass::HostInstall
             }
             // `npm ci` is lockfile-exact by definition and takes no package.
@@ -571,6 +576,40 @@ mod tests {
             CommandClass::HostInstall.capability(),
             CapabilityId::SystemModify,
             "a host install must not answer to a project capability"
+        );
+    }
+
+    #[test]
+    fn uninstalling_globally_also_leaves_the_project_lane() {
+        // Regression: `npm uninstall -g` (and the equivalent remove/rm forms)
+        // writes the host-wide package store exactly like `npm install -g`.
+        // The classifier used to route the global uninstall to PackageAdd —
+        // the project lane — while every other package manager (cargo, pip)
+        // already treated it as HostInstall.
+        assert_eq!(
+            class("npm", &["uninstall", "-g", "typescript"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("npm", &["remove", "--global", "typescript"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("pnpm", &["rm", "-g", "typescript"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("bun", &["remove", "-g", "typescript"]),
+            CommandClass::HostInstall
+        );
+        // Without a host flag the same verbs stay project-scoped.
+        assert_eq!(
+            class("npm", &["uninstall", "lodash"]),
+            CommandClass::PackageAdd
+        );
+        assert_eq!(
+            class("yarn", &["remove", "left-pad"]),
+            CommandClass::PackageAdd
         );
     }
 
