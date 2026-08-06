@@ -1075,7 +1075,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "d2baf23bc358801ac502a53ec82ac75e1e85d90dd130752d108f3c961580dc9a",
+      "content_sha256": "44c255fda7bc776a5c69d2b701294ef041ea9cac6c3ad72a499094e58f323ab4",
       "headings": [],
       "id": "runtime-constitution",
       "path": "OPTIMUS_AGENTS.md",
@@ -3614,6 +3614,25 @@
     },
     {
       "authority": "record",
+      "content_sha256": "dc7104b387a6940f3933d1ae6e9f823ed588d745c80033af493730066c239a0b",
+      "headings": [
+        "ADR-0085: User sovereignty over workflow and security posture",
+        "Context",
+        "Decision",
+        "Consequences"
+      ],
+      "id": "decisions-0085-user-sovereignty-over-workflow-and-security-posture",
+      "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
+      "plane": "decision",
+      "review_by": "2026-11-07",
+      "reviewed_on": "2026-08-07",
+      "status": "current",
+      "summary": "Optimus must never force the user to use it one way or another and must never force more security or less security — workflow and security posture are the user's choice, entirely and at all times (owner directive 2026-08-07). The runtime constitution gains a User sovereignty section; approval/permission postures become user-selectable requirements in spec-015 instead of product-mandated fences; product defaults must never override or trap an explicit user choice.",
+      "title": "ADR-0085: User sovereignty over workflow and security posture",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4113,7 +4132,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "25b2f6fa4a355d5a635d764aac70138d5bc9bdf13ec24eaf95fb637abc3a7a3b",
+      "content_sha256": "b2150dbc674e7a664fc85c559f323be00ef09fd1eb37075d82300b1adca07da3",
       "headings": [
         "Surface protocol — one wire contract for CLI, TUI, and desktop",
         "Revision table",
@@ -4204,7 +4223,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "673b38a7b56af65e8ec14b7c8017e42e3edb51076bbf8b279f2847baf5ac7086",
+  "documents_sha256": "45bb7045bc7fc20cf162f4c398528d5b493fe76c778240f404b5ce9e0ca14831",
   "routes": [
     {
       "id": "docs.navigation",

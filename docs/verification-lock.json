@@ -247,7 +247,7 @@
       "resolved_files": 16
     },
     "decisions-0026-separate-development-and-runtime-agents": {
-      "binding_sha256": "412f371aeca07a7f45ebf4d99db1080f683728d45755abe0ff35bd080a7c3454",
+      "binding_sha256": "125e5498b3756bd47385788213219f0c02a52ce20ed4e82a606447b74b2afb2a",
       "document_sha256": "48479242a324749b37582d686c2a8ffac4f5e958067d245161951f6408232331",
       "path": "docs/decisions/0026-separate-development-and-runtime-agents.md",
       "resolved_files": 5
@@ -547,25 +547,31 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "38f7c731bfa25d3108020dfda7c5fd5a4680b5881901c2c1987b99918d4d6f05",
+      "binding_sha256": "99423eba8bec230df48e0037a1b972e654f37c8894ea7d6e5a642a14ff7bcc6f",
       "document_sha256": "ecd4065e35afe1f1978d29d5cd7bd566c84bebdbc4b3093bf70e828c9f002565",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 17
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "b01e412c8bfd68c59b23f464f16dc15175af5bb34698274aa2f5fe889fe68730",
+      "binding_sha256": "ed670a2f5fcd206b36eda0f12bd110d5728df77432a1bdf1e59fc202a0902262",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
     },
+    "decisions-0085-user-sovereignty-over-workflow-and-security-posture": {
+      "binding_sha256": "1371b366919ff0384d47617573515e695d525a2eecfe1707704bce9ff3deedfe",
+      "document_sha256": "dc7104b387a6940f3933d1ae6e9f823ed588d745c80033af493730066c239a0b",
+      "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
+      "resolved_files": 5
+    },
     "decisions-readme": {
-      "binding_sha256": "c4bc698acca13b561d2888188ecd4319ea5718ab5b993200097b646cf294dd12",
+      "binding_sha256": "c6d5c2c38655f8cac01a57b7b5ca441ec739546a1c3f1c3b23568ad4146da194",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
-      "resolved_files": 89
+      "resolved_files": 90
     },
     "engineering-memory-readme": {
-      "binding_sha256": "a0ff4ab8a92ede2f2846351cd2e8cec6117c451ce419762fbf95794699cbd51b",
+      "binding_sha256": "0b7a896c8db3477654d6fd7986ed4e7b902b98369beda15e8b99620d2d5037cc",
       "document_sha256": "aa883a8917daaf545f19d4f71b71fc604f8ede12f0c6910f25d04ae1d7f4e1b3",
       "path": "docs/runbooks/engineering-memory.md",
       "resolved_files": 9
@@ -668,21 +674,21 @@
     },
     "spec-015-surface-protocol": {
       "binding_sha256": "f26e785b9044f0aaaf50b64a0dabc45eb2cae4cac0d6a7caf8842e3effafd3ae",
-      "document_sha256": "25b2f6fa4a355d5a635d764aac70138d5bc9bdf13ec24eaf95fb637abc3a7a3b",
+      "document_sha256": "b2150dbc674e7a664fc85c559f323be00ef09fd1eb37075d82300b1adca07da3",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "6c93f4b628c82e766973c841a5e770b71b6c01b805af2faaad044cfe9c6904bf",
+      "binding_sha256": "01f92530206cf6197cb8bb5988e2285212f22637fb6ee2c363101288ab703e67",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "9bdd509640deef4202ad8bf6cb2f9f87933ad64d42f1521ad7a15732c473497c",
+      "binding_sha256": "db7d736292d6b1248fe043653ab0d6ed0d6d783a79ea2d638c25b32e283efd62",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
-      "resolved_files": 117
+      "resolved_files": 118
     },
     "specs-conventions": {
       "binding_sha256": "d4f8f8be60becea5cbd56a276b0284fc887c77c7412dafb974d9c836d77787bd",

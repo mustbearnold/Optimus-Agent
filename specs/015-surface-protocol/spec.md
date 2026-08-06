@@ -778,6 +778,16 @@ and ADR-0051 (`0051-electron-now-tauri-when-the-preview-leaves-the-shell.md:22`)
   bounds (9th/17th), the 30 s hello deadline case (R7 — silent
   connections close 4001 and free their slot), starvation + saturation —
   R3) that the gate tier runs.
+- R13. User sovereignty over approval posture (owner directive 2026-08-07;
+  ADR-0085): the runtime MUST NOT force a security posture on the user, in
+  either direction — approval depth, permission strictness, and autonomy
+  MUST be user-selectable (per profile and/or per session), and an explicit
+  user choice MUST always override any product default; no posture MAY be
+  hard-mandated by the runtime for a user who selected another.
+  [phase-marked: acceptance deferred — the posture-selection surface, kernel
+  grant routing, and tests land in a follow-on phase; the constitution-level
+  requirement is live since 2026-08-07 (OPTIMUS_AGENTS.md "User sovereignty",
+  ADR-0085)]
 
 ## Acceptance criteria
 
@@ -899,6 +909,14 @@ Phase A (milestone: desktop is a pure protocol client):
 - [ ] A10. Given the full gate spine, when `just check` and
   `bash scripts/verify.sh all` run, then all gates pass including the new
   serve conformance tests, and the module-size ratchet holds (law 21).
+- [ ] A11. Given a user who selects a security posture (approval depth /
+  permission strictness / autonomy) explicitly, when the runtime runs, then
+  the selected posture is honoured in every profile and session: a user who
+  selects less approval friction is never asked more, and a user who selects
+  more is never silently granted less; product defaults never override the
+  explicit choice. [phase-marked: acceptance deferred — lands with the
+  posture-selection implementation (R13); the constitution-level requirement
+  is live since 2026-08-07 (ADR-0085)]
 
 Phase B (one protocol boundary complete — follow-on issues at landing):
 
