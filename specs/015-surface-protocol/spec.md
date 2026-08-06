@@ -27,6 +27,7 @@ covers:
   - crates/optimus-host/src/dispatch.rs
   - crates/optimus-host/src/ws.rs
   - crates/optimus-host/src/handshake.rs
+  - crates/optimus-host/src/spawn_decision.rs
   - crates/optimus-host/src/ticket.rs
   - crates/optimus-host/tests/serve_protocol.rs
   - apps/optimus-cli/tests/capability_probe.rs

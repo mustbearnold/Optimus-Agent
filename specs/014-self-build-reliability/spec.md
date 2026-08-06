@@ -33,6 +33,7 @@ covers:
   - crates/optimus-host/src/sessions.rs
   - apps/optimus-ui/src/state/conversationStore.ts
   - apps/optimus-ui/src/ipc/tauriTransport.ts
+  - apps/optimus-ui/src/ipc/wsTransport.ts
   - apps/optimus-ui/src/app/OptimusApp.tsx
   - apps/optimus-ui/src/state/composerStore.ts
   - apps/optimus-ui/src/components/workbench/ActivityTimeline.tsx

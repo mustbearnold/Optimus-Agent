@@ -252,6 +252,9 @@ fn main() {
     // bootstrap awaits the broker ticket (spec-015 A3), so the record must
     // exist (or the diagnosis be terminal) by the time the webview loads.
     let serve = ServeLifecycle::start(home.clone(), DEFAULT_HOST_PORT);
+    // SIGTERM/SIGINT quit termination (R8): the tauri event loop does not
+    // fire RunEvent::Exit for signals.
+    serve_lifecycle::install_termination_handler(serve.clone());
     let state = AppState {
         home,
         cancellations: Arc::new(Mutex::new(HashMap::new())),

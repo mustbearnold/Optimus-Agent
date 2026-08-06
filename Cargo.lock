@@ -3637,6 +3637,7 @@ dependencies = [
  "optimus-kernel",
  "serde",
  "serde_json",
+ "signal-hook",
  "tauri",
  "tauri-build",
 ]

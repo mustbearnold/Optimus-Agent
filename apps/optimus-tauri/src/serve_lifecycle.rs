@@ -310,54 +310,66 @@ impl ServeLifecycle {
     }
 
     /// Watch the child; a mid-session crash relaunches within the budget.
+    /// The child stays IN the mutex — the watcher polls `try_wait` on it
+    /// and only takes it once it has exited, so `terminate()` can always
+    /// find and kill it (quit termination, R8).
     fn watch(&self) {
         let inner = Arc::clone(&self.0);
         let lifecycle = self.clone();
-        std::thread::spawn(move || {
-            loop {
-                let child = inner.child.lock().unwrap().take();
-                let Some(mut child) = child else {
-                    // Terminal diagnostic or attached: nothing to watch.
-                    if matches!(*inner.outcome.lock().unwrap(), ServeOutcome::Diagnostic(_)) {
-                        return;
-                    }
+        std::thread::spawn(move || loop {
+            let exited = {
+                let mut guard = inner.child.lock().unwrap();
+                let Some(child) = guard.as_mut() else {
+                    // No child to watch (attached, or a terminal
+                    // diagnostic): the thread idles.
+                    drop(guard);
                     std::thread::sleep(Duration::from_millis(250));
                     continue;
                 };
-                let _ = child.wait();
-                // Re-decide attach-first: a fresh serve may now hold the
-                // home; only when attach fails do we relaunch our own.
-                let record = read_record(&inner.home);
-                let record_healthy = record.as_ref().is_some_and(record_is_healthy);
-                let decision = decide(&ProbeSnapshot {
-                    record,
-                    record_healthy,
-                    desired_port_state: port_state(inner.port),
-                    capability: CapabilityProbe::Capable,
-                    spawn_exit: None,
-                    relaunch_attempts_used: 0,
-                });
-                match decision {
-                    Decision::Attach { port, token } => {
-                        *inner.outcome.lock().unwrap() = ServeOutcome::Attached { port, token };
+                match child.try_wait() {
+                    Ok(Some(_)) => {
+                        guard.take();
+                        true
                     }
-                    Decision::Diagnose(diagnostic) => {
-                        *inner.outcome.lock().unwrap() =
-                            ServeOutcome::Diagnostic(named(diagnostic));
+                    _ => false,
+                }
+            };
+            if !exited {
+                std::thread::sleep(Duration::from_millis(250));
+                continue;
+            }
+            // The child crashed mid-session: re-decide attach-first (a
+            // fresh serve may now hold the home); only when attach fails
+            // do we relaunch our own, within the 3/60 s budget.
+            let record = read_record(&inner.home);
+            let record_healthy = record.as_ref().is_some_and(record_is_healthy);
+            let decision = decide(&ProbeSnapshot {
+                record,
+                record_healthy,
+                desired_port_state: port_state(inner.port),
+                capability: CapabilityProbe::Capable,
+                spawn_exit: None,
+                relaunch_attempts_used: 0,
+            });
+            match decision {
+                Decision::Attach { port, token } => {
+                    *inner.outcome.lock().unwrap() = ServeOutcome::Attached { port, token };
+                }
+                Decision::Diagnose(diagnostic) => {
+                    *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(named(diagnostic));
+                    return;
+                }
+                Decision::Spawn => {
+                    let mut budget = inner.budget.lock().unwrap();
+                    if budget.can_relaunch(Instant::now()) {
+                        budget.record_crash(Instant::now());
+                        drop(budget);
+                        lifecycle.spawn_and_wait();
+                    } else {
+                        *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(
+                            "serve keeps failing to start — check the Optimus install".into(),
+                        );
                         return;
-                    }
-                    Decision::Spawn => {
-                        let mut budget = inner.budget.lock().unwrap();
-                        if budget.can_relaunch(Instant::now()) {
-                            budget.record_crash(Instant::now());
-                            drop(budget);
-                            lifecycle.spawn_and_wait();
-                        } else {
-                            *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(
-                                "serve keeps failing to start — check the Optimus install".into(),
-                            );
-                            return;
-                        }
                     }
                 }
             }
@@ -379,6 +391,28 @@ impl ServeLifecycle {
             let _ = child.wait();
         }
     }
+}
+
+/// Install SIGTERM/SIGINT termination (R8 quit termination). The tauri
+/// event loop does not fire `RunEvent::Exit` for signals — the OS default
+/// would kill the shell and orphan the spawned serve — so the handler
+/// terminates the child and exits cleanly.
+pub fn install_termination_handler(lifecycle: ServeLifecycle) {
+    let mut signals = signal_hook::iterator::Signals::new([
+        signal_hook::consts::SIGTERM,
+        signal_hook::consts::SIGINT,
+    ])
+    .expect("signal handler registration");
+    std::thread::spawn(move || {
+        // `forever()` never returns (it blocks until a signal); the loop
+        // exits the process on the first signal, which is the contract.
+        #[allow(clippy::never_loop)]
+        for signal in signals.forever() {
+            eprintln!("[optimus-tauri] termination signal {signal}; stopping serve");
+            lifecycle.terminate();
+            std::process::exit(0);
+        }
+    });
 }
 
 fn named(diagnostic: Diagnostic) -> String {
