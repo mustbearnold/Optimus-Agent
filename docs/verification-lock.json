@@ -397,31 +397,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "26a61291efb1caf2a8b5d65063d154e47f790eab7eb0b1955638631921bd22c5",
+      "binding_sha256": "6553f59a4351e338b1f3a5b4591539de797c693291865d0e26e29f7b016f17db",
       "document_sha256": "469b5ca212b2b4c2421999692fc8cf895d83c39c66e2a3a3cea76e14dde76c69",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "2a616627f6913e1d159fc794adff2abd539ca77852dc8f5ddb083d5ddfa2ca06",
+      "binding_sha256": "57547220cfbac9ad73e26ceb2af21158b84c5fd5886690012a8a3b1059b86aef",
       "document_sha256": "ab0c620b0432aff61f6bc4f8345f49865b9b883f43682666895d4d0444fda4e1",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "484d4e09aed73c1b36e6a6ceb04f1c8ff5c80fa73b649782b98e22b3675f0dd7",
+      "binding_sha256": "052d2794d4db829a321346c39956e60cedb62013c40c939b92d0261eacffa872",
       "document_sha256": "c4a3ab00c2d3fbe1721976d582fb1c06782d0f816d4d7dec85fa8b1b23039201",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "4f1303623780dad46df6f31e6f6b68131d865f67ba830a91597cccb349ad4fdd",
+      "binding_sha256": "a6b0c9e3eaa0566b62ce9ce7e27888f3e0df06be6f45eed908db575748ab51ec",
       "document_sha256": "a73def8d3bbfa25834930b88633203897b16b80e8c1419f300f027d71dc36ed6",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "ce6cce1b1f8bc38226f5d204f17e6189bf531df8d627c9b8df316e8c7daa9fa3",
+      "binding_sha256": "0d013e531ddf4e77c4fa3276928612971c4c790df2f29648539c1b90307c48dd",
       "document_sha256": "31beb580098880da15896268db255321727405d50cd61c59f0fa23e4b8845acc",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 5
@@ -505,7 +505,7 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "dc4d505203980bf33025d5750432c81b1c330a9d7249b462f98de203e652d11a",
+      "binding_sha256": "ed7074e3134366391a2032fc8e6172bddfdf492a7afcb740b320b75e861d7f72",
       "document_sha256": "a7844c8c83e76660b8af5a8051c6a63ed06e330cdb5357481c3feac532f75fa0",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 16
@@ -529,7 +529,7 @@
       "resolved_files": 9
     },
     "project-knowledge": {
-      "binding_sha256": "c19728b2d344f7d33e987109eb97cf481a6f6c62fbfc1ee31b8c057e80e993ff",
+      "binding_sha256": "6047f5da09da3a476472bb0715d0eec11a3c624d02503c3c7e1b737e1b2b39ba",
       "document_sha256": "7499a711cc7f830a78111cdba82e490ee8353d7cd9e584c35cc7668885b65bfd",
       "path": "specs/009-project-knowledge/project-knowledge.md",
       "resolved_files": 12
@@ -601,7 +601,7 @@
       "resolved_files": 44
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "6e54d5969e6bd42d1c6f5b032bcb2e9cffd41e37b15f323625f2638350b3e1d0",
+      "binding_sha256": "ed2bca0db07a467f467b89d1664191b533fcb0b22fb6268501af7531efd138f7",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 84
@@ -625,7 +625,7 @@
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "229ada681db4a7074ea372bc1947d42ae2a66688f735e329ff9af98eba395f0c",
+      "binding_sha256": "7f364c535614df08323ad6b06d5086431865fc21c2b4441a2fd1cc19399548ea",
       "document_sha256": "67ecbda13b84ede383791c52f83f5a09f532de61af54b1dfc9e6d4caa5b669f2",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 42
@@ -643,7 +643,7 @@
       "resolved_files": 117
     },
     "specs-conventions": {
-      "binding_sha256": "92168872ea84690e429cbec6ec29323bc73521376401ca28fbf4dfb6854dc3bb",
+      "binding_sha256": "9369e5986e27f50c152eb6f792b829a3c776c374176ff5977898e68cf1ecaeb1",
       "document_sha256": "c816724ffcfb8379ed6edda866cfe407b0ed05ba0f7d59b39819b17b2e53d81f",
       "path": "specs/conventions.md",
       "resolved_files": 6
