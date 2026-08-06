@@ -217,28 +217,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "20c99a7eb152225cbc6c33644404bbc42447a48247171d8f87b0faaf744881e5",
+      "binding_sha256": "d869b39b829af1bbf20a622a34edfa4d8e9973bf1877bf52ac4fe61eb3ac6f9b",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 123
+      "resolved_files": 124
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "a81b5128406c28e427e3c7e1793204e49607cd940805de3eb8ed9f21d3180855",
+      "binding_sha256": "f041575ea9a6dc2cfc8e63c00c21449e463f1bab55acfa2df2f81454d7786e7c",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 122
+      "resolved_files": 123
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "c465ca0375344233c6e308001bd6dac16fcef37c48737aab25e6a8e736cf99a5",
+      "binding_sha256": "fe4a135255764fb7e1083fe0d6eec78c6478851ac6aeeb95d605ac63c7d16ee5",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 94
+      "resolved_files": 95
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "e128186cd5565731166db0c627d664a477f6d0acb5ec2e1d3a652e562cf230c8",
+      "binding_sha256": "d19fa1ddddf1345c017f035e9b556ebd3cf2c7073da9f262791107e3e7f29ff5",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 124
+      "resolved_files": 125
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "e0a382903ee5a918c6e058ad1e95a8deaf1cc3f78a4165f4c4e01a2cc02f0014",
@@ -463,7 +463,7 @@
       "resolved_files": 21
     },
     "decisions-0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor": {
-      "binding_sha256": "623c722ea531275314d3d332bb03ad8351d612378e9b0098683165e304d8e111",
+      "binding_sha256": "aa77faec81059ddf2172ec9a0f599299c6e61f87716dba6629c673942bf42800",
       "document_sha256": "d5e9212873bd49dcba728f7857fa68fb29fa4b2acfc4fe0f5a83f5158222daa4",
       "path": "docs/decisions/0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor.md",
       "resolved_files": 19
@@ -487,37 +487,37 @@
       "resolved_files": 7
     },
     "decisions-0080-toolchain-aware-command-envelope": {
-      "binding_sha256": "2b6c2139eb8ae3e5a2f919b72983ca8e4891772263ad0e7bd6c096d98e921c51",
+      "binding_sha256": "1be5bf0a8003b4e132a727f77294f5b1aaebf7f6647e8f1915ba8c4d1960d31f",
       "document_sha256": "85375405d60a4fbbe90c56850341e2349ba3415b9fe0662945e35f8d945610b9",
       "path": "docs/decisions/0080-toolchain-aware-command-envelope.md",
       "resolved_files": 5
     },
     "decisions-0081-truthful-approval-resolution-and-session-consent": {
-      "binding_sha256": "dda115695f4fe689bcf0a13e1185b894d646ef083e9e9280491f8f48e48ca93c",
+      "binding_sha256": "5e42f15f51ecd1503201e77c3b7da9a17822d0611ebfcb9334b26adf8e7df85c",
       "document_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
       "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
       "resolved_files": 14
     },
     "decisions-0082-latency-shaping-for-the-tool-loop": {
-      "binding_sha256": "fda813e0f91f41956ca1d5e5129b72c208afcee68f6626e4b01bf41a41e3e654",
+      "binding_sha256": "cbcbb50df0d8a2bbdb2dd4588cffb10684fd7fb37f9e34b99e146fe7ffbc4f9f",
       "document_sha256": "677acdf35f2be47f461b25e5304f5ca22593d0a16b904adb5d9fb3f1bc17d769",
       "path": "docs/decisions/0082-latency-shaping-for-the-tool-loop.md",
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "8ad0907d44b57f473c34b30c218efb477bd3601cfe877618aab6a671d2ccf7b5",
-      "document_sha256": "33371fbd73ea2b44fb9926cc9847d85dd01a00576c1961bb4527efce71e535f3",
+      "binding_sha256": "bba4d9b33af53e84fba9c4e21b306ab0dcc27d71b1b3b2b9892bdf5ca839cfef",
+      "document_sha256": "f7f51a5d717bcccd0ac1f21f283c366286eb9cebed9db2af0e3cc1dda778780d",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
-      "resolved_files": 13
+      "resolved_files": 15
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "c31694e4b1fdccbecf00bd80841f891568a6d78a81993af6fc897de1facf1efe",
+      "binding_sha256": "ed6e27cdf05a935c15b80451c859c05c8f7a9de2c9a519e2d7e8af7c1c02ff34",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
     },
     "decisions-readme": {
-      "binding_sha256": "5425b88413797f5cb5c3b7c9bf2730bb88aa764857ee869cf818605a697f3026",
+      "binding_sha256": "2bb3d7ce95c3928d839504ae4db7039bbb2506c53a5b82af21b75ce402d409cf",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 89
@@ -535,22 +535,22 @@
       "resolved_files": 12
     },
     "repository-components": {
-      "binding_sha256": "857bac40bdae4d4bda57f7e189fd49880d9bd9dd906716a605a88d6b6090a30b",
+      "binding_sha256": "50efc108b822d57bffb0f92ad136c61db718493d846c9eb7d9455be6d467d945",
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "7a5cc41d85b18aeb07bb307953adc54eec87cd25a46da34ef45ec68a290a9fb3",
+      "binding_sha256": "65f367a5f46ee062a89c7cda64986ec4011add032bf4730cc9e49e5aea984e97",
       "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 103
+      "resolved_files": 104
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "2af972b64d67ff6c787f3cbb2c39ffce4d143d9b59e578e1d0e05d8a78a26eef",
+      "binding_sha256": "70bc2cb4fa42bcb27d6bd3e71a3c66c26c6a93183898fa19e72e81be3ef9af07",
       "document_sha256": "0384df26dba334f01d0d07437909434acaa9638972e7acaa6018e12d79ff5e72",
       "path": "specs/002-host-ipc/spec.md",
-      "resolved_files": 50
+      "resolved_files": 51
     },
     "spec-003-kernel-turns": {
       "binding_sha256": "56a916c9ee0068b9d50478e07359f7b12ce2cbd3e99b64431d17e0c67f1244a1",
@@ -601,7 +601,7 @@
       "resolved_files": 44
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "8a576c4a30b92959fc07eb13830573baaf3ab9b3f1510ad37a865be8532c493f",
+      "binding_sha256": "6e54d5969e6bd42d1c6f5b032bcb2e9cffd41e37b15f323625f2638350b3e1d0",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 84
@@ -619,25 +619,25 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "01ed2c31a5c58157f7b2d50f4df0cd9246bc07d93761d846edd8f9533eceff54",
-      "document_sha256": "7e8ed546799aedf29ac97526fa3c3acef05811a5fac894677b4da494bfc5a574",
+      "binding_sha256": "c78388aec633e228682c994c213a1da54881b23d5a3f48b0516e0bfb06af620d",
+      "document_sha256": "a407ffabb1a030f877b372f7c075337042b26f90fffe315c628011e36940f5b5",
       "path": "specs/014-self-build-reliability/spec.md",
-      "resolved_files": 45
+      "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "bf0ff33fb34f0e75b8d0637325759d241c597a3abdd19ff357984ac98f750451",
-      "document_sha256": "492bdb5214260ef810ebb202bfb34220c4125c5361e06d33d12ee120a850f09b",
+      "binding_sha256": "cce0189761e72be1d25bd073d74cc5f8549278fa97ea5d94ff0b694a1764293b",
+      "document_sha256": "67ecbda13b84ede383791c52f83f5a09f532de61af54b1dfc9e6d4caa5b669f2",
       "path": "specs/015-surface-protocol/spec.md",
-      "resolved_files": 41
+      "resolved_files": 42
     },
     "specs-backlog": {
-      "binding_sha256": "5243b6bc5101686cda79987651d76212d6829b5e04abd037a6f93e9f278ac30c",
+      "binding_sha256": "d5792ca9b765291949148622d835b2202f46089a1504acdb029f8fd4f430acdc",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "7d94e72ca977d5ab8364fa87a2b2c20a7040c990d9ead82a29591141fda0f3fb",
+      "binding_sha256": "4bf63c4384b6982d9f39a705cad52c5d43774dd38fa19e87baee8811725cdd91",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117
