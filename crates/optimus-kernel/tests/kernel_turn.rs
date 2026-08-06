@@ -6,7 +6,7 @@ use optimus_kernel::{
     ModelProvider, PolicyMode, ProjectAuthorityStore, Role, ScriptedModel, SessionStore,
     StreamControl, StreamEvent, TimingEventKind, ToolCall, ToolLifecyclePhase, TurnStatus,
 };
-use optimus_packs::{PackError, ToolId, ToolOutcome, ToolOutcomeKind};
+use optimus_packs::{ToolId, ToolOutcome, ToolOutcomeKind};
 use optimus_runtime::RuntimeError;
 use optimus_skills::{Permission, SkillDraft};
 use serde_json::json;
