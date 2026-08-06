@@ -17,6 +17,7 @@ import type {
   Approval,
   Campaign,
   ChatHandle,
+  OptimusTransport,
   DeveloperAccess,
   Doctor,
   Project,
@@ -25,7 +26,7 @@ import type {
   SessionMeta,
   ToolApprovalBinding,
 } from '../ipc/contracts';
-import { getTransport } from '../ipc';
+import { getTransport, initTransport, resetTransport } from '../ipc';
 import { useAlive } from '../hooks/useAlive';
 import { appReducer } from '../state/appReducer';
 import {
@@ -77,8 +78,6 @@ import { WorkspacePane } from '../components/workspace/WorkspacePane';
 import { composeSendMessage } from './composeSendMessage';
 import { approvalResolutionParams } from './approvalResolution';
 
-const transport = getTransport();
-
 function projectFromRuntimeScope(scope: ProjectRuntimeScope): Project {
   const normalizedRoot = scope.primary_root.replace(/[\\/]+$/, '');
   const name = normalizedRoot.split(/[\\/]/).pop() || scope.project_id;
@@ -91,6 +90,18 @@ function projectFromRuntimeScope(scope: ProjectRuntimeScope): Project {
 }
 
 export function OptimusApp() {
+  // The broker ticket is awaited BEFORE the first transport construction
+  // (spec-015 A3): the transport is created once and cached, so the
+  // bootstrap must not race it. `null` = confirmed broker absence in the
+  // packaged renderer — the terminal affordance.
+  const [transport, setTransport] = useState<OptimusTransport | null>(getTransport());
+  useEffect(() => {
+    let live = true;
+    void initTransport().then((chosen) => {
+      if (live) setTransport(chosen);
+    });
+    return () => { live = false; };
+  }, []);
   const [state, dispatch] = useReducer(appReducer, undefined, () => ({
     selectedSessionId: null,
     activeRunSessionId: null,
@@ -149,6 +160,7 @@ export function OptimusApp() {
   const alive = useAlive();
 
   useEffect(() => {
+    if (!transport) return;
     let live = true;
     void transport.invoke<{ developer_access?: DeveloperAccess }>('developer_access_get')
       .then((result) => {
@@ -156,9 +168,10 @@ export function OptimusApp() {
       })
       .catch(() => undefined);
     return () => { live = false; };
-  }, []);
+  }, [transport]);
 
   const refreshCapabilityState = useCallback(async () => {
+    if (!transport) return;
     try {
       const [doctorResult, campaignResult] = await Promise.all([
         transport.invoke<Doctor>('doctor'),
@@ -172,9 +185,10 @@ export function OptimusApp() {
       if (!alive()) return;
       setBootError(error instanceof Error ? error.message : String(error));
     }
-  }, [alive]);
+  }, [alive, transport]);
 
   const refreshRuntime = useCallback(async () => {
+    if (!transport) return;
     try {
       const creationsAtRequest = sessionCreations.current;
       // The host serves IPC requests in order. Keep the initial workbench
@@ -233,10 +247,11 @@ export function OptimusApp() {
   useEffect(() => {
     const id = state.selectedSessionId;
     if (!id || conversationStore.get(id).loaded) return;
+    if (!transport) return;
     transport.invoke<SessionDetail>('get_session', { id }).then((detail) => {
       conversationStore.load(detail);
     }).catch((error) => setBootError(error instanceof Error ? error.message : String(error)));
-  }, [state.selectedSessionId]);
+  }, [state.selectedSessionId, transport]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = state.theme;
@@ -282,6 +297,7 @@ export function OptimusApp() {
   };
 
   const newSession = async (projectId?: string) => {
+    if (!transport) return;
     try {
       const created = await transport.invoke<SessionMeta>('new_session');
       if (!alive()) return;
@@ -334,6 +350,7 @@ export function OptimusApp() {
     // (display already merges them). Do not drop notes on Send (program P23).
     const text = composeSendMessage(input, annotation);
     if (!text || state.activeRunSessionId) return;
+    if (!transport) return;
     let sessionId = state.selectedSessionId;
     if (!sessionId) {
       const created = await transport.invoke<SessionMeta>('new_session');
@@ -354,6 +371,7 @@ export function OptimusApp() {
     setAnnotation('');
     dispatch({ type: 'set-active-run', id: sessionId });
     const model = modelOverride(composer.model);
+    if (!transport) return;
     const handle = transport.chat(
       {
         session: sessionId,
@@ -419,6 +437,7 @@ export function OptimusApp() {
       // transcript as they happen, and the handle must be cancellable. A
       // blocking resolve left the button on "Approving…" with no feedback for
       // the whole continuation and no way to stop it.
+      if (!transport) return;
       const handle = transport.chatApprovalResolve(
         approvalResolutionParams(sessionId, binding, decision, projectId),
         (event) => conversationStore.apply(sessionId, event)
@@ -559,7 +578,7 @@ export function OptimusApp() {
               compactSurface: state.layout.executionOpen ? 'work' : 'execution',
             },
           })}
-          onWindow={(action) => void transport.windowAction(action)}
+          onWindow={(action) => void transport?.windowAction(action)}
         />
 
         <div className="compact-switcher" role="tablist" aria-label="Primary surface">
@@ -586,6 +605,7 @@ export function OptimusApp() {
                   return;
                 }
                 try {
+                  if (!transport) return;
                   const result = await transport.invoke<{ sessions?: SessionMeta[] }>(
                     'session_search',
                     { q, include_archived: true }
@@ -601,6 +621,7 @@ export function OptimusApp() {
             onSelectSession={openSession}
             onNewSession={(projectId) => void newSession(projectId)}
             onAddProject={async () => {
+              if (!transport) return;
               const result = await transport.pickFolder();
               if (!result.ok || !result.path || !result.grantToken) return;
               const parts = result.path.split(/[\\/]/).filter(Boolean);
@@ -620,6 +641,7 @@ export function OptimusApp() {
             onManageProject={(project) => setSourceProjectId(project.id)}
             onToggleProject={(id) => setExpanded((current) => ({ ...current, [id]: current[id] === false }))}
             onTogglePin={async (session) => {
+              if (!transport) return;
               const pinned = !session.pinned;
               await transport.invoke('pin_session', { id: session.id, pinned });
               if (!alive()) return;
@@ -630,6 +652,7 @@ export function OptimusApp() {
               );
             }}
             onToggleArchive={async (session) => {
+              if (!transport) return;
               const archived = !session.archived;
               await transport.invoke('archive_session', { id: session.id, archived });
               if (!alive()) return;
@@ -647,6 +670,7 @@ export function OptimusApp() {
             })}
             onRename={(session) => setRenameSession(session)}
             onDelete={async (session) => {
+              if (!transport) return;
               if (!window.confirm(`Delete “${session.title || session.id}”? This cannot be undone.`)) return;
               await transport.invoke('delete_session', { id: session.id });
               if (!alive()) return;
@@ -659,11 +683,11 @@ export function OptimusApp() {
           <div className="rail-resizer" role="separator" tabIndex={0} aria-label="Resize project rail" aria-orientation="vertical" aria-valuemin={200} aria-valuemax={400} aria-valuenow={state.layout.leftWidth} aria-valuetext={`${state.layout.leftWidth} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'rail')} onPointerDown={(event) => beginResize(event, 'rail')} />
 
           <section className="app-stage">
-            {bootError ? <div className="boot-error" role="alert"><Icon name="warning" /><span>{bootError}</span><button type="button" onClick={() => void refreshRuntime()}>Retry</button></div> : null}
+            {bootError ? <div className="boot-error" role="alert"><Icon name="warning" /><span>{bootError}</span><button type="button" onClick={() => { resetTransport(); void initTransport().then(setTransport); }}>Retry</button></div> : null}
             <div className={`surface-row${workspaceMaximized ? ' is-workspace-maximized' : ''}`}>
               <div className="work-column">
                 <section className={`work-surface${workVisible ? ' is-compact-active' : ''}`} aria-label="Agent work surface">
-                  {state.layout.route === 'work' ? (
+                  {transport ? state.layout.route === 'work' ? (
                     <WorkbenchChat
                       title={title}
                       project={selectedProject}
@@ -703,11 +727,14 @@ export function OptimusApp() {
                     <MailPage transport={transport} />
                   ) : state.layout.route === 'artifacts' ? (
                     <ArtifactsSurface transport={transport} active standalone />
-                  ) : null}
+                  ) : null : null}
                 </section>
                 {state.layout.executionOpen ? <div className="execution-resizer" role="separator" tabIndex={0} aria-label="Resize execution dock" aria-orientation="horizontal" aria-valuemin={120} aria-valuemax={520} aria-valuenow={state.layout.executionHeight} aria-valuetext={`${state.layout.executionHeight} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'execution')} onPointerDown={(event) => beginResize(event, 'execution')} /> : null}
                 <ExecutionDock
-                  transport={transport}
+                  // Dialogs and the dock render only via post-boot user
+                  // interaction; a null transport never reaches them (the
+                  // boot-error banner is the terminal affordance instead).
+                  transport={transport!}
                   open={state.layout.executionOpen}
                   onClose={() => dispatch({ type: 'patch-layout', patch: { executionOpen: false, compactSurface: 'work' } })}
                   onState={updateExecutionState}
@@ -720,7 +747,7 @@ export function OptimusApp() {
                   <div className={`workspace-shell surface-${state.layout.compactSurface}`}>
                     <WorkspacePane
                       tab={state.layout.workspaceTab}
-                      transport={transport}
+                      transport={transport!}
                       suspended={browserSuspended}
                       onAddToPrompt={(text) => {
                         setAnnotation(text);
@@ -739,7 +766,7 @@ export function OptimusApp() {
 
         <SettingsDialog
           open={state.settingsOpen}
-          transport={transport}
+          transport={transport!}
           theme={state.theme}
           projects={projects}
           sessionId={state.selectedSessionId}
@@ -760,10 +787,12 @@ export function OptimusApp() {
               !authorizedProjects.has(sourceProject.id)
           )}
           onPickSource={async () => {
+            if (!transport) return { ok: false, cancelled: true };
             const result = await transport.pickFolder();
             return result;
           }}
           onSave={async (project, grantTokens) => {
+            if (!transport) return;
             const result = await transport.invoke<{ project?: ProjectRuntimeScope | null }>(
               'project_scopes_authorize',
               {
@@ -805,7 +834,7 @@ export function OptimusApp() {
         />
         <CommandPalette
           open={paletteOpen}
-          transport={transport}
+          transport={transport!}
           onClose={() => setPaletteOpen(false)}
           onRun={(commandId) => {
             if (
@@ -839,8 +868,9 @@ export function OptimusApp() {
           confirmLabel="Rename"
           onCancel={() => setRenameSession(null)}
           onConfirm={async (title) => {
+            if (!transport) return;
             if (!renameSession) return;
-            await transport.invoke('rename_session', { id: renameSession.id, title });
+            await transport?.invoke('rename_session', { id: renameSession.id, title });
             if (!alive()) return;
             setSessions((current) =>
               current.map((item) =>

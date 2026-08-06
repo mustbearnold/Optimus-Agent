@@ -20,6 +20,7 @@ covers:
   - apps/optimus-tauri/src/main.rs
   - apps/optimus-tauri/tauri.conf.json
   - apps/optimus-ui/src/ipc/contracts.ts
+  - apps/optimus-ui/src/ipc/wsTransport.ts
   - apps/optimus-tui/src/lib.rs
   - apps/optimus-cli/src/main.rs
   - crates/optimus-host/src/serve.rs

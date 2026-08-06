@@ -513,7 +513,7 @@ export type ProjectRuntimeScope = {
 };
 
 export interface OptimusTransport {
-  readonly kind: 'tauri' | 'http' | 'fixture';
+  readonly kind: 'tauri' | 'http' | 'fixture' | 'ws';
   invoke<T>(method: DesktopMethod, params?: Record<string, unknown>): Promise<T>;
   chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle;
   /** Resolve a parked approval as a streaming turn; events arrive as they happen. */
@@ -542,5 +542,13 @@ declare global {
   interface Window {
     __TAURI_INTERNALS__?: unknown;
     __TAURI__?: unknown;
+    /**
+     * The broker-owned ticket global (spec-015 A3): set by the shell
+     * broker command in the packaged app (re-issued on reload) and by
+     * dev-mode injection for tests. Presence selects the WS transport;
+     * confirmed absence (bridge present, broker answered no ticket)
+     * selects NO transport.
+     */
+    __OPTIMUS_BROKER_TICKET__?: { port: number; ticket: string } | null;
   }
 }

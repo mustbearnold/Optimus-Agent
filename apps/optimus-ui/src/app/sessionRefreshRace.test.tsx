@@ -17,28 +17,35 @@ const gate = vi.hoisted(() => {
 
 vi.mock('../ipc', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ipc')>();
+  const gateTransport = (real: NonNullable<ReturnType<typeof actual.getTransport>>) => ({
+    ...real,
+    async invoke(method: string, params?: Record<string, unknown>) {
+      const value = await (real.invoke as (m: string, p?: Record<string, unknown>) => Promise<unknown>)(
+        method,
+        params
+      );
+      if (method !== 'sessions' || !gate.armed) return value;
+      gate.calls += 1;
+      if (gate.calls > 1) return value;
+      // The fixture hands back a live reference to its own array; copy it
+      // so this response keeps the pre-click snapshot it was built from.
+      const snapshot = value as { sessions?: unknown[] };
+      const frozen = { ...snapshot, sessions: [...(snapshot.sessions ?? [])] };
+      await gate.held;
+      return frozen;
+    },
+  });
   return {
     ...actual,
     getTransport: () => {
       const real = actual.getTransport();
-      return {
-        ...real,
-        async invoke(method: string, params?: Record<string, unknown>) {
-          const value = await (real.invoke as (m: string, p?: Record<string, unknown>) => Promise<unknown>)(
-            method,
-            params
-          );
-          if (method !== 'sessions' || !gate.armed) return value;
-          gate.calls += 1;
-          if (gate.calls > 1) return value;
-          // The fixture hands back a live reference to its own array; copy it
-          // so this response keeps the pre-click snapshot it was built from.
-          const snapshot = value as { sessions?: unknown[] };
-          const frozen = { ...snapshot, sessions: [...(snapshot.sessions ?? [])] };
-          await gate.held;
-          return frozen;
-        },
-      };
+      return real ? gateTransport(real) : real;
+    },
+    // The app's bootstrap awaits the broker before constructing the
+    // transport (spec-015 A3); the gate wraps whatever it chose.
+    initTransport: async () => {
+      const chosen = await actual.initTransport();
+      return chosen ? gateTransport(chosen) : chosen;
     },
   };
 });
