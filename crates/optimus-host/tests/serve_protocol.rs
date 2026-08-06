@@ -30,13 +30,18 @@ type Ws = WebSocket<MaybeTlsStream<TcpStream>>;
 static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 /// Acquire the env lock with a deadline (a hung holder would otherwise
-/// block every env test in the process forever).
+/// block every env test in the process forever). A POISONED lock (a
+/// test panicked while holding it) is recovered, not spun on: one
+/// test's failure must never cascade into every other env test.
 fn env_lock() -> std::sync::MutexGuard<'static, ()> {
     let deadline = Instant::now() + Duration::from_secs(90);
     loop {
         match ENV_LOCK.try_lock() {
             Ok(guard) => return guard,
-            Err(_) => {
+            Err(std::sync::TryLockError::Poisoned(poisoned)) => {
+                return poisoned.into_inner();
+            }
+            Err(std::sync::TryLockError::WouldBlock) => {
                 assert!(Instant::now() < deadline, "ENV_LOCK held >90s");
                 std::thread::sleep(Duration::from_millis(25));
             }
