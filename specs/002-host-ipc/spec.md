@@ -39,13 +39,29 @@ folder picker) are explicit Tauri commands.
 - R2. React `DesktopMethod` MUST be a subset of the host registry; the matrix
   gate MUST fail on any typed method missing from the registry.
 - R3. Main-only methods (`project_root_stage_native`) MUST NOT appear in the
-  renderer surface and MUST be listed in `HOST_NON_INVOKE_CHANNELS`.
-- R4. Every registry method MUST be either renderer-callable or a documented
-  non-invoke channel (no silent host methods).
-- R5. `host_invoke` MUST forward any registry method and fail in the host on
-  unknown or main-only methods.
-- R6. Chat streaming MUST use `chat_start`/`chat_cancel` Tauri commands with
-  exactly one terminal event per stream (done, error, cancelled).
+  renderer surface. Amended by spec-015 Phase A6 (the surface-protocol
+  milestone): `project_root_stage_native` is a SHELL-GATED WIRE method —
+  reachable on the wire ONLY from `client_kind:"shell"` connections
+  presenting the staging process secret (spec-015 R2/R5/R7/R12), relayed
+  by the shell over its own authenticated connection; it is NOT a
+  `HOST_NON_INVOKE_CHANNELS` member (that const is deleted; the live gate
+  carries it as its own shell-gated bucket).
+- R4. Every registry method MUST be either wire-reachable, a documented
+  non-wire channel, or explicitly superseded (no silent host methods).
+  Amended by spec-015 Phase A6: the blocking chat family
+  (`chat`/`chat_offline`/`chat_approval_resolve`) is SUPERSEDED by the
+  streaming trio — not wire-reachable, not renderer-callable (spec-015 R2).
+- R5. `host_invoke` MUST shrink to the shell-native allowlist (window
+  chrome, folder picker — spec-001 R5) plus the staging relay, and MUST
+  fail in the host on unknown or main-only methods. Amended by spec-015
+  Phase A6: enforcement is the surface-contract gate's union rules + the
+  renderer's move to the WebSocket carrier (spec-015 R11); the Tauri
+  command itself remains a generic dispatcher.
+- R6. Chat streaming MUST use the streaming trio (`chat_start`/`chat_cancel`/
+  `chat_approval_resolve_start`) with exactly one terminal event per
+  stream (done, error, cancelled). Amended by spec-015 Phase A6: the trio
+  is promoted from Tauri commands to first-class wire methods over the
+  serve protocol (spec-015 R2/R4); the blocking chat family is superseded.
 - R7. `pick_folder` MUST stage a single-use project-root grant token; the
   native path exchange MUST go through `project_root_stage_native` with a
   process secret never sent to the renderer.

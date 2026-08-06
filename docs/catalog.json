@@ -3463,7 +3463,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "a7844c8c83e76660b8af5a8051c6a63ed06e330cdb5357481c3feac532f75fa0",
+      "content_sha256": "5f9507818a93a5ffdb3599f41d65ef3ee5d259555f79afc5f1ae8787e1514109",
       "headings": [
         "ADR-0083: One wire protocol for all surfaces",
         "Context",
@@ -3657,7 +3657,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
+      "content_sha256": "77bea388f2d67a0a84bd2db16f1e98da702872a8b0f97e3528abe2d6ec72cb0a",
       "headings": [
         "001 — Desktop shell",
         "Purpose",
@@ -3680,7 +3680,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "0384df26dba334f01d0d07437909434acaa9638972e7acaa6018e12d79ff5e72",
+      "content_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "headings": [
         "002 — Host IPC",
         "Purpose",
@@ -4000,7 +4000,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "67ecbda13b84ede383791c52f83f5a09f532de61af54b1dfc9e6d4caa5b669f2",
+      "content_sha256": "f5a7274d461518a7ad734dcfbfd431a05092650a75fdccea3e4a3e74d1b67589",
       "headings": [
         "Surface protocol — one wire contract for CLI, TUI, and desktop",
         "Revision table",
@@ -4091,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "4a05287c042fc2ce1494a2df9fde73a39473b23d5fd9efd0ac909c4aa4af9352",
+  "documents_sha256": "2f245a87d337ee5d6944a3f2ca5e8e304a53bb1799d5b465469a9af9d054665e",
   "routes": [
     {
       "id": "docs.navigation",

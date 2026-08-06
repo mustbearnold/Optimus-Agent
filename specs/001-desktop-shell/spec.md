@@ -51,8 +51,14 @@ product is exclusively Tauri — no Electron, no Wry rollback shell.
 - R7. The desktop entry MUST NOT expose a rollback shell action: neither
   Electron nor Wry. `check-product-complete-install.py` forbids both
   `ElectronRollback` and `LegacyWry`.
-- R8. The React workbench MUST auto-detect the transport: Tauri bridge when
-  `window.__TAURI_INTERNALS__` is present, HTTP host mode for tests. [inferred]
+- R8. The React workbench MUST auto-detect the transport: WebSocket when a
+  broker ticket global is present (spec-015 A3/R7); otherwise the Tauri
+  bridge when `window.__TAURI_INTERNALS__` is present; HTTP host mode for
+  tests (dev-only). Amended by spec-015 Phase A6: in the packaged app a
+  confirmed broker absence (Tauri bridge present, broker answered no
+  ticket) selects NO transport and surfaces the terminal affordance —
+  never a silent fixture; the packaged-vs-dev discriminator is
+  `window.__TAURI_INTERNALS__` presence. [inferred]
 
 ## Acceptance criteria
 - [x] A1. Given a clean checkout on main with the Tauri shell built, when `scripts/gates/check-tauri-launch.py` runs, then it exits 0 and prints `TAURI_LAUNCH_OK` with a windowed surface. (proven 2026-08-05: `TAURI_LAUNCH_OK version=0.1.0 window=yes`)

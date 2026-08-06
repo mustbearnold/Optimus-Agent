@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub const PROTOCOL_VERSION: u64 = 1;
 
 /// The wire event vocabulary (`StreamEvent` on the renderer,
-/// `contracts.ts:401-409`) plus nothing — `host.ready`/`host.error` are
+/// `contracts.ts:410-418`) plus nothing — `host.ready`/`host.error` are
 /// wire-level notifications, declared in the schema, not stream events.
 /// The surface-contract gate compares this const against the schema's
 /// event set.

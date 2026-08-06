@@ -217,25 +217,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "d869b39b829af1bbf20a622a34edfa4d8e9973bf1877bf52ac4fe61eb3ac6f9b",
+      "binding_sha256": "6ac321fe6ff0e41e69852071d80cbfa8879839f99ead06c62978e16b6dd3d958",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 124
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "f041575ea9a6dc2cfc8e63c00c21449e463f1bab55acfa2df2f81454d7786e7c",
+      "binding_sha256": "7695786a122c6b6c69a974b00275629ffd35dd1cab22588a5a640a00643d36e7",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 123
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "fe4a135255764fb7e1083fe0d6eec78c6478851ac6aeeb95d605ac63c7d16ee5",
+      "binding_sha256": "f99d20573cd8e8d11bf76a9d2f9c8d290bc07c96f94569cb045a851f099b8a40",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 95
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "d19fa1ddddf1345c017f035e9b556ebd3cf2c7073da9f262791107e3e7f29ff5",
+      "binding_sha256": "9ebca5fd6a1ee1f2b59d5432a977a25797a4d0ec0b9ed773f366993e21af1874",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 125
@@ -505,19 +505,19 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "ed7074e3134366391a2032fc8e6172bddfdf492a7afcb740b320b75e861d7f72",
-      "document_sha256": "a7844c8c83e76660b8af5a8051c6a63ed06e330cdb5357481c3feac532f75fa0",
+      "binding_sha256": "49206bd98e66ca74943344abc88eb6a6775019e9b94c85f4b4852538cfcc8874",
+      "document_sha256": "5f9507818a93a5ffdb3599f41d65ef3ee5d259555f79afc5f1ae8787e1514109",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
-      "resolved_files": 16
+      "resolved_files": 17
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "ed6e27cdf05a935c15b80451c859c05c8f7a9de2c9a519e2d7e8af7c1c02ff34",
+      "binding_sha256": "a80ec4545c35e0ce6f4a7c20ca97d88661dc3b9812b0ed8e142fc29b8fb594d5",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
     },
     "decisions-readme": {
-      "binding_sha256": "c9f5efe27b3ad5c93e90e93cc3d228d9c09655b1095d419e1650ca4f27b649c2",
+      "binding_sha256": "1c9254259d8c3c8c0105a547041dd4e5eb86a7d79d90a3aeecf132015847b6d4",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 89
@@ -541,14 +541,14 @@
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "3010db1c5395e46e62df83022a4ac76434186220b0f399a241aaa87971f6ce29",
-      "document_sha256": "da7eae843ffb8253291896fe74c52f318a3c1b848527536fcd7971ad71d5c0f7",
+      "binding_sha256": "1c073455227ca638bd88cfcdd450dc164d37431352f7da7e784cf39d327896f9",
+      "document_sha256": "77bea388f2d67a0a84bd2db16f1e98da702872a8b0f97e3528abe2d6ec72cb0a",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 105
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "9355921108a5917b02c76d1e25376ca1605f8ee92bc3613af213cfd70e901ece",
-      "document_sha256": "0384df26dba334f01d0d07437909434acaa9638972e7acaa6018e12d79ff5e72",
+      "binding_sha256": "f27d2c067fc94232f5c063cab831e93edc35958179dd810daf3472201a1c0ad9",
+      "document_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "path": "specs/002-host-ipc/spec.md",
       "resolved_files": 51
     },
@@ -607,37 +607,37 @@
       "resolved_files": 84
     },
     "spec-012-windows-tauri-packaging": {
-      "binding_sha256": "b1e0f276176be60081b7108342086215eaf74b8f900dd4a048e0289c2a587b11",
+      "binding_sha256": "d3c6c7efe5d1e5010d2462e09a3840fade45efd5509bceac9ab644ce3cd95bd3",
       "document_sha256": "2fc932c467138d99d25c6741c5880ef84b36024c5d0b2fdbbb5803aca5925c50",
       "path": "specs/012-windows-tauri-packaging/spec.md",
       "resolved_files": 6
     },
     "spec-013-self-development": {
-      "binding_sha256": "9c809ec5a3ba12e41e7fbbcb5e4aaaacedb2991624c82f5aeeabd2c2518c63ef",
+      "binding_sha256": "230ba9760691e11caaa259a9b2f96a0c83adcf2c683ef4de65dc5bd60b898d03",
       "document_sha256": "fc6b85d488bd10838b2783bfa2d4a5c3a71529368f962e22d03cecfb741870aa",
       "path": "specs/013-self-development/spec.md",
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "c78388aec633e228682c994c213a1da54881b23d5a3f48b0516e0bfb06af620d",
+      "binding_sha256": "f2423870aa6e7bb29423f5801063e517a83320ad1424a5ec2576918cff6b6785",
       "document_sha256": "a407ffabb1a030f877b372f7c075337042b26f90fffe315c628011e36940f5b5",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "7f364c535614df08323ad6b06d5086431865fc21c2b4441a2fd1cc19399548ea",
-      "document_sha256": "67ecbda13b84ede383791c52f83f5a09f532de61af54b1dfc9e6d4caa5b669f2",
+      "binding_sha256": "dd36ce11b608acc8997fd759e8176575c0af3615d5627d82a2174bb3c5279fca",
+      "document_sha256": "f5a7274d461518a7ad734dcfbfd431a05092650a75fdccea3e4a3e74d1b67589",
       "path": "specs/015-surface-protocol/spec.md",
-      "resolved_files": 42
+      "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "d5792ca9b765291949148622d835b2202f46089a1504acdb029f8fd4f430acdc",
+      "binding_sha256": "6148c1b9e75959d1848beb90f231e7836b7cd6f915759dc4a6df1645113a879a",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "0ef6bbd9e663419ac076e096218daf6f33312f05c7ffafa246cc90726a05d102",
+      "binding_sha256": "23d5adc4496a9b741addb2c33a2da266a3fcd836304f5426382c717b4ca08599",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117

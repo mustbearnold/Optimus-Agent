@@ -13,6 +13,7 @@ covers:
   - crates/optimus-host/src/contract.rs
   - crates/optimus-host/src/router.rs
   - crates/optimus-host/src/chat.rs
+  - crates/optimus-host/src/record.rs
   - apps/optimus-desktop/src/host_runtime.rs
   - apps/optimus-desktop/src/main.rs
   - apps/optimus-cli/src/main.rs
@@ -109,7 +110,14 @@ from the existing subcommand-scoped `cron serve`
     not disable its help flag.
 11. **First network-server dependencies**: `optimus-host` gains tiny_http +
     tungstenite (0.29.0 already in `Cargo.lock` via headless_chrome), with
-    the module-size plan attached (spec-015 R10).
+    the module-size plan attached (spec-015 R10). **Mechanism as landed
+    (spec-015 round-3 review)**: the WS upgrade is NOT performed via
+    tiny_http's `Request::upgrade()` — `serve` runs a raw loopback
+    `TcpListener` + hand-rolled HTTP parser in `crates/optimus-host/src/ws.rs`
+    that performs the upgrade itself, then hands the stream to tungstenite
+    for RFC 6455; tiny_http 0.12.0 serves the HTTP health endpoint on the
+    same port. Locked direct deps: tiny_http 0.12.0 (`Cargo.lock:5602-5603`),
+    tungstenite 0.29.0 (`Cargo.lock:5890-5891`).
 
 ## Consequence
 
