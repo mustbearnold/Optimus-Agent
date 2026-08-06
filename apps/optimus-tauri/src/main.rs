@@ -2,10 +2,15 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
+use optimus_host::DEFAULT_HOST_PORT;
 use optimus_kernel::CancellationToken;
 use serde_json::{json, Value};
 use tauri::ipc::Channel;
 use tauri::{Manager, State, WebviewWindow};
+
+mod serve_lifecycle;
+
+use serve_lifecycle::ServeLifecycle;
 
 #[derive(Clone)]
 struct AppState {
@@ -13,6 +18,8 @@ struct AppState {
     cancellations: Arc<Mutex<HashMap<u64, CancellationToken>>>,
     ready_file: Option<PathBuf>,
     initial_session_id: Option<String>,
+    /// The serve lifecycle: attach-or-spawn-or-diagnose (spec-015 A4/R8).
+    serve: ServeLifecycle,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -215,6 +222,17 @@ fn pick_folder(state: State<'_, AppState>) -> Result<Value, String> {
     optimus_host::pick_folder_dialog(&state.home)
 }
 
+/// The broker answer (spec-015 A3): the healthy v2/ws record — port +
+/// dial ticket — or null. The renderer connects to `optimus serve` over
+/// WS with it; null is a CONFIRMED absence (the terminal affordance).
+#[tauri::command]
+fn broker_ticket(state: State<'_, AppState>) -> Option<Value> {
+    state
+        .serve
+        .broker_ticket()
+        .map(|(port, ticket)| json!({ "port": port, "ticket": ticket }))
+}
+
 fn main() {
     if std::env::args().any(|arg| arg == "--version" || arg == "-V") {
         println!("optimus-agent {}", env!("CARGO_PKG_VERSION"));
@@ -230,11 +248,16 @@ fn main() {
             home.display()
         );
     }
+    // The broker lifecycle runs before the window: the renderer's
+    // bootstrap awaits the broker ticket (spec-015 A3), so the record must
+    // exist (or the diagnosis be terminal) by the time the webview loads.
+    let serve = ServeLifecycle::start(home.clone(), DEFAULT_HOST_PORT);
     let state = AppState {
         home,
         cancellations: Arc::new(Mutex::new(HashMap::new())),
         ready_file: options.ready_file,
         initial_session_id: options.initial_session_id,
+        serve,
     };
     tauri::Builder::default()
         .manage(state)
@@ -264,10 +287,17 @@ fn main() {
             chat_approval_resolve_start,
             chat_cancel,
             window_action,
-            pick_folder
+            pick_folder,
+            broker_ticket
         ])
-        .run(tauri::generate_context!())
-        .expect("failed to run Optimus Tauri shell");
+        .build(tauri::generate_context!())
+        .expect("failed to build Optimus Tauri shell")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                // Quit termination (R8): kill the spawned serve.
+                app.state::<AppState>().serve.terminate();
+            }
+        });
 }
 
 #[cfg(target_os = "linux")]

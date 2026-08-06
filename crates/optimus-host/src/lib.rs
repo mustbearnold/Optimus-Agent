@@ -27,6 +27,7 @@ mod scheduling;
 mod scope;
 mod serve;
 mod sessions;
+pub mod spawn_decision;
 mod system;
 mod ticket;
 mod ws;
@@ -47,8 +48,8 @@ pub use home::resolve_home;
 pub use os::pick_folder_dialog;
 pub use record::{
     healthy_record, healthy_serving_port, holder_refusal_diagnostic, log_connection, read_record,
-    record_path, write_record, HostRuntimeRecord, RUNTIME_RECORD_FILE, TRANSPORT_HTTP,
-    TRANSPORT_WS,
+    record_is_healthy, record_path, write_record, HostRuntimeRecord, RUNTIME_RECORD_FILE,
+    TRANSPORT_HTTP, TRANSPORT_WS,
 };
 pub use router::handle_ipc;
 pub use serve::{
