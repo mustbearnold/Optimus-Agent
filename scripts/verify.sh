@@ -297,7 +297,7 @@ tier_test() {
   # Pinned split suites (spec-015 A5): gate self-containment — the surface
   # protocol conformance suite and the serve capability probe run by pinned
   # command alongside the workspace tier (the double-run is harmless).
-  run "surface-protocol conformance" cargo test -p optimus-host --test serve_protocol
+  run "surface-protocol conformance" cargo test -p optimus-host --test serve_protocol -- --test-threads=1
   run "serve capability probe" cargo test -p optimus-cli --test capability_probe
 }
 

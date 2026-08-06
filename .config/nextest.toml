@@ -20,3 +20,15 @@ max-threads = 1
 [[profile.default.overrides]]
 filter = 'package(optimus-runtime)'
 test-group = 'systemd-scopes'
+
+# The surface-protocol conformance suite shares the process env (the
+# ENV_LOCK serializes env-mutating tests) and its kernel-turn pacing is
+# load-sensitive. Parallel test threads make a holder's recv block under
+# load, blowing the 90s lock deadline and cascading failures — the same
+# disease optimus-runtime has with systemd scopes. Serialise it.
+[test-groups.surface-protocol]
+max-threads = 1
+
+[[profile.default.overrides]]
+filter = 'binary(serve_protocol)'
+test-group = 'surface-protocol'
