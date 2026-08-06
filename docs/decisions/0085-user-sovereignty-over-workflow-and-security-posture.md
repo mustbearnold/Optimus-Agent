@@ -30,7 +30,9 @@ depends_on:
 
 The product has historically shipped opinionated defaults: approval
 resolution hard-fences SystemModify-class actions in every profile
-(see ADR-0081 and the approval-latency-sandbox map), and workflow shaping
+(ADR-0081:48 — "maps to SystemModify, which no profile can grant" — with
+HostInstall and OpaqueShell classified into SystemModify at
+`crates/optimus-policy/src/command_class.rs:66,71`), and workflow shaping
 (agent orchestration, autonomy levels) is fixed by the runtime rather than
 selected by the user. The owner's directive establishes that neither workflow
 nor security posture may be forced on the user: the product must adapt to the
