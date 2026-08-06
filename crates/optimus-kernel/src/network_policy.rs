@@ -69,7 +69,15 @@ pub fn ip_blocked(ip: IpAddr) -> bool {
                 || (v4.octets()[0] == 169 && v4.octets()[1] == 254)
                 || v4.octets()[0] == 0
         }
-        IpAddr::V6(v6) => v6.is_loopback() || v6.is_unique_local() || v6.is_unicast_link_local(),
+        IpAddr::V6(v6) => {
+            // IPv4-mapped IPv6 (::ffff:a.b.c.d) must be checked against the
+            // IPv4 blocklist too: is_loopback() only matches ::1, so e.g.
+            // ::ffff:127.0.0.1 would otherwise bypass the SSRF guard.
+            if let Some(v4) = v6.to_ipv4_mapped() {
+                return ip_blocked(IpAddr::V4(v4));
+            }
+            v6.is_loopback() || v6.is_unique_local() || v6.is_unicast_link_local()
+        }
     }
 }
 
@@ -98,5 +106,17 @@ mod tests {
         // Host is not a literal private IP; resolution may still block if it resolves private
         // (unlikely for example.com). Accept Ok or resolved private as environment variance.
         let _ = assert_public_http_url(&url);
+    }
+
+    #[test]
+    fn blocks_ipv4_mapped_ipv6() {
+        // Regression: ::ffff:127.0.0.1 (IPv4-mapped IPv6) used to bypass the
+        // blocklist because is_loopback() only matches ::1.
+        assert!(ip_blocked("::ffff:127.0.0.1".parse::<IpAddr>().unwrap()));
+        assert!(ip_blocked("::ffff:10.0.0.5".parse::<IpAddr>().unwrap()));
+        assert!(ip_blocked("::ffff:169.254.1.1".parse::<IpAddr>().unwrap()));
+        assert!(!ip_blocked("::ffff:8.8.8.8".parse::<IpAddr>().unwrap()));
+        assert!(assert_public_http_url_str("http://[::ffff:127.0.0.1]/x").is_err());
+        assert!(assert_public_http_url_str("http://[::ffff:10.0.0.5]/x").is_err());
     }
 }
