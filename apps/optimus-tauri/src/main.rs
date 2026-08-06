@@ -9,6 +9,7 @@ use tauri::ipc::Channel;
 use tauri::{Manager, State, WebviewWindow};
 
 mod serve_lifecycle;
+mod stage_relay;
 
 use serve_lifecycle::ServeLifecycle;
 
@@ -219,7 +220,33 @@ fn window_action(action: String, window: WebviewWindow) -> Result<Value, String>
 
 #[tauri::command]
 fn pick_folder(state: State<'_, AppState>) -> Result<Value, String> {
-    optimus_host::pick_folder_dialog(&state.home)
+    // The shell stages the native selection over its own shell-kind
+    // wire connection when serve is up (spec-015 A4); the in-process
+    // path remains the pre-wire fallback.
+    let picked = rfd::FileDialog::new()
+        .set_title("Authorize project folder")
+        .pick_folder();
+    let Some(path) = picked else {
+        return Ok(json!({ "ok": false, "cancelled": true }));
+    };
+    match state.serve.stage_native(&path.to_string_lossy()) {
+        Ok(selection) => {
+            // Same envelope as the dialog path (the renderer's
+            // pickFolder contract): the selection carries the grant
+            // token the authorize call consumes.
+            let mut envelope = selection;
+            if let Some(object) = envelope.as_object_mut() {
+                object.insert("ok".into(), json!(true));
+                object.insert("cancelled".into(), json!(false));
+            }
+            Ok(envelope)
+        }
+        Err(_) => {
+            // Pre-wire fallback: no serve to relay with — stage
+            // in-process (the shell still shares the home).
+            optimus_host::pick_folder_dialog(&state.home)
+        }
+    }
 }
 
 /// The broker answer (spec-015 A3): the healthy v2/ws record — port +

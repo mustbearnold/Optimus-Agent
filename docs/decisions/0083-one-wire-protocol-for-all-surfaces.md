@@ -25,6 +25,7 @@ validated_by:
   - docs/architecture/surface-protocol.registry.json
   - crates/optimus-host/src/spawn_decision.rs
   - apps/optimus-tauri/src/serve_lifecycle.rs
+  - apps/optimus-tauri/src/stage_relay.rs
 ---
 
 # ADR-0083: One wire protocol for all surfaces

@@ -3635,11 +3635,13 @@ dependencies = [
  "dirs",
  "optimus-host",
  "optimus-kernel",
+ "rfd",
  "serde",
  "serde_json",
  "signal-hook",
  "tauri",
  "tauri-build",
+ "tungstenite",
 ]
 
 [[package]]

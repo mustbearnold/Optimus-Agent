@@ -19,7 +19,7 @@ use optimus_host::spawn_decision::{
     decide, re_probe, CapabilityProbe, CrashBudget, Decision, Diagnostic, PortState, ProbeSnapshot,
     Reprobed, READY_BOUND,
 };
-use optimus_host::{process_secret, read_record, record_is_healthy, EXIT_REFUSED, TRANSPORT_WS};
+use optimus_host::{dial_ticket, read_record, record_is_healthy, EXIT_REFUSED, TRANSPORT_WS};
 
 /// The shell's surfacing of the lifecycle outcome.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -120,7 +120,9 @@ struct ServeLifecycleInner {
     outcome: Mutex<ServeOutcome>,
     budget: Mutex<CrashBudget>,
     /// The shell-minted process secret (ADR-0084): delivered to the child
-    /// via env; the shell presents it on its own shell-kind connection.
+    /// via env at spawn; the shell presents it on its own shell-kind
+    /// connection. `dial_ticket`'s generator mints a CSPRNG token of
+    /// >= TICKET_MIN_CHARS — the same entropy class as the dial ticket.
     secret: String,
     port: u16,
 }
@@ -139,7 +141,7 @@ impl ServeLifecycle {
             child: Mutex::new(None),
             outcome: Mutex::new(ServeOutcome::Diagnostic("serve lifecycle starting".into())),
             budget: Mutex::new(CrashBudget::new()),
-            secret: process_secret().unwrap_or_default(),
+            secret: dial_ticket(),
             port,
         });
         let lifecycle = ServeLifecycle(inner);
@@ -382,6 +384,18 @@ impl ServeLifecycle {
     pub fn broker_ticket(&self) -> Option<(u16, String)> {
         let outcome = self.0.outcome.lock().unwrap();
         outcome.as_attach()
+    }
+
+    /// The shell-kind staging relay (R7/R12): stage a native project
+    /// root over the shell's own wire connection, presenting the process
+    /// secret. The serve-side shell-gated class injects the secret into
+    /// the stage call, so os.rs's check passes unchanged.
+    pub fn stage_native(&self, path: &str) -> Result<serde_json::Value, String> {
+        let outcome = self.0.outcome.lock().unwrap();
+        match outcome.as_attach() {
+            Some((port, _)) => crate::stage_relay::stage_native_root(port, &self.0.secret, path),
+            None => Err("no serve to stage with (the backend is not running)".into()),
+        }
     }
 
     /// Quit termination: kill the spawned serve on shell exit.

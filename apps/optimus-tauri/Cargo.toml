@@ -26,3 +26,5 @@ serde_json.workspace = true
 dirs = "6"
 tauri = { version = "2.11.5", features = [] }
 signal-hook = "0.3"
+tungstenite = "0.29.0"
+rfd = "0.15"
