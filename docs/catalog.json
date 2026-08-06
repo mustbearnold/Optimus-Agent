@@ -1103,7 +1103,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "45f482d7f58a00f262f80013167201d58878cd9275c53be20ee4fa853272d9b3",
+      "content_sha256": "ba7516a669da177a8c5dc39367f627f89fd27c2867c85fe6d0b803abea21d83a",
       "headings": [
         "Optimus Agent system overview",
         "Status legend",
@@ -2253,7 +2253,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "e43571206a59cebf0e30af9ea9dc83ff22690922ce7189da50d6546f09d93f71",
+      "content_sha256": "efc4ff5b0b63afbb7d35ea0eacd5d7c1dfc4cc3476de237c3344588ade231b70",
       "headings": [
         "ADR-0038: UI IPC architecture completeness (P15)",
         "Context",
@@ -2449,7 +2449,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "f88dd065069581d52b77d19c035cf8749ab139930600dc51c144d120a0bd064e",
+      "content_sha256": "c034f7bc82b7307902c77574fe00343514a89f812523ef550809c7179204f18a",
       "headings": [
         "ADR-0045: Agent host and surface transports",
         "Context",
@@ -2618,7 +2618,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5ada950dc0432803f2181401d8c778d4f51ad7c831052586f3a68cd9ffcfa82b",
+      "content_sha256": "92342194fbd68c9ff9430df334932ae0d962a5f10e750d432628df75be6c8692",
       "headings": [
         "ADR-0051: Tauri primary, Electron rollback during preview parity",
         "Context",
@@ -3463,7 +3463,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "5da0898b04725551a2835e5ec602306a707f0e9768c059e84990f64c656ac412",
+      "content_sha256": "33371fbd73ea2b44fb9926cc9847d85dd01a00576c1961bb4527efce71e535f3",
       "headings": [
         "ADR-0083: One wire protocol for all surfaces",
         "Context",
@@ -3680,7 +3680,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "ac65ddbc98b948c68c4d4e74209dc2f18ee007680f499d6733068240e52ebc77",
+      "content_sha256": "0384df26dba334f01d0d07437909434acaa9638972e7acaa6018e12d79ff5e72",
       "headings": [
         "002 — Host IPC",
         "Purpose",
@@ -4000,7 +4000,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "cb13db8cbae9787995db761de9c046479dc0eb607180a88fd07c4d4ce878ba8f",
+      "content_sha256": "46fe31aef9076bc39b0f0ae4ea3c1ade5afb1fd90607affe973707a7b0e19c85",
       "headings": [
         "Surface protocol — one wire contract for CLI, TUI, and desktop",
         "Revision table",
@@ -4091,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "2c87b09e3643c77d61800d51cc596f3f3a14ca326c0a2fcc068d8b1ff27a3da4",
+  "documents_sha256": "328a38203faad94edeb3a2d6af578624f145580eaf742d84c811e79917bfd459",
   "routes": [
     {
       "id": "docs.navigation",
