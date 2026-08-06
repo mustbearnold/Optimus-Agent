@@ -1633,10 +1633,10 @@ body,
   display: grid;
 }
 
-/* The densest card in the rail: project name, run state, title, and worktree.
-   A fixed 38px could not hold four rows, so the title and worktree were
-   compressed to 9px and 7px boxes and their glyphs sliced. Content decides the
-   height; 38px is only the floor. */
+/* Sessions inside a project folder show only the session name — the folder
+   heading already carries project name and worktree. The row keeps the
+   densest layout in the rail: a fixed 38px is only the floor, content
+   decides the height. */
 .project-sessions .session-row .session-select {
   height: auto;
   min-height: 38px;

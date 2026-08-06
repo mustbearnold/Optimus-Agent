@@ -183,7 +183,10 @@ describe('ProjectsRail session actions', () => {
       />
     );
 
-    expect(screen.getByTitle('Workspace audit')).toHaveTextContent('Optimus AgentWorking');
+    expect(screen.getByTitle('Workspace audit')).toHaveTextContent('Workspace audit');
+    const projectCard = screen.getByTitle('Workspace audit');
+    expect(projectCard).not.toHaveTextContent('Optimus Agent');
+    expect(projectCard).not.toHaveTextContent('Working');
     const unassignedCard = screen.getByTitle('General research');
     expect(unassignedCard).not.toHaveTextContent('No project');
     expect(unassignedCard).not.toHaveTextContent('messages');
@@ -251,7 +254,7 @@ describe('ProjectsRail session actions', () => {
     expect(screen.queryByRole('menu', { name: 'Filter sessions by project' })).not.toBeInTheDocument();
   });
 
-  it('shows project and worktree metadata only for an explicit assignment', () => {
+  it('renders only the session name inside a project folder', () => {
     render(
       <ProjectsRail
         collapsed={false}
@@ -277,9 +280,12 @@ describe('ProjectsRail session actions', () => {
     );
 
     const card = screen.getByTitle('Assess Optimus Agent Project State');
-    expect(card).toHaveTextContent('Optimus Agent');
-    expect(card).toHaveTextContent('Attention');
-    expect(card).toHaveTextContent('workspace-redesign');
+    expect(card).toHaveTextContent('Assess Optimus Agent Project State');
+    expect(card.querySelector('.session-card-meta')).toBeNull();
+    expect(card.querySelector('.session-state')).toBeNull();
+    expect(card.querySelector('.session-worktree')).toBeNull();
+    expect(card).not.toHaveTextContent('Attention');
+    expect(card).not.toHaveTextContent('workspace-redesign');
     expect(card).not.toHaveTextContent('messages');
   });
 

@@ -163,7 +163,7 @@ export function ProjectsRail(props: Props) {
     if (id) props.onAssign(id, projectId);
   };
 
-  const renderSession = (session: SessionMeta) => {
+  const renderSession = (session: SessionMeta, projectRow = false) => {
     const active = session.id === props.selectedSessionId;
     const indicator = props.sessionIndicators[session.id] || null;
     const project = projectForSession(session);
@@ -176,9 +176,12 @@ export function ProjectsRail(props: Props) {
             ? 'Optimus encountered an error'
             : '';
     const menuOpen = menuSession === session.id;
+    // Rows inside a project folder show only the session name; the folder
+    // heading already carries the project name and worktree.
+    const hasStatus = !projectRow && (project || indicator);
     return (
       <div
-        className={`session-row${active ? ' is-active' : ''}${project ? '' : ' is-unassigned'}${project || indicator ? ' has-status' : ''}`}
+        className={`session-row${active ? ' is-active' : ''}${project ? '' : ' is-unassigned'}${hasStatus ? ' has-status' : ''}`}
         key={session.id}
         draggable
         data-session-id={session.id}
@@ -205,13 +208,13 @@ export function ProjectsRail(props: Props) {
           }}
           title={session.title || session.id}
         >
-          {project ? (
+          {!projectRow && project ? (
             <span className="session-card-meta">
               <Icon name="folder" />
               <span>{project.name}</span>
             </span>
           ) : null}
-          {project || indicator ? (
+          {hasStatus ? (
             <span className={`session-state is-${indicator || 'idle'}`}>
               <span className="session-status-dot" aria-hidden="true" />
               {indicator === 'working'
@@ -223,9 +226,9 @@ export function ProjectsRail(props: Props) {
                     : formatSessionAge(session.updated_at || session.created_at, clock)}
             </span>
           ) : null}
-          {indicatorLabel ? <span className="sr-only">{indicatorLabel}</span> : null}
+          {!projectRow && indicatorLabel ? <span className="sr-only">{indicatorLabel}</span> : null}
           <strong className="session-title">{session.title || session.id.slice(0, 8)}</strong>
-          {project ? <span className="session-worktree">{worktreeName(project)}</span> : null}
+          {!projectRow && project ? <span className="session-worktree">{worktreeName(project)}</span> : null}
         </button>
         {menuOpen ? (
           <div
@@ -334,7 +337,7 @@ export function ProjectsRail(props: Props) {
           </button>
         </div>
         <div id={sessionsId} className="project-sessions" role="group" aria-label={`Sessions in ${project.name}`}>
-          {projectSessions.length ? projectSessions.map(renderSession) : <div className="project-drop-hint">Drop a session here</div>}
+          {projectSessions.length ? projectSessions.map((session) => renderSession(session, true)) : <div className="project-drop-hint">Drop a session here</div>}
         </div>
       </section>
     );
@@ -449,7 +452,7 @@ export function ProjectsRail(props: Props) {
           <section className="rail-section recent-section" data-testid="archived-chats-section" aria-labelledby="archived-chats-heading">
             <div className="rail-section-heading" id="archived-chats-heading"><span>Archived Chats</span></div>
             <div className="session-stack">
-              {archivedSessions.length ? archivedSessions.map(renderSession) : <div className="rail-empty">No archived chats</div>}
+              {archivedSessions.length ? archivedSessions.map((session) => renderSession(session)) : <div className="rail-empty">No archived chats</div>}
             </div>
           </section>
         ) : (
@@ -464,7 +467,7 @@ export function ProjectsRail(props: Props) {
               </div>
               <div className="session-stack pinned-session-stack">
                 {pinnedSessions.length
-                  ? pinnedSessions.map(renderSession)
+                  ? pinnedSessions.map((session) => renderSession(session))
                   : <div className="rail-empty">Pin a chat to keep it here</div>}
               </div>
             </section>
@@ -504,7 +507,7 @@ export function ProjectsRail(props: Props) {
                 }}
               >
                 {recentSessions.length
-                  ? recentSessions.map(renderSession)
+                  ? recentSessions.map((session) => renderSession(session))
                   : (
                     <div className="rail-empty">
                       {scopedProject
