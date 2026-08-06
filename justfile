@@ -244,9 +244,11 @@ em-generate:
     python3 scripts/tools/project_knowledge.py generate
     python3 scripts/tools/engineering_memory.py validate --quick
 
-# Engineering Memory: budgeted context pack for agent prompts.
-em-context budget="3000":
-    python3 scripts/tools/engineering_memory.py context --budget {{budget}}
+# Engineering Memory: budgeted context pack for agent prompts. Pass the
+# owning spec path (e.g. `just em-context specs/014-self-build-reliability/spec.md`)
+# to read that spec's EM instead of the generic orientation view.
+em-context spec="" budget="3000":
+    python3 scripts/tools/engineering_memory.py context --budget {{budget}}{{ if spec != "" { " --path " + spec } else { "" } }}
 
 # Hermes comparison scorecard — informational (ADR-0069); the release bar
 # is `just release-gate`.

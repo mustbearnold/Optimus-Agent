@@ -456,16 +456,16 @@ No transition may allocate unbounded DOM, parse full transcript history, or issu
 
 ### Mockup set
 
-Mockups live under `docs/design/optimus-vantage-2027/`:
+Mockups live under `specs/001-desktop-shell/assets/optimus-vantage-2027/` (WebP, converted from PNG):
 
-1. `01-primary-workbench.png` — parallel-agent task selected, evidence timeline, diff-oriented inspector, execution dock.
-2. `02-browser-review.png` — Browser inspector, annotations, compact command composer, active task continuity.
-3. `03-focus-and-empty.png` — collapsed scope rail, useful empty/focus state, command-first onboarding.
+1. `01-primary-workbench.webp` — parallel-agent task selected, evidence timeline, diff-oriented inspector, execution dock.
+2. `02-browser-review.webp` — Browser inspector, annotations, compact command composer, active task continuity.
+3. `03-focus-and-empty.webp` — collapsed scope rail, useful empty/focus state, command-first onboarding.
 
 Compiled implementation captures:
 
-4. `04-implemented-empty.png` — 1600 × 1000 empty/new-task state from the real HTTP desktop harness.
-5. `05-implemented-workbench.png` — 1600 × 1000 transcript + inspector + execution dock after all transitions settle.
-6. `06-implemented-focus-640.png` — 640 × 800 responsive focus state proving compact titlebar, rail, and composer fit.
+4. `04-implemented-empty.webp` — 1600 × 1000 empty/new-task state from the real HTTP desktop harness.
+5. `05-implemented-workbench.webp` — 1600 × 1000 transcript + inspector + execution dock after all transitions settle.
+6. `06-implemented-focus-640.webp` — 640 × 800 responsive focus state proving compact titlebar, rail, and composer fit.
 
 Mockups are directional system views. Stable DOM IDs, existing IPC, native Browser lifecycle, private Browser context, and honest capability boundaries remain normative over any image detail.
