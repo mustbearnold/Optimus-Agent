@@ -3463,6 +3463,44 @@
     },
     {
       "authority": "record",
+      "content_sha256": "5da0898b04725551a2835e5ec602306a707f0e9768c059e84990f64c656ac412",
+      "headings": [
+        "ADR-0083: One wire protocol for all surfaces",
+        "Context",
+        "Decision",
+        "Consequence"
+      ],
+      "id": "decisions-0083-one-wire-protocol-for-all-surfaces",
+      "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
+      "plane": "decision",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "Build the missing local agent server recorded in ADR-0045 — `optimus serve` as the headless agent backend (one core per home), one JSON-RPC 2.0 protocol over stdio and loopback WebSocket carriers sharing one dispatch over the host registry, making CLI, TUI, and desktop clients of one wire contract instead of embedded-runtime surfaces. Records the serve-verb disambiguation, the host.* wire-event naming divergence from Hermes' gateway.*, the exit codes 2/3 (bind-2 as a change), the record v2 + transport field + version-tolerant read_record, the committed schema artifact, the worker-pool dispatch model with control-plane bypass, disconnect-to-job-cancellation, the exit-code capability probe, and the host's first network-server dependencies.",
+      "title": "ADR-0083: One wire protocol for all surfaces",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
+      "content_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
+      "headings": [
+        "ADR-0084: WebSocket ticket + process-secret security model",
+        "Context",
+        "Decision",
+        "Consequence"
+      ],
+      "id": "decisions-0084-websocket-ticket-and-process-secret-security-model",
+      "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
+      "plane": "decision",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "The WebSocket carrier's security model — loopback-only bind, per-launch CSPRNG dial ticket (>= 32 chars) minted by the spawning shell and written to the user-only host-runtime record (the record token IS the dial ticket for renderer/tui/cli kinds; manual-start mint fallback), a per-launch minted process secret authenticating the shell kind with env delivery and server-side injection into the staging call (overriding any client-supplied token), credential-class enforcement on both carriers, renderer-brokered single ticket delivery with reload re-issue, an Origin allowlist with the credential as authorization, bearer-gated health unchanged, no stderr/argv/URL ticket logging, and the wry-era optimus://localhost origin retired for good.",
+      "title": "ADR-0084: WebSocket ticket + process-secret security model",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -3943,7 +3981,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "b4d8f4c034e0b9c718bf5b22d40cbaae4846ad8463ed3659bc83c1ce20299aa4",
+      "content_sha256": "7e8ed546799aedf29ac97526fa3c3acef05811a5fac894677b4da494bfc5a574",
       "headings": [
         "Self-build reliability and responsiveness",
         "Purpose",
@@ -3958,6 +3996,32 @@
       "status": "current",
       "summary": "Self-build reliability and responsiveness — the toolchain-aware command envelope for Developer Full Access, pre-card feasibility probes, visible approval-resolution outcomes (resume_error surfacing, multi-node re-park with still_pending), durable session-scoped capability consent, and latency shaping (per-provider reasoning-effort caps, per-step persistence, tool-loop guard scoping, tool-to-tool gap observability).",
       "title": "Self-build reliability and responsiveness",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
+      "content_sha256": "cb13db8cbae9787995db761de9c046479dc0eb607180a88fd07c4d4ce878ba8f",
+      "headings": [
+        "Surface protocol — one wire contract for CLI, TUI, and desktop",
+        "Revision table",
+        "Purpose",
+        "Current state (Confirmed behaviour)",
+        "Requirements",
+        "Acceptance criteria",
+        "Implementation phases",
+        "Out of scope",
+        "Open questions",
+        "Planned ADRs",
+        "Links"
+      ],
+      "id": "spec-015-surface-protocol",
+      "path": "specs/015-surface-protocol/spec.md",
+      "plane": "work",
+      "review_by": "2026-11-05",
+      "reviewed_on": "2026-08-05",
+      "status": "current",
+      "summary": "One wire contract for every Optimus surface — `optimus serve` as the headless agent backend (one core per home), JSON-RPC 2.0 over stdio and loopback WebSocket carriers sharing one dispatch, the host registry as the method vocabulary, and the packaged desktop app as a pure protocol client that spawns or attaches the backend it talks to.",
+      "title": "Surface protocol — one wire contract for CLI, TUI, and desktop",
       "type": "reference"
     },
     {
@@ -4027,7 +4091,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "c49292ff23b4e4f185ca9476354d0a41fbaadcd442ec4e7b3249d24ac6047584",
+  "documents_sha256": "2c87b09e3643c77d61800d51cc596f3f3a14ca326c0a2fcc068d8b1ff27a3da4",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4611,6 +4675,31 @@
       ],
       "primary": [
         "spec-014-self-build-reliability"
+      ]
+    },
+    {
+      "id": "specs.015-surface-protocol",
+      "keywords": [
+        "surface protocol",
+        "optimus serve",
+        "wire contract",
+        "JSON-RPC",
+        "WebSocket",
+        "stdio carrier",
+        "host-runtime record",
+        "dial ticket",
+        "process secret",
+        "streaming trio",
+        "chat_start",
+        "chat_cancel",
+        "host.ready",
+        "host.error",
+        "connections.log",
+        "surface-contract gate",
+        "protocol schema"
+      ],
+      "primary": [
+        "spec-015-surface-protocol"
       ]
     }
   ],

@@ -603,6 +603,31 @@
       "primary": [
         "spec-014-self-build-reliability"
       ]
+    },
+    {
+      "id": "specs.015-surface-protocol",
+      "keywords": [
+        "surface protocol",
+        "optimus serve",
+        "wire contract",
+        "JSON-RPC",
+        "WebSocket",
+        "stdio carrier",
+        "host-runtime record",
+        "dial ticket",
+        "process secret",
+        "streaming trio",
+        "chat_start",
+        "chat_cancel",
+        "host.ready",
+        "host.error",
+        "connections.log",
+        "surface-contract gate",
+        "protocol schema"
+      ],
+      "primary": [
+        "spec-015-surface-protocol"
+      ]
     }
   ],
   "schema_version": 1
