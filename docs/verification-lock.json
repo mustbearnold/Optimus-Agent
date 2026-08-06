@@ -560,12 +560,12 @@
     },
     "decisions-0085-user-sovereignty-over-workflow-and-security-posture": {
       "binding_sha256": "1371b366919ff0384d47617573515e695d525a2eecfe1707704bce9ff3deedfe",
-      "document_sha256": "c6fcf0a66829c1f0eef53d6cc933cd42bed78d9ce8519034c52101acb6aa0dc2",
+      "document_sha256": "86339ffd9f9d48c8df9efba525e4c8f437c0b6d9309ce6d2ff12d62d167402d5",
       "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "ec2d8ae682df81c4571b706ac8ecbbd6d62ebd5dce6d1be69c71928a2f5b312a",
+      "binding_sha256": "4a31b08405e881b1ef5b48ba3f77a871c62f930c968b76d9a21efcb20f239ea0",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 90
@@ -685,7 +685,7 @@
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "1cf186f9a18f019912fff80cbfc47b76e90275add44b6ea20072ad491d31051c",
+      "binding_sha256": "5a2b360a0db01a6f00a57bf0f692791364dec051ae152490668a6cf8135ef1b7",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 118

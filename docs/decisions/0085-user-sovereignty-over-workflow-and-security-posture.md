@@ -15,6 +15,8 @@ covers:
 depends_on:
   - docs/decisions/0081-truthful-approval-resolution-and-session-consent.md
   - docs/decisions/0026-separate-development-and-runtime-agents.md
+validated_by:
+  - specs/015-surface-protocol/spec.md
 ---
 
 # ADR-0085: User sovereignty over workflow and security posture

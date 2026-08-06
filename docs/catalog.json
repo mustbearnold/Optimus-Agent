@@ -3614,7 +3614,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "c6fcf0a66829c1f0eef53d6cc933cd42bed78d9ce8519034c52101acb6aa0dc2",
+      "content_sha256": "86339ffd9f9d48c8df9efba525e4c8f437c0b6d9309ce6d2ff12d62d167402d5",
       "headings": [
         "ADR-0085: User sovereignty over workflow and security posture",
         "Context",
@@ -4223,7 +4223,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "3d4262f8ec65a1417e4b979c1895604f286c09f71f33c0190e0bcfd9002374e8",
+  "documents_sha256": "15983200756101f33c73ad037f5d5f366ce63ed82c023271733a706b44301bf0",
   "routes": [
     {
       "id": "docs.navigation",
