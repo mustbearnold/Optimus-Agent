@@ -505,13 +505,13 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "49206bd98e66ca74943344abc88eb6a6775019e9b94c85f4b4852538cfcc8874",
+      "binding_sha256": "df0654d82c62bb0f224eac2c406dd9683f362f97501baaf19503503bb97a2b75",
       "document_sha256": "5f9507818a93a5ffdb3599f41d65ef3ee5d259555f79afc5f1ae8787e1514109",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 17
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "a80ec4545c35e0ce6f4a7c20ca97d88661dc3b9812b0ed8e142fc29b8fb594d5",
+      "binding_sha256": "5f597f885fa168de6bb7db6d9d33f11146156fd9516f61e6e2461e85b433e6e2",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
@@ -626,18 +626,18 @@
     },
     "spec-015-surface-protocol": {
       "binding_sha256": "dd36ce11b608acc8997fd759e8176575c0af3615d5627d82a2174bb3c5279fca",
-      "document_sha256": "f5a7274d461518a7ad734dcfbfd431a05092650a75fdccea3e4a3e74d1b67589",
+      "document_sha256": "9cd0839e09614b1b0b29e5336fd39cfd0a0e0c45fe01f31d0afd7e21ceac91e5",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "6148c1b9e75959d1848beb90f231e7836b7cd6f915759dc4a6df1645113a879a",
+      "binding_sha256": "8fb9e1d106ac92e2d4e8e1de61884929999f701f6afff864009e636695548861",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "23d5adc4496a9b741addb2c33a2da266a3fcd836304f5426382c717b4ca08599",
+      "binding_sha256": "6fbd1f0788b26d7d0b80ed0cb2e7e14f834a3fd855b06d9870777cd88179cf1f",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 117

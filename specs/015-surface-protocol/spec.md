@@ -73,6 +73,7 @@ Owner: optimus-agent-development (prompt-only owner)
 | 13 | Owner single-reviewer gate R1 (external, architecture/security lens, 2026-08-06): REJECTED — 2 blocking + 6 non-blocking | [G1-B1]–[G1-B2], [G1-N1]–[G1-N6] | Fixed in v14: stdio shell-kind rejection split — rejection pinned by serve_protocol.rs, exit-2 pin by capability_probe.rs case (v) (spawn `serve --stdio` with secret env absent, shell-kind hello, assert stderr + exit 2) [B1]; serve-side refusal diagnostic named for BOTH holder transports ("… in HTTP mode" / "… in ws mode"), pinned in R1/R8 and recorded in ADR-0083; A5(ii) split into (iia) http-holder + (iib) ws-holder fixtures; A6 gains the any-version/transport wording [B2]; tiny_http citation → spec-writing time + name-based [N1]; stale-id count re-derived at landing (34 at review time) [N2]; stdio-EOF exit pinned 0 (normal teardown) [N3]; install-meta wording → "only binary-path fields" [N4]; 30 s hello deadline on unauthenticated WS connections [N5]; Purpose/Out-of-scope spec-014 wording fixed + (issues #128–130) [N6]. |
 | 14 | Owner single-reviewer gate R2 (2026-08-06): APPROVED — both round-13 blockers verified fixed in the v14 text (exit-code executor + both-transport diagnostic), all 6 non-blocking fixes verified, ~90 citations re-checked, whole-spec re-audit clean; 4 polish notes only. Record: `Development/tmp/spec015-review-r2.md`. | [R2-B1]–[R2-B2], [R2-N1]–[R2-N6] | No fixes required; the 4 polish notes were carried into round 3 and are folded into v15. |
 | 15 | Owner single-reviewer gate R3 (single agent, same profile SOUL, 2026-08-06): REJECTED — 10 blocking + 9 non-blocking. Record: `Development/tmp/spec015-review-single-soul.md`. | [R3-B1]–[R3-B10], [R3-N1]–[R3-N9] | Fixed in v15: 11 dead `host_runtime.rs` citations re-pointed to `record.rs` (the implementation moved; the desktop file is a re-export shim) + `record.rs`/`contracts.schema.test.ts` added to `covers` + A6 binding list [B1]; 10 citations to the deleted gates re-pointed to `check-surface-contract.py` + the Current-state gate paragraph rewritten to describe the live gate [B2]; tauri `main.rs` +8 re-points (host_invoke :71, spawn_blocking :84, trio :89/:141/:191, registry :97-101, terminal removal :122-125, stuck-Approving :127-140, continuation :141-189, cancelled-wins :167-176, chat_cancel :191-201) [B3]; cli `main.rs` re-points (open_session :711, `cron serve` :855, `gateway serve` :1059) [B4]; `contracts.ts` +9 re-points (StreamEvent :410-418, ChatRequest :420-429, ApprovalResolveRequest :438-448, TimingEvent :396) + the removed index signature noted as done [B5]; `contract.rs` envelope re-point :120-135 [B6]; desktop `server.rs` re-points (`/api/health` :239-245, cancel closure :477-481) [B7]; `verify.sh`/shim re-points (`build react ui` :361, playwright tiers :452/:634, legacy shims :125-126/:308-322; old-gate sites marked historical) [B8]; R10's TS type-level conformance clauses (b)/(c) implemented in `contracts.schema.test.ts` [B9]; spec-002 R3/R4/R5/R6 + spec-001 R8 same-wave amendments applied [B10]; 9 non-blocking folded in: revision-table reorder + owner-R2 row (this table) [N1/N2]; inline "exit 2" in A2 [N3]; A1 ws-mode diagnostic pointer [N4]; R12 hello-deadline case named [N5]; R6 id-less-hello rewording to the implemented drop behavior [N6]; staging-secret row marked spec-writing-time snapshot [N7]; R7 ticket-delivery record-leg note [N8]; ADR-0083 + R8 record the WS-upgrade mechanism deviation [N9/N4]; R11 enforcement point reworded [N5/N9]. |
+| 16 | Owner single-reviewer gate R4 (single agent, same profile SOUL, 2026-08-06): REJECTED — 1 blocking + 6 non-blocking. Record: `Development/tmp/spec015-review-round4.md`. | [R4-B1], [R4-N1]–[R4-N6] | Fixed in v16: the A5 sweep-narrative parenthetical re-pointed to `specs/002-host-ipc/spec.md:72,87` (the v15 same-wave amendments displaced the A1 criterion + Tests footer from :56,71 — the fix wave's own single dead citation) [B1]; Links "(planned)" markers flipped to landed for serve_protocol.rs / capability_probe.rs / contracts.schema.test.ts / ADRs 0083-0084 [N1]; router.rs pin extended to :396-425 (the scope::enforce behavioral test starts at :415) [N2]; `httpTransport.ts:37` → :39 [N3]; `index.ts:6` → :7 [N4]; `server.rs:533-539` → :540 [N5]; tauri `main.rs:71` → :72 (the `#[tauri::command]` attribute is at :71, the fn at :72; also :71-87 → :72-87) [N6]. |
 
 ## Purpose
 
@@ -108,7 +109,7 @@ The desktop app must stop being a separate implementation of the agent
 surface. Today every surface embeds the runtime: the TUI links
 `optimus-host` in-process (`apps/optimus-tui/src/lib.rs:3-6`), the packaged
 Tauri shell links the host in-process and the renderer reaches it over
-`host_invoke` (`apps/optimus-tauri/src/main.rs:71`), and the CLI opens a
+`host_invoke` (`apps/optimus-tauri/src/main.rs:72`), and the CLI opens a
 `Kernel` directly (`apps/optimus-cli/src/main.rs:711`). ADR-0045 already
 recorded the gap: "There is no local agent server. Hermes runs two
 gateways: `tui_gateway/` is the local agent server and `gateway/` is
@@ -127,7 +128,7 @@ and documented once.
 | Surface | How it reaches the runtime today | Evidence |
 |---|---|---|
 | TUI | In-process: links `optimus-host`, calls `handle_ipc` directly | `apps/optimus-tui/src/lib.rs:3-6`, `apps/optimus-tui/src/main.rs:4-6` |
-| Desktop (product) | In-process: Tauri `host_invoke` (`main.rs:71`) → host registry via `spawn_blocking` (`main.rs:84`); chat via `chat_start`/`chat_cancel` commands; approval continuation via `chat_approval_resolve_start` (`main.rs:141-189`) | `apps/optimus-tauri/src/main.rs:89,114-120,191` |
+| Desktop (product) | In-process: Tauri `host_invoke` (`main.rs:72`) → host registry via `spawn_blocking` (`main.rs:84`); chat via `chat_start`/`chat_cancel` commands; approval continuation via `chat_approval_resolve_start` (`main.rs:141-189`) | `apps/optimus-tauri/src/main.rs:89,114-120,191` |
 | Desktop (HTTP mode) | Loopback HTTP+SSE server, `OPTIMUS_HTTP_TOKEN`, `--host-only` port 17865; bind failure exits 1 (`main.rs:181-183`), security validation failure exits 2 (`main.rs:173-178`), refusal exits 3 (`main.rs:165`) | `apps/optimus-desktop/src/main.rs:34,68,144`; `apps/optimus-desktop/src/server.rs:110-130,164` |
 | CLI | Embeds a `Kernel` (`Kernel::open_session`) | `apps/optimus-cli/src/main.rs:711` |
 | Attach-or-spawn record | `host-runtime.json` (version/port/pid/token) written only after bind, health-checked before trust (HTTP `GET /api/health`, Bearer token required) | `crates/optimus-host/src/record.rs:29-33,68-95,97-115` (consts/write/read/probe; the desktop shell re-exports at `apps/optimus-desktop/src/host_runtime.rs:14`); `server.rs:212-221,239-245` |
@@ -136,7 +137,7 @@ and documented once.
 The host registry is the frozen method surface: `METHOD_DOMAINS`
 (`crates/optimus-host/src/router.rs:27`) behind `handle_ipc`
 (`router.rs:210`), with `scope::enforce` on every call, pinned by tests
-(`router.rs:396-409`). `Domain::Chat` holds `chat` (`router.rs:150`),
+(`router.rs:396-425`). `Domain::Chat` holds `chat` (`router.rs:150`),
 `chat_offline` (`router.rs:151`), and `chat_approval_resolve`
 (`router.rs:152`). These three are BLOCKING and non-cancellable:
 `chat_turn(home, params, None)` and the resolve path pass `on_event=None`
@@ -491,7 +492,7 @@ and ADR-0051 (`0051-electron-now-tauri-when-the-preview-leaves-the-shell.md:22`)
  with `-32603` "rate limit exceeded" (request id, connection stays
  open — pinned by a conformance case); WS ping keepalive every 30 s (faster dead-peer
   detection than the SSE path's 300 s `recv_timeout`,
-  `server.rs:533-539`); max 8 concurrent connections (the 9th closes with
+  `server.rs:540`); max 8 concurrent connections (the 9th closes with
   `4003` "too many connections", R4) and 16 concurrent streams (the 17th
   is rejected with `-32603` "stream limit reached", R4), with a 30 s
   hello deadline — a connection that completes no `hello` within 30 s
@@ -714,7 +715,7 @@ and ADR-0051 (`0051-electron-now-tauri-when-the-preview-leaves-the-shell.md:22`)
   Enforcement as landed: the shrink is enforced by the surface-contract
   gate's union rules + the renderer's move to the WebSocket carrier —
   the Tauri command itself remains a generic dispatcher
-  (`apps/optimus-tauri/src/main.rs:71-87`), which is safe because the
+  (`apps/optimus-tauri/src/main.rs:72-87`), which is safe because the
   renderer no longer routes agent methods through it (the gate would
   fail any renderer call not on the wire set); no server-side allowlist
   on the command is required for the milestone.
@@ -979,7 +980,7 @@ Phase A (the milestone's core — desktop is a protocol client):
   ceiling (the A7 downgrade); the renderer bootstrap MUST await the broker ticket (or
   its confirmed absence) BEFORE the first transport construction —
   the transport is created once and cached
-  (`apps/optimus-ui/src/ipc/index.ts:6`), so a wrong
+  (`apps/optimus-ui/src/ipc/index.ts:7`), so a wrong
   ordering silently picks HTTP/fixture in the packaged app;
   shell broker command sets the broker-owned ticket global (re-issued on
   reload; dev-mode injection point for test tickets); `tauri.conf.json`
@@ -992,7 +993,7 @@ Phase A (the milestone's core — desktop is a protocol client):
   the SAME atomic commit (A5's bundle) the two legacy transports that
   still call the removed member — `httpTransport.ts:125-126` and
   `fixtureTransport.ts:308-322`, typed via
-  `invoke<T>(method: DesktopMethod, …)` at `httpTransport.ts:37` with
+  `invoke<T>(method: DesktopMethod, …)` at `httpTransport.ts:39` with
   `tsc -b` as the `build react ui` gate (`verify.sh:361`) — move to a
   NAMED typed legacy shim: a string-typed invoke path for
   `chat_approval_resolve` only, so the atomic commit keeps the full
@@ -1040,7 +1041,7 @@ Phase A (the milestone's core — desktop is a protocol client):
   `check-architecture-marks.py:103-110`
   (`required_paths` → `check-surface-contract.py`), re-point
   `validated_by`/`covers` frontmatter in spec-002 (incl. its A1
-  criterion and "Tests:" footer, `specs/002-host-ipc/spec.md:56,71`) AND
+  criterion and "Tests:" footer, `specs/002-host-ipc/spec.md:72,87`) AND
   ADR-0045:22 AND ADR-0038 (`0038-ui-ipc-architecture.md:12-13,21-22`)
   AND ADR-0051 (`0051-…:22`) AND spec-015's own frontmatter (at the
  implementation commit), update the `docs/architecture.md:1757`
@@ -1303,9 +1304,9 @@ Phase B (one protocol boundary complete):
   `apps/optimus-desktop/src/host_runtime.rs` (re-export shim);
   `scripts/gates/check-surface-contract.py`;
   `scripts/gates/check-architecture-marks.py`.
-- Tests: `serve_protocol.rs` (planned),
-  `apps/optimus-cli/tests/capability_probe.rs` (planned),
-  `contracts.schema.test.ts`
-  (planned), desktop e2e (`apps/optimus-desktop/e2e/**`).
-- ADRs (planned): 0083, 0084.
+- Tests: `crates/optimus-host/tests/serve_protocol.rs` (landed),
+  `apps/optimus-cli/tests/capability_probe.rs` (landed),
+  `apps/optimus-ui/src/ipc/contracts.schema.test.ts` (landed), desktop
+  e2e (`apps/optimus-desktop/e2e/**`).
+- ADRs: 0083 (landed), 0084 (landed).
 - Ontology: optimus-host, optimus-ui, optimus-cli, optimus-tui.
