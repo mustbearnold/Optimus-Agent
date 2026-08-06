@@ -231,16 +231,15 @@ pub fn assert_public_mcp_url(url: &str) -> Result<()> {
             return Err(McpError::Url(format!("blocked private/link-local {host}")));
         }
     }
-    // hex/octal-ish 0x7f.0.0.1
-    if host.contains("0x")
-        || host
-            .split('.')
-            .any(|p| p.starts_with('0') && p.len() > 1 && p.chars().all(|c| c.is_ascii_digit()))
-    {
-        // conservative reject for non-decimal dotted forms
-        if host.starts_with("0x") || host.contains(".0x") {
-            return Err(McpError::Url(format!("blocked non-decimal ip form {host}")));
-        }
+    // hex/octal-ish forms (0x7f.0.0.1, 0177.0.0.1, 127.0.0.01) are ambiguous
+    // across parsers: many HTTP clients read leading-zero dotted quads as
+    // octal, so `0177.0.0.1` aliases the 127.0.0.1 loopback. Reject all of
+    // them fail-closed instead of guessing decimal.
+    let has_leading_zero_quad = host.split('.').any(|p| {
+        p.len() > 1 && p.starts_with('0') && p.chars().all(|c| c.is_ascii_digit())
+    });
+    if host.starts_with("0x") || host.contains(".0x") || has_leading_zero_quad {
+        return Err(McpError::Url(format!("blocked non-decimal ip form {host}")));
     }
     Ok(())
 }
@@ -387,6 +386,18 @@ mod tests {
         config.http_url = Some("https://mcp.example.com/v1".into());
         let mapped = http_mock_bind(&config, &builtin_tool_id_set()).unwrap();
         assert!(!mapped.is_empty());
+    }
+
+    #[test]
+    fn http_rejects_octal_and_leading_zero_quads() {
+        // `0177.0.0.1` is octal for 127.0.0.1 in many HTTP clients (curl,
+        // browsers), and `127.0.0.01` is parser-dependent. Ambiguous
+        // non-decimal quads must fail closed, not silently parse as decimal.
+        assert!(assert_public_mcp_url("http://0177.0.0.1/mcp").is_err());
+        assert!(assert_public_mcp_url("http://127.0.0.01/mcp").is_err());
+        assert!(assert_public_mcp_url("http://0x7f000001/").is_err());
+        // Plain public dotted quads with no leading zeros stay allowed.
+        assert!(assert_public_mcp_url("http://8.8.8.8/mcp").is_ok());
     }
 
     #[test]
