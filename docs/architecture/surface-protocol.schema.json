@@ -1,0 +1,1254 @@
+{
+  "schema_version": 1,
+  "protocol_version": 1,
+  "framing": {
+    "carriers": [
+      "stdio",
+      "ws"
+    ],
+    "encoding": "json-rpc-2.0",
+    "line_delimited": true,
+    "max_frame_bytes": 1048576,
+    "ws_path": "/ws",
+    "ws_close_codes": {
+      "4001": "ticket rejected, credential-class violation, or hello deadline exceeded",
+      "4002": "unsupported protocol version",
+      "4003": "framing violation (binary/non-UTF-8/oversized) or too many connections"
+    },
+    "connections_log_line": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z origin=(missing|null|[^ ]+)$"
+  },
+  "methods": {
+    "hello": {
+      "kind": "protocol",
+      "params": {
+        "type": "object",
+        "required": [
+          "protocol_version",
+          "client_kind"
+        ],
+        "properties": {
+          "protocol_version": {
+            "const": 1
+          },
+          "client_kind": {
+            "enum": [
+              "renderer",
+              "tui",
+              "cli",
+              "shell"
+            ]
+          },
+          "ticket": {
+            "type": "string"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": [
+          "protocol_version",
+          "capabilities"
+        ],
+        "properties": {
+          "protocol_version": {
+            "const": 1
+          },
+          "capabilities": {
+            "type": "object",
+            "required": [
+              "streaming",
+              "carriers"
+            ],
+            "properties": {
+              "streaming": {
+                "const": true
+              },
+              "carriers": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "stdio",
+                    "ws"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "event": {
+      "kind": "server-origin",
+      "params": {
+        "type": "object",
+        "required": [
+          "stream_id",
+          "event"
+        ],
+        "properties": {
+          "stream_id": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "event": {
+            "$ref": "#/events"
+          }
+        }
+      }
+    },
+    "host.ready": {
+      "kind": "server-origin",
+      "params": {
+        "type": "object",
+        "required": [
+          "protocol_version"
+        ],
+        "properties": {
+          "protocol_version": {
+            "const": 1
+          }
+        }
+      }
+    },
+    "host.error": {
+      "kind": "server-origin",
+      "params": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "chat_start": {
+      "kind": "trio",
+      "params": {
+        "type": "object",
+        "required": [
+          "stream_id",
+          "request"
+        ],
+        "properties": {
+          "stream_id": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "request": {
+            "$ref": "#/chat_request"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": [
+          "stream_id"
+        ],
+        "properties": {
+          "stream_id": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "chat_cancel": {
+      "kind": "trio",
+      "params": {
+        "type": "object",
+        "required": [
+          "stream_id"
+        ],
+        "properties": {
+          "stream_id": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": [
+          "requested"
+        ],
+        "properties": {
+          "requested": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "chat_approval_resolve_start": {
+      "kind": "trio",
+      "params": {
+        "type": "object",
+        "required": [
+          "stream_id",
+          "params"
+        ],
+        "properties": {
+          "stream_id": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "params": {
+            "$ref": "#/approval_resolve_request"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": [
+          "stream_id"
+        ],
+        "properties": {
+          "stream_id": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "project_root_stage_native": {
+      "kind": "shell-gated",
+      "params": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "native_selection_token": {
+            "type": "string"
+          }
+        }
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "approvals_grant": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "approvals_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "approvals_release_yolo": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "archive_session": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_delete": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_delete_many": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_export": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_export_zip": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_get": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "artifacts_put_text": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "auth_import_cli": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "auth_import_hermes": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "auth_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "browser_click": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "browser_navigate": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "browser_reload": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "campaign_create": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "campaign_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "campaign_run": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "campaign_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "commands_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "cron_add": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "cron_history": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "cron_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "cron_remove": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "cron_set_enabled": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "cron_tick": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "delete_session": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_access_enable": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_access_get": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_access_revoke": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_emergency_stop": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_build_launch": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_launch": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_log": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_restart": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_rollback": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "developer_supervisor_stop": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "doctor": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "fs_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "fs_read": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "fs_roots": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_ack_delivery": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_ambiguous": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_enqueue": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_inbox": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_outbox": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "gateway_telegram_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "get_session": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "jobs_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "logs_tail": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "mcp_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "mcp_tools": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "memory_correct": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "memory_forget": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "memory_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "memory_recall": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "memory_search": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "new_session": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "packs_activate": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "packs_deactivate": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "packs_state": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "packs_verify_signed": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "pin_session": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "ping": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "project_scopes_authorize": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "project_scopes_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "provider_key_clear": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "provider_key_set": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "provider_keys_status": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "providers_catalog": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "providers_route_preview": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "rename_session": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "session_search": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "sessions": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "settings_get": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "settings_set": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "skills_deprecate": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "skills_list": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "skills_pin": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "startup_context": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    },
+    "term_run": {
+      "kind": "registry",
+      "params": {
+        "type": "object"
+      },
+      "result": {
+        "type": "object"
+      }
+    }
+  },
+  "events": {
+    "delta": {
+      "type": "object",
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "const": "delta"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "thinking": {
+      "type": "object",
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "const": "thinking"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "const": "status"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "required": [
+        "type",
+        "schema_version",
+        "event_id",
+        "run_id",
+        "call_id",
+        "tool_id",
+        "phase",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "const": "tool"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "call_id": {
+          "type": "string"
+        },
+        "tool_id": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "number"
+        },
+        "outcome": {
+          "type": "object"
+        },
+        "approval": {
+          "type": "object"
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "timing"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "elapsed_ms": {
+          "type": "number"
+        }
+      }
+    },
+    "done": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "done"
+        },
+        "result": {
+          "type": "object"
+        }
+      }
+    },
+    "cancelled": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "cancelled"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "type",
+        "error"
+      ],
+      "properties": {
+        "type": {
+          "const": "error"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "chat_request": {
+    "type": "object",
+    "required": [
+      "session",
+      "message",
+      "provider"
+    ],
+    "properties": {
+      "session": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "provider": {
+        "enum": [
+          "auto",
+          "offline",
+          "codex",
+          "deepseek",
+          "open-ai-compat"
+        ]
+      },
+      "model": {
+        "type": "string"
+      },
+      "thinking_level": {
+        "type": "string"
+      },
+      "fast": {
+        "type": "boolean"
+      },
+      "access": {
+        "type": "string"
+      },
+      "project_id": {
+        "type": "string"
+      }
+    }
+  },
+  "approval_resolve_request": {
+    "type": "object",
+    "required": [
+      "session_id",
+      "run_id",
+      "call_id",
+      "job_id",
+      "node_id",
+      "node_index",
+      "effect_sha256",
+      "decision"
+    ],
+    "properties": {
+      "session_id": {
+        "type": "string"
+      },
+      "run_id": {
+        "type": "string"
+      },
+      "call_id": {
+        "type": "string"
+      },
+      "job_id": {
+        "type": "string"
+      },
+      "node_id": {
+        "type": "string"
+      },
+      "node_index": {
+        "type": "integer"
+      },
+      "effect_sha256": {
+        "type": "string"
+      },
+      "decision": {
+        "enum": [
+          "approve",
+          "deny"
+        ]
+      },
+      "project_id": {
+        "type": "string"
+      }
+    }
+  },
+  "errors": {
+    "-32700": "parse error: reply id:null, connection continues",
+    "-32600": "invalid request: reply id:null (non-object JSON, missing/wrong jsonrpc, bad id, method-before-hello, second hello, unknown client_kind)",
+    "-32601": "unknown method, kind violation on a shell-gated method, or a server-origin-only method request: reply with the request id",
+    "-32602": "invalid params: malformed stream_id, duplicate approval-resolve binding: reply with the request id",
+    "-32603": "internal error, server busy (queue full), stream limit reached, rate limit exceeded: reply with the request id",
+    "-32000": "ticket rejected: reply, then close 4001",
+    "-32001": "unsupported protocol version: reply, then close 4002"
+  }
+}

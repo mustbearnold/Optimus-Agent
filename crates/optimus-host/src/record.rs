@@ -122,6 +122,56 @@ pub fn holder_refusal_diagnostic(record: &HostRuntimeRecord) -> String {
     }
 }
 
+/// Append an accepted-connection line to `<home>/logs/connections.log`
+/// (spec-015 R8): fires post-hello — after the credential handshake
+/// COMPLETED, so a rejected handshake never logs and a line proves dial AND
+/// handshake. The line carries the origin (`"null"`/`"missing"` or the
+/// origin value) and a timestamp, never the ticket; format pinned in the
+/// protocol schema (`docs/architecture/surface-protocol.schema.json`).
+pub fn log_connection(home: &Path, origin: &str) {
+    use std::io::Write;
+    let dir = home.join("logs");
+    if std::fs::create_dir_all(&dir).is_err() {
+        return;
+    }
+    let line = format!("{} origin={origin}\n", iso8601_utc_now());
+    let _ = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dir.join("connections.log"))
+        .and_then(|mut file| file.write_all(line.as_bytes()));
+}
+
+/// ISO-8601 UTC timestamp (`2026-08-06T13:03:00Z`) without a chrono
+/// dependency: civil-from-days conversion (Hinnant's algorithm).
+fn iso8601_utc_now() -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |duration| duration.as_secs() as i64);
+    let days = secs.div_euclid(86_400);
+    let tod = secs.rem_euclid(86_400);
+    let (year, month, day) = civil_from_days(days);
+    format!(
+        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}Z",
+        tod / 3600,
+        (tod % 3600) / 60,
+        tod % 60
+    )
+}
+
+fn civil_from_days(z: i64) -> (i64, u32, u32) {
+    let z = z + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = (z - era * 146_097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    (if m <= 2 { y + 1 } else { y }, m, d)
+}
+
 /// Minimal loopback `GET /api/health` with the record's bearer token. Kept on
 /// std TcpStream so probing costs no HTTP-client dependency.
 fn probe_health(port: u16, token: &str) -> bool {

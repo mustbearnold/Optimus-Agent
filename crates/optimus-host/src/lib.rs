@@ -12,9 +12,11 @@ mod developer;
 mod developer_build;
 mod developer_handoff;
 mod developer_process;
+mod dispatch;
 mod extensibility;
 mod files;
 mod gateway_turn;
+mod handshake;
 mod home;
 mod messaging;
 mod os;
@@ -27,22 +29,32 @@ mod serve;
 mod sessions;
 mod system;
 mod ticket;
+mod ws;
 
 pub use chat::{
     chat_approval_resolve, chat_approval_resolve_cancellable, chat_turn, chat_turn_cancellable,
     stream_delivery_control, stream_event_to_json,
 };
-pub use contract::{IpcEnvelope, IpcReply};
+pub use contract::{
+    wire_method_class, IpcEnvelope, IpcReply, WireClass, NON_WIRE_CHANNELS, PROTOCOL_METHODS,
+    PROTOCOL_VERSION, SERVER_ORIGIN_METHODS, SHELL_GATED_METHODS, STREAMING_TRIO,
+    STREAM_EVENT_VOCABULARY, SUPERSEDED_CHAT_FAMILY,
+};
+pub use dispatch::{disconnect_cleanup, process_frame, serialize_outbound, Connection, Outbound};
 pub use gateway_turn::{drain_gateway_once, gateway_turn, session_for_address};
+pub use handshake::{Carrier, ClientKind};
 pub use home::resolve_home;
 pub use os::pick_folder_dialog;
 pub use record::{
-    healthy_record, healthy_serving_port, holder_refusal_diagnostic, read_record, record_path,
-    write_record, HostRuntimeRecord, RUNTIME_RECORD_FILE, TRANSPORT_HTTP, TRANSPORT_WS,
+    healthy_record, healthy_serving_port, holder_refusal_diagnostic, log_connection, read_record,
+    record_path, write_record, HostRuntimeRecord, RUNTIME_RECORD_FILE, TRANSPORT_HTTP,
+    TRANSPORT_WS,
 };
 pub use router::handle_ipc;
 pub use serve::{
-    append_connection_log, run as serve_run, DEFAULT_HOST_PORT, EXIT_BIND_OR_SECURITY, EXIT_REFUSED,
+    append_connection_log, run as serve_run, start, start_with_io, RunningServer, ServeState,
+    DEFAULT_HOST_PORT, EXIT_BIND_OR_SECURITY, EXIT_REFUSED, MAX_FRAME_BYTES, OUTBOUND_CAPACITY,
+    PING_INTERVAL, RATE_LIMIT_PER_MINUTE, WORKER_COUNT, WORKER_QUEUE, WRITE_TIMEOUT,
 };
 pub use sessions::sessions_json;
 pub use system::{auth_status_json, doctor_json};
