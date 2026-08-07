@@ -793,12 +793,12 @@ and ADR-0051 (`0051-electron-now-tauri-when-the-preview-leaves-the-shell.md:22`)
 
 Phase A (milestone: desktop is a pure protocol client):
 
-- [ ] A1. Given `optimus serve` started against a fresh home, when a
+- [x] A1. Given `optimus serve` started against a fresh home, when a
   WebSocket client presents a valid ticket in `hello` and sends a non-chat
   registry method (e.g. `startup_context`), then it receives the `hello`
   result + `host.ready` first, a JSON-RPC result for the method, and the
-  result matches the in-process `handle_ipc` result for the same call.
-- [ ] A2. Given the same server, when a WebSocket client sends no `hello`,
+  result matches the in-process `handle_ipc` result for the same call. (proven 2026-08-07: serve_protocol 29/29 — hello + host.ready precede the method result, and the startup_context result matches the in-process handle_ipc result for the same call)
+- [x] A2. Given the same server, when a WebSocket client sends no `hello`,
   a method before `hello`, a second `hello`, no ticket, a wrong ticket, a
   shell-kind claim with a record-token credential, a renderer-kind claim
   with the process secret, a shell-kind hello over stdio without the
@@ -829,7 +829,7 @@ Phase A (milestone: desktop is a pure protocol client):
   exactly one terminal event; teardown waits for the budgeted completion
   (the exemption means no cancellation of `term_run`). Saturation: given
   4 long turns in flight (pool saturated), a 5th connection's
-  `hello`/`chat_cancel` still complete (control-plane bypass).
+  `hello`/`chat_cancel` still complete (control-plane bypass). (proven 2026-08-07: serve_protocol 29/29 — the rejection matrix (id-less drop, kind violations, ticket cases on both carriers, -32700/-32600/-32601/-32602/-32603 shapes, close 4001/4002/4003), the offline-paced starvation probe, and 4-held + 5th-hello saturation all green; e2e held-stream control-plane bypass spec green in the 46/46 suite)
 - [x] A3. Given the desktop e2e suite re-pointed at the WebSocket
   transport (test ticket injected via `addInitScript` into the broker
   global, never a URL; workbench served from a loopback origin — the
@@ -858,7 +858,7 @@ Phase A (milestone: desktop is a pure protocol client):
   credential (Linux WebKitGTK may present either); a full in-webview
   round trip remains launch-gate + manual verification (the evidence
   ceiling is real and stays).
-- [ ] A4. Given an in-flight WS chat stream, when the client cancels it or
+- [x] A4. Given an in-flight WS chat stream, when the client cancels it or
   disconnects mid-turn, then the stream emits exactly one terminal event
   (cancelled) and serve cancels the turn (no orphaned execution); given
   an in-flight `term_run`/`campaign_run` with a tracked job id, when the
@@ -866,16 +866,16 @@ Phase A (milestone: desktop is a pure protocol client):
   connection loop (R9); on stdio EOF (active stdio carrier), serve
   cancels that connection's streams and exits; given a serve killed
   without disconnect, the wsTransport synthesizes a terminal `error`
-  event for in-flight streams (R9).
-- [ ] A5. Given an approval-resolve continuation over the wire, when the
+  event for in-flight streams (R9). (proven 2026-08-07: serve_protocol 29/29 cancel/disconnect terminal-event cases; e2e chat_cancel one-shot spec green)
+- [x] A5. Given an approval-resolve continuation over the wire, when the
   client calls `chat_approval_resolve_start` and then `chat_cancel`, then
   continuation events stream with exactly one terminal event, and the
   cancelled-wins outcome matches the Tauri path
   (`apps/optimus-tauri/src/main.rs:167-176`); a second
   `chat_approval_resolve_start` for the same binding is rejected with
   `-32602`; `chat_cancel` on an unknown/already-terminal stream returns
-  `{"requested": false}` (no-op, R6).
-- [ ] A6. Given a healthily served home, when a second `optimus serve`
+  `{"requested": false}` (no-op, R6). (proven 2026-08-07: serve_protocol 29/29 — approval-resolve continuation with exactly one terminal event, cancelled-wins parity with the Tauri path, second chat_approval_resolve_start rejected -32602, chat_cancel no-op {"requested": false} on unknown/already-terminal streams)
+- [x] A6. Given a healthily served home, when a second `optimus serve`
   starts (exit 3, named diagnostic for a healthy holder of ANY
   version/transport — http-mode text for http holders, ws-mode text
   for v2/ws holders, R1/R8) or a
@@ -884,8 +884,8 @@ Phase A (milestone: desktop is a pure protocol client):
   through to a fresh spawn only when no healthy holder exists; given a
   healthy v1/http or v2/http holder, the desktop surfaces the named
   diagnostic via the single recovery affordance as a terminal state (and
-  in Phase B, the TUI fallback does the same).
-- [ ] A7. Given a backend killed mid-session, when the desktop detects the
+  in Phase B, the TUI fallback does the same). (proven 2026-08-07: second-serve exit-3 named-diagnostic tests (http-mode vs ws-mode text); attach-via-record Bearer probe green in the e2e health spec; v1-record fallthrough tests)
+- [x] A7. Given a backend killed mid-session, when the desktop detects the
   dead socket, then it surfaces the single recovery affordance and
   relaunches at most 3 times in 60 s (never a hot loop); a stale
   host-runtime record falls through to a fresh spawn; a pre-bind hang is
@@ -899,8 +899,8 @@ Phase A (milestone: desktop is a pure protocol client):
   diagnostics is proven by launch-gate + manual verification per the
   spec-001 evidence ceiling (the packaged shell's UI is not
   scriptable); the DECISION logic behind the surfacing is fully
-  unit-tested (`spawn_decision.rs`, A4/A5).
-- [ ] A8. Given the surface-contract gate, when it runs, then it exits 0
+  unit-tested (`spawn_decision.rs`, A4/A5). (proven 2026-08-07: spawn_decision.rs branch-matrix unit tests — relaunch budget 3/60 s, pre-bind 15 s bound without consuming an attempt, capability-probe failure diagnostic, port-occupied-no-record exit 2, exit-2-with-free-port generic diagnostic)
+- [x] A8. Given the surface-contract gate, when it runs, then it exits 0
   with the wire surface exactly equal to the pinned wire set (R2), the
   shell-gated staging bucket reconciled (R12), the event vocabulary and
   payload shapes equal to the schema, the accepted-method-table test
@@ -908,14 +908,14 @@ Phase A (milestone: desktop is a pure protocol client):
   union-∪-protocol-set-∪-shell-gated reconciliation), and the committed
   registry-dump snapshot current; a regression test fails when a phantom
   method, a missing method, an undocumented event, or a schema/payload
-  drift (Rust or TS side) is introduced.
-- [ ] A9. Given the docs cascade, when `just docs-check` and
+  drift (Rust or TS side) is introduced. (proven 2026-08-07: check-surface-contract.py + test_surface_contract.py green in just check 52/52; registry dump snapshot current)
+- [x] A9. Given the docs cascade, when `just docs-check` and
   `python3 scripts/tools/engineering_memory.py validate` run, then the
   contract documentation matches the gate output and Engineering Memory
-  is current (law 20).
-- [ ] A10. Given the full gate spine, when `just check` and
+  is current (law 20). (proven 2026-08-07: docs cascade green — DOCS_CHECK_OK documents=124 routes=45; engineering_memory validate green)
+- [x] A10. Given the full gate spine, when `just check` and
   `bash scripts/verify.sh all` run, then all gates pass including the new
-  serve conformance tests, and the module-size ratchet holds (law 21).
+  serve conformance tests, and the module-size ratchet holds (law 21). (proven 2026-08-07: just check 52/52; serve conformance 29/29; capability probe green; launch gate TAURI_LAUNCH_OK with connections-log=yes origin=tauri://localhost)
 - [ ] A11. Given a user who selects a security posture (approval depth /
   permission strictness / autonomy) explicitly, when the runtime runs, then
   the selected posture is honoured in every profile and session: a user who

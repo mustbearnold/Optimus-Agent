@@ -547,19 +547,19 @@
       "resolved_files": 11
     },
     "decisions-0083-one-wire-protocol-for-all-surfaces": {
-      "binding_sha256": "d8d5fe90e9823a52888a751385d603e50079e0af03a1ad1b993ee537188d3207",
+      "binding_sha256": "d522ebe2363baf1eee0c293b26ad12c2f0356c6533befd2989f1411f1ace7002",
       "document_sha256": "ecd4065e35afe1f1978d29d5cd7bd566c84bebdbc4b3093bf70e828c9f002565",
       "path": "docs/decisions/0083-one-wire-protocol-for-all-surfaces.md",
       "resolved_files": 17
     },
     "decisions-0084-websocket-ticket-and-process-secret-security-model": {
-      "binding_sha256": "0bfaeee17f65e085008ab3b2d98e2c225bd8cb78b187ccb7b541339015b57881",
+      "binding_sha256": "493c03bcfc973800316f3b78ffef38fc680830573a6f1d74e0e4df3d10bcd5e7",
       "document_sha256": "a9c8abf93837559895c14fca97b241360112b21f0bff9148e276d9fadd07670c",
       "path": "docs/decisions/0084-websocket-ticket-and-process-secret-security-model.md",
       "resolved_files": 14
     },
     "decisions-0085-user-sovereignty-over-workflow-and-security-posture": {
-      "binding_sha256": "da64d7722f1bcfcf62f9e3a7ea0c92ce815fdafbafaee735d8b345cda0ff6c51",
+      "binding_sha256": "a1434a855765f53a4409477f07c86e71c63971690e2f8c3b326116e762ff9985",
       "document_sha256": "86339ffd9f9d48c8df9efba525e4c8f437c0b6d9309ce6d2ff12d62d167402d5",
       "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
       "resolved_files": 5
@@ -674,7 +674,7 @@
     },
     "spec-015-surface-protocol": {
       "binding_sha256": "2834958048e30bf0a25a373abb923964d77cbd84e82427f35490b05f4888a2d8",
-      "document_sha256": "912ad8f2ca4c06a6fbe47f611d98ea38f0528a6f619f2a1f17ab073a028b24eb",
+      "document_sha256": "930be706c6f22c9372fc0acaa72b2ab27a1f60713276e8727eff09cf660e61cc",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
@@ -685,13 +685,13 @@
       "resolved_files": 10
     },
     "specs-backlog": {
-      "binding_sha256": "c72ef7b132abcd01de5cfd4a8b19f3fd36e1066bac58da01574890f0cbc6efc7",
+      "binding_sha256": "88f245df72d6fdc538e76723766fdcf1b630ab7b8c000ff5d3de58f10297389d",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 28
     },
     "specs-constitution": {
-      "binding_sha256": "59f66277d79a40ec791f560a74b2c9644413edc1b11e75d3b9ab8ff9915e8789",
+      "binding_sha256": "c0b0f4e0557286f556fda81f7314040dc9b98733f92ee637a7794e953e65930d",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 119
