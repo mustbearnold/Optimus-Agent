@@ -259,28 +259,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "e6f928e5acce8d36cc1d11041459b73dccbab7ebdd4ed50e5b96e44e8e9699a3",
+      "binding_sha256": "59efe1281d9f4e0f4bca247cbdb4dc19056ca4c7b0b39a5c4f1172853666452a",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 125
+      "resolved_files": 129
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "065d62b2c65c5ced6e5c84a3d6ee9583b1c6a0bbb9264df1b58eef40b883e280",
+      "binding_sha256": "d9710218dd58e793f4ef080bec696a0fa41c6991ac921f20d15a6e8b7fd7217f",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 124
+      "resolved_files": 128
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "69b076e6c3559be4414ea53623d49ebd092e13037065fe5379834dc764a8fa10",
+      "binding_sha256": "20a2f6992e1b05e76ad92ed650b2590a030d2627d7ef3283f1e36b62de254076",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 96
+      "resolved_files": 100
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "5e796cdf9bb289e7f60538bbd9641fcccc44afa0161e6241cbb866b291878a4e",
+      "binding_sha256": "3a274171b0b83da68b7e80f3f5b4d1667ad8e89b41e371664f3d3293bc1306f4",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 126
+      "resolved_files": 130
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "43221b6f4341510f36235e4d901cffef6aa022672526a82bdbc173d93332a184",
@@ -301,7 +301,7 @@
       "resolved_files": 22
     },
     "decisions-0035-command-capability-envelope": {
-      "binding_sha256": "6b9f8c9b6f0676b569131d3a96c760e71763a4cb7f99f5be8d4c8032580cc9a0",
+      "binding_sha256": "dffb2da9a61b9fbc30f5fdffefbf39e7e40a3082e7acc5cbb17041a930f5f9fe",
       "document_sha256": "6655d0ba6b9d255ddb447c547568bcc63b5f6088926f2c485e724d03d5d35cf3",
       "path": "docs/decisions/0035-command-capability-envelope.md",
       "resolved_files": 15
@@ -397,7 +397,7 @@
       "resolved_files": 10
     },
     "decisions-0051-electron-now-tauri-when-the-preview-leaves-the-shell": {
-      "binding_sha256": "9e41925bf2d34176ef0d9e0adf327ce000a9345b4a593387897d34d8c5599399",
+      "binding_sha256": "184d48a9d7f801e9d52dc8f7894a5d30820e1002cd8c8793773df6b66b53e04f",
       "document_sha256": "92342194fbd68c9ff9430df334932ae0d962a5f10e750d432628df75be6c8692",
       "path": "docs/decisions/0051-electron-now-tauri-when-the-preview-leaves-the-shell.md",
       "resolved_files": 10
@@ -505,7 +505,7 @@
       "resolved_files": 21
     },
     "decisions-0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor": {
-      "binding_sha256": "838093e16b6469bc47d3c31c06759d78187995bf42d6c29701554dc2bb9f1a9d",
+      "binding_sha256": "dc8c6109378790d494321793fcbe4499d5f61d940c2ab203aa56e55c25d35de5",
       "document_sha256": "d5e9212873bd49dcba728f7857fa68fb29fa4b2acfc4fe0f5a83f5158222daa4",
       "path": "docs/decisions/0076-developer-full-access-is-a-scoped-grant-with-a-stable-supervisor.md",
       "resolved_files": 19
@@ -535,7 +535,7 @@
       "resolved_files": 5
     },
     "decisions-0081-truthful-approval-resolution-and-session-consent": {
-      "binding_sha256": "0b05d11c310987999839bf05658044fd61c39e80649a998ce49663104862098d",
+      "binding_sha256": "ba1434ba72dc1b364466ad6be57c790beaa028b451074948e6d2d10923c948c7",
       "document_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
       "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
       "resolved_files": 14
@@ -583,25 +583,25 @@
       "resolved_files": 12
     },
     "repository-components": {
-      "binding_sha256": "be45836008ddc1d37b8cbf722fe9a5121742286e393057baad8236fb542dc3ee",
+      "binding_sha256": "7adc0886cfd7a1289388f76f2a750a4b65778a13be384722bd75de9379480853",
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "bd7b7f5377734249e6b88a85125951b1c6bd056e5cf47844d3ef12d2f6c4ae0a",
-      "document_sha256": "77bea388f2d67a0a84bd2db16f1e98da702872a8b0f97e3528abe2d6ec72cb0a",
+      "binding_sha256": "10aae838e0393ad9b204346e152790335a197254016c03dc3cfc6e12e256a87c",
+      "document_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 106
+      "resolved_files": 110
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "aeb6a66f14e17281e34af3d11d6da1a76dd8247c9c69aae97744a5d660f15b36",
+      "binding_sha256": "4affdb01d573e6737109bbc9ca8151a8c576e74870a9ec69488ce7cdaad957a0",
       "document_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "path": "specs/002-host-ipc/spec.md",
-      "resolved_files": 51
+      "resolved_files": 53
     },
     "spec-003-kernel-turns": {
-      "binding_sha256": "1f5302301be4c71e668bd118008c44fba044e129beb4972cb1901c9a80fc8430",
+      "binding_sha256": "607130fb9880689feb4f07ef1bfd4eca3abab632e77fefed2d7cb8495aa125ed",
       "document_sha256": "64540d8ecd02fb1c74be3f1b7c5b7ab490dc410ed402f199001b5f6416f2af38",
       "path": "specs/003-kernel-turns/spec.md",
       "resolved_files": 78
@@ -655,37 +655,37 @@
       "resolved_files": 87
     },
     "spec-012-windows-tauri-packaging": {
-      "binding_sha256": "d3c6c7efe5d1e5010d2462e09a3840fade45efd5509bceac9ab644ce3cd95bd3",
+      "binding_sha256": "689f65c75f30ae401519c8fa276a2de0787c6964616a00422ed6b30e8a17a8f9",
       "document_sha256": "2fc932c467138d99d25c6741c5880ef84b36024c5d0b2fdbbb5803aca5925c50",
       "path": "specs/012-windows-tauri-packaging/spec.md",
       "resolved_files": 6
     },
     "spec-013-self-development": {
-      "binding_sha256": "7f61209500c067c39af263895498a59e861f35ae74041c7388bf2cca50bb2cf2",
+      "binding_sha256": "d0450a0dc5dce95b3d5824cfaa322bfd34f4bf52da24fb610ab24556b182f2a6",
       "document_sha256": "fc6b85d488bd10838b2783bfa2d4a5c3a71529368f962e22d03cecfb741870aa",
       "path": "specs/013-self-development/spec.md",
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "b5baff803b9af12cc5ec0b52e4ed3bc97c8dd79801a16a109aca7ecf9f4f876c",
+      "binding_sha256": "68bfac724c19222dc42cacd9fe2d0d9386728fe9745c6913a0be608b43f25dc6",
       "document_sha256": "a407ffabb1a030f877b372f7c075337042b26f90fffe315c628011e36940f5b5",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "f26e785b9044f0aaaf50b64a0dabc45eb2cae4cac0d6a7caf8842e3effafd3ae",
+      "binding_sha256": "afb81806acc6aa2749201908206eefbf074f5b4b1d5db2d2212212952bab6e17",
       "document_sha256": "b2150dbc674e7a664fc85c559f323be00ef09fd1eb37075d82300b1adca07da3",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "8f0a2c29d99be939a61cc2b30462744a7f121d7b0565ce11c32429aedf26692f",
+      "binding_sha256": "2644dcc975d9413125e4f5c11d1fe4019754763e67f84788b7cbd984122a5291",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "930381912b84b344ccb8159bcfcee3be5f281a2bd8f0a3b49b82a67dabe9b5d0",
+      "binding_sha256": "679b362103433b777021fe0d97aad4867daa68613d2e279572cdbc28df6e6a85",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 118

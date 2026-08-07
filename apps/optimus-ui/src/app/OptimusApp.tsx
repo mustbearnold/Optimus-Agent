@@ -62,6 +62,7 @@ import { CapabilitiesPage } from '../components/capabilities/CapabilitiesPage';
 import { ConsolesPage, type ConsoleTab } from '../components/consoles/ConsolesPage';
 import { CommandPalette } from '../components/chrome/CommandPalette';
 import { TopBar } from '../components/chrome/TopBar';
+import { WindowResizeHandles } from '../components/chrome/WindowResizeHandles';
 import { TextPromptDialog } from '../components/chrome/TextPromptDialog';
 import { Icon } from '../components/chrome/Icon';
 import { ExecutionDock } from '../components/execution/ExecutionDock';
@@ -580,6 +581,10 @@ export function OptimusApp() {
           })}
           onWindow={(action) => void transport?.windowAction(action)}
         />
+
+        {/* Borderless-window resize hotspots (spec-001 R5 chrome): the
+            shell owns window geometry, not the surface protocol. */}
+        <WindowResizeHandles />
 
         <div className="compact-switcher" role="tablist" aria-label="Primary surface">
           <SurfaceButton surface="work" current={state.layout.compactSurface} onSelect={(surface) => dispatch({ type: 'patch-layout', patch: { compactSurface: surface } })} />

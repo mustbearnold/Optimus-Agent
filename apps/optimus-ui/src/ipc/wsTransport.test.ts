@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+  invoke: vi.fn(),
+}));
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: mocks.invoke,
+}));
 
 import { createWsTransport } from './wsTransport';
 
@@ -53,10 +61,15 @@ const realWebSocket = globalThis.WebSocket;
 beforeEach(() => {
   FakeWebSocket.instances = [];
   globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  mocks.invoke.mockReset();
+  delete window.__TAURI__;
+  delete window.__TAURI_INTERNALS__;
 });
 
 afterEach(() => {
   globalThis.WebSocket = realWebSocket;
+  delete window.__TAURI__;
+  delete window.__TAURI_INTERNALS__;
 });
 
 function lastSocket(): FakeWebSocket {
@@ -176,5 +189,21 @@ describe('wsTransport (surface protocol carrier)', () => {
     await waitForFrame(socket, (sent) => sent.method === 'doctor');
     socket.closeUnexpectedly();
     await expect(pending).rejects.toThrow('web socket closed unexpectedly');
+  });
+
+  it('routes window chrome to the shell bridge when packaged, no-op otherwise', async () => {
+    // Outside the packaged webview the affordance degrades to a resolved
+    // no-op (the wire carrier never invented a window protocol).
+    const plain = createWsTransport({ port: 17865, ticket: 't' });
+    await expect(plain.windowAction('minimize')).resolves.toEqual({ ok: false });
+    expect(mocks.invoke).not.toHaveBeenCalled();
+
+    // Packaged webview: the WS surface carrier is NOT the window owner —
+    // the shell bridge is (spec-001 R5), and the transport reaches it.
+    window.__TAURI_INTERNALS__ = {};
+    mocks.invoke.mockResolvedValue({ ok: true });
+    const packaged = createWsTransport({ port: 17865, ticket: 't' });
+    await expect(packaged.windowAction('maximize')).resolves.toEqual({ ok: true });
+    expect(mocks.invoke).toHaveBeenCalledWith('window_action', { action: 'maximize' });
   });
 });

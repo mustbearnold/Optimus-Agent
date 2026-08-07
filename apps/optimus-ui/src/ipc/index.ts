@@ -3,6 +3,7 @@ import { createFixtureTransport } from './fixtureTransport';
 import { createHttpTransport, hasHttpConfig } from './httpTransport';
 import { createTauriTransport } from './tauriTransport';
 import { createWsTransport, type BrokerTicket } from './wsTransport';
+import { isPackaged } from './windowBridge';
 
 let transport: OptimusTransport | null = null;
 let initPromise: Promise<OptimusTransport | null> | null = null;
@@ -11,10 +12,9 @@ let initPromise: Promise<OptimusTransport | null> | null = null;
  * The packaged-vs-dev discriminator (spec-001 R8's existing predicate,
  * pinned by spec-015 A3): the Tauri bridge exists ONLY in the packaged
  * webview. Dev-mode tests that fake it must set `__TAURI_INTERNALS__`.
+ * Single implementation lives in `windowBridge.ts` (the shell-owned
+ * chrome seam) and is shared with the transport selection here.
  */
-function isPackaged(): boolean {
-  return Boolean(window.__TAURI_INTERNALS__ || window.__TAURI__);
-}
 
 /**
  * Await the broker ticket (or its confirmed absence) BEFORE the first

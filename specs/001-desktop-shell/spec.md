@@ -43,7 +43,11 @@ product is exclusively Tauri — no Electron, no Wry rollback shell.
 - R4. The renderer MUST NOT receive `OPTIMUS_HTTP_TOKEN`; all durable effects
   flow through the host bridge (see spec 002).
 - R5. Window chrome (minimize/maximize/close) and native folder selection
-  MUST be Tauri commands, not host registry methods.
+  MUST be Tauri commands, not host registry methods. Window chrome MUST be
+  reachable from the renderer regardless of which surface carrier it is on
+  (spec-015 A3): the WS transport has no window protocol, so chrome actions
+  reach the shell bridge directly (`windowBridge.ts`) instead of riding the
+  wire. [inferred]
 - R6. The installer MUST stage Tauri + CLI, register the desktop entry
   with `X-Optimus-UI=react-tauri`, and MUST NOT stage Electron or reference
   it. The Wry rollback action (`LegacyWry`) and `OPTIMUS_DESKTOP_SHELL`
@@ -65,6 +69,7 @@ product is exclusively Tauri — no Electron, no Wry rollback shell.
 - [x] A2. Given the full gate spine, when `bash scripts/verify.sh all` runs, then the `tauri launch acceptance` tier passes and no electron tier is spawned. (proven 2026-08-05: verify 61/61, no electron anywhere)
 - [x] A3. Given an installed product, when `scripts/gates/check-product-complete-install.py` runs, then it reports `desktop_shell react-tauri` with no ElectronRollback action. (proven 2026-08-05: `PRODUCT_COMPLETE_INSTALL_OK desktop_shell=react-tauri`)
 - [x] A4. Given the desktop e2e suite, when Playwright drives the React workbench over the host, then all specs pass including a chat round-trip. (proven 2026-08-05: desktop e2e 62/62)
+- [x] A5. Given the installed desktop app with the broker up (renderer on the WS carrier), when the window control buttons are clicked and the window edges/corners are dragged, then minimize/maximize/close reach the shell bridge and resize starts a native compositor drag. (proven 2026-08-07: `windowBridge` + `window_action`/`window_resize_start` unit tests 11/11; installed-app verification via the WebKit inspector: DOM clicks on the three controls produced Iconic state, maximized 3440x1400, restored 1280x840, and process exit; `window_resize_start` answered `ok:true` and the hotspot pointerdown dispatched; live pointer-drag motion was not exercised because this host has no working pointer injection on Wayland)
 
 ## Out of scope
 

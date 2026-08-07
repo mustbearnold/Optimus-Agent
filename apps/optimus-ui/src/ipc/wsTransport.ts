@@ -7,6 +7,7 @@ import type {
   ProjectRootSelection,
   StreamEvent,
 } from './contracts';
+import { windowAction as bridgeWindowAction } from './windowBridge';
 
 /**
  * WebSocket carrier transport (spec-015 A3): the renderer speaks the
@@ -224,10 +225,12 @@ class WsTransport {
     return this.openStream('chat_approval_resolve_start', { params: request }, onEvent);
   }
 
-  // OS affordances are Tauri-bridge-only; over the wire they do not exist
-  // (mirrors the HTTP transport's graceful degradation).
-  windowAction(): Promise<unknown> {
-    return Promise.resolve({ ok: false });
+  // OS affordances are shell-owned, not wire-owned (spec-001 R5): the
+  // packaged webview reaches the Tauri bridge directly regardless of the
+  // surface carrier; outside the webview they degrade to a resolved
+  // no-op (mirrors the HTTP transport's graceful degradation).
+  windowAction(action: 'minimize' | 'maximize' | 'close'): Promise<unknown> {
+    return bridgeWindowAction(action);
   }
 
   pickFolder(): Promise<ProjectRootSelection> {

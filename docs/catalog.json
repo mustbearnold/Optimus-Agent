@@ -3789,7 +3789,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "77bea388f2d67a0a84bd2db16f1e98da702872a8b0f97e3528abe2d6ec72cb0a",
+      "content_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
       "headings": [
         "001 — Desktop shell",
         "Purpose",
@@ -4223,7 +4223,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "0b362372f3eb95259ec8cf13eb588fa4ca83e32ea048c1d2079e1b8f6d460605",
+  "documents_sha256": "53d124e24aded08fb42af1a67f220daa7c1692bdacfb57f5a191279780f424ef",
   "routes": [
     {
       "id": "docs.navigation",

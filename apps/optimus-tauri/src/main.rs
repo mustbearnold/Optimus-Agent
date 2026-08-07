@@ -218,6 +218,48 @@ fn window_action(action: String, window: WebviewWindow) -> Result<Value, String>
     Ok(json!({ "ok": true }))
 }
 
+/// Map a wire direction name to the native resize-drag direction.
+///
+/// Wire names match the WebView-side hotspot vocabulary
+/// (`window_resize_start` directions from the renderer); unknown names
+/// are rejected rather than silently ignored so a typo cannot turn the
+/// corner handles into dead zones.
+fn parse_resize_direction(direction: &str) -> Result<tauri_runtime::ResizeDirection, String> {
+    use tauri_runtime::ResizeDirection;
+    match direction {
+        "north" => Ok(ResizeDirection::North),
+        "south" => Ok(ResizeDirection::South),
+        "east" => Ok(ResizeDirection::East),
+        "west" => Ok(ResizeDirection::West),
+        "northEast" => Ok(ResizeDirection::NorthEast),
+        "northWest" => Ok(ResizeDirection::NorthWest),
+        "southEast" => Ok(ResizeDirection::SouthEast),
+        "southWest" => Ok(ResizeDirection::SouthWest),
+        _ => Err(format!("unsupported resize direction: {direction}")),
+    }
+}
+
+/// Start a native interactive resize drag in the given direction.
+///
+/// The renderer owns the window chrome (spec-001 R5): a borderless
+/// window has no WM-provided resize edges on every platform/desktop
+/// (KDE/XWayland undecorated windows in particular), so the renderer
+/// draws edge/corner hotspots and hands the pointer drag over to the
+/// compositor through this command. A maximized window cannot be
+/// resized by dragging — answer `ok:false` instead of starting a drag
+/// the compositor would have to cancel.
+#[tauri::command]
+fn window_resize_start(direction: String, window: tauri::Window) -> Result<Value, String> {
+    let direction = parse_resize_direction(&direction)?;
+    if window.is_maximized().map_err(|error| error.to_string())? {
+        return Ok(json!({ "ok": false, "reason": "maximized" }));
+    }
+    window
+        .start_resize_dragging(direction)
+        .map_err(|error| error.to_string())?;
+    Ok(json!({ "ok": true }))
+}
+
 #[tauri::command]
 fn pick_folder(state: State<'_, AppState>) -> Result<Value, String> {
     // The shell stages the native selection over its own shell-kind
@@ -317,6 +359,7 @@ fn main() {
             chat_approval_resolve_start,
             chat_cancel,
             window_action,
+            window_resize_start,
             pick_folder,
             broker_ticket
         ])
@@ -382,5 +425,38 @@ mod tests {
             parse_launch_options(Vec::<String>::new()),
             LaunchOptions::default()
         );
+    }
+
+    #[test]
+    fn resize_directions_cover_all_eight_hotspots() {
+        use tauri_runtime::ResizeDirection;
+        assert_eq!(parse_resize_direction("north"), Ok(ResizeDirection::North));
+        assert_eq!(parse_resize_direction("south"), Ok(ResizeDirection::South));
+        assert_eq!(parse_resize_direction("east"), Ok(ResizeDirection::East));
+        assert_eq!(parse_resize_direction("west"), Ok(ResizeDirection::West));
+        assert_eq!(
+            parse_resize_direction("northEast"),
+            Ok(ResizeDirection::NorthEast)
+        );
+        assert_eq!(
+            parse_resize_direction("northWest"),
+            Ok(ResizeDirection::NorthWest)
+        );
+        assert_eq!(
+            parse_resize_direction("southEast"),
+            Ok(ResizeDirection::SouthEast)
+        );
+        assert_eq!(
+            parse_resize_direction("southWest"),
+            Ok(ResizeDirection::SouthWest)
+        );
+    }
+
+    #[test]
+    fn resize_direction_rejects_unknown_names() {
+        let error = parse_resize_direction("diagonal").unwrap_err();
+        assert!(error.contains("unsupported resize direction"));
+        let error = parse_resize_direction("North").unwrap_err();
+        assert!(error.contains("unsupported resize direction"));
     }
 }

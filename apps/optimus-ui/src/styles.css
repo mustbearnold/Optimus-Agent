@@ -332,6 +332,80 @@ code {
   background: #da3344;
 }
 
+/* Native resize hotspots for the borderless window (spec-001 R5 chrome):
+   the compositor owns the actual drag once `window_resize_start` hands it
+   over, so the hotspots are thin invisible strips at the viewport edges.
+   The overlay is inert (pointer-events: none) except on the strips, and
+   it sits above every app surface (max app z-index is 100). */
+.window-resize-handles {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.resize-handle {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.resize-handle-north {
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 5px;
+}
+
+.resize-handle-south {
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 5px;
+}
+
+.resize-handle-west {
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 5px;
+}
+
+.resize-handle-east {
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 5px;
+}
+
+.resize-handle-northWest {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.resize-handle-northEast {
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.resize-handle-southWest {
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.resize-handle-southEast {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+}
+
 .app-body {
   min-width: 0;
   min-height: 0;

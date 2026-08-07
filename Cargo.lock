@@ -3641,6 +3641,7 @@ dependencies = [
  "signal-hook",
  "tauri",
  "tauri-build",
+ "tauri-runtime",
  "tungstenite",
 ]
 
