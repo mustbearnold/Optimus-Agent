@@ -4,10 +4,9 @@
 //! input or animation. Its update is queued before provider or tool work, which
 //! gives even a failed first turn an identity the next prompt can continue.
 
-use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 
-use optimus_host::handle_ipc;
+use optimus_host::client::HostClient;
 use serde_json::{json, Value};
 
 use super::TurnUpdate;
@@ -16,12 +15,17 @@ use super::TurnUpdate;
 ///
 /// `false` means the terminal update channel is closed or reservation failed;
 /// in either case the caller must stop before contacting the provider.
-pub(super) fn ensure(home: &PathBuf, params: &mut Value, updates: &Sender<TurnUpdate>) -> bool {
+pub(super) fn ensure(
+    client: &HostClient,
+    params: &mut Value,
+    updates: &Sender<TurnUpdate>,
+) -> bool {
     if params.get("session").is_some() {
         return true;
     }
 
-    let reserved = handle_ipc(home, "new_session", json!({}))
+    let reserved = client
+        .call("new_session", json!({}))
         .map_err(|error| format!("could not start a durable session: {error}"))
         .and_then(|value| {
             value

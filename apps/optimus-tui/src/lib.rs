@@ -1,12 +1,15 @@
 //! Terminal face of the Optimus agent host (ADR-0045).
 //!
-//! The TUI is not a remote client of the host — it *is* the host process, with a
-//! terminal drawn on top. `optimus-host` is linked in and `handle_ipc` is called
-//! directly, so there is no transport hop for the surface that owns the session.
-//! Other surfaces attach to this process over stdio or loopback HTTP instead.
+//! The TUI is a remote client of the host, exactly like the desktop surface:
+//! `optimus_host::client` speaks the surface protocol over stdio, so there is
+//! no private in-process path that could drift from what other surfaces see
+//! (spec-015 B1). On launch it spawns `optimus serve --stdio` or attaches to
+//! the serve that already holds the home; a healthy serve that refuses the
+//! attach is a named diagnostic terminal state.
 
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Instant;
 
 use crossterm::cursor::Show;
@@ -18,6 +21,8 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use crossterm::ExecutableCommand;
+use optimus_host::client::{self, ConnectOutcome, HostClient};
+use optimus_host::DEFAULT_HOST_PORT;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
@@ -45,6 +50,11 @@ pub mod workbench;
 pub use session::{Message, Role, TuiSession};
 
 /// Run the terminal face against an Optimus home directory.
+///
+/// The host connection is the first thing that happens: a named diagnostic
+/// terminal state is printed and the process exits non-zero when neither a
+/// spawn nor an attach is possible, instead of drawing a screen that cannot
+/// serve a single request.
 pub fn run(home: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let log = logging::log_path(&home);
     // Taken before the screen is, and dropped after it is handed back, so no
@@ -54,10 +64,35 @@ pub fn run(home: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     // and `Terminal::new` returning leaves a raw terminal with no value to hand
     // back, and that window is covered too.
     install_panic_restore(log);
+    let client = connect_host(&home)?;
     let mut terminal = enter()?;
-    let result = event_loop(&mut terminal, TuiSession::new(home));
+    let result = event_loop(&mut terminal, TuiSession::with_client(home, Some(client)));
     leave(terminal)?;
     result
+}
+
+/// Spawn `optimus serve --stdio` or attach to the serve already holding the
+/// home (spec-015 B1). A healthy serve that refuses the wire becomes a named
+/// diagnostic terminal state: the TUI prints it and exits non-zero rather
+/// than draw a screen that cannot serve anything.
+fn connect_host(home: &Path) -> Result<Arc<HostClient>, Box<dyn std::error::Error>> {
+    let port = std::env::var("OPTIMUS_SERVE_PORT")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(DEFAULT_HOST_PORT);
+    match client::connect(home, port) {
+        ConnectOutcome::Spawned(client) | ConnectOutcome::Attached(client) => {
+            // The carrier requires hello as its first frame (handshake).
+            // Without it the serve never starts the conversation and the
+            // first request hangs.
+            client.hello().map_err(|error| error.to_string())?;
+            Ok(Arc::new(client))
+        }
+        ConnectOutcome::Diagnostic(diagnostic) => {
+            eprintln!("{diagnostic}");
+            Err(diagnostic.to_string().into())
+        }
+    }
 }
 
 /// Undo everything [`enter`] did, without a `Terminal` and without failing.
@@ -189,7 +224,10 @@ fn event_loop(
             terminal.draw(|f| view::draw(f, &session))?;
         }
         let ready = match animation.next_wake(Instant::now()) {
-            Some(wake) => event::poll(wake.saturating_duration_since(Instant::now()))?,
+            Some(wake) => {
+                let wait = wake.saturating_duration_since(Instant::now());
+                event::poll(wait)?
+            }
             // No animation and no running worker: the terminal has no reason to
             // wake itself. `read` blocks until a human event arrives.
             None => true,

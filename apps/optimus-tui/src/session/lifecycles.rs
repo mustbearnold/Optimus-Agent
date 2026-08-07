@@ -1,55 +1,11 @@
-use std::path::Path;
+use optimus_host::client::HostClient;
+use optimus_kernel::SessionMeta;
+use serde_json::json;
 
-use optimus_kernel::{
-    PersistedToolLifecycle, SessionStore, ToolCall, ToolLifecycleEvent, ToolLifecyclePhase,
-};
-use serde_json::from_str;
+#[cfg(test)]
+use optimus_kernel::ToolLifecycleEvent;
 
-pub(super) fn is_tool_call_envelope(content: &str) -> bool {
-    from_str::<Vec<ToolCall>>(content)
-        .map(|calls| !calls.is_empty())
-        .unwrap_or(false)
-}
-
-/// Collapse each call's typed lifecycle into the latest phase for that call
-/// occurrence, preserving repeated provider ids across turns. Providers may
-/// reuse identifiers across turns, so only the current non-terminal occurrence
-/// is replaced.
-pub(super) fn collapse_tool_lifecycles(
-    lifecycles: Vec<PersistedToolLifecycle>,
-) -> Vec<ToolLifecycleEvent> {
-    let mut occurrences = Vec::new();
-    for lifecycle in lifecycles {
-        let event = lifecycle.event;
-        let can_update = occurrences
-            .last()
-            .is_some_and(|previous: &ToolLifecycleEvent| {
-                previous.run_id == event.run_id
-                    && previous.call_id == event.call_id
-                    && !is_terminal_tool_phase(previous.phase)
-            });
-        if can_update {
-            if let Some(previous) = occurrences.last_mut() {
-                *previous = event;
-            }
-        } else {
-            occurrences.push(event);
-        }
-    }
-    occurrences
-}
-
-fn is_terminal_tool_phase(phase: ToolLifecyclePhase) -> bool {
-    matches!(
-        phase,
-        ToolLifecyclePhase::Succeeded
-            | ToolLifecyclePhase::Failed
-            | ToolLifecyclePhase::Cancelled
-            | ToolLifecyclePhase::Suppressed
-            | ToolLifecyclePhase::Ambiguous
-    )
-}
-
+#[cfg(test)]
 pub(super) fn next_tool_lifecycle<'a>(
     lifecycles: &'a [ToolLifecycleEvent],
     call_id: &str,
@@ -64,10 +20,13 @@ pub(super) fn next_tool_lifecycle<'a>(
 }
 
 /// Resolve the newest durable session after an approval parks a turn.
-pub(super) fn latest_session_id(home: &Path) -> Option<String> {
-    let latest = SessionStore::open(home.join("sessions.db"))
-        .ok()?
-        .latest()
-        .ok()??;
-    Some(latest.id.to_string())
+pub(super) fn latest_session_id(client: Option<&HostClient>) -> Option<String> {
+    let client = client?;
+    let value = client.call("sessions", json!({})).ok()?;
+    let rows = value.get("sessions")?.as_array()?;
+    rows.iter()
+        .filter_map(|row| serde_json::from_value::<SessionMeta>(row.clone()).ok())
+        .filter(|meta| !meta.archived)
+        .max_by(|a, b| a.updated_at.cmp(&b.updated_at))
+        .map(|meta| meta.id.to_string())
 }

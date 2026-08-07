@@ -88,6 +88,9 @@ tempfile = "3"
 # not in the buffer. Dev-only; nothing ships with these.
 portable-pty = "0.9"
 vt100 = "0.15"
+# Pipes for in-process serve fixtures (the TUI tests drive a `start_with_io`
+# serve through the same stdio carrier a spawned child uses).
+os_pipe = "1"
 proptest = "1"
 clap = { version = "4", features = ["derive"] }
 tiny_http = "0.12"

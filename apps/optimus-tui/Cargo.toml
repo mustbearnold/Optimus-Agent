@@ -31,3 +31,4 @@ tempfile.workspace = true
 portable-pty.workspace = true
 proptest.workspace = true
 vt100.workspace = true
+os_pipe.workspace = true

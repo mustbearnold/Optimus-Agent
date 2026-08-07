@@ -15,7 +15,6 @@
 //! Commands answer locally and synchronously. Nothing here starts a turn, so the
 //! screen thread is never blocked by one.
 
-use optimus_host::handle_ipc;
 use optimus_kernel::SessionMeta;
 use serde_json::json;
 
@@ -225,7 +224,7 @@ fn approval(session: &mut TuiSession) {
 }
 
 fn providers(session: &mut TuiSession) {
-    match handle_ipc(&session.home, "providers_catalog", json!({})) {
+    match session.call("providers_catalog", json!({})) {
         Ok(value) => {
             let rows = value
                 .get("providers")
@@ -390,7 +389,8 @@ fn set_provider(session: &mut TuiSession, argument: &str) {
         session.push(Role::Error, "usage: /provider <id> — see /providers".into());
         return;
     }
-    let catalog = handle_ipc(&session.home, "providers_catalog", json!({}))
+    let catalog = session
+        .call("providers_catalog", json!({}))
         .ok()
         .and_then(|value| value.get("providers").and_then(|v| v.as_array()).cloned())
         .unwrap_or_default();
@@ -607,7 +607,7 @@ fn yolo(session: &mut TuiSession) {
 
 pub(crate) fn enable_yolo(session: &mut TuiSession) {
     // Reuse the runtime path the CLI flag uses, so the receipt story is identical.
-    match handle_ipc(&session.home, "approvals_release_yolo", json!({})) {
+    match session.call("approvals_release_yolo", json!({})) {
         Ok(value) => {
             let released = value.get("released").and_then(|v| v.as_u64()).unwrap_or(0);
             session.yolo = true;
@@ -644,11 +644,7 @@ fn pin(session: &mut TuiSession) {
         return;
     };
     let pinned = !current.pinned;
-    match handle_ipc(
-        &session.home,
-        "pin_session",
-        json!({ "id": id, "pinned": pinned }),
-    ) {
+    match session.call("pin_session", json!({ "id": id, "pinned": pinned })) {
         Ok(_) => {
             session.refresh_sidebar();
             session.push(
@@ -727,7 +723,28 @@ mod tests {
         let dir = tempdir().unwrap();
         let home = dir.path().join("home");
         std::fs::create_dir_all(&home).unwrap();
-        (dir, TuiSession::new(home))
+        // In-process serve over pipes: the same stdio carrier the shipped
+        // binary spawns, so command tests exercise the real wire (B1).
+        let (serve_stdin_r, client_stdin_w) = os_pipe::pipe().unwrap();
+        let (client_stdout_r, serve_stdout_w) = os_pipe::pipe().unwrap();
+        let server = optimus_host::start_with_io(
+            &home,
+            0,
+            true,
+            Box::new(serve_stdin_r),
+            Box::new(serve_stdout_w),
+        )
+        .expect("in-process serve");
+        let client = optimus_host::client::HostClient::pipes(
+            Box::new(client_stdin_w),
+            Box::new(client_stdout_r),
+        );
+        client.hello().expect("hello handshake");
+        drop(server);
+        (
+            dir,
+            TuiSession::with_client(home, Some(std::sync::Arc::new(client))),
+        )
     }
 
     #[test]

@@ -25,11 +25,23 @@
 //! except here.
 
 use std::io::{Read, Write};
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
+
+/// The TUI spawns `optimus serve --stdio` on `DEFAULT_HOST_PORT` (spec-015
+/// B1). Tests run in parallel, so each launch gets its own port; the TUI
+/// reads `OPTIMUS_SERVE_PORT` and the serve binds it.
+static NEXT_PORT: AtomicU16 = AtomicU16::new(0);
+
+fn serve_port() -> u16 {
+    // 17865 is the production default; tests sit above it to keep the port
+    // space disjoint from any real host.
+    NEXT_PORT.fetch_add(1, Ordering::Relaxed) + 20_000
+}
 
 /// Wide enough that a sentence-length draft fits on one row, narrow enough that
 /// a slightly longer one is forced to wrap where the test can predict it.
@@ -86,6 +98,17 @@ impl Term {
         // Without a terminal type crossterm cannot emit the sequences under
         // test, and the whole exercise is about those sequences.
         command.env("TERM", "xterm-256color");
+        command.env("OPTIMUS_SERVE_PORT", serve_port().to_string());
+        // The TUI spawns `optimus serve --stdio`. Point it at the workspace
+        // sibling binary so the test exercises the wire, not a stale PATH
+        // install.
+        let serve_bin = std::path::Path::new(env!("CARGO_BIN_EXE_optimus-tui"))
+            .parent()
+            .expect("the tui binary has a parent")
+            .join("optimus");
+        if serve_bin.is_file() {
+            command.env("OPTIMUS_SERVE_BIN", &serve_bin);
+        }
         for (key, value) in env {
             command.env(key, value);
         }

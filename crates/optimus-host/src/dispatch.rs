@@ -196,7 +196,15 @@ impl WorkerPool {
         for _ in 0..WORKER_COUNT {
             let rx = Arc::clone(&rx);
             std::thread::spawn(move || {
-                while let Ok(job) = rx.lock().unwrap().recv() {
+                loop {
+                    // Scope the guard so it drops BEFORE the job runs:
+                    // `while let Ok(job) = rx.lock().unwrap().recv()`
+                    // would hold the mutex across the body and serialize
+                    // the whole pool on one worker (regression: a registry
+                    // call queued behind a streaming turn would wait for
+                    // the turn to finish).
+                    let job = rx.lock().unwrap().recv();
+                    let Ok(job) = job else { break };
                     run_pool_job(job);
                 }
             });

@@ -16,11 +16,10 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
 
-use optimus_host::chat_approval_resolve_cancellable;
 use optimus_kernel::CancellationToken;
 use serde_json::json;
 
-use super::event_adapter::stream_sink;
+use super::event_adapter::wire_update;
 use super::{latest_session_id, ActiveTurn, Role, TuiSession, TurnUpdate, WorkerKind};
 
 impl TuiSession {
@@ -57,23 +56,59 @@ impl TuiSession {
 
         let (tx, rx) = mpsc::channel();
         let cancel = Arc::new(CancellationToken::new());
-        let worker_cancel = Arc::clone(&cancel);
-        let home = self.home.clone();
+        let Some(client) = self.client.clone() else {
+            let _ = tx.send(TurnUpdate::Failed("no host connection".to_string()));
+            self.active = Some(ActiveTurn {
+                updates: rx,
+                cancel,
+                kind: WorkerKind::Resolve,
+                awaiting_approval: false,
+                stream_id: None,
+            });
+            return;
+        };
+        let stream_id = client.fresh_stream_id();
+        let wire_stream_id = stream_id;
+        let binding_for_worker = settling_binding.clone();
+        let tx_for_worker = tx.clone();
         thread::spawn(move || {
-            let mut sink = stream_sink(tx.clone());
-            let update = match chat_approval_resolve_cancellable(
-                &home,
-                params,
-                Some(&mut sink),
-                &worker_cancel,
-            ) {
-                Ok(value) => {
+            let stream = match client.resolve(wire_stream_id, params) {
+                Ok(stream) => stream,
+                Err(error) => {
+                    let _ = tx.send(TurnUpdate::Failed(format!(
+                        "approval resolution failed: {error}"
+                    )));
+                    return;
+                }
+            };
+            let mut terminal = None;
+            while let Some(event) = stream.next() {
+                let kind = event.get("type").and_then(|v| v.as_str());
+                if matches!(kind, Some("done" | "cancelled" | "error")) {
+                    terminal = Some(event);
+                    break;
+                }
+                if let Some(update) = wire_update(&event) {
+                    if tx_for_worker.send(update).is_err() {
+                        return;
+                    }
+                }
+            }
+            let update = match terminal {
+                Some(event) if event.get("type").and_then(|v| v.as_str()) == Some("done") => {
                     // Ok means the decision itself was carried out, whatever
                     // the resumed turn goes on to do.
-                    let _ = tx.send(TurnUpdate::ApprovalSettled(Box::new(settling_binding)));
-                    resolved_update(&value)
+                    let _ = tx.send(TurnUpdate::ApprovalSettled(Box::new(binding_for_worker)));
+                    resolved_update(event.get("result").unwrap_or(&json!({})))
                 }
-                Err(error) => TurnUpdate::Failed(format!("approval resolution failed: {error}")),
+                Some(event) => TurnUpdate::Failed(format!(
+                    "approval resolution failed: {}",
+                    event
+                        .get("error")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("connection closed")
+                )),
+                None => TurnUpdate::Failed("approval resolution failed: connection lost".into()),
             };
             let _ = tx.send(update);
         });
@@ -83,6 +118,7 @@ impl TuiSession {
             cancel,
             kind: WorkerKind::Resolve,
             awaiting_approval: false,
+            stream_id: Some(stream_id),
         });
     }
 
@@ -99,7 +135,7 @@ impl TuiSession {
         let session_id = self
             .session_id
             .clone()
-            .or_else(|| latest_session_id(&self.home))
+            .or_else(|| latest_session_id(self.client.as_deref()))
             .ok_or("no session to resolve against yet")?;
         let mut params = json!({
             "session_id": session_id,

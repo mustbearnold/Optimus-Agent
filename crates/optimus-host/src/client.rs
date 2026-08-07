@@ -21,7 +21,7 @@
 //! - stdio EOF exits 0 (R9).
 
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -254,17 +254,21 @@ impl Stream {
     }
 }
 
+/// Shared client-side tables: pending request ids → reply senders, and
+/// open streams → event senders (aliased to keep clippy's complexity gate).
+type PendingTable = Arc<Mutex<HashMap<u64, Sender<Result<Value, String>>>>>;
+type StreamTable = Arc<Mutex<HashMap<u64, Sender<Value>>>>;
+
 /// A client of one `optimus serve` connection (stdio or WebSocket).
-#[derive(Debug)]
 pub struct HostClient {
     /// Pending request ids → reply senders.
-    pending: Arc<Mutex<HashMap<u64, Sender<Result<Value, String>>>>>,
+    pending: PendingTable,
     /// Open streams → event senders.
-    streams: Arc<Mutex<HashMap<u64, Sender<Value>>>>,
+    streams: StreamTable,
     /// The child, when this client spawned it (stdio carrier).
     child: Option<Child>,
     /// The stdio write half.
-    stdin: Option<Mutex<ChildStdin>>,
+    stdin: Option<Mutex<Box<dyn Write + Send>>>,
     /// The WebSocket write half, when attached.
     ws: Option<
         Arc<
@@ -274,6 +278,17 @@ pub struct HostClient {
     /// The record token, when attached over WebSocket (hello credential).
     ws_ticket: Option<String>,
     next_id: AtomicU64,
+}
+
+impl std::fmt::Debug for HostClient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HostClient")
+            .field("pending", &self.pending.lock().unwrap().len())
+            .field("streams", &self.streams.lock().unwrap().len())
+            .field("has_child", &self.child.is_some())
+            .field("has_ws", &self.ws.is_some())
+            .finish()
+    }
 }
 
 impl Drop for HostClient {
@@ -290,9 +305,30 @@ impl HostClient {
     /// child's stdout; the child lives until [`HostClient::close`] drops
     /// its stdin (stdio EOF exits 0, R9).
     fn stdio(child: Child, stdin: ChildStdin, stdout: std::process::ChildStdout) -> Self {
-        let pending: Arc<Mutex<HashMap<u64, Sender<Result<Value, String>>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
-        let streams: Arc<Mutex<HashMap<u64, Sender<Value>>>> = Arc::new(Mutex::new(HashMap::new()));
+        Self::from_io(Some(child), Box::new(stdin), Box::new(stdout))
+    }
+
+    /// Client over caller-owned byte streams, with no child to reap.
+    ///
+    /// This is the in-process test seam: a `start_with_io` serve in the same
+    /// process speaks the identical stdio carrier, so unit tests exercise the
+    /// same wire a spawned child would (spec-015 B1). The write half doubles
+    /// as the teardown signal — [`HostClient::close`] dropping it is the EOF
+    /// the serve reads as exit 0 (R9).
+    pub fn pipes(stdin: Box<dyn Write + Send>, stdout: Box<dyn Read + Send>) -> Self {
+        Self::from_io(None, stdin, stdout)
+    }
+
+    /// Shared constructor: spawn the reader thread over `stdout`, keep the
+    /// write half in `stdin`, and remember the child only when this client
+    /// owns one.
+    fn from_io(
+        child: Option<Child>,
+        stdin: Box<dyn Write + Send>,
+        stdout: Box<dyn Read + Send>,
+    ) -> Self {
+        let pending: PendingTable = Arc::new(Mutex::new(HashMap::new()));
+        let streams: StreamTable = Arc::new(Mutex::new(HashMap::new()));
         let reader_pending = Arc::clone(&pending);
         let reader_streams = Arc::clone(&streams);
         std::thread::spawn(move || {
@@ -331,7 +367,7 @@ impl HostClient {
         Self {
             pending,
             streams,
-            child: Some(child),
+            child,
             stdin: Some(Mutex::new(stdin)),
             ws: None,
             ws_ticket: None,
@@ -358,9 +394,8 @@ impl HostClient {
             .send(tungstenite::Message::Text(hello.to_string().into()))
             .map_err(|error| format!("hello send failed: {error}"))?;
 
-        let pending: Arc<Mutex<HashMap<u64, Sender<Result<Value, String>>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
-        let streams: Arc<Mutex<HashMap<u64, Sender<Value>>>> = Arc::new(Mutex::new(HashMap::new()));
+        let pending: PendingTable = Arc::new(Mutex::new(HashMap::new()));
+        let streams: StreamTable = Arc::new(Mutex::new(HashMap::new()));
         let reader_pending = Arc::clone(&pending);
         let reader_streams = Arc::clone(&streams);
         let writer = Arc::new(Mutex::new(socket));
@@ -468,6 +503,13 @@ impl HostClient {
     pub fn cancel(&self, stream_id: u64) -> Result<(), String> {
         self.call("chat_cancel", json!({ "stream_id": stream_id }))?;
         Ok(())
+    }
+
+    /// A fresh stream id for this connection. Stream ids are a separate id
+    /// space from request ids: the serve keys its stream registry by them,
+    /// and nothing else on the wire shares that namespace.
+    pub fn fresh_stream_id(&self) -> u64 {
+        self.next_id.fetch_add(1, Ordering::Relaxed) + 1
     }
 
     /// Hello with the `tui` kind. On stdio the ticket is OMITTED (pipe

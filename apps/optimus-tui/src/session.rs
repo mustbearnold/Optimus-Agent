@@ -1,7 +1,7 @@
 //! Session state for the terminal face.
 //!
-//! Turns go through `optimus_host::chat_turn_cancellable`, the same entry the
-//! desktop uses, so the TUI cannot drift onto a private path.
+//! Turns go through the host wire (`optimus_host::client`), the same protocol
+//! the desktop uses, so the TUI cannot drift onto a private path (spec-015 B1).
 //!
 //! The turn runs on a worker thread and reports back over a channel. The screen
 //! thread never blocks on a model call, which is what lets text stream in and
@@ -20,9 +20,9 @@ use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::time::Instant;
 
-use optimus_host::handle_ipc;
+use optimus_host::client::HostClient;
 use optimus_kernel::{
-    CancellationToken, ExecutionStore, SessionMeta, SessionStore, ToolApprovalBinding, ToolCall,
+    CancellationToken, SessionMeta, ToolApprovalBinding, ToolCall, ToolLifecycleEvent,
     ToolLifecyclePhase,
 };
 use serde_json::json;
@@ -40,9 +40,7 @@ mod reservation;
 mod workers;
 
 pub use event_adapter::{ToolStep, TurnUpdate};
-use lifecycles::{
-    collapse_tool_lifecycles, is_tool_call_envelope, latest_session_id, next_tool_lifecycle,
-};
+use lifecycles::latest_session_id;
 
 // All are exercised from this module's test block, beside the rest of the
 // surface's behaviour; none is called from production code up here.
@@ -102,6 +100,8 @@ struct ActiveTurn {
     /// Set once this worker's stream reported an `Approval`, so its terminal
     /// failure is rendered as a park rather than an error.
     awaiting_approval: bool,
+    /// The wire stream this worker drains, for cancel-over-the-wire.
+    stream_id: Option<u64>,
 }
 
 pub struct TuiSession {
@@ -166,10 +166,22 @@ pub struct TuiSession {
     /// whether a terminal `Done` still needs to place the settled answer.
     answer_started: bool,
     active: Option<ActiveTurn>,
+    /// The wire connection to the host. `None` only in pure-UI tests that
+    /// never speak the protocol; production and wire-backed tests always
+    /// carry one (spec-015 B1).
+    pub(crate) client: Option<Arc<HostClient>>,
 }
 
 impl TuiSession {
+    /// A session with no wire connection. Pure-UI tests construct this; the
+    /// event loop always connects first and uses [`TuiSession::with_client`].
     pub fn new(home: PathBuf) -> Self {
+        Self::with_client(home, None)
+    }
+
+    /// The one real constructor. `client` is `None` only for tests that never
+    /// touch the host; the protocol speaks through it everywhere else.
+    pub fn with_client(home: PathBuf, client: Option<Arc<HostClient>>) -> Self {
         // Choosing a provider is a decision about how you want to work, not
         // about this run of the program. Re-asking every launch treats it as
         // the latter.
@@ -208,12 +220,10 @@ impl TuiSession {
             started: None,
             answer_started: false,
             active: None,
+            client,
         };
         session.refresh_sidebar();
-        let latest = SessionStore::open(session.home.join("sessions.db"))
-            .and_then(|store| store.latest())
-            .ok()
-            .flatten();
+        let latest = session.latest_meta();
         if let Some(meta) = latest {
             if let Err(error) = session.load_session_meta(&meta) {
                 session.push(
@@ -225,13 +235,19 @@ impl TuiSession {
         session
     }
 
-    /// Refresh the rail from the durable stores. A failed refresh is treated as
-    /// an empty projection so a broken optional catalog cannot prevent the
-    /// composer from opening; the next successful turn will surface the real
-    /// storage error.
+    /// Refresh the rail from the host. A failed refresh is an empty projection
+    /// so a broken optional catalog cannot block the composer; the next
+    /// successful turn surfaces the real storage error. With no host
+    /// (pure-UI tests) the rail stays empty.
     pub(crate) fn refresh_sidebar(&mut self) {
-        let sessions = SessionStore::open(self.home.join("sessions.db"))
-            .and_then(|store| store.list())
+        let Some(client) = &self.client else {
+            return;
+        };
+        let sessions = client
+            .call("sessions", json!({}))
+            .ok()
+            .and_then(|value| value.get("sessions").cloned())
+            .and_then(|rows| serde_json::from_value::<Vec<SessionMeta>>(rows).ok())
             .unwrap_or_default();
         let workspace_count = sessions
             .iter()
@@ -263,10 +279,9 @@ impl TuiSession {
             }
         }
 
-        // Authorized scopes can exist before their first session. They still
-        // belong in Projects, otherwise the rail makes an available scope look
-        // like it does not exist.
-        if let Ok(value) = handle_ipc(&self.home, "project_scopes_list", json!({})) {
+        // Authorized scopes can exist before their first session; they still
+        // belong in Projects so the rail shows every available scope.
+        if let Ok(value) = client.call("project_scopes_list", json!({})) {
             if let Some(rows) = value.get("projects").and_then(|value| value.as_array()) {
                 for row in rows {
                     let Some(id) = row.get("project_id").and_then(|value| value.as_str()) else {
@@ -301,101 +316,98 @@ impl TuiSession {
         self.sidebar.reveal_session(self.session_id.as_deref());
     }
 
+    /// The newest non-archived durable row, over the wire (kernel `latest()`
+    /// contract: most recently updated, archived excluded).
+    fn latest_meta(&self) -> Option<SessionMeta> {
+        let client = self.client.as_ref()?;
+        let value = client.call("sessions", json!({})).ok()?;
+        let rows = value.get("sessions")?.as_array()?;
+        rows.iter()
+            .filter_map(|row| serde_json::from_value::<SessionMeta>(row.clone()).ok())
+            .filter(|meta| !meta.archived)
+            .max_by(|a, b| a.updated_at.cmp(&b.updated_at))
+    }
+
     /// Load one durable row into the compatibility transcript and its
-    /// workbench mirror. This is used both at launch and by sidebar clicks, so
-    /// reopening a session has exactly the same projection as a live turn.
+    /// workbench mirror, both at launch and on sidebar clicks. The restore
+    /// consumes the same wire projection the renderer's A11-oracle snapshot
+    /// uses (`get_session` → projected messages + tool_events), so a reopened
+    /// transcript cannot drift from what a fresh fetch would paint.
     fn load_session_meta(&mut self, meta: &SessionMeta) -> Result<(), String> {
-        let store =
-            SessionStore::open(self.home.join("sessions.db")).map_err(|error| error.to_string())?;
-        let (_, messages, _, _) = store
-            .load_bound_transcript(meta.id, meta.project.as_deref())
-            .map_err(|error| error.to_string())?;
-        let execution = ExecutionStore::open(self.home.join("execution.db"))
-            .map_err(|error| error.to_string())?;
-        let pending = execution
-            .pending_chat_approval_for_session(meta.id)
-            .map_err(|error| error.to_string())?;
-        let lifecycles = execution
-            .tool_lifecycle_for_session(meta.id)
-            .map_err(|error| error.to_string())?;
-        let lifecycles = collapse_tool_lifecycles(lifecycles);
-        let mut lifecycle_cursor = 0;
+        let Some(client) = &self.client else {
+            return Err("no host connection".into());
+        };
+        let value = client
+            .call("get_session", json!({ "id": meta.id }))
+            .map_err(|error| format!("could not load the session: {error}"))?;
+        let messages = value
+            .get("messages")
+            .and_then(|value| value.as_array())
+            .ok_or_else(|| "get_session returned no messages".to_string())?;
 
         self.messages.clear();
         self.workbench.clear();
-        for message in messages {
-            let optimus_kernel::Message {
-                role: stored_role,
-                content,
-                tool_call_id,
-                name,
-                ..
-            } = message;
-            // The kernel's system prompt is runtime context, not conversation
-            // history. Reopening it would dump internal instructions into the
-            // user's transcript and make a clean session look enormous.
-            if stored_role == optimus_kernel::Role::System {
-                continue;
-            }
-            // The kernel keeps the assistant's protocol tool-call envelope in
-            // the durable conversation so a resumed model sees it. It is not
-            // a useful terminal row: lifecycle events below are the typed
-            // human-facing view, so raw JSON never returns on relaunch.
-            if stored_role == optimus_kernel::Role::Assistant && is_tool_call_envelope(&content) {
-                continue;
-            }
-            if stored_role == optimus_kernel::Role::Tool {
-                if let Some(call_id) = tool_call_id.as_deref() {
-                    if let Some(lifecycle) =
-                        next_tool_lifecycle(&lifecycles, call_id, &mut lifecycle_cursor)
+        let mut pending: Option<(ToolApprovalBinding, ToolCall)> = None;
+        for row in messages {
+            let role = row.get("role").and_then(|value| value.as_str());
+            let content = row
+                .get("content")
+                .and_then(|value| value.as_str())
+                .unwrap_or_default();
+            match role {
+                Some("user") => {
+                    self.workbench.push_loaded(Role::User, None, None);
+                    self.messages.push(Message {
+                        role: Role::User,
+                        text: content.into(),
+                        call_id: None,
+                        run_id: None,
+                    });
+                }
+                Some("assistant") => {
+                    self.workbench.push_loaded(Role::Assistant, None, None);
+                    self.messages.push(Message {
+                        role: Role::Assistant,
+                        text: content.into(),
+                        call_id: None,
+                        run_id: None,
+                    });
+                    // The projection rides each turn's tool_events on its last
+                    // assistant message. Replaying them in wire order paints
+                    // the same receipts a live turn did.
+                    if let Some(events) = row.get("tool_events").and_then(|value| value.as_array())
                     {
-                        let is_pending = pending.as_ref().is_some_and(|(binding, _)| {
-                            lifecycle.phase == ToolLifecyclePhase::ApprovalRequired
-                                && lifecycle.run_id == binding.run_id.to_string()
-                                && lifecycle.call_id == binding.call_id
-                                && lifecycle.approval.as_ref() == Some(binding)
-                        });
-                        if is_pending {
-                            // The pending call has no tool result yet; its
-                            // blocked row is restored from the exact approval
-                            // binding after the durable transcript is
-                            // projected. Matching the lifecycle, rather than
-                            // only its provider id, keeps an older completed
-                            // call with the same id visible.
-                            continue;
+                        for event in events {
+                            let lifecycle: ToolLifecycleEvent =
+                                serde_json::from_value(event.clone())
+                                    .map_err(|error| error.to_string())?;
+                            if lifecycle.phase == ToolLifecyclePhase::ApprovalRequired {
+                                if let Some(binding) = lifecycle.approval.clone() {
+                                    // The wire does not carry the original
+                                    // ToolCall arguments (renderer parity:
+                                    // receipts restore from the binding).
+                                    let call = ToolCall {
+                                        id: binding.call_id.clone(),
+                                        name: lifecycle.tool_id.as_str().to_string(),
+                                        arguments: json!({}),
+                                    };
+                                    pending = Some((binding, call));
+                                    continue;
+                                }
+                            }
+                            let step = crate::tool_line::tool_step(&lifecycle);
+                            self.workbench.apply_tool_step(&step);
+                            self.messages.push(Message {
+                                role: Role::Tool,
+                                text: step.line,
+                                call_id: Some(step.call_id.clone()),
+                                run_id: Some(step.run_id.clone()),
+                            });
                         }
-                        let step = crate::tool_line::tool_step(lifecycle);
-                        self.workbench.apply_tool_step(&step);
-                        self.messages.push(Message {
-                            role: Role::Tool,
-                            text: step.line,
-                            call_id: Some(call_id.to_string()),
-                            run_id: Some(step.run_id.clone()),
-                        });
-                        continue;
                     }
                 }
+                _ => {}
             }
-            let (role, text) = match stored_role {
-                optimus_kernel::Role::User => (Role::User, content),
-                optimus_kernel::Role::System => continue,
-                optimus_kernel::Role::Assistant => (Role::Assistant, content),
-                optimus_kernel::Role::Tool => {
-                    let text = name
-                        .as_deref()
-                        .map(|name| format!("{name}  {content}"))
-                        .unwrap_or(content);
-                    (Role::Tool, text)
-                }
-            };
-            self.workbench
-                .push_loaded(role, tool_call_id.as_deref(), name.as_deref());
-            self.messages.push(Message {
-                role,
-                text,
-                call_id: tool_call_id,
-                run_id: None,
-            });
         }
         self.session_id = Some(meta.id.to_string());
         self.project_id = meta.project.clone();
@@ -693,11 +705,27 @@ impl TuiSession {
     }
 
     /// Ask the running turn to stop. The worker settles it as failed or done.
+    /// The token interrupts an in-process turn; the wire cancel asks the host
+    /// to stop the stream it owns.
     pub fn cancel(&mut self) {
         if let Some(active) = &self.active {
             active.cancel.cancel();
+            if let (Some(client), Some(stream_id)) = (&self.client, active.stream_id) {
+                let _ = client.cancel(stream_id);
+            }
             self.status = "cancelling".into();
         }
+    }
+
+    /// One host call over the wire. `None` client (pure-UI tests) is an
+    /// error, matching what a dead host would say.
+    pub(crate) fn call(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        let client = self.client.as_ref().ok_or("no host connection")?;
+        client.call(method, params)
     }
 
     /// Put the session in the running state with no worker behind it, so render
@@ -711,6 +739,7 @@ impl TuiSession {
             cancel: Arc::new(CancellationToken::new()),
             kind: WorkerKind::Turn,
             awaiting_approval: false,
+            stream_id: None,
         });
         self.begin(status);
         tx
@@ -818,11 +847,35 @@ mod tests {
     use optimus_kernel::ToolLifecycleEvent;
     use tempfile::tempdir;
 
+    use super::lifecycles::next_tool_lifecycle;
+
     fn session() -> (tempfile::TempDir, TuiSession) {
         let dir = tempdir().unwrap();
         let home = dir.path().join("home");
         std::fs::create_dir_all(&home).unwrap();
-        (dir, TuiSession::new(home))
+        (dir, session_at(&home))
+    }
+
+    /// A session wired to an in-process serve over pipes: the same stdio
+    /// carrier the shipped binary spawns, so unit tests exercise the real
+    /// wire (spec-015 B1).
+    fn session_at(home: &std::path::Path) -> TuiSession {
+        let (serve_stdin_r, client_stdin_w) = os_pipe::pipe().unwrap();
+        let (client_stdout_r, serve_stdout_w) = os_pipe::pipe().unwrap();
+        let server = optimus_host::start_with_io(
+            home,
+            0,
+            true,
+            Box::new(serve_stdin_r),
+            Box::new(serve_stdout_w),
+        )
+        .expect("in-process serve");
+        let client = HostClient::pipes(Box::new(client_stdin_w), Box::new(client_stdout_r));
+        client.hello().expect("hello handshake");
+        // The serve keeps running until the client's pipes close (stdio EOF,
+        // R9); dropping the server struct only detaches its threads.
+        drop(server);
+        TuiSession::with_client(home.to_path_buf(), Some(Arc::new(client)))
     }
 
     /// Install a worker whose updates the test scripts by hand.
@@ -833,6 +886,7 @@ mod tests {
             cancel: Arc::new(CancellationToken::new()),
             kind,
             awaiting_approval: false,
+            stream_id: None,
         });
         tx
     }
@@ -903,7 +957,7 @@ mod tests {
         let home = session.home.clone();
         drop(session);
 
-        let restored = TuiSession::new(home);
+        let restored = session_at(&home);
         assert!(
             restored.session_id.is_some(),
             "the durable row should reopen"

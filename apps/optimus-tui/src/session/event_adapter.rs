@@ -1,17 +1,17 @@
-//! The typed event spine: kernel stream events in, transcript state out.
+//! The typed event spine: wire events in, transcript state out.
 //!
 //! Split out of `session.rs` under the module-size law, along the seam
 //! ADR-0075 formalizes. [`TurnUpdate`] is deliberately a plain data enum
-//! rather than a callback: it is the shape a future stdio or WebSocket
-//! transport publishes, so a remote client and the terminal consume identical
-//! events (ADR-0045). [`stream_sink`] is the only translation from kernel
-//! stream events and [`pump`](TuiSession::pump) their only consumer, which
-//! keeps lifecycle truth typed end to end — nothing here parses log or status
-//! text to decide state.
+//! rather than a callback: it is the shape the host publishes over stdio, so
+//! a remote client and the terminal consume identical events (ADR-0045).
+//! [`wire_update`] is the only translation from wire events and
+//! [`pump`](TuiSession::pump) their only consumer, which keeps lifecycle
+//! truth typed end to end — nothing here parses log or status text to decide
+//! state.
 
-use std::sync::mpsc::{self, TryRecvError};
+use std::sync::mpsc::TryRecvError;
 
-use optimus_kernel::{StreamControl, StreamEvent, ToolApprovalBinding, ToolLifecyclePhase};
+use optimus_kernel::{ToolApprovalBinding, ToolLifecyclePhase};
 
 use crate::tool_line::{readable, tool_step};
 
@@ -78,40 +78,37 @@ enum TurnEnd {
     WorkerGone,
 }
 
-/// Feed kernel stream events to the screen thread as transcript updates.
+/// Map one wire event (the `stream_event_to_json` shape the host emits) to a
+/// [`TurnUpdate`], or `None` for events the terminal does not render
+/// (thinking and timing detail belong in a dock, not the transcript).
 ///
-/// Shared by both workers. Resolving an approval resumes the turn it paused
-/// (ADR-0046), so it is a streaming turn like any other and has to present the
-/// same events the same way — a second translation would drift.
-pub(super) fn stream_sink(
-    stream: mpsc::Sender<TurnUpdate>,
-) -> impl FnMut(StreamEvent) -> StreamControl {
-    move |event: StreamEvent| {
-        let update = match event {
-            StreamEvent::TextDelta(text) => Some(TurnUpdate::Text(text)),
-            StreamEvent::Status(text) => Some(TurnUpdate::Status(text)),
-            // A paused exact effect needs a decision, so it becomes an action
-            // row; every other tool phase is visible work and belongs in the
-            // transcript. Thinking and timing detail do not — those belong in
-            // a dock.
-            StreamEvent::Tool(tool) => match (&tool.phase, &tool.approval) {
-                (ToolLifecyclePhase::ApprovalRequired, Some(binding)) => {
+/// Terminal events (`done`/`cancelled`/`error`) are not mapped here: the
+/// worker loop breaks on them first and settles the turn itself.
+pub(super) fn wire_update(value: &serde_json::Value) -> Option<TurnUpdate> {
+    let kind = value.get("type")?.as_str()?;
+    match kind {
+        "delta" => value
+            .get("text")
+            .and_then(|v| v.as_str())
+            .map(|text| TurnUpdate::Text(text.to_string())),
+        "status" => value
+            .get("text")
+            .and_then(|v| v.as_str())
+            .map(|text| TurnUpdate::Status(text.to_string())),
+        // A paused exact effect needs a decision, so it becomes an action
+        // row; every other tool phase is visible work and belongs in the
+        // transcript. Mirrors the in-process `stream_sink` tool arm.
+        "tool" => {
+            let tool: optimus_kernel::ToolLifecycleEvent =
+                serde_json::from_value(value.clone()).ok()?;
+            match (&tool.phase, &tool.approval) {
+                (optimus_kernel::ToolLifecyclePhase::ApprovalRequired, Some(binding)) => {
                     Some(TurnUpdate::Approval(Box::new(binding.clone())))
                 }
                 _ => Some(TurnUpdate::Tool(tool_step(&tool))),
-            },
-            _ => None,
-        };
-        let Some(update) = update else {
-            return StreamControl::Continue;
-        };
-        // A closed receiver means the screen is gone; stop the turn rather than
-        // keep spending tokens into a void.
-        if stream.send(update).is_err() {
-            StreamControl::Cancel
-        } else {
-            StreamControl::Continue
+            }
         }
+        _ => None,
     }
 }
 

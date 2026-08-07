@@ -13,12 +13,11 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
 
-use optimus_host::chat_turn_cancellable;
 use optimus_kernel::codex_device_login::device_code_login_with;
 use optimus_kernel::{CancellationToken, CodexAuthStore};
 use serde_json::json;
 
-use super::event_adapter::stream_sink;
+use super::event_adapter::wire_update;
 use super::{reservation, ActiveTurn, Role, TuiSession, TurnUpdate, WorkerKind};
 
 impl TuiSession {
@@ -51,8 +50,20 @@ impl TuiSession {
 
         let (tx, rx) = mpsc::channel();
         let cancel = Arc::new(CancellationToken::new());
-        let worker_cancel = Arc::clone(&cancel);
-        let home = self.home.clone();
+        let Some(client) = self.client.clone() else {
+            let _ = tx.send(TurnUpdate::Failed("no host connection".to_string()));
+            self.active = Some(ActiveTurn {
+                updates: rx,
+                cancel,
+                kind: WorkerKind::Turn,
+                awaiting_approval: false,
+                stream_id: None,
+            });
+            return;
+        };
+        let stream_id = client.fresh_stream_id();
+        let wire_stream_id = stream_id;
+        let tx_for_worker = tx.clone();
 
         thread::spawn(move || {
             // Proving the crash arm needs a worker that really dies mid-turn
@@ -63,25 +74,54 @@ impl TuiSession {
             if std::env::var_os("OPTIMUS_TUI_PANIC_IN_WORKER").is_some() {
                 panic!("OPTIMUS_TUI_PANIC_IN_WORKER");
             }
-            if !reservation::ensure(&home, &mut params, &tx) {
+            if !reservation::ensure(&client, &mut params, &tx) {
                 return;
             }
-            let mut sink = stream_sink(tx.clone());
-            let outcome = chat_turn_cancellable(&home, params, Some(&mut sink), &worker_cancel);
-            let final_update = match outcome {
-                Ok(value) => TurnUpdate::Done {
-                    session_id: value
-                        .get("session_id")
+            let stream = match client.start_turn(wire_stream_id, params) {
+                Ok(stream) => stream,
+                Err(error) => {
+                    let _ = tx.send(TurnUpdate::Failed(error));
+                    return;
+                }
+            };
+            let mut terminal = None;
+            while let Some(event) = stream.next() {
+                let kind = event.get("type").and_then(|v| v.as_str());
+                if matches!(kind, Some("done" | "cancelled" | "error")) {
+                    terminal = Some(event);
+                    break;
+                }
+                if let Some(update) = wire_update(&event) {
+                    if tx_for_worker.send(update).is_err() {
+                        return;
+                    }
+                }
+            }
+            let final_update = match terminal {
+                Some(event) if event.get("type").and_then(|v| v.as_str()) == Some("done") => {
+                    let empty = json!({});
+                    let result = event.get("result").unwrap_or(&empty);
+                    TurnUpdate::Done {
+                        session_id: result
+                            .get("session_id")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or_default()
+                            .to_string(),
+                        text: result
+                            .get("assistant_text")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or_default()
+                            .to_string(),
+                    }
+                }
+                Some(event) => TurnUpdate::Failed(
+                    event
+                        .get("error")
                         .and_then(|v| v.as_str())
-                        .unwrap_or_default()
+                        .unwrap_or("connection closed")
                         .to_string(),
-                    text: value
-                        .get("assistant_text")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default()
-                        .to_string(),
-                },
-                Err(error) => TurnUpdate::Failed(error),
+                ),
+                None => TurnUpdate::Failed("connection lost before the turn settled".into()),
             };
             let _ = tx.send(final_update);
         });
@@ -91,6 +131,7 @@ impl TuiSession {
             cancel,
             kind: WorkerKind::Turn,
             awaiting_approval: false,
+            stream_id: Some(stream_id),
         });
     }
 
@@ -112,6 +153,7 @@ impl TuiSession {
         let cancel = Arc::new(CancellationToken::new());
         let home = self.home.clone();
         let prompt_tx = tx.clone();
+        let client = self.client.clone();
 
         thread::spawn(move || {
             let outcome = CodexAuthStore::open(&home)
@@ -124,11 +166,13 @@ impl TuiSession {
                         )));
                         // Best effort: the code above is enough on its own if no
                         // browser opens, so a failure here is not the flow failing.
-                        let _ = optimus_host::handle_ipc(
-                            &home,
-                            "open_url",
-                            json!({ "url": prompt.verification_url }),
-                        );
+                        // The device-code exchange itself stays in-process
+                        // (documented deviation, B1); only the browser hand-off
+                        // rides the host wire.
+                        if let Some(client) = &client {
+                            let _ =
+                                client.call("open_url", json!({ "url": prompt.verification_url }));
+                        }
                     })
                     .map_err(|e| e.to_string())
                 });
@@ -146,6 +190,7 @@ impl TuiSession {
             cancel,
             kind: WorkerKind::Connect,
             awaiting_approval: false,
+            stream_id: None,
         });
     }
 
