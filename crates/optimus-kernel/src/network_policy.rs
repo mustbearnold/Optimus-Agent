@@ -76,7 +76,10 @@ pub fn ip_blocked(ip: IpAddr) -> bool {
             if let Some(v4) = v6.to_ipv4_mapped() {
                 return ip_blocked(IpAddr::V4(v4));
             }
-            v6.is_loopback() || v6.is_unique_local() || v6.is_unicast_link_local()
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || v6.is_unique_local()
+                || v6.is_unicast_link_local()
         }
     }
 }
@@ -118,5 +121,14 @@ mod tests {
         assert!(!ip_blocked("::ffff:8.8.8.8".parse::<IpAddr>().unwrap()));
         assert!(assert_public_http_url_str("http://[::ffff:127.0.0.1]/x").is_err());
         assert!(assert_public_http_url_str("http://[::ffff:10.0.0.5]/x").is_err());
+    }
+
+    #[test]
+    fn blocks_unspecified_ipv6() {
+        // Regression: `::` (the unspecified address) used to bypass the guard.
+        // It is the IPv6 analogue of 0.0.0.0 (already blocked for IPv4) and on
+        // many stacks connections to it land on the local host.
+        assert!(ip_blocked("::".parse::<IpAddr>().unwrap()));
+        assert!(assert_public_http_url_str("http://[::]/x").is_err());
     }
 }
