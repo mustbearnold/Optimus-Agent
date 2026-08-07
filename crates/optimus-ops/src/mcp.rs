@@ -235,9 +235,9 @@ pub fn assert_public_mcp_url(url: &str) -> Result<()> {
     // across parsers: many HTTP clients read leading-zero dotted quads as
     // octal, so `0177.0.0.1` aliases the 127.0.0.1 loopback. Reject all of
     // them fail-closed instead of guessing decimal.
-    let has_leading_zero_quad = host.split('.').any(|p| {
-        p.len() > 1 && p.starts_with('0') && p.chars().all(|c| c.is_ascii_digit())
-    });
+    let has_leading_zero_quad = host
+        .split('.')
+        .any(|p| p.len() > 1 && p.starts_with('0') && p.chars().all(|c| c.is_ascii_digit()));
     if host.starts_with("0x") || host.contains(".0x") || has_leading_zero_quad {
         return Err(McpError::Url(format!("blocked non-decimal ip form {host}")));
     }
