@@ -529,19 +529,19 @@
       "resolved_files": 7
     },
     "decisions-0080-toolchain-aware-command-envelope": {
-      "binding_sha256": "1be5bf0a8003b4e132a727f77294f5b1aaebf7f6647e8f1915ba8c4d1960d31f",
+      "binding_sha256": "02dcd3784a0aaec85874c925c5b70527d90094d161847c7ee9f56c09e61f23b6",
       "document_sha256": "85375405d60a4fbbe90c56850341e2349ba3415b9fe0662945e35f8d945610b9",
       "path": "docs/decisions/0080-toolchain-aware-command-envelope.md",
       "resolved_files": 5
     },
     "decisions-0081-truthful-approval-resolution-and-session-consent": {
-      "binding_sha256": "ba1434ba72dc1b364466ad6be57c790beaa028b451074948e6d2d10923c948c7",
+      "binding_sha256": "925701c405d2033de61c28fc2603e6cc806e87c3e9116b6c31074a5d4e380836",
       "document_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
       "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
       "resolved_files": 14
     },
     "decisions-0082-latency-shaping-for-the-tool-loop": {
-      "binding_sha256": "cbcbb50df0d8a2bbdb2dd4588cffb10684fd7fb37f9e34b99e146fe7ffbc4f9f",
+      "binding_sha256": "a1e762c41ffb6c4de6316a37e04fbc2950704682d45bb48dcb6d0377b1e789ad",
       "document_sha256": "677acdf35f2be47f461b25e5304f5ca22593d0a16b904adb5d9fb3f1bc17d769",
       "path": "docs/decisions/0082-latency-shaping-for-the-tool-loop.md",
       "resolved_files": 11
@@ -649,10 +649,10 @@
       "resolved_files": 44
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "a2234e2318def0d0da7b1b048f62be1243a8c8f7aeea078c3cb71829a98a0d8f",
+      "binding_sha256": "369eae4a2528338d37d133b45aa7e62187e0eb8b50f38e62dd4751aa9d01c65b",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
-      "resolved_files": 87
+      "resolved_files": 88
     },
     "spec-012-windows-tauri-packaging": {
       "binding_sha256": "689f65c75f30ae401519c8fa276a2de0787c6964616a00422ed6b30e8a17a8f9",
@@ -668,7 +668,7 @@
     },
     "spec-014-self-build-reliability": {
       "binding_sha256": "68bfac724c19222dc42cacd9fe2d0d9386728fe9745c6913a0be608b43f25dc6",
-      "document_sha256": "a407ffabb1a030f877b372f7c075337042b26f90fffe315c628011e36940f5b5",
+      "document_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
     },
@@ -679,13 +679,13 @@
       "resolved_files": 44
     },
     "specs-backlog": {
-      "binding_sha256": "2644dcc975d9413125e4f5c11d1fe4019754763e67f84788b7cbd984122a5291",
+      "binding_sha256": "6bca934668a724ca1c99dd200fb25413e506c05f6a883d57c22866b2e7a0f351",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 27
     },
     "specs-constitution": {
-      "binding_sha256": "679b362103433b777021fe0d97aad4867daa68613d2e279572cdbc28df6e6a85",
+      "binding_sha256": "efaedb9b7d70e6bd2eaa0f2375fbddce294a9cb738befe13be0974951d9a2afe",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 118

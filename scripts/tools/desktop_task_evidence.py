@@ -51,6 +51,17 @@ def capture_screen(path: Path, display: str | None = None) -> Path:
         command, capture_output=True, text=True, timeout=60, check=False,
     )
     if result.returncode != 0 or not path.is_file() or path.stat().st_size == 0:
+        # Some X servers refuse ImageMagick's XGetImage path (KWin's
+        # XWayland root in particular fails with "missing an image
+        # filename"); KDE's spectacle captures there. Fall back when
+        # available so capture stays enforced, else raise the original.
+        if shutil.which("spectacle"):
+            fallback = subprocess.run(
+                ["spectacle", "-b", "-n", "-o", str(path)],
+                capture_output=True, text=True, timeout=60, check=False,
+            )
+            if fallback.returncode == 0 and path.is_file() and path.stat().st_size > 0:
+                return path
         raise EvidenceError(f"import capture failed: {result.stderr.strip()[:200] or path}")
     return path
 

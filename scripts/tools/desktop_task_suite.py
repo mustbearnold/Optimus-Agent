@@ -26,7 +26,7 @@ Exit 0 with ``DESKTOP_TASK_SUITE_OK`` when every task passed; exit 1 with
 ``DESKTOP_TASK_SUITE_FAIL`` and the failing contracts otherwise. Self-skips
 (missing binary, missing ``websockets``, no display and no Xvfb) print
 ``DESKTOP_TASK_SUITE_SKIP: <reason>`` and exit 0 — the established pattern
-for optional-device gates (spec-014 R5).
+for optional-device gates (spec-014 R13).
 """
 
 from __future__ import annotations

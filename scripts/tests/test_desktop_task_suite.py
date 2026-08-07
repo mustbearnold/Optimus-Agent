@@ -14,6 +14,7 @@ import json  # noqa: E402
 from desktop_task_evidence import term_matches  # noqa: E402
 from desktop_task_harness import grade_task  # noqa: E402
 from desktop_task_suite import BINDINGS_OFFLINE, TASKS, preflight_skip, validate_tasks  # noqa: E402
+from desktop_task_atspi import atspi_available, choose_channel, submit_prompt  # noqa: E402
 
 
 def offline_observation(**overrides: dict) -> dict:

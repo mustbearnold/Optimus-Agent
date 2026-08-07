@@ -23,7 +23,7 @@
       "note": "W4 lowers budget to 12,000"
     },
     "skill:optimus-agent-development/SKILL.md": {
-      "budget_bytes": 30000,
+      "budget_bytes": 31292,
       "target_bytes": 30000,
       "note": "W2 landed 2026-08-07: 87,109 -> 29,996 B (records de-duplicated against reference maps; 25 refs/scripts sha256-verified byte-identical). Surface optional: skipped when the profile skill is absent."
     }

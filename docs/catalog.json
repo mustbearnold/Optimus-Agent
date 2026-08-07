@@ -4113,7 +4113,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "a407ffabb1a030f877b372f7c075337042b26f90fffe315c628011e36940f5b5",
+      "content_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
       "headings": [
         "Self-build reliability and responsiveness",
         "Purpose",
@@ -4223,7 +4223,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "53d124e24aded08fb42af1a67f220daa7c1692bdacfb57f5a191279780f424ef",
+  "documents_sha256": "825079b71ae58064bd9f4933790586486b0584bd53d949c01b1676c9cf5047eb",
   "routes": [
     {
       "id": "docs.navigation",

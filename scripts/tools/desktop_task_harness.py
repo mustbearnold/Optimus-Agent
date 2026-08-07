@@ -57,6 +57,7 @@ from pathlib import Path
 from typing import Any
 
 from desktop_task_evidence import Evidence  # noqa: E402
+from desktop_task_atspi import atspi_available, choose_channel, submit_prompt  # noqa: E402
 import websockets
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -554,6 +555,11 @@ async def run_task(
         "db": {},
         "captures": [],
     }
+    # Input channel probe (spec-014 R13): hosts with the AT stack submit
+    # through AT-SPI; everyone else keeps the deterministic DOM channel.
+    # The decision is recorded per prompt in the evidence.
+    atspi_ok, atspi_reason = atspi_available()
+    evidence["atspi"] = {"available": atspi_ok, "reason": atspi_reason, "prompts": []}
     evidence_obj = Evidence(output_dir, ocr_model, ocr_endpoint)
     inspector: Inspector | None = None
     session = AppSession(binary, home, free_port())
@@ -605,14 +611,29 @@ async def run_task(
                 evidence["dom"]["new_session_empty"] = "empty" in str(empty)
             for prompt in session_prompts:
                 expected_turns += 1
-                submitted = await inspector.evaluate(
-                    JS_SUBMIT
-                    % {
-                        "ta": json.dumps(COMPOSER_TEXTAREA),
-                        "send": json.dumps(SEND_BUTTON),
-                        "prompt": json.dumps(prompt),
-                    }
-                )
+                channel = choose_channel(atspi_ok)
+                submitted = None
+                entry: dict[str, Any] = {"turn": expected_turns, "channel": channel}
+                if atspi_ok:
+                    atspi_ev = await asyncio.to_thread(submit_prompt, prompt)
+                    entry.update(atspi_ev)
+                    if atspi_ev["ok"]:
+                        submitted = "submitted"
+                if submitted is None:
+                    submitted = await inspector.evaluate(
+                        JS_SUBMIT
+                        % {
+                            "ta": json.dumps(COMPOSER_TEXTAREA),
+                            "send": json.dumps(SEND_BUTTON),
+                            "prompt": json.dumps(prompt),
+                        }
+                    )
+                    if submitted == "submitted":
+                        entry["ok"] = True
+                        entry["detail"] = "dom submit via inspector"
+                    elif atspi_ok:
+                        entry["fell_back_to_dom"] = True
+                evidence["atspi"]["prompts"].append(entry)
                 if submitted != "submitted":
                     raise RuntimeError(f"composer submission failed: {submitted}")
                 await wait_for(

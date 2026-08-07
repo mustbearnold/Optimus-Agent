@@ -167,6 +167,18 @@ review record) is `Development/tmp/spec-self-build-reliability-draft.md`
   and a non-blocking once-per-session profile-suggestion banner after ≥3
   consecutive approvals (counted from `approval_required` lifecycle
   events).
+- R13. The installed-app evaluation loop (`desktop_task_suite.py` +
+  `desktop_task_harness.py`, spec-015 surface) MUST launch the packaged
+  desktop app with the WebKit remote inspector on an isolated `--home`,
+  submit composer prompts over the deterministic offline echo provider,
+  bind durable traces from `sessions.db` / `execution.db`, capture the
+  inspector console stream, and record a per-prompt input channel:
+  `atspi` when the host AT stack (pyatspi + a11y bus) is available —
+  accessibility-level input per the native-UI evidence ladder — and `dom`
+  otherwise, with the DOM channel always the fallback and the contracts
+  identical on both channels. The loop MUST self-skip on missing binary,
+  missing `websockets`, or missing display hardware (the optional-device
+  pattern), and a host without the AT stack MUST keep passing.
 
 ## Acceptance criteria
 
@@ -214,3 +226,13 @@ review record) is `Development/tmp/spec-self-build-reliability-draft.md`
       runs, then all gates are green, including the new envelope live
       probe, the approval vertical, the session-consent store tests, and
       the desktop e2e `09-self-build-reliability.spec.js`.
+- [ ] A10. Given the installed desktop app on a host with or without the AT
+      stack, when the desktop task suite runs the easy..ultra-hard
+      contracts, then every prompt is submitted (AT-SPI channel when
+      available, DOM fallback otherwise — both recorded in the evidence),
+      every turn settles succeeded in `execution.db` bound to
+      offline/offline-scripted with zero tool calls and zero approvals,
+      and the console stream carries no uncaught exceptions. (proven
+      2026-08-07: suite hermetic on this host — `easy-echo: ok`, four
+      tiers green, per-prompt channel evidence present; AT-SPI live path
+      is exercised on hosts with the stack and self-documents otherwise)
