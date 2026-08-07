@@ -1626,7 +1626,7 @@ body,
 
 .project-sessions {
   display: none;
-  padding: 0 0 3px 22px;
+  padding: 0 0 3px;
 }
 
 .project-group.is-open .project-sessions {
@@ -1635,13 +1635,14 @@ body,
 
 /* Sessions inside a project folder show only the session name — the folder
    heading already carries project name and worktree. The row keeps the
-   densest layout in the rail: a fixed 38px is only the floor, content
-   decides the height. */
+   densest layout in the rail, and it is deliberately the same box as a
+   Recent Chats row: same 32px floor, same full rail width, so the whole
+   session list reads as one dense column. */
 .project-sessions .session-row .session-select {
   height: auto;
-  min-height: 38px;
-  gap: 2px;
-  padding: 6px 8px;
+  min-height: 32px;
+  gap: 1px;
+  padding: 3px 8px;
 }
 
 .project-sessions .session-row .session-card-meta {
@@ -1687,13 +1688,15 @@ body,
   cursor: grabbing;
 }
 
-/* Content-driven, not a fixed 44px. A plain chat row is one line and still
-   measures 44px; a project-assigned row stacks project name, run state, title,
-   and worktree, and a fixed height cut the last two off mid-glyph. */
+/* Content-driven, not a fixed height. A plain chat row (Recent Chats, Pinned
+   without a project) is one line and measures the same 32px as a session
+   nested inside a project folder; a project-assigned row stacks project name,
+   run state, title, and worktree, and a fixed height cut the last two off
+   mid-glyph. The card grows; the text keeps its leading. */
 .session-select {
   height: auto;
-  min-height: 44px;
-  padding-block: 6px;
+  min-height: 32px;
+  padding-block: 3px;
   padding-inline: 9px;
 }
 
