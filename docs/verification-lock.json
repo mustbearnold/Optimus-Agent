@@ -499,7 +499,7 @@
       "resolved_files": 7
     },
     "decisions-0075-a-block-owns-its-lifecycle-rows-only-paint-it": {
-      "binding_sha256": "bb0a5e263867c89c098b9df88e98757a0b394768fe47ac5662d21116397844c2",
+      "binding_sha256": "02d7c9d20fc1dde6f9af599355ac6142bf1f7163e3d8da2f608c903a2bbef576",
       "document_sha256": "a143a046fed79e23a7c64e39e3816fb4b38e298c59628d184fc96629c8f9fc64",
       "path": "docs/decisions/0075-a-block-owns-its-lifecycle-rows-only-paint-it.md",
       "resolved_files": 21
@@ -643,10 +643,10 @@
       "resolved_files": 4
     },
     "spec-010-surfaces": {
-      "binding_sha256": "23a7c5c9a4482f1e53ba81648e9a89854ca205733e1c9cf886da18ffd8cb4f6e",
+      "binding_sha256": "e0f5011fe234733c71def0aafa89a094460ecf7f694357e498c3908b7c835ec4",
       "document_sha256": "68a9532cf023e0431cc7dbaebbc3d787e14eea51ab71b1d778fa10aae3d596e3",
       "path": "specs/010-surfaces/spec.md",
-      "resolved_files": 44
+      "resolved_files": 45
     },
     "spec-011-developer-tooling": {
       "binding_sha256": "32aee7b0f5dfb9155ba174490c99587c540b297f43d2b0b18dc0ea5655151f6f",
