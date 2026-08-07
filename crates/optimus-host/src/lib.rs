@@ -6,6 +6,7 @@
 //! function of home + method + params, so it is transport-agnostic.
 
 mod chat;
+pub mod client;
 mod consoles;
 mod contract;
 mod developer;
