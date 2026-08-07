@@ -179,6 +179,18 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
         },
 
         "npm" | "pnpm" | "yarn" | "bun" => match sub {
+            // yarn classic spells host-wide installs as a `global` subcommand
+            // (`yarn global add ...`) instead of a `-g` flag, so the mutating
+            // verb hides in the next positional. Without this arm the whole
+            // command fell through to ProjectExecute and a project-scoped
+            // grant would have covered a host-wide package store write.
+            "global"
+                if args.iter().any(|a| {
+                    matches!(a.as_str(), "add" | "remove" | "rm") || a.starts_with("upgrade")
+                }) =>
+            {
+                CommandClass::HostInstall
+            }
             // Global uninstalls write the host-wide package store just like
             // global installs; they must not answer to a project capability.
             "install" | "i" | "add" | "ci" | "update" | "upgrade" | "uninstall" | "remove"
@@ -267,7 +279,8 @@ fn classify_pip_args(args: &[String], sub: &str, global: bool) -> CommandClass {
 /// (`python -m pip ...`), so the module check cannot be confused by a
 /// positional argument that merely says "pip".
 fn is_python_module_pip(args: &[String]) -> bool {
-    args.windows(2).any(|pair| pair[0] == "-m" && pair[1] == "pip")
+    args.windows(2)
+        .any(|pair| pair[0] == "-m" && pair[1] == "pip")
 }
 
 /// The arguments after `pip` in a `python -m pip ...` invocation. The caller
@@ -550,7 +563,10 @@ mod tests {
             CommandClass::PackageAdd
         );
         assert_eq!(
-            class("python3", &["-m", "pip", "install", "-r", "requirements.txt"]),
+            class(
+                "python3",
+                &["-m", "pip", "install", "-r", "requirements.txt"]
+            ),
             CommandClass::PackageSync
         );
         assert_eq!(
@@ -679,6 +695,42 @@ mod tests {
         assert_eq!(
             class("yarn", &["remove", "left-pad"]),
             CommandClass::PackageAdd
+        );
+    }
+
+    #[test]
+    fn yarn_global_subcommand_also_leaves_the_project_lane() {
+        // Regression: yarn classic installs host-wide with `yarn global add`,
+        // not a `-g` flag, so the mutating verb sits in the next positional.
+        // The classifier used to see subcommand "global", fall through to
+        // ProjectExecute, and let a project-scoped grant cover a host-wide
+        // package store write — the same escalation the flag forms already
+        // guard against.
+        assert_eq!(
+            class("yarn", &["global", "add", "typescript"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("yarn", &["global", "remove", "typescript"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("yarn", &["global", "upgrade", "typescript"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("yarn", &["global", "upgrade-interactive"]),
+            CommandClass::HostInstall
+        );
+        // Read-only queries of the global store do not write it and keep
+        // their previous classification.
+        assert_eq!(
+            class("yarn", &["global", "list"]),
+            CommandClass::ProjectExecute
+        );
+        assert_eq!(
+            class("yarn", &["global", "dir"]),
+            CommandClass::ProjectExecute
         );
     }
 
