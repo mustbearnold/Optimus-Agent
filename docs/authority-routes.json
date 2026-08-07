@@ -755,6 +755,23 @@
       "primary": [
         "spec-015-surface-protocol"
       ]
+    },
+    {
+      "id": "specs.016-staleness-prevention",
+      "keywords": [
+        "staleness",
+        "stale",
+        "citation lint",
+        "docs lock",
+        "review_by",
+        "docs-cascade",
+        "freshness",
+        "spec-016"
+      ],
+      "primary": [
+        "spec-016-staleness-prevention"
+      ],
+      "supporting": []
     }
   ],
   "schema_version": 1

@@ -4158,6 +4158,37 @@
     },
     {
       "authority": "canonical",
+      "content_sha256": "7fc3f19713816c5eca81af1f4abfc4664423b613e20c986cd3cdd5b0d0d57a53",
+      "headings": [
+        "Spec-016: Staleness prevention — gate-enforced freshness",
+        "Revision table",
+        "Purpose",
+        "Current state (Confirmed behaviour)",
+        "Requirements",
+        "R1. Citation lint gate",
+        "R2. Snapshot discipline",
+        "R3. One-pass binding-closure refresh",
+        "R4. One-command cascade",
+        "R5. Scheduled stale audit",
+        "R6. Wiring and parity",
+        "R7. Line budget for the tool layer",
+        "Acceptance criteria",
+        "Implementation phases",
+        "Open questions",
+        "Links"
+      ],
+      "id": "spec-016-staleness-prevention",
+      "path": "specs/016-staleness-prevention/spec.md",
+      "plane": "work",
+      "review_by": "2026-11-06",
+      "reviewed_on": "2026-08-06",
+      "status": "current",
+      "summary": "Gate-enforced freshness for the Optimus tree — a citation-lint gate that fails any spec/ADR/runbook file:line claim that does not resolve against the live tree, a docs-lock refresh that converges the full binding closure in one pass (no partial-refresh rotation), a scheduled stale-audit that scans review_by dates, and a one-command docs+EM cascade. Zero staleness as a gate property, not a hygiene habit.",
+      "title": "Spec-016: Staleness prevention — gate-enforced freshness",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
       "content_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "headings": [
         "BACKLOG",
@@ -4223,7 +4254,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "825079b71ae58064bd9f4933790586486b0584bd53d949c01b1676c9cf5047eb",
+  "documents_sha256": "fb3adbbd5b89ec8c4ac031ec464c1373b0f59650919687b34cae80c57b6cafa4",
   "routes": [
     {
       "id": "docs.navigation",
@@ -4960,6 +4991,23 @@
       "primary": [
         "spec-015-surface-protocol"
       ]
+    },
+    {
+      "id": "specs.016-staleness-prevention",
+      "keywords": [
+        "staleness",
+        "stale",
+        "citation lint",
+        "docs lock",
+        "review_by",
+        "docs-cascade",
+        "freshness",
+        "spec-016"
+      ],
+      "primary": [
+        "spec-016-staleness-prevention"
+      ],
+      "supporting": []
     }
   ],
   "schema_version": 1

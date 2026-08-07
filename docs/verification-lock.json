@@ -427,7 +427,7 @@
       "resolved_files": 6
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "291ea2809bea1ae02985834855247e4dfd31a1c8c2afaa65b06ba69dc98ee7a1",
+      "binding_sha256": "2e08e38cdd9753e15e3b9b90bc49962420c1a78fb1ebefcf8bb04213c4dbe705",
       "document_sha256": "bc881dac3827d478f9269881830af38dc4a942d6a65e8de14e87922d6e76de9e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 7
@@ -678,17 +678,23 @@
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 44
     },
+    "spec-016-staleness-prevention": {
+      "binding_sha256": "3261edb30cc69ba9aa23ccc0ea7a59992d2155b15a31cabaecdfa3ccf8dfe465",
+      "document_sha256": "7fc3f19713816c5eca81af1f4abfc4664423b613e20c986cd3cdd5b0d0d57a53",
+      "path": "specs/016-staleness-prevention/spec.md",
+      "resolved_files": 10
+    },
     "specs-backlog": {
-      "binding_sha256": "6bca934668a724ca1c99dd200fb25413e506c05f6a883d57c22866b2e7a0f351",
+      "binding_sha256": "a7e43b9007d32b61e257928b4cbe09826b4768810c4869cbb472115bebd79efb",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
-      "resolved_files": 27
+      "resolved_files": 28
     },
     "specs-constitution": {
-      "binding_sha256": "efaedb9b7d70e6bd2eaa0f2375fbddce294a9cb738befe13be0974951d9a2afe",
+      "binding_sha256": "7951b5e639a7dae1917477359a0093978195f493d71d6f30cdc481777a615c97",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
-      "resolved_files": 118
+      "resolved_files": 119
     },
     "specs-conventions": {
       "binding_sha256": "78efb83462ffd15e1bb86ac0c5909bf82e08d8f07571d548fc2242996d422389",
