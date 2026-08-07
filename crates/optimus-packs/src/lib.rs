@@ -1,6 +1,7 @@
 //! Progressive capability packs with schema-token budgets.
 
 mod catalog;
+mod rotation;
 mod schema;
 mod signed;
 
@@ -26,6 +27,8 @@ pub enum PackError {
     CorePinned,
     #[error("on-demand pack limit exceeded: {loaded} >= {max}")]
     PackLimit { loaded: usize, max: usize },
+    #[error("pack has no available tools and cannot be provisioned: {0}")]
+    EmptyPack(String),
     #[error("schema token budget exceeded: {would_be} > {max}")]
     SchemaBudget { would_be: u32, max: u32 },
     #[error("schema token total overflowed u32 for {scope}")]
@@ -93,6 +96,7 @@ impl PackError {
             Self::SchemaBudget { .. } => "pack_schema_budget_exceeded",
             Self::PackLimit { .. } => "pack_on_demand_limit_exceeded",
             Self::CorePinned => "pack_core_pinned",
+            Self::EmptyPack(_) => "pack_empty",
             Self::UnknownPack(_) => "pack_unknown",
             Self::NotLoaded(_) => "pack_not_loaded",
             Self::ToolNotAdvertised(_) => "tool_not_advertised",
@@ -586,7 +590,11 @@ impl Default for PackBudgetConfig {
     fn default() -> Self {
         Self {
             max_on_demand_packs: 2,
-            max_schema_tokens: 2500,
+            // Ratchet 2800 (was 2600): the binding promise is that the two
+            // heaviest co-required on-demand packs fit alongside Core — the
+            // natural web+vision workflow is Browser (600) + Media (180) +
+            // Core (~1950) = 2730. Raises are spec amendments with evidence.
+            max_schema_tokens: 2800,
         }
     }
 }
@@ -873,6 +881,10 @@ impl CapabilitySession {
             });
         }
         self.loaded.insert(pack);
+        // LRU fidelity: never leave a stale entry ahead of the fresh one —
+        // a deactivated pack keeps its old activation order, and re-activating
+        // must not let `provision`'s victim scan pick that stale position.
+        self.activations.retain(|p| *p != pack);
         self.activations.push(pack);
         Ok(())
     }
@@ -882,17 +894,6 @@ impl CapabilitySession {
         self.activate(pack)
     }
 
-    pub fn deactivate(&mut self, pack: PackId) -> Result<()> {
-        if pack.is_core() {
-            return Err(PackError::CorePinned);
-        }
-        if !self.loaded.remove(&pack) {
-            return Err(PackError::NotLoaded(pack.as_str().into()));
-        }
-        Ok(())
-    }
-
-    /// Restore persisted packs against the current catalog and budget. Always includes Core.
     pub fn restore_loaded(&mut self, packs: &[PackId]) -> Result<()> {
         self.loaded.clear();
         self.loaded.insert(PackId::Core);
@@ -919,7 +920,7 @@ mod unit {
     #[test]
     fn core_tokens_under_default_budget() {
         let s = CapabilitySession::with_defaults();
-        assert!(s.schema_tokens() < 2500);
+        assert!(s.schema_tokens() < 2800);
         assert!(s.schema_tokens() > 0);
         assert_eq!(s.loaded_packs(), vec![PackId::Core]);
     }

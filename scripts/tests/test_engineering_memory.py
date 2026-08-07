@@ -62,8 +62,8 @@ class EngineeringMemoryTests(unittest.TestCase):
     def test_canonical_tool_catalog_is_reconciled(self) -> None:
         registry = EM.parse_tool_catalog()
         tools = registry["tools"]
-        self.assertEqual(len(tools), 23)
-        self.assertEqual(len({row["id"] for row in tools}), 23)
+        self.assertEqual(len(tools), 24)
+        self.assertEqual(len({row["id"] for row in tools}), 24)
         available = {row["id"] for row in tools if row["available"]}
         self.assertEqual(
             available,
@@ -79,6 +79,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "mkdir",
                 "patch_file",
                 "read_file",
+                "release_pack",
                 "rename_path",
                 "search_content",
                 "self_development",

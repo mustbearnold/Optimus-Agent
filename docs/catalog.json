@@ -1511,7 +1511,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "178babf2fc27326cdf9c1fda7c3e891adc3e3866b9e9713bed7e761d4a81feb7",
+      "content_sha256": "23d07cac78cec2d5aed083682cf9763f806653a5a2824cc0b3b148413202994a",
       "headings": [
         "ADR-0006: Progressive capability packs and skill→approval bridge",
         "Status",
@@ -3900,7 +3900,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "c3ddef772e722ff140c139804c4bda72cb576508c15df8ab611a505ef0bd7f27",
+      "content_sha256": "5a4bc22699a5261cbe705dc8d10b134e3285656b79507741ae560ee62915aade",
       "headings": [
         "006 — Memory, skills, packs",
         "Purpose",
@@ -4223,7 +4223,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "15983200756101f33c73ad037f5d5f366ce63ed82c023271733a706b44301bf0",
+  "documents_sha256": "0b362372f3eb95259ec8cf13eb588fa4ca83e32ea048c1d2079e1b8f6d460605",
   "routes": [
     {
       "id": "docs.navigation",

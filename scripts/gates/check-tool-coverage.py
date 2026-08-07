@@ -35,7 +35,7 @@ COVERAGE_RS = ROOT / "crates" / "optimus-kernel" / "tests" / "tool_coverage.rs"
 
 # Dispatchable tools are meant to grow. The pin makes each arrival an explicit
 # act — move it together with the coverage ledger, in the same commit.
-PINNED_DISPATCHABLE = 19
+PINNED_DISPATCHABLE = 20
 
 # The declared scaffolds that remain. This set may only shrink — do NOT add
 # entries. ADR-0068 §1 holds that a catalog row exists only when its tool

@@ -644,9 +644,8 @@ mod tests {
             })
             .expect("insert graph");
 
-        let err = recompute_job_status(&store, job_id).expect_err(
-            "terminal job with stale nodes must error instead of resurrecting",
-        );
+        let err = recompute_job_status(&store, job_id)
+            .expect_err("terminal job with stale nodes must error instead of resurrecting");
         assert!(matches!(err, GraphError::InvalidTransition(_)));
         assert_eq!(
             store.get_job(job_id.0).expect("job").status,
@@ -659,8 +658,8 @@ mod tests {
         let (store, _dir) = test_store();
         let created = create_job(&store, write_spec("done")).expect("create job");
         mark_job_running(&store, created.id).expect("job running");
-        let attempt = mark_node_running(&store, created.id, created.node_ids[0])
-            .expect("node running");
+        let attempt =
+            mark_node_running(&store, created.id, created.node_ids[0]).expect("node running");
         mark_node_succeeded(
             &store,
             created.id,

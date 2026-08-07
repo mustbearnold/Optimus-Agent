@@ -12,7 +12,7 @@ use uuid::Uuid;
 fn starts_with_core_only_under_budget() {
     let s = CapabilitySession::with_defaults();
     assert_eq!(s.loaded_packs(), vec![PackId::Core]);
-    assert!(s.schema_tokens() <= 2500);
+    assert!(s.schema_tokens() <= 2800);
     assert!(s.loaded_tools().iter().any(|t| t.id.as_str() == "terminal"));
     assert!(!s
         .loaded_tools()
@@ -581,4 +581,182 @@ fn construction_rejects_core_over_schema_budget() {
         Err(PackError::SchemaBudget { would_be, max })
             if would_be == core_tokens && max == core_tokens - 1
     ));
+}
+
+#[test]
+fn provision_rotates_least_recently_used_at_ceiling() {
+    // Task-driven rotation (spec-006 R5): at the 2-pack ceiling, provision
+    // swaps the least-recently-used on-demand pack out instead of failing
+    // with PackLimit — the ceiling becomes a footprint guard. Browser is
+    // activated first (LRU), so provisioning Media rotates Browser out.
+    let mut s = CapabilitySession::with_defaults();
+    s.activate(PackId::Browser).unwrap();
+    s.activate(PackId::Devex).unwrap();
+    s.provision(PackId::Media).unwrap();
+    let loaded = s.loaded_packs();
+    assert_eq!(loaded.len(), 3); // Core + 2 on-demand
+    assert!(loaded.contains(&PackId::Media));
+    assert!(
+        loaded.contains(&PackId::Devex),
+        "Devex was activated second — must survive"
+    );
+    assert!(
+        !loaded.contains(&PackId::Browser),
+        "Browser was activated first — LRU victim"
+    );
+    // Idempotent re-provision of the evicted pack swaps back.
+    s.provision(PackId::Browser).unwrap();
+    let loaded = s.loaded_packs();
+    assert!(loaded.contains(&PackId::Browser));
+    assert!(!loaded.contains(&PackId::Devex));
+}
+
+#[test]
+fn provision_atomic_schema_failure_keeps_victim() {
+    // The swap is atomic: when the incoming pack would exceed the schema
+    // budget even with the LRU victim evicted, the session is left
+    // untouched — never a half-rotated state.
+    let catalog = builtin_catalog();
+    let core_tokens = catalog[&PackId::Core].schema_tokens();
+    let media_tokens = catalog[&PackId::Media].schema_tokens();
+    let browser_tokens = catalog[&PackId::Browser].schema_tokens();
+    assert!(
+        browser_tokens > media_tokens,
+        "test needs a heavier incoming pack"
+    );
+    let mut s = CapabilitySession::new(PackBudgetConfig {
+        max_on_demand_packs: 1,
+        max_schema_tokens: core_tokens + media_tokens,
+    })
+    .unwrap();
+    s.activate(PackId::Media).unwrap();
+    let err = s.provision(PackId::Browser).unwrap_err();
+    assert!(
+        matches!(err, PackError::SchemaBudget { .. }),
+        "browser must not fit even with media evicted: {err:?}"
+    );
+    assert_eq!(
+        s.loaded_packs(),
+        vec![PackId::Core, PackId::Media],
+        "failed provision must not evict the victim"
+    );
+}
+
+#[test]
+fn re_activation_does_not_reanimate_a_stale_lru_entry() {
+    // Reviewer-found edge: deactivate leaves the old entry in `activations`,
+    // and a re-activated pack must not let the victim scan pick that stale
+    // first position. Scenario: browser, devex, release browser, re-activate
+    // browser, provision media -> devex must be the LRU victim.
+    let s = CapabilitySession::new(PackBudgetConfig::default()).unwrap();
+    let mut s = s;
+    s.activate(PackId::Browser).unwrap();
+    s.activate(PackId::Devex).unwrap();
+    s.deactivate(PackId::Browser).unwrap();
+    s.activate(PackId::Browser).unwrap();
+    s.provision(PackId::Media).unwrap();
+    assert_eq!(
+        s.loaded_packs(),
+        vec![PackId::Core, PackId::Browser, PackId::Media]
+    );
+}
+
+#[test]
+fn use_recency_beats_activation_recency() {
+    // Independent-review condition: eviction must track USE, not activation.
+    // Media is activated AFTER Browser, but Browser is used (touched)
+    // repeatedly; the LRU order must put the used pack most-recent, so the
+    // victim scan (first non-core in `activations`) would evict the
+    // untouched Media — not the used Browser.
+    let s = CapabilitySession::new(PackBudgetConfig::default()).unwrap();
+    let mut s = s;
+    s.activate(PackId::Browser).unwrap();
+    s.activate(PackId::Media).unwrap();
+    s.touch(PackId::Browser);
+    s.touch(PackId::Browser);
+    s.touch(PackId::Browser);
+    assert_eq!(
+        s.activations,
+        vec![PackId::Core, PackId::Media, PackId::Browser],
+        "use must reorder recency ahead of activation order"
+    );
+    // The provision path is order-driven: with Browser touched and Media
+    // untouched, a ceiling swap must evict Media. The builtin catalog has
+    // exactly two real on-demand packs, so the reorder assertion above IS
+    // the discrimination test; `provision_rotates_least_recently_used_at_ceiling`
+    // covers the swap mechanics.
+}
+
+#[test]
+fn provision_refuses_empty_packs() {
+    // Independent-review condition: an empty pack must never evict a real
+    // one — the agent-facing path refuses with a typed error.
+    let s = CapabilitySession::new(PackBudgetConfig::default()).unwrap();
+    let mut s = s;
+    s.activate(PackId::Browser).unwrap();
+    for empty in [
+        PackId::Devex,
+        PackId::Social,
+        PackId::Home,
+        PackId::Office,
+        PackId::Desktop,
+    ] {
+        let err = s.provision(empty).unwrap_err();
+        assert!(
+            matches!(err, PackError::EmptyPack(_)),
+            "{empty:?} must be refused as empty: {err:?}"
+        );
+    }
+    assert_eq!(
+        s.loaded_packs(),
+        vec![PackId::Core, PackId::Browser],
+        "empty-pack attempts must leave the session untouched"
+    );
+}
+
+#[test]
+fn default_budget_fits_core_plus_heaviest_co_required_pair() {
+    // Spec-006 A6 ratchet: the default schema budget must fit Core plus the
+    // two HEAVIEST on-demand packs (the web+vision workflow: Browser 600 +
+    // Media 180). Worst case, not averages over empty packs.
+    let catalog = builtin_catalog();
+    let core_tokens = catalog[&PackId::Core].schema_tokens();
+    let mut costs: Vec<u32> = [
+        PackId::Browser,
+        PackId::Devex,
+        PackId::Social,
+        PackId::Home,
+        PackId::Office,
+        PackId::Media,
+        PackId::Desktop,
+    ]
+    .iter()
+    .map(|p| catalog[p].schema_tokens())
+    .collect();
+    costs.sort_unstable_by(|a, b| b.cmp(a));
+    let heaviest_pair = u64::from(costs[0]) + u64::from(costs[1]);
+    let fits = u64::from(core_tokens) + heaviest_pair;
+    assert!(
+        fits <= u64::from(PackBudgetConfig::default().max_schema_tokens),
+        "Core({core_tokens}) + heaviest pair({heaviest_pair}) = {fits} exceeds the default budget"
+    );
+}
+
+#[test]
+fn release_frees_slot_for_rotation() {
+    let mut s = CapabilitySession::with_defaults();
+    s.activate(PackId::Browser).unwrap();
+    s.activate(PackId::Devex).unwrap();
+    s.deactivate_str("browser").unwrap();
+    s.provision(PackId::Media).unwrap();
+    let loaded = s.loaded_packs();
+    assert!(loaded.contains(&PackId::Media));
+    assert!(loaded.contains(&PackId::Devex));
+    assert!(!loaded.contains(&PackId::Browser));
+    // Core cannot be released; unknown names are typed errors.
+    assert_eq!(s.deactivate_str("core"), Err(PackError::CorePinned));
+    assert_eq!(
+        s.deactivate_str("nope"),
+        Err(PackError::UnknownPack("nope".into()))
+    );
 }

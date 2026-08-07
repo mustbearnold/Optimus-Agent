@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use optimus_kernel::{open_cron, CodexAuthStore, ProductSettings, ProviderKeyStore};
-use optimus_packs::CapabilitySession;
+use optimus_packs::{CapabilitySession, PackBudgetConfig};
 use optimus_runtime::{CampaignStatus, CampaignStore};
 use serde_json::json;
 
@@ -228,8 +228,14 @@ pub fn doctor_json(home: &PathBuf) -> serde_json::Value {
     out.insert("program_phase".into(), json!("P29"));
     out.insert("home".into(), json!(home.display().to_string()));
     out.insert("core_schema_tokens".into(), json!(s.schema_tokens()));
-    out.insert("max_budget".into(), json!(2500));
-    out.insert("max_on_demand".into(), json!(2));
+    out.insert(
+        "max_budget".into(),
+        json!(PackBudgetConfig::default().max_schema_tokens),
+    );
+    out.insert(
+        "max_on_demand".into(),
+        json!(PackBudgetConfig::default().max_on_demand_packs),
+    );
     out.insert(
         "pack_catalog".into(),
         serde_json::to_value(&pack_catalog).unwrap_or(json!([])),

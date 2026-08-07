@@ -45,10 +45,39 @@ Engineering Memory must never be conflated.
   stale skill is a defect.
 - R4. Packs MUST be verifiable (`packs_verify_signed`) and activatable per
   surface (`packs_state`, `packs_activate`, `packs_deactivate`).
+- R5. Pack rotation (task-driven): `activate_pack` MUST provision with
+  least-recently-used swap at the on-demand count ceiling — the ceiling is
+  a footprint guard, never a usage wall; `release_pack` MUST contract the
+  advertised schema in-turn. Both MUST rebuild the system prompt so
+  subsequent steps of the same turn see the change, and the swap MUST be
+  atomic (a schema-budget failure leaves the session untouched). Recency
+  is measured on USE: the kernel touches a pack after every successful
+  tool dispatch, so eviction targets the pack the agent is NOT working
+  with, not merely the one activated longest ago. Packs with no available
+  tools (ADR-0068 placeholders) MUST NOT be provisionable — rotating a
+  real pack out for zero capability is destructive — and MUST answer a
+  typed `pack_empty` error.
+- R6. The default schema budget is a ratchet (currently 2800): Core +
+  pack-management tools + the two HEAVIEST co-required on-demand packs
+  must fit (the web+vision workflow: Browser 600 + Media 180 + Core ~1950
+  = 2730). Raises are spec amendments with evidence; the acceptance test
+  is worst-case pack pairs, never averages over empty packs.
 
 ## Acceptance criteria
 - [ ] A1. Given the memory/skills/packs crate suites, when they run, then all tests pass.
 - [ ] A2. Given the retrieval map, when it is compared with the implemented memory surface, then it matches.
+- [ ] A3. Given a session at the on-demand ceiling, when the agent provisions
+  a further pack, then the least-recently-USED pack is swapped out and the
+  provision succeeds (never `pack_on_demand_limit_exceeded`).
+- [ ] A4. Given an activated pack, when `release_pack` runs, then the slot
+  and schema tokens are freed and the next step's advertised tools no
+  longer include the pack's tools.
+- [ ] A5. Given a provision that would exceed the schema budget even after
+  eviction, then the session is left untouched (no half-rotation).
+- [ ] A6. Given the default budget, then Core + pack-management tools + the
+  two heaviest on-demand packs fit within `max_schema_tokens` (2800).
+- [ ] A7. Given a pack with no available tools, when the agent provisions it,
+  then a typed `pack_empty` error returns and the session is untouched.
 
 ## Out of scope
 

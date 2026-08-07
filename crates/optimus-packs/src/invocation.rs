@@ -27,6 +27,7 @@ pub enum ToolInvocation {
     MemoryRecall,
     SkillResolve,
     ActivatePack,
+    ReleasePack,
     BrowserNavigate,
     BrowserSnapshot,
     BrowserClick,
@@ -101,6 +102,7 @@ impl ToolInvocation {
         Self::MemoryRecall,
         Self::SkillResolve,
         Self::ActivatePack,
+        Self::ReleasePack,
         Self::BrowserNavigate,
         Self::BrowserSnapshot,
         Self::BrowserClick,
@@ -128,6 +130,7 @@ impl ToolInvocation {
             Self::MemoryRecall => Some("memory_recall"),
             Self::SkillResolve => Some("skill_resolve"),
             Self::ActivatePack => Some("activate_pack"),
+            Self::ReleasePack => Some("release_pack"),
             Self::BrowserNavigate => Some("browser_navigate"),
             Self::BrowserSnapshot => Some("browser_snapshot"),
             Self::BrowserClick => Some("browser_click"),
@@ -157,6 +160,7 @@ impl ToolInvocation {
             Self::MemoryRecall => Some(ToolPolicy::MemoryRead),
             Self::SkillResolve => Some(ToolPolicy::SkillRead),
             Self::ActivatePack => Some(ToolPolicy::Capability),
+            Self::ReleasePack => Some(ToolPolicy::Capability),
             Self::BrowserNavigate => Some(ToolPolicy::Browser),
             Self::BrowserSnapshot => Some(ToolPolicy::Browser),
             Self::BrowserClick => Some(ToolPolicy::Browser),
@@ -174,6 +178,7 @@ impl ToolInvocation {
             | Self::MemoryRecall
             | Self::SkillResolve
             | Self::ActivatePack
+            | Self::ReleasePack
             | Self::BrowserSnapshot
             | Self::Unavailable => ReplayClass::Deterministic,
             Self::WriteFile

@@ -174,6 +174,15 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                         &["name"],
                     ),
                 ),
+                tool(
+                    ToolInvocation::ReleasePack,
+                    "Unload an on-demand capability pack (frees its slot and schema tokens)",
+                    100,
+                    object_schema(
+                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social"]}}),
+                        &["name"],
+                    ),
+                ),
                 unavailable("clarify", "Ask the user", ToolPolicy::UserInteraction),
             ],
         },

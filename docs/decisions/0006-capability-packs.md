@@ -28,9 +28,10 @@ Hermes tends to expose large tool schemas every turn (context tax). Optimus Phas
    - `activate(pack)` is an explicit segment boundary:
      - fails if pack unknown
      - fails if on-demand pack count would exceed `max_on_demand_packs` (default **2**)
-     - fails if total schema tokens would exceed `max_schema_tokens` (default **2500**)
+     - fails if total schema tokens would exceed `max_schema_tokens` (default **2800**; ratchet — Core + pack-management tools + the two heaviest on-demand packs must fit, currently Browser 600 + Media 180 + Core ~1950 = 2730)
    - `schema_tokens()` sums loaded packs only (core + activated).
    - `deactivate(pack)` allowed for on-demand packs only (not core).
+   - **Rotation (spec-006 R5, 2026-08-07)**: the agent-facing path is `provision(pack)` — at the count ceiling it atomically swaps the least-recently-*used* on-demand pack (recency = `touch` on every successful tool dispatch) and loads the new one; a schema-budget overflow leaves the session untouched. `release_pack` frees a slot and contracts the advertised schema in-turn. Packs with no available tools (ADR-0068 placeholders) answer a typed `pack_empty` error and can never evict a real pack.
 
 2. **Schema tokens are estimates**, not tokenizer-exact — stable integers for budgeting tests and operator UX. Real model tokenizers come later.
 

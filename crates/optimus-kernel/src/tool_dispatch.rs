@@ -101,7 +101,30 @@ impl Kernel {
                     .get("name")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| KernelError::Tool("activate_pack requires name".into()))?;
-                self.packs.activate_str(name)?;
+                // Provision rotates the least-recently-used on-demand pack
+                // out at the count ceiling (spec-006 R5), so a task can
+                // reach any pack without holding more than the footprint.
+                self.packs.provision_str(name)?;
+                // Update system prompt content for subsequent steps in-turn.
+                if let Some(sys) = self.messages.first_mut() {
+                    if sys.role == Role::System {
+                        sys.content = crate::system_prompt::system_prompt(
+                            &self.packs,
+                            &self.skills.list(false).unwrap_or_default(),
+                            self.runtime.command_fs_envelope(),
+                            self.config.self_development.is_some(),
+                        );
+                    }
+                }
+                Ok(self.packs.activation_snapshot().to_string())
+            }
+            ToolInvocation::ReleasePack => {
+                let name = call
+                    .arguments
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| KernelError::Tool("release_pack requires name".into()))?;
+                self.packs.deactivate_str(name)?;
                 // Update system prompt content for subsequent steps in-turn.
                 if let Some(sys) = self.messages.first_mut() {
                     if sys.role == Role::System {
@@ -520,6 +543,10 @@ impl Kernel {
                 call.name
             ))),
         }?;
+        // Use-based recency (spec-006 R5): every successful dispatch counts
+        // as use of its owning pack, so rotation evicts the pack the agent
+        // is NOT working with, not merely the one activated longest ago.
+        self.packs.touch_pack_of(tool_id.as_str());
         Ok((tool_id, result))
     }
 }

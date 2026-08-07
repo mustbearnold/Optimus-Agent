@@ -27,7 +27,7 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 /// Dispatchable tools this suite executes through a real turn.
-const DISPATCHABLE_EXERCISED: [&str; 19] = [
+const DISPATCHABLE_EXERCISED: [&str; 20] = [
     "read_file",
     "search_content",
     "find_files",
@@ -43,6 +43,7 @@ const DISPATCHABLE_EXERCISED: [&str; 19] = [
     "memory_recall",
     "skill_resolve",
     "activate_pack",
+    "release_pack",
     "browser_navigate",
     "browser_snapshot",
     "browser_click",
@@ -423,6 +424,46 @@ fn knowledge_tools_answer_offline_and_activation_expands_the_schema() {
     assert!(
         result.loaded_packs.iter().any(|p| p == "browser"),
         "the turn result must record the browser pack as loaded"
+    );
+}
+
+#[test]
+fn release_pack_contracts_the_advertised_schema_in_turn() {
+    // Rotation (spec-006 R5): release_pack must free the slot AND contract
+    // the advertised schema for subsequent steps of the same turn — the
+    // inverse of activation's expansion.
+    let dir = tempdir().unwrap();
+    let mut kernel = open_kernel(dir.path());
+    let mut model = scripted(vec![
+        tool_step("t1", "activate_pack", json!({"name": "browser"})),
+        tool_step("t2", "release_pack", json!({"name": "browser"})),
+        done("rotation exercised"),
+    ]);
+
+    let result = kernel
+        .turn(&mut model, "exercise pack rotation")
+        .expect("pack rotation must not need a network");
+
+    let invoked: Vec<&str> = result.invoked_tools.iter().map(|t| t.as_str()).collect();
+    assert_eq!(invoked, vec!["activate_pack", "release_pack"]);
+
+    let advertised_last: Vec<String> = model
+        .seen
+        .last()
+        .expect("the model saw at least one request")
+        .tools
+        .iter()
+        .map(|tool| tool.id.as_str().to_string())
+        .collect();
+    for browser_tool in ["browser_navigate", "browser_snapshot", "browser_click"] {
+        assert!(
+            !advertised_last.iter().any(|id| id == browser_tool),
+            "{browser_tool} must NOT be advertised after release_pack(browser); got {advertised_last:?}"
+        );
+    }
+    assert!(
+        !result.loaded_packs.iter().any(|p| p == "browser"),
+        "the turn result must no longer record the browser pack as loaded"
     );
 }
 
