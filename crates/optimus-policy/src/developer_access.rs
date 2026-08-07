@@ -352,7 +352,13 @@ fn normalize_path(path: &Path) -> PathBuf {
             std::path::Component::RootDir => normalized.push(Path::new("/")),
             std::path::Component::CurDir => {}
             std::path::Component::ParentDir => {
-                normalized.pop();
+                // Pop only a real component: `..` must never remove the root
+                // (or a Windows prefix). Popping past the root would turn an
+                // absolute path into a relative one, so `path_within` would
+                // deny a path that genuinely resolves inside the root.
+                if normalized.file_name().is_some() {
+                    normalized.pop();
+                }
             }
             std::path::Component::Normal(part) => normalized.push(part),
             std::path::Component::Prefix(prefix) => normalized.push(prefix.as_os_str()),
@@ -505,6 +511,39 @@ mod tests {
         assert!(!grant.allows(
             CapabilityId::FsProjectWrite,
             &target("/tmp/project/../outside")
+        ));
+    }
+
+    #[test]
+    fn parent_components_inside_the_root_resolve_without_popping_the_root() {
+        // Regression: `normalize_path` used to `pop()` on every `..`, so a
+        // parent component aimed at the root itself removed it and turned an
+        // absolute path into a relative one. `/../tmp/project/src/lib.rs`
+        // resolves to `/tmp/project/src/lib.rs` — inside the root — but the
+        // old normalizer produced the relative `tmp/project/src/lib.rs`,
+        // which `starts_with` compared against the absolute root and denied.
+        let grant = DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/tmp/project".into(),
+                root_hash: None,
+            },
+            ..Default::default()
+        };
+        assert!(grant.allows(
+            CapabilityId::FsProjectWrite,
+            &target("/../tmp/project/src/lib.rs")
+        ));
+        assert!(grant.allows(
+            CapabilityId::FsProjectWrite,
+            &target("/tmp/project/sub/../src/lib.rs")
+        ));
+        // Escapes still resolve outside the root and stay denied.
+        assert!(!grant.allows(
+            CapabilityId::FsProjectWrite,
+            &target("/tmp/project/../../etc/passwd")
         ));
     }
 
