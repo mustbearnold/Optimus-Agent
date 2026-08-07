@@ -544,6 +544,17 @@ pub fn recompute_job_status(store: &Store, job_id: JobId) -> Result<JobStatus> {
         return Ok(next);
     }
     if matches!(
+        current,
+        JobStatus::Succeeded | JobStatus::Failed | JobStatus::Cancelled
+    ) {
+        // Terminal job states are final: a recompute must never resurrect a
+        // completed job, even if node rows disagree (mirrors the guard in
+        // `mark_job_terminal`).
+        return Err(GraphError::InvalidTransition(format!(
+            "terminal job {job_id:?} cannot become {next:?}"
+        )));
+    }
+    if matches!(
         next,
         JobStatus::Succeeded | JobStatus::Failed | JobStatus::Cancelled
     ) {
@@ -558,4 +569,278 @@ pub fn recompute_job_status(store: &Store, job_id: JobId) -> Result<JobStatus> {
         )?;
     }
     Ok(next)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    fn test_store() -> (Store, tempfile::TempDir) {
+        let dir = tempdir().expect("tempdir");
+        let store = Store::open(&dir.path().join("work.graph.sqlite")).expect("open store");
+        (store, dir)
+    }
+
+    fn write_spec(label: &str) -> JobSpec {
+        JobSpec {
+            label: label.to_string(),
+            budget: JobBudget::default(),
+            nodes: vec![NodeSpec {
+                label: format!("{label}-node"),
+                effect: Effect::WriteFile {
+                    relative_path: format!("{label}.txt"),
+                    contents: "payload".to_string(),
+                },
+            }],
+        }
+    }
+
+    #[test]
+    fn create_job_rejects_empty_node_list() {
+        let (store, _dir) = test_store();
+        let err = create_job_with_id(
+            &store,
+            JobId(Uuid::new_v4()),
+            JobSpec {
+                label: "empty".into(),
+                budget: JobBudget::default(),
+                nodes: vec![],
+            },
+        )
+        .expect_err("empty node list must be rejected");
+        assert!(matches!(err, GraphError::InvalidTransition(_)));
+    }
+
+    #[test]
+    fn recompute_job_status_never_resurrects_terminal_job() {
+        let (store, _dir) = test_store();
+        let job_id = JobId(Uuid::new_v4());
+        let node_id = Uuid::new_v4();
+        // A job that is already terminal (Succeeded) but whose node rows are
+        // stale (one node still Pending) must not be dragged back to Pending
+        // by a recompute: terminal states are final.
+        store
+            .insert_job_graph(NewJobGraph {
+                id: job_id.0,
+                label: "already-done".into(),
+                status: JobStatus::Succeeded,
+                max_steps: 100,
+                max_consecutive_failures: 3,
+                command_timeout_ms: 30_000,
+                event_payload_json: "{}".into(),
+                nodes: vec![NewNodeGraph {
+                    id: node_id,
+                    idx: 0,
+                    label: "write".into(),
+                    status: NodeStatus::Pending,
+                    effect_json: serde_json::to_string(&Effect::WriteFile {
+                        relative_path: "a.txt".into(),
+                        contents: "x".into(),
+                    })
+                    .expect("serialize effect"),
+                    event_payload_json: "{}".into(),
+                }],
+            })
+            .expect("insert graph");
+
+        let err = recompute_job_status(&store, job_id).expect_err(
+            "terminal job with stale nodes must error instead of resurrecting",
+        );
+        assert!(matches!(err, GraphError::InvalidTransition(_)));
+        assert_eq!(
+            store.get_job(job_id.0).expect("job").status,
+            JobStatus::Succeeded
+        );
+    }
+
+    #[test]
+    fn recompute_job_status_is_idempotent_for_terminal_jobs() {
+        let (store, _dir) = test_store();
+        let created = create_job(&store, write_spec("done")).expect("create job");
+        mark_job_running(&store, created.id).expect("job running");
+        let attempt = mark_node_running(&store, created.id, created.node_ids[0])
+            .expect("node running");
+        mark_node_succeeded(
+            &store,
+            created.id,
+            created.node_ids[0],
+            attempt,
+            &serde_json::json!({ "ok": true }),
+        )
+        .expect("node succeeded");
+        assert_eq!(
+            recompute_job_status(&store, created.id).expect("recompute"),
+            JobStatus::Succeeded
+        );
+        // Recomputing a terminal job that agrees with its nodes stays a no-op.
+        assert_eq!(
+            recompute_job_status(&store, created.id).expect("recompute again"),
+            JobStatus::Succeeded
+        );
+    }
+
+    #[test]
+    fn two_node_job_runs_to_succeeded() {
+        let (store, _dir) = test_store();
+        let created = create_job(
+            &store,
+            JobSpec {
+                label: "two-node".into(),
+                budget: JobBudget::default(),
+                nodes: vec![
+                    NodeSpec {
+                        label: "first".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "a.txt".into(),
+                            contents: "1".into(),
+                        },
+                    },
+                    NodeSpec {
+                        label: "second".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "b.txt".into(),
+                            contents: "2".into(),
+                        },
+                    },
+                ],
+            },
+        )
+        .expect("create job");
+
+        mark_job_running(&store, created.id).expect("job running");
+        let attempt1 =
+            mark_node_running(&store, created.id, created.node_ids[0]).expect("run node 1");
+        mark_node_succeeded(
+            &store,
+            created.id,
+            created.node_ids[0],
+            attempt1,
+            &serde_json::json!({ "ok": true }),
+        )
+        .expect("succeed node 1");
+
+        mark_job_running(&store, created.id).expect("job running again");
+        let attempt2 =
+            mark_node_running(&store, created.id, created.node_ids[1]).expect("run node 2");
+        mark_node_succeeded(
+            &store,
+            created.id,
+            created.node_ids[1],
+            attempt2,
+            &serde_json::json!({ "ok": true }),
+        )
+        .expect("succeed node 2");
+        assert_eq!(
+            recompute_job_status(&store, created.id).expect("recompute"),
+            JobStatus::Succeeded
+        );
+    }
+
+    #[test]
+    fn mark_job_terminal_rejects_non_terminal_status() {
+        let (store, _dir) = test_store();
+        let created = create_job(&store, write_spec("t")).expect("create job");
+        let err = mark_job_terminal(&store, created.id, JobStatus::Running)
+            .expect_err("Running is not a terminal status");
+        assert!(matches!(err, GraphError::InvalidTransition(_)));
+    }
+
+    #[test]
+    fn mark_node_running_rejects_second_running_node() {
+        let (store, _dir) = test_store();
+        let created = create_job(
+            &store,
+            JobSpec {
+                label: "two".into(),
+                budget: JobBudget::default(),
+                nodes: vec![
+                    NodeSpec {
+                        label: "a".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "a.txt".into(),
+                            contents: "1".into(),
+                        },
+                    },
+                    NodeSpec {
+                        label: "b".into(),
+                        effect: Effect::WriteFile {
+                            relative_path: "b.txt".into(),
+                            contents: "2".into(),
+                        },
+                    },
+                ],
+            },
+        )
+        .expect("create job");
+        mark_job_running(&store, created.id).expect("job running");
+        mark_node_running(&store, created.id, created.node_ids[0]).expect("run node 1");
+        let err = mark_node_running(&store, created.id, created.node_ids[1])
+            .expect_err("second running node must be rejected");
+        assert!(matches!(err, GraphError::InvalidTransition(_)));
+    }
+
+    #[test]
+    fn effect_risk_classification_is_stable() {
+        let write = Effect::WriteFile {
+            relative_path: "a.txt".into(),
+            contents: "b".into(),
+        };
+        assert!(write.is_high_risk());
+        assert!(write.requires_fs_workspace_skill());
+
+        let assert_equals = Effect::AssertFileEquals {
+            relative_path: "a.txt".into(),
+            expected: "b".into(),
+        };
+        assert!(!assert_equals.is_high_risk());
+        assert!(!assert_equals.requires_fs_workspace_skill());
+
+        let run = Effect::RunCommand {
+            program: "true".into(),
+            args: vec![],
+        };
+        assert!(run.is_high_risk());
+        assert!(!run.requires_fs_workspace_skill());
+
+        let serve = Effect::ProjectServe {
+            workspace_sha256: "w".into(),
+            program: "srv".into(),
+            args: vec![],
+            port: 8080,
+            ttl_seconds: 30,
+        };
+        assert!(serve.is_high_risk());
+        assert!(!serve.requires_fs_workspace_skill());
+    }
+
+    #[test]
+    fn autonomy_profile_parse_round_trips_canonical_names() {
+        for profile in [
+            AutonomyProfile::Standard,
+            AutonomyProfile::ReviewChanges,
+            AutonomyProfile::ReadOnly,
+            AutonomyProfile::FullProject,
+            AutonomyProfile::DeveloperFullAccess,
+            AutonomyProfile::UnrestrictedHost,
+        ] {
+            assert_eq!(
+                AutonomyProfile::parse(profile.as_str()),
+                Some(profile),
+                "canonical name must round-trip: {}",
+                profile.as_str()
+            );
+        }
+        assert_eq!(
+            AutonomyProfile::parse("  YOLO "),
+            Some(AutonomyProfile::UnrestrictedHost)
+        );
+        assert_eq!(
+            AutonomyProfile::parse("ask"),
+            Some(AutonomyProfile::ReviewChanges)
+        );
+        assert_eq!(AutonomyProfile::parse("full"), None);
+        assert_eq!(AutonomyProfile::parse("host"), None);
+        assert_eq!(AutonomyProfile::parse(""), None);
+    }
 }
