@@ -1658,6 +1658,9 @@ body,
   font-size: 10px;
 }
 
+/* The 1px left border was a leftover of the 22px folder indent; nested rows
+   are flush with the rail now, so the border only painted a stray vertical
+   line beside the hint. */
 .project-drop-hint {
   min-height: 30px;
   display: flex;
@@ -1665,7 +1668,6 @@ body,
   padding: 0 8px;
   color: var(--faint);
   font-size: 10px;
-  border-left: 1px solid var(--border);
 }
 
 .session-row {

@@ -105,6 +105,25 @@ describe('motion contract', () => {
     );
   });
 
+  // The nested session boxes under a project folder share the Recent Chats
+  // geometry: flush with the rail (the old 22px folder indent is gone) and a
+  // 32px floor for the single title line. A regression here re-creates the
+  // offset, taller cards of the pre-compact rail.
+  it('keeps nested project sessions flush with the rail at the 32px floor', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    expect(css).toMatch(/\.project-sessions\s*\{\s*display:\s*none;\s*padding:\s*0 0 3px;\s*\}/);
+    expect(css).toMatch(
+      /\.project-sessions \.session-row \.session-select\s*\{[^}]*min-height:\s*32px/s
+    );
+  });
+
+  it('keeps the empty-folder drop hint flush like the rows around it', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    // The 1px left border was a leftover of the 22px folder indent; with nested
+    // rows flush to the rail it painted a stray vertical line beside the hint.
+    expect(css).not.toMatch(/\.project-drop-hint\s*\{[^}]*border-left\s*:/s);
+  });
+
   it('keeps project and settings labels readable without outlining the search field', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     expect(css).toMatch(/\.rail-search:focus-within\s*\{[^}]*box-shadow:\s*none/s);

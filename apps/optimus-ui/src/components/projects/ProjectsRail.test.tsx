@@ -456,6 +456,57 @@ describe('ProjectsRail session actions', () => {
     expect(onAssign).toHaveBeenCalledWith('loose', 'project-1');
   });
 
+  it('keeps nested project sessions as direct single-line rows', () => {
+    render(
+      <ProjectsRail
+        collapsed={false}
+        sessions={[
+          { id: 'linked', title: 'Linked session' },
+          { id: 'loose', title: 'Loose session' },
+        ]}
+        projects={[{ id: 'project-1', name: 'Alpha', rootPaths: ['/alpha'] }]}
+        assignments={{ linked: 'project-1' }}
+        expanded={{ 'project-1': true }}
+        selectedSessionId="linked"
+        sessionIndicators={{ linked: 'working' }}
+        onSearch={vi.fn()}
+        onSelectSession={vi.fn()}
+        onNewSession={vi.fn()}
+        onAddProject={vi.fn()}
+        onManageProject={vi.fn()}
+        onToggleProject={vi.fn()}
+        onTogglePin={vi.fn()}
+        onToggleArchive={vi.fn()}
+        onAssign={vi.fn()}
+        onRename={vi.fn()}
+        onDelete={vi.fn()}
+        onSettings={vi.fn()}
+      />
+    );
+
+    // The compact-row contract: a session inside a project folder is a direct
+    // child of the folder's session group and carries only its title — no
+    // folder meta, worktree, or run-state line — so every nested row is the
+    // same single-line 32px box as a Recent Chats row.
+    const group = screen.getByRole('group', { name: 'Sessions in Alpha' });
+    const nested = screen.getByTitle('Linked session').closest('.session-row');
+    expect(nested).not.toBeNull();
+    expect(nested!.parentElement).toBe(group);
+    expect(nested).toHaveAttribute('data-session-id', 'linked');
+    expect(
+      nested!.querySelectorAll('.session-card-meta, .session-worktree, .session-state')
+    ).toHaveLength(0);
+    const select = nested!.querySelector('.session-select');
+    expect(select).not.toBeNull();
+    expect(select!.querySelectorAll('.session-title')).toHaveLength(1);
+    expect(select!.querySelector('.session-title')).toHaveTextContent('Linked session');
+    expect(
+      Array.from(group.children).filter((el) => el.classList.contains('session-row'))
+    ).toHaveLength(1);
+    // A chat outside the folder is not nested and keeps its flat row shape.
+    expect(screen.getByTitle('Loose session').closest('.project-sessions')).toBeNull();
+  });
+
   it('offers a keyboard-safe move action from the session menu', () => {
     render(
       <ProjectsRail
