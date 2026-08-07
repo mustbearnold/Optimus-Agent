@@ -938,10 +938,13 @@ Phase B (one protocol boundary complete — follow-on issues at landing):
 - [ ] A12. Given the CLI in client mode, when a serve is already running,
   then the CLI attaches to it (no second core); when `--embedded` is
   passed, the CLI opens a kernel directly and works headless (CI mode).
-- [ ] A13. Given the TUI as a stdio client (offline provider env
+- [x] A13. Given the TUI as a stdio client (offline provider env
   `OPTIMUS_OFFLINE_LATENCY_MS` passed through to the serve child), when
   the tmux gates (`tui_e2e.py`, `tui_feature_matrix.py`,
   `tui_layout_playwright.cjs`) run, then all pass (spec-010 R1 preserved).
+  (proven 2026-08-08: TUI_E2E_OK; TUI_FEATURE_MATRIX_OK cases=16 checks=160;
+  TUI_LAYOUT_SWEEP_OK widths=20..140 heights=10..40 — the TUI speaks the
+  host wire as a stdio client, closes #136)
 - [ ] A14. Given the HTTP-retention decision, if the HTTP mode is retired,
   then no `OPTIMUS_HTTP_TOKEN`/`httpTransport.ts` residue remains per the
   six-plane ritual and gates + docs cascade are green; if retained, the
