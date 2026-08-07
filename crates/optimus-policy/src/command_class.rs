@@ -379,7 +379,20 @@ fn git_sets_inline_alias(args: &[String]) -> bool {
             && pair[1]
                 .get(.."alias.".len())
                 .is_some_and(|prefix| prefix.eq_ignore_ascii_case("alias."))
-    })
+    }) || args.iter().any(|arg| is_config_env_inline_alias(arg))
+}
+
+/// True when git is asked to read an alias body from an environment variable
+/// (`--config-env=alias.name=ENV`, git >= 2.31). The body never appears in
+/// argv, so the approval prompt would show only the variable name — the same
+/// concealment as `-c alias.name=...`, with the string hidden one step further.
+fn is_config_env_inline_alias(arg: &str) -> bool {
+    arg.strip_prefix("--config-env=")
+        .and_then(|rest| rest.split_once('='))
+        .is_some_and(|(name, _env)| {
+            name.get(.."alias.".len())
+                .is_some_and(|prefix| prefix.eq_ignore_ascii_case("alias."))
+        })
 }
 
 fn is_shell_command_flag(flag: &str) -> bool {
@@ -841,6 +854,20 @@ mod tests {
             ),
             CommandClass::OpaqueShell,
             "an inline git alias can conceal arbitrary shell execution"
+        );
+        // Regression: git >= 2.31 can read the alias body from an environment
+        // variable (`--config-env=alias.name=ENV`). The body never appears in
+        // argv, so it used to fall through to ProjectExecute — a project grant
+        // would have covered an alias that conceals arbitrary shell code.
+        assert_eq!(
+            class("git", &["--config-env=alias.ship=SHIP_CMD", "ship"]),
+            CommandClass::OpaqueShell,
+            "an env-read inline git alias conceals shell execution from argv"
+        );
+        assert_eq!(
+            class("git", &["--config-env=core.editor=EDITOR", "status"]),
+            CommandClass::ProjectExecute,
+            "a non-alias --config-env key is not an opaque command string"
         );
     }
 

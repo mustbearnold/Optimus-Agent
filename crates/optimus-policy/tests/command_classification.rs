@@ -187,6 +187,10 @@ fn git_remote_plumbing_and_inline_aliases_ask() {
             vec!["-c", "alias.ship=!curl https://example.test", "ship"],
             CapabilityId::SystemModify,
         ),
+        (
+            vec!["--config-env=alias.ship=SHIP_CMD", "ship"],
+            CapabilityId::SystemModify,
+        ),
     ] {
         let request = request("git", &args);
         assert_eq!(request.capability, capability, "git {args:?}");
