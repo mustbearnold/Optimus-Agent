@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -42,6 +43,17 @@ WINDOW_TITLE = "Optimus Agent"
 READY_MARKER = "[optimus-tauri] ready ui=react"
 LAUNCH_TIMEOUT_S = 30
 RECORD_FILE = "host-runtime.json"
+CONNECTION_LOG = "logs/connections.log"
+# Pinned in docs/architecture/surface-protocol.schema.json: the accepted-
+# connection line is `<iso8601> origin=<label>` with the label "missing",
+# "null", or the literal Origin value. A line fires post-hello (R8), so its
+# presence proves dial AND credential handshake.
+CONNECTION_LINE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z origin=(\S+)$")
+# The packaged-webview origins the R7 allowlist admits (handshake.rs), plus
+# the `null`/missing labels WebKitGTK may present (spec-015 A3).
+ALLOWED_PACKAGED_ORIGINS = frozenset(
+    {"tauri://localhost", "http://tauri.localhost", "null", "missing"}
+)
 
 
 class LaunchFailure(RuntimeError):
@@ -137,6 +149,23 @@ def record_health(record: dict) -> bool:
         return False
 
 
+def accepted_connection_origin(home: Path) -> str | None:
+    """Tail `<home>/logs/connections.log` (R8) for the newest accepted-
+    connection line and return its origin label, or None when the log is
+    absent/empty. A line fires post-hello, so it proves the packaged
+    webview dialed AND completed the credential handshake."""
+    try:
+        lines = (home / CONNECTION_LOG).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    origin = None
+    for line in lines:
+        match = CONNECTION_LINE_RE.match(line.strip())
+        if match:
+            origin = match.group(1)
+    return origin
+
+
 def main() -> int:
     if not BINARY.is_file():
         print(f"TAURI_LAUNCH_FAIL missing binary: {BINARY}", file=sys.stderr)
@@ -225,6 +254,21 @@ def main() -> int:
             if not wait_until(lambda: record_health(record), "record health with the dial ticket as Bearer"):
                 raise LaunchFailure("spawned serve record failed the health probe")
 
+            # Spec-015 A3 packaged-shell evidence: the webview dials the
+            # spawned serve through the broker ticket and the accepted-
+            # connection log (R8) fires post-hello — a line proves dial AND
+            # credential handshake. WebKitGTK may present tauri://localhost,
+            # http://tauri.localhost, or Origin: null; all are allowlisted.
+            def packaged_connection() -> str | None:
+                origin = accepted_connection_origin(spawn_home)
+                if origin is None:
+                    return None
+                return origin if origin in ALLOWED_PACKAGED_ORIGINS else None
+
+            connection_origin = wait_until(
+                packaged_connection, "accepted-connection log from the packaged webview"
+            )
+
             served_pid = int(record.get("pid") or 0)
             if served_pid <= 0:
                 raise LaunchFailure("serve record carries no usable pid")
@@ -238,7 +282,10 @@ def main() -> int:
                 raise LaunchFailure(
                     f"quit termination failed: serve pid {served_pid} still alive after shell exit"
                 )
-            print("TAURI_LAUNCH_OK spawn-path=serve record=v2/ws health=yes quit-termination=yes")
+            print(
+                f"TAURI_LAUNCH_OK spawn-path=serve record=v2/ws health=yes "
+                f"connections-log=yes origin={connection_origin} quit-termination=yes"
+            )
             return 0
         finally:
             stop_shell(child)
