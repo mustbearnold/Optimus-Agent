@@ -136,18 +136,25 @@ impl ServeLifecycle {
     /// attach fails, wait READY_BOUND for readiness, then keep a watcher
     /// that relaunches within the 3/60 s crash budget.
     pub fn start(home: PathBuf, port: u16) -> Self {
+        let lifecycle = Self::new(home, port);
+        lifecycle.ensure_serve();
+        lifecycle.watch();
+        lifecycle
+    }
+
+    /// A fresh handle: outcome seeded to a placeholder diagnostic — a
+    /// ticket is only ever produced by `ensure_serve`/`watch`, the
+    /// lifecycle proper. Test seam for the pre-lifecycle broker answer.
+    pub fn new(home: PathBuf, port: u16) -> Self {
         let inner = Arc::new(ServeLifecycleInner {
-            home: home.clone(),
+            home,
             child: Mutex::new(None),
             outcome: Mutex::new(ServeOutcome::Diagnostic("serve lifecycle starting".into())),
             budget: Mutex::new(CrashBudget::new()),
             secret: dial_ticket(),
             port,
         });
-        let lifecycle = ServeLifecycle(inner);
-        lifecycle.ensure_serve();
-        lifecycle.watch();
-        lifecycle
+        ServeLifecycle(inner)
     }
 
     fn ensure_serve(&self) {
@@ -448,18 +455,18 @@ mod tests {
 
     #[test]
     fn broker_ticket_answers_nothing_before_the_lifecycle_runs() {
-        // The lifecycle is start()ed in the shell; a fresh handle has no
-        // outcome yet — the broker must answer None, never invent a
-        // ticket.
+        // The lifecycle proper is ensure_serve()/watch() (run by start()).
+        // A fresh handle — new() — seeds only a placeholder diagnostic and
+        // must never present a ticket. Testing new() keeps this
+        // environment-independent: no spawn runs, so the machine's CLI
+        // presence and the (documented, ephemeral-bind) port-0 contract
+        // cannot turn the outcome into a ticket.
         let home =
             std::env::temp_dir().join(format!("tauri-lifecycle-none-{}", std::process::id()));
         std::fs::create_dir_all(&home).ok();
-        let lifecycle = ServeLifecycle::start(home.clone(), 0);
-        // 0 is an invalid serve port; attach-first finds no record and
-        // the spawn cannot run — the outcome is a diagnostic.
+        let lifecycle = ServeLifecycle::new(home.clone(), 0);
         let outcome = lifecycle.0.outcome.lock().unwrap().clone();
         assert!(matches!(outcome, ServeOutcome::Diagnostic(_)));
-        lifecycle.terminate();
         let _ = std::fs::remove_dir_all(&home);
     }
 }

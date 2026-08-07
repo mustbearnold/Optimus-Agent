@@ -22,7 +22,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-AUDIT = ROOT / "scripts" / "ui_layout_audit.cjs"
+AUDIT = ROOT / "scripts" / "tests" / "ui_layout_audit.cjs"
 URL = os.environ.get("OPTIMUS_UI_URL", "http://127.0.0.1:4174/")
 
 
@@ -47,6 +47,11 @@ SEED = """
 
 
 def main() -> int:
+    # WebKitGTK's GL compositing path aborts on hosts without a usable GL
+    # context (GDK: "backend does not support OpenGL"); software compositing
+    # is deterministic for a layout audit, so default it on (user overrides
+    # still win).
+    os.environ.setdefault("WEBKIT_DISABLE_COMPOSITING_MODE", "1")
     try:
         import gi  # type: ignore
 

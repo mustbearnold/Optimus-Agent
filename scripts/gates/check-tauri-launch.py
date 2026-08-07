@@ -162,6 +162,13 @@ def main() -> int:
         ready_file = tmp / "ready.json"
         log_file = tmp / "launch.log"
         env = dict(base_env)
+        # Negative phase must be hermetic: no discoverable CLI. R8 discovery
+        # reads $OPTIMUS_INSTALL_ROOT install-meta.json, the data-home copy,
+        # then PATH — a dev/installed `optimus` in any of those turns this
+        # into a legit spawn and breaks the no-CLI premise.
+        env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
+        env["OPTIMUS_INSTALL_ROOT"] = str(tmp / "no-install-root")
+        env["XDG_DATA_HOME"] = str(tmp / "no-data-home")
         child = launch_shell(home, ready_file, log_file, env)
         try:
             wait_ready(ready_file, child, log_file)

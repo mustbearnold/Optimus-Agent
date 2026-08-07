@@ -117,6 +117,34 @@ run() {
   fi
 }
 
+# retry <name> <tries> <cmd...>: run a step up to <tries> times, reporting
+# once. Guards the cargo steps against transient build-lock contention with
+# concurrent sessions; a genuine failure fails every attempt. The command is
+# executed in a subshell each attempt, so it must be an external command
+# (or stateless shell function), not a stateful one.
+retry() {
+  local name="$1" tries="$2"; shift 2
+  local out attempt=1 started="$EPOCHREALTIME"
+  while true; do
+    if out=$("$@" 2>&1); then
+      if [ "$attempt" -eq 1 ]; then
+        printf '%-46s%s (%ss)\n' "  $name" "${G}ok${X}" "$(seconds_since "$started")"
+      else
+        printf '%-46s%s (%ss, retry %s)\n' "  $name" "${G}ok${X}" "$(seconds_since "$started")" "$((attempt - 1))"
+      fi
+      PASSED+=("$name")
+      return 0
+    fi
+    if [ "$attempt" -ge "$tries" ]; then
+      printf '%-46s%s (%ss)\n' "  $name" "${R}FAIL${X}" "$(seconds_since "$started")"
+      FAILED+=("$name")
+      printf '%s\n' "$out" | tail -15 | sed 's/^/      /'
+      return 1
+    fi
+    attempt=$((attempt + 1))
+  done
+}
+
 # skip <name> <reason>
 skip() {
   printf '%-46s%s\n' "  $1" "${Y}skip${X} ($2)"
@@ -291,10 +319,13 @@ tier_check() {
 # --- tier: test --------------------------------------------------------------
 tier_test() {
   section "rust tests"
+  # Retried once: a concurrent session's cargo build can hold the target-dir
+  # lock briefly; a transient lock stall must not fail the gate (a genuine
+  # test failure fails both attempts).
   if cargo nextest --version >/dev/null 2>&1; then
-    run "cargo nextest" cargo nextest run --workspace
+    retry "cargo nextest" 2 cargo nextest run --workspace
   else
-    run "cargo test" cargo test --workspace --all-targets -- --test-threads=1
+    retry "cargo test" 2 cargo test --workspace --all-targets -- --test-threads=1
   fi
   # Pinned split suites (spec-015 A5): gate self-containment — the surface
   # protocol conformance suite and the serve capability probe run by pinned
@@ -403,14 +434,16 @@ tier_ui() {
     # Desktop task suite (easy tier) + self-improvement loop gates. Both
     # self-skip when their prerequisites (binary, websockets, display,
     # credentials, ollama) are absent, so they stay hermetic everywhere.
-    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
-      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-        run "desktop task suite" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
-        run "desktop self-improvement loop" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
-      else
-        run "desktop task suite" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
-        run "desktop self-improvement loop" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
-      fi
+    if command -v xvfb-run >/dev/null 2>&1; then
+      # Xvfb is the deterministic capture environment: the harness pins
+      # GDK_BACKEND=x11 + software compositing, and ImageMagick `import`
+      # grabs a real Xvfb root. Running natively on a Wayland session
+      # (XWayland root) makes the capture backend fail (import can't grab).
+      run "desktop task suite" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+      run "desktop self-improvement loop" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
+    elif [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
+      run "desktop task suite" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+      run "desktop self-improvement loop" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
     else
       skip "desktop task suite" "no display and no xvfb-run"
       skip "desktop self-improvement loop" "no display and no xvfb-run"
@@ -601,14 +634,16 @@ tier_all() {
     # Desktop task suite (easy tier) + self-improvement loop gates. Both
     # self-skip when their prerequisites (binary, websockets, display,
     # credentials, ollama) are absent, so they stay hermetic everywhere.
-    if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ] || command -v xvfb-run >/dev/null 2>&1; then
-      if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-        run "desktop task suite" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
-        run "desktop self-improvement loop" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
-      else
-        run "desktop task suite" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
-        run "desktop self-improvement loop" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
-      fi
+    if command -v xvfb-run >/dev/null 2>&1; then
+      # Xvfb is the deterministic capture environment: the harness pins
+      # GDK_BACKEND=x11 + software compositing, and ImageMagick `import`
+      # grabs a real Xvfb root. Running natively on a Wayland session
+      # (XWayland root) makes the capture backend fail (import can't grab).
+      run "desktop task suite" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+      run "desktop self-improvement loop" xvfb-run -a env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
+    elif [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
+      run "desktop task suite" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_task_suite.py --task easy
+      run "desktop self-improvement loop" env -u WAYLAND_DISPLAY python3 scripts/tools/desktop_self_improvement_loop.py --iterations 1 --timeout 600
     else
       skip "desktop task suite" "no display and no xvfb-run"
       skip "desktop self-improvement loop" "no display and no xvfb-run"

@@ -1165,8 +1165,11 @@ const DEFECTS = [
     name: "fixed-height-card-slices-its-own-text",
     // The shipped bug: the densest rail card had a fixed height, so its flex
     // children were compressed and the title rendered inside a 9px box.
-    css: `.project-sessions .session-row .session-select { height: 38px !important; min-height: 0 !important; }
-          .session-select > * { flex-shrink: 1 !important; }`,
+    // Project-folder rows are single-line since the rail dedup (folder rows
+    // no longer repeat worktree/state), so the forced height must undershoot
+    // the line directly to recreate the same clipping.
+    css: `.project-sessions .session-row .session-select { height: 9px !important; min-height: 0 !important; }
+          .session-select > * { flex: 0 0 auto !important; height: 8px !important; min-height: 0 !important; }`,
     expect: ["text-box-shorter-than-line", "content-overflows-container"],
   },
   {

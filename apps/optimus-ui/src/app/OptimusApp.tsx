@@ -230,7 +230,7 @@ export function OptimusApp() {
       if (!alive()) return;
       setBootError(error instanceof Error ? error.message : String(error));
     }
-  }, [alive, state.selectedSessionId]);
+  }, [alive, state.selectedSessionId, transport]);
 
   const updateExecutionState = useCallback((nextApprovals: Approval[]) => {
     setApprovals(nextApprovals);
