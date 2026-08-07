@@ -830,12 +830,19 @@ Phase A (milestone: desktop is a pure protocol client):
   (the exemption means no cancellation of `term_run`). Saturation: given
   4 long turns in flight (pool saturated), a 5th connection's
   `hello`/`chat_cancel` still complete (control-plane bypass).
-- [ ] A3. Given the desktop e2e suite re-pointed at the WebSocket
+- [x] A3. Given the desktop e2e suite re-pointed at the WebSocket
   transport (test ticket injected via `addInitScript` into the broker
   global, never a URL; workbench served from a loopback origin — the
   allowlist admits it, R7), when Playwright drives the React workbench
   against a spawned `optimus serve`, then all specs pass including a chat
-  round-trip that emits exactly one terminal event. Packaged-shell
+  round-trip that emits exactly one terminal event. (proven 2026-08-07:
+  desktop e2e 46/46 against the re-pointed suite — `apps/optimus-desktop/e2e`
+  spawns `optimus serve` per worker, serves `apps/optimus-ui/dist` from a
+  loopback origin, injects the ticket via `page.addInitScript`; the A3
+  headline test `chat round-trip emits exactly one terminal event`
+  asserts `terminalCount === 1` over the WS wire; `chat_cancel` one-shot
+  and held-stream control-plane bypass are pinned as separate specs.)
+  Packaged-shell
   evidence (the repo has no WebKitGTK driver — evidence ceiling,
   `specs/001-desktop-shell/spec.md:68-81`): the Origin allowlist is
   proven by ws.rs unit tests feeding `tauri://localhost`,

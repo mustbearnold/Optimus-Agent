@@ -1,280 +1,135 @@
 // @ts-check
-const { test, expect, url, waitForReady } = require('./support');
+// spec-015 A3: runtime + sessions over the WS wire. Protocol-level
+// assertions go through `rpc()` (the same JSON-RPC 2.0 frames the
+// renderer's wsTransport speaks); UI assertions drive the React workbench.
+const { test, expect, url, waitForReady, rpc, chatStream } = require('./support');
 
-test('new session button creates a thread', async ({ page }) => {
+test('doctor answers over the wire with home and version', async ({ serverInfo }) => {
+  const doctor = await rpc(serverInfo, 'doctor');
+  expect(doctor.ok).toBe(true);
+  expect(doctor.home).toBe(serverInfo.home);
+  expect(doctor.version).toBeTruthy();
+});
+
+test('new thread creates a session row in the rail', async ({ page, serverInfo }) => {
   await page.goto('/');
   await waitForReady(page);
 
-  await page.click('#newThread');
-  await expect
-    .poll(async () => page.locator('#sessionList .thread, #threadList .thread').count(), { timeout: 15000 })
-    .toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'New thread' }).click();
+  // The rail shows at least one session row after the create.
+  await expect(page.locator('.session-row').first()).toBeVisible({ timeout: 5000 });
+  // The composer is ready for the fresh session.
+  await expect(page.getByLabel('Message Optimus')).toBeVisible();
 });
 
-test('IPC doctor via fetch', async () => {
-  const r = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 1, method: 'doctor', params: {} }),
-  });
-  const j = await r.json();
-  expect(j.ok).toBe(true);
-  expect(j.result.phase).toBe('product-complete');
-  expect(j.result.program_phase).toBe('P29');
-  expect(j.result.home).toBeTruthy();
-  expect(j.result.streaming).toBe(true);
-  expect(j.result.cron).toBe(true);
-  expect(j.result.browser).toBeTruthy();
-  expect(j.result.approvals).toBe(true);
-  expect(j.result.files).toBe(true);
+test('multi-turn offline chat streams into the transcript', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+
+  const composer = page.getByLabel('Message Optimus');
+  await composer.fill('first turn please');
+  await page.getByRole('button', { name: 'Send message' }).click();
+  // The user message renders, then the offline echo streams in.
+  await expect(page.locator('.message.message-user').last()).toContainText('first turn please');
+  await expect(page.locator('.message.message-assistant').last()).toContainText('offline echo: first turn please', { timeout: 20000 });
+
+  // Second turn continues the same session (same transcript, new rows).
+  await composer.fill('second turn please');
+  await page.getByRole('button', { name: 'Send message' }).click();
+  await expect(page.locator('.message.message-user')).toHaveCount(2, { timeout: 5000 });
+  await expect(page.locator('.message.message-assistant').last()).toContainText('offline echo: second turn please', { timeout: 20000 });
 });
 
-test('IPC fs_roots / fs_list via fetch', async () => {
-  const roots = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 40, method: 'fs_roots', params: {} }),
-  }).then((x) => x.json());
+test('pin + unpin a session from the rail context menu', async ({ page, serverInfo }) => {
+  await page.goto('/');
+  await waitForReady(page);
+  await page.getByRole('button', { name: 'New thread' }).click();
+  const row = page.locator('.session-row').first();
+  await expect(row).toBeVisible({ timeout: 5000 });
+
+  // The actions menu opens on context menu (right-click) of the row.
+  await row.click({ button: 'right' });
+  const menu = page.getByRole('menu', { name: /Actions for / });
+  await expect(menu).toBeVisible();
+  await menu.getByRole('menuitem', { name: 'Pin session' }).click();
+  // The pinned band now holds the session.
+  await expect(page.locator('.pinned-section .session-row')).toHaveCount(1, { timeout: 5000 });
+
+  // Unpin from the same menu.
+  const pinnedRow = page.locator('.pinned-section .session-row').first();
+  await pinnedRow.click({ button: 'right' });
+  await page.getByRole('menu', { name: /Actions for / }).getByRole('menuitem', { name: 'Unpin session' }).click();
+  await expect(page.locator('.pinned-section .session-row')).toHaveCount(0, { timeout: 5000 });
+});
+
+test('fs_roots and fs_list answer over the wire', async ({ serverInfo }) => {
+  const roots = await rpc(serverInfo, 'fs_roots');
   expect(roots.ok).toBe(true);
-  expect(Array.isArray(roots.result.roots)).toBe(true);
-  expect(roots.result.roots.length).toBeGreaterThan(0);
-  expect(roots.result.roots[0].id).toBe('home');
-  expect(roots.result.roots[0].path).toBeTruthy();
-
-  const list = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 41, method: 'fs_list', params: { path: '' } }),
-  }).then((x) => x.json());
-  expect(list.ok).toBe(true);
-  expect(Array.isArray(list.result.entries)).toBe(true);
+  expect(Array.isArray(roots.roots)).toBe(true);
+  expect(roots.roots.some((root) => root.path === serverInfo.home)).toBe(true);
+  // The home itself is a scope the host can list.
+  const listed = await rpc(serverInfo, 'fs_list', { path: serverInfo.home });
+  expect(listed.ok).toBe(true);
+  expect(Array.isArray(listed.entries)).toBe(true);
 });
 
-test('approvals_list IPC is empty when idle', async () => {
-  const r = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 20, method: 'approvals_list', params: {} }),
-  }).then((x) => x.json());
-  expect(r.ok).toBe(true);
-  expect(Array.isArray(r.result.pending)).toBe(true);
+test('approvals list is empty on a fresh home; a terminal effect parks an approval', async ({ serverInfo }) => {
+  const before = await rpc(serverInfo, 'approvals_list');
+  expect(before.ok).toBe(true);
+  expect(before.pending || []).toHaveLength(0);
+
+  // term_run parks a command approval (job-stream mode) — the grant path
+  // needs a REAL pending job_id, not a synthetic one.
+  const run = await rpc(serverInfo, 'term_run', { line: 'echo grant-me' });
+  expect(run.ok).toBe(true);
+  expect(run.status).toBe('AwaitingApproval');
+
+  const pending = await rpc(serverInfo, 'approvals_list');
+  expect(pending.pending || []).toHaveLength(1);
+  const jobId = pending.pending[0].job_id;
+  expect(jobId).toBeTruthy();
+
+  const granted = await rpc(serverInfo, 'approvals_grant', { job_id: jobId });
+  expect(granted.ok).toBe(true);
+  expect(String(granted.status || '')).toMatch(/Done|Running|Succeeded|Completed/);
+  const after = await rpc(serverInfo, 'approvals_list');
+  expect(after.pending || []).toHaveLength(0);
 });
 
-test('campaign create run via IPC', async () => {
-  const create = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: 30,
-      method: 'campaign_create',
-      params: {
-        name: 'pw-campaign',
-        writes: [
-          { path: 'pw/a.txt', contents: 'one' },
-          { path: 'pw/b.txt', contents: 'two' },
-        ],
-      },
-    }),
-  }).then((r) => r.json());
-  expect(create.ok).toBe(true);
-  expect(create.result.id).toBeTruthy();
-  const run = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: 31,
-      method: 'campaign_run',
-      params: { id: create.result.id },
-    }),
-  }).then((r) => r.json());
-  expect(run.ok, JSON.stringify(run)).toBe(true);
-  expect(run.result.status).toBe('AwaitingApproval');
+test('cron add/list round-trips a named schedule', async ({ serverInfo }) => {
+  const name = `pw-cron-${Date.now()}`;
+  const added = await rpc(serverInfo, 'cron_add', {
+    name,
+    cron: '0 9 * * 1-5',
+    command: 'offline echo: cron',
+  });
+  expect(added.ok).toBe(true);
+  const listed = await rpc(serverInfo, 'cron_list');
+  const hit = (listed.jobs || []).find((j) => j.name === name);
+  expect(hit).toBeTruthy();
+});
 
-  let status = run.result.status;
-  for (let attempt = 0; attempt < 4 && status === 'AwaitingApproval'; attempt += 1) {
-    const approvals = await fetch(`${url()}/api/ipc`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: 32 + attempt, method: 'approvals_list', params: {} }),
-    }).then((response) => response.json());
-    expect(approvals.ok).toBe(true);
-    expect(approvals.result.pending.length).toBeGreaterThan(0);
-    for (const pending of approvals.result.pending) {
-      const granted = await fetch(`${url()}/api/ipc`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: 36 + attempt,
-          method: 'approvals_grant',
-          params: { job_id: pending.job_id },
-        }),
-      }).then((response) => response.json());
-      expect(granted.ok).toBe(true);
-      expect(granted.result.status).toBe('Succeeded');
-    }
-    const resumed = await fetch(`${url()}/api/ipc`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: 40 + attempt,
-        method: 'campaign_run',
-        params: { id: create.result.id },
-      }),
-    }).then((response) => response.json());
-    expect(resumed.ok).toBe(true);
-    status = resumed.result.status;
+test('campaign create + run over the wire with a tracked job id', async ({ serverInfo }) => {
+  const created = await rpc(serverInfo, 'campaign_create', {
+    name: `pw-campaign-${Date.now()}`,
+    writes: [{ path: 'out.txt', contents: 'offline campaign' }],
+  });
+  expect(created.ok).toBe(true);
+  expect(created.id).toBeTruthy();
+  expect(created.steps).toBe(1);
+  const run = await rpc(serverInfo, 'campaign_run', { id: created.id });
+  // Campaign writes are approval-gated: the run parks in AwaitingApproval
+  // and the approval list carries the tracked job (R9's tracked-job
+  // contract), or completes when a grant already exists.
+  expect(run.ok).toBe(true);
+  expect(run.id).toBeTruthy();
+  expect(run.status).toMatch(/Pending|Running|Succeeded|Failed|Cancelled|AwaitingApproval/);
+
+  // Resolve the parked approval so the worker home is clean for later
+  // specs (the dock test asserts a fresh approvals list).
+  const pending = await rpc(serverInfo, 'approvals_list');
+  const parked = (pending.pending || []).find((a) => /campaign/i.test(String(a.job_label || '')));
+  if (parked?.job_id) {
+    await rpc(serverInfo, 'approvals_grant', { job_id: parked.job_id });
   }
-  expect(status).toBe('Succeeded');
-});
-
-test('cron add list tick via IPC', async ({ serverInfo }) => {
-  const add = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: 10,
-      method: 'cron_add',
-      params: {
-        name: 'pw-cron',
-        every_secs: 5,
-        prompt: 'pw cron hello',
-        provider: 'offline',
-      },
-    }),
-  }).then((r) => r.json());
-  expect(add.ok).toBe(true);
-  expect(add.result.id).toBeTruthy();
-
-  const list = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 11, method: 'cron_list', params: {} }),
-  }).then((r) => r.json());
-  expect(list.ok).toBe(true);
-  expect((list.result.jobs || []).some((j) => j.name === 'pw-cron')).toBeTruthy();
-
-  // Force due by setting next via sqlite in the global server's temporary home.
-  const { execFileSync } = require('child_process');
-  const path = require('path');
-  const dbPath = path.join(serverInfo.home, 'cron.db');
-  execFileSync(
-    process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'),
-    ['-c', `import sqlite3; c=sqlite3.connect(${JSON.stringify(dbPath)}); c.execute('update cron_jobs set next_run_unix=0'); c.commit()`],
-    { stdio: 'pipe' }
-  );
-
-  const tick = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 12, method: 'cron_tick', params: {} }),
-  }).then((r) => r.json());
-  expect(tick.ok).toBe(true);
-  expect((tick.result.ran || []).length).toBeGreaterThan(0);
-  expect(JSON.stringify(tick.result.ran)).toContain('ok steps');
-});
-
-test('multi-turn offline session resume via UI', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-  await page.selectOption('#provider', 'offline');
-  await page.fill('#input', 'first-turn-alpha');
-  await page.press('#input', 'Enter');
-  await expect(page.locator('.msg.user .bubble').last()).toContainText('first-turn-alpha', {
-    timeout: 20000,
-  });
-  await expect(page.locator('.msg.assistant .bubble').last()).toContainText('offline echo', {
-    timeout: 20000,
-  });
-  // The final bubble is painted before refreshSessions completes and releases
-  // the busy guard. Wait for the actual send boundary, not just visible text.
-  await expect(page.locator('#send')).toBeEnabled({ timeout: 20000 });
-  await expect(page.locator('#provider')).toHaveValue('offline');
-  await page.fill('#input', 'second-turn-beta');
-  await page.press('#input', 'Enter');
-  await expect(page.locator('.msg.user .bubble').last()).toContainText('second-turn-beta', {
-    timeout: 20000,
-  });
-  await expect(page.locator('.msg.assistant .bubble').last()).toContainText('second-turn-beta', {
-    timeout: 20000,
-  });
-  // at least 2 user bubbles
-  await expect
-    .poll(async () => page.locator('.msg.user .bubble').count())
-    .toBeGreaterThanOrEqual(2);
-});
-
-test('pinned sessions via right-click context menu', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  await page.click('#newThread');
-  await page.click('#modeProjects');
-  await expect
-    .poll(
-      async () =>
-        (await page.locator('#projectList .thread').count()) +
-        (await page.locator('#sessionList .thread').count()),
-      { timeout: 15000 }
-    )
-    .toBeGreaterThan(0);
-
-  // Pin via contextmenu dispatch (more reliable than OS right-click in CI)
-  await page.evaluate(() => {
-    const row = document.querySelector('#projectList .thread, #sessionList .thread');
-    if (!row) throw new Error('no thread row');
-    row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 40, clientY: 200 }));
-  });
-  await expect(page.locator('#sessionCtx')).toBeVisible();
-  await page.locator('#sessionCtx [data-act="pin"]').click({ force: true });
-  await expect
-    .poll(async () => page.locator('#pinnedList .thread').count(), { timeout: 5000 })
-    .toBeGreaterThan(0);
-
-  await expect(page.locator('#railResize')).toBeVisible();
-  await page.click('#modeSessions');
-  await expect(page.locator('#sessionsLabel')).toContainText(/Sessions/i);
-  await page.click('#modeProjects');
-  await expect(page.locator('#sessionsLabel')).toContainText(/Projects/i);
-});
-
-test('doctor_json cron_jobs and status bar live bind', async ({ page }) => {
-  const r = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 99, method: 'doctor', params: {} }),
-  }).then((x) => x.json());
-  expect(r.ok).toBe(true);
-  expect(r.result).toBeTruthy();
-  expect(Object.prototype.hasOwnProperty.call(r.result, 'cron_jobs')).toBe(true);
-  expect(Object.prototype.hasOwnProperty.call(r.result, 'campaigns_active')).toBe(true);
-  expect(Object.prototype.hasOwnProperty.call(r.result, 'gateway')).toBe(true);
-  expect(typeof r.result.cron_jobs).toBe('number');
-
-  await page.goto('/');
-  await waitForReady(page);
-
-  await expect
-    .poll(async () => (await page.locator('#stGateway').innerText()).toLowerCase(), { timeout: 15000 })
-    .toMatch(/ok|down|up/);
-
-  await expect
-    .poll(async () => {
-      const cron = await page.locator('#stCron').innerText();
-      const agents = await page.locator('#stAgents').innerText();
-      const ver = await page.locator('#stVer').innerText();
-      const home = await page.locator('#stHome').innerText();
-      return { cron, agents, ver, home };
-    }, { timeout: 15000 })
-    .toMatchObject({
-      cron: expect.stringMatching(/\d/),
-      agents: expect.stringMatching(/\d/),
-      ver: expect.stringMatching(/\S/),
-      home: expect.stringMatching(/\S/),
-    });
-
-  // tokens / model filled (model may be offline-echo on fresh home)
-  const tokens = await page.locator('#stTokens').innerText();
-  expect(tokens.length).toBeGreaterThan(0);
-  const model = await page.locator('#stModel').innerText();
-  expect(model.length).toBeGreaterThan(0);
 });

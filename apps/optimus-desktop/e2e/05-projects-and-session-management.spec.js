@@ -1,148 +1,102 @@
 // @ts-check
-const { test, expect, url, waitForReady } = require('./support');
+// spec-015 A3: project + session management on the React workbench over
+// the WS transport. Projects come from the host (`project_scopes_list`);
+// the fresh home has no scopes, so the rail renders the Local session
+// band and the add-project affordance. Rename/delete go through the real
+// rail context menu + dialog (the app owns the session list state).
+const { test, expect, url, waitForReady, rpc } = require('./support');
 
-test('projects collapse and left resize + add', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  await page.click('#modeProjects');
-  await expect(page.locator('#projectAdd')).toBeVisible();
-  await expect(page.locator('#leftResize')).toBeAttached();
-
-  // Seed two projects + assign a session via localStorage
-  await page.click('#newThread');
-  await expect
-    .poll(async () => (await page.evaluate(() => (window.__sessions = null, true))), { timeout: 5000 })
-    .toBeTruthy();
-
-  await page.evaluate(() => {
-    const projects = [
-      { id: 'p_demo_a', name: 'DemoA', path: 'E:/Projects/DemoA' },
-      { id: 'p_demo_b', name: 'DemoB', path: 'E:/Projects/DemoB' },
-    ];
-    localStorage.setItem('optimus.ui.projects', JSON.stringify(projects));
-    localStorage.setItem('optimus.ui.projectExpanded', JSON.stringify({ p_demo_a: false, p_demo_b: false, __inbox: true }));
-  });
-
-  // force re-render
-  await page.click('#modeSessions');
-  await page.click('#modeProjects');
-
-  await expect(page.locator('.proj-group[data-proj-id="p_demo_a"]')).toBeVisible();
-  await expect(page.locator('.proj-group[data-proj-id="p_demo_b"]')).toBeVisible();
-
-  // collapsed by default (expanded flag false)
-  await expect(page.locator('.proj-group[data-proj-id="p_demo_a"]')).not.toHaveClass(/open/);
-  await page.locator('.proj-group[data-proj-id="p_demo_a"] .proj-head').click();
-  await expect(page.locator('.proj-group[data-proj-id="p_demo_a"]')).toHaveClass(/open/);
-  // other project stays collapsed — no open collision
-  await expect(page.locator('.proj-group[data-proj-id="p_demo_b"]')).not.toHaveClass(/open/);
-  await page.locator('.proj-group[data-proj-id="p_demo_a"] .proj-head').click();
-  await expect(page.locator('.proj-group[data-proj-id="p_demo_a"]')).not.toHaveClass(/open/);
-
-  // left resize handle changes --sidebar-w
-  const before = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim());
-  await page.locator('#leftResize').dispatchEvent('pointerdown', { bubbles: true, clientX: 260, clientY: 300 });
-  await page.evaluate(() => {
-    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 320, clientY: 300, bubbles: true }));
-    window.dispatchEvent(new PointerEvent('pointerup', { clientX: 320, clientY: 300, bubbles: true }));
-  });
-  const after = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim());
-  // width should be numeric px after drag path; tolerate unchanged if event path differs
-  expect(before.length + after.length).toBeGreaterThan(0);
-
-  // Add project via prompt path (HTTP stub)
-  page.once('dialog', async (d) => {
-    await d.accept('E:\Projects\InjectedProj');
-  });
-  await page.click('#projectAdd');
-  await expect
-    .poll(async () =>
-      page.evaluate(() => {
-        try {
-          return (JSON.parse(localStorage.getItem('optimus.ui.projects') || '[]') || []).some((p) => /InjectedProj/i.test(p.name || p.path || ''));
-        } catch { return false; }
-      })
-    , { timeout: 5000 })
-    .toBeTruthy();
+test('project scopes list answers over the wire', async ({ serverInfo }) => {
+  const scopes = await rpc(serverInfo, 'project_scopes_list');
+  expect(scopes.ok).toBe(true);
+  // The fresh home has no scopes; the rail renders the Local band instead
+  // of a hard-coded seed (first-run honesty contract).
+  expect(Array.isArray(scopes.projects)).toBe(true);
+  expect(scopes.projects).toHaveLength(0);
 });
 
-test('delete_session IPC and project DnD local state', async ({ page }) => {
+test('rail renders the local session band and the add-project affordance', async ({ page }) => {
   await page.goto('/');
   await waitForReady(page);
 
-  // create session via IPC
-  const created = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 201, method: 'new_session', params: {} }),
-  }).then((r) => r.json());
-  expect(created.ok).toBe(true);
-  const sid = created.result.id;
+  const rail = page.getByLabel('Projects and sessions');
+  await expect(rail).toBeVisible();
+  // The fresh home's scope-less state renders the rail bands (Pinned,
+  // Projects, Recent Chats) — no hard-coded project seed.
+  await expect(rail.getByTestId('pinned-section')).toBeVisible();
+  await expect(rail.getByTestId('projects-section')).toBeVisible();
+  await expect(rail.getByTestId('recent-chats-section')).toBeVisible();
+  // The add-project affordance exists (opens the folder picker path).
+  await expect(rail.getByRole('button', { name: 'Create project folder' })).toBeVisible();
+});
 
-  const del = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 202, method: 'delete_session', params: { id: sid } }),
-  }).then((r) => r.json());
+test('rail resize via the separator keyboard path changes the width', async ({ page }) => {
+  await page.goto('/');
+  await waitForReady(page);
+
+  const separator = page.getByRole('separator', { name: 'Resize project rail' });
+  await expect(separator).toBeVisible();
+  const before = Number(await separator.getAttribute('aria-valuenow'));
+  await separator.focus();
+  await page.keyboard.press('ArrowRight');
+  const after = Number(await separator.getAttribute('aria-valuenow'));
+  // The keyboard resize moves the rail width by the bounded step.
+  expect(after).toBeGreaterThan(before);
+});
+
+test('rename a session through the rail context menu + dialog', async ({ page, serverInfo }) => {
+  await page.goto('/');
+  await waitForReady(page);
+  await page.getByRole('button', { name: 'New thread' }).click();
+  const row = page.locator('.session-row').first();
+  await expect(row).toBeVisible({ timeout: 5000 });
+  const sessionId = await row.getAttribute('data-session-id');
+
+  // The wire contract: rename_session round-trips the new title.
+  const renamed = await rpc(serverInfo, 'rename_session', {
+    id: sessionId,
+    title: 'Renamed PW Session',
+  });
+  expect(renamed.ok).toBe(true);
+  expect(renamed.title).toBe('Renamed PW Session');
+
+  // The UI path: the row menu opens a rename dialog that updates the row.
+  await row.click({ button: 'right' });
+  await page.getByRole('menu', { name: /Actions for / }).getByRole('menuitem', { name: 'Rename' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Rename session' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('Session title').fill('UI Renamed Session');
+  await dialog.getByRole('button', { name: 'Rename' }).click();
+  await expect(row.locator('.session-title')).toContainText('UI Renamed Session', { timeout: 5000 });
+});
+
+test('delete_session over the wire removes the session from the host', async ({ page, serverInfo }) => {
+  await page.goto('/');
+  await waitForReady(page);
+  await page.getByRole('button', { name: 'New thread' }).click();
+  const row = page.locator('.session-row').first();
+  await expect(row).toBeVisible({ timeout: 5000 });
+  const sessionId = await row.getAttribute('data-session-id');
+
+  const del = await rpc(serverInfo, 'delete_session', { id: sessionId });
   expect(del.ok).toBe(true);
-  expect(del.result.deleted).toBe(true);
+  expect(del.deleted).toBe(true);
 
-  // UI: project + , ctx menus, pin project via evaluate
-  await page.click('#modeProjects');
-  await page.evaluate(() => {
-    const projects = [
-      { id: 'p_x', name: 'XProj', path: 'E:/Projects/XProj' },
-      { id: 'p_y', name: 'YProj', path: 'E:/Projects/YProj' },
-    ];
-    localStorage.setItem('optimus.ui.projects', JSON.stringify(projects));
-    localStorage.setItem('optimus.ui.pinnedProjects', JSON.stringify([]));
-    localStorage.setItem('optimus.ui.projectExpanded', JSON.stringify({ p_x: true, p_y: true, __inbox: true }));
-  });
-  await page.click('#modeSessions');
-  await page.click('#modeProjects');
-  await expect(page.locator('.proj-group[data-proj-id="p_x"] .proj-new')).toBeVisible();
-  await expect(page.locator('#projectCtx')).toBeAttached();
-  await expect(page.locator('#sessionCtx [data-act="delete"]')).toBeAttached();
-
-  // pin project via API helpers in page
-  await page.evaluate(() => {
-    localStorage.setItem('optimus.ui.pinnedProjects', JSON.stringify(['p_x']));
-  });
-  await page.click('#modeSessions');
-  await page.click('#modeProjects');
-  await expect(page.locator('#pinnedList .proj-group[data-proj-id="p_x"]')).toBeVisible();
+  // The host no longer lists the session.
+  const list = await rpc(serverInfo, 'sessions');
+  const hit = (list.sessions || []).find((s) => s.id === sessionId);
+  expect(hit).toBeFalsy();
 });
 
-test('rename_session IPC updates title', async ({ page }) => {
+test('sessions over the wire list the created session', async ({ page, serverInfo }) => {
   await page.goto('/');
   await waitForReady(page);
+  await page.getByRole('button', { name: 'New thread' }).click();
+  const row = page.locator('.session-row').first();
+  await expect(row).toBeVisible({ timeout: 5000 });
+  const sessionId = await row.getAttribute('data-session-id');
 
-  const created = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 301, method: 'new_session', params: {} }),
-  }).then((r) => r.json());
-  expect(created.ok).toBe(true);
-  const sid = created.result.id;
-
-  const ren = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 302, method: 'rename_session', params: { id: sid, title: 'Renamed PW Session' } }),
-  }).then((r) => r.json());
-  expect(ren.ok).toBe(true);
-  expect(ren.result.title).toBe('Renamed PW Session');
-
-  const list = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 303, method: 'sessions', params: {} }),
-  }).then((r) => r.json());
-  expect(list.ok).toBe(true);
-  const hit = (list.result.sessions || []).find((s) => s.id === sid);
+  const list = await rpc(serverInfo, 'sessions');
+  const hit = (list.sessions || []).find((s) => s.id === sessionId);
   expect(hit).toBeTruthy();
-  expect(hit.title).toBe('Renamed PW Session');
-
-  await expect(page.locator('#sessionCtx [data-act="rename"]')).toBeAttached();
 });

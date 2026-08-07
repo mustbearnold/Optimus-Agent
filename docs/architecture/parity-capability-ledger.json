@@ -152,7 +152,7 @@
    "evidence": [
     "apps/optimus-desktop/e2e/01-bootstrap-and-rendering.spec.js"
    ],
-   "trajectory": "playwright:Enter streams offline reply progressively",
+   "trajectory": "playwright:chat round-trip emits exactly one terminal event (A3 headline)",
    "owner_ticket": "A-07"
   },
   {
@@ -208,7 +208,7 @@
     "scripts/rebuild-install-relaunch.sh",
     "docs/decisions/0038-ui-ipc-architecture.md"
    ],
-   "trajectory": "playwright:shell multi-pane IA; program P29 install default Tauri+React",
+   "trajectory": "playwright:topbar: rail toggle, home mark, workspace, terminal, window controls; program P29 install default Tauri+React",
    "owner_ticket": "PF-02"
   },
   {
@@ -242,7 +242,7 @@
     "crates/optimus-kernel/src/fs_sandbox.rs",
     "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
    ],
-   "trajectory": "playwright:Files pane",
+   "trajectory": "playwright:files tab lists the home directory over fs_list",
    "owner_ticket": "B-04"
   },
   {
@@ -271,7 +271,7 @@
     "crates/optimus-runtime/tests/command_capture.rs",
     "apps/optimus-desktop/e2e/04-capabilities-and-tools.spec.js"
    ],
-   "trajectory": "playwright:term_run IPC requires explicit approval before command effect",
+   "trajectory": "playwright:term_run requires explicit approval before a command effect",
    "owner_ticket": "A-03"
   },
   {

@@ -1,206 +1,171 @@
 // @ts-check
-const { test, expect, url, waitForReady } = require('./support');
+// spec-015 A3: the desktop e2e suite drives the REACT workbench against a
+// spawned `optimus serve`. This spec pins the boot contract:
+//   - the serve health surface (HTTP GET /api/health, Bearer-gated with the
+//     record token — the ONLY HTTP surface serve keeps, serve.rs:8)
+//   - the React workbench boots over the WS transport (ticket injected via
+//     addInitScript into __OPTIMUS_BROKER_TICKET__, never a URL)
+//   - a chat round-trip emits EXACTLY ONE terminal event (the A3 headline)
+//   - WS cancel is one-shot; a second cancel is a no-op
+//   - held streams do not block the health surface or a new hello
+const { test, expect, url, waitForReady, rpc, chatStream } = require('./support');
 
-test('health API is up', async () => {
-  const r = await fetch(`${url()}/api/health`);
-  expect(r.ok).toBeTruthy();
-  const j = await r.json();
-  expect(j.ok).toBe(true);
-  expect(j.streaming).toBe(true);
-  expect(j).not.toHaveProperty('home');
-});
-
-test('UI boots and leaves Starting… state', async ({ page }) => {
-  const startupErrors = [];
-  page.on('pageerror', (error) => startupErrors.push(`pageerror: ${error.message}`));
-  page.on('console', (message) => {
-    if (message.type() === 'error') startupErrors.push(`console: ${message.text()}`);
-  });
-  await page.goto('/');
-  await waitForReady(page);
-  await expect(page.locator('#stVer')).not.toHaveText('ver…');
-  expect(startupErrors).toEqual([]);
-  // Settled shell: left nav + list chrome present (Hermes-compact rail)
-  await expect(page.locator('#newThread')).toBeVisible();
-  await expect(page.locator('#navCapabilities')).toBeVisible();
-  await expect(page.locator('#railSplit')).toBeVisible();
-  await expect(page.locator('#pinnedPane')).toBeVisible();
-  await expect(page.locator('#listPane')).toBeVisible();
-  await expect(page.locator('#modeProjects')).toBeVisible();
-  await expect(page.locator('#settingsBtn')).toBeVisible();
-  // SIGNAL rail removed
-  await expect(page.locator('#signalPanel')).toBeHidden();
-});
-
-test('Enter streams offline reply progressively', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForFunction(() => window.__optimusBridgeInstalled === true);
-  await waitForReady(page);
-
-  await page.selectOption('#provider', 'offline');
-  const input = page.locator('#input');
-  await input.fill('stream-me-please-xyz');
-  await input.press('Enter');
-
-  // Progressive: assistant bubble appears before full done
-  await expect(page.locator('.msg.assistant .bubble')).toBeVisible({ timeout: 15000 });
-  await expect(page.locator('.msg.user .bubble')).toContainText('stream-me-please-xyz');
-  await expect(page.locator('.msg.assistant .bubble')).toContainText('offline echo', {
-    timeout: 30000,
-  });
-  await expect(page.locator('.msg.assistant .bubble')).toContainText('stream-me-please-xyz');
-  await expect(input).toHaveValue('');
-});
-
-test('SSE stream endpoint emits delta then done', async () => {
-  // create session
-  const ns = await fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 1, method: 'new_session', params: {} }),
+test('serve exposes only the Bearer-gated health surface on HTTP', async ({ serverInfo }) => {
+  // The record token IS the Bearer (serve.rs:8, ws.rs:55-66).
+  const ok = await fetch(`http://127.0.0.1:${serverInfo.port}/api/health`, {
+    headers: { Authorization: `Bearer ${serverInfo.ticket}` },
   }).then((r) => r.json());
-  const session = ns.result.id;
-  const r = await fetch(`${url()}/api/chat/stream`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message: 'sse-chunk-test',
-      provider: 'offline',
-      session,
-    }),
-  });
-  expect(r.ok).toBeTruthy();
-  const text = await r.text();
-  expect(text).toContain('data: ');
-  expect(text).toContain('"type":"delta"');
-  expect(text).toContain('"type":"done"');
-  expect(text).toContain('offline echo');
+  expect(ok).toEqual({ ok: true, streaming: true, transport: 'ws' });
+
+  // Without the token the health probe is 401.
+  const denied = await fetch(`http://127.0.0.1:${serverInfo.port}/api/health`);
+  expect(denied.status).toBe(401);
+
+  // Anything else on HTTP is 404 — no /api/ipc, no /api/chat/stream.
+  const unknown = await fetch(`http://127.0.0.1:${serverInfo.port}/api/ipc`);
+  expect(unknown.status).toBe(404);
 });
 
-test('two held SSE responses do not block the HTTP accept loop', async () => {
-  test.setTimeout(60000);
-  const message = `held-stream-${'x'.repeat(512 * 1024)}`;
-  const startStream = () => fetch(`${url()}/api/chat/stream`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, provider: 'offline' }),
-  });
-
-  const [first, second] = await Promise.all([startStream(), startStream()]);
-  expect(first.ok).toBeTruthy();
-  expect(second.ok).toBeTruthy();
-
-  const health = await Promise.race([
-    fetch(`${url()}/api/health`),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('health blocked by SSE')), 3000)),
-  ]);
-  expect(health.ok).toBeTruthy();
-  expect((await health.json()).ok).toBeTruthy();
-
-  await Promise.all([first.body.cancel(), second.body.cancel()]);
-});
-
-test('bridge HTTP stream cancellation is local and one-shot', async ({ page }) => {
-  await page.route('**/api/chat/stream', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await route.fulfill({
-      status: 200,
-      contentType: 'text/event-stream',
-      body: 'data: {"type":"done","result":{}}\n\n',
-    }).catch(() => {});
-  });
+test('react workbench boots on the WS transport from a loopback origin', async ({ page }) => {
   await page.goto('/');
   await waitForReady(page);
+  // The work surface rendered (composer visible) — the transport resolved.
+  await expect(page.getByLabel('Message Optimus')).toBeVisible();
+  // The status bar shows the workbench state.
+  await expect(page.getByLabel('Session status')).toBeVisible();
+});
 
-  const observed = await page.evaluate(async () => {
-    const stream = window.optimus.chatStream('cancel locally', { provider: 'offline' }, () => {});
-    const first = stream.cancel();
-    const second = stream.cancel();
-    try {
-      await stream;
-      return { first, second, settled: 'resolved' };
-    } catch (error) {
-      return { first, second, settled: error && error.name };
+test('hello carries the record ticket and answers the protocol version', async ({ serverInfo }) => {
+  const { WebSocket } = globalThis;
+  const ws = new WebSocket(`ws://127.0.0.1:${serverInfo.port}/ws`);
+  const replies = [];
+  await new Promise((resolve, reject) => {
+    ws.addEventListener('open', resolve, { once: true });
+    ws.addEventListener('error', reject, { once: true });
+  });
+  ws.addEventListener('message', (event) => {
+    replies.push(JSON.parse(String(event.data)));
+    if (replies.length >= 2) ws.close();
+  });
+  ws.send(JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'hello',
+    params: { protocol_version: 1, client_kind: 'renderer', ticket: serverInfo.ticket },
+  }));
+  await new Promise((resolve) => ws.addEventListener('close', resolve, { once: true }));
+  const hello = replies.find((r) => r.id === 1);
+  expect(hello.result.protocol_version).toBe(1);
+  expect(hello.result.capabilities.streaming).toBe(true);
+  expect(hello.result.capabilities.carriers).toEqual(['stdio', 'ws']);
+  const ready = replies.find((r) => r.method === 'host.ready');
+  expect(ready).toBeTruthy();
+});
+
+test('chat round-trip emits exactly one terminal event (A3 headline)', async ({ serverInfo }) => {
+  const { events, terminal, terminalCount } = await chatStream(serverInfo, {
+    session: '',
+    message: 'hello from playwright',
+    provider: 'offline',
+  });
+  // The offline provider echoes the message; deltas stream before the terminal.
+  const text = events.map((e) => e.text || '').join('');
+  expect(text).toContain('offline echo: hello from playwright');
+  expect(terminalCount).toBe(1);
+  expect(terminal.type).toBe('done');
+  expect(terminal.result).toBeTruthy();
+});
+
+test('chat_cancel is one-shot: a second cancel is a no-op', async ({ serverInfo }) => {
+  const ws = await (async () => {
+    const { WebSocket } = globalThis;
+    const ws = new WebSocket(`ws://127.0.0.1:${serverInfo.port}/ws`);
+    const pending = new Map();
+    ws.addEventListener('message', (event) => {
+      const value = JSON.parse(String(event.data));
+      if (value.id !== undefined && pending.has(value.id)) {
+        const { resolve } = pending.get(value.id);
+        pending.delete(value.id);
+        resolve(value);
+      }
+    });
+    await new Promise((resolve, reject) => {
+      ws.addEventListener('open', resolve, { once: true });
+      ws.addEventListener('error', reject, { once: true });
+    });
+    ws.invoke = (id, method, params) =>
+      new Promise((resolve) => {
+        pending.set(id, { resolve });
+        ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+      });
+    return ws;
+  })();
+  try {
+    await ws.invoke(1, 'hello', {
+      protocol_version: 1,
+      client_kind: 'renderer',
+      ticket: serverInfo.ticket,
+    });
+    const ack = await ws.invoke(2, 'chat_start', {
+      stream_id: 7,
+      request: { session: '', message: 'cancel me', provider: 'offline' },
+    });
+    expect(ack.result.stream_id).toBe(7);
+    // The first cancel requests the cancellation.
+    const first = await ws.invoke(3, 'chat_cancel', { stream_id: 7 });
+    expect(first.result.requested).toBe(true);
+    // A second cancel on the same stream is a no-op (R6).
+    const second = await ws.invoke(4, 'chat_cancel', { stream_id: 7 });
+    expect(second.result.requested).toBe(false);
+  } finally {
+    ws.close();
+  }
+});
+
+test('held streams leave the health surface and a new hello responsive', async ({ serverInfo }) => {
+  // Saturate the pool with paced offline turns, then prove the control
+  // plane stays responsive: health answers and a fresh hello completes.
+  const { WebSocket } = globalThis;
+  const ws = new WebSocket(`ws://127.0.0.1:${serverInfo.port}/ws`);
+  const pending = new Map();
+  ws.addEventListener('message', (event) => {
+    const value = JSON.parse(String(event.data));
+    if (value.id !== undefined && pending.has(value.id)) {
+      const { resolve } = pending.get(value.id);
+      pending.delete(value.id);
+      resolve(value);
     }
   });
-
-  expect(observed).toEqual({ first: true, second: false, settled: 'AbortError' });
-});
-
-test('coalesceTools merges repeated web_search', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  const n = await page.evaluate(() => {
-    const tools = [
-      { name: 'web_search', detail: 'a', status: 'ok' },
-      { name: 'web_search', detail: 'b', status: 'ok' },
-      { name: 'web_search', detail: 'c', status: 'ok' },
-      { name: 'web_search', detail: 'd', status: 'ok' },
-      { name: 'web_search', detail: 'e', status: 'ok' },
-    ];
-    const g = window.__optimusTest.coalesceTools(tools);
-    return { groups: g.length, count: g[0].count, label: g[0].count > 1 ? `${g[0].name} ×${g[0].count}` : g[0].name };
+  await new Promise((resolve, reject) => {
+    ws.addEventListener('open', resolve, { once: true });
+    ws.addEventListener('error', reject, { once: true });
   });
-  expect(n.groups).toBe(1);
-  expect(n.count).toBe(5);
-  expect(n.label).toBe('web_search ×5');
-});
-
-test('formatRich hides tool JSON and keeps prose', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  const cleaned = await page.evaluate(() => {
-    const only = '[{"id":"call_x","name":"web_search","arguments":{"query":"nz"}}]';
-    const mixed = only + '\n\n**Hello** world\n- item';
-    const strip = window.__optimusTest.stripToolCallNoise;
-    return { only: strip(only), mixed: strip(mixed) };
-  });
-  expect(cleaned.only).toBe('');
-  expect(cleaned.mixed).toContain('**Hello**');
-  expect(cleaned.mixed).not.toContain('call_x');
-});
-
-test('formatRich cannot create event-handler attributes from markdown links', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  const rendered = await page.evaluate(() => {
-    const host = document.createElement('div');
-    const hooks = (/** @type {any} */ (window)).__optimusTest;
-    host.innerHTML = hooks.formatRich(
-      '[safe](https://example.com/"onmouseover="globalThis.__optimusLinkPwned=1")'
-    );
-    const link = host.querySelector('a.md-link');
-    return {
-      linkCount: host.querySelectorAll('a.md-link').length,
-      eventAttributes: link
-        ? [...link.attributes].map((attr) => attr.name).filter((name) => /^on/i.test(name))
-        : [],
-    };
-  });
-
-  expect(rendered.linkCount).toBe(1);
-  expect(rendered.eventAttributes).toEqual([]);
-});
-
-test('active turns retain session ownership until streaming settles', async ({ page }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  const blocked = await page.evaluate(async () => {
-    const hooks = (/** @type {any} */ (window)).__optimusTest;
-    hooks.setBusy(true);
-    try {
-      return {
-        created: await hooks.newSession(),
-        opened: await hooks.openSession('must-not-be-requested'),
-      };
-    } finally {
-      hooks.setBusy(false);
+  ws.invoke = (id, method, params) =>
+    new Promise((resolve) => {
+      pending.set(id, { resolve });
+      ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+    });
+  try {
+    await ws.invoke(1, 'hello', {
+      protocol_version: 1,
+      client_kind: 'renderer',
+      ticket: serverInfo.ticket,
+    });
+    for (let i = 0; i < 4; i += 1) {
+      await ws.invoke(10 + i, 'chat_start', {
+        stream_id: 20 + i,
+        request: { session: '', message: `held turn ${i}`, provider: 'offline' },
+      });
     }
-  });
-
-  expect(blocked).toEqual({ created: false, opened: false });
+    // Health still answers under load.
+    const health = await fetch(`http://127.0.0.1:${serverInfo.port}/api/health`, {
+      headers: { Authorization: `Bearer ${serverInfo.ticket}` },
+    }).then((r) => r.json());
+    expect(health.ok).toBe(true);
+    // A fresh connection's hello still completes (control-plane bypass).
+    const again = await rpc(serverInfo, 'ping');
+    expect(again.pong).toBe(true);
+  } finally {
+    ws.close();
+  }
 });

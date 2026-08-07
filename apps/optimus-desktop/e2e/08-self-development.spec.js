@@ -1,21 +1,12 @@
 // @ts-check
-const { test, expect, url, waitForReady } = require('./support');
-
-// The Developer Full Access / self-development vertical (spec-013). These
-// specs drive the real host's IPC surface over the desktop HTTP transport —
-// the same registry the Tauri shell forwards through `host_invoke`
-// (spec-002 R5) and the same methods the React DeveloperAccessPanel calls.
-// The panel's React behaviour is pinned by vitest; the full supervisor
-// lifecycle (build + launch, handoff, rollback, emergency stop) is pinned by
+// spec-015 A3: the Developer Full Access / self-development vertical
+// (spec-013) over the WS wire. These specs drive the real host's IPC
+// surface through the same JSON-RPC 2.0 frames the renderer's wsTransport
+// speaks against a spawned `optimus serve`. The React DeveloperAccessPanel
+// behaviour is pinned by vitest; the full supervisor lifecycle (build +
+// launch, handoff, rollback, emergency stop) is pinned by
 // `scripts/tests/test_self_development.py` on both surfaces.
-
-function ipc(method, params = {}) {
-  return fetch(`${url()}/api/ipc`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: Math.floor(Math.random() * 100000), method, params }),
-  }).then((response) => response.json());
-}
+const { test, expect, url, waitForReady, rpc } = require('./support');
 
 const CONFIRMATION = 'I understand Developer Full Access risks';
 
@@ -38,43 +29,40 @@ function grantFor(root) {
 }
 
 test('developer access starts disabled with an idle supervisor', async ({ serverInfo }) => {
-  const state = await ipc('developer_access_get');
+  const state = await rpc(serverInfo, 'developer_access_get');
   expect(state.ok).toBe(true);
-  expect(state.result.developer_access.enabled).toBe(false);
-  expect(state.result.supervisor.healthy).toBe(false);
-  expect(state.result.confirmation).toBe(CONFIRMATION);
+  expect(state.developer_access.enabled).toBe(false);
+  expect(state.supervisor.healthy).toBe(false);
+  expect(state.confirmation).toBe(CONFIRMATION);
 });
 
 test('developer access enable requires the one-time confirmation', async ({ serverInfo }) => {
-  const denied = await ipc('developer_access_enable', {
+  const denied = await rpc(serverInfo, 'developer_access_enable', {
     confirmation: 'wrong confirmation',
     grant: grantFor(serverInfo.home),
   });
   expect(denied.ok).toBe(false);
-  const state = await ipc('developer_access_get');
-  expect(state.result.developer_access.enabled).toBe(false);
+  const state = await rpc(serverInfo, 'developer_access_get');
+  expect(state.developer_access.enabled).toBe(false);
 });
 
-test('developer access enable + revoke round-trip on the real host', async ({ page, serverInfo }) => {
-  await page.goto('/');
-  await waitForReady(page);
-
-  const enabled = await ipc('developer_access_enable', {
+test('developer access enable + revoke round-trip on the real host', async ({ serverInfo }) => {
+  const enabled = await rpc(serverInfo, 'developer_access_enable', {
     confirmation: CONFIRMATION,
     grant: grantFor(serverInfo.home),
   });
   expect(enabled.ok).toBe(true);
-  expect(enabled.result.developer_access.enabled).toBe(true);
-  expect(enabled.result.developer_access.scope.root).toBe(serverInfo.home);
+  expect(enabled.developer_access.enabled).toBe(true);
+  expect(enabled.developer_access.scope.root).toBe(serverInfo.home);
   // production_systems can never be enabled by a grant (ADR-0076/0078).
-  expect(enabled.result.developer_access.capabilities.production_systems).toBe(false);
+  expect(enabled.developer_access.capabilities.production_systems).toBe(false);
 
-  const status = await ipc('developer_supervisor_status');
+  const status = await rpc(serverInfo, 'developer_supervisor_status');
   expect(status.ok).toBe(true);
-  expect(status.result.healthy).toBe(false);
+  expect(status.healthy).toBe(false);
 
-  const revoked = await ipc('developer_access_revoke');
+  const revoked = await rpc(serverInfo, 'developer_access_revoke');
   expect(revoked.ok).toBe(true);
-  expect(revoked.result.developer_access.enabled).toBe(false);
-  expect(revoked.result.supervisor.healthy).toBe(false);
+  expect(revoked.developer_access.enabled).toBe(false);
+  expect(revoked.supervisor.healthy).toBe(false);
 });
