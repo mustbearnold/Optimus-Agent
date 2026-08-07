@@ -209,13 +209,19 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
             _ => CommandClass::ProjectExecute,
         },
 
-        "pip" | "pip3" => match sub {
-            "install" | "uninstall" if global => CommandClass::HostInstall,
-            // `-r requirements.txt` names a file already in the repository.
-            "install" if requirements_only(args) => CommandClass::PackageSync,
-            "install" | "uninstall" => CommandClass::PackageAdd,
-            _ => CommandClass::ProjectExecute,
-        },
+        "pip" | "pip3" => classify_pip_args(args, sub, global),
+        // `python -m pip ...` is pip run from inside the interpreter. It must
+        // draw the same sync/add/host split as a bare `pip` invocation, not
+        // fall back to project execution: the approval prompt would otherwise
+        // say "runs project code" for a command that reaches PyPI.
+        "python" | "python3" | "py" if is_python_module_pip(args) => {
+            let pip_args = python_pip_args(args);
+            let pip_sub = pip_args.first().map(String::as_str).unwrap_or("");
+            let pip_global = pip_args
+                .iter()
+                .any(|f| HOST_INSTALL_FLAGS.contains(&f.as_str()));
+            classify_pip_args(&pip_args, pip_sub, pip_global)
+        }
 
         "uv" => match sub {
             "tool" => CommandClass::HostInstall,
@@ -244,6 +250,34 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
 #[must_use]
 pub fn capability_for_command(program: &str, args: &[String]) -> CapabilityId {
     classify_command(program, args).capability()
+}
+
+/// Shared sync/add/host split for `pip` and `python -m pip`.
+fn classify_pip_args(args: &[String], sub: &str, global: bool) -> CommandClass {
+    match sub {
+        "install" | "uninstall" if global => CommandClass::HostInstall,
+        // `-r requirements.txt` names a file already in the repository.
+        "install" if requirements_only(args) => CommandClass::PackageSync,
+        "install" | "uninstall" => CommandClass::PackageAdd,
+        _ => CommandClass::ProjectExecute,
+    }
+}
+
+/// True when the interpreter is asked to run pip as a module
+/// (`python -m pip ...`), so the module check cannot be confused by a
+/// positional argument that merely says "pip".
+fn is_python_module_pip(args: &[String]) -> bool {
+    args.windows(2).any(|pair| pair[0] == "-m" && pair[1] == "pip")
+}
+
+/// The arguments after `pip` in a `python -m pip ...` invocation. The caller
+/// must have already confirmed `is_python_module_pip`.
+fn python_pip_args(args: &[String]) -> Vec<String> {
+    args.iter()
+        .skip_while(|arg| arg.as_str() != "pip")
+        .skip(1)
+        .cloned()
+        .collect()
 }
 
 /// `pip install -r requirements.txt` names a file, not a package.
@@ -502,6 +536,41 @@ mod tests {
                 &["install", "--require-hashes", "-r", "requirements.txt"]
             ),
             CommandClass::PackageSync
+        );
+    }
+
+    #[test]
+    fn python_m_pip_is_pip_not_project_execution() {
+        // Regression: `python -m pip install requests` reaches PyPI exactly
+        // like `pip install requests`, but used to fall through to
+        // ProjectExecute — the approval prompt would say "runs project code"
+        // for a command that chooses a new dependency.
+        assert_eq!(
+            class("python", &["-m", "pip", "install", "requests"]),
+            CommandClass::PackageAdd
+        );
+        assert_eq!(
+            class("python3", &["-m", "pip", "install", "-r", "requirements.txt"]),
+            CommandClass::PackageSync
+        );
+        assert_eq!(
+            class("python", &["-m", "pip", "install", "--user", "black"]),
+            CommandClass::HostInstall,
+            "a --user install must leave the project lane even via -m"
+        );
+        assert_eq!(
+            class("python", &["-m", "pip", "uninstall", "requests"]),
+            CommandClass::PackageAdd
+        );
+        // Module invocations that are not pip stay project execution, and a
+        // positional that merely says "pip" is not the module form.
+        assert_eq!(
+            class("python", &["-m", "http.server", "8000"]),
+            CommandClass::ProjectExecute
+        );
+        assert_eq!(
+            class("python", &["script.py", "pip", "install", "requests"]),
+            CommandClass::ProjectExecute
         );
     }
 
