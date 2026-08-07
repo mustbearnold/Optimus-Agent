@@ -202,6 +202,28 @@ fn resolve_prefers_pinned_then_proven() {
 }
 
 #[test]
+fn update_body_rejects_empty_body() {
+    let (_d, reg) = open();
+    let id = reg
+        .create(SkillDraft {
+            name: "keep-body".into(),
+            body: "v1".into(),
+            permissions: vec![],
+            pin: false,
+        })
+        .unwrap();
+
+    // Same invariant as create(): whitespace-only bodies must be rejected.
+    let err = reg.update_body(id, Some("   ".into()), None).unwrap_err();
+    assert!(matches!(err, SkillError::Invariant(_)));
+
+    // And a failed update must not mutate the stored skill.
+    let s = reg.get(id).unwrap();
+    assert_eq!(s.body, "v1");
+    assert_eq!(s.version, 1);
+}
+
+#[test]
 fn deprecated_excluded_from_default_list_and_resolve() {
     let (_d, reg) = open();
     let id = reg

@@ -316,6 +316,10 @@ impl SkillRegistry {
             ));
         }
         let new_body = body.unwrap_or(skill.body);
+        // Same invariant as create(): a skill must never hold an empty body.
+        if new_body.trim().is_empty() {
+            return Err(SkillError::Invariant("body required".into()));
+        }
         let new_perms = if let Some(p) = permissions {
             let next = normalize_perms(&p);
             let declared: BTreeSet<_> = skill.permissions.iter().copied().collect();
