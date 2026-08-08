@@ -86,6 +86,12 @@ impl fmt::Display for ToolId {
     }
 }
 
+impl AsRef<str> for ToolId {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 impl From<&str> for ToolId {
     fn from(value: &str) -> Self {
         Self::new(value)
@@ -135,5 +141,12 @@ mod tests {
         let id = ToolId::new("terminal");
         assert_eq!(id.to_string(), "terminal");
         assert_eq!(ToolId::from("read_file").to_string(), "read_file");
+    }
+
+    #[test]
+    fn tool_id_as_ref_str_borrows_backing_string() {
+        let id = ToolId::new("search_content");
+        let borrowed: &str = id.as_ref();
+        assert_eq!(borrowed, "search_content");
     }
 }
