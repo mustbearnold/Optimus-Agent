@@ -100,19 +100,23 @@ pub(crate) fn unindex_claim_raw(conn: &Connection, id: &str) -> Result<()> {
 /// into a query-language console — and a malformed expression into an error
 /// rather than an empty result.
 fn match_expression(raw: &str) -> String {
+    // Repeated words are ANDed in FTS5, so "key key key" would otherwise build
+    // `"key"* "key"* "key"*` — redundant terms that cost nothing semantically
+    // but grow the expression (and, for pathological input, risk the tokenizer
+    // limit). Collapse them while preserving first-seen order.
+    let mut seen = std::collections::HashSet::new();
     raw.split_whitespace()
-        .map(|token| {
+        .filter_map(|token| {
             let cleaned: String = token
                 .chars()
                 .filter(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
                 .collect();
             if cleaned.is_empty() {
-                String::new()
-            } else {
-                format!("\"{cleaned}\"*")
+                return None;
             }
+            let term = format!("\"{cleaned}\"*");
+            seen.insert(term.clone()).then_some(term)
         })
-        .filter(|token| !token.is_empty())
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -357,5 +361,13 @@ mod tests {
     #[test]
     fn non_ascii_words_survive() {
         assert_eq!(match_expression("café Zürich"), "\"café\"* \"Zürich\"*");
+    }
+
+    #[test]
+    fn repeated_words_are_collapsed_not_repeated() {
+        // "key key key" must not build `"key"* "key"* "key"*`: the extra ANDed
+        // terms are redundant and only inflate the FTS5 expression.
+        assert_eq!(match_expression("key key key"), "\"key\"*");
+        assert_eq!(match_expression("deploy key deploy"), "\"deploy\"* \"key\"*");
     }
 }
