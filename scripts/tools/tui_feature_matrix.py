@@ -39,6 +39,116 @@ METHOD_SOURCES = (
 BRAILLE = set("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
 
 
+def read_completion_request(handler: http.server.BaseHTTPRequestHandler) -> dict:
+    """The parsed Chat Completions request body ({} when unreadable)."""
+    length = int(handler.headers.get("Content-Length", "0"))
+    raw = handler.rfile.read(length)
+    try:
+        payload = json.loads(raw or b"{}")
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def sse_chunks_for(message: dict) -> list[dict]:
+    """OpenAI-style streaming chunks for one non-streaming fixture message.
+
+    Mirrors what the kernel's SSE accumulator consumes (spec-021): content
+    deltas, tool_call fragments keyed by index (id/name first, then argument
+    pieces), a finish_reason chunk, and a final usage chunk because the
+    kernel requests stream_options.include_usage.
+    """
+    chunks: list[dict] = []
+    content = message.get("content")
+    if content:
+        midpoint = max(1, len(content) // 2)
+        for piece in (content[:midpoint], content[midpoint:]):
+            chunks.append(
+                {"choices": [{"index": 0, "delta": {"content": piece}, "finish_reason": None}]}
+            )
+    for index, call in enumerate(message.get("tool_calls") or []):
+        function = call.get("function", {})
+        chunks.append(
+            {
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {
+                            "tool_calls": [
+                                {
+                                    "index": index,
+                                    "id": call.get("id", ""),
+                                    "type": call.get("type", "function"),
+                                    "function": {
+                                        "name": function.get("name", ""),
+                                        "arguments": "",
+                                    },
+                                }
+                            ]
+                        },
+                        "finish_reason": None,
+                    }
+                ]
+            }
+        )
+        arguments = function.get("arguments", "")
+        if arguments:
+            midpoint = max(1, len(arguments) // 2)
+            for piece in (arguments[:midpoint], arguments[midpoint:]):
+                chunks.append(
+                    {
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {
+                                    "tool_calls": [
+                                        {"index": index, "function": {"arguments": piece}}
+                                    ]
+                                },
+                                "finish_reason": None,
+                            }
+                        ]
+                    }
+                )
+    finish = "tool_calls" if message.get("tool_calls") else "stop"
+    chunks.append({"choices": [{"index": 0, "delta": {}, "finish_reason": finish}]})
+    chunks.append(
+        {
+            "choices": [],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+        }
+    )
+    return chunks
+
+
+def send_completion(
+    handler: http.server.BaseHTTPRequestHandler, message: dict, *, stream: bool
+) -> None:
+    """Reply with plain JSON, or with SSE when the kernel asks to stream.
+
+    The OpenAI-compatible transport now always requests ``stream: true``
+    (spec-021), and its SSE accumulator finishes with "provider returned
+    empty content and no tool_calls" when a JSON-only fixture answers it.
+    """
+    if not stream:
+        body = json.dumps(
+            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
+        ).encode()
+        handler.send_response(200)
+        handler.send_header("Content-Type", "application/json")
+        handler.send_header("Content-Length", str(len(body)))
+        handler.end_headers()
+        handler.wfile.write(body)
+        return
+    handler.send_response(200)
+    handler.send_header("Content-Type", "text/event-stream")
+    handler.send_header("Cache-Control", "no-cache")
+    handler.end_headers()
+    for chunk in sse_chunks_for(message):
+        handler.wfile.write(b"data: " + json.dumps(chunk).encode("utf-8") + b"\n\n")
+    handler.wfile.write(b"data: [DONE]\n\n")
+
+
 class ApprovalFixtureHandler(http.server.BaseHTTPRequestHandler):
     """A tiny local Chat Completions provider for the approval journey.
 
@@ -54,8 +164,8 @@ class ApprovalFixtureHandler(http.server.BaseHTTPRequestHandler):
         return
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
-        length = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(length)
+        request = read_completion_request(self)
+        stream = bool(request.get("stream"))
         type(self).requests += 1
         request_number = type(self).requests
         if request_number in (1, 3):
@@ -84,14 +194,7 @@ class ApprovalFixtureHandler(http.server.BaseHTTPRequestHandler):
                 "role": "assistant",
                 "content": f"The {outcome} continuation returned.",
             }
-        body = json.dumps(
-            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        send_completion(self, message, stream=stream)
 
 
 class ApprovalContinuationFixtureHandler(http.server.BaseHTTPRequestHandler):
@@ -103,8 +206,8 @@ class ApprovalContinuationFixtureHandler(http.server.BaseHTTPRequestHandler):
         return
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
-        length = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(length)
+        request = read_completion_request(self)
+        stream = bool(request.get("stream"))
         type(self).requests += 1
         request_number = type(self).requests
         if request_number in (1, 2):
@@ -134,14 +237,7 @@ class ApprovalContinuationFixtureHandler(http.server.BaseHTTPRequestHandler):
                 "role": "assistant",
                 "content": "both approval continuations completed",
             }
-        body = json.dumps(
-            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        send_completion(self, message, stream=stream)
 
 
 class CompletedToolFixtureHandler(http.server.BaseHTTPRequestHandler):
@@ -159,8 +255,8 @@ class CompletedToolFixtureHandler(http.server.BaseHTTPRequestHandler):
         return
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
-        length = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(length)
+        request = read_completion_request(self)
+        stream = bool(request.get("stream"))
         type(self).requests += 1
         if type(self).requests == 1:
             message = {
@@ -182,14 +278,7 @@ class CompletedToolFixtureHandler(http.server.BaseHTTPRequestHandler):
                 "role": "assistant",
                 "content": "The directory listing came back clean.",
             }
-        body = json.dumps(
-            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        send_completion(self, message, stream=stream)
 
 
 class ReusedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
@@ -201,8 +290,8 @@ class ReusedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
         return
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
-        length = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(length)
+        request = read_completion_request(self)
+        stream = bool(request.get("stream"))
         type(self).requests += 1
         request_number = type(self).requests
         if request_number in (1, 3):
@@ -224,14 +313,7 @@ class ReusedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
         else:
             answer = "The alpha file was read." if request_number == 2 else "The beta file was read."
             message = {"role": "assistant", "content": answer}
-        body = json.dumps(
-            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        send_completion(self, message, stream=stream)
 
 
 class PendingRepeatedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
@@ -243,8 +325,8 @@ class PendingRepeatedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
         return
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler hook
-        length = int(self.headers.get("Content-Length", "0"))
-        self.rfile.read(length)
+        request = read_completion_request(self)
+        stream = bool(request.get("stream"))
         type(self).requests += 1
         request_number = type(self).requests
         if request_number == 1:
@@ -289,14 +371,7 @@ class PendingRepeatedCallFixtureHandler(http.server.BaseHTTPRequestHandler):
                 "role": "assistant",
                 "content": "The pending proof was approved after switching sessions.",
             }
-        body = json.dumps(
-            {"choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        send_completion(self, message, stream=stream)
 
 
 class FeatureFailure(RuntimeError):

@@ -519,6 +519,9 @@ mod tests {
             })
             .unwrap();
         let view = reg.get(id).unwrap();
-        assert_eq!(view.permissions, vec![Permission::FsWorkspace, Permission::Net]);
+        assert_eq!(
+            view.permissions,
+            vec![Permission::FsWorkspace, Permission::Net]
+        );
     }
 }

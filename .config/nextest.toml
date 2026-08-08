@@ -32,3 +32,14 @@ max-threads = 1
 [[profile.default.overrides]]
 filter = 'binary(serve_protocol)'
 test-group = 'surface-protocol'
+
+# The optimus-tui pty suite drives real tmux sessions and terminal paint
+# timing. Parallel pty tests starve the shared tmux event loop enough that
+# every test trips its 20s deadline at once — the same disease as above,
+# with tmux as the contended global resource. Serialise it.
+[test-groups.tui-pty]
+max-threads = 1
+
+[[profile.default.overrides]]
+filter = 'package(optimus-tui)'
+test-group = 'tui-pty'

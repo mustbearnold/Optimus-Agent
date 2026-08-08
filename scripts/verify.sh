@@ -308,10 +308,14 @@ tier_gates() {
 # --- tier: check -------------------------------------------------------------
 tier_check() {
   section "compile"
-  run "cargo check" cargo check --workspace --all-targets
+  # Clippy surfaces every compile error `cargo check` would, so hosts with
+  # clippy installed skip the redundant check pass: both commands serialise on
+  # the same target-dir lock, and the second pass was pure queue time. Hosts
+  # without clippy keep the plain check so the compile gate never disappears.
   if cargo clippy --version >/dev/null 2>&1; then
     run "clippy" cargo clippy --workspace --all-targets -- -D warnings
   else
+    run "cargo check" cargo check --workspace --all-targets
     skip "clippy" "not installed: rustup component add clippy"
   fi
 }
@@ -569,10 +573,12 @@ tier_all() {
   spawn "test_repo_token_budget"     python3 scripts/tests/test_repo_token_budget.py
 
   spawn_section "compile"
-  spawn "cargo check" cargo check --workspace --all-targets
+  # Same rationale as tier_check: clippy subsumes cargo check, and both queue
+  # on the target-dir lock — one compile pass instead of two.
   if cargo clippy --version >/dev/null 2>&1; then
     spawn "clippy" cargo clippy --workspace --all-targets -- -D warnings
   else
+    spawn "cargo check" cargo check --workspace --all-targets
     skip "clippy" "not installed: rustup component add clippy"
   fi
 
