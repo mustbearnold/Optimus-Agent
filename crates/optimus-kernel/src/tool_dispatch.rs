@@ -196,6 +196,7 @@ impl Kernel {
                     None => Ok(json!({ "found": false, "name": name }).to_string()),
                 }
             }
+            ToolInvocation::Goal => self.dispatch_goal(call),
             ToolInvocation::WriteFile => {
                 let path = call
                     .arguments

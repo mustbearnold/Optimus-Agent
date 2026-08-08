@@ -875,6 +875,25 @@
       "supporting": []
     },
     {
+      "id": "specs.026-goals",
+      "keywords": [
+        "goal",
+        "objective",
+        "token budget",
+        "time budget",
+        "budget_limited",
+        "goal tool",
+        "pause",
+        "resume",
+        "complete",
+        "spec-026"
+      ],
+      "primary": [
+        "spec-026-goals"
+      ],
+      "supporting": []
+    },
+    {
       "id": "specs.backlog",
       "keywords": [
         "backlog",

@@ -26,6 +26,7 @@ pub enum ToolInvocation {
     WebSearch,
     MemoryRecall,
     SkillResolve,
+    Goal,
     ActivatePack,
     ReleasePack,
     BrowserNavigate,
@@ -101,6 +102,7 @@ impl ToolInvocation {
         Self::WebSearch,
         Self::MemoryRecall,
         Self::SkillResolve,
+        Self::Goal,
         Self::ActivatePack,
         Self::ReleasePack,
         Self::BrowserNavigate,
@@ -129,6 +131,7 @@ impl ToolInvocation {
             Self::WebSearch => Some("web_search"),
             Self::MemoryRecall => Some("memory_recall"),
             Self::SkillResolve => Some("skill_resolve"),
+            Self::Goal => Some("goal"),
             Self::ActivatePack => Some("activate_pack"),
             Self::ReleasePack => Some("release_pack"),
             Self::BrowserNavigate => Some("browser_navigate"),
@@ -159,6 +162,7 @@ impl ToolInvocation {
             Self::WebSearch => Some(ToolPolicy::NetworkRead),
             Self::MemoryRecall => Some(ToolPolicy::MemoryRead),
             Self::SkillResolve => Some(ToolPolicy::SkillRead),
+            Self::Goal => Some(ToolPolicy::Capability),
             Self::ActivatePack => Some(ToolPolicy::Capability),
             Self::ReleasePack => Some(ToolPolicy::Capability),
             Self::BrowserNavigate => Some(ToolPolicy::Browser),
@@ -177,6 +181,7 @@ impl ToolInvocation {
             | Self::ListDir
             | Self::MemoryRecall
             | Self::SkillResolve
+            | Self::Goal
             | Self::ActivatePack
             | Self::ReleasePack
             | Self::BrowserSnapshot

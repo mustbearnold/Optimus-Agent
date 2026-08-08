@@ -27,7 +27,7 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 /// Dispatchable tools this suite executes through a real turn.
-const DISPATCHABLE_EXERCISED: [&str; 20] = [
+const DISPATCHABLE_EXERCISED: [&str; 21] = [
     "read_file",
     "search_content",
     "find_files",
@@ -48,6 +48,7 @@ const DISPATCHABLE_EXERCISED: [&str; 20] = [
     "browser_snapshot",
     "browser_click",
     "vision_analyze",
+    "goal",
 ];
 
 /// Declared scaffolds this suite holds to the typed-refusal contract.
@@ -739,6 +740,43 @@ fn every_unavailable_tool_refuses_with_a_typed_error() {
 // ---------------------------------------------------------------------------
 // Activation reachability: which packs a model can actually unlock.
 // ---------------------------------------------------------------------------
+
+#[test]
+fn goal_dispatch_manages_the_session_goal() {
+    let dir = tempdir().unwrap();
+    let mut kernel = open_kernel(dir.path());
+    let mut model = scripted(vec![
+        tool_step(
+            "g1",
+            "goal",
+            json!({"action": "set", "objective": "ship the report", "token_budget": 50}),
+        ),
+        tool_step("g2", "goal", json!({"action": "start"})),
+        tool_step("g3", "goal", json!({"action": "status"})),
+        done("goal exercised"),
+    ]);
+
+    let result = kernel
+        .turn(&mut model, "exercise the goal tool")
+        .expect("goal dispatch must not need a network");
+
+    let invoked: Vec<&str> = result.invoked_tools.iter().map(|t| t.as_str()).collect();
+    assert_eq!(invoked, vec!["goal", "goal", "goal"]);
+
+    let goal = kernel
+        .goal()
+        .expect("goal is queryable")
+        .expect("goal exists");
+    assert_eq!(goal.objective, "ship the report");
+    assert_eq!(goal.token_budget, Some(50));
+    assert_eq!(goal.status.as_str(), "active");
+
+    let evidence = evidence_shown_to_model(&model);
+    assert!(
+        evidence.contains("ship the report"),
+        "the model must see the goal record back: {evidence}"
+    );
+}
 
 #[test]
 fn activation_enum_pins_which_packs_a_model_can_reach() {

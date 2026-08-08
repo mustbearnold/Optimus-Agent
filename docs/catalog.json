@@ -3633,6 +3633,32 @@
     },
     {
       "authority": "record",
+      "content_sha256": "0d07054b4f729bf8300dc4c2135fa633c884cbe75c88840bc806f92fe307eeee",
+      "headings": [
+        "ADR-0086: Goals are session-scoped, budget-enforced objectives",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0086-goals-are-session-scoped-budget-enforced-objectives",
+      "path": "docs/decisions/0086-goals-are-session-scoped-budget-enforced-objectives.md",
+      "plane": "decision",
+      "review_by": "2026-11-08",
+      "reviewed_on": "2026-08-08",
+      "status": "current",
+      "summary": "Goals are durable, session-scoped records (objective, optional token and time budgets, closed status machine) persisted in the session store (sessions.db) — not the effect ledger (optimus.db) the roadmap named — and enforced by the turn loop before each model step, ending the turn with a distinct goal_budget_limited terminal outcome; kernel tool + CLI surface with deterministic, approval-free, replayable calls.",
+      "title": "ADR-0086: Goals are session-scoped, budget-enforced objectives",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4467,6 +4493,38 @@
     },
     {
       "authority": "canonical",
+      "content_sha256": "7c98fccf2f7e19e9fbb6061fb388c65fbf6ae5a43bbd44697a21acaeaa9eff60",
+      "headings": [
+        "Spec-026: Goals — model-held objectives with budgets",
+        "Revision table",
+        "Purpose",
+        "Current state (Confirmed behaviour)",
+        "Requirements",
+        "R1. Goal record",
+        "R2. Status machine",
+        "R3. Budget enforcement",
+        "R4. Time accounting",
+        "R5. Persistence",
+        "R6. Tool surface",
+        "R7. CLI surface",
+        "R8. Observability",
+        "Acceptance criteria",
+        "Out of scope",
+        "Open questions",
+        "Links"
+      ],
+      "id": "spec-026-goals",
+      "path": "specs/026-goals/spec.md",
+      "plane": "work",
+      "review_by": "2026-11-08",
+      "reviewed_on": "2026-08-08",
+      "status": "current",
+      "summary": "Model-held goals for Optimus — a durable, session-scoped goal record (objective, optional token budget, optional time budget, closed status machine) that the turn loop enforces at every model step, stops the turn honestly at a budget, and exposes through kernel tools and CLI commands; the capability class Prime Agent ships as its goal surface, planned natively for Phase 1a of the best-agent roadmap.",
+      "title": "Spec-026: Goals — model-held objectives with budgets",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
       "content_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "headings": [
         "BACKLOG",
@@ -4532,7 +4590,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "bc8ccfa345ef986502c0599d4448b2200089daafa0babdcef9a7c7b0ee7ecbe5",
+  "documents_sha256": "241b989d8b9515154c55b94b8018a92cbfeb5d8876536d3d1dcb1cce0493d9d7",
   "routes": [
     {
       "id": "architecture.blueprint",
@@ -5385,6 +5443,25 @@
       ],
       "primary": [
         "spec-025-session-messaging"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.026-goals",
+      "keywords": [
+        "goal",
+        "objective",
+        "token budget",
+        "time budget",
+        "budget_limited",
+        "goal tool",
+        "pause",
+        "resume",
+        "complete",
+        "spec-026"
+      ],
+      "primary": [
+        "spec-026-goals"
       ],
       "supporting": []
     },

@@ -8,9 +8,13 @@ use uuid::Uuid;
 
 use crate::{KernelError, Message, Result, Role};
 
+mod goal_ops;
+mod goals;
 mod latest;
 mod project;
 mod repair;
+
+pub use goals::{Goal, GoalBudgetReason, GoalStatus, GOALS_SCHEMA_VERSION};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionMeta {
@@ -201,6 +205,9 @@ impl SessionStore {
             ",
         )?;
         let store = Self { conn };
+        // spec-026: additive goals table (ADR-0086). Goals are session state,
+        // so they migrate with the session store, not the effect ledger.
+        store.ensure_goals_schema()?;
         store.backfill_fts_if_empty()?;
         Ok(store)
     }

@@ -162,6 +162,7 @@ pub fn kernel_or_security_code(error: &KernelError) -> &'static str {
         KernelError::CronLeaseLost { .. } => "cron_lease_lost",
         KernelError::CronLeaseExpired { .. } => "cron_lease_expired",
         KernelError::Cron(_) => "cron_error",
+        KernelError::GoalBudgetLimited { .. } => "goal_budget_limited",
         KernelError::Gateway(_) => "gateway_error",
     }
 }

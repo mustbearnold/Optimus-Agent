@@ -171,6 +171,9 @@ impl Kernel {
 
         loop {
             check_cancellation(cancellation)?;
+            // spec-026 R3: an active goal already over a budget stops the
+            // turn before any further model step (goal_budget_limited).
+            self.check_active_goal_budget()?;
             if steps >= self.config.max_steps {
                 let _ = self.save_session();
                 return Err(KernelError::MaxSteps(self.config.max_steps));
@@ -355,6 +358,10 @@ impl Kernel {
                 model_duration_ms,
                 usage.as_ref(),
             )?;
+            // spec-026 R3: post-step usage accumulation for the active goal.
+            // Over budget: transition to budget_limited and stop the turn so
+            // the next model call never starts.
+            self.accumulate_active_goal_usage(usage.as_ref())?;
 
             if !resp.tool_calls.is_empty() {
                 if resp.tool_calls.len() > HARD_MAX_TOOL_CALLS_PER_STEP {

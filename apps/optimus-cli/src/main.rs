@@ -4,9 +4,11 @@ use std::process::ExitCode;
 mod chat;
 mod doctor;
 mod gateway_http;
+mod goal;
 mod parsers;
 mod read_only;
 mod runtime_open;
+mod skills;
 mod telegram_cmd;
 mod vertical_cmd;
 use clap::{Parser, Subcommand};
@@ -22,7 +24,6 @@ use optimus_kernel::{
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
-use optimus_skills::{SkillDraft, SkillRegistry};
 use serde_json::json;
 pub(crate) const OPTIMUS_VERSION_MANIFEST: &str =
     include_str!("../../../docs/architecture/optimus-version.json");
@@ -76,7 +77,7 @@ enum Commands {
     /// Skills 2.0 registry
     Skills {
         #[command(subcommand)]
-        cmd: SkillsCmd,
+        cmd: skills::SkillsCmd,
     },
     /// Progressive capability packs
     Packs {
@@ -116,8 +117,12 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         fast: bool,
     },
-    /// List durable chat sessions
+    /// Durable chat sessions
     Sessions,
+    Goal {
+        #[command(flatten)]
+        args: goal::GoalArgs,
+    },
     /// Authentication (Codex OAuth, …)
     Auth {
         #[command(subcommand)]
@@ -186,28 +191,6 @@ enum Commands {
 enum DoctorCmd {
     /// List the process-local backup path set for this home
     BackupList,
-}
-
-#[derive(Subcommand, Debug)]
-enum SkillsCmd {
-    /// List non-deprecated skills
-    List {
-        #[arg(long)]
-        all: bool,
-    },
-    /// Create a candidate skill
-    Create {
-        name: String,
-        /// Skill body text
-        body: String,
-        /// Comma-separated permissions: fs,terminal,net,browser,memory_write
-        #[arg(long, default_value = "fs")]
-        perms: String,
-        #[arg(long)]
-        pin: bool,
-    },
-    /// Resolve best skill by name
-    Resolve { name: String },
 }
 
 #[derive(Subcommand, Debug)]
@@ -627,50 +610,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             }
             Ok(())
         }
-        Commands::Skills { cmd } => {
-            let reg = SkillRegistry::open(&skills_db)?;
-            match cmd {
-                SkillsCmd::List { all } => {
-                    for s in reg.list(all)? {
-                        println!(
-                            "{} v{} {:?} uses={} rate={:.2} perms={:?}",
-                            s.name, s.version, s.status, s.uses, s.success_rate, s.permissions
-                        );
-                    }
-                    Ok(())
-                }
-                SkillsCmd::Create {
-                    name,
-                    body,
-                    perms,
-                    pin,
-                } => {
-                    let permissions = parsers::parse_perms(&perms)?;
-                    let id = reg.create(SkillDraft {
-                        name,
-                        body,
-                        permissions,
-                        pin,
-                    })?;
-                    let s = reg.get(id)?;
-                    println!("created {} v{} {:?} id={id}", s.name, s.version, s.status);
-                    Ok(())
-                }
-                SkillsCmd::Resolve { name } => {
-                    match reg.resolve(&name)? {
-                        Some(s) => {
-                            println!(
-                                "{} v{} {:?} id={} rate={:.2}",
-                                s.name, s.version, s.status, s.id, s.success_rate
-                            );
-                            println!("{}", s.body);
-                        }
-                        None => println!("no skill named {name}"),
-                    }
-                    Ok(())
-                }
-            }
-        }
+        Commands::Skills { cmd } => skills::run_skills(&skills_db, cmd),
         Commands::Packs { cmd } => match cmd {
             PacksCmd::List => {
                 for (id, pack) in builtin_catalog() {
@@ -708,7 +648,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             session,
         } => {
             let sid = parse_session(session)?;
-            let mut kernel = Kernel::open_session(&cli.home, KernelConfig::default(), sid)?;
+            let mut kernel = open_session(&cli.home, sid)?;
             println!("session {}", kernel.session_id());
             let mut model = if demo_memory {
                 kernel.remember_demo("user", "prefers_editor", "helix")?;
@@ -762,6 +702,11 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         } => chat::run_chat(
             &cli.home, message, provider, model, base_url, session, thinking, fast,
         ),
+        Commands::Goal { args } => {
+            let sid = parse_session(args.session.clone())?;
+            let mut kernel = open_session(&cli.home, sid)?;
+            goal::run_goal(&mut kernel, &args)
+        }
         Commands::Sessions => {
             for s in list_sessions(&cli.home)? {
                 println!(
@@ -1390,6 +1335,15 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             optimus_host::serve_run(&cli.home, port, stdio);
         }
     }
+}
+
+/// Open a kernel for the current session (or a fresh one). The single
+/// allowed core-state call site in this binary (crate-layers allowlist).
+fn open_session(
+    home: &std::path::Path,
+    sid: Option<uuid::Uuid>,
+) -> Result<Kernel, Box<dyn std::error::Error>> {
+    Ok(Kernel::open_session(home, KernelConfig::default(), sid)?)
 }
 
 fn parse_session(

@@ -4,6 +4,18 @@ use optimus_packs::ToolDesc as ToolSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::{CancellationToken, KernelError, Result};
+
+/// Fail fast when the shared cancellation token has been set. Every model
+/// boundary and tool-loop check observes the same token (ADR-0046).
+pub(crate) fn check_cancellation(token: &CancellationToken) -> Result<()> {
+    if token.is_cancelled() {
+        Err(KernelError::Cancelled)
+    } else {
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {

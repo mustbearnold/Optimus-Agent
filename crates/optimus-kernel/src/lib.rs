@@ -112,6 +112,7 @@ pub use fs_sandbox::{
 };
 pub use home_ops::{get_session, list_sessions, open_cron, tick_cron, SessionDetail};
 pub use model_call::{apply_fast_mode, cap_effort_for_later_steps, normalize_thinking_level};
+pub(crate) use model_contract::check_cancellation;
 pub use model_contract::{CompletionRequest, CompletionResponse, Message, Role, ToolCall};
 pub(crate) use model_usage::completion_usage_from_value;
 pub use model_usage::CompletionUsage;
@@ -191,7 +192,8 @@ pub use routing::{
 pub use scripted::ScriptedModel;
 pub use security_denial::{classify_security_denial, kernel_or_security_code, SecurityDenialCode};
 pub use session::{
-    ListFilter, SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus,
+    Goal, GoalBudgetReason, GoalStatus, ListFilter, SessionEffectLink, SessionMeta, SessionStore,
+    TurnRecord, TurnStatus, GOALS_SCHEMA_VERSION,
 };
 pub(crate) use {model_call::pack_names, tool_report::*};
 
@@ -248,6 +250,11 @@ pub enum KernelError {
     CronLeaseExpired { job_id: Uuid },
     #[error("cron: {0}")]
     Cron(String),
+    #[error("goal {goal_id} budget exhausted: {reason}")]
+    GoalBudgetLimited {
+        goal_id: Uuid,
+        reason: GoalBudgetReason,
+    },
     #[error("gateway: {0}")]
     Gateway(#[from] optimus_ops::GatewayError),
 }
@@ -341,14 +348,6 @@ pub struct ToolApprovalBinding {
 pub enum StreamControl {
     Continue,
     Cancel,
-}
-
-pub(crate) fn check_cancellation(token: &CancellationToken) -> Result<()> {
-    if token.is_cancelled() {
-        Err(KernelError::Cancelled)
-    } else {
-        Ok(())
-    }
 }
 
 pub trait ModelProvider {

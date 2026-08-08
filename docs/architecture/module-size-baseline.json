@@ -3,7 +3,7 @@
   "limit": 800,
   "measure": "production lines: every #[cfg(test)] item and bare `mod x;` declaration excluded",
   "files": {
-    "apps/optimus-cli/src/main.rs": 1394,
+    "apps/optimus-cli/src/main.rs": 1346,
     "crates/optimus-agent/src/lib.rs": 903,
     "crates/optimus-eval/src/evaluation.rs": 806,
     "crates/optimus-kernel/src/codex_oauth.rs": 1050,

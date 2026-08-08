@@ -17,7 +17,7 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
         PackId::Core,
         PackDesc {
             id: PackId::Core,
-            summary: "Always-on waist: fs, terminal, web, memory, skills, packs, jobs, clarify"
+            summary: "Always-on waist: fs, terminal, web, memory, skills, packs, jobs, goals, clarify"
                 .into(),
             tools: vec![
                 tool(
@@ -164,6 +164,20 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     "Resolve procedural skill by name",
                     120,
                     object_schema(json!({"name":{"type":"string"}}), &["name"]),
+                ),
+                tool(
+                    ToolInvocation::Goal,
+                    "Manage the session goal: a durable objective with optional token and time budgets. Actions: set (create or rewrite in idle), start (idle to active), status, pause, resume, complete. Budgets are enforced by the turn loop while the goal is active.",
+                    60,
+                    object_schema(
+                        json!({
+                            "action":{"type":"string","enum":["set","start","status","pause","resume","complete"]},
+                            "objective":{"type":"string"},
+                            "token_budget":{"type":"integer","minimum":1},
+                            "time_budget_seconds":{"type":"integer","minimum":1}
+                        }),
+                        &["action"],
+                    ),
                 ),
                 tool(
                     ToolInvocation::ActivatePack,
