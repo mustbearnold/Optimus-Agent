@@ -784,6 +784,9 @@ mod tests {
             pinned: false,
             archived: false,
             project: project.map(str::to_owned),
+            inbound_policy: "hold-approval".into(),
+            discoverable: false,
+            dialog_expiry_seconds: None,
         };
         session.sidebar.sessions = vec![
             meta("Morning Handover", Some("warehouse")),

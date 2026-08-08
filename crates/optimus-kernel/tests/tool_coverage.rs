@@ -27,7 +27,7 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 /// Dispatchable tools this suite executes through a real turn.
-const DISPATCHABLE_EXERCISED: [&str; 21] = [
+const DISPATCHABLE_EXERCISED: [&str; 26] = [
     "read_file",
     "search_content",
     "find_files",
@@ -49,6 +49,11 @@ const DISPATCHABLE_EXERCISED: [&str; 21] = [
     "browser_click",
     "vision_analyze",
     "goal",
+    "session_send",
+    "session_inbox",
+    "session_roster",
+    "session_review",
+    "session_policy",
 ];
 
 /// Declared scaffolds this suite holds to the typed-refusal contract.
@@ -779,6 +784,86 @@ fn goal_dispatch_manages_the_session_goal() {
 }
 
 #[test]
+fn session_message_tools_round_trip_between_peers() {
+    let dir = tempdir().unwrap();
+    let home = dir.path();
+    // Peer B: default hold-approval policy, discoverable, opened first.
+    let mut kernel_b = Kernel::open(home, KernelConfig::default()).unwrap();
+    kernel_b.session_policy(None, Some(true), None).unwrap();
+    let b_id = kernel_b.session_id();
+
+    let mut kernel_a = Kernel::open(home, KernelConfig::default()).unwrap();
+    let mut model = scripted(vec![
+        tool_step("s0", "activate_pack", json!({"name": "collaboration"})),
+        tool_step(
+            "s1",
+            "session_send",
+            json!({
+                "to_session": b_id.to_string(),
+                "payload": "coverage ping",
+            }),
+        ),
+        tool_step("s2", "session_inbox", json!({})),
+        tool_step("s3", "session_roster", json!({})),
+        tool_step("s4", "session_policy", json!({"discoverable": true})),
+        done("messaging exercised"),
+    ]);
+
+    let result = kernel_a
+        .turn(&mut model, "exercise the session tools")
+        .expect("session tools must not need a network");
+    let invoked: Vec<&str> = result.invoked_tools.iter().map(|t| t.as_str()).collect();
+    assert_eq!(
+        invoked,
+        vec![
+            "activate_pack",
+            "session_send",
+            "session_inbox",
+            "session_roster",
+            "session_policy"
+        ]
+    );
+
+    let evidence = evidence_shown_to_model(&model);
+    assert!(
+        evidence.contains("held") || evidence.contains("queued"),
+        "the send receipt must reach the model: {evidence}"
+    );
+
+    // B reviews the held message through the real dispatch path.
+    let inbox = kernel_b.session_inbox(10).unwrap();
+    let held = inbox
+        .iter()
+        .find(|m| m.payload == "coverage ping")
+        .expect("held message");
+    let mut model_b = scripted(vec![
+        tool_step("r0", "activate_pack", json!({"name": "collaboration"})),
+        tool_step("r1", "session_inbox", json!({})),
+        tool_step(
+            "r2",
+            "session_review",
+            json!({
+                "message_id": held.id.to_string(),
+                "approve": true,
+            }),
+        ),
+        done("review exercised"),
+    ]);
+    kernel_b
+        .turn(&mut model_b, "review my inbox")
+        .expect("review must not need a network");
+    let review_evidence = evidence_shown_to_model(&model_b);
+    assert!(
+        review_evidence.contains("approved") || review_evidence.contains("delivered"),
+        "the review outcome must reach the model: {review_evidence}"
+    );
+    // (approved is the recorded decision; delivered is the landing state.)
+    let after = kernel_b.session_inbox(10).unwrap();
+    let reviewed = after.iter().find(|m| m.id == held.id).unwrap();
+    assert_eq!(reviewed.state.as_str(), "delivered");
+}
+
+#[test]
 fn activation_enum_pins_which_packs_a_model_can_reach() {
     let catalog = builtin_catalog();
     let activate = catalog
@@ -787,7 +872,14 @@ fn activation_enum_pins_which_packs_a_model_can_reach() {
         .find(|tool| tool.id.as_str() == "activate_pack")
         .expect("activate_pack must exist in the core pack");
 
-    for reachable in ["browser", "desktop", "media", "devex", "social"] {
+    for reachable in [
+        "browser",
+        "desktop",
+        "media",
+        "devex",
+        "social",
+        "collaboration",
+    ] {
         activate
             .validate_arguments(&json!({"name": reachable}))
             .unwrap_or_else(|error| panic!("activate_pack must accept {reachable}: {error}"));

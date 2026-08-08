@@ -53,6 +53,8 @@ impl Kernel {
         execution: RecordedExecution,
     ) -> Result<TurnResult> {
         let started = Instant::now();
+        // spec-025 R1: delivered auto/steer messages surface on the next turn.
+        self.surface_inbox_on_turn(sink);
         let mut timings = TimingAccumulator::default();
         let start_event = timing_event(TimingEventKind::TurnStarted, started, None, None, None);
         self.executions

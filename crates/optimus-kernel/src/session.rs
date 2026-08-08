@@ -1,16 +1,19 @@
 //! Durable chat session store.
 
 use std::path::Path;
+use std::time::Duration;
 
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::execution_support::with_schema_lock;
 use crate::{KernelError, Message, Result, Role};
 
 mod goal_ops;
 mod goals;
 mod latest;
+mod messaging;
 mod project;
 mod repair;
 
@@ -33,7 +36,25 @@ pub struct SessionMeta {
     /// Lifetime project binding (session/project.rs); `None` is a host session.
     #[serde(default)]
     pub project: Option<String>,
+    /// Spec-025 inbound policy: auto-accept | hold-approval | deny.
+    /// Secure default: hold-approval.
+    #[serde(default = "default_inbound_policy")]
+    pub inbound_policy: String,
+    /// Spec-025 R2: opt-in peer discovery. Fresh sessions are opted out.
+    #[serde(default)]
+    pub discoverable: bool,
+    /// Spec-025 R3: per-session dialog expiry for held messages (seconds);
+    /// `None` uses the plane default (30 minutes).
+    #[serde(default)]
+    pub dialog_expiry_seconds: Option<u64>,
 }
+
+fn default_inbound_policy() -> String {
+    "hold-approval".into()
+}
+
+/// Valid inbound policies (spec-025 R3).
+pub const INBOUND_POLICIES: [&str; 3] = ["auto-accept", "hold-approval", "deny"];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SessionEffectLink {
@@ -107,7 +128,10 @@ impl SessionStore {
             std::fs::create_dir_all(parent)?;
         }
         let conn = Connection::open(path)?;
-        conn.execute_batch(
+        // Concurrent kernel opens wait via busy_timeout, never fail locked.
+        conn.busy_timeout(Duration::from_secs(5))?;
+        crate::execution_support::schema_ddl::<crate::KernelError>(
+            &conn,
             "
             PRAGMA journal_mode = WAL;
             PRAGMA foreign_keys = ON;
@@ -157,43 +181,47 @@ impl SessionStore {
             );
             ",
         )?;
-        // program P24 hygiene columns + C1 project binding (idempotent migration).
-        let mut has_pinned = false;
-        let mut has_archived = false;
-        let mut has_project = false;
-        {
-            let mut stmt = conn.prepare("PRAGMA table_info(sessions)")?;
-            let rows = stmt.query_map([], |row| {
-                let name: String = row.get(1)?;
-                Ok(name)
-            })?;
-            for name in rows.flatten() {
-                if name == "pinned" {
-                    has_pinned = true;
-                }
-                if name == "archived" {
-                    has_archived = true;
-                }
-                if name == "project" {
-                    has_project = true;
+        // program P24 hygiene columns + C1 project binding (idempotent
+        // migration; serialized so concurrent openers cannot race an ALTER).
+        with_schema_lock(&conn, || {
+            let mut has_pinned = false;
+            let mut has_archived = false;
+            let mut has_project = false;
+            {
+                let mut stmt = conn.prepare("PRAGMA table_info(sessions)")?;
+                let rows = stmt.query_map([], |row| {
+                    let name: String = row.get(1)?;
+                    Ok(name)
+                })?;
+                for name in rows.flatten() {
+                    if name == "pinned" {
+                        has_pinned = true;
+                    }
+                    if name == "archived" {
+                        has_archived = true;
+                    }
+                    if name == "project" {
+                        has_project = true;
+                    }
                 }
             }
-        }
-        if !has_pinned {
-            conn.execute(
-                "ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0",
-                [],
-            )?;
-        }
-        if !has_archived {
-            conn.execute(
-                "ALTER TABLE sessions ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
-                [],
-            )?;
-        }
-        if !has_project {
-            conn.execute("ALTER TABLE sessions ADD COLUMN project TEXT", [])?;
-        }
+            if !has_pinned {
+                conn.execute(
+                    "ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0",
+                    [],
+                )?;
+            }
+            if !has_archived {
+                conn.execute(
+                    "ALTER TABLE sessions ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
+                    [],
+                )?;
+            }
+            if !has_project {
+                conn.execute("ALTER TABLE sessions ADD COLUMN project TEXT", [])?;
+            }
+            Ok(())
+        })?;
         conn.execute_batch(
             "
             CREATE VIRTUAL TABLE IF NOT EXISTS sessions_fts USING fts5(
@@ -208,6 +236,8 @@ impl SessionStore {
         // spec-026: additive goals table (ADR-0086). Goals are session state,
         // so they migrate with the session store, not the effect ledger.
         store.ensure_goals_schema()?;
+        // spec-025: inbound policy, discovery opt-in, dialog expiry columns.
+        store.ensure_messaging_columns()?;
         store.backfill_fts_if_empty()?;
         Ok(store)
     }
@@ -630,6 +660,9 @@ impl SessionStore {
             pinned: pinned != 0,
             archived: archived != 0,
             project: row.get(8)?,
+            inbound_policy: default_inbound_policy(),
+            discoverable: false,
+            dialog_expiry_seconds: None,
         })
     }
 

@@ -6,6 +6,13 @@ use serde_json::Value;
 
 use crate::{CancellationToken, KernelError, Result};
 
+/// Control returned by a streaming consumer after each event delivery attempt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StreamControl {
+    Continue,
+    Cancel,
+}
+
 /// Fail fast when the shared cancellation token has been set. Every model
 /// boundary and tool-loop check observes the same token (ADR-0046).
 pub(crate) fn check_cancellation(token: &CancellationToken) -> Result<()> {

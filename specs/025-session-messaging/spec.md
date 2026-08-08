@@ -204,40 +204,40 @@ relay (via spec-017 transports) is a later add, not a redesign.
 
 ## Acceptance criteria
 
-- [ ] A1. Given two live sessions A and B (B auto-accept), when A
+- [x] A1. Given two live sessions A and B (B auto-accept), when A
   sends via `session_send`, then B's next turn surfaces the message,
   the receipt reports delivered, and the store shows one delivered
   row carrying the machine id; given an over-cap message, then
   `message_too_large` is returned before enqueue, never a truncated
   send (R1, R4).
-- [ ] A2. Given a dormant session, when a message is sent to it, then
+- [x] A2. Given a dormant session, when a message is sent to it, then
   it is queued and surfaces on resume; given a session whose inbound
   policy is `hold-approval`, when it is reopened, then the policy is
   still `hold-approval` (persisted with the session) (R1, R3).
-- [ ] A3. Given B with `deny` policy, when A sends, then A's receipt
+- [x] A3. Given B with `deny` policy, when A sends, then A's receipt
   is a refused event, never success (R3, R4); given a target session
   that is gone or a store write failure, when A sends, then A
   receives the `session_send_failed` error, never a success receipt
   (R4).
-- [ ] A4. Given B running with bypassed permissions and a message
+- [x] A4. Given B running with bypassed permissions and a message
   requesting an effect, when the message arrives and is approved,
   then it is delivered and recorded; without approval by
   `dialogExpiry`, `message_held_expired` is recorded and A receives
   the expiry event; the expiry uses the configured per-session
   `dialogExpiry` duration with the documented default of 30 min (R3).
-- [ ] A5. Given a message containing an effect request, when it
+- [x] A5. Given a message containing an effect request, when it
   reaches B, then the permission classifier result is recorded and a
   risky request requires SmartDeny approval before B's agent acts;
   the receiving agent sees the message with its classification
   state (approved / denied / pending), never a bare unvetted request
   (R5).
-- [ ] A6. Given a retried delivery of the same message id, when it
+- [x] A6. Given a retried delivery of the same message id, when it
   lands, then the inbox holds exactly one copy (idempotent) (R4).
-- [ ] A7. Given peer discovery, when a session is opted in, then it
+- [x] A7. Given peer discovery, when a session is opted in, then it
   appears in listings with id, title, status, and last activity; when
   opted out, then it never appears; a FRESH session is opted out by
   default and does not appear until opted in (R2).
-- [ ] A8. Given the full implementation, when `just verify` runs,
+- [x] A8. Given the full implementation, when `just verify` runs,
   then the message-plane suite passes with zero skips and every
   transition is observable; `doctor backup-list` / the
   `backup_relative_paths()` enumeration includes the message store,
@@ -247,13 +247,13 @@ relay (via spec-017 transports) is a later add, not a redesign.
   (R1, R7); the `session_send` tool's spec-019 ceremony artifacts are
   present — `ToolInvocation` variant, catalog entry, EM
   reconciliation, module ratchet (R4).
-- [ ] A9. Given a reply sent from B to A's message, when the thread
+- [x] A9. Given a reply sent from B to A's message, when the thread
   view is queried, then the reply carries the correlation id and the
   store exposes the thread (R6).
-- [ ] A10. Given A awaiting a reply with a bounded wait, when the
+- [x] A10. Given A awaiting a reply with a bounded wait, when the
   reply does not arrive within the bound, then the wait expires with
   `reply_wait_expired` and does not hang (R6).
-- [ ] A11. Given a message whose delivery is retried and then fails
+- [x] A11. Given a message whose delivery is retried and then fails
   permanently, when the terminal state is recorded, then the message
   records EXACTLY ONE terminal outcome (delivered / refused /
   expired / failed) — never two (delivered+failed) — across the

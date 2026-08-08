@@ -197,6 +197,11 @@ impl Kernel {
                 }
             }
             ToolInvocation::Goal => self.dispatch_goal(call),
+            ToolInvocation::SessionSend
+            | ToolInvocation::SessionInbox
+            | ToolInvocation::SessionRoster
+            | ToolInvocation::SessionReview
+            | ToolInvocation::SessionPolicy => self.dispatch_session_message(call),
             ToolInvocation::WriteFile => {
                 let path = call
                     .arguments

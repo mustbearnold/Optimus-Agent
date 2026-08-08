@@ -732,8 +732,15 @@ fn stream_limit_rejects_the_17th() {
     let server = start_server();
     let _lock = env_lock();
     let mut ws = ws_client(&server);
+    // 30 s hold: every admitted stream must still be in flight when the
+    // 17th arrives. Streams are registered at dispatch (before their ack),
+    // so the hold only has to outlast the 16 sequential round-trips; a
+    // 1.5 s hold could be exhausted by those round-trips under full-suite
+    // load, letting the earliest streams terminate and admit the 17th.
+    // The held streams are cancelled below, so the long pace costs nothing
+    // at teardown.
     for stream_id in 0..16 {
-        offline_chat(&server, &mut ws, stream_id, 300, "hold");
+        offline_chat(&server, &mut ws, stream_id, 30_000, "hold");
     }
     // The 17th concurrent stream → -32603 "stream limit reached".
     send(
@@ -758,11 +765,40 @@ fn stream_limit_rejects_the_17th() {
             .contains("stream limit"),
         "diagnostic: {reply}"
     );
-    // Connection stays healthy (the in-flight turns keep emitting).
+    // Connection stays healthy. `ping` is worker-dispatched (spec-015 R3:
+    // only hello/chat_cancel run on the connection loop), so the pong is
+    // written only after the pool drains — release the 16 held streams
+    // first. Every stream is still registered here (30 s pace), so every
+    // cancel is {"requested": true}; a cancelled turn stops within a pace
+    // slice, the queued jobs drain, and the pong follows promptly.
     send(
         &mut ws,
         json!({ "jsonrpc": "2.0", "id": 901, "method": "ping", "params": {} }),
     );
+    for stream_id in 0..16 {
+        send(
+            &mut ws,
+            json!({
+                "jsonrpc": "2.0", "id": 2000 + stream_id, "method": "chat_cancel",
+                "params": { "stream_id": stream_id }
+            }),
+        );
+    }
+    for _ in 0..16 {
+        let reply = loop {
+            let value = recv(&mut ws);
+            if value.get("id").is_some() {
+                break value;
+            }
+        };
+        assert_eq!(
+            reply["result"],
+            json!({ "requested": true }),
+            "cancel reply: {reply}"
+        );
+    }
+    // The only id-bearing reply left is the pong (terminal events carry no
+    // id); the pool has drained, so it must arrive promptly.
     let reply = loop {
         let value = recv(&mut ws);
         if value.get("id").is_some() {

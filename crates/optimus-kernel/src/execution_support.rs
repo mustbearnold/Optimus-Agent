@@ -66,22 +66,77 @@ pub(crate) fn insert_manifest(
     Ok(())
 }
 
+/// Run `body` inside an immediate transaction (schema migrations only).
+///
+/// Check-then-alter migrations must be atomic: the host's worker pool
+/// opens kernels on the same home concurrently, and two openers that both
+/// pass the `PRAGMA table_info` check will race the `ALTER TABLE` (one
+/// fails with "duplicate column name"). `BEGIN IMMEDIATE` takes the write
+/// lock up front; with the connection's `busy_timeout`, a racing opener
+/// waits for the migration instead of failing it.
+pub(crate) fn with_schema_lock<T>(
+    connection: &Connection,
+    body: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    connection.execute_batch("BEGIN IMMEDIATE")?;
+    match body() {
+        Ok(value) => {
+            connection.execute_batch("COMMIT")?;
+            Ok(value)
+        }
+        Err(error) => {
+            let _ = connection.execute_batch("ROLLBACK");
+            Err(error)
+        }
+    }
+}
+
+/// Run the open-time schema batch, retrying the transient busy failure that
+/// the busy handler does not cover.
+///
+/// `PRAGMA journal_mode = WAL` takes a file-level lock; SQLite returns
+/// SQLITE_BUSY immediately for that statement without consulting the busy
+/// handler. The host's worker pool opens kernels on the same home
+/// concurrently, so several openers race the journal-mode change on a fresh
+/// file. The window is microseconds (the winning opener finishes its DDL),
+/// so retrying the idempotent batch is the documented pattern.
+pub(crate) fn schema_ddl<E>(connection: &Connection, batch: &str) -> std::result::Result<(), E>
+where
+    rusqlite::Error: Into<E>,
+{
+    let mut attempts = 0;
+    loop {
+        match connection.execute_batch(batch) {
+            Ok(()) => return Ok(()),
+            Err(rusqlite::Error::SqliteFailure(failure, _))
+                if failure.code == rusqlite::ErrorCode::DatabaseBusy && attempts < 8 =>
+            {
+                attempts += 1;
+                std::thread::sleep(std::time::Duration::from_millis(2));
+            }
+            Err(error) => return Err(error.into()),
+        }
+    }
+}
+
 pub(crate) fn ensure_column(
     connection: &Connection,
     table: &str,
     column: &str,
     sql_type: &str,
 ) -> Result<()> {
-    let mut statement = connection.prepare(&format!("PRAGMA table_info({table})"))?;
-    let columns = statement
-        .query_map([], |row| row.get::<_, String>(1))?
-        .collect::<std::result::Result<Vec<_>, _>>()?;
-    if !columns.iter().any(|value| value == column) {
-        connection.execute_batch(&format!(
-            "ALTER TABLE {table} ADD COLUMN {column} {sql_type}"
-        ))?;
-    }
-    Ok(())
+    with_schema_lock(connection, || {
+        let mut statement = connection.prepare(&format!("PRAGMA table_info({table})"))?;
+        let columns = statement
+            .query_map([], |row| row.get::<_, String>(1))?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        if !columns.iter().any(|value| value == column) {
+            connection.execute_batch(&format!(
+                "ALTER TABLE {table} ADD COLUMN {column} {sql_type}"
+            ))?;
+        }
+        Ok(())
+    })
 }
 
 pub(crate) fn read_classes(

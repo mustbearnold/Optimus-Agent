@@ -3,7 +3,7 @@
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -11,6 +11,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 mod redaction;
+mod schema;
 mod text_recall;
 pub use text_recall::{ClaimStanding, TextRecallHit, TextRecallPacket, TextRecallQuery};
 
@@ -237,7 +238,12 @@ impl Memory {
             std::fs::create_dir_all(parent).ok();
         }
         let conn = Connection::open(path)?;
-        conn.execute_batch(
+        // Concurrent kernel opens (the host's worker pool, one home) must
+        // wait for a migrating opener instead of failing "database is
+        // locked" (gateway.rs convention).
+        conn.busy_timeout(Duration::from_secs(5))?;
+        schema::schema_ddl(
+            &conn,
             "
             PRAGMA journal_mode = WAL;
             PRAGMA foreign_keys = ON;
@@ -284,18 +290,18 @@ impl Memory {
                 ON claims(tenant, user_id, project, subject, predicate);
             ",
         )?;
-        ensure_column(
+        schema::ensure_column(
             &conn,
             "claims",
             "sensitivity",
             "TEXT NOT NULL DEFAULT 'personal'",
         )?;
-        ensure_column(&conn, "claims", "retention_until", "TEXT")?;
-        ensure_column(&conn, "claims", "tombstoned_at", "TEXT")?;
-        ensure_column(&conn, "claims", "erased", "INTEGER NOT NULL DEFAULT 0")?;
-        ensure_column(&conn, "ledger", "tenant", "TEXT NOT NULL DEFAULT ''")?;
-        ensure_column(&conn, "ledger", "user_id", "TEXT NOT NULL DEFAULT ''")?;
-        ensure_column(&conn, "ledger", "project", "TEXT NOT NULL DEFAULT ''")?;
+        schema::ensure_column(&conn, "claims", "retention_until", "TEXT")?;
+        schema::ensure_column(&conn, "claims", "tombstoned_at", "TEXT")?;
+        schema::ensure_column(&conn, "claims", "erased", "INTEGER NOT NULL DEFAULT 0")?;
+        schema::ensure_column(&conn, "ledger", "tenant", "TEXT NOT NULL DEFAULT ''")?;
+        schema::ensure_column(&conn, "ledger", "user_id", "TEXT NOT NULL DEFAULT ''")?;
+        schema::ensure_column(&conn, "ledger", "project", "TEXT NOT NULL DEFAULT ''")?;
         conn.execute(
             "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', '2')",
             [],
@@ -809,36 +815,6 @@ pub(crate) fn purpose_allowed_use(purpose: RecallPurpose) -> AllowedUse {
         RecallPurpose::ProcedureLookup => AllowedUse::ProcedureLookup,
         RecallPurpose::ActionAuthorize => AllowedUse::Action,
     }
-}
-
-fn ensure_column(
-    connection: &Connection,
-    table: &str,
-    column: &str,
-    definition: &str,
-) -> Result<()> {
-    let valid_identifier = |value: &str| {
-        !value.is_empty()
-            && value
-                .bytes()
-                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
-    };
-    if !valid_identifier(table) || !valid_identifier(column) {
-        return Err(MemoryError::Invariant(
-            "invalid schema migration identifier".into(),
-        ));
-    }
-    let mut statement = connection.prepare(&format!("PRAGMA table_info({table})"))?;
-    let names = statement.query_map([], |row| row.get::<_, String>(1))?;
-    for name in names {
-        if name? == column {
-            return Ok(());
-        }
-    }
-    connection.execute_batch(&format!(
-        "ALTER TABLE {table} ADD COLUMN {column} {definition}"
-    ))?;
-    Ok(())
 }
 
 fn min_trust(a: TrustDomain, b: TrustDomain) -> TrustDomain {

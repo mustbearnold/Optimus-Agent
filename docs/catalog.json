@@ -3659,6 +3659,32 @@
     },
     {
       "authority": "record",
+      "content_sha256": "1d2a07d0b5fac3237f4a101a7cdaaf5b1c11b52631cb635df0f281e2d7022786",
+      "headings": [
+        "ADR-0087: The session message plane is a durable ops store",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0087-the-session-message-plane-is-a-durable-ops-store",
+      "path": "docs/decisions/0087-the-session-message-plane-is-a-durable-ops-store.md",
+      "plane": "decision",
+      "review_by": "2026-11-08",
+      "reviewed_on": "2026-08-08",
+      "status": "current",
+      "summary": "Session-to-session messaging (spec-025) is a durable SQLite store owned by optimus-ops (messages.db, gateway-authority pattern with idempotent message-id keys, ordered events, exactly-one-terminal), enforced by the kernel through five on-demand collaboration-pack tools; session attributes (inbound policy, discovery opt-in, dialog expiry) persist on the session row; delivery is live-aware (dormant targets stay queued until resume); risky payloads are permission-classified and effect execution stays SmartDeny-gated.",
+      "title": "ADR-0087: The session message plane is a durable ops store",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4461,7 +4487,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "086fee2e15238abaab730daaf812425bc89ec41fe1505f4c3b1a854d2ee14d63",
+      "content_sha256": "2857ddd8e0f317901af5b9451d019a093b5653a833727635fe1c1623ba191c0a",
       "headings": [
         "Spec-025: Session-to-session messaging — the message plane",
         "Revision table",
@@ -4590,7 +4616,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "241b989d8b9515154c55b94b8018a92cbfeb5d8876536d3d1dcb1cce0493d9d7",
+  "documents_sha256": "0df6bbaea8e1a206641bf45cc44955047cd529f6e8433104d33c20390fd35d64",
   "routes": [
     {
       "id": "architecture.blueprint",

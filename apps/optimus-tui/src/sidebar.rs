@@ -557,6 +557,9 @@ mod tests {
                     pinned: false,
                     archived: false,
                     project: None,
+                    inbound_policy: "hold-approval".into(),
+                    discoverable: false,
+                    dialog_expiry_seconds: None,
                 })
                 .collect(),
             ..State::default()
@@ -606,6 +609,9 @@ mod tests {
                 pinned: false,
                 archived: false,
                 project: project.map(str::to_owned),
+                inbound_policy: "hold-approval".into(),
+                discoverable: false,
+                dialog_expiry_seconds: None,
             })
             .collect();
         state.select_project(0);

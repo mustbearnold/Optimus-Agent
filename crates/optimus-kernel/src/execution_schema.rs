@@ -1,7 +1,14 @@
+use std::time::Duration;
+
 use rusqlite::{Connection, Result};
 
 pub(super) fn initialize(conn: &Connection) -> Result<()> {
-    conn.execute_batch(
+    // Concurrent kernel opens wait via busy_timeout, never fail locked.
+    conn.busy_timeout(Duration::from_secs(5))?;
+    // schema_ddl: the journal-mode pragma takes a file-level lock that the
+    // busy handler does not cover; concurrent first-opens retry instead.
+    crate::execution_support::schema_ddl::<rusqlite::Error>(
+        conn,
         "PRAGMA journal_mode=WAL;
          PRAGMA foreign_keys=ON;
          CREATE TABLE IF NOT EXISTS execution_manifests(

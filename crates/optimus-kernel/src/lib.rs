@@ -24,6 +24,7 @@ mod execution_timing;
 mod fs_sandbox;
 mod fs_search;
 mod home_ops;
+mod message_ops;
 mod model_call;
 mod model_contract;
 mod model_usage;
@@ -113,6 +114,7 @@ pub use fs_sandbox::{
 pub use home_ops::{get_session, list_sessions, open_cron, tick_cron, SessionDetail};
 pub use model_call::{apply_fast_mode, cap_effort_for_later_steps, normalize_thinking_level};
 pub(crate) use model_contract::check_cancellation;
+pub use model_contract::StreamControl;
 pub use model_contract::{CompletionRequest, CompletionResponse, Message, Role, ToolCall};
 pub(crate) use model_usage::completion_usage_from_value;
 pub use model_usage::CompletionUsage;
@@ -145,8 +147,9 @@ pub use optimus_ops::{
     stdio_mock_bind, telegram_poll_once, CommandSurface, CronAttemptView, CronClaim, CronError,
     CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus,
     InboundMessage, MappedMcpTool, McpError, McpSessionConfig, McpToolOffer, McpTransportKind,
-    MockTelegramTransport, OutboundMessage, OutboxReceipt, SurfaceCommand, TelegramConfig,
-    TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate,
+    MessageClassification, MessageKind, MessageMode, MessageState, MockTelegramTransport,
+    OutboundMessage, OutboxReceipt, SessionMessage, SurfaceCommand, TelegramConfig, TelegramError,
+    TelegramPollResult, TelegramTransport, TelegramUpdate,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;
 pub use optimus_workflow::{
@@ -257,6 +260,8 @@ pub enum KernelError {
     },
     #[error("gateway: {0}")]
     Gateway(#[from] optimus_ops::GatewayError),
+    #[error("message plane: {0}")]
+    Message(#[from] optimus_ops::MessageError),
 }
 
 impl From<optimus_ops::CronError> for KernelError {
@@ -341,13 +346,6 @@ pub struct ToolApprovalBinding {
     pub node_index: u32,
     pub effect_sha256: String,
     pub summary: String,
-}
-
-/// Control returned by a streaming consumer after each event delivery attempt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StreamControl {
-    Continue,
-    Cancel,
 }
 
 pub trait ModelProvider {
@@ -443,6 +441,7 @@ pub struct Kernel {
     session_title: String,
     sessions: SessionStore,
     executions: ExecutionStore,
+    message_plane: optimus_ops::MessageStore,
     project_roots: Vec<PathBuf>,
 }
 
@@ -516,6 +515,9 @@ impl Kernel {
         let skills = SkillRegistry::open(home.join("skills.db"))?;
         let sessions = SessionStore::open(home.join("sessions.db"))?;
         let executions = ExecutionStore::open(home.join("execution.db"))?;
+        let message_plane = optimus_ops::MessageStore::open(&home)?;
+        // spec-025: this kernel instance is a live peer while it is open.
+        let _ = message_plane.register_live(session_id.unwrap_or_else(Uuid::new_v4));
         let mut packs = CapabilitySession::new(config.pack_budget.clone())?;
 
         let (session_id, session_title, messages) = if let Some(id) = session_id {
@@ -553,6 +555,7 @@ impl Kernel {
             &pack_names(&packs),
             &messages,
         )?;
+        let _ = message_plane.register_live(session_id);
 
         Ok(Self {
             config,
@@ -568,6 +571,7 @@ impl Kernel {
             session_title,
             sessions,
             executions,
+            message_plane,
             project_roots,
         })
     }

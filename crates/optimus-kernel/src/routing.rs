@@ -2,13 +2,14 @@
 
 use std::collections::BTreeSet;
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
+use crate::execution_support::with_schema_lock;
 use crate::telemetry::{route_telemetry_aggregate, RouteTelemetryAggregate};
 use crate::{KernelError, Result, TraceContext};
 
@@ -659,7 +660,12 @@ fn persist_decision(
 ) -> Result<()> {
     std::fs::create_dir_all(home.as_ref())?;
     let connection = Connection::open(home.as_ref().join("routing.db"))?;
-    connection.execute_batch(
+    // Concurrent route persistence (per-turn) must wait, not fail locked.
+    connection.busy_timeout(Duration::from_secs(5))?;
+    // schema_ddl: the journal-mode pragma takes a file-level lock the busy
+    // handler does not cover; concurrent first-opens retry instead.
+    crate::execution_support::schema_ddl::<crate::KernelError>(
+        &connection,
         "PRAGMA journal_mode=WAL;
          CREATE TABLE IF NOT EXISTS route_decisions(
            id TEXT PRIMARY KEY,surface TEXT NOT NULL,requested_provider TEXT NOT NULL,
@@ -693,17 +699,19 @@ fn persist_decision(
 }
 
 fn ensure_route_column(connection: &Connection, column: &str, declaration: &str) -> Result<()> {
-    let mut statement = connection.prepare("PRAGMA table_info(route_decisions)")?;
-    let names = statement
-        .query_map([], |row| row.get::<_, String>(1))?
-        .collect::<std::result::Result<Vec<_>, _>>()?;
-    if !names.iter().any(|name| name == column) {
-        connection.execute(
-            &format!("ALTER TABLE route_decisions ADD COLUMN {column} {declaration}"),
-            [],
-        )?;
-    }
-    Ok(())
+    with_schema_lock(connection, || {
+        let mut statement = connection.prepare("PRAGMA table_info(route_decisions)")?;
+        let names = statement
+            .query_map([], |row| row.get::<_, String>(1))?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        if !names.iter().any(|name| name == column) {
+            connection.execute(
+                &format!("ALTER TABLE route_decisions ADD COLUMN {column} {declaration}"),
+                [],
+            )?;
+        }
+        Ok(())
+    })
 }
 
 pub fn route_decision_count(home: impl AsRef<Path>) -> Result<usize> {

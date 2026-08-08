@@ -1,6 +1,7 @@
 //! SQLite event ledger and job/node projections.
 
 use std::path::Path;
+use std::time::Duration;
 
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,8 @@ pub enum StoreError {
 }
 
 pub type Result<T> = std::result::Result<T, StoreError>;
+
+mod migration;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -168,6 +171,10 @@ impl Store {
             std::fs::create_dir_all(parent).ok();
         }
         let conn = Connection::open(path)?;
+        // Concurrent kernel opens (the host's worker pool, one home) must
+        // wait for a migrating opener instead of failing "database is
+        // locked" (gateway.rs convention).
+        conn.busy_timeout(Duration::from_secs(5))?;
         if let Some(advertised) = Self::advertised_schema_version(&conn)? {
             let version: u32 = advertised.parse().map_err(|_| {
                 StoreError::Invariant(format!("invalid Work Graph schema version {advertised:?}"))
@@ -178,8 +185,14 @@ impl Store {
                 )));
             }
         }
-        conn.execute_batch(
-            "
+        // The journal-mode pragma takes a file-level lock that the busy
+        // handler does not cover; concurrent first-opens (the host's worker
+        // pool opens kernels on one home) retry the idempotent batch
+        // instead of failing.
+        let mut attempts = 0;
+        loop {
+            match conn.execute_batch(
+                "
             PRAGMA journal_mode = WAL;
             PRAGMA foreign_keys = ON;
             CREATE TABLE IF NOT EXISTS meta (
@@ -260,13 +273,23 @@ impl Store {
             CREATE INDEX IF NOT EXISTS idx_action_approvals_exact
             ON action_approvals(job_id,node_id,effect_hash,decision,expires_unix);
             ",
-        )?;
+            ) {
+                Ok(()) => break,
+                Err(rusqlite::Error::SqliteFailure(failure, _))
+                    if failure.code == rusqlite::ErrorCode::DatabaseBusy && attempts < 8 =>
+                {
+                    attempts += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(2));
+                }
+                Err(error) => return Err(error.into()),
+            }
+        }
         conn.execute(
             "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '1')",
             [],
         )?;
+        migration::migrate(&conn)?;
         let store = Self { conn };
-        store.migrate()?;
         store.refresh_job_quarantine()?;
         Ok(store)
     }
@@ -288,169 +311,6 @@ impl Store {
                 |row| row.get(0),
             )
             .optional()?)
-    }
-
-    fn migrate(&self) -> Result<()> {
-        let version = self.schema_version()?;
-        let v: u32 = version.parse().map_err(|_| {
-            StoreError::Invariant(format!("invalid Work Graph schema version {version:?}"))
-        })?;
-        if v > 7 {
-            return Err(StoreError::Invariant(format!(
-                "unsupported future Work Graph schema version {v}"
-            )));
-        }
-        if v < 2 {
-            self.ensure_job_column("max_steps", "INTEGER NOT NULL DEFAULT 100")?;
-            self.ensure_job_column("steps_executed", "INTEGER NOT NULL DEFAULT 0")?;
-            self.ensure_job_column("consecutive_failures", "INTEGER NOT NULL DEFAULT 0")?;
-            self.ensure_job_column("max_consecutive_failures", "INTEGER NOT NULL DEFAULT 3")?;
-            self.ensure_job_column("command_timeout_ms", "INTEGER NOT NULL DEFAULT 30000")?;
-            self.conn.execute_batch(
-                "
-                CREATE TABLE IF NOT EXISTS approvals (
-                    id TEXT PRIMARY KEY NOT NULL,
-                    job_id TEXT NOT NULL,
-                    scope TEXT NOT NULL,
-                    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-                );
-                ",
-            )?;
-            self.conn.execute(
-                "INSERT INTO meta(key, value) VALUES ('schema_version', '2')
-                 ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                [],
-            )?;
-        }
-        if v < 3 {
-            let has_terminal_slot = self.table_has_column("events", "terminal_slot")?;
-            let transaction = self.conn.unchecked_transaction()?;
-            if !has_terminal_slot {
-                transaction.execute("ALTER TABLE events ADD COLUMN terminal_slot INTEGER", [])?;
-            }
-            transaction.execute_batch(
-                "
-                CREATE TABLE IF NOT EXISTS job_quarantine (
-                    job_id TEXT PRIMARY KEY NOT NULL,
-                    reason TEXT NOT NULL,
-                    detected_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-                );
-                INSERT OR IGNORE INTO job_quarantine(job_id, reason)
-                SELECT job_id, 'multiple legacy job_terminal events'
-                FROM events
-                WHERE kind = 'job_terminal' AND job_id IS NOT NULL
-                GROUP BY job_id
-                HAVING COUNT(*) > 1;
-                UPDATE events
-                SET terminal_slot = CASE
-                    WHEN kind = 'job_terminal'
-                     AND job_id NOT IN (SELECT job_id FROM job_quarantine)
-                    THEN 1
-                    ELSE NULL
-                END;
-                CREATE UNIQUE INDEX IF NOT EXISTS one_terminal_event_per_job
-                    ON events(job_id) WHERE terminal_slot = 1;
-                CREATE TRIGGER IF NOT EXISTS enforce_terminal_slot_insert
-                BEFORE INSERT ON events
-                WHEN (NEW.kind = 'job_terminal' AND COALESCE(NEW.terminal_slot, 0) != 1)
-                  OR (NEW.kind != 'job_terminal' AND NEW.terminal_slot IS NOT NULL)
-                BEGIN
-                    SELECT RAISE(ABORT, 'invalid terminal event slot');
-                END;
-                CREATE TRIGGER IF NOT EXISTS enforce_terminal_slot_update
-                BEFORE UPDATE OF kind, terminal_slot, job_id ON events
-                WHEN (NEW.kind = 'job_terminal' AND COALESCE(NEW.terminal_slot, 0) != 1)
-                  OR (NEW.kind != 'job_terminal' AND NEW.terminal_slot IS NOT NULL)
-                BEGIN
-                    SELECT RAISE(ABORT, 'invalid terminal event slot');
-                END;
-                INSERT INTO meta(key, value) VALUES ('schema_version', '3')
-                ON CONFLICT(key) DO UPDATE SET value = excluded.value;
-                ",
-            )?;
-            transaction.commit()?;
-        }
-        if v < 4 {
-            let transaction = self.conn.unchecked_transaction()?;
-            transaction.execute_batch(
-                "
-                CREATE TRIGGER IF NOT EXISTS reject_quarantined_job_update
-                BEFORE UPDATE ON jobs
-                WHEN EXISTS (SELECT 1 FROM job_quarantine WHERE job_id = OLD.id)
-                BEGIN
-                    SELECT RAISE(ABORT, 'job is quarantined');
-                END;
-                CREATE TRIGGER IF NOT EXISTS reject_quarantined_node_update
-                BEFORE UPDATE ON nodes
-                WHEN EXISTS (SELECT 1 FROM job_quarantine WHERE job_id = OLD.job_id)
-                BEGIN
-                    SELECT RAISE(ABORT, 'job is quarantined');
-                END;
-                INSERT INTO meta(key, value) VALUES ('schema_version', '4')
-                ON CONFLICT(key) DO UPDATE SET value = excluded.value;
-                ",
-            )?;
-            transaction.commit()?;
-        }
-        if v < 5 {
-            let transaction = self.conn.unchecked_transaction()?;
-            transaction.execute_batch(
-                "CREATE TABLE IF NOT EXISTS effect_attempts (
-                    attempt_id TEXT PRIMARY KEY NOT NULL,
-                    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-                    node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-                    attempt_no INTEGER NOT NULL CHECK(attempt_no >= 1),
-                    intent_json TEXT NOT NULL,
-                    status TEXT NOT NULL CHECK(status IN (
-                        'prepared','succeeded','failed','ambiguous','interrupted','cancelled'
-                    )),
-                    receipt_json TEXT,
-                    started_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-                    finished_at TEXT,
-                    UNIQUE(node_id, attempt_no)
-                 );
-                 INSERT INTO meta(key, value) VALUES ('schema_version', '5')
-                 ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
-            )?;
-            transaction.commit()?;
-        }
-        if v < 6 {
-            let transaction = self.conn.unchecked_transaction()?;
-            transaction.execute_batch(
-                "CREATE TABLE IF NOT EXISTS cancellation_requests (
-                    job_id TEXT PRIMARY KEY NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-                    reason TEXT NOT NULL,
-                    requested_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-                 );
-                 INSERT INTO meta(key, value) VALUES ('schema_version', '6')
-                 ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
-            )?;
-            transaction.commit()?;
-        }
-        if v < 7 {
-            let transaction = self.conn.unchecked_transaction()?;
-            transaction.execute_batch(
-                "CREATE TABLE IF NOT EXISTS action_approvals (
-                    id TEXT PRIMARY KEY NOT NULL,
-                    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-                    node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-                    effect_hash TEXT NOT NULL CHECK(length(effect_hash) = 64),
-                    actor TEXT NOT NULL CHECK(length(actor) > 0),
-                    decision TEXT NOT NULL CHECK(decision IN ('granted','denied','revoked')),
-                    created_unix INTEGER NOT NULL CHECK(created_unix >= 0),
-                    expires_unix INTEGER NOT NULL CHECK(expires_unix > created_unix),
-                    revoked_unix INTEGER,
-                    revoked_by TEXT,
-                    reason TEXT
-                 );
-                 CREATE INDEX IF NOT EXISTS idx_action_approvals_exact
-                 ON action_approvals(job_id,node_id,effect_hash,decision,expires_unix);
-                 INSERT INTO meta(key, value) VALUES ('schema_version', '7')
-                 ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
-            )?;
-            transaction.commit()?;
-        }
-        Ok(())
     }
 
     fn refresh_job_quarantine(&self) -> Result<()> {
@@ -503,34 +363,6 @@ impl Store {
             return Err(StoreError::Invariant(format!(
                 "job {job_id} is quarantined: {reason}"
             )));
-        }
-        Ok(())
-    }
-
-    fn table_has_column(&self, table: &str, column: &str) -> Result<bool> {
-        let mut stmt = self.conn.prepare(&format!("PRAGMA table_info({table})"))?;
-        let columns = stmt.query_map([], |row| row.get::<_, String>(1))?;
-        for existing in columns {
-            if existing? == column {
-                return Ok(true);
-            }
-        }
-        Ok(false)
-    }
-
-    fn ensure_job_column(&self, name: &str, decl: &str) -> Result<()> {
-        let mut stmt = self.conn.prepare("PRAGMA table_info(jobs)")?;
-        let cols = stmt.query_map([], |row| row.get::<_, String>(1))?;
-        let mut found = false;
-        for c in cols {
-            if c? == name {
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            self.conn
-                .execute(&format!("ALTER TABLE jobs ADD COLUMN {name} {decl}"), [])?;
         }
         Ok(())
     }
@@ -1656,6 +1488,7 @@ fn parse_uuid(s: String, idx: usize) -> std::result::Result<Uuid, rusqlite::Erro
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use tempfile::tempdir;
 
     #[test]

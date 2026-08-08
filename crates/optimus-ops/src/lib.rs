@@ -9,6 +9,7 @@ mod gateway;
 mod hermes_import;
 mod mcp;
 mod media_fixtures;
+mod message_plane;
 mod pty_session;
 mod surface_commands;
 mod surfaces;
@@ -44,6 +45,11 @@ pub use media_fixtures::{
     image_generate_offline, stt_offline, tts_offline, vision_analyze_offline, ImageGenerateRequest,
     ImageGenerateResult, MediaError, SttRequest, SttResult, TtsRequest, TtsResult,
     VisionAnalyzeRequest, VisionAnalyzeResult,
+};
+pub use message_plane::{
+    MessageClassification, MessageError, MessageEvent, MessageKind, MessageMode, MessageState,
+    MessageStore, SessionMessage, DEFAULT_DIALOG_EXPIRY_SECONDS, DEFAULT_MAX_MESSAGE_BYTES,
+    MESSAGE_PLANE_SCHEMA_VERSION,
 };
 pub use pty_session::{PtyError, PtySessionStore, PtyTab, DEFAULT_MAX_TABS};
 pub use surface_commands::{

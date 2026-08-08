@@ -27,6 +27,11 @@ pub enum ToolInvocation {
     MemoryRecall,
     SkillResolve,
     Goal,
+    SessionSend,
+    SessionInbox,
+    SessionRoster,
+    SessionReview,
+    SessionPolicy,
     ActivatePack,
     ReleasePack,
     BrowserNavigate,
@@ -103,6 +108,11 @@ impl ToolInvocation {
         Self::MemoryRecall,
         Self::SkillResolve,
         Self::Goal,
+        Self::SessionSend,
+        Self::SessionInbox,
+        Self::SessionRoster,
+        Self::SessionReview,
+        Self::SessionPolicy,
         Self::ActivatePack,
         Self::ReleasePack,
         Self::BrowserNavigate,
@@ -132,6 +142,11 @@ impl ToolInvocation {
             Self::MemoryRecall => Some("memory_recall"),
             Self::SkillResolve => Some("skill_resolve"),
             Self::Goal => Some("goal"),
+            Self::SessionSend => Some("session_send"),
+            Self::SessionInbox => Some("session_inbox"),
+            Self::SessionRoster => Some("session_roster"),
+            Self::SessionReview => Some("session_review"),
+            Self::SessionPolicy => Some("session_policy"),
             Self::ActivatePack => Some("activate_pack"),
             Self::ReleasePack => Some("release_pack"),
             Self::BrowserNavigate => Some("browser_navigate"),
@@ -163,6 +178,12 @@ impl ToolInvocation {
             Self::MemoryRecall => Some(ToolPolicy::MemoryRead),
             Self::SkillResolve => Some(ToolPolicy::SkillRead),
             Self::Goal => Some(ToolPolicy::Capability),
+            // One arm per variant so Engineering Memory can parse ToolPolicy maps.
+            Self::SessionSend => Some(ToolPolicy::Capability),
+            Self::SessionInbox => Some(ToolPolicy::Capability),
+            Self::SessionRoster => Some(ToolPolicy::Capability),
+            Self::SessionReview => Some(ToolPolicy::Capability),
+            Self::SessionPolicy => Some(ToolPolicy::Capability),
             Self::ActivatePack => Some(ToolPolicy::Capability),
             Self::ReleasePack => Some(ToolPolicy::Capability),
             Self::BrowserNavigate => Some(ToolPolicy::Browser),
@@ -182,6 +203,11 @@ impl ToolInvocation {
             | Self::MemoryRecall
             | Self::SkillResolve
             | Self::Goal
+            | Self::SessionSend
+            | Self::SessionInbox
+            | Self::SessionRoster
+            | Self::SessionReview
+            | Self::SessionPolicy
             | Self::ActivatePack
             | Self::ReleasePack
             | Self::BrowserSnapshot

@@ -2,6 +2,7 @@
 
 use std::collections::BTreeSet;
 use std::path::Path;
+use std::time::Duration;
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -106,8 +107,17 @@ impl SkillRegistry {
             std::fs::create_dir_all(parent).ok();
         }
         let conn = Connection::open(path)?;
-        conn.execute_batch(
-            "
+        // Concurrent kernel opens (the host's worker pool, one home) must
+        // wait for a migrating opener instead of failing "database is
+        // locked" (gateway.rs convention).
+        conn.busy_timeout(Duration::from_secs(5))?;
+        // The journal-mode pragma takes a file-level lock that the busy
+        // handler does not cover; concurrent first-opens (the host's worker
+        // pool) retry the idempotent batch instead of failing.
+        let mut attempts = 0;
+        loop {
+            match conn.execute_batch(
+                "
             PRAGMA journal_mode = WAL;
             PRAGMA foreign_keys = ON;
             CREATE TABLE IF NOT EXISTS skills (
@@ -130,7 +140,17 @@ impl SkillRegistry {
                 payload_json TEXT NOT NULL
             );
             ",
-        )?;
+            ) {
+                Ok(()) => break,
+                Err(rusqlite::Error::SqliteFailure(failure, _))
+                    if failure.code == rusqlite::ErrorCode::DatabaseBusy && attempts < 8 =>
+                {
+                    attempts += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(2));
+                }
+                Err(error) => return Err(error.into()),
+            }
+        }
         Ok(Self { conn, policy })
     }
 

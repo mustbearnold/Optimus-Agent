@@ -127,79 +127,9 @@ impl PackError {
 
 pub type Result<T> = std::result::Result<T, PackError>;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum PackId {
-    Core,
-    Browser,
-    Desktop,
-    Media,
-    Devex,
-    Social,
-    /// Home-automation / IoT breadth (Track Z.10).
-    Home,
-    /// Office docs breadth (Track Z.10).
-    Office,
-}
+mod ids;
 
-impl PackId {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            PackId::Core => "core",
-            PackId::Browser => "browser",
-            PackId::Desktop => "desktop",
-            PackId::Media => "media",
-            PackId::Devex => "devex",
-            PackId::Social => "social",
-            PackId::Home => "home",
-            PackId::Office => "office",
-        }
-    }
-
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "core" => Some(Self::Core),
-            "browser" => Some(Self::Browser),
-            "desktop" => Some(Self::Desktop),
-            "media" => Some(Self::Media),
-            "devex" => Some(Self::Devex),
-            "social" => Some(Self::Social),
-            "home" => Some(Self::Home),
-            "office" => Some(Self::Office),
-            _ => None,
-        }
-    }
-
-    pub fn is_core(self) -> bool {
-        matches!(self, PackId::Core)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[serde(transparent)]
-pub struct ToolId(String);
-
-impl ToolId {
-    pub fn new(id: impl Into<String>) -> Self {
-        Self(id.into())
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl From<&str> for ToolId {
-    fn from(value: &str) -> Self {
-        Self::new(value)
-    }
-}
-
-impl From<String> for ToolId {
-    fn from(value: String) -> Self {
-        Self::new(value)
-    }
-}
+pub use ids::{PackId, ToolId};
 
 pub const TOOL_OUTCOME_VERSION: u16 = 1;
 pub const MAX_TOOL_OUTCOME_SUMMARY_BYTES: usize = 4096;

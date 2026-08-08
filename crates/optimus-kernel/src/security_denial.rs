@@ -164,5 +164,6 @@ pub fn kernel_or_security_code(error: &KernelError) -> &'static str {
         KernelError::Cron(_) => "cron_error",
         KernelError::GoalBudgetLimited { .. } => "goal_budget_limited",
         KernelError::Gateway(_) => "gateway_error",
+        KernelError::Message(_) => "message_plane_error",
     }
 }

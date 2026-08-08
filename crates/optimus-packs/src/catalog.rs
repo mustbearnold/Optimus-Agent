@@ -184,7 +184,7 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     "Load an on-demand capability pack",
                     100,
                     object_schema(
-                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social"]}}),
+                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social","collaboration"]}}),
                         &["name"],
                     ),
                 ),
@@ -193,11 +193,72 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     "Unload an on-demand capability pack (frees its slot and schema tokens)",
                     100,
                     object_schema(
-                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social"]}}),
+                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social","collaboration"]}}),
                         &["name"],
                     ),
                 ),
                 unavailable("clarify", "Ask the user", ToolPolicy::UserInteraction),
+            ],
+        },
+    );
+    m.insert(
+        PackId::Collaboration,
+        PackDesc {
+            id: PackId::Collaboration,
+            summary: "On-demand session collaboration: send, inbox, roster, review, policy (spec-025)".into(),
+            tools: vec![
+                tool(
+                    ToolInvocation::SessionSend,
+                    "Send a message to another session (spec-025). Returns a failure-honest receipt; the target's inbound policy decides the landing state (auto-accept delivers, hold-approval holds, deny refuses).",
+                    80,
+                    object_schema(
+                        json!({
+                            "to_session":{"type":"string"},
+                            "payload":{"type":"string"},
+                            "kind":{"type":"string","enum":["request","reply","notice"]},
+                            "reply_to":{"type":"string"},
+                            "mode":{"type":"string","enum":["auto","steer","follow_up"]}
+                        }),
+                        &["to_session", "payload"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::SessionInbox,
+                    "List this session's inbox with permission-classification state (spec-025). Delivers queued messages and expires held ones first.",
+                    60,
+                    object_schema(json!({"limit":{"type":"integer","minimum":1}}), &[]),
+                ),
+                tool(
+                    ToolInvocation::SessionRoster,
+                    "List sessions opted into peer discovery (spec-025 R2). Opted-out sessions never appear.",
+                    50,
+                    object_schema(json!({}), &[]),
+                ),
+                tool(
+                    ToolInvocation::SessionReview,
+                    "Approve or deny a held session message (spec-025 R3): approve delivers it, deny refuses it.",
+                    60,
+                    object_schema(
+                        json!({
+                            "message_id":{"type":"string"},
+                            "approve":{"type":"boolean"}
+                        }),
+                        &["message_id", "approve"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::SessionPolicy,
+                    "Get or set this session's inbound policy (auto-accept|hold-approval|deny), peer-discovery opt-in, and dialog expiry seconds (spec-025 R2/R3).",
+                    70,
+                    object_schema(
+                        json!({
+                            "inbound_policy":{"type":"string","enum":["auto-accept","hold-approval","deny"]},
+                            "discoverable":{"type":"boolean"},
+                            "dialog_expiry_seconds":{"type":"integer","minimum":1}
+                        }),
+                        &[],
+                    ),
+                ),
             ],
         },
     );
