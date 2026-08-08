@@ -274,6 +274,7 @@ tier_gates() {
   spawn "documentation-contract"     python3 scripts/tools/docs_system.py check
   spawn "repository-ontology"        python3 scripts/tools/repository_ontology.py check
   spawn "temporal-project-knowledge" python3 scripts/tools/project_knowledge.py check
+  spawn "project-index"              python3 scripts/tools/project_index.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/tests/test_architecture_marks.py
@@ -282,6 +283,7 @@ tier_gates() {
   spawn "test_docs_system"           python3 scripts/tests/test_docs_system.py
   spawn "test_repository_ontology"   python3 scripts/tests/test_repository_ontology.py
   spawn "test_project_knowledge"      python3 scripts/tests/test_project_knowledge.py
+  spawn "test_project_index"          python3 scripts/tests/test_project_index.py
   spawn "test_managed_project_cleanup" python3 scripts/tests/test_managed_project_cleanup.py
   spawn "test_impact_select"         python3 scripts/tests/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/tests/test_instruction_planes.py
@@ -543,6 +545,7 @@ tier_all() {
   spawn "documentation-contract"     python3 scripts/tools/docs_system.py check
   spawn "repository-ontology"        python3 scripts/tools/repository_ontology.py check
   spawn "temporal-project-knowledge" python3 scripts/tools/project_knowledge.py check
+  spawn "project-index"              python3 scripts/tools/project_index.py check
 
   spawn_section "gate self-tests"
   spawn "test_architecture_marks"    python3 scripts/tests/test_architecture_marks.py
@@ -551,6 +554,7 @@ tier_all() {
   spawn "test_docs_system"           python3 scripts/tests/test_docs_system.py
   spawn "test_repository_ontology"   python3 scripts/tests/test_repository_ontology.py
   spawn "test_project_knowledge"      python3 scripts/tests/test_project_knowledge.py
+  spawn "test_project_index"          python3 scripts/tests/test_project_index.py
   spawn "test_managed_project_cleanup" python3 scripts/tests/test_managed_project_cleanup.py
   spawn "test_impact_select"         python3 scripts/tests/test_impact_select.py
   spawn "test_instruction_planes"    python3 scripts/tests/test_instruction_planes.py

@@ -40,13 +40,22 @@ tui-layout:
 verify:
     @bash scripts/verify.sh all
 
-# Bounded startup card for every coding agent.
+# Bounded startup card for every coding agent. Refreshes the root folder
+# index (index.md) and names the mandatory SOUL.md persona, so every
+# development turn starts with both current.
 orient:
     @python3 scripts/tools/repository_ontology.py orient
+    @echo "SOUL: SOUL.md (mandatory persona for every AI agent working in this repository)"
+    @python3 scripts/tools/project_index.py generate
 
 # Explain what a path is, whether it ships, and whether it is removable.
 explain-path path:
     @python3 scripts/tools/repository_ontology.py explain-path {{quote(path)}}
+
+# Regenerate the root folder index (index.md); the project-index gate in
+# scripts/verify.sh fails when the committed file drifts from this output.
+project-index:
+    @python3 scripts/tools/project_index.py generate
 
 # Atomically rebuild the indexed SQLite file/component/commit provenance graph.
 project-graph:
