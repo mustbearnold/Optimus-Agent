@@ -55,7 +55,7 @@ impl AutonomyProfile {
         match raw.trim().to_ascii_lowercase().as_str() {
             "standard" | "std" => Some(Self::Standard),
             "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
-            "read_only" | "readonly" | "read" => Some(Self::ReadOnly),
+            "read_only" | "readonly" | "read" | "read-only" => Some(Self::ReadOnly),
             "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
             "developer_full_access" | "developer-full-access" | "developer" => {
                 Some(Self::DeveloperFullAccess)
@@ -1248,6 +1248,17 @@ mod tests {
         );
         assert_eq!(
             AutonomyProfile::parse("read"),
+            Some(AutonomyProfile::ReadOnly)
+        );
+        // Hyphenated spellings are accepted for the other profiles
+        // ("full-project", "developer-full-access"); "read-only" must parse
+        // symmetrically instead of quietly failing closed.
+        assert_eq!(
+            AutonomyProfile::parse("read-only"),
+            Some(AutonomyProfile::ReadOnly)
+        );
+        assert_eq!(
+            AutonomyProfile::parse("READ-ONLY"),
             Some(AutonomyProfile::ReadOnly)
         );
         assert_eq!(
