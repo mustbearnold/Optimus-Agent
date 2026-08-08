@@ -1,10 +1,14 @@
 //! OpenAI-compatible Chat Completions provider.
 
+use std::collections::BTreeMap;
+use std::io::{BufRead, BufReader};
+
 use serde_json::{json, Value};
 
 use crate::{
-    completion_usage_from_value, CompletionRequest, CompletionResponse, CompletionUsage,
-    KernelError, Message, ModelProvider, Result, Role, ToolCall, ToolSchema,
+    check_cancellation, completion_usage_from_value, CancellationToken, CompletionRequest,
+    CompletionResponse, CompletionUsage, KernelError, Message, ModelProvider, Result, Role,
+    StreamEvent, ToolCall, ToolSchema,
 };
 
 #[derive(Debug, Clone)]
@@ -127,6 +131,54 @@ impl ModelProvider for OpenAiCompatModel {
         self.last_usage = usage;
         Ok(response)
     }
+
+    /// Real SSE streaming: `stream:true` body, incremental TextDelta sinks
+    /// per content chunk, reasoning_content chunk sinks as ThinkingDelta,
+    /// tool-call fragments accumulated by index. The assembled response is
+    /// identical in shape to the non-streaming `from_openai_response` so the
+    /// turn loop needs no knowledge of the transport.
+    fn complete_streaming(
+        &mut self,
+        request: CompletionRequest,
+        sink: &mut dyn FnMut(StreamEvent),
+    ) -> Result<CompletionResponse> {
+        self.last_usage = None;
+        let body = to_openai_stream_request(&request, &self.config.model);
+        let url = self.completions_url();
+        let (response, usage) = stream_http(
+            &self.config,
+            &url,
+            body,
+            self.config.organization.as_deref(),
+            sink,
+            None,
+        )?;
+        self.last_usage = usage;
+        Ok(response)
+    }
+
+    fn complete_streaming_cancellable(
+        &mut self,
+        request: CompletionRequest,
+        sink: &mut dyn FnMut(StreamEvent),
+        cancellation: &CancellationToken,
+    ) -> Result<CompletionResponse> {
+        check_cancellation(cancellation)?;
+        self.last_usage = None;
+        let body = to_openai_stream_request(&request, &self.config.model);
+        let url = self.completions_url();
+        let (response, usage) = stream_http(
+            &self.config,
+            &url,
+            body,
+            self.config.organization.as_deref(),
+            sink,
+            Some(cancellation),
+        )?;
+        check_cancellation(cancellation)?;
+        self.last_usage = usage;
+        Ok(response)
+    }
 }
 
 /// DeepSeek V4 Chat Completions adapter. It intentionally has its own type so
@@ -167,6 +219,36 @@ impl ModelProvider for DeepseekModel {
         let body = to_deepseek_request(&request, &self.config.model);
         let url = self.completions_url();
         let (response, usage) = complete_http(&self.config, &url, body, None)?;
+        self.last_usage = usage;
+        Ok(response)
+    }
+
+    fn complete_streaming(
+        &mut self,
+        request: CompletionRequest,
+        sink: &mut dyn FnMut(StreamEvent),
+    ) -> Result<CompletionResponse> {
+        self.last_usage = None;
+        let body = to_deepseek_stream_request(&request, &self.config.model);
+        let url = self.completions_url();
+        let (response, usage) = stream_http(&self.config, &url, body, None, sink, None)?;
+        self.last_usage = usage;
+        Ok(response)
+    }
+
+    fn complete_streaming_cancellable(
+        &mut self,
+        request: CompletionRequest,
+        sink: &mut dyn FnMut(StreamEvent),
+        cancellation: &CancellationToken,
+    ) -> Result<CompletionResponse> {
+        check_cancellation(cancellation)?;
+        self.last_usage = None;
+        let body = to_deepseek_stream_request(&request, &self.config.model);
+        let url = self.completions_url();
+        let (response, usage) =
+            stream_http(&self.config, &url, body, None, sink, Some(cancellation))?;
+        check_cancellation(cancellation)?;
         self.last_usage = usage;
         Ok(response)
     }
@@ -225,6 +307,214 @@ fn complete_http(
         serde_json::from_str(&text).map_err(|e| KernelError::Model(e.to_string()))?;
     let usage = completion_usage_from_value(&value);
     Ok((from_openai_response(&value)?, usage))
+}
+
+/// Streaming SSE round-trip for OpenAI-compatible Chat Completions.
+///
+/// Reads the response body incrementally (ureq `into_reader`), parses
+/// `data:` lines, and sinks events as they arrive:
+/// - `delta.content` → `StreamEvent::TextDelta`
+/// - `delta.reasoning_content` → `StreamEvent::ThinkingDelta`
+/// - `delta.tool_calls` fragments are accumulated by `index` (OpenAI
+///   streams a tool call as id/name on the first fragment and argument
+///   fragments afterwards) and re-assembled into `ToolCall`s.
+///
+/// The terminal `[DONE]` marker ends the stream. Usage arrives in the final
+/// chunk when `stream_options.include_usage` was requested. Cancellation is
+/// checked between chunks so a stop lands promptly, not after the next
+/// provider round-trip. The assembled response has the same shape as
+/// `from_openai_response`, so callers cannot tell the transport apart.
+fn stream_http(
+    config: &OpenAiCompatConfig,
+    url: &str,
+    body: Value,
+    organization: Option<&str>,
+    sink: &mut dyn FnMut(StreamEvent),
+    cancellation: Option<&CancellationToken>,
+) -> Result<(CompletionResponse, Option<CompletionUsage>)> {
+    let agent = ureq::AgentBuilder::new()
+        .timeout_connect(std::time::Duration::from_secs(30))
+        // Per-read stall timeout, not an overall deadline: a long reasoning
+        // phase between deltas is normal and must not abort the stream.
+        .timeout_read(std::time::Duration::from_secs(config.timeout_secs))
+        .build();
+    let mut req = agent
+        .post(url)
+        .set("Content-Type", "application/json")
+        .set("Authorization", &format!("Bearer {}", config.api_key));
+    if let Some(org) = organization {
+        req = req.set("OpenAI-Organization", org);
+    }
+    let resp = match req.send_json(body) {
+        Ok(resp) => resp,
+        Err(ureq::Error::Status(status, resp)) => {
+            let body = resp.into_string().unwrap_or_default();
+            return Err(KernelError::Model(provider_status_message(status, &body)));
+        }
+        Err(error) => return Err(KernelError::Model(error.to_string())),
+    };
+    let status = resp.status();
+    if !(200..300).contains(&status) {
+        let text = resp
+            .into_string()
+            .map_err(|e| KernelError::Model(e.to_string()))?;
+        return Err(KernelError::Model(provider_status_message(status, &text)));
+    }
+    let mut reader = BufReader::new(resp.into_reader());
+    let mut accumulator = StreamAccumulator::default();
+    let mut line = String::new();
+    loop {
+        if let Some(token) = cancellation {
+            check_cancellation(token)?;
+        }
+        line.clear();
+        let read = reader
+            .read_line(&mut line)
+            .map_err(|e| KernelError::Model(format!("stream read error: {e}")))?;
+        if read == 0 {
+            // EOF without [DONE]: some compatible servers close cleanly.
+            break;
+        }
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let Some(payload) = trimmed.strip_prefix("data:") else {
+            // Ignore event/retry/comment lines; only `data:` carries JSON.
+            continue;
+        };
+        let payload = payload.trim();
+        if payload == "[DONE]" {
+            break;
+        }
+        if payload.is_empty() {
+            continue;
+        }
+        let chunk: Value = match serde_json::from_str(payload) {
+            Ok(chunk) => chunk,
+            Err(_) => continue, // keep-alive `: ping` or partial lines
+        };
+        if let Some(error) = chunk.get("error") {
+            return Err(KernelError::Model(format!(
+                "provider stream error: {}",
+                error
+            )));
+        }
+        accumulator.ingest(&chunk, sink);
+    }
+    let usage = accumulator.usage.clone();
+    let response = accumulator.finish()?;
+    Ok((response, usage))
+}
+
+/// Accumulates one OpenAI-compatible streamed completion.
+#[derive(Default)]
+struct StreamAccumulator {
+    text: String,
+    reasoning: String,
+    /// Tool-call fragments keyed by stream `index`.
+    tool_calls: BTreeMap<usize, StreamedToolCall>,
+    usage: Option<CompletionUsage>,
+}
+
+#[derive(Default)]
+struct StreamedToolCall {
+    id: String,
+    name: String,
+    arguments: String,
+}
+
+impl StreamAccumulator {
+    fn ingest(&mut self, chunk: &Value, sink: &mut dyn FnMut(StreamEvent)) {
+        if chunk.get("usage").is_some_and(|u| !u.is_null()) {
+            if let Some(u) = completion_usage_from_value(chunk) {
+                self.usage = Some(u);
+            }
+        }
+        let Some(delta) = chunk.pointer("/choices/0/delta") else {
+            return;
+        };
+        if let Some(content) = delta.get("content").and_then(Value::as_str) {
+            if !content.is_empty() {
+                self.text.push_str(content);
+                sink(StreamEvent::TextDelta(content.to_string()));
+            }
+        }
+        if let Some(reasoning) = delta.get("reasoning_content").and_then(Value::as_str) {
+            if !reasoning.is_empty() {
+                self.reasoning.push_str(reasoning);
+                sink(StreamEvent::ThinkingDelta(reasoning.to_string()));
+            }
+        }
+        let Some(fragments) = delta.get("tool_calls").and_then(Value::as_array) else {
+            return;
+        };
+        for fragment in fragments {
+            let index = fragment
+                .get("index")
+                .and_then(Value::as_u64)
+                .unwrap_or_default() as usize;
+            let entry = self.tool_calls.entry(index).or_default();
+            if let Some(id) = fragment.get("id").and_then(Value::as_str) {
+                if !id.is_empty() {
+                    entry.id = id.to_string();
+                }
+            }
+            if let Some(function) = fragment.get("function") {
+                if let Some(name) = function.get("name").and_then(Value::as_str) {
+                    if !name.is_empty() {
+                        entry.name = name.to_string();
+                    }
+                }
+                if let Some(args) = function.get("arguments").and_then(Value::as_str) {
+                    entry.arguments.push_str(args);
+                }
+            }
+        }
+    }
+
+    fn finish(self) -> Result<CompletionResponse> {
+        let text = (!self.text.trim().is_empty()).then_some(self.text);
+        let reasoning_content = (!self.reasoning.trim().is_empty()).then_some(self.reasoning);
+        let mut tool_calls = Vec::with_capacity(self.tool_calls.len());
+        for (_, call) in self.tool_calls {
+            if call.id.is_empty() {
+                return Err(KernelError::Model(
+                    "streamed tool_call missing non-empty id".into(),
+                ));
+            }
+            if call.name.is_empty() {
+                return Err(KernelError::Model(
+                    "streamed tool_call missing function name".into(),
+                ));
+            }
+            let arguments: Value = if call.arguments.trim().is_empty() {
+                json!({})
+            } else {
+                serde_json::from_str(&call.arguments).map_err(|error| {
+                    KernelError::Model(format!(
+                        "streamed tool_call {} has invalid JSON arguments: {error}",
+                        call.name
+                    ))
+                })?
+            };
+            tool_calls.push(ToolCall {
+                id: call.id,
+                name: call.name,
+                arguments,
+            });
+        }
+        if text.is_none() && tool_calls.is_empty() {
+            return Err(KernelError::Model(
+                "provider returned empty content and no tool_calls".into(),
+            ));
+        }
+        Ok(CompletionResponse {
+            text,
+            tool_calls,
+            reasoning_content,
+        })
+    }
 }
 
 /// What the user is told when a provider rejects a request.
@@ -286,6 +576,25 @@ pub fn to_deepseek_request(request: &CompletionRequest, model: &str) -> Value {
             body["reasoning_effort"] = json!(deepseek_reasoning_effort(model, effort));
         }
     }
+    body
+}
+
+/// Build a DeepSeek V4 streaming request. `stream:true` plus
+/// `stream_options.include_usage` (the OpenAI-compatible way to receive usage
+/// in the final chunk). Everything else mirrors `to_deepseek_request`.
+pub fn to_deepseek_stream_request(request: &CompletionRequest, model: &str) -> Value {
+    let mut body = to_deepseek_request(request, model);
+    body["stream"] = json!(true);
+    body["stream_options"] = json!({ "include_usage": true });
+    body
+}
+
+/// Build an OpenAI-compatible streaming request, same shape as
+/// `to_openai_request` plus `stream:true` and include-usage stream options.
+pub fn to_openai_stream_request(request: &CompletionRequest, model: &str) -> Value {
+    let mut body = to_openai_request(request, model);
+    body["stream"] = json!(true);
+    body["stream_options"] = json!({ "include_usage": true });
     body
 }
 

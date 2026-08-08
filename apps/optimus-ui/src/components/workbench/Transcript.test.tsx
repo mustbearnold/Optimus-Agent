@@ -40,6 +40,50 @@ describe('Transcript', () => {
     expect(screen.getByText('The answer is 42.')).toBeInTheDocument();
   });
 
+  it('auto-opens the thinking block while the assistant is working', () => {
+    render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-think-live',
+            role: 'assistant',
+            content: '',
+            thinking: 'Streaming reasoning…',
+            status: 'working',
+          },
+        ]}
+        status="working"
+        statusText="Working"
+        onStarter={vi.fn()}
+      />
+    );
+    const block = screen.getByText('Streaming reasoning…').closest('details');
+    expect(block).not.toBeNull();
+    expect(block).toHaveAttribute('open');
+  });
+
+  it('leaves completed thinking blocks collapsed by default', () => {
+    render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-think-done',
+            role: 'assistant',
+            content: 'Done.',
+            thinking: 'Finished reasoning.',
+            status: 'completed',
+          },
+        ]}
+        status="completed"
+        statusText="Completed"
+        onStarter={vi.fn()}
+      />
+    );
+    const block = screen.getByText('Finished reasoning.').closest('details');
+    expect(block).not.toBeNull();
+    expect(block).not.toHaveAttribute('open');
+  });
+
   it('keeps an active assistant status visible without a sender label', () => {
     render(
       <Transcript

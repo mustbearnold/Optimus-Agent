@@ -32,7 +32,10 @@ const MessageRow = memo(function MessageRow({
         </div>
       ) : null}
       {message.role === 'assistant' && message.thinking ? (
-        <details className="thinking-block">
+        <details
+          className="thinking-block"
+          open={message.status === 'working' ? true : undefined}
+        >
           <summary>Thinking</summary>
           <pre className="thinking-body">{message.thinking}</pre>
         </details>
