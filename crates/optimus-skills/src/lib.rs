@@ -155,7 +155,12 @@ impl SkillRegistry {
     }
 
     pub fn create(&self, draft: SkillDraft) -> Result<Uuid> {
-        if draft.name.trim().is_empty() {
+        // Normalize the name exactly once: reject empty, then store the
+        // trimmed form. Storing the untrimmed name would let "run" and
+        // " run " drift into separate rows that resolve() can never
+        // reconcile into one skill (regression test: trims_name).
+        let name = draft.name.trim();
+        if name.is_empty() {
             return Err(SkillError::Invariant("name required".into()));
         }
         if draft.body.trim().is_empty() {
@@ -168,13 +173,13 @@ impl SkillRegistry {
         } else {
             SkillStatus::Candidate
         };
-        let version = self.next_version(&draft.name)?;
+        let version = self.next_version(name)?;
         self.conn.execute(
             "INSERT INTO skills(id, name, version, status, body, permissions_json)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![
                 id.to_string(),
-                draft.name,
+                name,
                 version,
                 status_str(status),
                 draft.body,
@@ -461,4 +466,59 @@ fn row_to_view(row: &rusqlite::Row<'_>) -> rusqlite::Result<SkillView> {
         total_tokens,
         success_rate,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    fn open_registry() -> (TempDir, SkillRegistry) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let reg = SkillRegistry::open(dir.path().join("skills.db")).expect("open registry");
+        (dir, reg)
+    }
+
+    fn draft(name: &str) -> SkillDraft {
+        SkillDraft {
+            name: name.into(),
+            body: "body".into(),
+            permissions: vec![],
+            pin: false,
+        }
+    }
+
+    #[test]
+    fn create_trims_surrounding_whitespace_from_name() {
+        let (_dir, reg) = open_registry();
+        let id = reg.create(draft("  run  ")).unwrap();
+        let view = reg.get(id).unwrap();
+        assert_eq!(view.name, "run");
+        // resolve() must find it under the canonical trimmed name, and must
+        // not accidentally match a distinct whitespace-padded spelling.
+        assert_eq!(reg.resolve("run").unwrap().unwrap().id, id);
+        assert!(reg.resolve("run   ").unwrap().is_none());
+    }
+
+    #[test]
+    fn create_rejects_whitespace_only_name() {
+        let (_dir, reg) = open_registry();
+        let err = reg.create(draft("   ")).unwrap_err();
+        assert!(matches!(err, SkillError::Invariant(_)));
+    }
+
+    #[test]
+    fn create_deduplicates_and_sorts_permissions() {
+        let (_dir, reg) = open_registry();
+        let id = reg
+            .create(SkillDraft {
+                name: "s".into(),
+                body: "body".into(),
+                permissions: vec![Permission::Net, Permission::FsWorkspace, Permission::Net],
+                pin: false,
+            })
+            .unwrap();
+        let view = reg.get(id).unwrap();
+        assert_eq!(view.permissions, vec![Permission::FsWorkspace, Permission::Net]);
+    }
 }
