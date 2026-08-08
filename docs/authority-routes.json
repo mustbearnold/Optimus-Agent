@@ -21,64 +21,54 @@
   ],
   "routes": [
     {
-      "id": "docs.navigation",
+      "id": "architecture.blueprint",
       "keywords": [
-        "documentation",
-        "docs",
-        "find",
-        "index",
-        "catalog",
-        "where should I start"
-      ],
-      "primary": [
-        "specs-backlog"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "docs.history",
-      "keywords": [
-        "history",
-        "historical",
-        "superseded",
-        "precedence",
-        "old plan",
-        "contradiction",
-        "record"
-      ],
-      "primary": [
-        "spec-011-developer-tooling"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "product.status",
-      "keywords": [
-        "Optimus today",
-        "what exists",
-        "implemented",
-        "current capability",
-        "current gaps",
-        "product status"
-      ],
-      "primary": [
-        "spec-001-desktop-shell"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "product.roadmap",
-      "keywords": [
+        "north star",
+        "blueprint",
+        "exceeds Hermes",
+        "planned",
         "roadmap",
-        "next",
-        "priority",
-        "direction",
-        "future",
-        "product goal",
-        "north star"
+        "future direction",
+        "delivery plan",
+        "phases"
       ],
       "primary": [
-        "specs-backlog"
+        "architecture-exceeds-blueprint"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.control-plane",
+      "keywords": [
+        "control plane",
+        "orchestration",
+        "workflow runtime",
+        "terminal outcome",
+        "cancellation",
+        "retry",
+        "agent execution",
+        "specialist"
+      ],
+      "primary": [
+        "architecture-control-plane-workflows"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "architecture.desktop-ops",
+      "keywords": [
+        "desktop daily use",
+        "launch",
+        "streaming",
+        "durability",
+        "backup",
+        "restore",
+        "doctor",
+        "crash resume",
+        "operator"
+      ],
+      "primary": [
+        "architecture-desktop-ops"
       ],
       "supporting": []
     },
@@ -109,35 +99,20 @@
       ]
     },
     {
-      "id": "architecture.control-plane",
+      "id": "architecture.security-observability",
       "keywords": [
-        "control plane",
-        "orchestration",
-        "workflow runtime",
-        "terminal outcome",
-        "cancellation",
-        "retry",
-        "agent execution",
-        "specialist"
+        "security",
+        "approvals",
+        "SmartDeny",
+        "sandbox",
+        "events",
+        "observability",
+        "replay",
+        "GPU fallback",
+        "architectural debt"
       ],
       "primary": [
-        "architecture-control-plane-workflows"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "architecture.tools-modularity",
-      "keywords": [
-        "tool system",
-        "ToolDesc",
-        "tool contract",
-        "domain modularity",
-        "packs",
-        "effector",
-        "P13"
-      ],
-      "primary": [
-        "architecture-tools-modularity"
+        "architecture-security-observability"
       ],
       "supporting": []
     },
@@ -159,55 +134,18 @@
       "supporting": []
     },
     {
-      "id": "architecture.security-observability",
+      "id": "architecture.tools-modularity",
       "keywords": [
-        "security",
-        "approvals",
-        "SmartDeny",
-        "sandbox",
-        "events",
-        "observability",
-        "replay",
-        "GPU fallback",
-        "architectural debt"
+        "tool system",
+        "ToolDesc",
+        "tool contract",
+        "domain modularity",
+        "packs",
+        "effector",
+        "P13"
       ],
       "primary": [
-        "architecture-security-observability"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "architecture.desktop-ops",
-      "keywords": [
-        "desktop daily use",
-        "launch",
-        "streaming",
-        "durability",
-        "backup",
-        "restore",
-        "doctor",
-        "crash resume",
-        "operator"
-      ],
-      "primary": [
-        "architecture-desktop-ops"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "architecture.blueprint",
-      "keywords": [
-        "north star",
-        "blueprint",
-        "exceeds Hermes",
-        "planned",
-        "roadmap",
-        "future direction",
-        "delivery plan",
-        "phases"
-      ],
-      "primary": [
-        "architecture-exceeds-blueprint"
+        "architecture-tools-modularity"
       ],
       "supporting": []
     },
@@ -228,74 +166,6 @@
       "supporting": []
     },
     {
-      "id": "development.instructions",
-      "keywords": [
-        "coding agent",
-        "developer rules",
-        "development law",
-        "AGENTS",
-        "edit repository",
-        "build Optimus"
-      ],
-      "primary": [
-        "development-instructions"
-      ],
-      "supporting": [
-        "specs-backlog"
-      ]
-    },
-    {
-      "id": "runtime.constitution",
-      "keywords": [
-        "Optimus behavior",
-        "runtime instruction",
-        "product session",
-        "constitution",
-        "user interaction",
-        "product agent"
-      ],
-      "primary": [
-        "runtime-constitution"
-      ],
-      "supporting": [
-        "spec-001-desktop-shell"
-      ]
-    },
-    {
-      "id": "development.delivery",
-      "keywords": [
-        "delivery",
-        "save progress",
-        "commit",
-        "main",
-        "main-only",
-        "push"
-      ],
-      "primary": [
-        "development-instructions"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "development.workspace",
-      "keywords": [
-        "Repository",
-        "Source",
-        "Development",
-        "workspace",
-        "worktree",
-        "project folder",
-        "machine-local",
-        "git-excluded"
-      ],
-      "primary": [
-        "development-instructions"
-      ],
-      "supporting": [
-        "decision-0062-source-and-development-are-separate-workspace-planes"
-      ]
-    },
-    {
       "id": "desktop.stack",
       "keywords": [
         "desktop",
@@ -314,83 +184,36 @@
       ]
     },
     {
-      "id": "security.approvals",
+      "id": "development.delivery",
       "keywords": [
-        "security",
-        "approval",
-        "permission",
-        "SmartDeny",
-        "risk",
-        "trust",
-        "autonomy",
-        "capability broker"
+        "delivery",
+        "save progress",
+        "commit",
+        "main",
+        "main-only",
+        "push"
       ],
       "primary": [
-        "spec-004-runtime-effects"
+        "development-instructions"
       ],
       "supporting": []
     },
     {
-      "id": "models.routing",
+      "id": "development.instructions",
       "keywords": [
-        "model",
-        "provider",
-        "routing",
-        "reasoning",
-        "OAuth",
-        "OpenAI",
-        "local model",
-        "Auto"
+        "coding agent",
+        "developer rules",
+        "development law",
+        "AGENTS",
+        "edit repository",
+        "build Optimus"
       ],
       "primary": [
-        "spec-003-kernel-turns"
+        "development-instructions"
       ],
-      "supporting": []
-    },
-    {
-      "id": "memory.systems",
-      "keywords": [
-        "memory",
-        "retrieval",
-        "session",
-        "project knowledge",
-        "conversation index",
-        "semantic search",
-        "workspace memory"
-      ],
-      "primary": [
-        "spec-006-memory-skills-packs"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "engineering-memory.authority",
-      "keywords": [
-        "Engineering Memory",
-        "generated knowledge",
-        "stale docs",
-        "source binding",
-        "context lens",
-        "impact lens"
-      ],
-      "primary": [
-        "spec-006-memory-skills-packs"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "testing.synthetic-users",
-      "keywords": [
-        "synthetic user",
-        "lab",
-        "simulator",
-        "user simulation",
-        "eval"
-      ],
-      "primary": [
-        "spec-008-eval"
-      ],
-      "supporting": []
+      "supporting": [
+        "specs-backlog"
+      ]
     },
     {
       "id": "development.project-knowledge",
@@ -422,6 +245,167 @@
       ]
     },
     {
+      "id": "development.workspace",
+      "keywords": [
+        "Repository",
+        "Source",
+        "Development",
+        "workspace",
+        "worktree",
+        "project folder",
+        "machine-local",
+        "git-excluded"
+      ],
+      "primary": [
+        "development-instructions"
+      ],
+      "supporting": [
+        "decision-0062-source-and-development-are-separate-workspace-planes"
+      ]
+    },
+    {
+      "id": "docs.history",
+      "keywords": [
+        "history",
+        "historical",
+        "superseded",
+        "precedence",
+        "old plan",
+        "contradiction",
+        "record"
+      ],
+      "primary": [
+        "spec-011-developer-tooling"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "docs.navigation",
+      "keywords": [
+        "documentation",
+        "docs",
+        "find",
+        "index",
+        "catalog",
+        "where should I start"
+      ],
+      "primary": [
+        "specs-backlog"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "engineering-memory.authority",
+      "keywords": [
+        "Engineering Memory",
+        "generated knowledge",
+        "stale docs",
+        "source binding",
+        "context lens",
+        "impact lens"
+      ],
+      "primary": [
+        "spec-006-memory-skills-packs"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "engineering-memory.runbook",
+      "keywords": [
+        "engineering memory",
+        "lenses",
+        "em context",
+        "staleness",
+        "regenerate"
+      ],
+      "primary": [
+        "engineering-memory-readme"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "memory.systems",
+      "keywords": [
+        "memory",
+        "retrieval",
+        "session",
+        "project knowledge",
+        "conversation index",
+        "semantic search",
+        "workspace memory"
+      ],
+      "primary": [
+        "spec-006-memory-skills-packs"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "models.routing",
+      "keywords": [
+        "model",
+        "provider",
+        "routing",
+        "reasoning",
+        "OAuth",
+        "OpenAI",
+        "local model",
+        "Auto"
+      ],
+      "primary": [
+        "spec-003-kernel-turns"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "product.roadmap",
+      "keywords": [
+        "roadmap",
+        "next",
+        "priority",
+        "direction",
+        "future",
+        "product goal",
+        "north star"
+      ],
+      "primary": [
+        "specs-backlog"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "product.status",
+      "keywords": [
+        "Optimus today",
+        "what exists",
+        "implemented",
+        "current capability",
+        "current gaps",
+        "product status"
+      ],
+      "primary": [
+        "spec-001-desktop-shell"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "repository.components",
+      "keywords": [
+        "components",
+        "ontology",
+        "catalog",
+        "component database",
+        "component wiki",
+        "does it ship",
+        "safe to delete",
+        "repository path",
+        "development component"
+      ],
+      "primary": [
+        "repository-components"
+      ],
+      "supporting": []
+    },
+    {
       "id": "repository.gates",
       "keywords": [
         "gate",
@@ -438,6 +422,40 @@
       "supporting": [
         "repository-readme"
       ]
+    },
+    {
+      "id": "runtime.constitution",
+      "keywords": [
+        "Optimus behavior",
+        "runtime instruction",
+        "product session",
+        "constitution",
+        "user interaction",
+        "product agent"
+      ],
+      "primary": [
+        "runtime-constitution"
+      ],
+      "supporting": [
+        "spec-001-desktop-shell"
+      ]
+    },
+    {
+      "id": "security.approvals",
+      "keywords": [
+        "security",
+        "approval",
+        "permission",
+        "SmartDeny",
+        "risk",
+        "trust",
+        "autonomy",
+        "capability broker"
+      ],
+      "primary": [
+        "spec-004-runtime-effects"
+      ],
+      "supporting": []
     },
     {
       "id": "specs.001-desktop-shell",
@@ -605,84 +623,6 @@
       "supporting": []
     },
     {
-      "id": "specs.backlog",
-      "keywords": [
-        "backlog",
-        "unspecced",
-        "gap",
-        "future work",
-        "known capability"
-      ],
-      "primary": [
-        "specs-backlog"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "repository.components",
-      "keywords": [
-        "components",
-        "ontology",
-        "catalog",
-        "component database",
-        "component wiki",
-        "does it ship",
-        "safe to delete",
-        "repository path",
-        "development component"
-      ],
-      "primary": [
-        "repository-components"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "engineering-memory.runbook",
-      "keywords": [
-        "engineering memory",
-        "lenses",
-        "em context",
-        "staleness",
-        "regenerate"
-      ],
-      "primary": [
-        "engineering-memory-readme"
-      ],
-      "supporting": []
-    },
-    {
-      "id": "specs.constitution",
-      "keywords": [
-        "constitution",
-        "principles",
-        "sdd loop",
-        "definition of done",
-        "naming planes",
-        "highest authority"
-      ],
-      "primary": [
-        "specs-constitution"
-      ],
-      "supporting": [
-        "specs-conventions"
-      ]
-    },
-    {
-      "id": "specs.conventions",
-      "keywords": [
-        "conventions",
-        "formatting",
-        "commit style",
-        "spec template",
-        "package manager",
-        "placement law"
-      ],
-      "primary": [
-        "specs-conventions"
-      ],
-      "supporting": []
-    },
-    {
       "id": "specs.012-windows-tauri-packaging",
       "keywords": [
         "windows",
@@ -770,6 +710,227 @@
       ],
       "primary": [
         "spec-016-staleness-prevention"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.017-gateway-breadth",
+      "keywords": [
+        "gateway",
+        "transport adapter",
+        "Discord",
+        "Slack",
+        "email",
+        "WhatsApp",
+        "Signal",
+        "wire conformance",
+        "messaging platform",
+        "proactive messaging"
+      ],
+      "primary": [
+        "spec-017-gateway-breadth"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.018-deployment-ops",
+      "keywords": [
+        "deployment",
+        "VPS",
+        "systemd",
+        "service user",
+        "backup",
+        "restore",
+        "doctor",
+        "install",
+        "headless"
+      ],
+      "primary": [
+        "spec-018-deployment-ops"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.019-tool-catalog-breadth",
+      "keywords": [
+        "tool catalog",
+        "capability packs",
+        "Devex",
+        "git tools",
+        "media",
+        "image generation",
+        "TTS",
+        "STT",
+        "social",
+        "ToolDesc"
+      ],
+      "primary": [
+        "spec-019-tool-catalog-breadth"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.020-integrations-breadth",
+      "keywords": [
+        "integrations",
+        "MCP client",
+        "streamable HTTP",
+        "stdio",
+        "GitHub REST",
+        "tool allowlist",
+        "integration"
+      ],
+      "primary": [
+        "spec-020-integrations-breadth"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.021-interfaces",
+      "keywords": [
+        "interfaces",
+        "OpenAI-compatible",
+        "chat completions",
+        "SSE",
+        "streaming",
+        "ACP",
+        "Agent Client Protocol",
+        "dashboard",
+        "websocket ticket",
+        "PTY"
+      ],
+      "primary": [
+        "spec-021-interfaces"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.022-model-provider-breadth",
+      "keywords": [
+        "provider",
+        "Anthropic",
+        "Messages API",
+        "OpenRouter",
+        "Nous Portal",
+        "reasoning level",
+        "model routing",
+        "budgets"
+      ],
+      "primary": [
+        "spec-022-model-provider-breadth"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.023-ecosystem-community",
+      "keywords": [
+        "ecosystem",
+        "marketplace",
+        "skills",
+        "packs",
+        "trust store",
+        "revocation",
+        "install",
+        "update",
+        "uninstall",
+        "signed index"
+      ],
+      "primary": [
+        "spec-023-ecosystem-community"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.024-monitoring-research",
+      "keywords": [
+        "monitoring",
+        "script jobs",
+        "URL change monitor",
+        "research",
+        "cron",
+        "unified diff",
+        "alerts"
+      ],
+      "primary": [
+        "spec-024-monitoring-research"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.025-session-messaging",
+      "keywords": [
+        "messaging",
+        "session",
+        "message plane",
+        "peer discovery",
+        "inbound policy",
+        "receipts",
+        "permission classifier",
+        "delivery modes",
+        "agent messaging"
+      ],
+      "primary": [
+        "spec-025-session-messaging"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.backlog",
+      "keywords": [
+        "backlog",
+        "unspecced",
+        "gap",
+        "future work",
+        "known capability"
+      ],
+      "primary": [
+        "specs-backlog"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.constitution",
+      "keywords": [
+        "constitution",
+        "principles",
+        "sdd loop",
+        "definition of done",
+        "naming planes",
+        "highest authority"
+      ],
+      "primary": [
+        "specs-constitution"
+      ],
+      "supporting": [
+        "specs-conventions"
+      ]
+    },
+    {
+      "id": "specs.conventions",
+      "keywords": [
+        "conventions",
+        "formatting",
+        "commit style",
+        "spec template",
+        "package manager",
+        "placement law"
+      ],
+      "primary": [
+        "specs-conventions"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "testing.synthetic-users",
+      "keywords": [
+        "synthetic user",
+        "lab",
+        "simulator",
+        "user simulation",
+        "eval"
+      ],
+      "primary": [
+        "spec-008-eval"
       ],
       "supporting": []
     }
