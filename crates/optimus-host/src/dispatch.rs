@@ -18,15 +18,15 @@ use std::time::{Duration, Instant};
 use optimus_kernel::{CancellationToken, StreamControl};
 use optimus_runtime::CampaignStore;
 use serde_json::{json, Value};
+use uuid::Uuid;
 
-use crate::chat::{chat_approval_resolve_cancellable, chat_turn_cancellable, stream_event_to_json};
+use crate::chat::{chat_approval_resolve_cancellable, chat_turn_inner, stream_event_to_json};
+use crate::children::run_child_turn;
 use crate::contract::{wire_method_class, WireClass, PROTOCOL_VERSION};
 use crate::handshake::{self, Carrier, ClientKind, HelloError, HelloParams};
 use crate::record;
 use crate::router::handle_ipc;
-use crate::serve::{
-    ServeState, EXIT_BIND_OR_SECURITY, RATE_LIMIT_PER_MINUTE, WORKER_COUNT, WORKER_QUEUE,
-};
+use crate::serve::{ServeState, EXIT_BIND_OR_SECURITY, RATE_LIMIT_PER_MINUTE, WORKER_COUNT};
 
 /// Outbound wire traffic for one connection, ordered by the single channel.
 #[derive(Debug)]
@@ -156,7 +156,7 @@ impl WindowRateLimiter {
     }
 }
 
-enum PoolJob {
+pub(crate) enum PoolJob {
     Registry {
         conn: Arc<Connection>,
         id: u64,
@@ -168,6 +168,13 @@ enum PoolJob {
         stream_id: u64,
         request: Value,
         token: CancellationToken,
+        children: Option<Arc<dyn optimus_kernel::ChildCoordinator>>,
+    },
+    ChildRun {
+        spec: crate::children::ChildRunSpec,
+        token: CancellationToken,
+        live: Arc<Mutex<HashMap<Uuid, CancellationToken>>>,
+        children: Option<Arc<dyn optimus_kernel::ChildCoordinator>>,
     },
     ResolveStart {
         conn: Arc<Connection>,
@@ -190,8 +197,12 @@ pub(crate) struct WorkerPool {
 }
 
 impl WorkerPool {
-    pub(crate) fn start() -> Self {
-        let (tx, rx) = mpsc::sync_channel(WORKER_QUEUE);
+    /// Start the pool over a caller-owned channel: `serve` builds the
+    /// children runtime over the same channel (spec-034 R4).
+    pub(crate) fn start_with_channel(
+        tx: mpsc::SyncSender<PoolJob>,
+        rx: mpsc::Receiver<PoolJob>,
+    ) -> Self {
         let rx = Arc::new(Mutex::new(rx));
         for _ in 0..WORKER_COUNT {
             let rx = Arc::clone(&rx);
@@ -260,6 +271,7 @@ fn run_pool_job(job: PoolJob) {
             stream_id,
             request,
             token,
+            children,
         } => {
             let mut on_event = |event| {
                 let payload = stream_event_to_json(&event);
@@ -272,7 +284,14 @@ fn run_pool_job(job: PoolJob) {
                     Err(_) => StreamControl::Cancel,
                 }
             };
-            let outcome = chat_turn_cancellable(&conn.home, request, Some(&mut on_event), &token);
+            let outcome = chat_turn_inner(
+                &conn.home,
+                request,
+                Some(&mut on_event),
+                &token,
+                children,
+                false,
+            );
             let terminal = match outcome {
                 Ok(result) => json!({ "type": "done", "result": result }),
                 Err(error) if token.is_cancelled() => {
@@ -288,6 +307,14 @@ fn run_pool_job(job: PoolJob) {
                 event: terminal,
             });
             conn.streams.lock().unwrap().remove(&stream_id);
+        }
+        PoolJob::ChildRun {
+            spec,
+            token,
+            live,
+            children,
+        } => {
+            run_child_turn(spec, token, live, children);
         }
         PoolJob::ResolveStart {
             conn,
@@ -506,11 +533,14 @@ pub fn process_frame(state: &ServeState, conn: &Arc<Connection>, carrier: Carrie
             };
             match state.pool.dispatch(PoolJob::ChatStart {
                 conn: Arc::clone(conn),
+                children: state.children.clone(),
                 stream_id,
                 request,
                 token,
             }) {
-                Ok(()) => conn.reply(id, json!({ "stream_id": stream_id })),
+                Ok(()) => {
+                    conn.reply(id, json!({ "stream_id": stream_id }));
+                }
                 Err(PoolError::Busy) => {
                     conn.streams.lock().unwrap().remove(&stream_id);
                     conn.error(Some(id), -32603, "server busy");

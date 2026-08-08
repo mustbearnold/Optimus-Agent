@@ -1,6 +1,7 @@
 //! Chat provider selection and stream serialization.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use optimus_kernel::{
     CancellationToken, ChatApprovalDecision, ChatApprovalStatus, CodexOAuthConfig, CodexOAuthModel,
@@ -315,6 +316,16 @@ pub(crate) struct AccessConfig {
     command_fs_envelope: Option<optimus_graph::CommandFsEnvelope>,
 }
 
+/// The child-run command-fs envelope snapshot (spec-034 R5).
+fn parse_command_fs_envelope(raw: &str) -> optimus_graph::CommandFsEnvelope {
+    match raw {
+        "confined" => optimus_graph::CommandFsEnvelope::Confined,
+        "confined_no_network" => optimus_graph::CommandFsEnvelope::ConfinedNoNetwork,
+        "unrestricted_host" => optimus_graph::CommandFsEnvelope::UnrestrictedHost,
+        _ => optimus_graph::CommandFsEnvelope::Confined,
+    }
+}
+
 pub(crate) fn access_config(raw: Option<&str>) -> AccessConfig {
     let profile = raw
         .and_then(optimus_graph::AutonomyProfile::parse)
@@ -408,8 +419,24 @@ pub fn chat_turn(
 pub fn chat_turn_cancellable(
     home: &PathBuf,
     params: serde_json::Value,
+    on_event: Option<&mut dyn FnMut(StreamEvent) -> StreamControl>,
+    cancellation: &CancellationToken,
+) -> Result<serde_json::Value, String> {
+    chat_turn_inner(home, params, on_event, cancellation, None, false)
+}
+
+/// The shared turn executor. `children` is the daemon-owned child
+/// coordinator injected into every kernel the daemon opens (spec-034
+/// R4/R5). `child_run` marks the daemon-internal child runner: the
+/// surface-turn refusal does not apply to it, and the child kernel
+/// config overrides (policy snapshot, depth limit) only apply to it.
+pub(crate) fn chat_turn_inner(
+    home: &PathBuf,
+    params: serde_json::Value,
     mut on_event: Option<&mut dyn FnMut(StreamEvent) -> StreamControl>,
     cancellation: &CancellationToken,
+    children: Option<Arc<dyn optimus_kernel::ChildCoordinator>>,
+    child_run: bool,
 ) -> Result<serde_json::Value, String> {
     let message = params
         .get("message")
@@ -428,12 +455,48 @@ pub fn chat_turn_cancellable(
         .get("session")
         .and_then(|v| v.as_str())
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
+    // Surface-turn refusal (spec-034 R4): only the daemon may run a
+    // child session's turns. The child runner bypasses this check.
+    if !child_run {
+        if let Some(sid) = session {
+            if crate::children::is_child_session(home, sid)? {
+                return Err(format!(
+                    "session {sid} is a child session; only the daemon may run its turns (spec-034)"
+                ));
+            }
+        }
+    }
     let model_override = params
         .get("model")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
     let access = access_config(params.get("access").and_then(|value| value.as_str()));
+    // The child-run policy snapshot (spec-034 R5): the daemon-internal
+    // runner restores the inherited-or-explicit effect policy and
+    // command-fs envelope. Surface calls never reach these overrides.
+    let effect_policy = if child_run {
+        match params
+            .get("effect_policy")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+        {
+            "unrestricted" => optimus_graph::PolicyMode::Unrestricted,
+            _ => optimus_graph::PolicyMode::SmartDeny,
+        }
+    } else {
+        access.policy
+    };
+    let command_fs_envelope = if child_run {
+        params
+            .get("command_fs_envelope")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty())
+            .map(parse_command_fs_envelope)
+            .or(access.command_fs_envelope)
+    } else {
+        access.command_fs_envelope
+    };
     let config = KernelConfig {
         thinking_level: params
             .get("thinking_level")
@@ -452,9 +515,19 @@ pub fn chat_turn_cancellable(
             .and_then(|v| v.as_bool())
             .unwrap_or(false),
         max_steps: turn_max_steps(access.profile),
-        effect_policy: access.policy,
+        effect_policy,
         autonomy_profile: access.profile,
-        command_fs_envelope: access.command_fs_envelope,
+        command_fs_envelope,
+        children_max_depth: if child_run {
+            params
+                .get("children_max_depth")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(1)
+                .clamp(1, 8) as u32
+        } else {
+            1
+        },
+        children,
         self_development: self_development_handler(home, access.profile),
         ..KernelConfig::default()
     };
@@ -482,7 +555,63 @@ pub fn chat_turn_cancellable(
                 .get("demo_memory")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
-            let mut model = if demo_memory {
+            let demo_children = params
+                .get("demo_children")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let mut model = if demo_children {
+                // The deterministic daemon-level recursion fixture
+                // (spec-034 A1): activate the children pack, three
+                // parallel child spawns, then a plain completion. Each
+                // child runs offline too, so the whole tree settles
+                // without a network.
+                ScriptedModel::new(vec![
+                    CompletionResponse {
+                        text: None,
+                        tool_calls: vec![ToolCall {
+                            id: "k0".into(),
+                            name: "activate_pack".into(),
+                            arguments: json!({"name": "children"}),
+                        }],
+                        reasoning_content: None,
+                    },
+                    CompletionResponse {
+                        text: None,
+                        tool_calls: vec![
+                            ToolCall {
+                                id: "k1".into(),
+                                name: "session_spawn".into(),
+                                arguments: json!({
+                                    "task": "summarize the roadmap",
+                                    "provider": "offline",
+                                }),
+                            },
+                            ToolCall {
+                                id: "k2".into(),
+                                name: "session_spawn".into(),
+                                arguments: json!({
+                                    "task": "review the ADR",
+                                    "provider": "offline",
+                                }),
+                            },
+                            ToolCall {
+                                id: "k3".into(),
+                                name: "session_spawn".into(),
+                                arguments: json!({
+                                    "task": "draft the changelog",
+                                    "provider": "offline",
+                                }),
+                            },
+                        ],
+                        reasoning_content: None,
+                    },
+                    CompletionResponse {
+                        text: Some("children spawned".into()),
+                        tool_calls: vec![],
+                        reasoning_content: None,
+                    },
+                ])
+            } else if demo_memory {
                 let _ = kernel.remember_demo("user", "prefers_editor", "helix");
                 ScriptedModel::new(vec![
                     CompletionResponse {
@@ -510,14 +639,13 @@ pub fn chat_turn_cancellable(
                 }])
             }
             .paced(offline_pace());
-            kernel
-                .turn_with_controlled_sink_cancellable(
-                    &mut model,
-                    &message,
-                    &mut sink,
-                    cancellation,
-                )
-                .map_err(|e| e.to_string())?
+            let turn_outcome = kernel.turn_with_controlled_sink_cancellable(
+                &mut model,
+                &message,
+                &mut sink,
+                cancellation,
+            );
+            turn_outcome.map_err(|e| e.to_string())?
         }
         ProviderId::OpenAiCompat => {
             let mut cfg = apply_resolved_openai_model(

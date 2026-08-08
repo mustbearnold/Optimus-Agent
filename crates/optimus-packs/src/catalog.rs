@@ -184,7 +184,7 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     "Load an on-demand capability pack",
                     100,
                     object_schema(
-                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social","collaboration"]}}),
+                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social","collaboration","children"]}}),
                         &["name"],
                     ),
                 ),
@@ -193,7 +193,7 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                     "Unload an on-demand capability pack (frees its slot and schema tokens)",
                     100,
                     object_schema(
-                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social","collaboration"]}}),
+                        json!({"name":{"type":"string","enum":["browser","desktop","media","devex","social","collaboration","children"]}}),
                         &["name"],
                     ),
                 ),
@@ -258,6 +258,52 @@ pub fn builtin_catalog() -> BTreeMap<PackId, PackDesc> {
                         }),
                         &[],
                     ),
+                ),
+            ],
+        },
+    );
+    m.insert(
+        PackId::Children,
+        PackDesc {
+            id: PackId::Children,
+            summary: "Recursive children: spawn child kernel sessions, cancel, delete, list (spec-034)".into(),
+            tools: vec![
+                tool(
+                    ToolInvocation::SessionSpawn,
+                    "Spawn a child kernel session with one typed task prompt (spec-034 R1). Returns an admission handle at once; the child runs daemon-backed and survives parent client detach. The child inherits provider, skills, and policy, or takes an explicit selection. The depth limit applies.",
+                    90,
+                    object_schema(
+                        json!({
+                            "task": {"type": "string"},
+                            "provider": {"type": "string"},
+                            "model": {"type": "string"}
+                        }),
+                        &["task"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::SessionCancelChild,
+                    "Cancel a direct child and its descendants (spec-034 R6). Records the durable cancel marker, stops the child turn, and settles exactly one cancelled terminal.",
+                    70,
+                    object_schema(
+                        json!({"child_session_id": {"type": "string"}}),
+                        &["child_session_id"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::SessionDeleteChild,
+                    "Delete a direct child (spec-034 R6). Requests cancellation when the child runs, waits for the terminal, then writes the durable tombstone. The terminal status never changes.",
+                    70,
+                    object_schema(
+                        json!({"child_session_id": {"type": "string"}}),
+                        &["child_session_id"],
+                    ),
+                ),
+                tool(
+                    ToolInvocation::SessionChildren,
+                    "List this session's direct children with status, depth, and usage attribution (spec-034 R2/R7).",
+                    60,
+                    object_schema(json!({}), &[]),
                 ),
             ],
         },

@@ -27,7 +27,7 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 /// Dispatchable tools this suite executes through a real turn.
-const DISPATCHABLE_EXERCISED: [&str; 26] = [
+const DISPATCHABLE_EXERCISED: [&str; 30] = [
     "read_file",
     "search_content",
     "find_files",
@@ -54,6 +54,10 @@ const DISPATCHABLE_EXERCISED: [&str; 26] = [
     "session_roster",
     "session_review",
     "session_policy",
+    "session_spawn",
+    "session_cancel_child",
+    "session_delete_child",
+    "session_children",
 ];
 
 /// Declared scaffolds this suite holds to the typed-refusal contract.
@@ -669,6 +673,79 @@ fn vision_analyze_dispatches_deterministically_and_types_its_refusals() {
         "the refusal must carry its typed code so the model can repair the call"
     );
     assert_eq!(result.assistant_text, "vision exercised");
+}
+
+// ---------------------------------------------------------------------------
+// Recursive children (spec-034): real dispatch, refusal contracts.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn children_tools_reach_real_dispatch_and_refuse_without_the_daemon() {
+    // The kernel in this suite has no daemon bridge (config.children is
+    // None). The children surface must behave exactly like the spec's
+    // A9 contract: `session_children` succeeds with the durable registry
+    // (empty here), and the three daemon surfaces refuse the call with a
+    // diagnostic naming the tool — never a panic, never a silent success.
+    let dir = tempdir().unwrap();
+    let mut kernel = open_kernel(dir.path());
+    let mut model = scripted(vec![
+        tool_step("c0", "activate_pack", json!({"name": "children"})),
+        tool_step(
+            "c1",
+            "session_spawn",
+            json!({ "task": "summarize the roadmap", "provider": "offline" }),
+        ),
+        tool_step(
+            "c2",
+            "session_cancel_child",
+            json!({ "child_session_id": "00000000-0000-0000-0000-000000000001" }),
+        ),
+        tool_step(
+            "c3",
+            "session_delete_child",
+            json!({ "child_session_id": "00000000-0000-0000-0000-000000000001" }),
+        ),
+        tool_step("c4", "session_children", json!({})),
+        done("children surface exercised"),
+    ]);
+
+    let result = kernel
+        .turn(&mut model, "exercise the children surface")
+        .expect("the children tools must fail the call, not the turn");
+
+    let trace = format!("{:?}", result.tool_trace);
+    for name in [
+        "session_spawn",
+        "session_cancel_child",
+        "session_delete_child",
+    ] {
+        assert!(
+            trace.contains(&format!("{name} -> {name}: tool:")),
+            "{name} must refuse without the daemon bridge, got: {trace}"
+        );
+    }
+    assert!(
+        trace.contains("session_spawn") && trace.contains("daemon-backed kernel"),
+        "the spawn refusal must name the daemon requirement, got: {trace}"
+    );
+    assert!(
+        trace.contains("session_cancel_child") && trace.contains("daemon-backed kernel"),
+        "the cancel refusal must name the daemon requirement, got: {trace}"
+    );
+    assert!(
+        trace.contains("session_delete_child") && trace.contains("daemon-backed kernel"),
+        "the delete refusal must name the daemon requirement, got: {trace}"
+    );
+    let evidence = evidence_shown_to_model(&model);
+    assert!(
+        evidence.contains("\"tool_id\":\"session_children\",\"kind\":\"succeeded\""),
+        "session_children must settle as a succeeded outcome, got: {evidence}"
+    );
+    assert!(
+        evidence.contains("\"tool_id\":\"session_spawn\",\"kind\":\"failed\""),
+        "the daemon-less spawn must settle as a failed outcome, got: {evidence}"
+    );
+    assert_eq!(result.assistant_text, "children surface exercised");
 }
 
 // ---------------------------------------------------------------------------

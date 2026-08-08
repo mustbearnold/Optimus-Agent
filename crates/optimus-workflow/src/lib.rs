@@ -6,6 +6,7 @@
 //! spawn models.
 
 mod child_lease;
+pub mod children;
 mod orchestrator_envelopes;
 mod run_controller;
 mod specialist_vertical;

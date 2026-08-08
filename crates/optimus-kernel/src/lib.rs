@@ -111,7 +111,7 @@ pub use execution_timing::{ExecutionModelCallSummary, ExecutionTimingSummary};
 pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
 };
-pub use home_ops::{get_session, list_sessions, open_cron, tick_cron, SessionDetail};
+pub use home_ops::{get_session, list_sessions, open_cron, tick_cron, ChildSummary, SessionDetail};
 pub use model_call::{apply_fast_mode, cap_effort_for_later_steps, normalize_thinking_level};
 pub(crate) use model_contract::check_cancellation;
 pub use model_contract::StreamControl;
@@ -195,8 +195,8 @@ pub use routing::{
 pub use scripted::ScriptedModel;
 pub use security_denial::{classify_security_denial, kernel_or_security_code, SecurityDenialCode};
 pub use session::{
-    Goal, GoalBudgetReason, GoalStatus, ListFilter, SessionEffectLink, SessionMeta, SessionStore,
-    TurnRecord, TurnStatus, GOALS_SCHEMA_VERSION,
+    ChildCoordinator, ChildSpawnRequest, Goal, GoalBudgetReason, GoalStatus, ListFilter,
+    SessionEffectLink, SessionMeta, SessionStore, TurnRecord, TurnStatus, GOALS_SCHEMA_VERSION,
 };
 pub(crate) use {model_call::pack_names, tool_report::*};
 

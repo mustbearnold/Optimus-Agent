@@ -29,6 +29,7 @@
 //! workspace HTTP substrate (the desktop HTTP mode uses it); this deviation
 //! is recorded here and in the A2 landing commit.
 
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::path::Path;
@@ -79,6 +80,9 @@ pub struct ServeState {
     pub home: std::path::PathBuf,
     pub ticket: String,
     pub process_secret: Option<String>,
+    /// The daemon-owned child coordinator (spec-034 R4), injected into
+    /// every chat stream this server opens.
+    pub(crate) children: Option<Arc<dyn optimus_kernel::ChildCoordinator>>,
     pub(crate) pool: WorkerPool,
     pub connections: AtomicUsize,
     pub shutdown: AtomicBool,
@@ -176,15 +180,37 @@ pub fn start_with_io(
         return Err(format!("cannot write host-runtime record: {error}"));
     }
 
+    // The daemon-owned children runtime (spec-034 R4): one channel
+    // feeds both the pool workers and the coordinator's enqueue path.
+    let (tx, rx) = mpsc::sync_channel(WORKER_QUEUE);
+    let live = Arc::new(Mutex::new(HashMap::new()));
+    let runtime: Arc<dyn optimus_kernel::ChildCoordinator> = Arc::new(
+        crate::children::ChildrenRuntime::new(home.to_path_buf(), tx.clone(), Arc::clone(&live)),
+    );
+    let pool = WorkerPool::start_with_channel(tx.clone(), rx);
+
     let state = Arc::new(ServeState {
         home: home.to_path_buf(),
         ticket: ticket.clone(),
         process_secret,
-        pool: WorkerPool::start(),
+        children: Some(Arc::clone(&runtime)),
+        pool,
         connections: AtomicUsize::new(0),
         shutdown: AtomicBool::new(false),
         exit_code: Mutex::new(None),
     });
+
+    // Adoption sweep (spec-034 R4): re-run never-started children and
+    // settle interrupted ones before the server accepts any client.
+    match crate::children::adopt_children(home, &tx, &live, &runtime) {
+        Ok(adopted) if adopted > 0 => {
+            eprintln!("[optimus serve] adopted {adopted} children");
+        }
+        Ok(_) => {}
+        Err(error) => {
+            eprintln!("[optimus serve] child adoption failed: {error}");
+        }
+    }
 
     let mut threads = Vec::new();
     let accept_state = Arc::clone(&state);

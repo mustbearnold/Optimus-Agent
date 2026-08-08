@@ -32,6 +32,10 @@ pub enum ToolInvocation {
     SessionRoster,
     SessionReview,
     SessionPolicy,
+    SessionSpawn,
+    SessionCancelChild,
+    SessionDeleteChild,
+    SessionChildren,
     ActivatePack,
     ReleasePack,
     BrowserNavigate,
@@ -113,6 +117,10 @@ impl ToolInvocation {
         Self::SessionRoster,
         Self::SessionReview,
         Self::SessionPolicy,
+        Self::SessionSpawn,
+        Self::SessionCancelChild,
+        Self::SessionDeleteChild,
+        Self::SessionChildren,
         Self::ActivatePack,
         Self::ReleasePack,
         Self::BrowserNavigate,
@@ -147,6 +155,10 @@ impl ToolInvocation {
             Self::SessionRoster => Some("session_roster"),
             Self::SessionReview => Some("session_review"),
             Self::SessionPolicy => Some("session_policy"),
+            Self::SessionSpawn => Some("session_spawn"),
+            Self::SessionCancelChild => Some("session_cancel_child"),
+            Self::SessionDeleteChild => Some("session_delete_child"),
+            Self::SessionChildren => Some("session_children"),
             Self::ActivatePack => Some("activate_pack"),
             Self::ReleasePack => Some("release_pack"),
             Self::BrowserNavigate => Some("browser_navigate"),
@@ -184,6 +196,10 @@ impl ToolInvocation {
             Self::SessionRoster => Some(ToolPolicy::Capability),
             Self::SessionReview => Some(ToolPolicy::Capability),
             Self::SessionPolicy => Some(ToolPolicy::Capability),
+            Self::SessionSpawn => Some(ToolPolicy::Capability),
+            Self::SessionCancelChild => Some(ToolPolicy::Capability),
+            Self::SessionDeleteChild => Some(ToolPolicy::Capability),
+            Self::SessionChildren => Some(ToolPolicy::Capability),
             Self::ActivatePack => Some(ToolPolicy::Capability),
             Self::ReleasePack => Some(ToolPolicy::Capability),
             Self::BrowserNavigate => Some(ToolPolicy::Browser),
@@ -208,6 +224,10 @@ impl ToolInvocation {
             | Self::SessionRoster
             | Self::SessionReview
             | Self::SessionPolicy
+            | Self::SessionSpawn
+            | Self::SessionCancelChild
+            | Self::SessionDeleteChild
+            | Self::SessionChildren
             | Self::ActivatePack
             | Self::ReleasePack
             | Self::BrowserSnapshot

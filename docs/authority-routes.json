@@ -894,6 +894,24 @@
       "supporting": []
     },
     {
+      "id": "specs.034-recursive-children",
+      "keywords": [
+        "recursive children",
+        "child session",
+        "admission handle",
+        "child registry",
+        "depth limit",
+        "usage attribution",
+        "session_spawn",
+        "daemon-backed",
+        "spec-034"
+      ],
+      "primary": [
+        "spec-034-recursive-children"
+      ],
+      "supporting": []
+    },
+    {
       "id": "specs.backlog",
       "keywords": [
         "backlog",

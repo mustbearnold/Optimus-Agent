@@ -202,6 +202,12 @@ impl Kernel {
             | ToolInvocation::SessionRoster
             | ToolInvocation::SessionReview
             | ToolInvocation::SessionPolicy => self.dispatch_session_message(call),
+            // spec-034: recursive children surface. The action is the
+            // invocation variant — each named tool is its own surface.
+            ToolInvocation::SessionSpawn => self.dispatch_children(call, "spawn"),
+            ToolInvocation::SessionCancelChild => self.dispatch_children(call, "cancel"),
+            ToolInvocation::SessionDeleteChild => self.dispatch_children(call, "delete"),
+            ToolInvocation::SessionChildren => self.dispatch_children(call, "list"),
             ToolInvocation::WriteFile => {
                 let path = call
                     .arguments

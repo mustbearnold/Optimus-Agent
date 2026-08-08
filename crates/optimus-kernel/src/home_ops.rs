@@ -129,12 +129,67 @@ pub fn list_sessions(home: impl AsRef<Path>) -> Result<Vec<SessionMeta>> {
 pub fn get_session(home: impl AsRef<Path>, id: Uuid) -> Result<SessionDetail> {
     let store = SessionStore::open(home.as_ref().join("sessions.db"))?;
     let (packs, messages, title) = store.load(id)?;
+    let children = store
+        .child_children(id)?
+        .into_iter()
+        .map(|row| ChildSummary {
+            child_session_id: row.child_session_id,
+            depth: row.depth,
+            status: row.status.as_str().to_string(),
+            created_at: row.created_at,
+            terminal_at: row.terminal_at,
+            total_tokens: 0,
+            input_tokens: 0,
+            output_tokens: 0,
+            reasoning_tokens: 0,
+        })
+        .collect::<Vec<_>>();
+    let children = match ExecutionStore::open(home.as_ref().join("execution.db")) {
+        Ok(executions) => {
+            let child_ids = children
+                .iter()
+                .map(|summary| summary.child_session_id)
+                .collect::<Vec<_>>();
+            let usage = executions.child_usage(&child_ids)?;
+            children
+                .into_iter()
+                .map(|mut summary| {
+                    if let Some((total, input, output, reasoning)) =
+                        usage.get(&summary.child_session_id)
+                    {
+                        summary.total_tokens = *total;
+                        summary.input_tokens = *input;
+                        summary.output_tokens = *output;
+                        summary.reasoning_tokens = *reasoning;
+                    }
+                    summary
+                })
+                .collect()
+        }
+        Err(_) => children,
+    };
     Ok(SessionDetail {
         id,
         title,
         packs,
         messages,
+        children,
     })
+}
+
+/// One direct child in the context tree (spec-034 R7/R8): status,
+/// depth, and the attributed usage totals.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChildSummary {
+    pub child_session_id: Uuid,
+    pub depth: u32,
+    pub status: String,
+    pub total_tokens: u64,
+    pub input_tokens: u64,
+    pub output_tokens: u64,
+    pub reasoning_tokens: u64,
+    pub created_at: String,
+    pub terminal_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,6 +198,7 @@ pub struct SessionDetail {
     pub title: String,
     pub packs: Vec<String>,
     pub messages: Vec<Message>,
+    pub children: Vec<ChildSummary>,
 }
 
 #[cfg(test)]

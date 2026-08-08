@@ -3,7 +3,7 @@ use optimus_packs::PackBudgetConfig;
 use serde_json::Value;
 use std::path::Path;
 
-use crate::CompressionConfig;
+use crate::{ChildCoordinator, CompressionConfig};
 
 /// Host-owned bridge for the agent-facing self-development tool.
 ///
@@ -35,6 +35,13 @@ pub struct KernelConfig {
     pub developer_access: Option<optimus_policy::DeveloperAccessGrant>,
     /// Optional host-owned self-development supervisor bridge.
     pub self_development: Option<SelfDevelopmentHandler>,
+    /// Recursive-children config (spec-034). `children_max_depth` is
+    /// the depth limit (R3): default 1, so a parent may spawn children
+    /// but a child may not spawn its own. `children` is the daemon
+    /// bridge; `None` means the kernel is not daemon-backed and spawn
+    /// refuses with a diagnostic (R4, A9).
+    pub children_max_depth: u32,
+    pub children: Option<std::sync::Arc<dyn ChildCoordinator>>,
 }
 
 impl Default for KernelConfig {
@@ -60,6 +67,8 @@ impl Default for KernelConfig {
             command_fs_envelope: None,
             developer_access: None,
             self_development: None,
+            children_max_depth: 1,
+            children: None,
         }
     }
 }

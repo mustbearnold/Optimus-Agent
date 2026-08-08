@@ -62,8 +62,8 @@ class EngineeringMemoryTests(unittest.TestCase):
     def test_canonical_tool_catalog_is_reconciled(self) -> None:
         registry = EM.parse_tool_catalog()
         tools = registry["tools"]
-        self.assertEqual(len(tools), 30)
-        self.assertEqual(len({row["id"] for row in tools}), 30)
+        self.assertEqual(len(tools), 34)
+        self.assertEqual(len({row["id"] for row in tools}), 34)
         available = {row["id"] for row in tools if row["available"]}
         self.assertEqual(
             available,
@@ -94,6 +94,10 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "session_roster",
                 "session_review",
                 "session_policy",
+                "session_spawn",
+                "session_cancel_child",
+                "session_delete_child",
+                "session_children",
             },
         )
         # Searching is a workspace read, not a process spawn. Shelling out to

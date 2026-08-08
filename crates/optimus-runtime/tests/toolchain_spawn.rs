@@ -183,7 +183,14 @@ fn invisible_program_is_denied_not_carded() {
 #[cfg(target_os = "linux")]
 #[test]
 fn live_bare_cargo_runs_through_the_product_chain() {
-    let Some(home) = std::env::var_os("HOME").map(std::path::PathBuf::from) else {
+    // Capture the real home under the lock: a sibling test's temp-HOME
+    // window must not leak into the capture (the sandbox binds derive
+    // from it; a temp capture would silently skip or deny the tier).
+    let home: Option<std::path::PathBuf> = {
+        let _guard = HOME_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::var_os("HOME").map(std::path::PathBuf::from)
+    };
+    let Some(home) = home else {
         return;
     };
     let cargo_shim = home.join(".cargo/bin/cargo");
@@ -196,57 +203,51 @@ fn live_bare_cargo_runs_through_the_product_chain() {
     // The whole body holds the HOME lock: the sandbox HOME is derived from
     // the open-time home (pinned in the runtime), and the sibling tests
     // redirect the process HOME.
-    with_home(
-        std::env::var_os("HOME")
-            .map(std::path::PathBuf::from)
-            .as_deref()
-            .unwrap_or(std::path::Path::new("/")),
-        || {
-            let rt = Runtime::open_with_developer_access(
-                &root.path().join("optimus.db"),
-                &workspace,
-                confined_config(),
-                Some(valid_grant(workspace.to_str().unwrap(), true)),
-                vec![workspace.clone()],
-            )
-            .expect("runtime");
-            let job = rt
-                .create_job(JobSpec {
-                    label: "live-cargo".into(),
-                    budget: Default::default(),
-                    nodes: vec![NodeSpec {
-                        label: "run".into(),
-                        effect: Effect::RunCommand {
-                            program: "cargo".into(),
-                            args: vec!["--version".into()],
-                        },
-                    }],
-                })
-                .unwrap();
-            match rt.run_all(job) {
-                Ok(optimus_runtime::JobStatus::Succeeded) => {
-                    let capture = rt
-                        .latest_command_capture(job)
-                        .expect("capture query")
-                        .expect("capture after success");
-                    assert!(
-                        capture.stdout.contains("cargo"),
-                        "cargo must report its version: {}",
-                        capture.stdout
-                    );
-                    assert_eq!(capture.exit_code, Some(0));
-                }
-                Ok(status) => {
-                    let capture = rt.latest_command_capture(job).ok().flatten();
-                    panic!("expected Succeeded, got {status:?}; capture={capture:?}")
-                }
-                Err(error) => panic!(
-                    "bare cargo must run under the toolchain tier: {error}; env HOME={:?}",
-                    std::env::var_os("HOME")
-                ),
+    with_home(&home, || {
+        let rt = Runtime::open_with_developer_access(
+            &root.path().join("optimus.db"),
+            &workspace,
+            confined_config(),
+            Some(valid_grant(workspace.to_str().unwrap(), true)),
+            vec![workspace.clone()],
+        )
+        .expect("runtime");
+        let job = rt
+            .create_job(JobSpec {
+                label: "live-cargo".into(),
+                budget: Default::default(),
+                nodes: vec![NodeSpec {
+                    label: "run".into(),
+                    effect: Effect::RunCommand {
+                        program: "cargo".into(),
+                        args: vec!["--version".into()],
+                    },
+                }],
+            })
+            .unwrap();
+        match rt.run_all(job) {
+            Ok(optimus_runtime::JobStatus::Succeeded) => {
+                let capture = rt
+                    .latest_command_capture(job)
+                    .expect("capture query")
+                    .expect("capture after success");
+                assert!(
+                    capture.stdout.contains("cargo"),
+                    "cargo must report its version: {}",
+                    capture.stdout
+                );
+                assert_eq!(capture.exit_code, Some(0));
             }
-        },
-    );
+            Ok(status) => {
+                let capture = rt.latest_command_capture(job).ok().flatten();
+                panic!("expected Succeeded, got {status:?}; capture={capture:?}")
+            }
+            Err(error) => panic!(
+                "bare cargo must run under the toolchain tier: {error}; env HOME={:?}",
+                std::env::var_os("HOME")
+            ),
+        }
+    });
 }
 
 /// HostInstall into a ro-bound toolchain dir is denied with a read-only

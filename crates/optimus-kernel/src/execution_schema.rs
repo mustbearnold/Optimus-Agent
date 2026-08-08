@@ -4,7 +4,7 @@ use rusqlite::{Connection, Result};
 
 pub(super) fn initialize(conn: &Connection) -> Result<()> {
     // Concurrent kernel opens wait via busy_timeout, never fail locked.
-    conn.busy_timeout(Duration::from_secs(5))?;
+    conn.busy_timeout(Duration::from_secs(15))?;
     // schema_ddl: the journal-mode pragma takes a file-level lock that the
     // busy handler does not cover; concurrent first-opens retry instead.
     crate::execution_support::schema_ddl::<rusqlite::Error>(
@@ -77,7 +77,22 @@ pub(super) fn initialize(conn: &Connection) -> Result<()> {
            call_json TEXT NOT NULL,
            status TEXT NOT NULL CHECK(status IN ('pending','approved','denied')),
            PRIMARY KEY(manifest_id,call_id)
-         );",
+           );
+           CREATE TABLE IF NOT EXISTS execution_child_attribution(
+            parent_manifest_id TEXT NOT NULL REFERENCES execution_manifests(id) ON DELETE CASCADE,
+            child_session_id TEXT NOT NULL,
+            child_manifest_id TEXT NOT NULL UNIQUE REFERENCES execution_manifests(id) ON DELETE CASCADE,
+            input_tokens INTEGER NOT NULL DEFAULT 0 CHECK(input_tokens >= 0),
+            output_tokens INTEGER NOT NULL DEFAULT 0 CHECK(output_tokens >= 0),
+            total_tokens INTEGER NOT NULL DEFAULT 0 CHECK(total_tokens >= 0),
+            reasoning_tokens INTEGER NOT NULL DEFAULT 0 CHECK(reasoning_tokens >= 0),
+            cached_input_tokens INTEGER NOT NULL DEFAULT 0 CHECK(cached_input_tokens >= 0),
+            cache_write_tokens INTEGER NOT NULL DEFAULT 0 CHECK(cache_write_tokens >= 0),
+            duration_ms INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0),
+            attributed_at_unix INTEGER NOT NULL,
+            PRIMARY KEY(parent_manifest_id, child_manifest_id)
+          );
+        ",
     )?;
     migrate_developer_full_access_profile(conn)
 }

@@ -14,6 +14,8 @@ pub enum PackId {
     Devex,
     Social,
     Collaboration,
+    /// Recursive children: child kernel sessions (spec-034).
+    Children,
     /// Home-automation / IoT breadth (Track Z.10).
     Home,
     /// Office docs breadth (Track Z.10).
@@ -30,6 +32,7 @@ impl PackId {
             PackId::Devex => "devex",
             PackId::Social => "social",
             PackId::Collaboration => "collaboration",
+            PackId::Children => "children",
             PackId::Home => "home",
             PackId::Office => "office",
         }
@@ -44,6 +47,7 @@ impl PackId {
             "devex" => Some(Self::Devex),
             "social" => Some(Self::Social),
             "collaboration" => Some(Self::Collaboration),
+            "children" => Some(Self::Children),
             "home" => Some(Self::Home),
             "office" => Some(Self::Office),
             _ => None,

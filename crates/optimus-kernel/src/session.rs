@@ -10,6 +10,9 @@ use uuid::Uuid;
 use crate::execution_support::with_schema_lock;
 use crate::{KernelError, Message, Result, Role};
 
+pub mod child_ops;
+pub use child_ops::{ChildCoordinator, ChildSpawnRequest};
+mod children;
 mod goal_ops;
 mod goals;
 mod latest;
@@ -129,7 +132,7 @@ impl SessionStore {
         }
         let conn = Connection::open(path)?;
         // Concurrent kernel opens wait via busy_timeout, never fail locked.
-        conn.busy_timeout(Duration::from_secs(5))?;
+        conn.busy_timeout(Duration::from_secs(15))?;
         crate::execution_support::schema_ddl::<crate::KernelError>(
             &conn,
             "
@@ -238,6 +241,7 @@ impl SessionStore {
         store.ensure_goals_schema()?;
         // spec-025: inbound policy, discovery opt-in, dialog expiry columns.
         store.ensure_messaging_columns()?;
+        store.ensure_children_schema()?;
         store.backfill_fts_if_empty()?;
         Ok(store)
     }

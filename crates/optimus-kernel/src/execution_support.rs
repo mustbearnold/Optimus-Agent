@@ -78,7 +78,22 @@ pub(crate) fn with_schema_lock<T>(
     connection: &Connection,
     body: impl FnOnce() -> Result<T>,
 ) -> Result<T> {
-    connection.execute_batch("BEGIN IMMEDIATE")?;
+    // The write lock at BEGIN does not always consult the busy handler
+    // (WAL); retry the acquire like schema_ddl does. The body stays
+    // single-shot: the migration must not run twice.
+    let mut attempts = 0;
+    loop {
+        match connection.execute_batch("BEGIN IMMEDIATE") {
+            Ok(()) => break,
+            Err(rusqlite::Error::SqliteFailure(failure, _))
+                if failure.code == rusqlite::ErrorCode::DatabaseBusy && attempts < 64 =>
+            {
+                attempts += 1;
+                std::thread::sleep(std::time::Duration::from_millis(2));
+            }
+            Err(error) => return Err(error.into()),
+        }
+    }
     match body() {
         Ok(value) => {
             connection.execute_batch("COMMIT")?;
@@ -98,8 +113,10 @@ pub(crate) fn with_schema_lock<T>(
 /// SQLITE_BUSY immediately for that statement without consulting the busy
 /// handler. The host's worker pool opens kernels on the same home
 /// concurrently, so several openers race the journal-mode change on a fresh
-/// file. The window is microseconds (the winning opener finishes its DDL),
-/// so retrying the idempotent batch is the documented pattern.
+/// file. The window is the winning opener's full DDL batch (spec-034 grew
+/// the sessions and execution batches with the children registry and
+/// attribution tables), so the retry budget must cover a whole batch, not
+/// a single statement.
 pub(crate) fn schema_ddl<E>(connection: &Connection, batch: &str) -> std::result::Result<(), E>
 where
     rusqlite::Error: Into<E>,
@@ -109,7 +126,7 @@ where
         match connection.execute_batch(batch) {
             Ok(()) => return Ok(()),
             Err(rusqlite::Error::SqliteFailure(failure, _))
-                if failure.code == rusqlite::ErrorCode::DatabaseBusy && attempts < 8 =>
+                if failure.code == rusqlite::ErrorCode::DatabaseBusy && attempts < 200 =>
             {
                 attempts += 1;
                 std::thread::sleep(std::time::Duration::from_millis(2));

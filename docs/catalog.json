@@ -3685,6 +3685,25 @@
     },
     {
       "authority": "record",
+      "content_sha256": "d2f9852023d6fab93ed75f9a39818ba0a1ce941d1ae6ba1c364e4bc8752953a4",
+      "headings": [
+        "ADR-0088: Recursive children form a durable session hierarchy",
+        "Context",
+        "Decision",
+        "Consequences"
+      ],
+      "id": "decisions-0088-recursive-children-are-durable-session-hierarchy",
+      "path": "docs/decisions/0088-recursive-children-are-durable-session-hierarchy.md",
+      "plane": "decision",
+      "review_by": "2026-11-08",
+      "reviewed_on": "2026-08-08",
+      "status": "current",
+      "summary": "Recursive children (spec-034) form a durable session hierarchy — a parent kernel session spawns full child kernel sessions with one typed task prompt, receives an admission handle immediately, and tracks them in a session_children registry in sessions.db with a depth limit (default 1), daemon-backed execution in the host worker pool with re-adoption after restart, cancellation and durable tombstones, and usage attribution in execution.db reconciled against the child manifests; the tool surface is a new on-demand children pack with Capability-policy spawn.",
+      "title": "ADR-0088: Recursive children form a durable session hierarchy",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4551,6 +4570,39 @@
     },
     {
       "authority": "canonical",
+      "content_sha256": "c442a5e53d1f60417db5df37cc6e03a98d5eaadd507732c73c2cb63876eb4bbf",
+      "headings": [
+        "Spec-034: Recursive children — child kernel sessions with usage attribution",
+        "Revision table",
+        "Purpose",
+        "Current state (Confirmed behaviour)",
+        "Requirements",
+        "R1. Child admission",
+        "R2. Child registry",
+        "R3. Depth limit",
+        "R4. Daemon-backed execution",
+        "R5. Inheritance and selection",
+        "R6. Cancellation and deletion",
+        "R7. Usage attribution",
+        "R8. Observability",
+        "R9. Security and ceremony",
+        "Acceptance criteria",
+        "Out of scope",
+        "Open questions",
+        "Links"
+      ],
+      "id": "spec-034-recursive-children",
+      "path": "specs/034-recursive-children/spec.md",
+      "plane": "work",
+      "review_by": "2026-11-08",
+      "reviewed_on": "2026-08-08",
+      "status": "current",
+      "summary": "Recursive children for Optimus. A parent kernel session spawns child kernel sessions with one typed task prompt. The spawn returns an admission handle at once. The children live in a durable registry with a depth limit, daemon-backed execution, cancellation, tombstones, and usage attribution. This is Phase 1a.3 of the best-agent roadmap.",
+      "title": "Spec-034: Recursive children — child kernel sessions with usage attribution",
+      "type": "reference"
+    },
+    {
+      "authority": "canonical",
       "content_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "headings": [
         "BACKLOG",
@@ -4616,7 +4668,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "0df6bbaea8e1a206641bf45cc44955047cd529f6e8433104d33c20390fd35d64",
+  "documents_sha256": "880c1daa3a2703c0d4a80b8b6936a4691aed5dd55df55345a6efea3384bbb9f8",
   "routes": [
     {
       "id": "architecture.blueprint",
@@ -5488,6 +5540,24 @@
       ],
       "primary": [
         "spec-026-goals"
+      ],
+      "supporting": []
+    },
+    {
+      "id": "specs.034-recursive-children",
+      "keywords": [
+        "recursive children",
+        "child session",
+        "admission handle",
+        "child registry",
+        "depth limit",
+        "usage attribution",
+        "session_spawn",
+        "daemon-backed",
+        "spec-034"
+      ],
+      "primary": [
+        "spec-034-recursive-children"
       ],
       "supporting": []
     },

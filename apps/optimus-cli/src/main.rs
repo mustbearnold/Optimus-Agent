@@ -1,13 +1,17 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+
+use session_cmd::{parse_session, with_session};
 mod chat;
+mod children;
 mod doctor;
 mod gateway_http;
 mod goal;
 mod parsers;
 mod read_only;
 mod runtime_open;
+mod session_cmd;
 mod skills;
 mod telegram_cmd;
 mod vertical_cmd;
@@ -119,6 +123,11 @@ enum Commands {
     },
     /// Durable chat sessions
     Sessions,
+    /// Recursive children of a session (spec-034)
+    Children {
+        #[command(flatten)]
+        args: children::ChildrenArgs,
+    },
     Goal {
         #[command(flatten)]
         args: goal::GoalArgs,
@@ -702,11 +711,12 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         } => chat::run_chat(
             &cli.home, message, provider, model, base_url, session, thinking, fast,
         ),
-        Commands::Goal { args } => {
-            let sid = parse_session(args.session.clone())?;
-            let mut kernel = open_session(&cli.home, sid)?;
-            goal::run_goal(&mut kernel, &args)
-        }
+        Commands::Goal { args } => with_session(&cli.home, args.session.clone(), |kernel| {
+            goal::run_goal(kernel, &args)
+        }),
+        Commands::Children { args } => with_session(&cli.home, args.session.clone(), |kernel| {
+            children::run_children(kernel, &args)
+        }),
         Commands::Sessions => {
             for s in list_sessions(&cli.home)? {
                 println!(
@@ -1339,18 +1349,9 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
 /// Open a kernel for the current session (or a fresh one). The single
 /// allowed core-state call site in this binary (crate-layers allowlist).
-fn open_session(
+pub(crate) fn open_session(
     home: &std::path::Path,
     sid: Option<uuid::Uuid>,
 ) -> Result<Kernel, Box<dyn std::error::Error>> {
     Ok(Kernel::open_session(home, KernelConfig::default(), sid)?)
-}
-
-fn parse_session(
-    session: Option<String>,
-) -> Result<Option<uuid::Uuid>, Box<dyn std::error::Error>> {
-    match session {
-        None => Ok(None),
-        Some(s) => Ok(Some(uuid::Uuid::parse_str(&s)?)),
-    }
 }
