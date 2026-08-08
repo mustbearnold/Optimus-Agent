@@ -73,3 +73,87 @@ pub(crate) fn completion_usage_from_value(value: &Value) -> Option<CompletionUsa
     };
     (!parsed.is_empty()).then_some(parsed)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn parses_openai_chat_completion_shape() {
+        let value = json!({
+            "model": "gpt-4o",
+            "usage": {
+                "prompt_tokens": 120,
+                "completion_tokens": 40,
+                "total_tokens": 160,
+            },
+        });
+        let usage = completion_usage_from_value(&value).expect("usage");
+        assert_eq!(usage.input_tokens, Some(120));
+        assert_eq!(usage.output_tokens, Some(40));
+        assert_eq!(usage.total_tokens, Some(160));
+        assert_eq!(usage.reasoning_tokens, None);
+        assert_eq!(usage.cached_input_tokens, None);
+        assert_eq!(usage.cache_write_tokens, None);
+    }
+
+    #[test]
+    fn parses_responses_shape_with_details() {
+        let value = json!({
+            "usage": {
+                "input_tokens": 200,
+                "output_tokens": 50,
+                "total_tokens": 250,
+                "output_tokens_details": { "reasoning_tokens": 11 },
+                "input_tokens_details": {
+                    "cached_tokens": 90,
+                    "cache_write_tokens": 3,
+                },
+            },
+        });
+        let usage = completion_usage_from_value(&value).expect("usage");
+        assert_eq!(usage.input_tokens, Some(200));
+        assert_eq!(usage.output_tokens, Some(50));
+        assert_eq!(usage.total_tokens, Some(250));
+        assert_eq!(usage.reasoning_tokens, Some(11));
+        assert_eq!(usage.cached_input_tokens, Some(90));
+        assert_eq!(usage.cache_write_tokens, Some(3));
+    }
+
+    #[test]
+    fn direct_fields_win_over_nested_details() {
+        // Anthropic-style direct fields must shadow any nested details.
+        let value = json!({
+            "usage": {
+                "input_tokens": 9,
+                "output_tokens": 4,
+                "input_tokens_details": { "cached_tokens": 999 },
+            },
+        });
+        let usage = completion_usage_from_value(&value).expect("usage");
+        assert_eq!(usage.input_tokens, Some(9));
+        assert_eq!(usage.output_tokens, Some(4));
+        assert_eq!(usage.cached_input_tokens, Some(999));
+    }
+
+    #[test]
+    fn missing_or_empty_usage_is_none() {
+        assert_eq!(completion_usage_from_value(&json!({})), None);
+        assert_eq!(completion_usage_from_value(&json!({"usage": {}})), None);
+    }
+
+    #[test]
+    fn unknown_fields_do_not_invent_tokens() {
+        let value = json!({
+            "usage": {
+                "prompt_tokens": 1,
+                "completion_tokens": 2,
+                "weird_custom_field": 999,
+            },
+        });
+        let usage = completion_usage_from_value(&value).expect("usage");
+        assert_eq!(usage.total_tokens, None);
+        assert_eq!(usage.reasoning_tokens, None);
+    }
+}
