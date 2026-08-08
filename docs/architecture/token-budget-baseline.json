@@ -23,9 +23,9 @@
       "note": "W4 lowers budget to 12,000"
     },
     "skill:optimus-agent-development/SKILL.md": {
-      "budget_bytes": 35954,
+      "budget_bytes": 37871,
       "target_bytes": 30000,
-      "note": "W2 landed 2026-08-07: 87,109 -> 29,996 B (records de-duplicated against reference maps; 25 refs/scripts sha256-verified byte-identical). Surface optional: skipped when the profile skill is absent."
+      "note": "W2 landed 2026-08-07: 87,109 -> 29,996 B (records de-duplicated against reference maps; 25 refs/scripts sha256-verified byte-identical). Re-anchored 2026-08-08 (#130 landing): deliberate growth wave — expert-profile copy gained spec-015 landing-pitfalls + pack-rotation references; target_bytes 30,000 unchanged (ratchet direction preserved). Surface optional: skipped when the profile skill is absent."
     }
   }
 }

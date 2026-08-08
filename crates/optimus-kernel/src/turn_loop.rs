@@ -58,8 +58,20 @@ impl Kernel {
         self.executions
             .record_timing_event(execution.manifest_id, &start_event)?;
         sink(StreamEvent::Timing(start_event));
-        let mut result =
-            self.run_turn_loop(model, sink, cancellation, execution, started, &mut timings);
+        // R9 (ADR-0082): the effect-link batch accumulates across a model
+        // step; it is flushed at the step boundary, and any residue left by a
+        // mid-step exit is flushed by finish_turn below (the mandatory choke
+        // point for non-park exits).
+        let mut pending_effect_links = Vec::new();
+        let mut result = self.run_turn_loop(
+            model,
+            sink,
+            cancellation,
+            execution,
+            started,
+            &mut timings,
+            &mut pending_effect_links,
+        );
         let total_ms = elapsed_ms(started);
         if let Ok(turn) = &mut result {
             turn.timings = TurnTimings {
@@ -75,6 +87,17 @@ impl Kernel {
             result,
             Err(KernelError::Runtime(RuntimeError::NeedsApproval { .. }))
         ) {
+            // R9 (ADR-0082): park inline — the turn stays Running, so
+            // finish_turn is not the exit here; flush the accumulated
+            // effect-link batch (calls executed before the approval-required
+            // call) before the turn pauses.
+            self.sessions.save_with_effect_links(
+                self.session_id,
+                &self.session_title,
+                &pack_names(&self.packs),
+                &self.messages,
+                &pending_effect_links,
+            )?;
             return result;
         }
         let (status, error_code) = match &result {
@@ -90,6 +113,7 @@ impl Kernel {
             &self.messages,
             status,
             error_code,
+            &pending_effect_links,
         )?;
         self.executions.finish_timed(
             execution.manifest_id,
@@ -122,6 +146,7 @@ impl Kernel {
         result
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn run_turn_loop(
         &mut self,
         model: &mut dyn ModelProvider,
@@ -130,24 +155,19 @@ impl Kernel {
         execution: RecordedExecution,
         turn_started: Instant,
         timings: &mut TimingAccumulator,
+        pending_effect_links: &mut Vec<SessionEffectLink>,
     ) -> Result<TurnResult> {
         // Zero for a fresh turn, so it starts at step 1 as it always has. A turn
         // resuming after an approval reuses its manifest, and counting on from
         // the steps already recorded keeps `execution_model_calls` — keyed on
         // `(manifest_id, step)` — collision-free, and keeps `max_steps` spanning
         // the whole turn rather than resetting across the pause (ADR-0046).
-        let mut steps = self
-            .executions
-            .list_model_calls(execution.manifest_id)?
-            .iter()
-            .map(|call| call.step)
-            .max()
-            .unwrap_or(0);
+        let prior_calls = self.executions.list_model_calls(execution.manifest_id)?;
+        let mut steps = prior_calls.iter().map(|call| call.step).max().unwrap_or(0);
         let mut tool_trace = Vec::new();
         let mut invoked_tools = Vec::new();
         let mut compressed = false;
         let mut evidence_signatures = BTreeSet::new();
-        let mut synthesis_only = false;
 
         loop {
             check_cancellation(cancellation)?;
@@ -161,7 +181,20 @@ impl Kernel {
                 compressed = true;
             }
 
-            let tools = if synthesis_only {
+            // R10: step-scoped tool-loop guard (ADR-0082). The engagement
+            // counter is COUNT(DISTINCT step) over suppressed tool_finished
+            // timing events — the only durable record carrying step + suppressed
+            // per call, so it survives approval resume, and a step that
+            // suppressed several calls still counts once. One suppressed step
+            // keeps tools ADVERTISED with a guard message; a second suppresses
+            // the tool surface entirely (the old turn-wide `synthesis_only`).
+            let suppressed_steps = self
+                .executions
+                .suppressed_tool_step_count(execution.manifest_id)?;
+            let synthesis_guard = suppressed_steps >= 1;
+            let tool_lockdown = suppressed_steps >= 2;
+
+            let tools = if tool_lockdown {
                 Vec::new()
             } else {
                 self.tool_schemas()
@@ -172,6 +205,17 @@ impl Kernel {
                 normalize_thinking_level(self.config.thinking_level.as_deref()),
                 self.config.fast_mode,
             );
+            // R8: the first step of a fresh turn keeps the user's choice
+            // (after fast mode); every later step caps at `low`, `off` is
+            // never upgraded, and `auto` resolves to `low`. Evaluated per
+            // iteration: `steps` increments each round, and a resumed turn
+            // re-enters with recorded calls, so its first resumed step is
+            // already "later" (ADR-0082).
+            let effort = if prior_calls.is_empty() && steps == 1 {
+                effort
+            } else {
+                cap_effort_for_later_steps(effort)
+            };
             let thinking_effort = effort.clone();
             let mut request_messages = self.messages.clone();
             // Last line of defence before the wire. Compression and session load
@@ -187,10 +231,18 @@ impl Kernel {
                     repair.dropped_orphan_results, repair.synthesized_results
                 )));
             }
-            if synthesis_only {
+            if tool_lockdown {
                 request_messages.push(Message {
                     role: Role::System,
                     content: "Tool-loop guard active: synthesis-only step. Answer from the evidence already present and do not request more tools.".into(),
+                    tool_call_id: None,
+                    name: None,
+                    reasoning_content: None,
+                });
+            } else if synthesis_guard {
+                request_messages.push(Message {
+                    role: Role::System,
+                    content: "Tool-loop guard active: a tool call was suppressed earlier in this turn. Prefer synthesizing from the evidence already present; further tool calls may be suppressed.".into(),
                     tool_call_id: None,
                     name: None,
                     reasoning_content: None,
@@ -323,6 +375,12 @@ impl Kernel {
                 // with a real call. A real user sees the agent recover;
                 // without this the whole turn died with pack_error.
                 let mut invalid_tool_ids: BTreeMap<String, String> = BTreeMap::new();
+                // R9: one durability write per model step, not one per tool
+                // call (ADR-0082). Effect links for every call in this step
+                // accumulate in the caller-owned batch (persisted in a single
+                // transaction after the call loop); anything left by a
+                // mid-step exit is flushed by `finish_turn`.
+                pending_effect_links.clear();
                 for call in &resp.tool_calls {
                     let provider_call_id = call.id.trim();
                     if provider_call_id.is_empty() {
@@ -378,9 +436,6 @@ impl Kernel {
                             .is_some_and(|value| !evidence_signatures.insert(value))
                     };
                     let suppressed = over_budget || duplicate;
-                    if suppressed {
-                        synthesis_only = true;
-                    }
                     let tool_started = Instant::now();
                     let start_event = timing_event(
                         TimingEventKind::ToolStarted,
@@ -677,14 +732,18 @@ impl Kernel {
                         name: Some(call.name),
                         reasoning_content: None,
                     });
-                    self.sessions.save_with_effect_links(
-                        self.session_id,
-                        &self.session_title,
-                        &pack_names(&self.packs),
-                        &self.messages,
-                        effect_link.as_slice(),
-                    )?;
+                    pending_effect_links.extend(effect_link);
                 }
+                // R9: persist effect links once per model step (ADR-0082) —
+                // a single transaction covering every call in the step instead
+                // of one write per call; `finish_turn` settles the turn.
+                self.sessions.save_with_effect_links(
+                    self.session_id,
+                    &self.session_title,
+                    &pack_names(&self.packs),
+                    &self.messages,
+                    pending_effect_links.as_slice(),
+                )?;
                 continue;
             }
 

@@ -103,7 +103,7 @@ describe('composer Auto persistence and resolution', () => {
     expect(loadComposer()?.settings).toEqual({
       provider: 'open-ai-compat',
       model: '',
-      thinking: 'high',
+      thinking: 'minimal',
       access: 'standard',
       fast: false,
     });

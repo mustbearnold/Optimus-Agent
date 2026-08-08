@@ -30,7 +30,7 @@ export function WorkbenchStatusBar({ status, statusText, settings, developerAcce
   const detail =
     statusText.trim().toLowerCase() === stateLabel.toLowerCase() ? '' : statusText;
   const model = settings.model || (settings.provider === 'offline' ? 'Offline' : 'Auto');
-  const thinking = settings.thinking ? capitalize(settings.thinking) : 'High';
+  const thinking = settings.thinking ? capitalize(settings.thinking) : 'Minimal';
   const access = developerAccess?.enabled
     ? `Developer · ${developerScopeLabel(developerAccess)}`
     : accessLabel(settings.access);

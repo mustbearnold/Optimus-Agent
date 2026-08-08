@@ -253,6 +253,7 @@ fn session_and_agent_terminal_outcomes_agree_after_independent_reopen() {
                 &messages,
                 turn_status,
                 error_code,
+                &[],
             )
             .unwrap();
         invocations

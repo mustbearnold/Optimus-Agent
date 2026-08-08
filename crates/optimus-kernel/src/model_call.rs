@@ -35,6 +35,27 @@ pub fn apply_fast_mode(effort: Option<String>, fast: bool) -> Option<String> {
     }
 }
 
+/// R8 latency shaping: cap reasoning effort at `low` for every step after the
+/// first of a fresh turn. The caller keeps the user's choice for the first
+/// step (fresh turn only — an approval-resumed turn re-enters with recorded
+/// calls and is capped from its first resumed step).
+///
+/// Ordering: `off` < `minimal` < `low` < everything above. `off` is never
+/// upgraded; `auto`/`None` becomes `low`; unknown levels are treated as
+/// above `low` and capped, so a provider-specific high-effort label cannot
+/// slip through.
+pub fn cap_effort_for_later_steps(effort: Option<String>) -> Option<String> {
+    let Some(level) = effort else {
+        return Some("low".into());
+    };
+    let above_low = !matches!(level.as_str(), "off" | "minimal" | "low");
+    if above_low {
+        Some("low".into())
+    } else {
+        Some(level)
+    }
+}
+
 pub(crate) fn pack_names(packs: &CapabilitySession) -> Vec<String> {
     packs
         .loaded_packs()
@@ -45,7 +66,7 @@ pub(crate) fn pack_names(packs: &CapabilitySession) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{apply_fast_mode, normalize_thinking_level};
+    use super::{apply_fast_mode, cap_effort_for_later_steps, normalize_thinking_level};
 
     #[test]
     fn auto_omits_provider_specific_effort() {
@@ -65,6 +86,56 @@ mod tests {
         assert_eq!(
             normalize_thinking_level(Some("x-high")),
             Some("xhigh".into())
+        );
+    }
+
+    #[test]
+    fn later_steps_cap_effort_at_low_but_never_upgrade_off() {
+        // R8: every step after the first of a fresh turn caps at `low`.
+        assert_eq!(
+            cap_effort_for_later_steps(Some("high".into())),
+            Some("low".into())
+        );
+        assert_eq!(
+            cap_effort_for_later_steps(Some("medium".into())),
+            Some("low".into())
+        );
+        assert_eq!(
+            cap_effort_for_later_steps(Some("xhigh".into())),
+            Some("low".into())
+        );
+        assert_eq!(
+            cap_effort_for_later_steps(Some("max".into())),
+            Some("low".into())
+        );
+        assert_eq!(
+            cap_effort_for_later_steps(Some("low".into())),
+            Some("low".into())
+        );
+        // `minimal` and `off` are at or below the cap and never upgraded.
+        assert_eq!(
+            cap_effort_for_later_steps(Some("minimal".into())),
+            Some("minimal".into())
+        );
+        assert_eq!(
+            cap_effort_for_later_steps(Some("off".into())),
+            Some("off".into())
+        );
+        // `auto`/`None` resolves to the cap.
+        assert_eq!(cap_effort_for_later_steps(None), Some("low".into()));
+    }
+
+    #[test]
+    fn fast_mode_applies_before_the_step_cap() {
+        // Fast mode caps `high` at `medium`; the step cap then lands on `low`.
+        assert_eq!(
+            cap_effort_for_later_steps(apply_fast_mode(Some("high".into()), true)),
+            Some("low".into())
+        );
+        // Off survives both.
+        assert_eq!(
+            cap_effort_for_later_steps(apply_fast_mode(Some("off".into()), true)),
+            Some("off".into())
         );
     }
 }

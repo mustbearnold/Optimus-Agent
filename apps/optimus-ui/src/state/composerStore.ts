@@ -103,7 +103,9 @@ export function restoredAccess(raw: unknown): string {
 export const offlineComposer: ComposerSettings = {
   provider: 'offline',
   model: 'offline-scripted',
-  thinking: 'high',
+  // R8 (ADR-0082): fresh defaults favor latency — the kernel caps later
+  // steps at `low` anyway; minimal keeps the first step cheap too.
+  thinking: 'minimal',
   access: 'standard',
   fast: false,
 };
@@ -112,7 +114,7 @@ export const offlineComposer: ComposerSettings = {
 export const codexComposer: ComposerSettings = {
   provider: 'codex',
   model: 'gpt-5.6-terra',
-  thinking: 'high',
+  thinking: 'minimal',
   access: 'standard',
   fast: false,
 };
@@ -120,7 +122,7 @@ export const codexComposer: ComposerSettings = {
 export const autoComposer: ComposerSettings = {
   provider: 'auto',
   model: '',
-  thinking: 'high',
+  thinking: 'minimal',
   access: 'standard',
   fast: false,
 };
@@ -161,7 +163,7 @@ export function loadComposer(): StoredComposer | null {
       settings: {
         provider,
         model,
-        thinking: isReasoningLevel(parsed.thinking) ? parsed.thinking : 'high',
+        thinking: isReasoningLevel(parsed.thinking) ? parsed.thinking : 'minimal',
         access: restoredAccess(parsed.access),
         fast: parsed.fast === true,
       },

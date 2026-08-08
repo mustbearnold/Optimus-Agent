@@ -100,4 +100,21 @@ impl ExecutionStore {
         }
         Ok(summary)
     }
+
+    /// R10 (ADR-0082): distinct model steps whose tool calls were suppressed —
+    /// the durable engagement counter for the step-scoped tool-loop guard.
+    /// COUNT(DISTINCT step) survives approval resume, and a step that
+    /// suppressed several calls still counts once.
+    pub fn suppressed_tool_step_count(&self, manifest_id: Uuid) -> Result<u32> {
+        self.conn
+            .query_row(
+                "SELECT COUNT(DISTINCT step)
+                 FROM execution_timing_events
+                 WHERE manifest_id=?1 AND kind='tool_finished' AND suppressed=1",
+                params![manifest_id.to_string()],
+                |row| row.get::<_, i64>(0),
+            )
+            .map(|count| count as u32)
+            .map_err(KernelError::Sqlite)
+    }
 }

@@ -111,7 +111,7 @@ pub use fs_sandbox::{
     is_denied_name, FsEntry, FsEntryKind, FsRoots, FsSandboxError, ReadTextResult,
 };
 pub use home_ops::{get_session, list_sessions, open_cron, tick_cron, SessionDetail};
-pub use model_call::{apply_fast_mode, normalize_thinking_level};
+pub use model_call::{apply_fast_mode, cap_effort_for_later_steps, normalize_thinking_level};
 pub use model_contract::{CompletionRequest, CompletionResponse, Message, Role, ToolCall};
 pub(crate) use model_usage::completion_usage_from_value;
 pub use model_usage::CompletionUsage;

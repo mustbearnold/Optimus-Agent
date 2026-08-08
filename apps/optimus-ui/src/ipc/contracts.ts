@@ -336,6 +336,13 @@ export type ToolActivity = {
     | 'suppressed'
     | 'ambiguous';
   durationMs?: number;
+  /**
+   * Wall-clock offsets (ms) of tool start/finish within the run, from the
+   * kernel's timing events — feed the R11 tool-to-tool gap breakdown.
+   * Absent for persisted runs without timing data.
+   */
+  startedAtMs?: number;
+  finishedAtMs?: number;
   outcome?: ToolOutcome;
   /**
    * The durable runtime identity for a pending high-risk effect. This is

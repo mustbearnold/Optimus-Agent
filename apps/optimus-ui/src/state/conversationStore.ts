@@ -134,6 +134,41 @@ class ConversationStore {
     this.emit(detail.id);
   }
 
+  /** R11: timing offsets that arrived before their tool lifecycle event
+   *  (sessionId -> callId -> { startedAtMs?, finishedAtMs? }). */
+  private pendingToolTimes = new Map<
+    string,
+    Map<string, { startedAtMs?: number; finishedAtMs?: number }>
+  >();
+
+  private attachToolTime(
+    sessionId: string,
+    callId: string,
+    kind: 'tool_started' | 'tool_finished',
+    elapsedMs: number,
+  ) {
+    const stashed =
+      this.pendingToolTimes.get(sessionId) ||
+      new Map<string, { startedAtMs?: number; finishedAtMs?: number }>();
+    const entry = stashed.get(callId) || {};
+    entry[kind === 'tool_started' ? 'startedAtMs' : 'finishedAtMs'] = elapsedMs;
+    stashed.set(callId, entry);
+    this.pendingToolTimes.set(sessionId, stashed);
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+    const messages = session.messages.slice();
+    const messageIndex = findLastAssistantIndex(messages);
+    if (messageIndex < 0) return;
+    const message = messages[messageIndex]!;
+    const tools = [...(message.tools || [])];
+    const toolIndex = tools.findIndex((tool) => tool.callId === callId);
+    if (toolIndex >= 0) {
+      tools[toolIndex] = { ...tools[toolIndex]!, ...entry };
+      messages[messageIndex] = { ...message, tools };
+      this.sessions.set(sessionId, { ...session, messages });
+    }
+  }
+
   begin(sessionId: string, userText: string) {
     const current = this.sessions.get(sessionId) || emptyProjection();
     const stamp = `${Date.now()}:${Math.random().toString(36).slice(2)}`;
@@ -199,6 +234,14 @@ class ConversationStore {
       } else {
         tools.push(activity);
       }
+      // R11 back-fill: the kernel sinks timing BEFORE the lifecycle event, so
+      // start/finish offsets stashed by the timing handler are applied when
+      // the tool activity finally appears.
+      const stashed = this.pendingToolTimes.get(sessionId)?.get(event.call_id);
+      if (stashed && Object.keys(stashed).length > 0) {
+        const target = toolIndex >= 0 ? toolIndex : tools.length - 1;
+        tools[target] = { ...tools[target]!, ...stashed };
+      }
       messages[messageIndex] = {
         ...message,
         tools: tools.slice(-200),
@@ -220,11 +263,24 @@ class ConversationStore {
         statusText: event.text,
       });
     } else if (event.type === 'timing') {
-      this.sessions.set(sessionId, {
+      const next = {
         ...current,
         durationMs:
           typeof event.elapsed_ms === 'number' ? event.elapsed_ms : current.durationMs,
-      });
+      };
+      this.sessions.set(sessionId, next);
+      // R11: tool-to-tool gap breakdown — attach start/finish run offsets to
+      // the owning tool activity. The kernel sinks the timing event BEFORE
+      // the tool lifecycle event (turn_loop.rs), so attach is
+      // order-independent: offsets are stashed per call and back-filled when
+      // the tool activity appears.
+      if (
+        typeof event.elapsed_ms === 'number' &&
+        event.call_id &&
+        (event.kind === 'tool_started' || event.kind === 'tool_finished')
+      ) {
+        this.attachToolTime(sessionId, event.call_id, event.kind, event.elapsed_ms);
+      }
     } else if (event.type === 'done') {
       this.flushText(sessionId);
       this.flushThinking(sessionId);

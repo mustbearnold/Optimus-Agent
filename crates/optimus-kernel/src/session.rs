@@ -282,44 +282,54 @@ impl SessionStore {
         }
         Self::reindex_fts_tx(&transaction, id, title, messages)?;
         for link in links {
-            if link.tool_call_id.trim().is_empty() {
-                return Err(KernelError::Model(
-                    "session effect link requires tool_call_id".into(),
-                ));
-            }
-            let inserted = transaction.execute(
-                "INSERT OR IGNORE INTO session_effect_links(
-                   session_id,tool_call_id,job_id,node_id,effect_attempt_id,effect_hash,
-                   outcome,receipt_hash,linked_at
-                 ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
-                params![
-                    id.to_string(),
-                    link.tool_call_id,
-                    link.job_id.to_string(),
-                    link.node_id.to_string(),
-                    link.effect_attempt_id.to_string(),
-                    link.effect_hash,
-                    link.outcome,
-                    link.receipt_hash,
-                    now
-                ],
-            )?;
-            if inserted == 0 {
-                let existing = transaction.query_row(
-                    "SELECT job_id,node_id,effect_attempt_id,effect_hash,outcome,receipt_hash,tool_call_id
-                     FROM session_effect_links WHERE session_id=?1 AND tool_call_id=?2",
-                    params![id.to_string(), link.tool_call_id],
-                    effect_link_from_row,
-                )?;
-                if existing != *link {
-                    return Err(KernelError::Model(format!(
-                        "conflicting durable effect provenance for tool call {}",
-                        link.tool_call_id
-                    )));
-                }
-            }
+            Self::persist_effect_link_tx(&transaction, id, link, &now)?;
         }
         transaction.commit()?;
+        Ok(())
+    }
+
+    fn persist_effect_link_tx(
+        transaction: &rusqlite::Transaction<'_>,
+        id: Uuid,
+        link: &SessionEffectLink,
+        now: &str,
+    ) -> Result<()> {
+        if link.tool_call_id.trim().is_empty() {
+            return Err(KernelError::Model(
+                "session effect link requires tool_call_id".into(),
+            ));
+        }
+        let inserted = transaction.execute(
+            "INSERT OR IGNORE INTO session_effect_links(
+              session_id,tool_call_id,job_id,node_id,effect_attempt_id,effect_hash,
+              outcome,receipt_hash,linked_at
+            ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+            params![
+                id.to_string(),
+                link.tool_call_id,
+                link.job_id.to_string(),
+                link.node_id.to_string(),
+                link.effect_attempt_id.to_string(),
+                link.effect_hash,
+                link.outcome,
+                link.receipt_hash,
+                now
+            ],
+        )?;
+        if inserted == 0 {
+            let existing = transaction.query_row(
+                "SELECT job_id,node_id,effect_attempt_id,effect_hash,outcome,receipt_hash,tool_call_id
+                 FROM session_effect_links WHERE session_id=?1 AND tool_call_id=?2",
+                params![id.to_string(), link.tool_call_id],
+                effect_link_from_row,
+            )?;
+            if existing != *link {
+                return Err(KernelError::Model(format!(
+                    "conflicting durable effect provenance for tool call {}",
+                    link.tool_call_id
+                )));
+            }
+        }
         Ok(())
     }
 
@@ -385,6 +395,7 @@ impl SessionStore {
         messages: &[Message],
         status: TurnStatus,
         error_code: Option<&str>,
+        effect_links: &[SessionEffectLink],
     ) -> Result<()> {
         if !status.is_terminal() {
             return Err(KernelError::Model(
@@ -436,6 +447,13 @@ impl SessionStore {
             params![turn_id.to_string(), status.as_str(), now],
         )?;
         Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
+        // R9 (ADR-0082): flush the accumulated effect-link batch on every
+        // mid-step exit — finish_turn is the mandatory choke point for all
+        // exits other than the inline step-boundary save and the approval
+        // park (which is durable via the approval lifecycle).
+        for link in effect_links {
+            Self::persist_effect_link_tx(&transaction, session_id, link, &now)?;
+        }
         transaction.commit()?;
         Ok(())
     }
@@ -896,6 +914,7 @@ mod hygiene_tests {
                 &messages,
                 TurnStatus::Succeeded,
                 None,
+                &[],
             )
             .unwrap();
         let hits = store.search("needleword", false).unwrap();

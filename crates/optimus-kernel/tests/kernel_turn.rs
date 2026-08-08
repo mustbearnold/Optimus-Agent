@@ -1088,7 +1088,10 @@ fn max_steps_trips() {
 }
 
 #[test]
-fn tool_call_execution_budget_suppresses_overflow_and_forces_synthesis() {
+fn tool_call_execution_budget_suppresses_overflow_with_step_scoped_guard() {
+    // R10 (ADR-0082): the tool-loop guard is step-scoped, not turn-wide. One
+    // suppressed step keeps the tool surface ADVERTISED with a guard message;
+    // a second suppressed step locks the surface down entirely.
     let dir = tempdir().unwrap();
     let config = KernelConfig {
         max_tool_calls_per_step: 1,
@@ -1113,6 +1116,22 @@ fn tool_call_execution_budget_suppresses_overflow_and_forces_synthesis() {
             reasoning_content: None,
         },
         CompletionResponse {
+            text: None,
+            tool_calls: vec![
+                ToolCall {
+                    id: "three".into(),
+                    name: "activate_pack".into(),
+                    arguments: json!({"name":"browser"}),
+                },
+                ToolCall {
+                    id: "four".into(),
+                    name: "activate_pack".into(),
+                    arguments: json!({"name":"browser"}),
+                },
+            ],
+            reasoning_content: None,
+        },
+        CompletionResponse {
             text: Some("Browser tools are ready.".into()),
             tool_calls: vec![],
             reasoning_content: None,
@@ -1125,8 +1144,20 @@ fn tool_call_execution_budget_suppresses_overflow_and_forces_synthesis() {
             events.push(event)
         })
         .unwrap();
-    assert_eq!(result.steps, 2);
-    assert!(model.seen[1].tools.is_empty());
+    assert_eq!(result.steps, 3);
+    // Step 2 (after one suppressed step): tools still advertised (guard).
+    assert!(!model.seen[1].tools.is_empty());
+    assert!(model.seen[1].messages.iter().any(|message| {
+        message.role == Role::System
+            && message
+                .content
+                .contains("a tool call was suppressed earlier in this turn")
+    }));
+    // Step 3 (after two suppressed steps): surface locked down.
+    assert!(model.seen[2].tools.is_empty());
+    assert!(model.seen[2].messages.iter().any(|message| {
+        message.role == Role::System && message.content.contains("synthesis-only step")
+    }));
     assert!(kernel.messages.iter().any(|message| {
         message.tool_call_id.as_deref() == Some("two")
             && message.content.contains("tool_call_budget_suppressed")
@@ -1136,6 +1167,13 @@ fn tool_call_execution_budget_suppresses_overflow_and_forces_synthesis() {
         StreamEvent::Timing(timing)
             if timing.kind == TimingEventKind::ToolFinished
                 && timing.call_id.as_deref() == Some("two")
+                && timing.suppressed
+    )));
+    assert!(events.iter().any(|event| matches!(
+        event,
+        StreamEvent::Timing(timing)
+            if timing.kind == TimingEventKind::ToolFinished
+                && timing.call_id.as_deref() == Some("four")
                 && timing.suppressed
     )));
     assert_eq!(
@@ -1173,7 +1211,10 @@ fn hard_tool_call_ceiling_rejects_before_dispatch() {
 }
 
 #[test]
-fn repeated_read_only_evidence_call_is_suppressed_and_forces_timed_synthesis() {
+fn repeated_read_only_evidence_call_is_suppressed_with_guard_message() {
+    // R10 (ADR-0082): one suppressed step keeps the surface ADVERTISED with
+    // the guard message; the model is steered to synthesize rather than
+    // stripped of tools (that needs a second suppressed step).
     let dir = tempdir().unwrap();
     let mut kernel = Kernel::open(dir.path(), KernelConfig::default()).unwrap();
     let session_id = kernel.session_id();
@@ -1212,11 +1253,12 @@ fn repeated_read_only_evidence_call_is_suppressed_and_forces_timed_synthesis() {
 
     assert_eq!(result.steps, 3);
     assert_eq!(result.invoked_tools, vec![ToolId::from("memory_recall")]);
-    assert!(model.seen[2].tools.is_empty());
-    assert!(model.seen[2]
-        .messages
-        .iter()
-        .any(|message| message.content.contains("synthesis-only")));
+    // One suppressed step: surface still advertised, guard message steers
+    // synthesis (lockdown needs a second suppressed step).
+    assert!(!model.seen[2].tools.is_empty());
+    assert!(model.seen[2].messages.iter().any(|message| message
+        .content
+        .contains("a tool call was suppressed earlier in this turn")));
     assert!(kernel.messages.iter().any(|message| {
         message.tool_call_id.as_deref() == Some("duplicate")
             && message.content.contains("duplicate_tool_call_suppressed")

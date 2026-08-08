@@ -3,8 +3,8 @@
 use optimus_graph::AutonomyProfile;
 use optimus_kernel::{
     list_sessions, CompletionResponse, ExecutionStatus, ExecutionStore, Kernel, KernelConfig,
-    KernelError, Message, PolicyMode, ReplayClassification, ScriptedModel, SessionStore, ToolCall,
-    TurnStatus,
+    KernelError, Message, PolicyMode, ReplayClassification, ScriptedModel, SessionEffectLink,
+    SessionStore, ToolCall, TurnStatus,
 };
 use optimus_packs::{PackError, PackId};
 use rusqlite::{params, Connection};
@@ -299,6 +299,69 @@ fn conflicting_effect_link_rolls_back_session_snapshot() {
 }
 
 #[test]
+fn finish_turn_flushes_accumulated_effect_links_on_mid_step_exit() {
+    // R9 (ADR-0082): finish_turn is the mandatory choke point flushing the
+    // accumulated effect-link batch on mid-step exits (cancel, control-plane
+    // error, defensive error). A failed settlement must still persist the
+    // batch atomically with the terminal event.
+    let directory = tempdir().unwrap();
+    let store = SessionStore::open(directory.path().join("sessions.db")).unwrap();
+    let id = store.create("flush").unwrap();
+    let system = Message {
+        role: optimus_kernel::Role::System,
+        content: "sys".into(),
+        tool_call_id: None,
+        name: None,
+        reasoning_content: None,
+    };
+    store
+        .save(id, "flush", &[], std::slice::from_ref(&system))
+        .unwrap();
+    let messages = vec![
+        system,
+        Message {
+            role: optimus_kernel::Role::User,
+            content: "mid-step exit".into(),
+            tool_call_id: None,
+            name: None,
+            reasoning_content: None,
+        },
+    ];
+    let turn = store.begin_turn(id, "flush", &[], &messages, 1).unwrap();
+    let link = SessionEffectLink {
+        tool_call_id: "flush-call-1".into(),
+        job_id: uuid::Uuid::new_v4(),
+        node_id: uuid::Uuid::new_v4(),
+        effect_attempt_id: uuid::Uuid::new_v4(),
+        effect_hash: "a".repeat(64),
+        outcome: "succeeded".into(),
+        receipt_hash: Some("b".repeat(64)),
+    };
+    store
+        .finish_turn(
+            turn,
+            id,
+            "flush",
+            &[],
+            &messages,
+            TurnStatus::Failed,
+            Some("mid_step_error"),
+            &[link],
+        )
+        .unwrap();
+
+    let links = store.effect_links(id).unwrap();
+    assert_eq!(
+        links.len(),
+        1,
+        "mid-step exit must flush through finish_turn"
+    );
+    assert_eq!(links[0].tool_call_id, "flush-call-1");
+    assert_eq!(links[0].effect_hash, "a".repeat(64));
+    assert_eq!(store.turn_event_count(turn).unwrap(), 2);
+}
+
+#[test]
 fn failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event() {
     let directory = tempdir().unwrap();
     let config = KernelConfig {
@@ -336,7 +399,8 @@ fn failed_turn_persists_accepted_boundary_and_exactly_one_terminal_event() {
             &[],
             &messages,
             TurnStatus::Failed,
-            Some("max_steps")
+            Some("max_steps"),
+            &[]
         )
         .is_err());
     assert_eq!(store.turn_event_count(turns[0].id).unwrap(), 2);

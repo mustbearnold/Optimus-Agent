@@ -83,4 +83,34 @@ describe('ActivityTimeline', () => {
 
     expect(screen.getByRole('button', { name: /1 failed so far/ })).toBeInTheDocument();
   });
+
+  it('computes the R11 tool-to-tool gap breakdown from timing offsets', async () => {
+    const user = userEvent.setup();
+    render(
+      <ActivityTimeline
+        tools={[
+          { ...tools[0]!, finishedAtMs: 120 },
+          { ...tools[1]!, startedAtMs: 1500 },
+        ]}
+      />
+    );
+
+    // The heading shows the aggregate idle time between the two tools.
+    expect(
+      screen.getByRole('button', { name: /idle between tools/i })
+    ).toHaveTextContent('1.4s idle between tools');
+
+    const groupToggle = screen.getByRole('button', { name: /Read files, searched/i });
+    await user.click(groupToggle);
+
+    // Each tool detail carries its own idle-after value…
+    const readRow = screen.getByRole('button', { name: 'Expand read tool details' });
+    await user.click(readRow);
+    expect(
+      screen.getByRole('region', { name: 'Technical details for read_file' })
+    ).toHaveTextContent('Idle after');
+
+    // …and the list shows the gap chip between items.
+    expect(screen.getAllByText('idle 1.4s').length).toBeGreaterThan(0);
+  });
 });

@@ -1800,6 +1800,16 @@ body,
   font-size: 10px;
 }
 
+/* R11: tool-to-tool idle gap chip between activity rows. */
+.activity-gap {
+  margin: 0 0 4px 24px;
+  padding: 1px 8px;
+  border-left: 1px dashed var(--border-strong);
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .activity-detail dl {
   display: grid;
   gap: 2px;

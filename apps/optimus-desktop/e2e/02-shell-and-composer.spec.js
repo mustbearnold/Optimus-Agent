@@ -113,10 +113,10 @@ test('workbench status segments: model, thinking, access, project', async ({ pag
   await page.goto('/');
   await waitForReady(page);
   const status = page.getByLabel('Session status');
-  // Fresh home: Auto model, High thinking default, Standard access,
-  // and no project folder (Local session).
+  // Fresh home: Auto model, Minimal thinking default (R8 latency shaping),
+  // Standard access, and no project folder (Local session).
   await expect(status.locator('.workbench-status-primary')).toContainText('Auto');
-  await expect(status.locator('.workbench-status-secondary').first()).toContainText('High');
+  await expect(status.locator('.workbench-status-secondary').first()).toContainText('Minimal');
   await expect(status.locator('.workbench-status-secondary').last()).toContainText('Standard');
   await expect(status).toContainText('Local session');
 });

@@ -25,6 +25,7 @@ pub(crate) fn settle_manifestless_turn(
         messages,
         TurnStatus::Failed,
         Some("execution_manifest_missing"),
+        &[],
     )
 }
 
@@ -54,6 +55,7 @@ impl Kernel {
                     &self.messages,
                     TurnStatus::Failed,
                     Some(kernel_error_code(&error)),
+                    &[],
                 )?;
                 Err(error)
             }

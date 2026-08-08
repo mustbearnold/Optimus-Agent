@@ -155,6 +155,36 @@ describe('ConversationStore', () => {
     expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]?.status).toBe('failed');
   });
 
+  it('attaches R11 timing offsets to the owning tool from timing events', () => {
+    const id = `tool-gaps-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'inspect');
+    // The kernel sinks the timing event BEFORE the tool lifecycle event
+    // (turn_loop.rs) — offsets must survive that order and back-fill when the
+    // activity appears.
+    conversationStore.apply(id, {
+      type: 'timing',
+      kind: 'tool_started',
+      call_id: 'call-1',
+      elapsed_ms: 400,
+    });
+    conversationStore.apply(id, toolEvent('call-1', 'started', 'Reading', 'read_file'));
+    conversationStore.apply(id, {
+      type: 'timing',
+      kind: 'tool_finished',
+      call_id: 'call-1',
+      elapsed_ms: 900,
+    });
+
+    expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]).toEqual(
+      expect.objectContaining({
+        callId: 'call-1',
+        startedAtMs: 400,
+        finishedAtMs: 900,
+      })
+    );
+  });
+
   it('keeps an exact-action tool awaiting approval when the stream closes', () => {
     const id = `tool-approval-${Date.now()}`;
     conversationStore.load({ id, messages: [] });

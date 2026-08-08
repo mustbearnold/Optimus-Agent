@@ -19,7 +19,7 @@ describe('WorkbenchStatusBar', () => {
     );
     expect(screen.getByText('Run the focused verification command')).toBeInTheDocument();
     expect(screen.getByText('Auto')).toBeInTheDocument();
-    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByText('Minimal')).toBeInTheDocument();
     expect(screen.getByText('Standard')).toBeInTheDocument();
     expect(screen.queryByText(/tokens|cache|cost/i)).not.toBeInTheDocument();
   });

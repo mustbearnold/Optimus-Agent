@@ -18,6 +18,20 @@ export function ActivityTimeline({
   onApprovalDecision?: ApprovalDecisionHandler;
 }) {
   const summary = summarizeTools(tools);
+  // R11: tool-to-tool gap breakdown — idle waits between consecutive tools,
+  // computed from the kernel's timing events (start/finish run offsets).
+  const gaps = tools.map((tool, index) => {
+    const next = tools[index + 1];
+    if (!next) return undefined;
+    if (typeof tool.finishedAtMs !== 'number' || typeof next.startedAtMs !== 'number') {
+      return undefined;
+    }
+    const gap = next.startedAtMs - tool.finishedAtMs;
+    return gap >= 0 ? gap : undefined;
+  });
+  const gapTotal = gaps
+    .filter((gap): gap is number => typeof gap === 'number')
+    .reduce((sum, gap) => sum + gap, 0);
   const failedCount = tools.filter((tool) => isFailed(tool.status)).length;
   // A group is failed when the group failed. One denied call among twenty that
   // succeeded is a partial outcome, and calling it `is-failed` is what made the
@@ -55,12 +69,15 @@ export function ActivityTimeline({
         {/* A partial failure still earns the warning mark — it is the summary
             text, not the icon, that was claiming more than happened. */}
         <Icon name={failed || partiallyFailed || attention ? 'warning' : 'source'} />
-        <span>{summary}</span>
+        <span>
+          {summary}
+          {gapTotal > 0 ? ` · ${formatDuration(gapTotal)} idle between tools` : ''}
+        </span>
         <Icon className="activity-chevron" name="chevron" />
       </button>
       <div className="activity-rows" id={rowsId} aria-hidden={!open}>
         <div className="activity-rows-inner">
-          {tools.map((tool) => {
+          {tools.map((tool, index) => {
             const category = categorizeTool(tool.name);
             const approvalState = approvalStates[tool.id];
             const detailOpen = Boolean(openDetails[tool.id]);
@@ -90,6 +107,7 @@ export function ActivityTimeline({
                       <div><dt>Status</dt><dd>{tool.status}</dd></div>
                       <div><dt>Call</dt><dd>{tool.callId}</dd></div>
                       {typeof tool.durationMs === 'number' ? <div><dt>Duration</dt><dd>{formatDuration(tool.durationMs)}</dd></div> : null}
+                      {typeof gaps[index] === 'number' ? <div><dt>Idle after</dt><dd>{formatDuration(gaps[index]!)}</dd></div> : null}
                     </dl>
                     {tool.outcome ? <pre>{JSON.stringify(tool.outcome, null, 2)}</pre> : null}
                   </div>
@@ -103,6 +121,11 @@ export function ActivityTimeline({
                       setApprovalStates((current) => ({ ...current, [tool.id]: next }))
                     }
                   />
+                ) : null}
+                {typeof gaps[index] === 'number' ? (
+                  <div className="activity-gap" data-gap-ms={gaps[index]}>
+                    idle {formatDuration(gaps[index]!)}
+                  </div>
                 ) : null}
               </div>
             );

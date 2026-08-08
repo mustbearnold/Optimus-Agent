@@ -360,6 +360,7 @@ mod tests {
                 &messages,
                 TurnStatus::Succeeded,
                 None,
+                &[],
             )
             .unwrap();
 
