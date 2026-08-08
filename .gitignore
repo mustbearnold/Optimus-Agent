@@ -24,3 +24,8 @@ coverage/
 
 # A runtime home the TUI creates when run from the tree. Holds auth.json.
 /.optimus/
+
+# Local research scratch from the best-agent roadmap sessions (kept on disk,
+# excluded from the repository and the component ontology).
+/.hermes/
+/.steploop/
