@@ -355,7 +355,7 @@
       "resolved_files": 6
     },
     "decisions-0044-bounded-project-trust-and-capability-broker": {
-      "binding_sha256": "ef042e24d807aebdb8d000817ced9fcbed0b84fa9eca3d1323ecfcc36d6d4699",
+      "binding_sha256": "83f43a0591317ffb6559e67ab7d9cfe59a464f577f0dd8c463ea93180bfafbdc",
       "document_sha256": "f3f6239edf51227785807adbb471ff77cf47a3f3f7013dcd347f8bbd7cf6b231",
       "path": "docs/decisions/0044-bounded-project-trust-and-capability-broker.md",
       "resolved_files": 18
@@ -409,7 +409,7 @@
       "resolved_files": 6
     },
     "decisions-0059-standard-autonomy-is-consequence-bounded": {
-      "binding_sha256": "a82966ad9c71945e74d22e705797427affa7d89fbd6d7da8735bce2559172679",
+      "binding_sha256": "393aaeabbc750af4603eb7ce2f5a4c1e1784b4a6217d11e75b9222e4c026dbae",
       "document_sha256": "863740a9a132e639d213fabe070a30c57920638718307ee83884b4407b3ca7dc",
       "path": "docs/decisions/0059-standard-autonomy-is-consequence-bounded.md",
       "resolved_files": 6
@@ -559,7 +559,7 @@
       "resolved_files": 14
     },
     "decisions-0085-user-sovereignty-over-workflow-and-security-posture": {
-      "binding_sha256": "b428d7a3a938f32ebbb8d676bc5ec12fa3f2380fa0dde401b9af6ebd3db5cf92",
+      "binding_sha256": "25c0788e503666ebff1658c6e14f16c60fc48e4e370e0b82c7842dda82312a06",
       "document_sha256": "86339ffd9f9d48c8df9efba525e4c8f437c0b6d9309ce6d2ff12d62d167402d5",
       "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
       "resolved_files": 5
@@ -685,7 +685,7 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "3120705041083a8be0e176bf9661bae9c797111755cad554d35b06a969c79bf4",
+      "binding_sha256": "44d087ec2969435949f856733eb4c8457ac0283fcb506a72da2d56eb50a454d8",
       "document_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
