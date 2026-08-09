@@ -71,8 +71,12 @@ not be confused with “full host FS for commands.”
    Kernel loads `settings.json` when `KernelConfig.command_fs_envelope` is
    unset.
 5. **Shared egress policy** for browser + web_search lives in
-   `optimus_kernel::network_policy` (`assert_public_http_url`). Provider TLS
-   adapters may remain adapter-local when documented.
+   `optimus_kernel::network_policy` (`assert_public_http_url`). The guard
+   blocks cloud instance-metadata endpoints by hostname as well as by
+   address (`metadata.google.internal`, and AWS `instance-data`, the short
+   name for the link-local 169.254.169.254), so SSRF protection does not
+   depend on DNS resolution. Provider TLS adapters may remain adapter-local
+   when documented.
 
 ## Consequences
 

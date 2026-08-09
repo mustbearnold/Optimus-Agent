@@ -2285,7 +2285,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "6655d0ba6b9d255ddb447c547568bcc63b5f6088926f2c485e724d03d5d35cf3",
+      "content_sha256": "456b8fccf9ae7afd1ba5446e97baf78eab5895842ddf20becd922ef85e961a5f",
       "headings": [
         "ADR-0035: Command capability envelope + Unrestricted break-glass (P12)",
         "Context",
@@ -4668,7 +4668,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "880c1daa3a2703c0d4a80b8b6936a4691aed5dd55df55345a6efea3384bbb9f8",
+  "documents_sha256": "e7fc9fa3e6c93ac0f0e8849c5d3bdea56cecabe1734a34e5a940b6e2d8259c9d",
   "routes": [
     {
       "id": "architecture.blueprint",
