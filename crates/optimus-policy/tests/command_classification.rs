@@ -249,6 +249,42 @@ fn installing_a_host_binary_leaves_the_project_lane_and_asks() {
 }
 
 #[test]
+fn pipx_installing_a_tool_is_a_host_change_not_a_project_run() {
+    // Regression: `pipx install <pkg>` writes a standalone tool into the
+    // user-level pipx environment (outside the project), but the classifier
+    // used to fall through to `ProcessProjectExecute` — the same grant that
+    // covers `cargo test`. It must leave the project lane and ask.
+    for args in [
+        vec!["install", "httpie"],
+        vec!["uninstall", "httpie"],
+        vec!["upgrade", "httpie"],
+        vec!["ensurepath"],
+    ] {
+        let request = request("pipx", &args);
+        assert_eq!(
+            request.capability,
+            CapabilityId::SystemModify,
+            "pipx {args:?}"
+        );
+        assert_eq!(
+            request.externality,
+            Externality::HostSystem,
+            "pipx {args:?}"
+        );
+        assert!(
+            !allowed(&CapabilityBroker.decide(AutonomyProfile::Standard, &request)),
+            "Standard must ask for pipx {args:?}"
+        );
+    }
+
+    // `pipx run` executes a tool in place and stays a transparent project
+    // execution, so it is not a host-install classification.
+    let run = request("pipx", &["run", "httpie"]);
+    assert_eq!(run.capability, CapabilityId::ProcessProjectExecute);
+    assert_eq!(run.externality, Externality::ProjectLocal);
+}
+
+#[test]
 fn a_global_npm_install_is_a_host_change_however_it_is_spelled() {
     for args in [
         vec!["install", "-g", "tsx"],

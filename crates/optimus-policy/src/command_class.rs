@@ -222,6 +222,16 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
         },
 
         "pip" | "pip3" => classify_pip_args(args, sub, global),
+        // `pipx` installs standalone tools into a user-level environment
+        // (`~/.local/pipx`, then symlinked onto PATH), outside the project.
+        // Those verbs write a host-wide package store just like `pip install
+        // --user`, so they must not answer to a project capability.
+        "pipx" => match sub {
+            "install" | "uninstall" | "upgrade" | "reinstall" | "ensurepath" => {
+                CommandClass::HostInstall
+            }
+            _ => CommandClass::ProjectExecute,
+        },
         // `python -m pip ...` is pip run from inside the interpreter. It must
         // draw the same sync/add/host split as a bare `pip` invocation, not
         // fall back to project execution: the approval prompt would otherwise
