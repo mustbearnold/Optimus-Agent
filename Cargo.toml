@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/optimus-crypto",
     "crates/optimus-store",
     "crates/optimus-graph",
     "crates/optimus-policy",
@@ -22,6 +23,7 @@ members = [
     "apps/optimus-tauri",
 ]
 default-members = [
+    "crates/optimus-crypto",
     "crates/optimus-store",
     "crates/optimus-graph",
     "crates/optimus-policy",
@@ -49,6 +51,7 @@ authors = ["Optimus Agent"]
 repository = "https://github.com/local/optimus-agent"
 
 [workspace.dependencies]
+optimus-crypto = { path = "crates/optimus-crypto" }
 optimus-store = { path = "crates/optimus-store" }
 optimus-graph = { path = "crates/optimus-graph" }
 optimus-policy = { path = "crates/optimus-policy" }

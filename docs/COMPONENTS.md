@@ -27,6 +27,7 @@ This is the generated human view of `docs/repository-components.json`.
 | `crates/optimus-agent` | Typed specialist registry, invocation contracts, and durable invocation ledger. | `primary` | `transitive` | no |
 | `crates/optimus-artifacts` | Content-addressed product artifact storage and typed handoffs. | `primary` | `transitive` | no |
 | `crates/optimus-browser` | Optional CDP browser backend enabled by the kernel default feature. | `optional` | `transitive` | no |
+| `crates/optimus-crypto` | SHA-256 digest computation and validated hex identity (ADR-0089). | `primary` | `transitive` | no |
 | `crates/optimus-eval` | Offline integrity, trajectory, replay, and evaluation-report library used by the CLI. | `supporting` | `transitive` | no |
 | `crates/optimus-graph` | Job, node, effect, and transition domain contracts. | `primary` | `transitive` | no |
 | `crates/optimus-host` | Shared surface IPC method registry and domain dispatch authority. | `primary` | `transitive` | no |

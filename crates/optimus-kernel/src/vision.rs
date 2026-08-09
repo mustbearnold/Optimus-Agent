@@ -202,7 +202,7 @@ fn parse_args(arguments: &Value) -> Result<VisionArgs, VisionError> {
         .filter(|s| !s.is_empty());
     let source = match (artifact, path) {
         (Some(sha), None) => {
-            if sha.len() != 64 || !sha.bytes().all(|b| b.is_ascii_hexdigit()) {
+            if !optimus_crypto::is_sha256_hex(sha) {
                 return Err(VisionError::InvalidArguments(
                     "artifact_sha256 must be exactly 64 hexadecimal characters".into(),
                 ));

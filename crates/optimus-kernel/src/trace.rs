@@ -387,7 +387,7 @@ fn validate_label(value: &str, field: &str) -> Result<()> {
 }
 
 fn validate_sha256(value: &str) -> Result<()> {
-    if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+    if !optimus_crypto::is_sha256_hex(value) {
         return Err(invalid("evidence hash must be SHA-256 hex"));
     }
     Ok(())

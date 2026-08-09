@@ -10,7 +10,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use fs2::FileExt;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use thiserror::Error;
@@ -759,12 +758,11 @@ fn open_owned_file(path: &Path, append: bool) -> Result<File> {
 }
 
 fn hex_sha256(bytes: &[u8]) -> String {
-    let digest = Sha256::digest(bytes);
-    digest.iter().map(|b| format!("{b:02x}")).collect()
+    optimus_crypto::sha256_hex(bytes)
 }
 
 fn validate_sha256(value: &str) -> Result<()> {
-    if value.len() != 64 || !value.bytes().all(|b| b.is_ascii_hexdigit()) {
+    if !optimus_crypto::is_sha256_hex(value) {
         return Err(tool_err("artifact sha256 must be 64 hex characters"));
     }
     Ok(())

@@ -65,7 +65,7 @@ impl DeveloperScope {
             Self::SelectedRepository { root, root_hash } => {
                 validate_root(root, "repository root")?;
                 if let Some(hash) = root_hash {
-                    if hash.len() != 64 || !hash.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+                    if !optimus_crypto::is_sha256_hex(hash) {
                         return Err("repository root hash must be 64 hexadecimal characters".into());
                     }
                 }

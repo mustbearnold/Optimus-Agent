@@ -446,6 +446,24 @@
     {
       "concern": "product-runtime",
       "distribution": "transitive",
+      "id": "optimus-crypto",
+      "lifecycle": "primary",
+      "not": [
+        "Policy decisions",
+        "Effect execution"
+      ],
+      "package": "optimus-crypto",
+      "parent": "rust-crates",
+      "path": "crates/optimus-crypto",
+      "repository_role": "required",
+      "retention": "essential",
+      "safe_to_delete": false,
+      "storage_plane": "repository",
+      "summary": "SHA-256 digest computation and validated hex identity (ADR-0089)."
+    },
+    {
+      "concern": "product-runtime",
+      "distribution": "transitive",
       "id": "optimus-eval",
       "lifecycle": "supporting",
       "not": [
@@ -3704,6 +3722,33 @@
     },
     {
       "authority": "record",
+      "content_sha256": "a868c0ba78dd44602f198370ac9fde0e26481e894513544243f3e34f8aadf327",
+      "headings": [
+        "ADR-0089: SHA-256 digest validation and computation in a leaf crate",
+        "Status",
+        "Context",
+        "Decision",
+        "Consequences",
+        "Alternatives considered",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Reasons",
+        "Risks",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0089-sha256-digest-leaf-crate",
+      "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
+      "plane": "decision",
+      "review_by": "2026-11-09",
+      "reviewed_on": "2026-08-09",
+      "status": "current",
+      "summary": "SHA-256 hex validation and digest computation move into a new dependency-free leaf crate `optimus-crypto` (validated `Sha256Digest` newtype, `is_sha256_hex` predicate, `sha256_hex` computation). The rule \"a digest is exactly 64 hex digits\" previously existed as ~14 hand-written copies across 10 crates, one of which had already drifted in its error text; every consumer now converts at the crate seam instead of re-deriving the rule. Serialized digest strings are byte-identical (the newtype is `#[serde(transparent)]`), so SQLite columns, wire fields, and persisted manifests are untouched.",
+      "title": "ADR-0089: SHA-256 digest validation and computation in a leaf crate",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4668,7 +4713,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "028f0675224d84b41d5346a2c259773861c2184b01514b572f5e3740bea5f560",
+  "documents_sha256": "75d7ba9502488f72fcdb5cd2a6436ebb5750eaf573ab620f26e62df72e6cbba6",
   "routes": [
     {
       "id": "architecture.blueprint",

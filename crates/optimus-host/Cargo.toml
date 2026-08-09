@@ -7,6 +7,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+optimus-crypto.workspace = true
 optimus-kernel.workspace = true
 optimus-packs.workspace = true
 optimus-runtime.workspace = true

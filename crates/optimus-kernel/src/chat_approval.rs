@@ -90,12 +90,7 @@ impl Kernel {
         expected_effect_sha256: &str,
         decision: ChatApprovalDecision,
     ) -> Result<ChatApprovalResolution> {
-        if call_id.trim().is_empty()
-            || expected_effect_sha256.len() != 64
-            || !expected_effect_sha256
-                .bytes()
-                .all(|byte| byte.is_ascii_hexdigit())
-        {
+        if call_id.trim().is_empty() || !optimus_crypto::is_sha256_hex(expected_effect_sha256) {
             return Err(KernelError::Model(
                 "chat approval requires a call id and 64-hex effect identity".into(),
             ));

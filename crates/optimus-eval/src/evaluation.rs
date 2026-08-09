@@ -6,7 +6,6 @@ use std::path::Path;
 use optimus_packs::ToolId;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use optimus_kernel::{ExecutionStatus, KernelError, ReplayClassification, Result};
@@ -23,7 +22,7 @@ fn invalid(reason: impl Into<String>) -> KernelError {
 }
 
 fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    optimus_crypto::sha256_hex(bytes)
 }
 
 fn canonical_source_digest(source: &str) -> String {
@@ -31,7 +30,7 @@ fn canonical_source_digest(source: &str) -> String {
 }
 
 fn validate_hash(value: &str, field: &str) -> Result<()> {
-    if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+    if !optimus_crypto::is_sha256_hex(value) {
         return Err(invalid(format!("{field} must be a SHA-256 hex digest")));
     }
     Ok(())

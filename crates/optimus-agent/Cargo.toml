@@ -9,6 +9,7 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
+optimus-crypto.workspace = true
 optimus-graph.workspace = true
 optimus-runtime.workspace = true
 optimus-packs.workspace = true

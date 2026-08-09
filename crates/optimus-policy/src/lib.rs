@@ -254,11 +254,7 @@ impl OwnedLocalhostBinding {
             && self.port != 0
             && !self.project_scope_id.is_empty()
             && request.project_scope_id.as_deref() == Some(self.project_scope_id.as_str())
-            && self.project_root_hash.len() == 64
-            && self
-                .project_root_hash
-                .bytes()
-                .all(|byte| byte.is_ascii_hexdigit())
+            && optimus_crypto::is_sha256_hex(&self.project_root_hash)
             && request.target.project_root_hash.as_deref() == Some(self.project_root_hash.as_str())
             && request.externality == Externality::OwnedLocalhost
             && !self.session_id.is_nil()

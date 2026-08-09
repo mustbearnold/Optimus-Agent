@@ -10,7 +10,6 @@ use optimus_packs::{builtin_catalog, ToolId};
 use optimus_runtime::{Runtime, RuntimeError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use optimus_kernel::{
@@ -201,7 +200,7 @@ fn finish_integrity_trace(
     } else {
         SpanStatus::Failed
     };
-    let evidence_sha256 = format!("{:x}", Sha256::digest(observation.evidence.as_bytes()));
+    let evidence_sha256 = optimus_crypto::sha256_hex(observation.evidence.as_bytes());
     traces.append_event(
         context,
         TraceEventKind::Evidence,

@@ -44,11 +44,7 @@ impl OwnedLocalhostExecutionContext {
             && self.project_scope_id.trim() == self.project_scope_id
             && self.project_scope_id.len() <= 256
             && self.project_root_hash == workspace_sha256
-            && self.project_root_hash.len() == 64
-            && self
-                .project_root_hash
-                .bytes()
-                .all(|byte| byte.is_ascii_hexdigit())
+            && optimus_crypto::is_sha256_hex(&self.project_root_hash)
             && !self.session_id.is_nil()
             && !self.run_id.is_nil()
             && !self.owner_job_id.is_nil()

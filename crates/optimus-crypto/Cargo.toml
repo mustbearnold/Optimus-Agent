@@ -1,0 +1,14 @@
+[package]
+name = "optimus-crypto"
+description = "Deterministic SHA-256 digest computation and validated hex identities"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

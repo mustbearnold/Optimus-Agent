@@ -3360,6 +3360,7 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 name = "optimus-agent"
 version = "0.1.0"
 dependencies = [
+ "optimus-crypto",
  "optimus-graph",
  "optimus-packs",
  "optimus-runtime",
@@ -3378,6 +3379,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "fs2",
+ "optimus-crypto",
  "serde",
  "serde_json",
  "sha2",
@@ -3424,6 +3426,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "optimus-crypto"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "optimus-desktop"
 version = "0.1.0"
 dependencies = [
@@ -3450,6 +3461,7 @@ dependencies = [
 name = "optimus-eval"
 version = "0.1.0"
 dependencies = [
+ "optimus-crypto",
  "optimus-graph",
  "optimus-kernel",
  "optimus-memory",
@@ -3482,6 +3494,7 @@ version = "0.1.0"
 dependencies = [
  "dirs",
  "libc",
+ "optimus-crypto",
  "optimus-graph",
  "optimus-kernel",
  "optimus-packs",
@@ -3515,6 +3528,7 @@ dependencies = [
  "optimus-agent",
  "optimus-artifacts",
  "optimus-browser",
+ "optimus-crypto",
  "optimus-graph",
  "optimus-memory",
  "optimus-ops",
@@ -3568,6 +3582,7 @@ dependencies = [
 name = "optimus-packs"
 version = "0.1.0"
 dependencies = [
+ "optimus-crypto",
  "serde",
  "serde_json",
  "sha2",
@@ -3580,6 +3595,7 @@ dependencies = [
 name = "optimus-policy"
 version = "0.1.0"
 dependencies = [
+ "optimus-crypto",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -3592,6 +3608,7 @@ version = "0.1.0"
 dependencies = [
  "cap-std",
  "libc",
+ "optimus-crypto",
  "optimus-graph",
  "optimus-policy",
  "optimus-skills",
@@ -3622,6 +3639,7 @@ dependencies = [
 name = "optimus-store"
 version = "0.1.0"
 dependencies = [
+ "optimus-crypto",
  "rusqlite",
  "serde",
  "serde_json",
@@ -3675,6 +3693,7 @@ version = "0.1.0"
 dependencies = [
  "optimus-agent",
  "optimus-artifacts",
+ "optimus-crypto",
  "optimus-graph",
  "optimus-packs",
  "optimus-runtime",

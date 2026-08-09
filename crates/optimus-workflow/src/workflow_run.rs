@@ -748,7 +748,7 @@ impl WorkflowRunStore {
             return Err(invalid("workflow run cancellation requested"));
         }
         if let Some(ref digest) = artifact_sha256 {
-            if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
+            if !optimus_crypto::is_sha256_hex(digest) {
                 return Err(invalid("artifact sha256 must be 64 hex chars"));
             }
         }

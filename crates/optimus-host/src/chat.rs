@@ -304,7 +304,7 @@ fn required_effect_sha256(params: &serde_json::Value) -> Result<String, String> 
         .get("effect_sha256")
         .and_then(|value| value.as_str())
         .ok_or_else(|| "effect_sha256 required".to_string())?;
-    if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+    if !optimus_crypto::is_sha256_hex(value) {
         return Err("effect_sha256 must be a 64-character hexadecimal digest".into());
     }
     Ok(value.to_ascii_lowercase())

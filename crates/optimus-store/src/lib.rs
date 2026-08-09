@@ -987,7 +987,7 @@ impl Store {
         reason: Option<&str>,
     ) -> Result<()> {
         self.ensure_job_not_quarantined(approval.job_id)?;
-        if approval.effect_hash.len() != 64
+        if !optimus_crypto::is_sha256_hex(&approval.effect_hash)
             || approval.actor.is_empty()
             || approval.expires_unix <= approval.created_unix
             || !matches!(decision, "granted" | "denied")

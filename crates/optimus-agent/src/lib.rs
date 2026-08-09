@@ -892,7 +892,7 @@ fn now_unix() -> u64 {
 }
 
 fn validate_sha256(value: &str, label: &str) -> Result<()> {
-    if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+    if !optimus_crypto::is_sha256_hex(value) {
         return Err(invalid(format!("{label} sha256 is invalid")));
     }
     Ok(())

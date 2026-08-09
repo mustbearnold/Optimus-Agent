@@ -343,7 +343,7 @@ fn validate_error_code(value: &str) -> std::result::Result<(), String> {
 }
 
 fn validate_sha256(value: &str) -> std::result::Result<(), String> {
-    if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+    if !optimus_crypto::is_sha256_hex(value) {
         return Err("sha256 must be exactly 64 hexadecimal characters".into());
     }
     Ok(())
