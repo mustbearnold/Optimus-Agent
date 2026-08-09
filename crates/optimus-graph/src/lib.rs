@@ -187,7 +187,7 @@ impl AutonomyProfile {
         match raw.trim().to_ascii_lowercase().as_str() {
             "standard" | "std" => Some(Self::Standard),
             "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
-            "read_only" | "readonly" | "read" => Some(Self::ReadOnly),
+            "read_only" | "readonly" | "read" | "read-only" => Some(Self::ReadOnly),
             "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
             "developer_full_access" | "developer-full-access" | "developer" => {
                 Some(Self::DeveloperFullAccess)
@@ -837,6 +837,17 @@ mod tests {
         assert_eq!(
             AutonomyProfile::parse("ask"),
             Some(AutonomyProfile::ReviewChanges)
+        );
+        // Parity with optimus-policy (53d865f): the hyphenated spellings of
+        // the other profiles ("full-project", "developer-full-access") parse,
+        // so "read-only" must too instead of failing closed to None here.
+        assert_eq!(
+            AutonomyProfile::parse("read-only"),
+            Some(AutonomyProfile::ReadOnly)
+        );
+        assert_eq!(
+            AutonomyProfile::parse("READ-ONLY"),
+            Some(AutonomyProfile::ReadOnly)
         );
         assert_eq!(AutonomyProfile::parse("full"), None);
         assert_eq!(AutonomyProfile::parse("host"), None);
