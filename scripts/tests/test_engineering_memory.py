@@ -41,6 +41,7 @@ class EngineeringMemoryTests(unittest.TestCase):
                 "optimus-artifacts",
                 "optimus-browser",
                 "optimus-cli",
+                "optimus-crypto",
                 "optimus-desktop",
                 "optimus-eval",
                 "optimus-graph",

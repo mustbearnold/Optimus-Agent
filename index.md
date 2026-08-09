@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **158 folders**, **873 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **160 folders**, **876 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -466,7 +466,7 @@ Optimus Agent/
 │       └── vite.config.ts
 ├── assets/ (1 files) — Product icons and resources consumed by installers and installed surfaces.
 │   └── optimus-agent.svg
-├── crates/ (223 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
+├── crates/ (225 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
 │   ├── optimus-agent/ (2 files) — Typed specialist registry, invocation contracts, and durable invocation ledger.
 │   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
@@ -480,6 +480,10 @@ Optimus Agent/
 │   │   │   └── screencast_spike.rs
 │   │   ├── src/ (2 files)
 │   │   │   ├── dom_snapshot.js
+│   │   │   └── lib.rs
+│   │   └── Cargo.toml
+│   ├── optimus-crypto/ (2 files) — SHA-256 digest computation and validated hex identity (ADR-0089).
+│   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
 │   │   └── Cargo.toml
 │   ├── optimus-eval/ (8 files) — Offline integrity, trajectory, replay, and evaluation-report library used by the CLI.
@@ -736,7 +740,7 @@ Optimus Agent/
 │       │   ├── attribution.rs
 │       │   └── recursion.rs
 │       └── Cargo.toml
-├── docs/ (123 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
+├── docs/ (124 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
 │   ├── architecture/ (19 files)
 │   │   ├── hermes-baselines/ (1 files)
 │   │   │   └── hermes-0.19.0.json
@@ -758,7 +762,7 @@ Optimus Agent/
 │   │   ├── token-budget-baseline.json
 │   │   ├── tools-and-modularity.md
 │   │   └── versioning-and-parity.md
-│   ├── decisions/ (91 files)
+│   ├── decisions/ (92 files)
 │   │   ├── 0000-locked-defaults.md
 │   │   ├── 0001-kernel-and-work-graph.md
 │   │   ├── 0002-memory-invariants.md
@@ -849,6 +853,7 @@ Optimus Agent/
 │   │   ├── 0086-goals-are-session-scoped-budget-enforced-objectives.md
 │   │   ├── 0087-the-session-message-plane-is-a-durable-ops-store.md
 │   │   ├── 0088-recursive-children-are-durable-session-hierarchy.md
+│   │   ├── 0089-sha256-digest-leaf-crate.md
 │   │   └── README.md
 │   ├── runbooks/ (6 files)
 │   │   ├── agent-domain.md
@@ -1055,8 +1060,8 @@ Optimus Agent/
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
 | `apps/` | 54 | 252 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
-| `crates/` | 47 | 223 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
-| `docs/` | 5 | 123 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
+| `crates/` | 49 | 225 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
+| `docs/` | 5 | 124 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 81 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |
