@@ -861,14 +861,35 @@ select:focus-visible,
   font-size: 11px;
 }
 
-.thinking-block,
+/* Thinking is inline prose inside the message flow, not a card: no border,
+   no surface fill when open (the 1px box + `[open]` fill would outrank
+   styles.css:1419 only if set here — border-color alone is not enough to
+   kill the width/style it inherited). */
+.thinking-block {
+  border: none;
+  background: transparent;
+}
+
+.thinking-block[open] {
+  background: transparent;
+}
+
+/* Inline alignment: the label sits on the message's left edge, the body
+   indents under it — no box padding. */
+.thinking-block summary {
+  padding: 2px 0;
+}
+
+.thinking-block .thinking-body {
+  padding: 0 0 8px 14px;
+}
+
 .activity-group {
   border-color: var(--border);
   background: transparent;
 }
 
-.activity-group[open],
-.thinking-block[open] {
+.activity-group[open] {
   background: var(--surface);
 }
 
