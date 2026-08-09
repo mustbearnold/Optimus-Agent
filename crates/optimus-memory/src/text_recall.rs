@@ -111,7 +111,12 @@ fn match_expression(raw: &str) -> String {
                 .chars()
                 .filter(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
                 .collect();
-            if cleaned.is_empty() {
+            // The porter/unicode61 tokenizer treats `_` and `-` as word
+            // separators, so a token made only of them has no searchable
+            // content. Emit nothing rather than a useless `"-"*` term — the
+            // same "pure punctuation reduces to nothing" rule already applied
+            // to `!`, `?`, etc.
+            if !cleaned.chars().any(char::is_alphanumeric) {
                 return None;
             }
             let term = format!("\"{cleaned}\"*");
@@ -356,6 +361,23 @@ mod tests {
         // Which the caller turns into an empty result, never an FTS5 error.
         assert!(match_expression("!!! ??? ...").is_empty());
         assert!(match_expression("   ").is_empty());
+    }
+
+    #[test]
+    fn hyphen_and_underscore_only_tokens_reduce_to_nothing() {
+        // `-` and `_` are FTS5 word separators, so a token made only of them
+        // carries no searchable content. Emit nothing rather than a useless
+        // `"-"*` term, matching the pure-punctuation invariant above.
+        assert!(match_expression("- - _").is_empty());
+        assert!(match_expression("_").is_empty());
+        assert_eq!(match_expression("deploy - key"), "\"deploy\"* \"key\"*");
+    }
+
+    #[test]
+    fn hyphens_and_underscores_inside_words_survive() {
+        // Real hyphenated/underscored words keep their joining characters.
+        assert_eq!(match_expression("well-being"), "\"well-being\"*");
+        assert_eq!(match_expression("snake_case"), "\"snake_case\"*");
     }
 
     #[test]
