@@ -724,6 +724,7 @@ def main() -> int:
     sub.add_parser("generate")
     refresh_parser = sub.add_parser("refresh")
     refresh_parser.add_argument("doc_id", nargs="+")
+    sub.add_parser("heal")
     search_parser = sub.add_parser("search")
     search_parser.add_argument("query")
     search_parser.add_argument("--include-records", action="store_true")
@@ -742,6 +743,28 @@ def main() -> int:
         elif args.command == "refresh":
             refresh(documents, args.doc_id)
             print(f"DOCS_REFRESHED ids={','.join(args.doc_id)}")
+        elif args.command == "heal":
+            healed = 0
+            for _ in range(5):
+                try:
+                    validate_lock(documents)
+                    break
+                except DocsError as error:
+                    match = re.search(r"changed=\[([^\]]*)\]", str(error))
+                    if not match:
+                        raise
+                    ids = [item.strip().strip("'") for item in match.group(1).split(",")]
+                    refresh(documents, ids)
+                    generate(documents, routes)
+                    healed += 1
+            else:
+                raise DocsError("docs-heal did not converge after 5 iterations")
+            result = validate_all(documents, routes)
+            print(
+                "DOCS_HEALED "
+                f"iterations={healed} documents={result['documents']} "
+                f"routes={result['routes']} benchmark={result['benchmark_top_one']:.1%}"
+            )
         elif args.command == "search":
             payload = load_catalog_or_build(documents, routes)
             for entry in search(payload, args.query, args.include_records)[:10]:

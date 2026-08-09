@@ -231,6 +231,11 @@ docs-generate:
 docs-refresh *doc_ids:
     python3 scripts/tools/docs_system.py refresh {{doc_ids}}
 
+# Convergent one-shot: refresh the stale source bindings, regenerate the
+# deterministic catalog, and repeat until docs-check is green (bounded).
+docs-heal:
+    python3 scripts/tools/docs_system.py heal
+
 # Search current authority by intent. History and evidence are opt-in.
 docs-search query:
     python3 scripts/tools/docs_system.py search {{quote(query)}}

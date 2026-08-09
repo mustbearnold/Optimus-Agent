@@ -79,7 +79,7 @@
       "resolved_files": 3
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "ee95d9e25dd7ffb5069e43bcdca650c515febbbda3e9dd8c4d19c991f976a0ac",
+      "binding_sha256": "8439d8a2ec87055866078ab19d70c2f523182b15c4143885302011f952cd121b",
       "document_sha256": "45b13ab7c0ad537149ed3d1212c6ff8fea5360702352d4bea2752457894c9541",
       "path": "docs/runbooks/project-hygiene.md",
       "resolved_files": 3
@@ -403,7 +403,7 @@
       "resolved_files": 10
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "979bc876bcde18332fc4dc5d24f5dad103471fe9793f045365c997d714c7575b",
+      "binding_sha256": "0bb5c1192c5ed4dc2c1dc0ff889d0125bbb8dade2531a6e9849a979553b5e481",
       "document_sha256": "312a8d2082506b419af27a8fa4d99f21c89cdce0eee0a605f14f5ea528610c89",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 6
@@ -427,7 +427,7 @@
       "resolved_files": 6
     },
     "decisions-0063-documentation-is-a-governed-authority-plane": {
-      "binding_sha256": "c60ac0bb299fa8fb67ec96a56eb547aca4a316ee60a850e7af6c34022544ab0f",
+      "binding_sha256": "a12685a382745ef564cba5b240d2ef08c3788e784e8b0e967f395df5dca9458a",
       "document_sha256": "bc881dac3827d478f9269881830af38dc4a942d6a65e8de14e87922d6e76de9e",
       "path": "docs/decisions/0063-documentation-is-a-governed-authority-plane.md",
       "resolved_files": 7
@@ -523,7 +523,7 @@
       "resolved_files": 12
     },
     "decisions-0079-keep-bun-as-the-js-package-manager": {
-      "binding_sha256": "87c7d7e059f1b798a31abcb8ff94b0824b5077d30135b1c40fdda61fd23d5893",
+      "binding_sha256": "f6fbdb7763f80dccc75d32eae3f69e41b145ed12e5c24f92ad12ab513c28fdb3",
       "document_sha256": "a63634cf6d597c8369a736b5a3fe058f146965910ae0e742d209f6f7be49d176",
       "path": "docs/decisions/0079-keep-bun-as-the-js-package-manager.md",
       "resolved_files": 7
@@ -601,7 +601,7 @@
       "resolved_files": 12
     },
     "repository-components": {
-      "binding_sha256": "367cc543c146b0afd292f1a225d660d6b58f41120ccb11679d0302f2fd502314",
+      "binding_sha256": "a890cb329d6615de1514100de0988d18d3f6a7c6c62070c1b777f1a721fab260",
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29
@@ -649,7 +649,7 @@
       "resolved_files": 45
     },
     "spec-008-eval": {
-      "binding_sha256": "df8d549aa99682d4d29dc0641ba75ede3408fb7aa01d15d12300352463fead79",
+      "binding_sha256": "22db51a21c39aa7077f071e03919195cf99724fd85c3c5a7840b8439dd1c416b",
       "document_sha256": "435ce121334013533217aeb5a46c3fae08239bda1b2319f31652902a139ddbff",
       "path": "specs/008-eval/spec.md",
       "resolved_files": 13
@@ -667,7 +667,7 @@
       "resolved_files": 49
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "6b1a9ffbd32b56895570081a7edf38848a16e03f35f0508a7aa0f90726d3ae73",
+      "binding_sha256": "1f3115d0515e725f5601275d90fd9824c1197bbdfd6d2ef3b02f8bcf776d796c",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 90
@@ -697,7 +697,7 @@
       "resolved_files": 44
     },
     "spec-016-staleness-prevention": {
-      "binding_sha256": "72fef3dc1605d21c315614de2055db75331e288731543ae26bc78bbaf7f1acb6",
+      "binding_sha256": "2bbcfa26042c1c99b4a9759fcbfce05c0d0301447636dc94593deed6541c088b",
       "document_sha256": "7fc3f19713816c5eca81af1f4abfc4664423b613e20c986cd3cdd5b0d0d57a53",
       "path": "specs/016-staleness-prevention/spec.md",
       "resolved_files": 10
@@ -775,13 +775,13 @@
       "resolved_files": 39
     },
     "specs-constitution": {
-      "binding_sha256": "3487cd1e575b333566bd309f07f70ba603b19d2bfa16177ee42029a992a566bc",
+      "binding_sha256": "39e1a078f93caaa72a28345093d3783643e9a1ee73f5c34b10a19d2f3d8d8de5",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 133
     },
     "specs-conventions": {
-      "binding_sha256": "f6e09fa6e70d50398a58722462f727d370a337fa58b3327ea6b590c8a541782a",
+      "binding_sha256": "6c86a162e64ef01e096c0e48c90d3c64e175311e3d6151156e894053b32a6a55",
       "document_sha256": "c816724ffcfb8379ed6edda866cfe407b0ed05ba0f7d59b39819b17b2e53d81f",
       "path": "specs/conventions.md",
       "resolved_files": 6
