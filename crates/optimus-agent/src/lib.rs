@@ -901,3 +901,68 @@ fn validate_sha256(value: &str, label: &str) -> Result<()> {
 fn invalid(message: impl Into<String>) -> AgentError {
     AgentError::Msg(message.into())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn agent_id_accepts_valid_ids() {
+        for id in [
+            "a",
+            "agent_1",
+            "my-agent",
+            "a-b_c9",
+            "x".repeat(64).as_str(),
+        ] {
+            let parsed = AgentId::parse(id).expect("valid id should parse");
+            assert_eq!(parsed.as_str(), id);
+        }
+    }
+
+    #[test]
+    fn agent_id_rejects_invalid_ids() {
+        for id in [
+            "",
+            "A",
+            "Agent",
+            "with space",
+            "-lead",
+            "9lead",
+            "x".repeat(65).as_str(),
+        ] {
+            assert!(AgentId::parse(id).is_err(), "id {id:?} should be rejected");
+        }
+    }
+
+    #[test]
+    fn agent_version_accepts_canonical_semver() {
+        for version in ["0.0.0", "1.2.3", "10.20.30", "0.1.0"] {
+            let parsed = AgentVersion::parse(version).expect("valid version should parse");
+            assert_eq!(parsed.as_str(), version);
+        }
+    }
+
+    #[test]
+    fn agent_version_rejects_non_canonical_semver() {
+        for version in [
+            "1", "1.2", "1.2.3.4", "01.2.3", "1.02.3", "1.2.03", "1.2.a", "1.2.-3", "",
+        ] {
+            assert!(
+                AgentVersion::parse(version).is_err(),
+                "version {version:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn validate_sha256_accepts_only_64_hex_digits() {
+        assert!(validate_sha256(
+            "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+            "test"
+        )
+        .is_ok());
+        assert!(validate_sha256("short", "test").is_err());
+        assert!(validate_sha256(&"a".repeat(64).replace('a', "g"), "test").is_err());
+    }
+}
