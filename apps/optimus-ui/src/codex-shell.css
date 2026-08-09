@@ -792,20 +792,20 @@ button:not(:disabled):active {
 
 .terminal-panel,
 :root[data-theme="light"] .terminal-panel {
-  color: #e6edf3;
-  background: #15171a;
+  color: var(--text-2);
+  background: var(--canvas);
 }
 
 .terminal-output {
   padding: 10px 13px;
-  color: #c9d1d9;
+  color: var(--text-2);
   font-size: 12px;
   line-height: 1.55;
 }
 
 .terminal-command {
   min-height: 38px;
-  border-top-color: #30343a;
+  border-top-color: var(--border-strong);
 }
 
 .terminal-command input {
@@ -1154,7 +1154,7 @@ button:not(:disabled):active {
 }
 
 .project-source-list article > div > .source-auth.is-pending {
-  color: var(--warning, #b45309);
+  color: var(--warning);
 }
 
 .source-actions {

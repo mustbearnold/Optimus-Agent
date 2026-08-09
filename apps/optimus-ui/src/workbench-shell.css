@@ -577,20 +577,16 @@ select:focus-visible,
 }
 
 .session-state.is-working {
-  color: #16803c;
+  color: var(--success);
 }
 
 .session-state.is-attention {
-  color: #b45309;
+  color: var(--warning);
 }
 
 .session-state.is-error {
-  color: #c93636;
+  color: var(--danger);
 }
-
-:root[data-theme="dark"] .session-state.is-working { color: #6ee7a0; }
-:root[data-theme="dark"] .session-state.is-attention { color: #f6bd60; }
-:root[data-theme="dark"] .session-state.is-error { color: #fb8787; }
 
 .session-state .session-status-dot {
   position: static;

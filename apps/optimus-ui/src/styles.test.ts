@@ -257,6 +257,32 @@ describe('motion contract', () => {
     expect(css).toMatch(/--accent:\s*#9a9a9a/);
   });
 
+  // Execution-state colours are semantic, not a second palette: the rail dots
+  // and session rows read the tokens, and no chromatic remnant of the
+  // pre-mono palette (neon status hues, the old glyph gradient, GitHub-dark
+  // terminal blues, near-black button-text literals) may hide anywhere.
+  it('keeps execution-state colours and the terminal on the mono tokens', () => {
+    const baseCss = [
+      readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8'),
+      readFileSync(resolve(process.cwd(), 'src/codex-shell.css'), 'utf8'),
+    ].join('\n');
+    const workbenchCss = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    const css = `${baseCss}\n${workbenchCss}`;
+    expect(css).toMatch(/\.session-status-dot\.is-working\s*\{[^}]*background:\s*var\(--success\)/s);
+    expect(css).toMatch(/\.session-status-dot\.is-attention\s*\{[^}]*background:\s*var\(--warning\)/s);
+    expect(css).toMatch(/\.session-status-dot\.is-error\s*\{[^}]*background:\s*var\(--danger\)/s);
+    expect(css).toMatch(/\.session-state\.is-working\s*\{[^}]*color:\s*var\(--success\)/s);
+    expect(css).toMatch(/\.session-state\.is-attention\s*\{[^}]*color:\s*var\(--warning\)/s);
+    expect(css).toMatch(/\.session-state\.is-error\s*\{[^}]*color:\s*var\(--danger\)/s);
+    expect(css).toMatch(/\.send-button\.is-stop\s*\{[^}]*background:\s*var\(--danger\)/s);
+    expect(css).toMatch(/\.terminal-panel,\s*:root\[data-theme="light"\] \.terminal-panel\s*\{[^}]*background:\s*var\(--canvas\)/s);
+    expect(css).toMatch(/\.terminal-output\s*\{[^}]*color:\s*var\(--text-2\)/s);
+    expect(css).toMatch(/\.terminal-command\s*\{[^}]*border-top-color:\s*var\(--border-strong\)/s);
+    expect(css).not.toMatch(
+      /#(?:aa6aff|656fff|3cd7d0|47ff83|ff405f|16803c|6ee7a0|b45309|f6bd60|c93636|fb8787|15171a|e6edf3|c9d1d9|30343a|aeb8c6|667180|202936|d5dce6|090b11|0a0d12|101216|e54d5d)/i
+    );
+  });
+
   it('spans the session status footer across the entire app', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     // The footer is an app-wide bar (Hermes-style), not a card-scoped strip:
