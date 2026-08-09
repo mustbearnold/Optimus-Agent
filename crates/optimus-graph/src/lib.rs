@@ -186,7 +186,7 @@ impl AutonomyProfile {
     pub fn parse(raw: &str) -> Option<Self> {
         match raw.trim().to_ascii_lowercase().as_str() {
             "standard" | "std" => Some(Self::Standard),
-            "review_changes" | "review" | "ask" => Some(Self::ReviewChanges),
+            "review_changes" | "review-changes" | "review" | "ask" => Some(Self::ReviewChanges),
             "read_only" | "readonly" | "read" | "read-only" => Some(Self::ReadOnly),
             "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
             "developer_full_access" | "developer-full-access" | "developer" => {
@@ -861,6 +861,16 @@ mod tests {
         assert_eq!(
             AutonomyProfile::parse("READ-ONLY"),
             Some(AutonomyProfile::ReadOnly)
+        );
+        // "review-changes" is the hyphenated spelling of "review_changes";
+        // it must parse symmetrically like the other underscore profiles.
+        assert_eq!(
+            AutonomyProfile::parse("review-changes"),
+            Some(AutonomyProfile::ReviewChanges)
+        );
+        assert_eq!(
+            AutonomyProfile::parse("REVIEW-CHANGES"),
+            Some(AutonomyProfile::ReviewChanges)
         );
         assert_eq!(AutonomyProfile::parse("full"), None);
         assert_eq!(AutonomyProfile::parse("host"), None);
