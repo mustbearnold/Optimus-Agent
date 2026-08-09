@@ -223,12 +223,23 @@ def dependent_closure(seeds: set[str], reverse: dict[str, set[str]]) -> set[str]
 
 
 def package_for_path(path: str, members: dict[str, Path]) -> str | None:
-    """The workspace crate a repository-relative path belongs to."""
+    """The workspace crate a repository-relative path belongs to.
+
+    A path normally lives *under* a crate directory (``crates/foo/src/lib.rs``),
+    but ``--paths`` may also be handed a crate directory itself, with or without
+    a trailing slash (``crates/foo`` / ``crates/foo/``). Both spellings must
+    select the crate: rule 3 says touching a crate selects that crate, and a
+    crate root is nothing other than that crate. Leaving it unclassified would
+    silently escalate the whole workspace, which is over-conservative but, worse,
+    inconsistent — the trailing-slash form already classified correctly.
+    """
     best: tuple[int, str] | None = None
     for name, directory in members.items():
-        prefix = f"{directory.relative_to(ROOT).as_posix()}/"
-        if path.startswith(prefix) and (best is None or len(prefix) > best[0]):
-            best = (len(prefix), name)
+        rel = directory.relative_to(ROOT).as_posix()
+        prefix = f"{rel}/"
+        if path == rel or path.startswith(prefix):
+            if best is None or len(prefix) > best[0]:
+                best = (len(prefix), name)
     return best[1] if best else None
 
 

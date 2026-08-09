@@ -180,6 +180,16 @@ class PathClassificationTests(unittest.TestCase):
             "optimus-kernel",
         )
 
+    def test_a_crate_root_directory_selects_its_own_package(self) -> None:
+        # A caller may hand --paths a crate directory rather than a file inside
+        # it. Both spellings — with and without a trailing slash — must select
+        # that crate, not be left unclassified and escalate the whole workspace.
+        for path in ("crates/optimus-kernel", "crates/optimus-kernel/"):
+            with self.subTest(path=path):
+                plan = plan_for(path)
+                self.assertFalse(plan.escalated, path)
+                self.assertIn("optimus-kernel", plan.packages, path)
+
 
 class SeededRegressionTests(unittest.TestCase):
     """The P42 exit gate: ten seeded regressions, each selected.
