@@ -34,11 +34,17 @@ pub struct PairingRepair {
     pub dropped_orphan_results: usize,
     /// Missing `tool` results synthesised so a surviving parent stays answered.
     pub synthesized_results: usize,
+    /// Parent `tool_calls` claims synthesised on the outgoing copy for
+    /// `{base}:node{n}` results whose exact claim never existed in history
+    /// (R6). Stored history never receives these; only the request copy does.
+    pub synthesized_claims: usize,
 }
 
 impl PairingRepair {
     pub fn changed(self) -> bool {
-        self.dropped_orphan_results > 0 || self.synthesized_results > 0
+        self.dropped_orphan_results > 0
+            || self.synthesized_results > 0
+            || self.synthesized_claims > 0
     }
 }
 
@@ -103,6 +109,23 @@ pub fn is_well_paired(messages: &[Message]) -> bool {
 /// duplicate behind once the real result lands. Synthesis belongs on the
 /// outgoing request only, where nothing is persisted; see
 /// [`repair_tool_pairing`].
+///
+/// R6: a synthetic per-node result (`{base}:node{n}`) survives orphan-dropping
+/// whenever its base call is claimed anywhere; see [`node_result_base`].
+///
+/// The base call id a synthetic per-node result answers, if any. After a
+/// multi-node re-park, the settled node's result is recorded under
+/// `{base}:node{n}` — a call the model never claimed (it claimed `{base}`), so
+/// the exact id is not in the history. The result is still meaningful, and
+/// must survive orphan-dropping whenever the base IS claimed anywhere.
+fn node_result_base(id: &str) -> Option<&str> {
+    let (base, suffix) = id.rsplit_once(":node")?;
+    if suffix.is_empty() || !suffix.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    Some(base)
+}
+
 pub fn drop_orphan_results(messages: &mut Vec<Message>) -> PairingRepair {
     // Every id an assistant message actually asked for. A result is an orphan
     // when no parent anywhere in the history claims its id, which is stricter
@@ -120,14 +143,21 @@ pub fn drop_orphan_results(messages: &mut Vec<Message>) -> PairingRepair {
         if message.role != Role::Tool {
             return true;
         }
-        message
-            .tool_call_id
-            .as_deref()
-            .is_some_and(|id| claimed.iter().any(|open| open == id))
+        let Some(id) = message.tool_call_id.as_deref() else {
+            return false;
+        };
+        // R6 exemption, in `drop_orphan_results` ONLY: a synthetic per-node
+        // result survives when its base call is claimed anywhere. Unclaimed
+        // bases still drop; `is_well_paired` stays strict so the request gate
+        // fires the repair that synthesizes the parent claim on the outgoing
+        // copy.
+        claimed.iter().any(|open| open == id)
+            || node_result_base(id).is_some_and(|base| claimed.iter().any(|open| open == base))
     });
     PairingRepair {
         dropped_orphan_results: before - messages.len(),
         synthesized_results: 0,
+        synthesized_claims: 0,
     }
 }
 
@@ -145,8 +175,71 @@ pub fn drop_orphan_results(messages: &mut Vec<Message>) -> PairingRepair {
 pub fn repair_tool_pairing(messages: &mut Vec<Message>) -> PairingRepair {
     let mut repair = drop_orphan_results(messages);
 
+    // R6: synthesize the parent `tool_calls` claim for synthetic per-node
+    // results. After a multi-node re-park the transcript carries a tool result
+    // for `{base}:node{n}` whose exact claim never existed (the assistant only
+    // claimed `{base}`). `is_well_paired` is strict, so this repair is what
+    // makes the outgoing request answerable — a cloned call with the node id,
+    // a sibling entry (never nested inside another call). Stored history is
+    // untouched: this runs on the outgoing copy only.
+    let mut groups: Vec<(usize, Vec<String>)> = Vec::new();
+    for (index, message) in messages.iter().enumerate() {
+        if let Some(ids) = assistant_call_ids(message) {
+            groups.push((index, ids));
+        }
+    }
+    let mut claim_by_parent: std::collections::HashMap<usize, Vec<ToolCall>> =
+        std::collections::HashMap::new();
+    for (parent, ids) in &groups {
+        let Some(assistant) = messages.get(*parent) else {
+            continue;
+        };
+        let mut calls: Vec<ToolCall> = match serde_json::from_str(&assistant.content) {
+            Ok(calls) => calls,
+            Err(_) => continue,
+        };
+        let mut end = parent + 1;
+        while end < messages.len() && messages[end].role == Role::Tool {
+            end += 1;
+        }
+        let mut added_any = false;
+        for message in &messages[parent + 1..end] {
+            let Some(result_id) = message.tool_call_id.as_deref() else {
+                continue;
+            };
+            // Exact claims are already covered; only node-suffixed results
+            // whose base is claimed but whose exact id is not need a claim.
+            if ids.iter().any(|open| open == result_id) {
+                continue;
+            }
+            let Some(base) = node_result_base(result_id) else {
+                continue;
+            };
+            if !ids.iter().any(|open| open == base) {
+                continue;
+            }
+            let Some(base_call) = calls.iter().find(|call| call.id == base) else {
+                continue;
+            };
+            let mut claim = base_call.clone();
+            claim.id = result_id.to_string();
+            calls.push(claim);
+            added_any = true;
+            repair.synthesized_claims += 1;
+        }
+        if added_any {
+            claim_by_parent.insert(*parent, calls);
+        }
+    }
+    for (parent, calls) in claim_by_parent {
+        if let Some(assistant) = messages.get_mut(parent) {
+            assistant.content = serde_json::to_string(&calls).unwrap_or(assistant.content.clone());
+        }
+    }
+
     // Answer whatever is still open. Walking backwards keeps the insertion index
-    // of every earlier group correct as results are spliced in.
+    // of every earlier group correct as results are spliced in. Re-derive the
+    // groups after claim synthesis so node claims count as asked-for.
     let mut groups: Vec<(usize, Vec<String>)> = Vec::new();
     for (index, message) in messages.iter().enumerate() {
         if let Some(ids) = assistant_call_ids(message) {

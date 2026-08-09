@@ -44,7 +44,7 @@ mod skill_index;
 mod system_prompt;
 mod telemetry;
 mod tool_dispatch;
-mod tool_pairing;
+pub mod tool_pairing;
 mod tool_report;
 mod trace;
 mod turn_loop;

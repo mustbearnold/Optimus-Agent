@@ -1216,7 +1216,7 @@ impl Store {
                 "SELECT attempt_id,job_id,node_id,intent_json,status,receipt_json
                  FROM effect_attempts
                  WHERE job_id=?1 AND status<>'prepared'
-                 ORDER BY attempt_no DESC LIMIT 1",
+                 ORDER BY started_at DESC, rowid DESC LIMIT 1",
                 params![job_id.to_string()],
                 |row| {
                     Ok(EffectAttemptOutcomeRow {

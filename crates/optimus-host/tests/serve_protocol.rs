@@ -1006,6 +1006,35 @@ fn approval_resolve_streams_and_cancel_wins() {
 }
 
 #[test]
+fn approval_resolve_done_payload_carries_still_pending_and_resume_error() {
+    // spec-014 R4/R5 wire shape: the resolve stream's done payload must carry
+    // `still_pending` and `resume_error` so surfaces can branch on a failed
+    // continuation or a re-parked approval. On a single-node settle,
+    // still_pending is false and resume_error is null; the pending_* fields
+    // are absent.
+    let server = start_server();
+    let (session_id, binding) = parked_turn(server.home.path());
+
+    let mut ws = ws_client(&server);
+    let resolve = resolve_params(&binding, &session_id, "approve");
+    send(
+        &mut ws,
+        json!({ "jsonrpc": "2.0", "id": 50, "method": "chat_approval_resolve_start", "params": {"stream_id": 8, "params": resolve} }),
+    );
+    let ack = recv(&mut ws);
+    assert_eq!(ack["id"], 50);
+    let terminal = drain_to_terminal(&mut ws, &server.schema["events"]);
+    assert_eq!(terminal["type"], "done", "{terminal}");
+    let result = &terminal["result"];
+    assert_eq!(result["still_pending"], false, "{terminal}");
+    assert!(
+        result.get("resume_error").is_none() || result["resume_error"].is_null(),
+        "{terminal}"
+    );
+    assert_eq!(result["status"], "approved");
+}
+
+#[test]
 fn approval_resolve_cancel_wins() {
     let server = start_server();
     let (session_id, binding) = parked_turn(server.home.path());

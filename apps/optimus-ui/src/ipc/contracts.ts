@@ -456,7 +456,13 @@ export type ApprovalResolveRequest = {
 
 export type ChatHandle = {
   streamId: number;
-  done: Promise<void>;
+  /**
+   * Resolves with the stream's terminal event (`done` / `cancelled` /
+   * `error`). The `done` payload carries the resolve/chat result, including
+   * `resume_error` and `still_pending` (spec-014 R4/R5), so callers can
+   * branch on a failed continuation or a re-parked approval.
+   */
+  done: Promise<StreamEvent | undefined>;
   cancel: () => Promise<{ requested: boolean }>;
 };
 

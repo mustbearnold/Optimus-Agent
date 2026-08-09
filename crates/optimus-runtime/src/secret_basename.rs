@@ -19,8 +19,15 @@ pub fn is_secret_basename(name: &str) -> bool {
             // the OpenSSH key types beyond `id_rsa`, including the
             // FIDO2-backed security-key types (`id_*_sk`), whose private keys
             // must be protected just like any other.
-            "auth.json" | "id_rsa" | "id_ed25519" | "id_ed448" | "id_ecdsa" | "id_dsa"
-                | "id_ed25519_sk" | "id_ecdsa_sk" | ".netrc"
+            "auth.json"
+                | "id_rsa"
+                | "id_ed25519"
+                | "id_ed448"
+                | "id_ecdsa"
+                | "id_dsa"
+                | "id_ed25519_sk"
+                | "id_ecdsa_sk"
+                | ".netrc"
         )
         || lower.ends_with(".pem")
 }

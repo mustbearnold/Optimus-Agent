@@ -1184,6 +1184,21 @@ mod tests {
         }
     }
 
+    #[test]
+    fn a_re_parked_job_keeps_the_turn_parked_on_the_next_card() {
+        // R5: node 1 re-parked while node 0 settled. The resolve stream already
+        // delivered the second card's approval event; the terminal must not
+        // finish the turn as a hollow Done.
+        let update = super::resolved_update(&json!({
+            "status": "approved",
+            "still_pending": true,
+        }));
+        match update {
+            TurnUpdate::Failed(error) => assert!(error.contains("re-parked"), "{error}"),
+            other => panic!("a re-park must keep the turn parked: {other:?}"),
+        }
+    }
+
     /// A resumed turn can reach a second held effect. That is another decision
     /// to make, not an error to show.
     #[test]

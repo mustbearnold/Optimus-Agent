@@ -21,9 +21,9 @@ function openStream(
   const streamId = nextStreamId++;
   const events = new Channel<StreamEvent>();
   let terminal = false;
-  let resolveDone: () => void = () => undefined;
+  let resolveDone: (event?: StreamEvent) => void = () => undefined;
   let rejectDone: (reason?: unknown) => void = () => undefined;
-  const done = new Promise<void>((resolve, reject) => {
+  const done = new Promise<StreamEvent | undefined>((resolve, reject) => {
     resolveDone = resolve;
     rejectDone = reject;
   });
@@ -31,7 +31,9 @@ function openStream(
     onEvent(event);
     if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') {
       terminal = true;
-      resolveDone();
+      // R4: resolve with the terminal payload so callers can branch on
+      // `result.resume_error` / `result.still_pending`.
+      resolveDone(event);
     }
   };
   void invoke(method, { streamId, ...payload, events }).catch((error) => {

@@ -69,7 +69,7 @@ export function createHttpTransport(): OptimusTransport & {
     chat(request: ChatRequest, onEvent: (event: StreamEvent) => void): ChatHandle {
       const id = streamId++;
       const controller = new AbortController();
-      const done = (async () => {
+      const done = (async (): Promise<StreamEvent | undefined> => {
         const response = await fetch(`${config.baseUrl}/api/chat/stream`, {
           method: 'POST',
           headers: { ...headers(), Accept: 'text/event-stream' },
@@ -82,6 +82,7 @@ export function createHttpTransport(): OptimusTransport & {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+        let terminal: StreamEvent | undefined;
         while (true) {
           const { done: ended, value } = await reader.read();
           if (ended) break;
@@ -96,12 +97,17 @@ export function createHttpTransport(): OptimusTransport & {
               .join('');
             if (!data) continue;
             try {
-              onEvent(JSON.parse(data) as StreamEvent);
+              const event = JSON.parse(data) as StreamEvent;
+              onEvent(event);
+              if (event.type === 'done' || event.type === 'cancelled' || event.type === 'error') {
+                terminal = event;
+              }
             } catch {
               onEvent({ type: 'error', error: 'Malformed stream event' });
             }
           }
         }
+        return terminal;
       })();
       return {
         streamId: id,
@@ -121,12 +127,14 @@ export function createHttpTransport(): OptimusTransport & {
       onEvent: (event: StreamEvent) => void
     ): ChatHandle {
       const id = streamId++;
-      const done = (async () => {
+      const done = (async (): Promise<StreamEvent | undefined> => {
         const result = await this.legacyInvoke<{ status: string }>(
           'chat_approval_resolve',
           { ...request }
         );
-        onEvent({ type: 'done', result });
+        const event: StreamEvent = { type: 'done', result };
+        onEvent(event);
+        return event;
       })();
       return {
         streamId: id,

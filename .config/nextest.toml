@@ -43,3 +43,18 @@ max-threads = 1
 [[profile.default.overrides]]
 filter = 'package(optimus-tui)'
 test-group = 'tui-pty'
+
+# concurrent_open (optimus-kernel) intentionally hammers the shared SQLite
+# stores with 8 simultaneous first-opens behind a barrier — its concurrency is
+# INTERNAL, so serializing the binary keeps the race it tests intact while
+# stopping unrelated parallel suites from starving the 5s busy_timeout under
+# full-workspace load (observed as "database is locked" on opener N only in
+# `cargo nextest run`; the same binary passes reliably isolated and under
+# `--test-threads=1`). The same disease as the suites above, with the host's
+# I/O scheduler as the contended resource.
+[test-groups.concurrent-open]
+max-threads = 1
+
+[[profile.default.overrides]]
+filter = 'binary(concurrent_open)'
+test-group = 'concurrent-open'

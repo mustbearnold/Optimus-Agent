@@ -90,6 +90,35 @@ describe('tauri transport', () => {
     });
   });
 
+  it('resolves done with the terminal payload so callers can branch (R4/R5)', async () => {
+    const transport = createTauriTransport();
+    const request = {
+      session_id: 'session-a',
+      run_id: 'run-1',
+      call_id: 'call-1',
+      job_id: 'job-1',
+      node_id: 'node-1',
+      node_index: 0,
+      effect_sha256: 'a'.repeat(64),
+      decision: 'approve' as const,
+    };
+    const handle = transport.chatApprovalResolve(request, () => undefined);
+    mocks.channels[0].onmessage({
+      type: 'done',
+      result: { still_pending: true, pending_call_id: 'call-1:node1' },
+    });
+    const terminal = await handle.done;
+    expect(terminal).toEqual(
+      expect.objectContaining({
+        type: 'done',
+        result: expect.objectContaining({
+          still_pending: true,
+          pending_call_id: 'call-1:node1',
+        }),
+      })
+    );
+  });
+
   it('normalizes Rust folder grants to the UI contract', async () => {
     mocks.invoke.mockResolvedValueOnce({
       ok: true,

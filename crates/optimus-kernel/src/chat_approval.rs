@@ -63,6 +63,15 @@ pub struct ChatApprovalResolution {
     pub binding: ToolApprovalBinding,
     pub status: ChatApprovalStatus,
     pub event: ToolLifecycleEvent,
+    /// R5: a second node re-parked on the same job while the first settled.
+    /// The host must skip resuming the turn: the resolved call is finished,
+    /// a new `{base}:node{n}` binding is pending, and the next card renders
+    /// via record -> get_session projection -> reload.
+    pub still_pending: bool,
+    /// R5: the synthesized next binding (present when `still_pending`).
+    pub pending_binding: Option<ToolApprovalBinding>,
+    /// R5: the `ApprovalRequired` lifecycle event for the second card.
+    pub pending_event: Option<ToolLifecycleEvent>,
 }
 
 impl Kernel {
@@ -172,12 +181,19 @@ impl Kernel {
         // in between is the human reading the card, and charging their thinking
         // time to the command would misreport every approved action.
         let settling = std::time::Instant::now();
+        // R5: a multi-node job re-parks when a later node needs approval while
+        // the settled node's effect already ran. The settled outcome is still
+        // recorded as the bound call's result, that call's approval is
+        // finished, and a new `{base}:node{n}` binding is synthesized. The
+        // host skips resuming; the second card renders via the record.
+        let mut re_parked = false;
         let (status, outcome, phase) = match decision {
             ChatApprovalDecision::Approve => {
                 self.runtime
                     .grant_approval(ApprovalGrant::for_job(job_id))?;
                 let job_status = self.runtime.resume(job_id)?;
-                if !matches!(job_status, JobStatus::Succeeded | JobStatus::Failed) {
+                re_parked = job_status == JobStatus::AwaitingApproval;
+                if !(re_parked || matches!(job_status, JobStatus::Succeeded | JobStatus::Failed)) {
                     return Err(KernelError::Model(format!(
                         "approved job did not reach a terminal outcome: {job_status:?}"
                     )));
@@ -193,7 +209,10 @@ impl Kernel {
                         "approved effect provenance does not match the pending binding".into(),
                     ));
                 }
-                let succeeded = job_status == JobStatus::Succeeded && effect.status == "succeeded";
+                // The settled node's success derives from its effect status
+                // alone when the job re-parked; the job status is no longer a
+                // terminal verdict on this call (R5).
+                let succeeded = effect.status == "succeeded";
                 // What the effect produced, not merely that it ran. The turn
                 // resumes from this result, and a model handed only a status
                 // would narrate an outcome it never observed (ADR-0046).
@@ -357,10 +376,78 @@ impl Kernel {
         // once, when the model actually stops.
         self.executions
             .finish_chat_approval(manifest_id, call_id, status)?;
+        if re_parked {
+            // R5: the approved call settled; a later node on the same job
+            // parked. Finish is done above; now synthesize the next card:
+            // `{base}:node{n}`, a cloned ToolCall that is never nested inside
+            // another call, recorded with its own approval row and lifecycle
+            // event in ONE transaction. The turn is left Running, exactly as
+            // the loop parked it, so the second card renders via the record
+            // (get_session projection) and resolving it resumes the turn.
+            let pending = self
+                .runtime
+                .list_pending_approvals()?
+                .into_iter()
+                .find(|pending| pending.job_id == job_id)
+                .ok_or_else(|| {
+                    KernelError::Model("re-parked job lost its next pending approval".into())
+                })?;
+            let node_id = pending.node_id.ok_or_else(|| {
+                KernelError::Model("re-parked pending approval lost node identity".into())
+            })?;
+            let node_index = pending.node_index.ok_or_else(|| {
+                KernelError::Model("re-parked pending approval lost node index".into())
+            })?;
+            let next_effect_sha256 =
+                format!("{:x}", Sha256::digest(pending.effect_json.as_bytes()));
+            let next_call_id = format!("{}:node{}", binding.call_id, node_index);
+            // A clone of the original call, id replaced: the second card is the
+            // same tool continuing, never a nested call (R5).
+            let mut next_call = call.clone();
+            next_call.id = next_call_id.clone();
+            let next_summary = exact_action_summary(&pending.effect_json);
+            let next_binding = ToolApprovalBinding {
+                run_id: manifest_id,
+                call_id: next_call_id,
+                tool_id: binding.tool_id.clone(),
+                job_id,
+                node_id,
+                node_index,
+                effect_sha256: next_effect_sha256,
+                summary: next_summary,
+            };
+            let mut next_event = tool_lifecycle_event(
+                manifest_id,
+                &next_call,
+                binding.tool_id.clone(),
+                ToolLifecyclePhase::ApprovalRequired,
+                next_binding.summary.clone(),
+                None,
+                None,
+            );
+            next_event.approval = Some(next_binding.clone());
+            self.executions.record_chat_approval_required(
+                manifest_id,
+                &next_call,
+                &next_event,
+                &next_binding,
+            )?;
+            return Ok(ChatApprovalResolution {
+                binding: next_binding.clone(),
+                status,
+                event,
+                still_pending: true,
+                pending_binding: Some(next_binding),
+                pending_event: Some(next_event),
+            });
+        }
         Ok(ChatApprovalResolution {
             binding,
             status,
             event,
+            still_pending: false,
+            pending_binding: None,
+            pending_event: None,
         })
     }
 

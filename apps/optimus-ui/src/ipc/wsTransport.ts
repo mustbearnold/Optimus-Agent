@@ -180,9 +180,9 @@ class WsTransport {
   ): ChatHandle {
     const streamId = this.nextStreamId++;
     let terminal = false;
-    let resolveDone: () => void = () => undefined;
+    let resolveDone: (event?: StreamEvent) => void = () => undefined;
     let rejectDone: (reason?: Error) => void = () => undefined;
-    const done = new Promise<void>((resolve, reject) => {
+    const done = new Promise<StreamEvent | undefined>((resolve, reject) => {
       resolveDone = resolve;
       rejectDone = reject;
     });
@@ -191,7 +191,9 @@ class WsTransport {
       if (event.type === 'done' || event.type === 'error' || event.type === 'cancelled') {
         terminal = true;
         this.streams.delete(streamId);
-        resolveDone();
+        // R4: resolve with the terminal payload so callers can branch on
+        // `result.resume_error` / `result.still_pending`.
+        resolveDone(event);
       }
     });
     this.invokeRaw<{ stream_id: number }>(method, { stream_id: streamId, ...payload }).catch(

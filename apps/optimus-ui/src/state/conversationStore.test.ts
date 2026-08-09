@@ -185,7 +185,7 @@ describe('ConversationStore', () => {
     );
   });
 
-  it('keeps an exact-action tool awaiting approval when the stream closes', () => {
+  it('keeps an exact-action tool awaiting approval when the resolve stays pending (R5)', () => {
     const id = `tool-approval-${Date.now()}`;
     conversationStore.load({ id, messages: [] });
     conversationStore.begin(id, 'update the file');
@@ -194,7 +194,9 @@ describe('ConversationStore', () => {
       id,
       toolEvent('call-1', 'approval_required', 'Write src/app.ts (12 bytes)', 'write_file')
     );
-    conversationStore.apply(id, { type: 'error', error: 'approval required' });
+    // R5: the first node settled, a second re-parked; the resolve stream
+    // reports `still_pending` and the workbench waits for the next card.
+    conversationStore.apply(id, { type: 'done', result: { still_pending: true } });
 
     expect(conversationStore.get(id).status).toBe('awaiting_approval');
     expect(conversationStore.get(id).messages.at(-1)?.tools?.[0]).toEqual(
@@ -203,6 +205,47 @@ describe('ConversationStore', () => {
         detail: 'Write src/app.ts (12 bytes)',
       })
     );
+  });
+
+  it('fails the session truthfully when an error closes the stream during an approval (R4)', () => {
+    const id = `tool-approval-error-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'update the file');
+    conversationStore.apply(id, toolEvent('call-1', 'started', 'Running', 'write_file'));
+    conversationStore.apply(
+      id,
+      toolEvent('call-1', 'approval_required', 'Write src/app.ts (12 bytes)', 'write_file')
+    );
+    // R4: no swallow — an error during the pause fails the session instead of
+    // freezing the transcript on a card that can never settle.
+    conversationStore.apply(id, { type: 'error', error: 'missing or already resolved' });
+
+    expect(conversationStore.get(id).status).toBe('failed');
+    expect(conversationStore.get(id).statusText).toBe('missing or already resolved');
+  });
+
+  it('fails with the resume_error text and preserves it across the reload (R4)', () => {
+    const id = `tool-resume-error-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'update the file');
+    conversationStore.apply(
+      id,
+      toolEvent('call-1', 'approval_required', 'Write src/app.ts (12 bytes)', 'write_file')
+    );
+    // The resolve stream's done payload carries the continuation failure.
+    conversationStore.apply(id, {
+      type: 'done',
+      result: { resume_error: 'provider rejected the resumed request' },
+    });
+
+    expect(conversationStore.get(id).status).toBe('failed');
+    expect(conversationStore.get(id).statusText).toBe('provider rejected the resumed request');
+
+    // The post-resolve reload must not downgrade the specific error to the
+    // generic "Run failed".
+    conversationStore.load({ id, messages: [], run_status: 'failed' });
+    expect(conversationStore.get(id).status).toBe('failed');
+    expect(conversationStore.get(id).statusText).toBe('provider rejected the resumed request');
   });
 
   it('replays durable tool receipts on reload and ignores reconnect duplicates', () => {

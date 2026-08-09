@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **158 folders**, **863 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **158 folders**, **868 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -158,7 +158,7 @@ Optimus Agent/
 │   ├── MIGRATION_REPORT.md
 │   ├── claude-settings-local.json
 │   └── github-conventions.md
-├── apps/ (246 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
+├── apps/ (247 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
 │   ├── optimus-cli/ (21 files) — Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.
 │   │   ├── src/ (13 files)
 │   │   │   ├── chat.rs
@@ -183,8 +183,8 @@ Optimus Agent/
 │   │   │   ├── eval_report.rs
 │   │   │   └── gateway_http.rs
 │   │   └── Cargo.toml
-│   ├── optimus-desktop/ (26 files) — Rust desktop authority and IPC/HTTP host, plus the still-required Windows Wry surface.
-│   │   ├── e2e/ (9 files)
+│   ├── optimus-desktop/ (27 files) — Rust desktop authority and IPC/HTTP host, plus the still-required Windows Wry surface.
+│   │   ├── e2e/ (10 files)
 │   │   │   ├── 01-bootstrap-and-rendering.spec.js
 │   │   │   ├── 02-shell-and-composer.spec.js
 │   │   │   ├── 03-runtime-and-sessions.spec.js
@@ -193,6 +193,7 @@ Optimus Agent/
 │   │   │   ├── 06-preview-browser.spec.js
 │   │   │   ├── 07-vantage-design.spec.js
 │   │   │   ├── 08-self-development.spec.js
+│   │   │   ├── 09-self-build-reliability.spec.js
 │   │   │   └── support.js
 │   │   ├── e2e-live/ (1 files)
 │   │   │   └── 01-desktop-live-model.spec.js
@@ -460,7 +461,7 @@ Optimus Agent/
 │       └── vite.config.ts
 ├── assets/ (1 files) — Product icons and resources consumed by installers and installed surfaces.
 │   └── optimus-agent.svg
-├── crates/ (220 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
+├── crates/ (223 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
 │   ├── optimus-agent/ (2 files) — Typed specialist registry, invocation contracts, and durable invocation ledger.
 │   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
@@ -528,7 +529,7 @@ Optimus Agent/
 │   │   │   ├── recursion.rs
 │   │   │   └── serve_protocol.rs
 │   │   └── Cargo.toml
-│   ├── optimus-kernel/ (81 files) — Product turn loop, sessions, model routing, credentials, tool dispatch, and runtime composition.
+│   ├── optimus-kernel/ (83 files) — Product turn loop, sessions, model routing, credentials, tool dispatch, and runtime composition.
 │   │   ├── src/ (56 files)
 │   │   │   ├── session/ (8 files)
 │   │   │   │   ├── child_ops.rs
@@ -587,9 +588,10 @@ Optimus Agent/
 │   │   │   ├── turn_recovery.rs
 │   │   │   ├── vision.rs
 │   │   │   └── web_search.rs
-│   │   ├── tests/ (24 files)
+│   │   ├── tests/ (26 files)
 │   │   │   ├── adr_budgets.rs
 │   │   │   ├── agent_contracts.rs
+│   │   │   ├── approval_vertical.rs
 │   │   │   ├── browser_live.rs
 │   │   │   ├── causal_trace.rs
 │   │   │   ├── codex_oauth.rs
@@ -608,6 +610,7 @@ Optimus Agent/
 │   │   │   ├── session_resume.rs
 │   │   │   ├── specialist_vertical.rs
 │   │   │   ├── tool_coverage.rs
+│   │   │   ├── tool_pairing_vertical.rs
 │   │   │   ├── trace_contracts.rs
 │   │   │   ├── web_search_live.rs
 │   │   │   ├── workflow_contracts.rs
@@ -671,7 +674,7 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── command_classification.rs
 │   │   └── Cargo.toml
-│   ├── optimus-runtime/ (27 files) — Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.
+│   ├── optimus-runtime/ (28 files) — Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.
 │   │   ├── src/ (14 files)
 │   │   │   ├── owned_localhost/ (3 files)
 │   │   │   │   ├── global.rs
@@ -688,12 +691,13 @@ Optimus Agent/
 │   │   │   ├── secret_basename.rs
 │   │   │   ├── toolchain.rs
 │   │   │   └── workspace_identity.rs
-│   │   ├── tests/ (12 files)
+│   │   ├── tests/ (13 files)
 │   │   │   ├── approvals_surface.rs
 │   │   │   ├── cancellation.rs
 │   │   │   ├── command_capture.rs
 │   │   │   ├── command_envelope.rs
 │   │   │   ├── crash_resume.rs
+│   │   │   ├── latest_outcome_multi_node.rs
 │   │   │   ├── owned_localhost_serve.rs
 │   │   │   ├── path_confinement.rs
 │   │   │   ├── phase1_policy_budget.rs
@@ -862,7 +866,7 @@ Optimus Agent/
 │   │   └── questions-v1.json
 │   └── synthetic-user-lab/ (1 files) — Versioned personas, journeys, and scoring definitions for general-purpose Optimus testing.
 │       └── cohort-v1.json
-├── scripts/ (80 files) — Deterministic repository gates, generation, installation, and diagnostics.
+├── scripts/ (81 files) — Deterministic repository gates, generation, installation, and diagnostics.
 │   ├── gates/ (17 files)
 │   │   ├── check-architecture-marks.py
 │   │   ├── check-autonomy-profiles.py
@@ -881,7 +885,7 @@ Optimus Agent/
 │   │   ├── check-surface-contract.py
 │   │   ├── check-tauri-launch.py
 │   │   └── check-tool-coverage.py
-│   ├── tests/ (32 files)
+│   ├── tests/ (33 files)
 │   │   ├── playwright_dom_click_audit.cjs
 │   │   ├── test_architecture_marks.py
 │   │   ├── test_autonomy_profiles.py
@@ -896,6 +900,7 @@ Optimus Agent/
 │   │   ├── test_lockfile_discipline.py
 │   │   ├── test_managed_project_cleanup.py
 │   │   ├── test_module_size.py
+│   │   ├── test_neutral_fixtures.py
 │   │   ├── test_optimus_version.py
 │   │   ├── test_perf_harness.py
 │   │   ├── test_project_hygiene.py
@@ -1043,12 +1048,12 @@ Optimus Agent/
 | `.config/` | 1 | 1 | Versioned nextest configuration used by repository verification. |
 | `.githooks/` | 1 | 3 | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. |
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
-| `apps/` | 54 | 246 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
+| `apps/` | 54 | 247 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
-| `crates/` | 47 | 220 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
+| `crates/` | 47 | 223 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
 | `docs/` | 5 | 123 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
-| `scripts/` | 4 | 80 | Deterministic repository gates, generation, installation, and diagnostics. |
+| `scripts/` | 4 | 81 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |
 | `specs/` | 30 | 39 | SDD capability specs: one directory per capability with a living spec.md (requirements + acceptance criteria), transient plan.md/tasks.md while work is active, and the BACKLOG of unspecced gaps. |
 

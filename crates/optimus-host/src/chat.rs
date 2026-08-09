@@ -130,14 +130,32 @@ pub fn chat_approval_resolve_cancellable(
             cancellation.cancel();
         }
     }
-
-    // The decision is durable from here. A continuation that fails must not be
-    // reported as a failed approval — the effect already ran and is receipted —
-    // so its outcome is carried in the response rather than raised as an error.
-    let resumed = resume_settled_turn(home, &manifest, &mut kernel, &mut on_event, cancellation);
+    // R5: a second node re-parked while the first settled. Emit the second
+    // card's `approval_required` event (the renderer needs it to open the row),
+    // skip resuming the turn, and say so in the payload: the workbench reloads
+    // via get_session and the next card renders from the record.
+    if let Some(pending_event) = resolution.pending_event.clone() {
+        if let Some(callback) = on_event.as_mut() {
+            if callback(StreamEvent::Tool(Box::new(pending_event))) == StreamControl::Cancel {
+                cancellation.cancel();
+            }
+        }
+    }
+    let resumed = if resolution.still_pending {
+        None
+    } else {
+        Some(resume_settled_turn(
+            home,
+            &manifest,
+            &mut kernel,
+            &mut on_event,
+            cancellation,
+        ))
+    };
 
     // Deliberately return a small presentation model rather than serializing
     // the durable protocol event, which may grow internal-only fields.
+    let pending_binding = resolution.pending_binding;
     Ok(json!({
         "session_id": kernel.session_id().to_string(),
         "title": kernel.session_title(),
@@ -150,8 +168,13 @@ pub fn chat_approval_resolve_cancellable(
         "tool_id": tool_id,
         "summary": binding.summary,
         "status": status,
-        "assistant_text": resumed.as_ref().ok().map(|text| text.as_str()),
-        "resume_error": resumed.as_ref().err(),
+        "still_pending": resolution.still_pending,
+        "pending_call_id": pending_binding.as_ref().map(|pending| pending.call_id.clone()),
+        "pending_node_id": pending_binding.as_ref().map(|pending| pending.node_id.to_string()),
+        "pending_node_index": pending_binding.as_ref().map(|pending| pending.node_index),
+        "pending_effect_sha256": pending_binding.as_ref().map(|pending| pending.effect_sha256.clone()),
+        "assistant_text": resumed.as_ref().and_then(|resumed| resumed.as_ref().ok().map(|text| text.as_str())),
+        "resume_error": resumed.as_ref().and_then(|resumed| resumed.as_ref().err()),
     }))
 }
 

@@ -213,6 +213,13 @@ pub(super) fn resolved_update(value: &serde_json::Value) -> TurnUpdate {
         .and_then(|v| v.as_str())
         .unwrap_or_default()
         .to_string();
+    // R5: a second node re-parked while the first settled. The stream already
+    // carried the second card's `approval_required` event (which held the
+    // binding); this terminal must keep the turn parked on that card rather
+    // than finish it as a hollow Done.
+    if value.get("still_pending").and_then(|v| v.as_bool()) == Some(true) {
+        return TurnUpdate::Failed("needs approval: job re-parked".into());
+    }
     match value.get("resume_error").and_then(|v| v.as_str()) {
         Some(error) if !error.is_empty() => TurnUpdate::Failed(error.to_string()),
         _ => TurnUpdate::Done {

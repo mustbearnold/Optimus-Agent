@@ -418,10 +418,12 @@ export function createFixtureTransport(): OptimusTransport & {
         details.set(request.session, detail);
         const session = sessions.find((candidate) => candidate.id === request.session);
         if (session) session.message_count = detail.messages.length;
-        onEvent({
+        const terminal: StreamEvent = {
           type: 'done',
           result: { provider, model },
-        });
+        };
+        onEvent(terminal);
+        return terminal;
       })();
       return {
         streamId: id,
@@ -499,10 +501,12 @@ export function createFixtureTransport(): OptimusTransport & {
         const session = sessions.find((candidate) => candidate.id === sessionId);
         if (session) session.message_count = detail.messages.length;
         onEvent({ type: 'timing', elapsed_ms: 120 });
-        onEvent({
+        const terminal: StreamEvent = {
           type: 'done',
           result: { status: decision, resume_error: null, assistant_text: answer },
-        });
+        };
+        onEvent(terminal);
+        return terminal;
       })();
       return {
         streamId: id,

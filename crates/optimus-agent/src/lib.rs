@@ -901,7 +901,6 @@ fn validate_sha256(value: &str, label: &str) -> Result<()> {
 fn invalid(message: impl Into<String>) -> AgentError {
     AgentError::Msg(message.into())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

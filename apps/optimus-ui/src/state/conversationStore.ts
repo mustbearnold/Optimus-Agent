@@ -124,10 +124,20 @@ class ConversationStore {
           : status === 'cancelled' && lastLifecycle !== 'cancelled'
             ? 'Run cancelled'
             : lastSummary;
+    // R4: a failed continuation carries its specific error text on the done
+    // payload; a reload must not downgrade it to the generic "Run failed".
+    const current = this.sessions.get(detail.id);
+    const preservedFailure =
+      status === 'failed' &&
+      current?.status === 'failed' &&
+      current.statusText &&
+      current.statusText !== 'Run failed'
+        ? current.statusText
+        : statusText;
     this.sessions.set(detail.id, {
       messages,
       status,
-      statusText,
+      statusText: preservedFailure,
       loaded: true,
     });
     this.toolEventIds.set(detail.id, eventIds);
@@ -284,6 +294,26 @@ class ConversationStore {
     } else if (event.type === 'done') {
       this.flushText(sessionId);
       this.flushThinking(sessionId);
+      const result = event.result;
+      // R4: the resolve/chat terminal payload decides the state. A failed
+      // continuation must surface as the failure it was, with the error text
+      // preserved across the post-resolve reload; a re-parked approval (R5)
+      // stays in an explicit awaiting state — the second card renders from the
+      // record after the reload.
+      if (result?.resume_error) {
+        this.setTerminal(sessionId, 'failed', String(result.resume_error));
+        return;
+      }
+      if (result?.still_pending === true) {
+        const current = this.sessions.get(sessionId) || emptyProjection();
+        this.sessions.set(sessionId, {
+          ...current,
+          status: 'awaiting_approval',
+          statusText: 'Waiting for the next approval',
+        });
+        this.emit(sessionId);
+        return;
+      }
       this.setTerminal(sessionId, 'completed', 'Completed');
       return;
     } else if (event.type === 'cancelled') {
@@ -294,14 +324,9 @@ class ConversationStore {
     } else if (event.type === 'error') {
       this.flushText(sessionId);
       this.flushThinking(sessionId);
-      const pending = this.sessions.get(sessionId);
-      const hasExactApproval = pending?.messages.some((message) =>
-        message.tools?.some((tool) => tool.status === 'awaiting_approval')
-      );
-      if (pending?.status === 'awaiting_approval' && hasExactApproval) {
-        this.emit(sessionId);
-        return;
-      }
+      // R4: no swallow. Any error during an approval pause fails the session
+      // truthfully; a stale-card click surfaces "missing or already resolved"
+      // instead of freezing the transcript on a card that can never settle.
       const status: RunStatus = /abort|cancel/i.test(event.error) ? 'cancelled' : 'failed';
       this.setTerminal(
         sessionId,
