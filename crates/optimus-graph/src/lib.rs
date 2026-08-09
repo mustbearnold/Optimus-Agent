@@ -544,10 +544,10 @@ pub fn recompute_job_status(store: &Store, job_id: JobId) -> Result<JobStatus> {
         JobStatus::Interrupted
     } else if nodes.iter().any(|n| n.status == NodeStatus::Running) {
         JobStatus::Running
-    } else if nodes
-        .iter()
-        .all(|n| matches!(n.status, NodeStatus::Succeeded | NodeStatus::Cancelled))
-    {
+    } else if nodes.iter().all(|n| n.status == NodeStatus::Succeeded) {
+        // Reached only when every node succeeded: any cancelled node is already
+        // caught by the `any(Cancelled)` guard above, so a cancelled job can
+        // never be mislabelled Succeeded here.
         JobStatus::Succeeded
     } else {
         JobStatus::Pending
@@ -663,6 +663,49 @@ mod tests {
         assert_eq!(
             store.get_job(job_id.0).expect("job").status,
             JobStatus::Succeeded
+        );
+    }
+
+    #[test]
+    fn recompute_job_status_all_cancelled_is_cancelled_never_succeeded() {
+        let (store, _dir) = test_store();
+        let job_id = JobId(Uuid::new_v4());
+        let node_id = Uuid::new_v4();
+        // A job whose every node was cancelled must recompute to Cancelled, not
+        // Succeeded. This guards the `all(Succeeded)` terminal arm in
+        // `recompute_job_status` against being simplified into something that
+        // mislabels a fully-cancelled job as successful.
+        store
+            .insert_job_graph(NewJobGraph {
+                id: job_id.0,
+                label: "all-cancelled".into(),
+                status: JobStatus::Pending,
+                max_steps: 100,
+                max_consecutive_failures: 3,
+                command_timeout_ms: 30_000,
+                event_payload_json: "{}".into(),
+                nodes: vec![NewNodeGraph {
+                    id: node_id,
+                    idx: 0,
+                    label: "write".into(),
+                    status: NodeStatus::Cancelled,
+                    effect_json: serde_json::to_string(&Effect::WriteFile {
+                        relative_path: "a.txt".into(),
+                        contents: "x".into(),
+                    })
+                    .expect("serialize effect"),
+                    event_payload_json: "{}".into(),
+                }],
+            })
+            .expect("insert graph");
+
+        assert_eq!(
+            recompute_job_status(&store, job_id).expect("recompute"),
+            JobStatus::Cancelled
+        );
+        assert_eq!(
+            store.get_job(job_id.0).expect("job").status,
+            JobStatus::Cancelled
         );
     }
 
