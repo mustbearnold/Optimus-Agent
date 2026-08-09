@@ -25,6 +25,21 @@ pub enum CronError {
 
 pub type Result<T> = std::result::Result<T, CronError>;
 
+/// Minimum enforced scheduling interval in seconds. Guards against
+/// pathological sub-second intervals that would busy-loop the scheduler.
+pub const MIN_CRON_INTERVAL_SECS: u64 = 5;
+
+/// Clamp a raw interval to the enforced minimum.
+pub fn effective_interval(every_secs: u64) -> u64 {
+    every_secs.max(MIN_CRON_INTERVAL_SECS)
+}
+
+/// Compute the next run timestamp after a completed or cancelled attempt.
+/// Uses saturating arithmetic so extreme timestamps never overflow.
+pub fn next_run_after(now: u64, every_secs: u64) -> u64 {
+    now.saturating_add(effective_interval(every_secs))
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CronJob {
     pub id: Uuid,
@@ -132,7 +147,7 @@ impl CronStore {
         prompt: &str,
         provider: &str,
     ) -> Result<CronJob> {
-        let every_secs = every_secs.max(5);
+        let every_secs = effective_interval(every_secs);
         let id = Uuid::new_v4();
         let now = now_unix();
         let created = format!("unix:{now}");
@@ -143,7 +158,7 @@ impl CronStore {
             prompt: prompt.into(),
             provider: provider.into(),
             enabled: true,
-            next_run_unix: now + every_secs,
+            next_run_unix: next_run_after(now, every_secs),
             last_run_unix: None,
             last_status: None,
             created_at: created.clone(),
@@ -301,11 +316,12 @@ impl CronStore {
     }
 
     pub fn complete_claim(&self, claim: &CronClaim, status: &str, now: u64) -> Result<()> {
+        let next_run = next_run_after(now, claim.job.every_secs);
         let transaction = self.conn.unchecked_transaction()?;
         let changed = transaction.execute(
             "UPDATE cron_jobs
              SET last_run_unix=?1,last_status=?2,
-                 next_run_unix=?1+CASE WHEN every_secs<5 THEN 5 ELSE every_secs END,
+                 next_run_unix=?7,
                  lease_owner_id=NULL,lease_token=NULL,lease_acquired_unix=NULL,
                  lease_heartbeat_unix=NULL,lease_deadline_unix=NULL
              WHERE id=?3 AND lease_owner_id=?4 AND lease_generation=?5 AND lease_token=?6
@@ -316,7 +332,8 @@ impl CronStore {
                 claim.job.id.to_string(),
                 claim.owner_id.to_string(),
                 claim.generation as i64,
-                claim.lease_token.to_string()
+                claim.lease_token.to_string(),
+                next_run as i64
             ],
         )?;
         if changed == 0 {
@@ -370,17 +387,20 @@ impl CronStore {
 
     pub fn cancel_running(&self, id: Uuid, now: u64) -> Result<bool> {
         let transaction = self.conn.unchecked_transaction()?;
-        let attempt_id: Option<String> = transaction
+        let attempt: Option<(String, i64)> = transaction
             .query_row(
-                "SELECT attempt_id FROM cron_attempts WHERE job_id=?1 AND status='running'",
+                "SELECT a.attempt_id, j.every_secs
+                 FROM cron_attempts a JOIN cron_jobs j ON j.id=a.job_id
+                 WHERE a.job_id=?1 AND a.status='running'",
                 params![id.to_string()],
-                |row| row.get(0),
+                |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .optional()?;
-        let Some(attempt_id) = attempt_id else {
+        let Some((attempt_id, every_secs)) = attempt else {
             transaction.commit()?;
             return Ok(false);
         };
+        let next_run = next_run_after(now, every_secs as u64);
         transaction.execute(
             "UPDATE cron_attempts SET status='cancelled',completed_unix=?1,detail='operator cancellation'
              WHERE attempt_id=?2 AND status='running'",
@@ -389,11 +409,11 @@ impl CronStore {
         transaction.execute(
             "UPDATE cron_jobs
              SET last_run_unix=?1,last_status='cancelled',
-                 next_run_unix=?1+CASE WHEN every_secs<5 THEN 5 ELSE every_secs END,
+                 next_run_unix=?3,
                  lease_generation=lease_generation+1,lease_owner_id=NULL,lease_token=NULL,
                  lease_acquired_unix=NULL,lease_heartbeat_unix=NULL,lease_deadline_unix=NULL
              WHERE id=?2",
-            params![now as i64, id.to_string()],
+            params![now as i64, id.to_string(), next_run as i64],
         )?;
         transaction.commit()?;
         Ok(true)
@@ -723,6 +743,43 @@ mod tests {
             Err(CronError::LeaseLost { job_id }) if job_id == job.id
         ));
         assert!(!store.list().unwrap().pop().unwrap().enabled);
+    }
+
+    #[test]
+    fn interval_and_next_run_math() {
+        // Sub-minimum intervals are clamped to the enforced floor.
+        assert_eq!(effective_interval(0), MIN_CRON_INTERVAL_SECS);
+        assert_eq!(effective_interval(3), MIN_CRON_INTERVAL_SECS);
+        assert_eq!(effective_interval(5), 5);
+        assert_eq!(effective_interval(60), 60);
+
+        assert_eq!(next_run_after(10, 5), 15);
+        assert_eq!(next_run_after(10, 0), 15);
+
+        // Saturating arithmetic must not overflow at the extreme edge.
+        assert_eq!(next_run_after(u64::MAX, 60), u64::MAX);
+        assert_eq!(next_run_after(u64::MAX, 0), u64::MAX);
+    }
+
+    #[test]
+    fn add_clamps_sub_minimum_interval() {
+        let d = tempdir().unwrap();
+        let s = CronStore::open(d.path().join("cron.db")).unwrap();
+        let job = s.add("min", 2, "work", "offline").unwrap();
+        assert_eq!(job.every_secs, MIN_CRON_INTERVAL_SECS);
+        // Complete a claimed job to prove schedule advance shares the clamp.
+        let mut store = CronStore::open(d.path().join("cron.db")).unwrap();
+        store.set_next_run(job.id, 10).unwrap();
+        let claim = store
+            .claim_due(10, Uuid::new_v4(), 30)
+            .unwrap()
+            .pop()
+            .unwrap();
+        store.complete_claim(&claim, "ok", 10).unwrap();
+        assert_eq!(
+            store.list().unwrap().pop().unwrap().next_run_unix,
+            next_run_after(10, job.every_secs)
+        );
     }
 
     #[test]
