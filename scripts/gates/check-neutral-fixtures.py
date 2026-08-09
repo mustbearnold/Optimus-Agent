@@ -31,10 +31,15 @@ FORBIDDEN = re.compile(
 )
 
 
-def main() -> int:
+def scan_tree(root: Path) -> list[str]:
+    """Return `file:line: snippet` findings for machine-specific paths.
+
+    `root` is the repository tree to scan; extracted so the gate is testable
+    against a synthetic tree instead of the live checkout.
+    """
     errors: list[str] = []
     for base in SCANNED:
-        for path in (ROOT / base).rglob("*"):
+        for path in (root / base).rglob("*"):
             if not path.is_file() or path.suffix not in SUFFIXES:
                 continue
             if SKIPPED_DIRS & set(path.parts):
@@ -45,8 +50,13 @@ def main() -> int:
                 continue
             for number, line in enumerate(text.splitlines(), start=1):
                 if FORBIDDEN.search(line):
-                    rel = path.relative_to(ROOT)
+                    rel = path.relative_to(root)
                     errors.append(f"{rel}:{number}: {line.strip()[:100]}")
+    return errors
+
+
+def main() -> int:
+    errors = scan_tree(ROOT)
 
     if errors:
         print(
