@@ -9,10 +9,18 @@ Fail-closed local gate for kernel / runtime / packs / eval changes:
 
 Usage:
   python3 scripts/check-observability-gate.py
+
+`verify all` runs the workspace test tier (cargo nextest), which executes both
+suites below as part of the 1490-test workspace run. Setting
+OPTIMUS_OBS_COVERED_ELSEWHERE=1 tells the gate its cargo suites are covered by
+that same run, so it enforces only the static export-surface check instead of
+paying the suites twice behind one target-dir lock. Standalone `gates`/`check`
+tiers never set the variable and keep the full fail-closed behaviour.
 """
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -51,6 +59,9 @@ def check_export_surface() -> None:
 
 def main() -> int:
     check_export_surface()
+    if os.environ.get("OPTIMUS_OBS_COVERED_ELSEWHERE") == "1":
+        print("OBS_GATE_OK tests covered by the workspace test tier")
+        return 0
     run(
         "integrity integration",
         [

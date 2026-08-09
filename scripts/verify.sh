@@ -16,6 +16,12 @@
 #           it is the gate for releases and for changes to live surfaces.
 #           Missing creds/tmux FAIL — a live tier must never quietly skip.
 #
+# `all` is content-addressed: a fully green run records the tree's content key
+# in Development/verify-cache.json (machine-local, git-excluded), and a later
+# run on a byte-identical tree reuses that evidence in ~1s. Any file change
+# invalidates the cache. OPTIMUS_VERIFY_NO_CACHE=1 forces a fresh run; managed
+# land (OPTIMUS_VERIFY_FORBID_SKIPS=1) never reads or writes the cache.
+#
 # Exits non-zero if any gate fails. All gates run to completion first so one
 # invocation reports the whole picture rather than only the first failure.
 
@@ -51,6 +57,16 @@ if [ -z "${RUSTC_WRAPPER:-}" ] && [ -z "${OPTIMUS_VERIFY_NO_SCCACHE:-}" ]; then
   if command -v sccache >/dev/null 2>&1; then
     export RUSTC_WRAPPER=sccache
   fi
+fi
+
+# Fast linking. The debug binaries are ~300MB, and the default BFD ld spends
+# most of every incremental rebuild in the link step. lld cuts that
+# several-fold; missing lld changes nothing, and OPTIMUS_VERIFY_NO_LLD=1 opts
+# a run out when the linker itself is under suspicion. The first run after
+# enabling pays a one-time full relink.
+if [ -z "${OPTIMUS_VERIFY_NO_LLD:-}" ] && command -v ld.lld >/dev/null 2>&1; then
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="${CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS:-} -Clink-arg=-fuse-ld=lld"
+  export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS
 fi
 
 if ! command -v tmux >/dev/null 2>&1; then
@@ -156,6 +172,48 @@ skip() {
 }
 
 section() { printf '\n%s\n' "${B}$1${X}"; }
+
+# --- content-addressed verification cache ------------------------------------
+VERIFY_CACHE="$ROOT/Development/verify-cache.json"
+STATE_KEY=""
+
+# repo_state_key — sha256 over the sha256 of every repository file (tracked
+# plus untracked-not-ignored), in stable path order. A pure function of tree
+# content: no mtimes, no HEAD sha, so an unchanged tree always hashes equal.
+repo_state_key() {
+  git ls-files -z --cached --others --exclude-standard \
+    | LC_ALL=C sort -z \
+    | xargs -0 -r sha256sum 2>/dev/null \
+    | sha256sum | cut -d' ' -f1
+}
+
+if [ "$TIER" = "all" ] && [ -z "${OPTIMUS_VERIFY_NO_CACHE:-}" ] && [ -z "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ]; then
+  STATE_KEY="$(repo_state_key)"
+  if [ -n "$STATE_KEY" ] && [ -f "$VERIFY_CACHE" ] && python3 -c '
+import json, sys
+cache = json.load(open(sys.argv[1]))
+sys.exit(0 if cache.get("key") == sys.argv[2] and not cache.get("failed") else 1)
+' "$VERIFY_CACHE" "$STATE_KEY"; then
+    section "verification cache"
+    printf '  %scontent-addressed hit%s: tree byte-identical to the last green `verify all`\n' "$G" "$X"
+    if [ -n "${OPTIMUS_VERIFY_SKIP_REPORT:-}" ]; then
+      python3 -c '
+import json, sys
+cache = json.load(open(sys.argv[1]))
+lines = ["\t".join(skip) for skip in cache.get("skipped", [])]
+open(sys.argv[2], "w").write("\n".join(lines) + ("\n" if lines else ""))
+' "$VERIFY_CACHE" "$OPTIMUS_VERIFY_SKIP_REPORT"
+    fi
+    python3 -c '
+import json, sys
+cache = json.load(open(sys.argv[1]))
+skips = len(cache.get("skipped", []))
+print(f"  verified-at {cache.get(\"completed_at\", \"unknown\")} — passed={cache.get(\"passed\", \"?\")} skipped={skips}")
+' "$VERIFY_CACHE"
+    printf '  (force a fresh run with OPTIMUS_VERIFY_NO_CACHE=1)\n\n'
+    exit 0
+  fi
+fi
 
 # --- parallel gate execution -------------------------------------------------
 #
@@ -531,7 +589,9 @@ tier_all() {
   spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
   spawn "tool-coverage"              python3 scripts/gates/check-tool-coverage.py
-  spawn "observability"              python3 scripts/gates/check-observability-gate.py
+  # The workspace test tier below runs both obs-gate suites again, so here the
+  # gate enforces its static export surface only (OPTIMUS_OBS_COVERED_ELSEWHERE).
+  spawn "observability"              env OPTIMUS_OBS_COVERED_ELSEWHERE=1 python3 scripts/gates/check-observability-gate.py
   spawn "module-size"                python3 scripts/gates/check-module-size.py
   spawn "product-complete-install"   python3 scripts/gates/check-product-complete-install.py
   spawn "parity-ledger"              python3 scripts/gates/check-parity-ledger.py
@@ -734,5 +794,26 @@ fi
 if [ -n "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ] && [ "${#SKIPPED[@]}" -gt 0 ]; then
   printf '\n  skipped (forbidden by OPTIMUS_VERIFY_FORBID_SKIPS): %s\n\n' "${SKIPPED[*]}"
   exit 1
+fi
+
+# Record a fully green `all` run for the content-addressed cache.
+if [ "$TIER" = "all" ] && [ -n "$STATE_KEY" ]; then
+  mkdir -p "$(dirname "$VERIFY_CACHE")"
+  python3 - "$VERIFY_CACHE" "$STATE_KEY" "${#PASSED[@]}" "${#FAILED[@]}" ${SKIPPED_DETAIL[@]+"${SKIPPED_DETAIL[@]}"} <<'PY'
+import datetime, json, sys
+argv = sys.argv[1:]
+cache_path, key = argv[0], argv[1]
+passed, failed = int(argv[2]), int(argv[3])
+skips = [line.split("\t", 1) for line in argv[4:]]
+payload = {
+    "key": key,
+    "completed_at": datetime.datetime.now().isoformat(timespec="seconds"),
+    "passed": passed,
+    "failed": failed,
+    "skipped": skips,
+}
+with open(cache_path, "w") as handle:
+    json.dump(payload, handle, indent=2)
+PY
 fi
 printf '\n'
