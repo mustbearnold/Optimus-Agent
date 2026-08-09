@@ -284,13 +284,17 @@ fn is_python_module_pip(args: &[String]) -> bool {
 }
 
 /// The arguments after `pip` in a `python -m pip ...` invocation. The caller
-/// must have already confirmed `is_python_module_pip`.
+/// must have already confirmed `is_python_module_pip`. The extraction anchors on
+/// the same `-m pip` window the detection uses, so a positional argument that
+/// merely spells "pip" *before* the module form (e.g.
+/// `python build-pip-step -m pip install x`) cannot shift the extraction point.
 fn python_pip_args(args: &[String]) -> Vec<String> {
-    args.iter()
-        .skip_while(|arg| arg.as_str() != "pip")
-        .skip(1)
-        .cloned()
-        .collect()
+    let after_module = args
+        .windows(2)
+        .position(|pair| pair[0] == "-m" && pair[1] == "pip")
+        .map(|index| index + 2)
+        .unwrap_or(0);
+    args.iter().skip(after_module).cloned().collect()
 }
 
 /// `pip install -r requirements.txt` names a file, not a package.
@@ -600,6 +604,28 @@ mod tests {
         assert_eq!(
             class("python", &["script.py", "pip", "install", "requests"]),
             CommandClass::ProjectExecute
+        );
+    }
+
+    #[test]
+    fn a_pip_positional_before_m_does_not_shift_the_module_form() {
+        // Regression: extraction anchored on the *first* positional spelled
+        // "pip", so a script that merely says "pip" before the `-m pip` module
+        // form used to swallow the real module arguments. `pip install` after
+        // `-m` must still be a package add, not a project execution.
+        assert_eq!(
+            class(
+                "python",
+                &["build-pip-step.py", "pip", "-m", "pip", "install", "requests"]
+            ),
+            CommandClass::PackageAdd
+        );
+        assert_eq!(
+            class(
+                "python",
+                &["setup.py", "pip", "-m", "pip", "install", "-r", "requirements.txt"]
+            ),
+            CommandClass::PackageSync
         );
     }
 
