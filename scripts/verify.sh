@@ -173,6 +173,44 @@ skip() {
 
 section() { printf '\n%s\n' "${B}$1${X}"; }
 
+# --- content-addressed UI bundle ---------------------------------------------
+# The Tauri shell embeds the React bundle: tauri-build emits
+# rerun-if-changed on the dist DIRECTORY, so any write into dist (even
+# byte-identical rewrites) dirties the shell crate and forces a full
+# recompile + relink (~20-50s). `bun run build` rewrites dist on every
+# invocation, so a plain verify paid the relink even when the UI did not
+# change. Content-address the UI sources instead: skip the bun build when
+# the sources hash matches the last build's stamp (Development/ui-build.stamp,
+# machine-local, git-excluded). Any UI source change invalidates.
+UI_STAMP="$ROOT/Development/ui-build.stamp"
+
+ui_source_key() {
+  (cd "$ROOT/apps/optimus-ui" && git ls-files -z --cached --others --exclude-standard       -- src index.html index.css package.json vite.config.* tsconfig*.json public     | LC_ALL=C sort -z     | xargs -0 -r sha256sum 2>/dev/null     | sha256sum | cut -d' ' -f1)
+}
+
+ui_bundle_current() {
+  local key stamp
+  [ -f "$ROOT/apps/optimus-ui/dist/index.html" ] || return 1
+  [ -z "${OPTIMUS_VERIFY_NO_CACHE:-}" ] || return 1
+  key="$(ui_source_key)"
+  [ -n "$key" ] || return 1
+  stamp="$(cat "$UI_STAMP" 2>/dev/null)"
+  [ "$stamp" = "$key" ]
+}
+
+# build_react_ui — run the React bundle build unless a content-addressed
+# stamp proves the current bundle already matches the UI sources.
+build_react_ui() {
+  if ui_bundle_current; then
+    section "build react ui"
+    printf '  %scontent-addressed hit%s: bundle matches UI sources (force with OPTIMUS_VERIFY_NO_CACHE=1)\n' "$G" "$X"
+    return 0
+  fi
+  run "build react ui" bun run --cwd apps/optimus-ui build
+  mkdir -p "$(dirname "$UI_STAMP")"
+  ui_source_key > "$UI_STAMP"
+}
+
 # --- content-addressed verification cache ------------------------------------
 VERIFY_CACHE="$ROOT/Development/verify-cache.json"
 STATE_KEY=""
@@ -459,7 +497,7 @@ tier_ui() {
     reap
     # The Tauri binary embeds the React bundle at compile time, so the UI
     # build must precede the shell build.
-    run "build react ui" bun run --cwd apps/optimus-ui build
+    build_react_ui
     run "build optimus cli" cargo build -p optimus-cli
     run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
     run "tui e2e" python3 scripts/tools/tui_e2e.py
@@ -552,7 +590,7 @@ tier_ui() {
 
   if [ "$playwright_ready" = 1 ]; then
     run "build desktop host" cargo build -p optimus-cli
-    run "build react ui" bun --cwd apps/optimus-ui run build
+    build_react_ui
   fi
   [ "$playwright_ready" = 1 ] && spawn_dir "playwright" apps/optimus-desktop "bunx playwright test"
   reap
@@ -574,7 +612,7 @@ tier_all() {
   if [ -d apps/optimus-desktop/node_modules ]; then
     section "build"
     run "build desktop host" cargo build -p optimus-cli
-    run "build react ui" bun --cwd apps/optimus-ui run build
+    build_react_ui
     host_built=1
   fi
 
@@ -668,7 +706,7 @@ tier_all() {
     reap
     # The Tauri binary embeds the React bundle at compile time, so the UI
     # build must precede the shell build.
-    run "build react ui" bun run --cwd apps/optimus-ui build
+    build_react_ui
     run "build optimus cli" cargo build -p optimus-cli
     run "build tauri shell" cargo build -p optimus-tauri --features optimus-tauri/custom-protocol
     run "tui e2e" python3 scripts/tools/tui_e2e.py
