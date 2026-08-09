@@ -804,3 +804,57 @@ fn verify_report(report: &EvaluationReportV1) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{canonical_source_digest, validate_hash, validate_id};
+
+    #[test]
+    fn canonical_source_digest_normalizes_crlf_and_lf_identically() {
+        // A Windows-checked-out fixture must hash the same as its LF sibling,
+        // otherwise the same source evaluated on two machines disagrees.
+        let lf = "first line\nsecond line\n";
+        let crlf = "first line\r\nsecond line\r\n";
+        let cr = "first line\rsecond line\r";
+        assert_eq!(
+            canonical_source_digest(crlf),
+            canonical_source_digest(lf),
+            "CRLF and LF sources must hash identically"
+        );
+        assert_eq!(
+            canonical_source_digest(cr),
+            canonical_source_digest(lf),
+            "bare CR and LF sources must hash identically"
+        );
+    }
+
+    #[test]
+    fn canonical_source_digest_crlf_is_not_double_normalized() {
+        // A lone trailing CR (e.g. a file ending in `\r\n` after the first
+        // pass) must not turn into a doubled newline: the digest must match
+        // the already-normalized text byte-for-byte.
+        assert_eq!(
+            canonical_source_digest("a\r\nb\r\n"),
+            canonical_source_digest("a\nb\n")
+        );
+    }
+
+    #[test]
+    fn validate_hash_rejects_malformed_digests() {
+        // Lowercase and uppercase hex are both valid SHA-256 digests.
+        assert!(validate_hash(&"0".repeat(64), "evidence.sha256").is_ok());
+        assert!(validate_hash(&"A".repeat(64), "evidence.sha256").is_ok());
+        // Too short and non-hex are rejected.
+        assert!(validate_hash(&"0".repeat(63), "evidence.sha256").is_err());
+        assert!(validate_hash(&"z".repeat(64), "evidence.sha256").is_err());
+    }
+
+    #[test]
+    fn validate_id_requires_canonical_identifiers() {
+        assert!(validate_id("abc-123_456", "id").is_ok());
+        assert!(validate_id("", "id").is_err());
+        assert!(validate_id("has Spaces", "id").is_err());
+        assert!(validate_id("HasUppercase", "id").is_err());
+        assert!(validate_id(&"x".repeat(129), "id").is_err());
+    }
+}
