@@ -130,18 +130,25 @@ def strip_html_comments(source: str) -> str:
     return "".join(output)
 
 
-def braced_contents(source: str, opening: int, surface: str) -> tuple[str, int]:
+def braced_contents(
+    source: str, opening: int, surface: str, rust: bool = False
+) -> tuple[str, int]:
     """Return the contents and closing offset of one balanced `{ ... }`.
 
     The bounded source shapes checked here contain strings, so braces inside a
     quoted diagnostic must not end a Rust match or JavaScript object early.
+    With `rust=True`, a lone `'` is a lifetime, not a quote, and a char
+    literal (`'x'`, `'\n'`) is skipped as a unit — otherwise
+    `&'static str` desynchronises the scanner for the rest of the impl.
     """
     if opening < 0 or opening >= len(source) or source[opening] != "{":
         fail(f"{surface}: could not find the opening brace")
     depth = 0
     quote: str | None = None
     escaped = False
-    for offset in range(opening, len(source)):
+    offset = opening
+    limit = len(source)
+    while offset < limit:
         char = source[offset]
         if quote is not None:
             if escaped:
@@ -150,6 +157,13 @@ def braced_contents(source: str, opening: int, surface: str) -> tuple[str, int]:
                 escaped = True
             elif char == quote:
                 quote = None
+            offset += 1
+            continue
+        if rust and char == "'":
+            if offset + 2 < limit and source[offset + 2] == "'":
+                offset += 4 if source[offset + 1] == "\\" else 3
+            else:
+                offset += 1
             continue
         if char in {'"', "'", "`"}:
             quote = char
@@ -159,6 +173,7 @@ def braced_contents(source: str, opening: int, surface: str) -> tuple[str, int]:
             depth -= 1
             if depth == 0:
                 return source[opening + 1 : offset], offset
+        offset += 1
     fail(f"{surface}: opening brace has no matching close")
 
 
@@ -214,12 +229,12 @@ def match_body(source: str, signature: str, surface: str) -> str:
     if len(functions) != 1:
         fail(f"{surface}: expected one matching function, found {len(functions)}")
     function_open = source.find("{", functions[0].end())
-    function_body, _ = braced_contents(source, function_open, surface)
+    function_body, _ = braced_contents(source, function_open, surface, rust=True)
     matches = list(re.finditer(r"\bmatch\b[^{}]*\{", function_body, re.S))
     if len(matches) != 1:
         fail(f"{surface}: expected one top-level match, found {len(matches)}")
     match_open = function_open + 1 + matches[0].end() - 1
-    body, _ = braced_contents(source, match_open, surface)
+    body, _ = braced_contents(source, match_open, surface, rust=True)
     return body
 
 
@@ -289,10 +304,24 @@ def parse_table(source: str, crate: str) -> dict[str, str]:
     guard, a fully-qualified variant, a wrapped or-pattern, or a catch-all that
     returns a profile would otherwise be invisible here — and an invisible arm
     is an arm the rules below never get to judge.
+
+    The search is scoped to the AutonomyProfile impl: other types in the same
+    crate (e.g. CommandFsEnvelope) legitimately define the same
+    `fn parse(raw: &str) -> Option<Self>` shape.
     """
     table: dict[str, str] = {}
+    stripped = strip_comments(source)
+    impl = re.search(r"impl\s+AutonomyProfile\s*\{", stripped)
+    if not impl:
+        fail(f"{crate}: could not find impl AutonomyProfile")
+    impl_body, _ = braced_contents(
+        stripped,
+        stripped.find("{", impl.start()),
+        f"{crate}: impl AutonomyProfile",
+        rust=True,
+    )
     body = match_body(
-        source,
+        impl_body,
         r"\bfn\s+parse\(raw:\s*&str\)\s*->\s*Option<Self>",
         f"{crate}: AutonomyProfile::parse",
     )

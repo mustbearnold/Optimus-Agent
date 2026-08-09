@@ -89,7 +89,7 @@ class Host:
                 time.sleep(0.05)
         raise RuntimeError(f"host did not become healthy: {self.stderr_tail()}")
 
-    def call(self, method: str, params: dict[str, object]) -> dict[str, object]:
+    def call(self, method: str, params: dict[str, object], timeout: float = 30.0) -> dict[str, object]:
         body = json.dumps({"id": 1, "method": method, "params": params}).encode()
         request = urllib.request.Request(
             f"{self.base}/api/ipc",
@@ -102,7 +102,7 @@ class Host:
                 "Content-Type": "application/json",
             },
         )
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             envelope = json.load(response)
         if not envelope.get("ok"):
             raise RuntimeError(f"{method}: {envelope}")
@@ -190,6 +190,10 @@ def run(binary: Path, workspace: Path, surface: str) -> None:
                     raise RuntimeError(f"could not create a handoff session: {session}")
                 built = timed(
                     "self_development_build_launch",
+                    # The supervised child runs a real cargo build of the
+                    # workspace; a legitimately dirty desktop crate (e.g. after
+                    # a workspace change) can take minutes. 30s made the gate
+                    # flaky whenever the binary needed a rebuild.
                     lambda: host.call(
                         "developer_supervisor_build_launch",
                         {
@@ -198,6 +202,7 @@ def run(binary: Path, workspace: Path, surface: str) -> None:
                             "surface": surface,
                             "session_id": session_id,
                         },
+                        timeout=900.0,
                     ),
                 )
                 if not built.get("healthy") or built.get("status") != "healthy":
