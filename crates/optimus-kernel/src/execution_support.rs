@@ -35,10 +35,7 @@ pub(crate) fn insert_manifest(
             "execution manifest requires a canonical autonomy profile".into(),
         ));
     }
-    if !matches!(
-        command_fs_envelope,
-        "confined" | "confined_no_network" | "unrestricted_host"
-    ) {
+    if optimus_graph::CommandFsEnvelope::parse(command_fs_envelope).is_none() {
         return Err(KernelError::Model(
             "execution manifest requires a canonical command envelope".into(),
         ));

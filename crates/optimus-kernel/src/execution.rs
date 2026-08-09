@@ -242,7 +242,7 @@ impl ExecutionStore {
             provider,
             model,
             "review_changes",
-            "confined_no_network",
+            optimus_graph::CommandFsEnvelope::ConfinedNoNetwork.as_str(),
             prompt,
             tool_catalog,
             policy,
