@@ -57,6 +57,10 @@ pub fn host_blocked(host: &str) -> bool {
         || host.ends_with(".localhost")
         || host.ends_with(".local")
         || host == "metadata.google.internal"
+        // AWS EC2 short name for the instance-metadata service, which
+        // resolves to the link-local 169.254.169.254. Blocked so the SSRF
+        // guard does not rely on DNS resolving to a private IP to catch it.
+        || host == "instance-data"
 }
 
 pub fn ip_blocked(ip: IpAddr) -> bool {
@@ -130,5 +134,15 @@ mod tests {
         // many stacks connections to it land on the local host.
         assert!(ip_blocked("::".parse::<IpAddr>().unwrap()));
         assert!(assert_public_http_url_str("http://[::]/x").is_err());
+    }
+
+    #[test]
+    fn blocks_aws_instance_metadata_hostname() {
+        // Regression: `instance-data` (AWS EC2's short name for the metadata
+        // service at 169.254.169.254) used to pass `host_blocked`, so the
+        // guard depended on DNS resolving to the link-local IP to catch it.
+        // A stub resolver returning the loopback would otherwise admit SSRF.
+        assert!(host_blocked("instance-data"));
+        assert!(assert_public_http_url_str("http://instance-data/latest/meta-data/").is_err());
     }
 }
