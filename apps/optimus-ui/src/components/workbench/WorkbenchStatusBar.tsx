@@ -43,7 +43,7 @@ export function WorkbenchStatusBar({ status, statusText, settings, developerAcce
         {detail ? <span className="workbench-status-detail" title={detail}>{detail}</span> : null}
       </span>
       <span className="workbench-status-spacer" />
-      <span className="workbench-status-segment" title={project?.primaryRoot || 'No project folder'}>
+      <span className="workbench-status-segment workbench-status-project" title={project?.primaryRoot || 'No project folder'}>
         <Icon name="folder" />
         <span>{project?.name || 'Local session'}</span>
       </span>
@@ -51,11 +51,11 @@ export function WorkbenchStatusBar({ status, statusText, settings, developerAcce
         <Icon name="agent" />
         <span>{model}</span>
       </span>
-      <span className="workbench-status-segment workbench-status-secondary" title={`Thinking · ${thinking}`}>
+      <span className="workbench-status-segment workbench-status-secondary workbench-status-thinking" title={`Thinking · ${thinking}`}>
         <Icon name="source" />
         <span>{thinking}</span>
       </span>
-      <span className="workbench-status-segment workbench-status-secondary" title={`Access · ${access}`}>
+      <span className="workbench-status-segment workbench-status-secondary workbench-status-access" title={`Access · ${access}`}>
         <Icon name={developerAccess?.enabled ? 'terminal' : 'shield'} />
         <span>{access}</span>
       </span>

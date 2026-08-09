@@ -27,9 +27,6 @@
   --session-card: rgba(18, 18, 18, 0.68);
   --session-card-hover: rgba(24, 24, 24, 0.78);
   --session-card-selected: rgba(30, 30, 30, 0.88);
-  --send-control: rgba(18, 18, 18, 0.96);
-  --send-control-hover: rgba(34, 34, 34, 0.98);
-  --send-control-disabled: rgba(14, 14, 14, 0.76);
   --border: #2a2a2a;
   --border-strong: #363636;
   --text: #eaeaea;
@@ -81,9 +78,6 @@
   --session-card: rgba(18, 18, 18, 0.68);
   --session-card-hover: rgba(24, 24, 24, 0.78);
   --session-card-selected: rgba(30, 30, 30, 0.88);
-  --send-control: rgba(18, 18, 18, 0.96);
-  --send-control-hover: rgba(34, 34, 34, 0.98);
-  --send-control-disabled: rgba(14, 14, 14, 0.76);
   --border: #2a2a2a;
   --border-strong: #363636;
   --text: #eaeaea;
@@ -779,7 +773,10 @@ select:focus-visible,
   max-width: min(82%, 600px);
   margin-left: auto;
   padding: 11px 15px;
-  border: 1px solid var(--border);
+  /* Compact right-aligned surface: the fill is the single boundary. No
+     hairline — border+fill would make the prompt a card, and the system
+     gives a panel exactly one boundary (DESIGN.md). */
+  border: 0;
   border-radius: 0;
   background: var(--surface-2);
 }
@@ -790,13 +787,15 @@ select:focus-visible,
 
 /* Reasonix treats tool activity as a quiet, nested part of the assistant
    turn. Keep the collapsed state lightweight, then give the opened group a
-   readable surface and a single visual spine for the rows. */
+   readable surface and a single visual spine for the rows. The surface fill
+   is the panel's one boundary — no hairline on top of it (DESIGN.md:
+   "A panel gets one boundary"). */
 .activity-timeline[data-open="true"] {
   margin-top: 14px;
   padding: 7px 9px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
   box-shadow: none;
 }
 
@@ -809,7 +808,8 @@ select:focus-visible,
 
 .activity-timeline[data-open="true"] .activity-heading {
   color: var(--text-2);
-  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  /* No header fill inside the open panel: the panel's surface is the only
+     boundary, and a full-width fill strip would nest a card inside it. */
 }
 
 .activity-rows {
@@ -875,22 +875,15 @@ select:focus-visible,
 }
 
 /* Inline alignment: the label sits on the message's left edge, the body
-   indents under it — no box padding. */
+   indents under it — no box padding. Weight 500 = label weight (DESIGN.md:
+   400 body / 500 labels / 700 titles), not a bold field. */
 .thinking-block summary {
   padding: 2px 0;
+  font-weight: 500;
 }
 
 .thinking-block .thinking-body {
   padding: 0 0 8px 14px;
-}
-
-.activity-group {
-  border-color: var(--border);
-  background: transparent;
-}
-
-.activity-group[open] {
-  background: var(--surface);
 }
 
 .inline-approval {
@@ -940,11 +933,13 @@ select:focus-visible,
 
 /* The access and model controls are persistent state, not primary actions, so
    they read as small chips tucked into the composer's bottom-left corner
-   rather than a full-height toolbar competing with the prompt. */
+   rather than a full-height toolbar competing with the prompt. The 32px send
+   defines the row's height (DESIGN.md: metadata row 26-28px + Send/Stop is a
+   32px high-emphasis icon button); no extra bottom padding inflates it. */
 .composer-controls {
   min-height: 28px;
   gap: 3px;
-  padding: 0 6px 4px 5px;
+  padding: 0 6px 0 5px;
 }
 
 .composer-access-trigger,
@@ -1007,13 +1002,17 @@ select:focus-visible,
   font-weight: 700;
 }
 
+/* Send/Stop is the composer's high-emphasis action (DESIGN.md: "Accent:
+   ...send..."; "Send/Stop is a 32 px high-emphasis icon button"). Accent
+   fill + canvas glyph, no hairline. Stop uses danger and the target never
+   moves between states. */
 .send-button {
   width: 32px;
   height: 32px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-2);
-  background: var(--send-control);
+  border: 0;
+  border-radius: 0;
+  color: var(--danger-contrast);
+  background: var(--accent);
 }
 
 .send-button .optimus-icon {
@@ -1023,15 +1022,19 @@ select:focus-visible,
 }
 
 .send-button:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--send-control-hover);
+  color: var(--danger-contrast);
+  background: var(--accent-strong);
 }
 
 .send-button:disabled {
   color: var(--faint);
-  background: var(--send-control-disabled);
-  border-color: var(--border);
-  opacity: 1;
+  background: var(--surface-2);
+}
+
+.send-button.is-stop,
+.send-button.is-stop:hover:not(:disabled) {
+  color: var(--danger-contrast);
+  background: var(--danger);
 }
 
 .work-empty {
@@ -1068,9 +1071,21 @@ select:focus-visible,
 
 .workspace-tabs,
 .execution-tabs {
-  height: 42px;
-  padding: 5px 7px;
+  padding: 1px 7px;
   background: var(--surface);
+}
+
+/* Evidence inspector tab strip is 34 px (DESIGN.md); the execution dock
+   header is 30 px — its buttons are 28 px so the strip stays at contract.
+   The explicit min-heights override older shells' 35/36 px bases. */
+.workspace-tabs {
+  height: 34px;
+  min-height: 34px;
+}
+
+.execution-tabs {
+  height: 30px;
+  min-height: 30px;
 }
 
 .workspace-tabs button,
@@ -1079,11 +1094,21 @@ select:focus-visible,
   border-radius: 0;
 }
 
+.execution-tabs button {
+  height: 28px;
+}
+
 .workspace-tabs button.is-active,
 .execution-tabs button[aria-selected="true"] {
   color: var(--text);
   background: var(--surface-2);
   box-shadow: none;
+}
+
+/* Active tab = quiet surface + one accent marker (DESIGN.md: "Active state
+   uses a quiet surface and one accent marker"). */
+.workspace-tabs button.is-active {
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 @media (max-width: 1099px) {
@@ -1196,7 +1221,6 @@ select:focus-visible,
 .inline-notice,
 .boot-error,
 .settings-callout,
-.activity-group,
 .terminal-panel {
   box-shadow: none;
 }
@@ -1207,7 +1231,7 @@ select:focus-visible,
 
 .workbench-statusbar {
   min-width: 0;
-  min-height: 20px;
+  min-height: 22px;
   /* The footer spans the entire app (rail + work + workspace), not just the
      work column. It shrinks with the window, so the drop-out below has to
      query this element, not the screen. */
@@ -1224,7 +1248,7 @@ select:focus-visible,
   background: var(--rail);
   font-size: 11px;
   /* `line-height: 1` gave 11px glyphs an 11px box, so descenders in
-     "Developer" and "repository" sat on the box edge. The bar is 20px tall —
+     "Developer" and "repository" sat on the box edge. The bar is 22px tall —
      there is room for real leading. */
   line-height: 1.4;
 }
@@ -1286,22 +1310,31 @@ select:focus-visible,
   color: var(--faint);
 }
 
-/* Shed the least important segment first, so what remains is always legible
-   rather than four competing ellipses. */
-@container statusbar (max-width: 620px) {
-  .workbench-status-secondary {
+/* The truth strip is passive facts (DESIGN.md: "Show only facts useful
+   across the whole app"), not a row of buttons: segments keep their hover
+   tooltip but drop the pill background. Shed one segment at a time, least
+   important first (thinking → access → project → detail), so what remains
+   always reads instead of four competing ellipses. */
+@container statusbar (max-width: 640px) {
+  .workbench-status-segment.workbench-status-thinking {
     display: none;
   }
 }
 
-@container statusbar (max-width: 430px) {
+@container statusbar (max-width: 540px) {
+  .workbench-status-segment.workbench-status-access {
+    display: none;
+  }
+}
+
+@container statusbar (max-width: 440px) {
+  .workbench-status-segment.workbench-status-project {
+    display: none;
+  }
+}
+
+@container statusbar (max-width: 360px) {
   .workbench-status-detail {
-    display: none;
-  }
-}
-
-@container statusbar (max-width: 340px) {
-  .workbench-status-segment:not(.workbench-status-primary) {
     display: none;
   }
 }
@@ -1312,7 +1345,6 @@ select:focus-visible,
 
 .workbench-status-segment:hover {
   color: var(--text-2);
-  background: var(--hover);
 }
 
 .workbench-status-segment > .optimus-icon {
@@ -1342,7 +1374,9 @@ select:focus-visible,
     padding-inline: 5px;
   }
 
-  .workbench-status-secondary {
+  /* Coarse fallback for engines without container queries: shed the least
+     important segment; the container rules do the finer shedding. */
+  .workbench-status-segment.workbench-status-thinking {
     display: none;
   }
 }
@@ -1805,7 +1839,7 @@ body,
 }
 
 .activity-timeline[data-open="true"] {
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface);
   box-shadow: none;
 }
@@ -1847,16 +1881,22 @@ body,
   padding: 7px 8px;
   border-left: 1px solid var(--border-strong);
   color: var(--muted);
-  background: var(--surface-2);
+  /* Flat continuation of the row inside the open panel — no box fill (a
+     filled box inside the panel would nest a card). The left spine keeps it
+     attached to the timeline. */
+  background: transparent;
   font-size: 10px;
 }
 
-/* R11: tool-to-tool idle gap chip between activity rows. */
+/* R11: tool-to-tool idle gap between activity rows — a quiet mono timing
+   annotation on the timeline spine, not a chip: no box padding, no dashed
+   border, no fill (DESIGN.md: monospace is reserved for timings). */
 .activity-gap {
-  margin: 0 0 4px 24px;
-  padding: 1px 8px;
-  border-left: 1px dashed var(--border-strong);
+  margin: 2px 0 6px 24px;
+  padding: 0 0 0 9px;
+  border-left: 1px solid var(--border-strong);
   color: var(--faint);
+  font-family: var(--mono, "0xProto Nerd Font Mono", monospace);
   font-size: 10px;
   line-height: 1.5;
 }

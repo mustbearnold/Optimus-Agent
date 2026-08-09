@@ -197,12 +197,38 @@ describe('motion contract', () => {
     expect(css).toMatch(/\.composer-access-tier\.is-advanced,\s*\.composer-access-tier\.is-expert\s*\{[^}]*border-top/s);
   });
 
-  it('keeps the send control dark in enabled, hover, and disabled states', () => {
+  it('makes Send/Stop the high-emphasis accent control in every state', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/\.send-button\s*\{[^}]*color:\s*var\(--text-2\)[^}]*background:\s*var\(--send-control\)/s);
-    expect(css).toMatch(/\.send-button:hover:not\(:disabled\)\s*\{[^}]*background:\s*var\(--send-control-hover\)/s);
-    expect(css).toMatch(/\.send-button:disabled\s*\{[^}]*background:\s*var\(--send-control-disabled\)/s);
-    expect(css).not.toMatch(/\.send-button\s*\{[^}]*background:\s*var\(--accent\)/s);
+    // DESIGN.md: "Accent ... send ..." + "Send/Stop is a 32 px high-emphasis
+    // icon button" — accent fill + canvas glyph, no hairline, 32×32.
+    expect(css).toMatch(/\.send-button\s*\{[^}]*width:\s*32px[^}]*height:\s*32px/s);
+    expect(css).toMatch(/\.send-button\s*\{[^}]*color:\s*var\(--danger-contrast\)[^}]*background:\s*var\(--accent\)/s);
+    expect(css).toMatch(/\.send-button:hover:not\(:disabled\)\s*\{[^}]*background:\s*var\(--accent-strong\)/s);
+    expect(css).toMatch(/\.send-button\.is-stop,\s*\.send-button\.is-stop:hover:not\(:disabled\)\s*\{[^}]*background:\s*var\(--danger\)/s);
+    expect(css).toMatch(/\.send-button\s*\{[^}]*border:\s*0/s);
+    expect(css).not.toMatch(/--send-control/);
+  });
+
+  it('keeps surfaces at one boundary each: no border+fill cards', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    // User prompt: compact right-aligned surface — the fill is the boundary.
+    expect(css).toMatch(/\.message-user\s*\{[^}]*border:\s*0[^}]*background:\s*var\(--surface-2\)/s);
+    // Open evidence timeline: embedded panel — the surface fill is the
+    // boundary; the disclosure header does not nest a card inside it.
+    expect(css).toMatch(/\.activity-timeline\[data-open="true"\]\s*\{[^}]*border:\s*0[^}]*background:\s*var\(--surface\)/s);
+    expect(css).not.toMatch(/\.activity-timeline\[data-open="true"\]\s*\.activity-heading\s*\{[^}]*background:/s);
+    // Tool detail: flat continuation of the row, spine only, no box fill.
+    expect(css).toMatch(/\.activity-detail\s*\{[^}]*background:\s*transparent/s);
+    // R11 idle gap: mono timing annotation, not a dashed chip.
+    expect(css).toMatch(/\.activity-gap\s*\{[^}]*font-family:\s*var\(--mono/s);
+    expect(css).not.toMatch(/border-left:\s*1px dashed/);
+    // Tab strips at DESIGN.md heights; active tab = quiet surface + one
+    // accent marker.
+    expect(css).toMatch(/\.workspace-tabs\s*\{[^}]*height:\s*34px/s);
+    expect(css).toMatch(/\.execution-tabs\s*\{[^}]*height:\s*30px/s);
+    expect(css).toMatch(/\.workspace-tabs button\.is-active\s*\{[^}]*box-shadow:\s*inset 0 -2px 0 var\(--accent\)/s);
+    // Truth strip at its 22px contract.
+    expect(css).toMatch(/\.workbench-statusbar\s*\{[^}]*min-height:\s*22px/s);
   });
 
   it('keeps every workbench surface square without adding broad visual effects', () => {
