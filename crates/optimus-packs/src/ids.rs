@@ -58,6 +58,12 @@ impl PackId {
     pub fn is_core(self) -> bool {
         matches!(self, PackId::Core)
     }
+
+    /// Whether the pack is loaded on demand rather than always-on in the waist.
+    /// Every pack other than `Core` is an edge pack loaded via `activate_pack`.
+    pub fn is_on_demand(self) -> bool {
+        !self.is_core()
+    }
 }
 
 impl fmt::Display for PackId {
@@ -134,6 +140,27 @@ mod tests {
         assert_eq!(PackId::Core.to_string(), "core");
         assert_eq!(PackId::Browser.to_string(), "browser");
         assert_eq!(PackId::Home.to_string(), "home");
+    }
+
+    #[test]
+    fn pack_id_is_core_and_is_on_demand_are_complementary() {
+        assert!(PackId::Core.is_core());
+        assert!(!PackId::Core.is_on_demand());
+
+        for id in [
+            PackId::Browser,
+            PackId::Desktop,
+            PackId::Media,
+            PackId::Devex,
+            PackId::Social,
+            PackId::Collaboration,
+            PackId::Children,
+            PackId::Home,
+            PackId::Office,
+        ] {
+            assert!(!id.is_core());
+            assert!(id.is_on_demand());
+        }
     }
 
     #[test]
