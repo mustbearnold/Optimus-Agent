@@ -24,31 +24,31 @@ describe('motion contract', () => {
     expect(css).toMatch(/\.surface-row:not\(:has\(\.workspace-shell\)\)\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
   });
 
-  it('paints the work area as one opaque square pane without text bleed', () => {
+  it('paints the work area as one flat square pane without text bleed', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/--work-pane-bg:\s*#0b0b0b/);
+    expect(css).toMatch(/--work-pane-bg:\s*#0e0e0e/);
     expect(css).toMatch(/\.work-surface\s*\{[^}]*background:\s*var\(--work-pane-bg\)/s);
-    expect(css).toMatch(/\.transcript\s*\{[^}]*background:\s*#0b0b0b/s);
+    expect(css).toMatch(/\.transcript\s*\{[^}]*background:\s*var\(--work-pane-bg\)/s);
     expect(css).toMatch(/\.composer-shell\s*\{[^}]*var\(--work-pane-bg\)/s);
   });
 
-  it('paints the project sidebar as solid black without blurring its text', () => {
+  it('paints the project sidebar solid without blurring its text', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/--project-rail-bg:\s*#080808/);
-    expect(css).toMatch(/\.project-rail\s*\{[^}]*background:\s*#080808/s);
+    expect(css).toMatch(/--project-rail-bg:\s*#0a0a0a/);
+    expect(css).toMatch(/\.project-rail\s*\{[^}]*background:\s*#0a0a0a/s);
     expect(css).not.toMatch(/backdrop-filter/i);
   });
 
   it('keeps elevated menus opaque over the transcript', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*--elevated:\s*#111111/s);
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--elevated:\s*#111111/s);
+    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*--elevated:\s*#181818/s);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--elevated:\s*#181818/s);
   });
 
-  it('uses the black glass palette in both saved theme modes', () => {
+  it('uses the neutral mono palette in both saved theme modes', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#0d0b0a[^}]*--accent:\s*#f47742/s);
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--canvas:\s*#0d0b0a[^}]*--surface:\s*#101010[^}]*--accent:\s*#f47742/s);
+    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#0e0e0e[^}]*--accent:\s*#9a9a9a/s);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--canvas:\s*#0e0e0e[^}]*--surface:\s*#141414[^}]*--accent:\s*#9a9a9a/s);
   });
 
   it('keeps thread rows flat and reserves full-contrast titles for selection', () => {
@@ -250,10 +250,19 @@ describe('motion contract', () => {
     // the global square reset (layout 50% positions are allowed).
     expect(css).not.toMatch(/border-radius:\s*999px/);
     expect(css).not.toMatch(/border-radius:\s*50%/);
-    // The canvas is the warm-tinted near-black, never pure black.
+    // The canvas is the neutral mono near-black, never pure black.
     expect(css).not.toMatch(/--canvas:\s*#000000/);
-    // One accent, warm orange; no blue/indigo accent remnants anywhere.
-    expect(css).not.toMatch(/--accent:\s*#(?:2f6feb|7aa2f7|8b92ff|5c63d8)/);
-    expect(css).toMatch(/--accent:\s*#f47742/);
+    // One neutral midground accent; no blue/indigo accent remnants anywhere.
+    expect(css).not.toMatch(/--accent:\s*#(?:2f6feb|7aa2f7|8b92ff|5c63d8|f47742)/);
+    expect(css).toMatch(/--accent:\s*#9a9a9a/);
+  });
+
+  it('spans the session status footer across the entire app', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    // The footer is an app-wide bar (Hermes-style), not a card-scoped strip:
+    // the app grid owns an explicit auto row for it.
+    expect(css).toMatch(/\.optimus-app\s*\{[^}]*grid-template-rows:\s*var\(--topbar-h\)\s+1fr\s+auto/s);
+    expect(css).toMatch(/\.workbench-statusbar\s*\{[^}]*justify-content:\s*space-between/s);
+    expect(css).toMatch(/\.workbench-statusbar\s*\{[^}]*background:\s*var\(--rail\)/s);
   });
 });

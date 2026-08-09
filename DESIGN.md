@@ -3,75 +3,75 @@ version: alpha
 name: Optimus Vantage
 description: A compact artifact-centered agent workbench for supervising parallel software work with calm, high-refresh motion.
 colors:
-  primary: "#7C8CFF"
-  canvas: "#080B10"
-  rail: "#0B0F16"
-  surface: "#0E131B"
-  elevated: "#141B26"
-  interactive: "#192231"
-  interactiveHover: "#202C3D"
-  border: "#263244"
-  borderStrong: "#35445A"
-  text: "#F2F5F8"
-  textSecondary: "#A9B3C2"
-  textMuted: "#7F8A9B"
-  accent: "#7C8CFF"
-  accentStrong: "#9AA6FF"
-  accentWash: "#1B2240"
-  cyan: "#63D4FF"
-  success: "#52D6A4"
-  warning: "#F3C778"
-  danger: "#FF7B86"
-  focus: "#A8B3FF"
-  lightCanvas: "#F4F6F9"
-  lightSurface: "#FFFFFF"
-  lightText: "#17202D"
-  lightTextSecondary: "#526074"
-  lightBorder: "#CFD6E2"
+  primary: "#9A9A9A"
+  canvas: "#0E0E0E"
+  rail: "#0A0A0A"
+  surface: "#141414"
+  elevated: "#181818"
+  interactive: "#1E1E1E"
+  interactiveHover: "#262626"
+  border: "#2A2A2A"
+  borderStrong: "#363636"
+  text: "#EAEAEA"
+  textSecondary: "#C8C8C8"
+  textMuted: "#808080"
+  accent: "#9A9A9A"
+  accentStrong: "#C8C8C8"
+  accentWash: "#202020"
+  cyan: "#6F9BA6"
+  success: "#55A583"
+  warning: "#C08532"
+  danger: "#E75E78"
+  focus: "#9A9A9A"
+  lightCanvas: "#0E0E0E"
+  lightSurface: "#141414"
+  lightText: "#EAEAEA"
+  lightTextSecondary: "#C8C8C8"
+  lightBorder: "#2A2A2A"
 typography:
   display:
-    fontFamily: Inter, Geist, SF Pro Display, Segoe UI, sans-serif
+    fontFamily: Segoe WPC, Segoe UI, -apple-system, SF Pro Text, system-ui, sans-serif
     fontSize: 1.25rem
-    fontWeight: 620
+    fontWeight: 700
     lineHeight: 1.2
-    letterSpacing: "-0.025em"
+    letterSpacing: "-0.02em"
   title:
-    fontFamily: Inter, Geist, SF Pro Text, Segoe UI, sans-serif
+    fontFamily: Segoe WPC, Segoe UI, -apple-system, SF Pro Text, system-ui, sans-serif
     fontSize: 0.875rem
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.01em"
   body:
-    fontFamily: Inter, Geist, SF Pro Text, Segoe UI, sans-serif
-    fontSize: 0.875rem
-    fontWeight: 430
+    fontFamily: Segoe WPC, Segoe UI, -apple-system, SF Pro Text, system-ui, sans-serif
+    fontSize: 0.8125rem
+    fontWeight: 400
     lineHeight: 1.55
-    letterSpacing: "-0.004em"
+    letterSpacing: "0em"
   bodyCompact:
-    fontFamily: Inter, Geist, SF Pro Text, Segoe UI, sans-serif
-    fontSize: 0.78125rem
-    fontWeight: 450
+    fontFamily: Segoe WPC, Segoe UI, -apple-system, SF Pro Text, system-ui, sans-serif
+    fontSize: 0.75rem
+    fontWeight: 400
     lineHeight: 1.35
     letterSpacing: "0em"
   label:
-    fontFamily: Inter, Geist, SF Pro Text, Segoe UI, sans-serif
+    fontFamily: Segoe WPC, Segoe UI, -apple-system, SF Pro Text, system-ui, sans-serif
     fontSize: 0.6875rem
-    fontWeight: 580
+    fontWeight: 500
     lineHeight: 1.2
     letterSpacing: "0.035em"
   mono:
-    fontFamily: Geist Mono, Berkeley Mono, SFMono-Regular, Cascadia Code, monospace
+    fontFamily: 0xProto Nerd Font Mono, SFMono-Regular, Cascadia Code, monospace
     fontSize: 0.75rem
-    fontWeight: 430
+    fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "-0.01em"
 rounded:
-  xs: 4px
-  sm: 6px
-  md: 8px
-  lg: 10px
-  xl: 12px
-  panel: 14px
+  xs: 0px
+  sm: 0px
+  md: 0px
+  lg: 0px
+  xl: 0px
+  panel: 0px
 spacing:
   hairline: 1px
   xxs: 2px
@@ -209,15 +209,15 @@ The forecast is falsified if leading tools converge back to a single linear chat
 
 ## Colors
 
-Vantage uses a near-black blue canvas, opaque structural surfaces, restrained borders, and one cool periwinkle accent. Cyan is reserved for inspectable links and live navigation; semantic colors communicate execution state.
+Vantage uses a neutral mono canvas, opaque structural surfaces, restrained borders, and one neutral midground accent. Cyan is reserved for inspectable links and live navigation; semantic colors communicate execution state.
 
-- **Canvas `#080B10`:** the continuous desktop field.
-- **Rail `#0B0F16`:** scope and status lanes; barely separated from the canvas.
-- **Surface `#0E131B`:** composer, controls, and embedded panels.
-- **Elevated `#141B26`:** menus and temporary popovers only.
-- **Interactive `#192231`:** selected/hoverable technical rows.
-- **Accent `#7C8CFF`:** focus, active selection, send, and progress—not decoration.
-- **Cyan `#63D4FF`:** links, Browser target, and inspected references.
+- **Canvas `#0E0E0E`:** the continuous desktop field. Never pure black.
+- **Rail `#0A0A0A`:** scope and status lanes; barely separated from the canvas.
+- **Surface `#141414`:** composer, controls, and embedded panels.
+- **Elevated `#181818`:** menus and temporary popovers only.
+- **Interactive `#1E1E1E`:** selected/hoverable technical rows.
+- **Accent `#9A9A9A`:** focus, active selection, send, and progress—not decoration.
+- **Cyan `#6F9BA6`:** links, Browser target, and inspected references.
 - **Success/Warning/Danger:** completed, waiting/approval, and failed/destructive.
 
 Do not use large gradients, aurora wallpaper, tinted glass across the whole shell, or saturated status confetti. A subtle one-pixel highlight may separate an elevated surface. Light mode maps the same luminance roles to `lightCanvas`, `lightSurface`, `lightText`, `lightTextSecondary`, and `lightBorder`; it is not a separate visual concept.
@@ -226,14 +226,14 @@ Minimum text/background contrast is WCAG 2.2 AA. Body text targets 7:1 where pra
 
 ## Typography
 
-Inter/Geist-style grotesks carry interface and prose; a coding mono is reserved for technical evidence. The system uses optical density rather than tiny text.
+The system sans stack carries interface and prose; a coding mono is reserved for technical evidence. The system uses optical density rather than tiny text.
 
-- Main transcript: 14 px equivalent, 1.55 line-height, maximum readable measure 78 characters.
-- Compact rows and controls: 12.5 px equivalent, 28–30 px tall.
+- Main transcript: 13 px equivalent, 1.55 line-height, maximum readable measure 78 characters.
+- Compact rows and controls: 12 px equivalent, 28–30 px tall.
 - Section labels: 11 px equivalent, sentence case by default; uppercase only for terse machine states.
-- Code/output: 12 px equivalent with tabular numerals.
+- Code/output: 12 px equivalent (`0xProto Nerd Font Mono`) with tabular numerals.
 - Headings: one restrained 20 px display level and compact 14 px titles. No oversized hero copy inside a desktop tool.
-- Weight hierarchy: 430 body, 580 labels, 600–620 titles. Avoid fields of bold text.
+- Weight hierarchy: 400 body, 500 labels, 700 titles. Avoid fields of bold text.
 
 Streamed text is never scaled, blurred, translated, or individually animated. Stable glyph metrics are a motion requirement.
 
@@ -294,12 +294,9 @@ Avoid permanent backdrop blur. It increases paint cost and reduces text contrast
 
 ## Shapes
 
-The shell is rectilinear with modest 6–12 px radii. Shape indicates interaction class:
+The shell is rectilinear with zero radius. Shape indicates interaction class:
 
-- 4–6 px: code blocks, status marks, dense rows.
-- 8 px: compact buttons, inputs, tabs, menus.
-- 10–12 px: composer, popovers, task panels.
-- 14 px: rare floating panel on a large canvas.
+- 0 px everywhere: code blocks, status marks, dense rows, buttons, inputs, tabs, menus, composer, popovers, task panels.
 - Full pills: only count/status capsules with one short value; never paragraphs or full navigation rows.
 
 No arbitrary mixed corner motifs. No giant rounded cards. Resize rails remain straight 7 px hit regions with a 1 px visible seam and a 2–3 px center affordance.

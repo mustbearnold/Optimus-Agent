@@ -157,6 +157,9 @@ export function OptimusApp() {
   const sessionIndicators = useConversationIndicators(
     sessions.map((session) => session.id)
   );
+  // The app-wide footer reads the selected session's run status regardless of
+  // which route is active (Hermes-style status bar sibling of the layout).
+  const statusConversation = useConversation(state.selectedSessionId);
 
   const alive = useAlive();
 
@@ -702,7 +705,6 @@ export function OptimusApp() {
                       input={input}
                       annotation={annotation}
                       settings={composer}
-                      developerAccess={developerAccess || undefined}
                       onStarter={setInput}
                       onApprovalDecision={resolveTranscriptApproval}
                       onChange={(value) => { setAnnotation(''); setInput(value); }}
@@ -768,6 +770,14 @@ export function OptimusApp() {
             </div>
           </section>
         </div>
+
+        <WorkbenchStatusBar
+          status={statusConversation.status}
+          statusText={statusConversation.statusText}
+          settings={composer}
+          developerAccess={developerAccess || undefined}
+          project={selectedProject}
+        />
 
         <SettingsDialog
           open={state.settingsOpen}
@@ -899,7 +909,6 @@ const WorkbenchChat = memo(function WorkbenchChat({
   input,
   annotation,
   settings,
-  developerAccess,
   onStarter,
   onApprovalDecision,
   onChange,
@@ -915,7 +924,6 @@ const WorkbenchChat = memo(function WorkbenchChat({
   input: string;
   annotation: string;
   settings: ComposerSettings;
-  developerAccess?: DeveloperAccess;
   onStarter: (text: string) => void;
   onApprovalDecision: (
     binding: ToolApprovalBinding,
@@ -953,13 +961,6 @@ const WorkbenchChat = memo(function WorkbenchChat({
         onSettings={onSettings}
         onSend={onSend}
         onStop={onStop}
-      />
-      <WorkbenchStatusBar
-        status={conversation.status}
-        statusText={conversation.statusText}
-        settings={settings}
-        developerAccess={developerAccess}
-        project={project}
       />
     </>
   );
