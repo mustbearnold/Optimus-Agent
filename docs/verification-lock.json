@@ -439,31 +439,31 @@
       "resolved_files": 8
     },
     "decisions-0065-temporal-project-knowledge-is-an-embedded-database": {
-      "binding_sha256": "e3a9564e17d23803fde6dc4e8c110304e9b496f3535f974a354f03ed68edc981",
+      "binding_sha256": "851259a8a2f0c7187df6ab63e3f76e5ca8631fbee296e495290ba068d66d1fde",
       "document_sha256": "469b5ca212b2b4c2421999692fc8cf895d83c39c66e2a3a3cea76e14dde76c69",
       "path": "docs/decisions/0065-temporal-project-knowledge-is-an-embedded-database.md",
       "resolved_files": 7
     },
     "decisions-0066-temporal-project-knowledge-is-a-code-aware-interval-graph": {
-      "binding_sha256": "278007907fa611c499e09fed9dbc49982cf4435982e60cdc42c301989f80fac3",
+      "binding_sha256": "6cf2a5a24ff3c93719454d781ac3e942c536ebfe2ac6d356da55a1897f846e5e",
       "document_sha256": "ab0c620b0432aff61f6bc4f8345f49865b9b883f43682666895d4d0444fda4e1",
       "path": "docs/decisions/0066-temporal-project-knowledge-is-a-code-aware-interval-graph.md",
       "resolved_files": 8
     },
     "decisions-0067-managed-cleanup-fingerprints-symlinks-without-following": {
-      "binding_sha256": "763dbf737b01538f48cf0bfc467aadfe55c1f3caa09c62833ddb5e3979fefe78",
+      "binding_sha256": "8e22cf19739feb56566f438c1683926ed9242148c27954aa753ab149299ded2f",
       "document_sha256": "c4a3ab00c2d3fbe1721976d582fb1c06782d0f816d4d7dec85fa8b1b23039201",
       "path": "docs/decisions/0067-managed-cleanup-fingerprints-symlinks-without-following.md",
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "dd1ac798025cfc468cbbfad5430494f0e77bccbc8b9404c692b015a96cd0353f",
+      "binding_sha256": "2efe2ecab51767675ac1c68d3958f5ef50fbfbc3bc6054746b3b793df34ac690",
       "document_sha256": "a73def8d3bbfa25834930b88633203897b16b80e8c1419f300f027d71dc36ed6",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
     },
     "decisions-0069-release-is-measured-against-optimus-not-hermes": {
-      "binding_sha256": "89e2b8bab6a3377d20d1ecaaa9550db70b0a20e0f3ddd365637db7ff446313f9",
+      "binding_sha256": "2a8cb1231cc91c8fcacfbc087b33044bc2b43bc2878321d3c06825b11c51f9b7",
       "document_sha256": "31beb580098880da15896268db255321727405d50cd61c59f0fa23e4b8845acc",
       "path": "docs/decisions/0069-release-is-measured-against-optimus-not-hermes.md",
       "resolved_files": 5
@@ -595,7 +595,7 @@
       "resolved_files": 9
     },
     "project-knowledge": {
-      "binding_sha256": "f07d52359911f7cdcb67da8dbed60f6822791672f738af6ed58a86df75c897aa",
+      "binding_sha256": "27957f642518389184ae6f5fb7fe55e9fe0590d8292d4e9e6da1f8f80946b680",
       "document_sha256": "7499a711cc7f830a78111cdba82e490ee8353d7cd9e584c35cc7668885b65bfd",
       "path": "specs/009-project-knowledge/project-knowledge.md",
       "resolved_files": 12
@@ -667,7 +667,7 @@
       "resolved_files": 49
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "cbc6f0cc7fed360b11b95ffd6cfc9f8daf97e9cc0dd76ea52780895ae05e0c29",
+      "binding_sha256": "6b1a9ffbd32b56895570081a7edf38848a16e03f35f0508a7aa0f90726d3ae73",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 90
@@ -697,7 +697,7 @@
       "resolved_files": 44
     },
     "spec-016-staleness-prevention": {
-      "binding_sha256": "dbfd4d98b6839c08f15025f16e09fd349f8140a065aa09a2f1f6ac9ebb65e9df",
+      "binding_sha256": "72fef3dc1605d21c315614de2055db75331e288731543ae26bc78bbaf7f1acb6",
       "document_sha256": "7fc3f19713816c5eca81af1f4abfc4664423b613e20c986cd3cdd5b0d0d57a53",
       "path": "specs/016-staleness-prevention/spec.md",
       "resolved_files": 10
@@ -781,7 +781,7 @@
       "resolved_files": 133
     },
     "specs-conventions": {
-      "binding_sha256": "cc64e5eeab8234f2c0d5828b5a9e267598e5e0ee04da0f4c831972308b26adcc",
+      "binding_sha256": "f6e09fa6e70d50398a58722462f727d370a337fa58b3327ea6b590c8a541782a",
       "document_sha256": "c816724ffcfb8379ed6edda866cfe407b0ed05ba0f7d59b39819b17b2e53d81f",
       "path": "specs/conventions.md",
       "resolved_files": 6
