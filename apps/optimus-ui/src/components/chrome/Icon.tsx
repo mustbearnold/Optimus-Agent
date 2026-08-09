@@ -1,50 +1,4 @@
-import type { SVGProps } from 'react';
-import {
-  Accessibility,
-  Archive,
-  ArrowLeft,
-  ArrowRight,
-  BrowserCode,
-  ChatSquare,
-  CheckSquare,
-  ChevronDown,
-  CloseSquare,
-  CodeFile,
-  Cpu,
-  Envelope,
-  FileText,
-  Files,
-  Folder,
-  FolderAdd,
-  Globe,
-  IconComponent,
-  InfoSquare,
-  MagicWand,
-  Maximize,
-  Minimize,
-  Moon,
-  MoreSquare,
-  Palette,
-  PenSquare,
-  Pin,
-  Plus,
-  Refresh,
-  Scan,
-  Search,
-  Pointer,
-  Settings,
-  Shield,
-  SidebarLeft,
-  SidebarRight,
-  Sliders,
-  Stop,
-  Sun,
-  TaskSquare,
-  TerminalSquare,
-  ThreeDCube,
-  Trash,
-  Warning,
-} from 'reicon-react';
+import type { CSSProperties } from 'react';
 
 export type IconName =
   | 'sidebar'
@@ -93,60 +47,71 @@ export type IconName =
   | 'source'
   | 'info';
 
-// Keep the application's semantic icon vocabulary stable while sourcing every
-// rendered glyph from Reicon. Their Outline components use currentColor, so
-// the existing CSS hex tokens remain the single source of icon colour.
-const icons: Record<IconName, IconComponent> = {
-  sidebar: SidebarLeft,
-  search: Search,
-  plus: Plus,
-  compose: PenSquare,
-  folder: Folder,
-  chat: ChatSquare,
-  capabilities: ThreeDCube,
-  mail: Envelope,
-  artifact: FileText,
-  archive: Archive,
-  browser: BrowserCode,
-  files: Files,
-  terminal: TerminalSquare,
-  tasks: TaskSquare,
-  settings: Settings,
-  sun: Sun,
-  moon: Moon,
-  panel: SidebarRight,
-  back: ArrowLeft,
-  forward: ArrowRight,
-  reload: Refresh,
-  send: Pointer,
-  stop: Stop,
-  chevron: ChevronDown,
-  pin: Pin,
-  trash: Trash,
-  refresh: Refresh,
-  check: CheckSquare,
-  warning: Warning,
-  close: CloseSquare,
-  more: MoreSquare,
-  annotation: Scan,
-  minimize: Minimize,
-  maximize: Maximize,
-  project: FolderAdd,
-  appearance: Palette,
-  agent: Cpu,
-  shield: Shield,
-  memory: Cpu,
-  automation: MagicWand,
-  accessibility: Accessibility,
-  advanced: Sliders,
-  globe: Globe,
-  source: CodeFile,
-  info: InfoSquare,
+// Every glyph is a codepoint in the bundled 0xProto Nerd Font (Propo metrics).
+// The application's semantic icon vocabulary stays stable; only the source of
+// the glyph changed (Reicon SVGs → Nerd Font codepoints). Icons use
+// currentColor, so the existing CSS hex tokens remain the colour source.
+const GLYPHS: Record<IconName, string> = {
+  sidebar: '\uEBF3', // cod-layout_sidebar_left
+  search: '\uEA6D', // cod-search
+  plus: '\uEA60', // cod-add
+  compose: '\uEA73', // cod-edit
+  folder: '\uEA83', // cod-folder
+  chat: '\uEA6B', // cod-comment
+  capabilities: '\uEB29', // cod-package
+  mail: '\uEB1C', // cod-mail
+  artifact: '\uEA7B', // cod-file
+  archive: '\uEA98', // cod-archive
+  browser: '\uEAAE', // cod-browser
+  files: '\uEAF0', // cod-files
+  terminal: '\uEA85', // cod-terminal
+  tasks: '\uEAB3', // cod-checklist
+  settings: '\uEAF8', // cod-gear
+  sun: '\uF185', // fa-sun-o
+  moon: '\uF186', // fa-moon-o
+  panel: '\uEBF4', // cod-layout_sidebar_right
+  back: '\uEA9B', // cod-arrow_left
+  forward: '\uEA9C', // cod-arrow_right
+  reload: '\uEB37', // cod-refresh
+  send: '\uEC0F', // cod-send
+  stop: '\uEABD', // cod-circle_slash
+  chevron: '\uEAB4', // cod-chevron_down
+  pin: '\uEB2B', // cod-pin
+  trash: '\uEA81', // cod-trash
+  refresh: '\uEB37', // cod-refresh
+  check: '\uEAB2', // cod-check
+  warning: '\uEA6C', // cod-warning
+  close: '\uEA76', // cod-close
+  more: '\uEA7C', // cod-ellipsis
+  annotation: '\uEB26', // cod-note
+  minimize: '\uEABA', // cod-chrome_minimize
+  maximize: '\uEAB9', // cod-chrome_maximize
+  project: '\uEAAC', // cod-briefcase
+  appearance: '\uEFCC', // fa-palette
+  agent: '\uEC20', // cod-robot
+  shield: '\uEB53', // cod-shield
+  memory: '\uEACE', // cod-database
+  automation: '\uEBCF', // cod-wand
+  accessibility: '\uF29A', // fa-universal_access
+  advanced: '\uF1DE', // fa-sliders
+  globe: '\uEB01', // cod-globe
+  source: '\uEAC4', // cod-code
+  info: '\uEA74', // cod-info
 };
 
-export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
-  const ReiconIcon = icons[name];
-  const className = ['optimus-icon', props.className].filter(Boolean).join(' ');
-
-  return <ReiconIcon aria-hidden="true" weight="Outline" {...props} className={className} />;
+export function Icon({
+  name,
+  className,
+  style,
+}: {
+  name: IconName;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const classes = ['optimus-icon', className].filter(Boolean).join(' ');
+  return (
+    <span className={classes} style={style} aria-hidden="true" role="img" data-icon={name}>
+      {GLYPHS[name]}
+    </span>
+  );
 }

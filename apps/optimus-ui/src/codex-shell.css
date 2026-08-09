@@ -14,82 +14,6 @@
   font-display: swap;
 }
 
-:root,
-:root[data-theme="light"] {
-  color-scheme: light;
-  --canvas: #ffffff;
-  --rail: #f7f7f7;
-  --project-rail-bg: #f2f2f2;
-  --work-surface-bg: #f7f7f7;
-  --surface: #ffffff;
-  --surface-2: #f5f5f5;
-  --surface-3: #eeeeee;
-  --elevated: #ffffff;
-  --hover: #ececec;
-  --selected: #e7e7e7;
-  --border: #e5e5e5;
-  --border-strong: #d3d3d3;
-  --text: #1f1f1f;
-  --text-2: #303030;
-  --muted: #686868;
-  --faint: #8b8b8b;
-  --rail-nav-text: #787878;
-  --chrome-control-icon: #606060;
-  --accent: #2f6feb;
-  --accent-strong: #225fc9;
-  --accent-soft: rgba(47, 111, 235, 0.1);
-  --success: #1a7f4b;
-  --warning: #9a6700;
-  --danger: #c73545;
-  --danger-contrast: #ffffff;
-  --danger-soft: rgba(199, 53, 69, 0.08);
-  --topbar-h: 36px;
-  --radius-sm: 5px;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --rail-card-inset: inset 0 1px 2px rgba(255, 255, 255, 0.9),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.12);
-  --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.14), 0 1px 4px rgba(0, 0, 0, 0.08);
-  --shadow-dialog: 0 18px 60px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 13px;
-  line-height: 1.45;
-  text-rendering: auto;
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --canvas: #202020;
-  --rail: #191919;
-  --project-rail-bg: #151515;
-  --work-surface-bg: #1b1b1b;
-  --surface: #202020;
-  --surface-2: #292929;
-  --surface-3: #323232;
-  --elevated: #292929;
-  --hover: #303030;
-  --selected: #383838;
-  --border: #343434;
-  --border-strong: #484848;
-  --text: #f2f2f2;
-  --text-2: #dddddd;
-  --muted: #a2a2a2;
-  --faint: #7e7e7e;
-  --rail-nav-text: #b8b8b8;
-  --chrome-control-icon: #b2b2b2;
-  --accent: #7aa2f7;
-  --accent-strong: #a8c1ff;
-  --accent-soft: rgba(122, 162, 247, 0.14);
-  --success: #72c894;
-  --warning: #dfb75f;
-  --danger: #e36876;
-  --danger-contrast: #191919;
-  --danger-soft: rgba(227, 104, 118, 0.12);
-  --rail-card-inset: inset 0 1px 2px rgba(255, 255, 255, 0.08),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.34);
-  --shadow-popover: 0 10px 28px rgba(0, 0, 0, 0.42);
-  --shadow-dialog: 0 22px 70px rgba(0, 0, 0, 0.52);
-}
 
 html,
 body,
@@ -139,10 +63,11 @@ button:not(:disabled):active {
   transform: none;
 }
 
-svg {
-  width: 16px;
-  height: 16px;
+.optimus-icon {
+  min-width: 16px;
+  min-height: 16px;
   stroke-width: 1.7;
+  flex-shrink: 0;
 }
 
 .optimus-app {
@@ -218,18 +143,18 @@ svg {
   gap: 7px;
   padding: 0 7px 0 3px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .optimus-glyph {
   width: 22px;
   height: 22px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--surface);
   background: var(--text);
   font-size: 11px;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 :root[data-theme="dark"] .optimus-glyph {
@@ -261,7 +186,7 @@ svg {
 .breadcrumb strong {
   max-width: 42vw;
   color: var(--text-2);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .source-count {
@@ -271,7 +196,7 @@ svg {
   flex: 0 0 auto !important;
   place-items: center;
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: 0;
   color: var(--muted);
   font-size: 10px;
 }
@@ -286,19 +211,17 @@ svg {
   min-width: 36px;
 }
 
-.window-controls svg {
-  width: 14px;
-  height: 14px;
-}
-
 .window-controls .window-control-icon {
-  width: 11px;
-  height: 11px;
-  stroke: currentColor;
-  stroke-width: 1.1;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
-  shape-rendering: geometricPrecision;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  min-height: 14px;
+  font-family: "0xProto Nerd Font Propo", "0xProto Nerd Font", sans-serif;
+  font-size: 11px;
+  line-height: 1.2;
+  color: currentColor;
+  flex-shrink: 0;
 }
 
 .app-body {
@@ -329,7 +252,7 @@ svg {
   height: 30px;
   padding: 0 8px;
   border-color: transparent;
-  border-radius: 7px;
+  border-radius: 0;
   background: transparent;
 }
 
@@ -348,9 +271,10 @@ svg {
   box-shadow: none;
 }
 
-.rail-search > svg {
-  width: 13px;
-  height: 13px;
+.rail-search > .optimus-icon {
+  min-width: 13px;
+  min-height: 13px;
+  flex-shrink: 0;
 }
 
 .rail-search kbd {
@@ -376,15 +300,16 @@ svg {
   height: 31px;
   gap: 7px;
   padding-inline: 8px;
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--faint);
   font-size: 13px;
 }
 
 /* Keep rail glyphs optically level with the 13px navigation labels. */
-.rail-nav button > svg {
-  width: 13px;
-  height: 13px;
+.rail-nav button > .optimus-icon {
+  min-width: 13px;
+  min-height: 13px;
+  flex-shrink: 0;
 }
 
 .rail-nav button {
@@ -417,7 +342,7 @@ svg {
   padding: 0 8px;
   color: var(--faint);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -435,9 +360,10 @@ svg {
   background: transparent;
 }
 
-.add-project-button > svg {
-  width: 13px;
-  height: 13px;
+.add-project-button > .optimus-icon {
+  min-width: 13px;
+  min-height: 13px;
+  flex-shrink: 0;
 }
 
 .add-project-button:hover,
@@ -455,7 +381,7 @@ svg {
   min-width: 0;
   column-gap: 1px;
   padding-right: 2px;
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 .project-heading > button {
@@ -470,11 +396,12 @@ svg {
   min-width: 0;
 }
 
-.project-heading > .project-toggle > svg {
+.project-heading > .project-toggle > .optimus-icon {
   align-self: center;
   margin-top: 0;
-  width: 12px;
-  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  flex-shrink: 0;
 }
 
 .project-heading > button:not(:first-child) {
@@ -488,10 +415,11 @@ svg {
   background: transparent;
 }
 
-.project-heading > button:not(:first-child) > svg {
-  width: 12px;
-  height: 12px;
+.project-heading > button:not(:first-child) > .optimus-icon {
+  min-width: 12px;
+  min-height: 12px;
   transform: none;
+  flex-shrink: 0;
 }
 
 .project-heading:hover > button:not(:first-child),
@@ -526,7 +454,7 @@ svg {
 .project-copy strong {
   color: var(--text-2);
   font-size: 12px;
-  font-weight: 450;
+  font-weight: 400;
 }
 
 .project-copy small {
@@ -544,7 +472,7 @@ svg {
 
 .session-row {
   grid-template-columns: minmax(0, 1fr) 26px;
-  border-radius: 5px;
+  border-radius: 0;
   box-shadow: none;
 }
 
@@ -573,7 +501,7 @@ svg {
 
 .session-copy strong {
   font-size: 12px;
-  font-weight: 450;
+  font-weight: 400;
 }
 
 .session-copy small {
@@ -687,13 +615,13 @@ svg {
 .browser-chrome > button {
   width: 30px;
   height: 30px;
-  border-radius: 7px;
+  border-radius: 0;
 }
 
 .browser-address {
   height: 30px;
   padding-inline: 10px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--surface-2);
 }
 
@@ -731,7 +659,7 @@ svg {
   margin-bottom: 6px;
   color: var(--faint);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .message-worked span {
@@ -748,7 +676,7 @@ svg {
   max-width: 82%;
   padding: 10px 13px;
   border-color: transparent;
-  border-radius: 16px;
+  border-radius: 0;
   background: var(--surface-3);
 }
 
@@ -769,7 +697,7 @@ svg {
 .fatal-shell h1 {
   margin: 10px 0 8px;
   font-size: clamp(27px, 2.4vw, 34px);
-  font-weight: 550;
+  font-weight: 700;
   letter-spacing: -0.035em;
 }
 
@@ -797,20 +725,20 @@ svg {
 
 .composer-card {
   border-color: var(--border-strong);
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09), 0 10px 24px rgba(0, 0, 0, 0.05);
+  border-radius: 0;
 }
 
 :root[data-theme="dark"] .composer-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.34);
+  box-shadow: none;
 }
 
 :root[data-theme="dark"] .session-title,
-:root[data-theme="dark"] .session-project-trigger > svg:first-child,
+:root[data-theme="dark"] .session-project-trigger > .optimus-icon:first-child,
 :root[data-theme="dark"] .message-meta,
 :root[data-theme="dark"] .message-body,
 :root[data-theme="dark"] .composer-card textarea {
-  color: #ffffff;
+  color: var(--text);
+  flex-shrink: 0;
 }
 
 .composer-card textarea {
@@ -831,14 +759,14 @@ svg {
 .composer-settings-trigger,
 .composer-access-trigger {
   height: 27px;
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 12px;
 }
 
 .send-button {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 0;
   color: var(--surface);
   background: var(--text);
 }
@@ -886,8 +814,8 @@ svg {
 
 .terminal-command button {
   height: 28px;
-  color: #ffffff;
-  background: #2f6feb;
+  color: var(--danger-contrast);
+  background: var(--accent);
 }
 
 .dialog-backdrop {
@@ -901,7 +829,7 @@ svg {
   height: min(720px, calc(100vh - 48px));
   max-height: none;
   border-color: var(--border);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--elevated);
   box-shadow: var(--shadow-dialog);
   animation: none;
@@ -920,7 +848,7 @@ svg {
 .project-sources-dialog h2 {
   margin: 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .settings-mark,
@@ -929,7 +857,7 @@ svg {
   height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--text-2);
   background: var(--surface-2);
 }
@@ -967,7 +895,7 @@ svg {
 
 .settings-nav button.is-active {
   color: var(--text);
-  font-weight: 550;
+  font-weight: 700;
 }
 
 .settings-nav button span {
@@ -992,7 +920,7 @@ svg {
   margin: 0 0 5px;
   color: var(--text);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   text-transform: none;
 }
@@ -1018,7 +946,7 @@ svg {
   margin: 0 0 7px;
   color: var(--text);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .settings-group > div {
@@ -1039,7 +967,7 @@ svg {
 .settings-row strong {
   color: var(--text-2);
   font-size: 13px;
-  font-weight: 520;
+  font-weight: 700;
 }
 
 .settings-row span {
@@ -1069,7 +997,7 @@ svg {
   margin: 14px 0 0;
   padding: 10px 11px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--muted);
   background: var(--surface-2);
   font-size: 11px;
@@ -1087,7 +1015,7 @@ svg {
   padding-inline: 14px;
   color: var(--surface);
   background: var(--text);
-  font-weight: 550;
+  font-weight: 700;
 }
 
 .project-sources-dialog {
@@ -1097,7 +1025,7 @@ svg {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--elevated);
   box-shadow: var(--shadow-dialog);
   animation: none;
@@ -1138,7 +1066,7 @@ svg {
 .field-stack > span {
   color: var(--text-2);
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 700;
 }
 
 .field-stack input {
@@ -1146,7 +1074,7 @@ svg {
   height: 34px;
   padding-inline: 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--surface);
 }
 
@@ -1193,7 +1121,7 @@ svg {
   height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--muted);
   background: var(--surface-2);
 }
@@ -1205,7 +1133,7 @@ svg {
 }
 
 .project-source-list article strong {
-  font-weight: 520;
+  font-weight: 700;
 }
 
 .project-source-list article > div > span {
@@ -1218,7 +1146,7 @@ svg {
 
 .project-source-list article > div > .source-auth {
   white-space: normal;
-  font-weight: 520;
+  font-weight: 700;
 }
 
 .project-source-list article > div > .source-auth.is-ready {
@@ -1261,9 +1189,10 @@ svg {
   text-align: center;
 }
 
-.project-source-empty svg {
-  width: 22px;
-  height: 22px;
+.project-source-empty .optimus-icon {
+  min-width: 22px;
+  min-height: 22px;
+  flex-shrink: 0;
 }
 
 .project-source-empty strong {

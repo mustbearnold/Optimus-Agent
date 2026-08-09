@@ -24,9 +24,8 @@ describe('OptimusApp fixture contract', () => {
     expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument();
     expect(screen.getByLabelText('Message Optimus')).toBeInTheDocument();
     expect(screen.queryByRole('contentinfo', { name: 'System status' })).not.toBeInTheDocument();
-    const sendIcon = screen.getByRole('button', { name: 'Send message' }).querySelector('svg path');
-    expect(sendIcon).toHaveAttribute('fill', 'none');
-    expect(sendIcon).toHaveAttribute('stroke', 'currentColor');
+    const sendIcon = screen.getByRole('button', { name: 'Send message' }).querySelector('.optimus-icon');
+    expect(sendIcon).toHaveAttribute('data-icon', 'send');
 
     const windowControls = container.querySelector('.window-controls');
     expect(windowControls).toBeInTheDocument();
@@ -35,7 +34,7 @@ describe('OptimusApp fixture contract', () => {
         name: action[0].toUpperCase() + action.slice(1),
       });
       expect(button.querySelector(`[data-window-icon="${action}"]`)).toBeInTheDocument();
-      expect(button.querySelector('svg.reicon')).not.toBeInTheDocument();
+      expect(button.querySelector('span.window-control-icon')).toBeInTheDocument();
     }
   });
 

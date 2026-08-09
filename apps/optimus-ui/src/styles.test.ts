@@ -41,21 +41,21 @@ describe('motion contract', () => {
 
   it('keeps elevated menus opaque over the transcript', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*--elevated:\s*#0c0c0c/s);
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--elevated:\s*#0c0c0c/s);
+    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*--elevated:\s*#111111/s);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--elevated:\s*#111111/s);
   });
 
   it('uses the black glass palette in both saved theme modes', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#000000[^}]*--accent:\s*#f47742/s);
-    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--canvas:\s*#000000[^}]*--surface:\s*rgba\(10,\s*10,\s*10,\s*0\.84\)[^}]*--accent:\s*#f47742/s);
+    expect(css).toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*dark[^}]*--canvas:\s*#0d0b0a[^}]*--accent:\s*#f47742/s);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--canvas:\s*#0d0b0a[^}]*--surface:\s*#101010[^}]*--accent:\s*#f47742/s);
   });
 
   it('keeps thread rows flat and reserves full-contrast titles for selection', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     expect(css).toMatch(/\.session-row\s*\{[^}]*border-radius:\s*0/s);
     expect(css).toMatch(/\.rail-project-scope \.project-scope-trigger\s*\{[^}]*border-radius:\s*0/s);
-    expect(css).toMatch(/\.project-rail \.session-row \.session-title\s*\{[^}]*color:\s*var\(--faint\)[^}]*font-size:\s*15px[^}]*font-weight:\s*450/s);
+    expect(css).toMatch(/\.project-rail \.session-row \.session-title\s*\{[^}]*color:\s*var\(--faint\)[^}]*font-size:\s*15px[^}]*font-weight:\s*400/s);
     expect(css).toMatch(/\.project-rail \.session-row\.is-active \.session-title\s*\{[^}]*color:\s*var\(--text\)/s);
     expect(css).toMatch(/\.session-row\s*\{[^}]*background:\s*var\(--session-card\)/s);
     expect(css).toMatch(/\.session-row:hover\s*\{[^}]*background:\s*var\(--session-card-hover\)[^}]*box-shadow:\s*inset 0 0 15px/s);
@@ -127,9 +127,9 @@ describe('motion contract', () => {
   it('keeps project and settings labels readable without outlining the search field', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     expect(css).toMatch(/\.rail-search:focus-within\s*\{[^}]*box-shadow:\s*none/s);
-    expect(css).toMatch(/\.session-card-meta\s*\{[^}]*color:\s*var\(--text-2\)[^}]*font-size:\s*14px[^}]*font-weight:\s*500/s);
-    expect(css).toMatch(/\.session-card-meta > svg\s*\{[^}]*width:\s*16px[^}]*height:\s*16px/s);
-    expect(css).toMatch(/\.rail-footer \.rail-settings-button\s*\{[^}]*color:\s*var\(--text-2\)[^}]*font-size:\s*14px[^}]*font-weight:\s*500/s);
+    expect(css).toMatch(/\.session-card-meta\s*\{[^}]*color:\s*var\(--text-2\)[^}]*font-size:\s*14px[^}]*font-weight:\s*400/s);
+    expect(css).toMatch(/\.session-card-meta > \.optimus-icon\s*\{[^}]*min-width:\s*16px[^}]*min-height:\s*16px/s);
+    expect(css).toMatch(/\.rail-footer \.rail-settings-button\s*\{[^}]*color:\s*var\(--text-2\)[^}]*font-size:\s*14px[^}]*font-weight:\s*400/s);
   });
 
   it('does not leak recent session titles into the icon-only rail', () => {
@@ -146,9 +146,12 @@ describe('motion contract', () => {
     expect(css).toMatch(/\.project-rail\.is-collapsed\s*\{[^}]*width:\s*52px[^}]*min-width:\s*52px[^}]*max-width:\s*52px[^}]*overflow:\s*hidden/s);
     expect(css).toMatch(/\.project-rail\.is-collapsed \.rail-primary,\s*\.project-rail\.is-collapsed \.rail-scroll\s*\{[^}]*display:\s*none/s);
     expect(css).toMatch(/\.composer-shell\s*\{[^}]*background:\s*var\(--work-pane-bg\)/s);
-    expect(css).toMatch(/\.composer-card\s*\{[^}]*background:\s*var\(--work-pane-bg\)[^}]*border-color:\s*var\(--border\)/s);
+    // The composer is not a card: it sits flush on the work surface (transparent,
+    // borderless) so the shell's pane background is the only paint behind it.
+    expect(css).toMatch(/\.composer-card\s*\{[^}]*background:\s*transparent/s);
+    expect(css).toMatch(/\.composer-card\s*\{[^}]*border:\s*0/s);
     const focusRule = [...css.matchAll(/\.composer-card:focus-within\s*\{([^}]*)\}/g)].at(-1)?.[1] || '';
-    expect(focusRule).toContain('border-color: var(--border-strong)');
+    expect(focusRule).toContain('border-bottom-color: var(--border-strong)');
     expect(focusRule).not.toContain('var(--accent)');
   });
 
@@ -168,16 +171,17 @@ describe('motion contract', () => {
     }
   });
 
-  it('renders shared icons with sharp square stroke geometry', () => {
+  it('renders shared icons as Nerd Font glyphs with a uniform baseline', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
-    expect(css).toMatch(/\.optimus-icon\s*\{[^}]*shape-rendering:\s*geometricPrecision/s);
-    expect(css).toMatch(/\.optimus-icon path,[\s\S]*?\.optimus-icon ellipse\s*\{[^}]*stroke-linecap:\s*square[^}]*stroke-linejoin:\s*miter/s);
+    expect(css).toMatch(/\.optimus-icon\s*\{[^}]*font-family:\s*"0xProto Nerd Font Propo"/s);
+    expect(css).toMatch(/\.optimus-icon\s*\{[^}]*display:\s*inline-flex[^}]*line-height:\s*1\.2/s);
+    expect(css).not.toMatch(/\.optimus-icon path/s);
   });
 
   it('limits the Unrestricted host flame effect to its text and icon', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
     expect(css).toMatch(/\.composer-access-trigger\.is-unrestricted-host,[\s\S]*?background:\s*transparent;[^}]*box-shadow:\s*none/s);
-    expect(css).toMatch(/\.composer-access-trigger\.is-unrestricted-host > span,\s*\.composer-access-trigger\.is-unrestricted-host > svg\s*\{[^}]*animation:\s*unrestricted-host-flame 3600ms ease-in-out infinite alternate/s);
+    expect(css).toMatch(/\.composer-access-trigger\.is-unrestricted-host > span,\s*\.composer-access-trigger\.is-unrestricted-host > \.optimus-icon\s*\{[^}]*animation:\s*unrestricted-host-flame 3600ms ease-in-out infinite alternate/s);
     expect(css).not.toMatch(/animation:\s*unrestricted-host-flame[^;]*steps\(/s);
     expect(css).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.composer-access-trigger\.is-unrestricted-host > span,[\s\S]*?animation:\s*none/s);
   });
@@ -187,7 +191,7 @@ describe('motion contract', () => {
   // a hex literal so the light theme gets its own contrast-checked value.
   it('colours the Expert tier before it is picked', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
-    const expertRule = css.match(/\.composer-access-tier\.is-expert button > svg,[^{]*\{([^}]*)\}/);
+    const expertRule = css.match(/\.composer-access-tier\.is-expert button > \.optimus-icon,[^{]*\{([^}]*)\}/);
     expect(expertRule?.[1]).toContain('color: var(--warning)');
     expect(expertRule?.[1]).not.toMatch(/#[0-9a-f]{3,8}/i);
     expect(css).toMatch(/\.composer-access-tier\.is-advanced,\s*\.composer-access-tier\.is-expert\s*\{[^}]*border-top/s);
@@ -230,5 +234,26 @@ describe('motion contract', () => {
     expect(css).toMatch(/::-webkit-scrollbar\s*\{[^}]*width:\s*0\s*!important/s);
     expect(css).not.toMatch(/scrollbar-width:\s*(?:thin|auto)/i);
     expect(css).not.toMatch(/scrollbar-color\s*:/i);
+  });
+
+  it('keeps one converged design system across every shell', () => {
+    const baseCss = [
+      readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8'),
+      readFileSync(resolve(process.cwd(), 'src/codex-shell.css'), 'utf8'),
+    ].join('\n');
+    const workbenchCss = readFileSync(resolve(process.cwd(), 'src/workbench-shell.css'), 'utf8');
+    const css = `${baseCss}\n${workbenchCss}`;
+    // The codex-measured shell owns no palette of its own; it consumes the
+    // workbench tokens. A second `:root` palette is the split-personality tell.
+    expect(css).not.toMatch(/:root,\s*:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*light/s);
+    // No pill/circle radius anywhere: the only radii are the 0px tokens and
+    // the global square reset (layout 50% positions are allowed).
+    expect(css).not.toMatch(/border-radius:\s*999px/);
+    expect(css).not.toMatch(/border-radius:\s*50%/);
+    // The canvas is the warm-tinted near-black, never pure black.
+    expect(css).not.toMatch(/--canvas:\s*#000000/);
+    // One accent, warm orange; no blue/indigo accent remnants anywhere.
+    expect(css).not.toMatch(/--accent:\s*#(?:2f6feb|7aa2f7|8b92ff|5c63d8)/);
+    expect(css).toMatch(/--accent:\s*#f47742/);
   });
 });

@@ -450,7 +450,7 @@ export function ProjectsRail(props: Props) {
       <div className="rail-scroll">
         {projectScope === 'archived' ? (
           <section className="rail-section recent-section" data-testid="archived-chats-section" aria-labelledby="archived-chats-heading">
-            <div className="rail-section-heading" id="archived-chats-heading"><span>Archived Chats</span></div>
+            <h2 className="rail-section-heading" id="archived-chats-heading">Archived Chats</h2>
             <div className="session-stack">
               {archivedSessions.length ? archivedSessions.map((session) => renderSession(session)) : <div className="rail-empty">No archived chats</div>}
             </div>
@@ -462,9 +462,9 @@ export function ProjectsRail(props: Props) {
           // third is the organised tree, and the bottom third is history.
           <>
             <section className="rail-section pinned-section" data-testid="pinned-section" aria-labelledby="pinned-heading">
-              <div className="rail-section-heading" id="pinned-heading">
-                <span>Pinned</span>
-              </div>
+              <h2 className="rail-section-heading" id="pinned-heading">
+                Pinned
+              </h2>
               <div className="session-stack pinned-session-stack">
                 {pinnedSessions.length
                   ? pinnedSessions.map((session) => renderSession(session))
@@ -473,12 +473,12 @@ export function ProjectsRail(props: Props) {
             </section>
 
             <section className="rail-section projects-section" data-testid="projects-section" aria-labelledby="projects-heading">
-              <div className="rail-section-heading" id="projects-heading">
+              <h2 className="rail-section-heading" id="projects-heading">
                 <span>Projects</span>
                 <button type="button" aria-label="Create project folder" title="Create project folder" onClick={props.onAddProject}>
                   <Icon name="project" />
                 </button>
-              </div>
+              </h2>
               <div className="project-stack">
                 {props.projects.length
                   ? props.projects.map(renderProject)
@@ -487,12 +487,12 @@ export function ProjectsRail(props: Props) {
             </section>
 
             <section className="rail-section recent-section" data-testid="recent-chats-section" aria-labelledby="recent-chats-heading">
-              <div className="rail-section-heading" id="recent-chats-heading">
+              <h2 className="rail-section-heading" id="recent-chats-heading">
                 <span>Recent Chats</span>
                 <button type="button" aria-label="New recent chat" title="New recent chat" onClick={() => props.onNewSession()}>
                   <Icon name="compose" />
                 </button>
-              </div>
+              </h2>
               <div
                 className="session-stack recent-session-stack"
                 data-drop-target="recent-chats"

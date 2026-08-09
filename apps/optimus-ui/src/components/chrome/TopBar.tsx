@@ -42,19 +42,23 @@ function ToolbarButton({
   );
 }
 
+// Window controls use the same Nerd Font glyphs as every other icon so the
+// chrome stays uniform; `data-window-icon` is preserved for the layout tests.
+const WINDOW_GLYPHS: Record<'minimize' | 'maximize' | 'close', string> = {
+  minimize: '\uEABA', // cod-chrome_minimize
+  maximize: '\uEAB9', // cod-chrome_maximize
+  close: '\uEAB8', // cod-chrome_close
+};
+
 function WindowControlIcon({ action }: { action: 'minimize' | 'maximize' | 'close' }) {
   return (
-    <svg
+    <span
       className="window-control-icon"
       data-window-icon={action}
-      viewBox="0 0 12 12"
-      fill="none"
       aria-hidden="true"
     >
-      {action === 'minimize' ? <path d="M2 9.5h8" /> : null}
-      {action === 'maximize' ? <rect x="2.25" y="2.25" width="7.5" height="7.5" /> : null}
-      {action === 'close' ? <path d="m2.5 2.5 7 7m0-7-7 7" /> : null}
-    </svg>
+      {WINDOW_GLYPHS[action]}
+    </span>
   );
 }
 

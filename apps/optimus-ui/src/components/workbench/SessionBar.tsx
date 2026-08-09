@@ -43,10 +43,10 @@ export function SessionBar({ title, project, showSeparator }: Props) {
             >
               <Icon name="folder" />
             </button>
-            <span className="session-title">{title}</span>
+            <h1 className="session-title">{title}</h1>
           </>
         ) : (
-          <span className="session-title">{title}</span>
+          <h1 className="session-title">{title}</h1>
         )}
         {open && project ? (
           <div className="session-project-menu" role="menu" aria-label={`${project.name} project details`}>

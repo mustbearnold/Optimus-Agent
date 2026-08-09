@@ -9,17 +9,17 @@
 :root,
 :root[data-theme="light"] {
   color-scheme: dark;
-  --canvas: #000000;
-  --rail: rgba(0, 0, 0, 0.9);
-  --project-rail-bg: rgba(0, 0, 0, 0.82);
-  --work-surface-bg: #050505;
-  --work-pane-bg: rgba(7, 7, 7, 0.78);
+  --canvas: #0d0b0a;
+  --rail: #080808;
+  --project-rail-bg: #080808;
+  --work-surface-bg: #0a0a0a;
+  --work-pane-bg: #0b0b0b;
   --work-pane-edge: rgba(255, 255, 255, 0.075);
-  --surface: rgba(10, 10, 10, 0.84);
-  --surface-2: rgba(15, 15, 15, 0.82);
-  --surface-3: rgba(20, 20, 20, 0.78);
+  --surface: #101010;
+  --surface-2: #151515;
+  --surface-3: #1b1b1b;
   /* Menus are solid so transcript text never shines through the surface. */
-  --elevated: #0c0c0c;
+  --elevated: #111111;
   --hover: rgba(255, 255, 255, 0.055);
   --selected: rgba(255, 255, 255, 0.08);
   --session-card: rgba(18, 18, 18, 0.68);
@@ -51,29 +51,29 @@
   --topbar-h: 36px;
   /* Reasonix keeps the shell quiet, but gives interactive surfaces enough
      radius to read as one coherent desktop app instead of terminal panes. */
-  --radius-sm: 6px;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 0px;
+  --radius: 0px;
+  --radius-lg: 0px;
   --rail-card-inset: inset 0 0 15px rgba(255, 255, 255, 0.04);
   --shadow-popover: inset 0 0 0 1px var(--border);
   --shadow-dialog: inset 0 0 0 1px var(--border-strong);
   --workspace-shadow: none;
-  font-family: "DM Sans Variable", "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: "0xProto Nerd Font Propo", "DM Sans Variable", "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   font-size: 13px;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --canvas: #000000;
-  --rail: rgba(0, 0, 0, 0.9);
-  --project-rail-bg: rgba(0, 0, 0, 0.82);
-  --work-surface-bg: #050505;
-  --work-pane-bg: rgba(7, 7, 7, 0.78);
+  --canvas: #0d0b0a;
+  --rail: #080808;
+  --project-rail-bg: #080808;
+  --work-surface-bg: #0a0a0a;
+  --work-pane-bg: #0b0b0b;
   --work-pane-edge: rgba(255, 255, 255, 0.075);
-  --surface: rgba(10, 10, 10, 0.84);
-  --surface-2: rgba(15, 15, 15, 0.82);
-  --surface-3: rgba(20, 20, 20, 0.78);
-  --elevated: #0c0c0c;
+  --surface: #101010;
+  --surface-2: #151515;
+  --surface-3: #1b1b1b;
+  --elevated: #111111;
   --hover: rgba(255, 255, 255, 0.055);
   --selected: rgba(255, 255, 255, 0.08);
   --session-card: rgba(18, 18, 18, 0.68);
@@ -98,9 +98,9 @@
   --danger: #d87882;
   --danger-contrast: #050505;
   --danger-soft: rgba(216, 120, 130, 0.11);
-  --radius-sm: 6px;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 0px;
+  --radius: 0px;
+  --radius-lg: 0px;
   --rail-card-inset: inset 0 0 15px rgba(255, 255, 255, 0.04);
   --shadow-popover: inset 0 0 0 1px var(--border);
   --shadow-dialog: inset 0 0 0 1px var(--border-strong);
@@ -108,8 +108,22 @@
 }
 
 body {
-  font-weight: 450;
+  font-weight: 400;
   letter-spacing: -0.006em;
+}
+
+/* Semantic heading reset: the shell owns heading typography, not the browser.
+   Sizes come from the class rules below; weights are bold/non-bold only
+   (0xProto Nerd Font ships exactly 400 and 700). Scoped to the app tree so
+   the compiled sheet keeps no bare `h1, h2, h3` preflight signature. */
+.optimus-app h1,
+.optimus-app h2,
+.optimus-app h3,
+.optimus-app h4,
+.optimus-app h5,
+.optimus-app h6 {
+  margin: 0;
+  font-weight: 700;
 }
 
 button,
@@ -119,20 +133,20 @@ select {
   font-weight: inherit;
 }
 
-/* Shared glyph contract: crisp, angular outlines with no rounded stroke ends. */
+/* Shared glyph contract: every icon is a Nerd Font glyph (0xProto Nerd Font
+   Propo) using currentColor, so the CSS hex tokens stay the colour source. */
 .optimus-icon {
-  shape-rendering: geometricPrecision;
-}
-
-.optimus-icon path,
-.optimus-icon line,
-.optimus-icon polyline,
-.optimus-icon polygon,
-.optimus-icon rect,
-.optimus-icon circle,
-.optimus-icon ellipse {
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "0xProto Nerd Font Propo", "0xProto Nerd Font", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2;
+  speak: none;
+  text-rendering: optimizeLegibility;
+  flex-shrink: 0;
 }
 
 button:focus-visible,
@@ -179,10 +193,10 @@ select:focus-visible,
   align-items: center;
   gap: 7px;
   padding: 0 8px;
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--text);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.025em;
 }
 
@@ -190,17 +204,18 @@ select:focus-visible,
   background: var(--hover);
 }
 
-.topbar-product-mark svg {
-  width: 13px;
-  height: 13px;
+.topbar-product-mark .optimus-icon {
+  min-width: 13px;
+  min-height: 13px;
   color: var(--faint);
+  flex-shrink: 0;
 }
 
 .toolbar-button,
 .product-mark,
 .window-controls .window-workspace-control {
   height: 32px;
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .toolbar-button {
@@ -280,7 +295,7 @@ select:focus-visible,
   gap: 8px;
   padding: 0 8px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--muted);
   background: transparent;
 }
@@ -299,7 +314,7 @@ select:focus-visible,
   min-height: 24px;
   color: inherit;
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 700;
 }
 
 .rail-search input::placeholder {
@@ -307,10 +322,11 @@ select:focus-visible,
   opacity: 1;
 }
 
-.rail-search > svg {
-  width: 16px;
-  height: 16px;
+.rail-search > .optimus-icon {
+  min-width: 16px;
+  min-height: 16px;
   color: var(--faint);
+  flex-shrink: 0;
 }
 
 .rail-search kbd {
@@ -320,7 +336,7 @@ select:focus-visible,
   align-items: center;
   padding: 0 6px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 0;
   color: var(--faint);
   font-size: 10px;
   background: var(--surface-2);
@@ -330,7 +346,7 @@ select:focus-visible,
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--muted);
   background: transparent;
 }
@@ -340,9 +356,10 @@ select:focus-visible,
   background: var(--hover);
 }
 
-.new-session-icon svg {
-  width: 16px;
-  height: 16px;
+.new-session-icon .optimus-icon {
+  min-width: 16px;
+  min-height: 16px;
+  flex-shrink: 0;
 }
 
 .rail-project-scope {
@@ -358,7 +375,7 @@ select:focus-visible,
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--muted);
 }
 
@@ -374,7 +391,7 @@ select:focus-visible,
   gap: 8px;
   padding: 0 8px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 0;
 }
 
@@ -387,10 +404,11 @@ select:focus-visible,
   white-space: nowrap;
 }
 
-.project-scope-trigger svg:last-child {
-  width: 12px;
-  height: 12px;
+.project-scope-trigger .optimus-icon:last-child {
+  min-width: 12px;
+  min-height: 12px;
   color: var(--faint);
+  flex-shrink: 0;
 }
 
 .project-scope-menu {
@@ -401,7 +419,7 @@ select:focus-visible,
   left: 10px;
   padding: 4px;
   border: 1px solid var(--border-strong);
-  border-radius: 9px;
+  border-radius: 0;
   background: var(--elevated);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
 }
@@ -421,7 +439,7 @@ select:focus-visible,
   align-items: center;
   gap: 8px;
   padding: 0 8px;
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--text-2);
   font-size: 12px;
   text-align: left;
@@ -446,7 +464,7 @@ select:focus-visible,
 .project-scope-option > button:last-child {
   display: grid;
   place-items: center;
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--faint);
 }
 
@@ -523,16 +541,17 @@ select:focus-visible,
   gap: 6px;
   color: var(--text-2);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 18px;
   padding-right: 96px;
 }
 
-.session-card-meta > svg {
-  width: 16px;
-  height: 16px;
+.session-card-meta > .optimus-icon {
+  min-width: 16px;
+  min-height: 16px;
   flex: 0 0 auto;
   color: var(--muted);
+  flex-shrink: 0;
 }
 
 .session-card-meta > span:nth-child(2) {
@@ -575,7 +594,7 @@ select:focus-visible,
   width: 5px;
   height: 5px;
   flex: 0 0 auto;
-  border-radius: 50%;
+  border-radius: 0;
   background: currentColor;
   box-shadow: none;
   opacity: 1;
@@ -596,7 +615,7 @@ select:focus-visible,
 .project-rail .session-row .session-title {
   color: var(--faint);
   font-size: 15px;
-  font-weight: 450;
+  font-weight: 400;
   line-height: 20px;
   letter-spacing: -0.01em;
 }
@@ -639,15 +658,16 @@ select:focus-visible,
   padding: 0 8px;
   color: var(--text-2);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   text-align: left;
 }
 
-.rail-footer .rail-settings-button > svg {
-  width: 16px;
-  height: 16px;
+.rail-footer .rail-settings-button > .optimus-icon {
+  min-width: 16px;
+  min-height: 16px;
   flex: 0 0 auto;
   color: var(--muted);
+  flex-shrink: 0;
 }
 
 .rail-footer .rail-settings-button:hover {
@@ -658,7 +678,7 @@ select:focus-visible,
 .app-stage {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--work-surface-bg);
   box-shadow: var(--workspace-shadow);
 }
@@ -702,14 +722,14 @@ select:focus-visible,
 .session-title {
   color: var(--text);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.014em;
 }
 
 .session-project-trigger {
   width: 30px;
   height: 30px;
-  border-radius: 7px;
+  border-radius: 0;
 }
 
 .transcript {
@@ -761,7 +781,7 @@ select:focus-visible,
   margin-left: auto;
   padding: 11px 15px;
   border: 1px solid var(--border);
-  border-radius: 16px 16px 5px 16px;
+  border-radius: 0;
   background: var(--surface-2);
 }
 
@@ -867,19 +887,23 @@ select:focus-visible,
 }
 
 .composer-card {
-  border: 1px solid var(--border-strong);
-  border-radius: 20px;
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.06), 0 8px 24px rgba(24, 24, 27, 0.08);
+  /* Not a card: flush with the work surface, no box, no border, no radius.
+     The only affordance is a hairline underline on focus (herdr-PAPER style).
+     ADR-0030 still caps the composer at 736px via .composer-shell. */
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 :root[data-theme="dark"] .composer-card {
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  box-shadow: none;
 }
 
 .composer-card:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 52%, var(--border-strong));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 10px 30px rgba(24, 24, 27, 0.09);
+  border-bottom-color: var(--border-strong);
+  box-shadow: none;
 }
 
 .composer-card textarea {
@@ -908,15 +932,16 @@ select:focus-visible,
   height: 22px;
   padding-inline: 6px;
   gap: 5px;
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--muted);
   font-size: 11px;
 }
 
-.composer-access-trigger > svg,
-.composer-settings-trigger > svg {
-  width: 13px;
-  height: 13px;
+.composer-access-trigger > .optimus-icon,
+.composer-settings-trigger > .optimus-icon {
+  min-width: 13px;
+  min-height: 13px;
+  flex-shrink: 0;
 }
 
 .composer-access-trigger:hover,
@@ -942,22 +967,24 @@ select:focus-visible,
 }
 
 .composer-access-trigger.is-unrestricted-host > span,
-.composer-access-trigger.is-unrestricted-host > svg {
+.composer-access-trigger.is-unrestricted-host > .optimus-icon {
   color: #eda052;
   animation: unrestricted-host-flame 3600ms ease-in-out infinite alternate;
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .composer-access-trigger.is-unrestricted-host > span,
-  .composer-access-trigger.is-unrestricted-host > svg {
+  .composer-access-trigger.is-unrestricted-host > .optimus-icon {
     animation: none;
     color: #ff9f32;
-  }
+  flex-shrink: 0;
+}
 }
 
 .composer-settings-model {
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .send-button {
@@ -969,9 +996,10 @@ select:focus-visible,
   background: var(--send-control);
 }
 
-.send-button svg {
-  width: 18px;
-  height: 18px;
+.send-button .optimus-icon {
+  min-width: 18px;
+  min-height: 18px;
+  flex-shrink: 0;
 }
 
 .send-button:hover:not(:disabled) {
@@ -993,20 +1021,20 @@ select:focus-visible,
 
 .empty-kicker {
   color: var(--accent);
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .work-empty h1 {
   max-width: 520px;
   margin: 9px 0;
   font-size: clamp(30px, 4vw, 42px);
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1.06;
 }
 
 .starter-list button {
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 .starter-list button:hover {
@@ -1028,7 +1056,7 @@ select:focus-visible,
 .workspace-tabs button,
 .execution-tabs button {
   height: 32px;
-  border-radius: 7px;
+  border-radius: 0;
 }
 
 .workspace-tabs button.is-active,
@@ -1054,7 +1082,7 @@ select:focus-visible,
   }
 
   .app-stage {
-    border-radius: 10px;
+    border-radius: 0;
   }
 
   .compact-switcher {
@@ -1068,7 +1096,7 @@ select:focus-visible,
 
   .compact-switcher button {
     min-height: 30px;
-    border-radius: 7px;
+    border-radius: 0;
   }
 
   .compact-switcher button[aria-selected="true"] {
@@ -1089,7 +1117,7 @@ select:focus-visible,
   .app-stage {
     border-inline: 0;
     border-bottom: 0;
-    border-radius: 10px 10px 0 0;
+    border-radius: 0;
   }
 
   .session-bar {
@@ -1110,7 +1138,7 @@ select:focus-visible,
   }
 
   .composer-card {
-    border-radius: 17px;
+    border-radius: 0;
   }
 }
 
@@ -1125,7 +1153,6 @@ select:focus-visible,
 
 .app-stage,
 .message-user,
-.composer-card,
 .thinking-block,
 .activity-approval,
 .approval-card,
@@ -1156,7 +1183,6 @@ select:focus-visible,
 
 .composer-card:focus-within {
   border-color: var(--border-strong);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 .workbench-statusbar {
@@ -1219,7 +1245,7 @@ select:focus-visible,
   width: 5px;
   height: 5px;
   flex: 0 0 auto;
-  border-radius: 50%;
+  border-radius: 0;
   background: currentColor;
 }
 
@@ -1269,10 +1295,11 @@ select:focus-visible,
   background: var(--hover);
 }
 
-.workbench-status-segment > svg {
-  width: 12px;
-  height: 12px;
+.workbench-status-segment > .optimus-icon {
+  min-width: 12px;
+  min-height: 12px;
   color: var(--faint);
+  flex-shrink: 0;
 }
 
 .workbench-status-spacer {
@@ -1441,9 +1468,10 @@ body,
 }
 
 .project-rail.is-collapsed .rail-project-scope .project-scope-trigger span,
-.project-rail.is-collapsed .rail-project-scope .project-scope-trigger > svg:last-child,
+.project-rail.is-collapsed .rail-project-scope .project-scope-trigger > .optimus-icon:last-child,
 .project-rail.is-collapsed .rail-project-scope > button[aria-label="Add project"] {
   display: none;
+  flex-shrink: 0;
 }
 
 .rail-section-heading {
@@ -1578,22 +1606,25 @@ body,
   text-align: left;
 }
 
-.project-toggle > svg:first-child {
-  width: 12px;
-  height: 12px;
+.project-toggle > .optimus-icon:first-child {
+  min-width: 12px;
+  min-height: 12px;
   color: var(--faint);
   transform: rotate(-90deg);
   transition: transform 120ms ease-out;
+  flex-shrink: 0;
 }
 
-.project-group.is-open .project-toggle > svg:first-child {
+.project-group.is-open .project-toggle > .optimus-icon:first-child {
   transform: rotate(0deg);
+  flex-shrink: 0;
 }
 
-.project-toggle > svg:nth-child(2) {
-  width: 15px;
-  height: 15px;
+.project-toggle > .optimus-icon:nth-child(2) {
+  min-width: 15px;
+  min-height: 15px;
   color: var(--muted);
+  flex-shrink: 0;
 }
 
 .project-toggle span {
@@ -1712,7 +1743,7 @@ body,
 .project-rail .session-row .session-title {
   color: var(--text-2);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .project-rail .session-row.is-active .session-title {
@@ -1865,14 +1896,11 @@ body,
 }
 
 .composer-card {
-  background: var(--work-pane-bg);
-  border-color: var(--border);
-  box-shadow: inset 0 0 0 1px var(--border);
+  background: transparent;
 }
 
 .composer-card:focus-within {
-  border-color: var(--border-strong);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  border-bottom-color: var(--border-strong);
 }
 
 @media (max-width: 800px) {
@@ -1888,11 +1916,12 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-toggle > svg:first-child,
+  .project-toggle > .optimus-icon:first-child,
   .session-row,
   .activity-heading {
     transition: none;
-  }
+  flex-shrink: 0;
+}
 }
 
 /* Scroll surfaces remain interactive without visible scrollbar chrome. */
