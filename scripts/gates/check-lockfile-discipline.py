@@ -45,12 +45,15 @@ def findings(root: Path = ROOT) -> list[str]:
     # required roots against one shared set is identical in behaviour and
     # avoids calling git three times per check.
     tracked = tracked_files(root)
-    tracked_names = {Path(path).name for path in tracked}
+    # `git ls-files` returns paths relative to the repo root, so a root-level
+    # lockfile appears exactly as its bare name. Matching against `tracked`
+    # (not against basenames) is required: a nested Cargo.lock/bun.lock in a
+    # subdirectory would otherwise falsely satisfy the root requirement.
     for path in tracked:
         if Path(path).name in FOREIGN_LOCKFILES:
             problems.append(f"{path}: foreign lockfile tracked; use Bun (bun.lock)")
     for name in sorted(REQUIRED_ROOT_LOCKFILES):
-        if name not in tracked_names:
+        if name not in tracked:
             problems.append(f"{name}: required root lockfile is not tracked")
     manifest = root / "package.json"
     try:

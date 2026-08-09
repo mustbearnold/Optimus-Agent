@@ -54,6 +54,23 @@ class LockfileDisciplineTest(unittest.TestCase):
         problems = lockfile_discipline.findings(self.root)
         self.assertTrue(any("bun.lock" in item for item in problems))
 
+    def test_nested_lockfile_does_not_satisfy_root_requirement(self) -> None:
+        """A Cargo.lock in a subdirectory must not satisfy the root Cargo.lock.
+
+        Regression: the gate previously collected only basenames of tracked
+        files, so a nested apps/foo/Cargo.lock made a missing root Cargo.lock
+        appear present and the gate passed when it should have failed.
+        """
+        (self.root / "Cargo.lock").unlink()
+        nested = self.root / "apps" / "foo"
+        nested.mkdir(parents=True)
+        (nested / "Cargo.lock").write_text("", encoding="utf-8")
+        # Stage both the root deletion and the nested file so the index
+        # reflects reality (git ls-files reads the index, not the worktree).
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        problems = lockfile_discipline.findings(self.root)
+        self.assertTrue(any("Cargo.lock" in item for item in problems))
+
     def test_rejects_non_bun_package_manager(self) -> None:
         (self.root / "package.json").write_text(
             json.dumps({"name": "test", "packageManager": "pnpm@9.0.0"}),
