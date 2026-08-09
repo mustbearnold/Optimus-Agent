@@ -496,3 +496,35 @@ impl ReplayStore {
         Ok(report)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validate_sha256_accepts_only_64_hex_digits() {
+        let valid = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+        assert!(validate_sha256(valid, "fixture id").is_ok());
+
+        // Uppercase hex digits are a valid SHA-256 digest representation.
+        assert!(validate_sha256(&valid.to_ascii_uppercase(), "fixture id").is_ok());
+
+        // Too short, too long, and non-hex characters must all be rejected.
+        assert!(validate_sha256(&valid[..63], "fixture id").is_err());
+        assert!(validate_sha256(&format!("{valid}0"), "fixture id").is_err());
+        assert!(validate_sha256(&format!("g{valid}"), "fixture id").is_err());
+        assert!(validate_sha256("", "fixture id").is_err());
+    }
+
+    #[test]
+    fn digest_is_stable_hex_sha256() {
+        // Well-known SHA-256 of the ASCII bytes "abc".
+        assert_eq!(
+            digest(b"abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        // A digest of its own digest output round-trips through validate_sha256.
+        let double = digest(digest(b"abc").as_bytes());
+        assert!(validate_sha256(&double, "digest").is_ok());
+    }
+}
