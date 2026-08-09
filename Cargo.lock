@@ -3467,6 +3467,7 @@ dependencies = [
 name = "optimus-graph"
 version = "0.1.0"
 dependencies = [
+ "optimus-policy",
  "optimus-store",
  "serde",
  "serde_json",

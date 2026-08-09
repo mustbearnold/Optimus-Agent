@@ -6,7 +6,7 @@
 
 use optimus_policy::{
     build_effect_request_for, build_owned_localhost_serve_request, AuthorityDecision,
-    AutonomyProfile as PolicyAutonomy, CapabilityBroker, OwnedLocalhostBinding,
+    CapabilityBroker, OwnedLocalhostBinding,
 };
 
 use optimus_graph::GraphError;
@@ -17,17 +17,6 @@ use crate::{
     mark_node_awaiting_approval, AutonomyProfile, Effect, JobId, PolicyMode, Result, Runtime,
     RuntimeError,
 };
-
-fn policy_autonomy(profile: AutonomyProfile) -> PolicyAutonomy {
-    match profile {
-        AutonomyProfile::Standard => PolicyAutonomy::Standard,
-        AutonomyProfile::ReviewChanges => PolicyAutonomy::ReviewChanges,
-        AutonomyProfile::ReadOnly => PolicyAutonomy::ReadOnly,
-        AutonomyProfile::FullProject => PolicyAutonomy::FullProject,
-        AutonomyProfile::DeveloperFullAccess => PolicyAutonomy::DeveloperFullAccess,
-        AutonomyProfile::UnrestrictedHost => PolicyAutonomy::UnrestrictedHost,
-    }
-}
 
 /// Stable effect kind name + audit fields for the capability broker.
 fn effect_policy_view(effect: &Effect) -> (&'static str, Option<String>, Option<String>, String) {
@@ -193,7 +182,7 @@ impl Runtime {
         effect: &Effect,
         effect_hash: &str,
     ) -> Result<AuthorityDecision> {
-        let profile = policy_autonomy(self.config.autonomy_profile);
+        let profile = self.config.autonomy_profile;
         let (kind, root_hash, relative_path, summary) = effect_policy_view(effect);
         let mut request = build_effect_request_for(
             kind,
@@ -255,7 +244,7 @@ impl Runtime {
         let mut request = request;
         request.target.absolute_path = Some(self.workspace_path().display().to_string());
         request.developer_access = self.developer.grant.clone();
-        match CapabilityBroker.decide(policy_autonomy(self.config.autonomy_profile), &request) {
+        match CapabilityBroker.decide(self.config.autonomy_profile, &request) {
             AuthorityDecision::Allow { authority_id, .. } => Ok(Some(authority_id)),
             AuthorityDecision::Ask { .. } => Ok(None),
             AuthorityDecision::Deny { code, reason, .. } => {
@@ -284,7 +273,7 @@ impl Runtime {
             AuthorityDecision::Allow { .. } => {
                 // Durable exact-effect trust grant (audit without human pause).
                 let now = Self::now_unix()?;
-                let actor = policy_autonomy(self.config.autonomy_profile).trust_actor();
+                let actor = self.config.autonomy_profile.trust_actor();
                 self.store
                     .insert_action_approval(&NewActionApproval {
                         id: Uuid::new_v4(),
@@ -329,7 +318,7 @@ impl Runtime {
     ///
     /// Returns the number of approvals released.
     pub fn release_open_approvals_under_yolo(&self) -> Result<usize> {
-        let actor = PolicyAutonomy::UnrestrictedHost.trust_actor();
+        let actor = AutonomyProfile::UnrestrictedHost.trust_actor();
         let now = Self::now_unix()?;
         let mut released = 0usize;
         for pending in self.list_pending_approvals()? {

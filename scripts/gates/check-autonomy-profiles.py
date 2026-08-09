@@ -9,8 +9,9 @@ vocabulary it is a face for. This is that gate.
 
 Compares:
   1. Canonical profile names   — crates/optimus-policy/src/lib.rs (`as_str`)
-  2. Accepted spellings        — the `parse` arms in optimus-policy and
-                                 optimus-graph, which must agree
+  2. Accepted spellings        — the `parse` arms in optimus-policy (the one
+                                 canonical table; optimus-graph must not
+                                 define its own — it re-exports the type)
   3. React menu values         — apps/optimus-ui/.../Composer.tsx, in the order
                                  the tiers actually render them
   4. React persistence         — apps/optimus-ui/src/state/composerStore.ts
@@ -29,8 +30,9 @@ Rules (each is a way #118 could come back):
     here — an allowlist, not a blocklist of words somebody thought of. A
     blocklist is only ever as good as its author's imagination, and 'full' was
     already outside one author's.
-  - The two Rust parse tables agree, so the profile a surface gets cannot
-    depend on which crate read the string.
+  - Exactly one Rust parse table exists, in optimus-policy. optimus-graph
+    re-exports the type (ADR-0044 owns the vocabulary), so the profile a
+    surface gets cannot depend on which crate read the string.
   - Every stored default is `standard`, in every React preset, and neither
     composer restores a stored value to break-glass: ADR-0044 §5 keeps
     unrestricted host out of anything durable.
@@ -62,12 +64,12 @@ DESKTOP_JS = ROOT / "apps/optimus-desktop/ui/app.js"
 DESKTOP_STYLE = ROOT / "apps/optimus-desktop/ui/style.css"
 CLI_PARSERS = ROOT / "apps/optimus-cli/src/parsers.rs"
 
-# The complete set of words that may reach break-glass, per crate. Anything
-# else mapping to `UnrestrictedHost` fails, including words nobody here
-# thought of — which is the point. `yolo` is the CLI's own flag and lives in
-# the graph crate only.
-BREAK_GLASS = frozenset({"unrestricted_host", "unrestricted"})
-GRAPH_ONLY = frozenset({"yolo"})
+# The complete set of words that may reach break-glass. Anything else mapping
+# to `UnrestrictedHost` fails, including words nobody here thought of — which
+# is the point. `yolo` is the CLI's own flag; it was graph-only until the
+# collapse merged it into the canonical table (it is unmistakable, and #118's
+# "full"/"host" remain gone).
+BREAK_GLASS = frozenset({"unrestricted_host", "unrestricted", "yolo"})
 EXPECTED_ALIASES = {
     "standard": "standard",
     "review_changes": "review_changes",
@@ -805,35 +807,32 @@ def main() -> int:
         fail(f"optimus-policy: unexpected profile vocabulary {profiles}")
 
     policy_table = parse_table(policy_source, "optimus-policy")
-    graph_table = parse_table(read(GRAPH), "optimus-graph")
+    graph_source = strip_comments(read(GRAPH))
 
-    # The CLI's own break-glass word lives in the graph table only; every other
-    # spelling must mean the same thing in both crates. The exemption runs one
-    # way: optimus-policy gaining `yolo` is drift too.
-    shared = set(policy_table) | (set(graph_table) - GRAPH_ONLY)
-    drifted = sorted(
-        word for word in shared if policy_table.get(word) != graph_table.get(word)
-    )
-    if drifted:
+    # One table owns the vocabulary (ADR-0044). optimus-graph must re-export
+    # the type, never define a second parse table: two hand-maintained tables
+    # drifted once (graph accepted `yolo`, policy did not) and would drift
+    # again. A re-export is a `pub use` of the policy type with no `impl`.
+    if re.search(r"\bimpl\s+AutonomyProfile\s*\{", graph_source):
         fail(
-            "optimus-policy and optimus-graph disagree on "
-            + ", ".join(
-                f"{w!r} ({policy_table.get(w)} vs {graph_table.get(w)})" for w in drifted
-            )
+            "optimus-graph defines its own AutonomyProfile impl; it must "
+            "re-export optimus_policy::AutonomyProfile so one table owns the "
+            "vocabulary (ADR-0044)"
+        )
+    if not re.search(r"pub use optimus_policy::AutonomyProfile", graph_source):
+        fail(
+            "optimus-graph must re-export optimus_policy::AutonomyProfile; "
+            "a second parse table is drift"
         )
 
     # An allowlist, not a blocklist: whatever reaches break-glass has to be one
     # of these words, including words this file's author never imagined (#118).
-    for table, crate, allowed in (
-        (policy_table, "optimus-policy", BREAK_GLASS),
-        (graph_table, "optimus-graph", BREAK_GLASS | GRAPH_ONLY),
-    ):
-        reaching = {w for w, v in table.items() if v == "UnrestrictedHost"}
-        if reaching != allowed:
-            fail(
-                f"{crate}: {sorted(reaching)} parse to UnrestrictedHost; break-"
-                f"glass answers to exactly {sorted(allowed)} and nothing else (#118)"
-            )
+    reaching = {w for w, v in policy_table.items() if v == "UnrestrictedHost"}
+    if reaching != BREAK_GLASS:
+        fail(
+            f"optimus-policy: {sorted(reaching)} parse to UnrestrictedHost; break-"
+            f"glass answers to exactly {sorted(BREAK_GLASS)} and nothing else (#118)"
+        )
 
     options = menu_options(read(COMPOSER))
     values = [value for value, _, _ in options]

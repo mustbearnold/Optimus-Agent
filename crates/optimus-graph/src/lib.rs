@@ -152,54 +152,11 @@ pub enum PolicyMode {
     Unrestricted,
 }
 
-/// Product autonomy profile (when Optimus asks). Re-exported shape kept in graph
-/// so `RuntimeConfig` stays self-describing without a hard graph→policy cycle
-/// at the type layer for older callers; runtime maps this to `optimus_policy`.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "snake_case")]
-pub enum AutonomyProfile {
-    /// Recommended product default: ordinary project work auto-authorized.
-    Standard,
-    /// Pause project writes and commands (legacy “Ask before effects”).
-    #[default]
-    ReviewChanges,
-    ReadOnly,
-    FullProject,
-    /// Explicit local self-development authority, bounded by a persisted grant.
-    DeveloperFullAccess,
-    /// Expert break-glass marker; pair with [`PolicyMode::Unrestricted`] in product.
-    UnrestrictedHost,
-}
-
-impl AutonomyProfile {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Standard => "standard",
-            Self::ReviewChanges => "review_changes",
-            Self::ReadOnly => "read_only",
-            Self::FullProject => "full_project",
-            Self::DeveloperFullAccess => "developer_full_access",
-            Self::UnrestrictedHost => "unrestricted_host",
-        }
-    }
-
-    pub fn parse(raw: &str) -> Option<Self> {
-        match raw.trim().to_ascii_lowercase().as_str() {
-            "standard" | "std" => Some(Self::Standard),
-            "review_changes" | "review-changes" | "review" | "ask" => Some(Self::ReviewChanges),
-            "read_only" | "readonly" | "read" | "read-only" => Some(Self::ReadOnly),
-            "full_project" | "full-project" | "project_full" => Some(Self::FullProject),
-            "developer_full_access" | "developer-full-access" | "developer" => {
-                Some(Self::DeveloperFullAccess)
-            }
-            // Mirrors optimus-policy: break-glass answers only to words that
-            // cannot be misread as ordinary. `yolo` stays because the CLI flag
-            // of that name is unmistakable; `full` and `host` are gone (#118).
-            "unrestricted_host" | "unrestricted" | "yolo" => Some(Self::UnrestrictedHost),
-            _ => None,
-        }
-    }
-}
+/// Product autonomy profile (when Optimus asks). Canonical definition lives in
+/// `optimus-policy` (ADR-0044); graph re-exports it so `RuntimeConfig` stays
+/// self-describing and every caller shares one type. optimus-policy is a
+/// dependency-free leaf, so this edge cannot cycle.
+pub use optimus_policy::AutonomyProfile;
 
 /// Filesystem/network envelope for approved `RunCommand` / `ProjectRunCommand`.
 ///

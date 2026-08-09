@@ -101,6 +101,10 @@ FIVE_ITEMS = "\n".join(
     )
 )
 
+# After the AutonomyProfile collapse (issue #143), optimus-graph carries no
+# parse table of its own: it re-exports the canonical type from optimus-policy.
+GRAPH_STUB = "\npub use optimus_policy::AutonomyProfile;\n"
+
 STORE_TEMPLATE = """
 type ComposerSettings = {{ access: string }};
 const ACCESS_ALIASES: Readonly<Record<string, string>> = {prototype}{{
@@ -271,8 +275,8 @@ class AutonomyGateTests(unittest.TestCase):
     def write(
         self,
         *,
-        policy_break_glass: str = '"unrestricted_host" | "unrestricted"',
-        graph_break_glass: str | None = None,
+        policy_break_glass: str = '"unrestricted_host" | "unrestricted" | "yolo"',
+        graph_source: str = GRAPH_STUB,
         menu: str = FIVE_ITEMS,
         tiers: str = DEFAULT_TIERS,
         store: tuple[str, str, str] = ("standard", "standard", "standard"),
@@ -290,13 +294,7 @@ class AutonomyGateTests(unittest.TestCase):
         cli_unrestricted: str = '"unrestricted"',
     ) -> None:
         GATE.POLICY.write_text(POLICY_TEMPLATE.format(break_glass=policy_break_glass))
-        GATE.GRAPH.write_text(
-            POLICY_TEMPLATE.format(
-                break_glass=graph_break_glass
-                if graph_break_glass is not None
-                else f'{policy_break_glass} | "yolo"'
-            )
-        )
+        GATE.GRAPH.write_text(graph_source)
         GATE.COMPOSER.write_text(MENU_TEMPLATE.format(items=menu, tiers=tiers))
         GATE.STORE.write_text(
             STORE_TEMPLATE.format(
@@ -372,12 +370,14 @@ class AutonomyGateTests(unittest.TestCase):
         self.write(menu="\n".join(FIVE_ITEMS.splitlines()[:4]))
         self.assert_fails("a menu missing a profile must fail")
 
-    def test_crates_that_disagree_fail(self) -> None:
+    def test_a_graph_parse_table_fails(self) -> None:
+        """The collapse (issue #143) left one table; a second one is drift."""
         self.write(
-            policy_break_glass='"unrestricted_host" | "unrestricted"',
-            graph_break_glass='"unrestricted_host" | "unrestricted" | "ask"',
+            graph_source=POLICY_TEMPLATE.format(
+                break_glass='"unrestricted_host" | "unrestricted"'
+            )
         )
-        self.assert_fails("'ask' meaning two things across crates must fail")
+        self.assert_fails("a second AutonomyProfile parse table in graph must fail")
 
     def test_a_default_other_than_standard_fails(self) -> None:
         self.write(store=("standard", "unrestricted_host", "standard"))
@@ -446,7 +446,6 @@ impl AutonomyProfile {
             "_ => None,", "_ => Some(Self::UnrestrictedHost),"
         )
         GATE.POLICY.write_text(source)
-        GATE.GRAPH.write_text(source)
         self.assert_fails("every unknown string meaning break-glass must fail")
 
     def test_a_fully_qualified_variant_is_still_classified(self) -> None:
@@ -455,7 +454,6 @@ impl AutonomyProfile {
             '"full_project" | "full" => Some(AutonomyProfile::UnrestrictedHost),',
         )
         GATE.POLICY.write_text(source)
-        GATE.GRAPH.write_text(source)
         self.assert_fails("Self:: and AutonomyProfile:: must be read alike")
 
     def test_a_stored_alias_restoring_to_break_glass_fails(self) -> None:

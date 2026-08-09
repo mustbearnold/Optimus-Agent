@@ -64,8 +64,10 @@ impl AutonomyProfile {
             // “full” and “host” used to land here — the composer's first menu
             // item said "Full access" and meant this (#118) — so a stale
             // sender of either now falls closed to ReviewChanges instead of
-            // quietly receiving the whole machine.
-            "unrestricted_host" | "unrestricted" => Some(Self::UnrestrictedHost),
+            // quietly receiving the whole machine. `yolo` is the CLI flag of
+            // that name; it moved into this table when the graph copy was
+            // collapsed (the graph crate now re-exports this type).
+            "unrestricted_host" | "unrestricted" | "yolo" => Some(Self::UnrestrictedHost),
             _ => None,
         }
     }
@@ -1286,7 +1288,13 @@ mod tests {
         for raw in ["full", "host", "all", "everything"] {
             assert_eq!(AutonomyProfile::parse(raw), None, "{raw}");
         }
-        for raw in ["unrestricted_host", "unrestricted", "UNRESTRICTED_HOST"] {
+        for raw in [
+            "unrestricted_host",
+            "unrestricted",
+            "yolo",
+            "UNRESTRICTED_HOST",
+            "YOLO",
+        ] {
             assert_eq!(
                 AutonomyProfile::parse(raw),
                 Some(AutonomyProfile::UnrestrictedHost),
