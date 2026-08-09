@@ -193,7 +193,7 @@
       "resolved_files": 0
     },
     "decisions-0017-engineering-memory-separation": {
-      "binding_sha256": "1dfbc0602c0fe4ee99594dee9c49f303ff8b29024f8c1eb29e422aff2eccc015",
+      "binding_sha256": "323c341ec0c94d1b6e8a9d399ef838e5296ef4fe909d0373c0196e85a06890ce",
       "document_sha256": "9d0b23fa1ebe91db1bd9af3073889d39e12f1533ea521b5a482796fe44fbdd64",
       "path": "docs/decisions/0017-engineering-memory-separation.md",
       "resolved_files": 5
@@ -205,7 +205,7 @@
       "resolved_files": 4
     },
     "decisions-0019-capability-files-and-unified-campaign-authority": {
-      "binding_sha256": "d0d11d7c87e467226e72ab3c98b08bf25cbaee5e4064138ed21b20f645809ee5",
+      "binding_sha256": "7c2449f4c946cea78b89cc31630e9270801e231dd4911e74f04dc20a8da64ecd",
       "document_sha256": "d5b213f1c85608fb41c3d9b1a4c0bab4761a38afcd5a39fe2f753a9879eb8e35",
       "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "resolved_files": 11
@@ -259,31 +259,31 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "839c462098041dab339eaf3d18186aadf4ad2cb47e97f0c6cc19f0c4884f16c8",
+      "binding_sha256": "797178cbe872a9dec79169b300dd5d76c9e185524ec1c9793c2f0d0d7e75edbd",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 136
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "6dc8b2946cbd99f3a25d31eb57f407a23e07f3871986df5e50fe2ce25786c58a",
+      "binding_sha256": "249323916ccae468ec309ba851e8aa11e45f1c1aa4bef303f9c608afc54f15b8",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 135
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "8b980f3c63e76dd2cc1542f1b49eb310f9d05f0c811b61a357fa7c03a802f471",
+      "binding_sha256": "ed19a305e78a305c68f7852c37ca55512f46fe3e847220aa0046c229ac13b24b",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 105
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "623ab0e65e9ef419e62e996bde427dbb322b54ee8dc6fa3870dc0d55e118f4d2",
+      "binding_sha256": "11d28bc9b49c299644fd12aa2a1d18694a3f98b7b61c79fd4cbe5895476386ce",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 137
     },
     "decisions-0032-engineering-memory-compact-lenses": {
-      "binding_sha256": "34cefe755cfa0d937c8817bb260785b94d68047c742a485f56a9d4b52d373757",
+      "binding_sha256": "d0418808cf6e0bf5a0f8d512b7a5cacd10492d0fd3fc02a089d35c304700061a",
       "document_sha256": "fcbf540f8f7881a9d96e4caa563efb667ca9ccfeea9e476735bbfaa929844958",
       "path": "docs/decisions/0032-engineering-memory-compact-lenses.md",
       "resolved_files": 6
@@ -385,7 +385,7 @@
       "resolved_files": 7
     },
     "decisions-0049-module-size-is-measured-honestly": {
-      "binding_sha256": "86be30919bd7cb915cbd88c4edcbc7f02c33170bd09ee38a5951092529f33c99",
+      "binding_sha256": "3c8eb433bb29375070cd05723e3fbd1b2fe8b7feaab1ce083857b4ac990c0927",
       "document_sha256": "ce6b80d3ad533d63106d7e7e979595ef22c201a45ae24161d7b998ab32169a08",
       "path": "docs/decisions/0049-module-size-is-measured-honestly.md",
       "resolved_files": 5
@@ -421,7 +421,7 @@
       "resolved_files": 12
     },
     "decisions-0061-generated-engineering-memory-is-a-disposable-cache": {
-      "binding_sha256": "359b3cc282ebffa5c881c40d92d3610c6569fba126e77e620158b6bd0bfd9dd4",
+      "binding_sha256": "3200b8e44ffcbc12527b7035dd553842d55aae4ab182a39f46034eb075e6bd98",
       "document_sha256": "9561979ce2fa41bf84e78be47c26e3f3f2d69d0a2ed1dba38bf0dd1ecdb3db96",
       "path": "docs/decisions/0061-generated-engineering-memory-is-a-disposable-cache.md",
       "resolved_files": 6
@@ -589,13 +589,13 @@
       "resolved_files": 3
     },
     "decisions-readme": {
-      "binding_sha256": "a0eba1fe91248a975fb5205bbf70142abfac2ccb0766185592aaa16adc1c43db",
+      "binding_sha256": "fd931cdc0a6fb122db0937d1c063929a3d71962b94cc9f59df7c630816aa39ad",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 94
     },
     "engineering-memory-readme": {
-      "binding_sha256": "b790a5072c7f22d7f4ce7cb0317eed5a158b6bfead628d76e4b052d7415adb38",
+      "binding_sha256": "8721093f5e2431673c8fce40e2abf439f59a6f5e11aa07f7631017fdb1091b48",
       "document_sha256": "aa883a8917daaf545f19d4f71b71fc604f8ede12f0c6910f25d04ae1d7f4e1b3",
       "path": "docs/runbooks/engineering-memory.md",
       "resolved_files": 9
@@ -613,7 +613,7 @@
       "resolved_files": 30
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "508852878d55912cde43ede8eac8a8e73cedd15c5eb536e4e189c291a1890f92",
+      "binding_sha256": "9a58481c43da63ab4a56a73c70e0ea87481d465de398992c7f43e53fe6c0d171",
       "document_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 116
@@ -673,7 +673,7 @@
       "resolved_files": 49
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "eaf81ce8b8d4c40ce610869e9b90689470a5d80b845953c2cdb92416c823d39f",
+      "binding_sha256": "15280f123ced248b84df96f7c51fc607da7791e24328a113fc0f5af673330de2",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 91

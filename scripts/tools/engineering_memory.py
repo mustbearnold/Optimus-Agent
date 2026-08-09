@@ -88,6 +88,7 @@ EXCLUDED_PARTS = {
     ".claude",
     ".engineering-memory",
     ".cache",
+    ".pytest_cache",
     "__pycache__",
     "node_modules",
     "target",
