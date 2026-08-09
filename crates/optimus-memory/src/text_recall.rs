@@ -368,6 +368,9 @@ mod tests {
         // "key key key" must not build `"key"* "key"* "key"*`: the extra ANDed
         // terms are redundant and only inflate the FTS5 expression.
         assert_eq!(match_expression("key key key"), "\"key\"*");
-        assert_eq!(match_expression("deploy key deploy"), "\"deploy\"* \"key\"*");
+        assert_eq!(
+            match_expression("deploy key deploy"),
+            "\"deploy\"* \"key\"*"
+        );
     }
 }
