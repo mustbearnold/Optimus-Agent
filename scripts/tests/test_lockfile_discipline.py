@@ -62,6 +62,28 @@ class LockfileDisciplineTest(unittest.TestCase):
         problems = lockfile_discipline.findings(self.root)
         self.assertTrue(any("packageManager" in item for item in problems))
 
+    def test_queries_git_index_exactly_once(self) -> None:
+        """findings() must call git ls-files once, not once per concern.
+
+        Regression: the gate used to spawn a `git ls-files` subprocess three
+        times for a single check (foreign lockfiles, then each required root
+        lockfile). One shared index query is behaviourally identical and keeps
+        the gate cheap on a large monorepo.
+        """
+        calls = {"count": 0}
+        real = lockfile_discipline.tracked_files
+
+        def counting_tracked(root):
+            calls["count"] += 1
+            return real(root)
+
+        lockfile_discipline.tracked_files = counting_tracked
+        try:
+            self.assertEqual(lockfile_discipline.findings(self.root), [])
+            self.assertEqual(calls["count"], 1)
+        finally:
+            lockfile_discipline.tracked_files = real
+
 
 if __name__ == "__main__":
     unittest.main()

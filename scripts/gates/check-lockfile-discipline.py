@@ -40,11 +40,17 @@ def tracked_files(root: Path = ROOT) -> list[str]:
 
 def findings(root: Path = ROOT) -> list[str]:
     problems: list[str] = []
-    for path in tracked_files(root):
+    # Query the index once: `git ls-files` is the whole cost of this gate, and
+    # each call spawns a subprocess. Scanning foreign lockfiles and checking
+    # required roots against one shared set is identical in behaviour and
+    # avoids calling git three times per check.
+    tracked = tracked_files(root)
+    tracked_names = {Path(path).name for path in tracked}
+    for path in tracked:
         if Path(path).name in FOREIGN_LOCKFILES:
             problems.append(f"{path}: foreign lockfile tracked; use Bun (bun.lock)")
     for name in sorted(REQUIRED_ROOT_LOCKFILES):
-        if name not in tracked_files(root):
+        if name not in tracked_names:
             problems.append(f"{name}: required root lockfile is not tracked")
     manifest = root / "package.json"
     try:
