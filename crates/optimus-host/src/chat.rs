@@ -318,12 +318,8 @@ pub(crate) struct AccessConfig {
 
 /// The child-run command-fs envelope snapshot (spec-034 R5).
 fn parse_command_fs_envelope(raw: &str) -> optimus_graph::CommandFsEnvelope {
-    match raw {
-        "confined" => optimus_graph::CommandFsEnvelope::Confined,
-        "confined_no_network" => optimus_graph::CommandFsEnvelope::ConfinedNoNetwork,
-        "unrestricted_host" => optimus_graph::CommandFsEnvelope::UnrestrictedHost,
-        _ => optimus_graph::CommandFsEnvelope::Confined,
-    }
+    optimus_graph::CommandFsEnvelope::parse(raw)
+        .unwrap_or(optimus_graph::CommandFsEnvelope::Confined)
 }
 
 pub(crate) fn access_config(raw: Option<&str>) -> AccessConfig {
@@ -388,12 +384,8 @@ fn resume_access_config(
     let profile = optimus_graph::AutonomyProfile::parse(autonomy_profile)
         .filter(|profile| profile.as_str() == autonomy_profile)
         .ok_or_else(|| "approval continuation has an invalid autonomy profile".to_string())?;
-    let envelope = match command_fs_envelope {
-        "confined" => optimus_graph::CommandFsEnvelope::Confined,
-        "confined_no_network" => optimus_graph::CommandFsEnvelope::ConfinedNoNetwork,
-        "unrestricted_host" => optimus_graph::CommandFsEnvelope::UnrestrictedHost,
-        _ => return Err("approval continuation has an invalid command envelope".into()),
-    };
+    let envelope = optimus_graph::CommandFsEnvelope::parse(command_fs_envelope)
+        .ok_or_else(|| "approval continuation has an invalid command envelope".to_string())?;
     if profile == optimus_graph::AutonomyProfile::UnrestrictedHost {
         let mut access = access_config(Some("review_changes"));
         access.command_fs_envelope = Some(optimus_graph::CommandFsEnvelope::ConfinedNoNetwork);

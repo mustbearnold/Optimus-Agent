@@ -230,6 +230,19 @@ impl CommandFsEnvelope {
         }
     }
 
+    /// Parse a canonical envelope name, exactly as [`CommandFsEnvelope::as_str`]
+    /// renders it. Unknown spellings return `None` so callers keep their own
+    /// fail-closed default (e.g. `Confined` for a surface access string) rather
+    /// than this method silently choosing a mode.
+    pub fn parse(raw: &str) -> Option<Self> {
+        match raw {
+            "confined" => Some(Self::Confined),
+            "confined_no_network" => Some(Self::ConfinedNoNetwork),
+            "unrestricted_host" => Some(Self::UnrestrictedHost),
+            _ => None,
+        }
+    }
+
     /// Whether this mode claims workspace-only writable FS on Linux.
     pub fn linux_workspace_only_writable(self) -> bool {
         matches!(self, Self::Confined | Self::ConfinedNoNetwork)
@@ -852,5 +865,26 @@ mod tests {
         assert_eq!(AutonomyProfile::parse("full"), None);
         assert_eq!(AutonomyProfile::parse("host"), None);
         assert_eq!(AutonomyProfile::parse(""), None);
+    }
+
+    #[test]
+    fn command_fs_envelope_parse_round_trips_canonical_names() {
+        for envelope in [
+            CommandFsEnvelope::Confined,
+            CommandFsEnvelope::ConfinedNoNetwork,
+            CommandFsEnvelope::UnrestrictedHost,
+        ] {
+            assert_eq!(
+                CommandFsEnvelope::parse(envelope.as_str()),
+                Some(envelope),
+                "canonical name must round-trip: {}",
+                envelope.as_str()
+            );
+        }
+        // Unknown spellings fail closed to None: the caller keeps its own
+        // default rather than parse silently choosing a mode.
+        assert_eq!(CommandFsEnvelope::parse("confined_no_net"), None);
+        assert_eq!(CommandFsEnvelope::parse("CONFINED"), None);
+        assert_eq!(CommandFsEnvelope::parse(""), None);
     }
 }
