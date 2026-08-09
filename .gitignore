@@ -1,5 +1,6 @@
 /target
 /.engineering-memory/
+/.commandcode/
 **/node_modules/
 **/test-results/
 **/playwright-report/

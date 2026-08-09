@@ -8,6 +8,10 @@ fn run_chat(extra_args: &[&str]) -> std::process::Output {
     command
         .args(["--home", home.path().to_str().unwrap(), "chat", "hello"])
         .args(extra_args)
+        // Client mode (spec-015 B2 default) spawns `optimus serve --stdio`;
+        // port 0 binds an ephemeral port so the parallel tests here never
+        // collide on the production default.
+        .env("OPTIMUS_SERVE_PORT", "0")
         .env_remove("OPTIMUS_API_KEY")
         .env_remove("OPTIMUS_OPENAI_BASE_URL")
         .env_remove("OPTIMUS_OPENAI_API_KEY")

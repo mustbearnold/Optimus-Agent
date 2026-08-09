@@ -3576,7 +3576,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "ecd4065e35afe1f1978d29d5cd7bd566c84bebdbc4b3093bf70e828c9f002565",
+      "content_sha256": "80ab678d9218bef94593e7157c342614faf1d0f5699952766a09b8bdb4521930",
       "headings": [
         "ADR-0083: One wire protocol for all surfaces",
         "Context",
@@ -4668,7 +4668,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "e7fc9fa3e6c93ac0f0e8849c5d3bdea56cecabe1734a34e5a940b6e2d8259c9d",
+  "documents_sha256": "028f0675224d84b41d5346a2c259773861c2184b01514b572f5e3740bea5f560",
   "routes": [
     {
       "id": "architecture.blueprint",

@@ -804,7 +804,6 @@ fn verify_report(report: &EvaluationReportV1) -> Result<()> {
     }
     Ok(())
 }
-
 #[cfg(test)]
 mod tests {
     use super::{canonical_source_digest, validate_hash, validate_id};

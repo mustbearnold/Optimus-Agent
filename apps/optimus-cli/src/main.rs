@@ -43,6 +43,10 @@ struct Cli {
     #[arg(long, global = true, default_value_t = false)]
     yolo: bool,
 
+    /// Open the kernel in process instead of speaking the serve wire (spec-015 B2)
+    #[arg(long, global = true, default_value_t = false)]
+    embedded: bool,
+
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -101,25 +105,8 @@ enum Commands {
     },
     /// Chat using automatic provider selection unless explicitly overridden
     Chat {
-        message: String,
-        /// Provider: auto (default) | offline | openai | codex
-        #[arg(long, default_value = "auto")]
-        provider: String,
-        /// Override model; `auto` leaves selection to the provider
-        #[arg(long)]
-        model: Option<String>,
-        /// Override base URL (openai provider only)
-        #[arg(long)]
-        base_url: Option<String>,
-        /// Resume session uuid
-        #[arg(long)]
-        session: Option<String>,
-        /// Thinking level: off|minimal|low|medium|high|xhigh|max|ultra
-        #[arg(long)]
-        thinking: Option<String>,
-        /// Prefer lower-latency effort cap
-        #[arg(long, default_value_t = false)]
-        fast: bool,
+        #[command(flatten)]
+        args: chat::ChatArgs,
     },
     /// Durable chat sessions
     Sessions,
@@ -700,17 +687,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             );
             Ok(())
         }
-        Commands::Chat {
-            message,
-            provider,
-            model,
-            base_url,
-            session,
-            thinking,
-            fast,
-        } => chat::run_chat(
-            &cli.home, message, provider, model, base_url, session, thinking, fast,
-        ),
+        Commands::Chat { args } => chat::run_chat(&cli.home, args, cli.embedded),
         Commands::Goal { args } => with_session(&cli.home, args.session.clone(), |kernel| {
             goal::run_goal(kernel, &args)
         }),

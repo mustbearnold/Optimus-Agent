@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **158 folders**, **861 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **158 folders**, **863 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -158,8 +158,8 @@ Optimus Agent/
 │   ├── MIGRATION_REPORT.md
 │   ├── claude-settings-local.json
 │   └── github-conventions.md
-├── apps/ (245 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
-│   ├── optimus-cli/ (20 files) — Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.
+├── apps/ (246 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
+│   ├── optimus-cli/ (21 files) — Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.
 │   │   ├── src/ (13 files)
 │   │   │   ├── chat.rs
 │   │   │   ├── children.rs
@@ -174,9 +174,10 @@ Optimus Agent/
 │   │   │   ├── skills.rs
 │   │   │   ├── telegram_cmd.rs
 │   │   │   └── vertical_cmd.rs
-│   │   ├── tests/ (6 files)
+│   │   ├── tests/ (7 files)
 │   │   │   ├── capability_probe.rs
 │   │   │   ├── chat_auto.rs
+│   │   │   ├── client_mode.rs
 │   │   │   ├── doctor_durability.rs
 │   │   │   ├── eval_compare.rs
 │   │   │   ├── eval_report.rs
@@ -459,7 +460,7 @@ Optimus Agent/
 │       └── vite.config.ts
 ├── assets/ (1 files) — Product icons and resources consumed by installers and installed surfaces.
 │   └── optimus-agent.svg
-├── crates/ (219 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
+├── crates/ (220 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
 │   ├── optimus-agent/ (2 files) — Typed specialist registry, invocation contracts, and durable invocation ledger.
 │   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
@@ -670,8 +671,8 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── command_classification.rs
 │   │   └── Cargo.toml
-│   ├── optimus-runtime/ (26 files) — Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.
-│   │   ├── src/ (13 files)
+│   ├── optimus-runtime/ (27 files) — Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.
+│   │   ├── src/ (14 files)
 │   │   │   ├── owned_localhost/ (3 files)
 │   │   │   │   ├── global.rs
 │   │   │   │   ├── listener_proof.rs
@@ -684,6 +685,7 @@ Optimus Agent/
 │   │   │   ├── owned_localhost.rs
 │   │   │   ├── policy_bridge.rs
 │   │   │   ├── process_ownership.rs
+│   │   │   ├── secret_basename.rs
 │   │   │   ├── toolchain.rs
 │   │   │   └── workspace_identity.rs
 │   │   ├── tests/ (12 files)
@@ -1041,9 +1043,9 @@ Optimus Agent/
 | `.config/` | 1 | 1 | Versioned nextest configuration used by repository verification. |
 | `.githooks/` | 1 | 3 | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. |
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
-| `apps/` | 54 | 245 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
+| `apps/` | 54 | 246 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
-| `crates/` | 47 | 219 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
+| `crates/` | 47 | 220 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
 | `docs/` | 5 | 123 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 80 | Deterministic repository gates, generation, installation, and diagnostics. |

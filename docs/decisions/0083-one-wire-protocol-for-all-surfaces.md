@@ -22,6 +22,7 @@ validated_by:
   - scripts/tests/test_surface_contract.py
   - crates/optimus-host/tests/serve_protocol.rs
   - apps/optimus-cli/tests/capability_probe.rs
+  - apps/optimus-cli/tests/client_mode.rs
   - docs/architecture/surface-protocol.schema.json
   - docs/architecture/surface-protocol.registry.json
   - crates/optimus-host/src/spawn_decision.rs

@@ -39,6 +39,10 @@ use crate::serve::{EXIT_BIND_OR_SECURITY, EXIT_REFUSED};
 pub const RECORD_WAIT: Duration = Duration::from_secs(5);
 /// Record-probe interval during the spawn wait (spec-015 B1).
 pub const RECORD_PROBE: Duration = Duration::from_millis(250);
+/// WS reader poll tick: the socket read timeout that lets the reader thread
+/// service the outbound channel while no inbound frame is pending
+/// (serve-side POLL_TICK parity, ws.rs:34-35).
+const WS_POLL_TICK: Duration = Duration::from_millis(100);
 
 /// Why a client could not reach a host (named diagnostics, spec-015 B1).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -166,8 +170,15 @@ pub fn connect(home: &Path, port: u16) -> ConnectOutcome {
             Ok(None) => {}
             Err(_) => return ConnectOutcome::Diagnostic(ConnectDiagnostic::SpawnFailed(-1)),
         }
-        if healthy_record(home).is_some() {
-            return ConnectOutcome::Spawned(HostClient::stdio(child, stdin, stdout));
+        // Only the child WE spawned counts as a successful spawn: the child
+        // writes its record with its own pid (record.rs:72), so a healthy
+        // record with a DIFFERENT pid is a pre-existing holder — the child
+        // is about to refuse it (exit 3) and the client must attach instead
+        // of speaking stdio to a dying child (regression: B2 attach).
+        if let Some(record) = healthy_record(home) {
+            if record.pid == child.id() {
+                return ConnectOutcome::Spawned(HostClient::stdio(child, stdin, stdout));
+            }
         }
         if Instant::now() >= deadline {
             break;
@@ -269,15 +280,21 @@ pub struct HostClient {
     child: Option<Child>,
     /// The stdio write half.
     stdin: Option<Mutex<Box<dyn Write + Send>>>,
-    /// The WebSocket write half, when attached.
-    ws: Option<
-        Arc<
-            Mutex<tungstenite::WebSocket<tungstenite::stream::MaybeTlsStream<std::net::TcpStream>>>,
-        >,
-    >,
+    /// The WebSocket write half, when attached: serialized frames sent to
+    /// the reader thread's outbound channel (one thread owns the socket for
+    /// reads AND writes — see `ws_attach`).
+    ws: Option<mpsc::Sender<WsOutbound>>,
     /// The record token, when attached over WebSocket (hello credential).
     ws_ticket: Option<String>,
     next_id: AtomicU64,
+}
+
+/// Frames the caller hands to the WS reader thread. `Close` mirrors the
+/// serve's `Outbound::Close`: the reader performs the polite close
+/// handshake and exits.
+enum WsOutbound {
+    Frame(String),
+    Close,
 }
 
 impl std::fmt::Debug for HostClient {
@@ -376,62 +393,101 @@ impl HostClient {
     }
 
     /// Attach to a running serve over WebSocket with the record token.
+    ///
+    /// No hello is sent here: the caller's `hello`/`hello_as` is the
+    /// handshake on BOTH carriers, so one code path presents the credential
+    /// and the serve's second-hello rejection (dispatch.rs:441) can never
+    /// fire. The ticket rides on the client for `hello_as` to present.
+    ///
+    /// ONE thread owns the socket and multiplexes reads and writes (the
+    /// serve-side pattern, ws.rs:15-17): the reader thread drains the
+    /// outbound channel into the socket and dispatches inbound frames.
+    /// A second thread sharing the socket through a mutex would deadlock —
+    /// a reader blocked in `read()` holds the socket while `write()` waits
+    /// for it (regression: the pre-B2 attach path hung until the serve's
+    /// 30 s hello deadline closed the connection).
     fn ws_attach(record: &HostRuntimeRecord) -> Result<Self, String> {
         let url = format!("ws://127.0.0.1:{}/ws", record.port);
         let (mut socket, _) = tungstenite::connect(url)
             .map_err(|error| format!("websocket attach failed: {error}"))?;
-        let hello = json!({
-            "jsonrpc": "2.0",
-            "id": 0,
-            "method": "hello",
-            "params": {
-                "protocol_version": PROTOCOL_VERSION,
-                "client_kind": "tui",
-                "ticket": record.token,
-            },
-        });
-        socket
-            .send(tungstenite::Message::Text(hello.to_string().into()))
-            .map_err(|error| format!("hello send failed: {error}"))?;
+        // The reader thread polls with a short socket timeout so outbound
+        // frames are serviced while no inbound frame is pending (serve-side
+        // POLL_TICK, ws.rs:34-35).
+        if let tungstenite::stream::MaybeTlsStream::Plain(stream) = socket.get_mut() {
+            let _ = stream.set_read_timeout(Some(WS_POLL_TICK));
+        }
 
         let pending: PendingTable = Arc::new(Mutex::new(HashMap::new()));
         let streams: StreamTable = Arc::new(Mutex::new(HashMap::new()));
         let reader_pending = Arc::clone(&pending);
         let reader_streams = Arc::clone(&streams);
-        let writer = Arc::new(Mutex::new(socket));
-        let writer_thread = Arc::clone(&writer);
+        let (out_tx, out_rx) = mpsc::channel::<WsOutbound>();
+        let reader_out = out_rx;
         std::thread::spawn(move || {
-            let mut socket = writer_thread.lock().unwrap();
             loop {
-                let Ok(message) = socket.read() else {
-                    break;
-                };
-                let tungstenite::Message::Text(text) = message else {
-                    continue;
-                };
-                let Some(frame) = parse_inbound(&text) else {
-                    continue;
-                };
-                match frame {
-                    Inbound::Reply { id, result } => {
-                        if let Some(tx) = reader_pending.lock().unwrap().remove(&id) {
-                            let _ = tx.send(Ok(result));
+                // Drain outbound first: requests, events, and the close
+                // handshake are serviced even while the socket is idle.
+                while let Ok(item) = reader_out.try_recv() {
+                    match item {
+                        WsOutbound::Frame(line) => {
+                            if socket
+                                .send(tungstenite::Message::Text(line.into()))
+                                .is_err()
+                            {
+                                break;
+                            }
                         }
-                    }
-                    Inbound::Error { id, code, message } => {
-                        if let Some(tx) = reader_pending.lock().unwrap().remove(&id) {
-                            let _ = tx.send(Err(format!("{message} (code {code})")));
-                        }
-                    }
-                    Inbound::Event { stream_id, event } => {
-                        if let Some(tx) = reader_streams.lock().unwrap().get(&stream_id) {
-                            let _ = tx.send(event.clone());
+                        WsOutbound::Close => {
+                            let _ = socket.close(None);
+                            return;
                         }
                     }
                 }
-            }
-            for (_, tx) in reader_pending.lock().unwrap().drain() {
-                let _ = tx.send(Err("connection lost".to_string()));
+                match socket.read() {
+                    Ok(tungstenite::Message::Text(text)) => {
+                        let Some(frame) = parse_inbound(&text) else {
+                            continue;
+                        };
+                        match frame {
+                            Inbound::Reply { id, result } => {
+                                if let Some(tx) = reader_pending.lock().unwrap().remove(&id) {
+                                    let _ = tx.send(Ok(result));
+                                }
+                            }
+                            Inbound::Error { id, code, message } => {
+                                if let Some(tx) = reader_pending.lock().unwrap().remove(&id) {
+                                    let _ = tx.send(Err(format!("{message} (code {code})")));
+                                }
+                            }
+                            Inbound::Event { stream_id, event } => {
+                                if let Some(tx) = reader_streams.lock().unwrap().get(&stream_id) {
+                                    let _ = tx.send(event.clone());
+                                }
+                            }
+                        }
+                    }
+                    Ok(tungstenite::Message::Ping(payload)) => {
+                        let _ = socket.send(tungstenite::Message::Pong(payload));
+                    }
+                    Ok(tungstenite::Message::Close(_)) => {
+                        for (_, tx) in reader_pending.lock().unwrap().drain() {
+                            let _ = tx.send(Err("connection lost".to_string()));
+                        }
+                        return;
+                    }
+                    Ok(_) => {}
+                    Err(tungstenite::Error::Io(error))
+                        if matches!(
+                            error.kind(),
+                            std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                        ) => {}
+                    Err(_) => {
+                        for (_, tx) in reader_pending.lock().unwrap().drain() {
+                            let _ = tx.send(Err("connection lost".to_string()));
+                        }
+                        return;
+                    }
+                }
             }
         });
         Ok(Self {
@@ -439,7 +495,7 @@ impl HostClient {
             streams,
             child: None,
             stdin: None,
-            ws: Some(writer),
+            ws: Some(out_tx),
             ws_ticket: Some(record.token.clone()),
             next_id: AtomicU64::new(1),
         })
@@ -453,10 +509,8 @@ impl HostClient {
                 .and_then(|_| stdin.flush())
                 .map_err(|error| format!("stdio write failed: {error}"))
         } else if let Some(ws) = &self.ws {
-            ws.lock()
-                .unwrap()
-                .send(tungstenite::Message::Text(line.into()))
-                .map_err(|error| format!("websocket write failed: {error}"))
+            ws.send(WsOutbound::Frame(line))
+                .map_err(|_| "websocket write failed: connection closed".to_string())
         } else {
             Err("client has no carrier".to_string())
         }
@@ -517,9 +571,17 @@ impl HostClient {
     /// `handshake.rs:133-147`). On a WebSocket attach the record token is
     /// presented.
     pub fn hello(&self) -> Result<Value, String> {
+        self.hello_as("tui")
+    }
+
+    /// Hello presenting an explicit `client_kind` (spec-015 B2: the CLI
+    /// speaks the wire as `cli`, the TUI as `tui`). Credential rules are
+    /// identical for renderer/tui/cli (handshake.rs:133-147); the kind only
+    /// labels the surface.
+    pub fn hello_as(&self, kind: &str) -> Result<Value, String> {
         let mut params = json!({
             "protocol_version": PROTOCOL_VERSION,
-            "client_kind": "tui",
+            "client_kind": kind,
         });
         if let Some(ticket) = &self.ws_ticket {
             params["ticket"] = json!(ticket);
@@ -527,12 +589,12 @@ impl HostClient {
         self.call("hello", params)
     }
 
-    /// Close the connection: drop stdin (stdio EOF exits 0, R9) or close
-    /// the WebSocket.
+    /// Close the connection: drop stdin (stdio EOF exits 0, R9) or ask the
+    /// WS reader thread to perform the polite close handshake.
     pub fn close(&mut self) {
         self.stdin.take();
         if let Some(ws) = &self.ws {
-            let _ = ws.lock().unwrap().close(None);
+            let _ = ws.send(WsOutbound::Close);
         }
     }
 

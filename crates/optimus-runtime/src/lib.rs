@@ -6,6 +6,7 @@ mod effect_outcome;
 mod effect_preflight;
 mod owned_localhost;
 mod process_ownership;
+mod secret_basename;
 pub mod toolchain;
 mod workspace_identity;
 use process_ownership::*;
@@ -84,19 +85,7 @@ pub const MAX_CAPTURE_BYTES: usize = 32 * 1024;
 ///
 /// This is the single policy authority shared by runtime effects and kernel
 /// filesystem-root callers.
-pub fn is_secret_basename(name: &str) -> bool {
-    let lower = name.to_ascii_lowercase();
-    // `.env`, `.env.local`, `.env.production`, ... — environment-scoped env
-    // files carry the same credentials as the bare `.env`.
-    lower.starts_with(".env")
-        || matches!(
-            lower.as_str(),
-            // Config credentials and SSH private keys. The `id_*` set covers
-            // the OpenSSH key types beyond `id_rsa`.
-            "auth.json" | "id_rsa" | "id_ed25519" | "id_ed448" | "id_ecdsa" | "id_dsa" | ".netrc"
-        )
-        || lower.ends_with(".pem")
-}
+pub use secret_basename::is_secret_basename;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct CommandCapture {
@@ -1329,44 +1318,5 @@ mod windows_process_tests {
         );
         assert_ne!(in_job, 0, "child is not owned by the expected Job Object");
         guard.kill_and_reap().expect("terminate contained tree");
-    }
-}
-
-#[cfg(test)]
-mod secret_basename_tests {
-    use super::is_secret_basename;
-
-    #[test]
-    fn denies_exact_credential_filenames() {
-        for name in [".env", "auth.json", "id_rsa", ".netrc"] {
-            assert!(is_secret_basename(name), "{name} should be denied");
-        }
-    }
-
-    #[test]
-    fn denies_ssh_private_key_types() {
-        for name in ["id_ed25519", "id_ed448", "id_ecdsa", "id_dsa"] {
-            assert!(is_secret_basename(name), "{name} should be denied");
-        }
-    }
-
-    #[test]
-    fn denies_environment_scoped_env_files() {
-        for name in [".env.local", ".env.production", ".env.test", ".ENV.PROD"] {
-            assert!(is_secret_basename(name), "{name} should be denied");
-        }
-    }
-
-    #[test]
-    fn denies_pem_suffix_case_insensitively() {
-        assert!(is_secret_basename("key.pem"));
-        assert!(is_secret_basename("CERT.PEM"));
-    }
-
-    #[test]
-    fn allows_ordinary_filenames() {
-        for name in ["readme.md", "env.txt", "notes", "id_rsa.pub", ".gitignore"] {
-            assert!(!is_secret_basename(name), "{name} should be allowed");
-        }
     }
 }
