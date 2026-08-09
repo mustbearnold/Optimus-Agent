@@ -16,8 +16,11 @@ pub fn is_secret_basename(name: &str) -> bool {
         || matches!(
             lower.as_str(),
             // Config credentials and SSH private keys. The `id_*` set covers
-            // the OpenSSH key types beyond `id_rsa`.
-            "auth.json" | "id_rsa" | "id_ed25519" | "id_ed448" | "id_ecdsa" | "id_dsa" | ".netrc"
+            // the OpenSSH key types beyond `id_rsa`, including the
+            // FIDO2-backed security-key types (`id_*_sk`), whose private keys
+            // must be protected just like any other.
+            "auth.json" | "id_rsa" | "id_ed25519" | "id_ed448" | "id_ecdsa" | "id_dsa"
+                | "id_ed25519_sk" | "id_ecdsa_sk" | ".netrc"
         )
         || lower.ends_with(".pem")
 }
@@ -36,6 +39,13 @@ mod tests {
     #[test]
     fn denies_ssh_private_key_types() {
         for name in ["id_ed25519", "id_ed448", "id_ecdsa", "id_dsa"] {
+            assert!(is_secret_basename(name), "{name} should be denied");
+        }
+    }
+
+    #[test]
+    fn denies_ssh_security_key_private_key_types() {
+        for name in ["id_ed25519_sk", "id_ecdsa_sk"] {
             assert!(is_secret_basename(name), "{name} should be denied");
         }
     }
