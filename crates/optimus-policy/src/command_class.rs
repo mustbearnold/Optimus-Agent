@@ -616,14 +616,29 @@ mod tests {
         assert_eq!(
             class(
                 "python",
-                &["build-pip-step.py", "pip", "-m", "pip", "install", "requests"]
+                &[
+                    "build-pip-step.py",
+                    "pip",
+                    "-m",
+                    "pip",
+                    "install",
+                    "requests"
+                ]
             ),
             CommandClass::PackageAdd
         );
         assert_eq!(
             class(
                 "python",
-                &["setup.py", "pip", "-m", "pip", "install", "-r", "requirements.txt"]
+                &[
+                    "setup.py",
+                    "pip",
+                    "-m",
+                    "pip",
+                    "install",
+                    "-r",
+                    "requirements.txt"
+                ]
             ),
             CommandClass::PackageSync
         );

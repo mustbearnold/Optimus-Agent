@@ -55,13 +55,13 @@
       "resolved_files": 0
     },
     "architecture-state-memory": {
-      "binding_sha256": "32bcfe3b587506892411d5309db3352397a563fe43970c32f9b364268551dc1f",
+      "binding_sha256": "75616cbf8b678fbf7a6c7c60ee5bdd047c14d653002f0cc9bcdb471f246af334",
       "document_sha256": "0d1dcd429eb3d74373f249448ae016ed08fd1fa8ad4f3c695e440f1eea69b9cb",
       "path": "docs/architecture/state-and-memory.md",
       "resolved_files": 3
     },
     "architecture-system-overview": {
-      "binding_sha256": "be0031e7c36442e78632dc47466504fefb3a8f25fe88c8cd25dbbc8760143827",
+      "binding_sha256": "6330ee6b2128e04f0010020a77eb8faed539b78795e072f09f4b6344772d05e3",
       "document_sha256": "c1d9e0b3d46fdfade1beaf1ddbe0bc2b30677bc6f22afcb5ce81545818440930",
       "path": "docs/architecture.md",
       "resolved_files": 20
@@ -205,13 +205,13 @@
       "resolved_files": 4
     },
     "decisions-0019-capability-files-and-unified-campaign-authority": {
-      "binding_sha256": "76cd7c6401ba6815c1504df74ecbf2f03bbf653735ad848cef7cceb9f4ddce72",
+      "binding_sha256": "b5c520c90276de038b9a6e7323c50bba974b0e1a0bade8c17796049d6222fb81",
       "document_sha256": "d5b213f1c85608fb41c3d9b1a4c0bab4761a38afcd5a39fe2f753a9879eb8e35",
       "path": "docs/decisions/0019-capability-files-and-unified-campaign-authority.md",
       "resolved_files": 11
     },
     "decisions-0020-work-graph-integrity-and-loopback-security": {
-      "binding_sha256": "fe781dad36f2e41f4aaf73638bf254da19645db5c0f507a3ecb45a4dae3358e4",
+      "binding_sha256": "c85bdc59a86ec9a9c13f61e1d9ce96f1469cf2568eb1874b8023fdf8b70e5c78",
       "document_sha256": "d44bd3453f9ff8af53683670bb641bf755dc074c07ec7a53ba36bed42e7f9987",
       "path": "docs/decisions/0020-work-graph-integrity-and-loopback-security.md",
       "resolved_files": 24
@@ -277,7 +277,7 @@
       "resolved_files": 100
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "4557702c0b5949337d3194a3afe18a2a05a7048759191864286c02ec31ff03c1",
+      "binding_sha256": "1628d90d6c359b07639a4c812319bbf3ba80de335e69bd8be03d56ae237a7d88",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 132
@@ -301,7 +301,7 @@
       "resolved_files": 25
     },
     "decisions-0035-command-capability-envelope": {
-      "binding_sha256": "13e95b4bb22d1b12b18c3ca25ef629d98999fa4eecf133f7f21b5b9d474e6c16",
+      "binding_sha256": "a7093207fe7833ac03c27a618efffcc6aaabcc41bb15ce26389035e818f95cee",
       "document_sha256": "456b8fccf9ae7afd1ba5446e97baf78eab5895842ddf20becd922ef85e961a5f",
       "path": "docs/decisions/0035-command-capability-envelope.md",
       "resolved_files": 15
@@ -325,7 +325,7 @@
       "resolved_files": 8
     },
     "decisions-0039-files-mutate-effect-taxonomy": {
-      "binding_sha256": "254601a7fb47d93389274253e82e45f2a31ac0b5b2de42c2f8b1f752d0792bae",
+      "binding_sha256": "34973c22a27ddfab085d3434c6007786a8d3afedbb7ee3718b532cc9b468c6b2",
       "document_sha256": "776ed3073eccdf904ae89db6bd0622c553525b606e4785a3595d87ad0f0d258c",
       "path": "docs/decisions/0039-files-mutate-effect-taxonomy.md",
       "resolved_files": 12
@@ -355,7 +355,7 @@
       "resolved_files": 6
     },
     "decisions-0044-bounded-project-trust-and-capability-broker": {
-      "binding_sha256": "bc587bd6e6e4a2212839304acdfc2f61d487dadaf80b7ec1be6e8bf610a53321",
+      "binding_sha256": "c52639538d7ff79d37bbcb33a29291256e56910f008ca755ef46965dc0f701ed",
       "document_sha256": "f3f6239edf51227785807adbb471ff77cf47a3f3f7013dcd347f8bbd7cf6b231",
       "path": "docs/decisions/0044-bounded-project-trust-and-capability-broker.md",
       "resolved_files": 18
@@ -409,7 +409,7 @@
       "resolved_files": 6
     },
     "decisions-0059-standard-autonomy-is-consequence-bounded": {
-      "binding_sha256": "d171983984a21c402246f1c8a2b1f2806e50474d1b9943f1fe8ebcb8095b95f2",
+      "binding_sha256": "a82966ad9c71945e74d22e705797427affa7d89fbd6d7da8735bce2559172679",
       "document_sha256": "863740a9a132e639d213fabe070a30c57920638718307ee83884b4407b3ca7dc",
       "path": "docs/decisions/0059-standard-autonomy-is-consequence-bounded.md",
       "resolved_files": 6
@@ -523,7 +523,7 @@
       "resolved_files": 12
     },
     "decisions-0079-keep-bun-as-the-js-package-manager": {
-      "binding_sha256": "08be497351c995733ff71d2f04dfe6c5d848920ce320778eef9d6dd7508ac050",
+      "binding_sha256": "87c7d7e059f1b798a31abcb8ff94b0824b5077d30135b1c40fdda61fd23d5893",
       "document_sha256": "a63634cf6d597c8369a736b5a3fe058f146965910ae0e742d209f6f7be49d176",
       "path": "docs/decisions/0079-keep-bun-as-the-js-package-manager.md",
       "resolved_files": 7
@@ -559,7 +559,7 @@
       "resolved_files": 14
     },
     "decisions-0085-user-sovereignty-over-workflow-and-security-posture": {
-      "binding_sha256": "0c72d14605850deb1dd70e9ab9c4a33d9782f28627f604d64969b332d6bc88be",
+      "binding_sha256": "b428d7a3a938f32ebbb8d676bc5ec12fa3f2380fa0dde401b9af6ebd3db5cf92",
       "document_sha256": "86339ffd9f9d48c8df9efba525e4c8f437c0b6d9309ce6d2ff12d62d167402d5",
       "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
       "resolved_files": 5
@@ -625,7 +625,7 @@
       "resolved_files": 88
     },
     "spec-004-runtime-effects": {
-      "binding_sha256": "3640e37b0395d176c2100178609b5fa3234051f8dffcda9b7ace5a67ea32bb6a",
+      "binding_sha256": "dec2e1718bf55318bde804f84077be592280a1b893d48d12dea78b8f99e85913",
       "document_sha256": "f58986c0460b1769463b6b01fc22ec5c7a4cb1a1ef0594fb2c610c7d12114544",
       "path": "specs/004-runtime-effects/spec.md",
       "resolved_files": 32
@@ -667,7 +667,7 @@
       "resolved_files": 49
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "826bfac5c093b27211d4e053ba4f65da00d2e9ed91612cc2ef8776d3aebcfcf9",
+      "binding_sha256": "cbc6f0cc7fed360b11b95ffd6cfc9f8daf97e9cc0dd76ea52780895ae05e0c29",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 90
@@ -685,7 +685,7 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "05584f68f408e17c99924d0eb3583d0dc68cb6d6702b21619bdf10f104a8de90",
+      "binding_sha256": "4f93fbb560d2ab171240bb34f356a1f066254a349d1405a991e342b0dd12469d",
       "document_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
@@ -781,7 +781,7 @@
       "resolved_files": 133
     },
     "specs-conventions": {
-      "binding_sha256": "6d7450204125edf171bc4d95ec01c2d0f32da3dd4c10c9d21d2145dcd93710db",
+      "binding_sha256": "cc64e5eeab8234f2c0d5828b5a9e267598e5e0ee04da0f4c831972308b26adcc",
       "document_sha256": "c816724ffcfb8379ed6edda866cfe407b0ed05ba0f7d59b39819b17b2e53d81f",
       "path": "specs/conventions.md",
       "resolved_files": 6
