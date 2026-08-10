@@ -146,6 +146,44 @@ impl CapabilityId {
         }
     }
 
+    /// Resolve a capability from its canonical [`CapabilityId::as_str`] name.
+    ///
+    /// Unknown names fall closed to `None` so a caller resolving a capability
+    /// string from a surface/UI or a persisted form never guesses; a broker
+    /// that cannot name a capability must not fabricate authority for it.
+    pub fn parse(name: &str) -> Option<Self> {
+        match name {
+            "fs.project.read" => Some(Self::FsProjectRead),
+            "fs.project.write" => Some(Self::FsProjectWrite),
+            "fs.project.rename" => Some(Self::FsProjectRename),
+            "fs.project.delete" => Some(Self::FsProjectDelete),
+            "process.project.execute" => Some(Self::ProcessProjectExecute),
+            "process.project.serve" => Some(Self::ProcessProjectServe),
+            "package.sync" => Some(Self::PackageSync),
+            "package.add" => Some(Self::PackageAdd),
+            "network.public.read" => Some(Self::NetworkPublicRead),
+            "network.registry.read" => Some(Self::NetworkRegistryRead),
+            "network.localhost.owned" => Some(Self::NetworkLocalhostOwned),
+            "network.private" => Some(Self::NetworkPrivate),
+            "credential.use" => Some(Self::CredentialUse),
+            "credential.read_raw" => Some(Self::CredentialReadRaw),
+            "git.local.read" => Some(Self::GitLocalRead),
+            "git.local.write" => Some(Self::GitLocalWrite),
+            "git.remote.push" => Some(Self::GitRemotePush),
+            "git.remote.pull_request" => Some(Self::GitRemotePullRequest),
+            "browser.public.read" => Some(Self::BrowserPublicRead),
+            "browser.localhost.owned" => Some(Self::BrowserLocalhostOwned),
+            "external.send" => Some(Self::ExternalSend),
+            "external.publish" => Some(Self::ExternalPublish),
+            "external.deploy" => Some(Self::ExternalDeploy),
+            "data.remote.write" => Some(Self::DataRemoteWrite),
+            "data.remote.delete" => Some(Self::DataRemoteDelete),
+            "system.modify" => Some(Self::SystemModify),
+            "commerce.spend" => Some(Self::CommerceSpend),
+            _ => None,
+        }
+    }
+
     pub fn is_project_mutation(self) -> bool {
         matches!(
             self,
@@ -808,6 +846,72 @@ mod tests {
             &req(CapabilityId::FsProjectWrite),
         );
         assert!(d.is_allow());
+    }
+
+    #[test]
+    fn capability_id_as_str_round_trips_through_parse() {
+        // Every capability must resolve back from its canonical as_str() name.
+        // A new variant added to the enum but forgotten in `parse` would fail
+        // this test, keeping the vocabulary and its name parser in lockstep.
+        let capabilities = [
+            CapabilityId::FsProjectRead,
+            CapabilityId::FsProjectWrite,
+            CapabilityId::FsProjectRename,
+            CapabilityId::FsProjectDelete,
+            CapabilityId::ProcessProjectExecute,
+            CapabilityId::ProcessProjectServe,
+            CapabilityId::PackageSync,
+            CapabilityId::PackageAdd,
+            CapabilityId::NetworkPublicRead,
+            CapabilityId::NetworkRegistryRead,
+            CapabilityId::NetworkLocalhostOwned,
+            CapabilityId::NetworkPrivate,
+            CapabilityId::CredentialUse,
+            CapabilityId::CredentialReadRaw,
+            CapabilityId::GitLocalRead,
+            CapabilityId::GitLocalWrite,
+            CapabilityId::GitRemotePush,
+            CapabilityId::GitRemotePullRequest,
+            CapabilityId::BrowserPublicRead,
+            CapabilityId::BrowserLocalhostOwned,
+            CapabilityId::ExternalSend,
+            CapabilityId::ExternalPublish,
+            CapabilityId::ExternalDeploy,
+            CapabilityId::DataRemoteWrite,
+            CapabilityId::DataRemoteDelete,
+            CapabilityId::SystemModify,
+            CapabilityId::CommerceSpend,
+        ];
+        for capability in capabilities {
+            assert_eq!(
+                CapabilityId::parse(capability.as_str()),
+                Some(capability),
+                "as_str() and parse() must agree for {:?}",
+                capability
+            );
+        }
+    }
+
+    #[test]
+    fn capability_id_parse_falls_closed_on_unknown_names() {
+        // A broker that cannot name a capability must not fabricate authority:
+        // unknown spellings resolve to None so callers keep their own
+        // fail-closed default instead of silently mapping to a real capability.
+        for unknown in [
+            "fs.project.write ", // trailing whitespace must not slip through
+            "fs.project.READ",
+            "fs.project",
+            "process.execute",
+            "",
+            "system.modify ",
+            "delete.everything",
+        ] {
+            assert_eq!(
+                CapabilityId::parse(unknown),
+                None,
+                "unexpected parse of {unknown:?}"
+            );
+        }
     }
 
     #[test]
