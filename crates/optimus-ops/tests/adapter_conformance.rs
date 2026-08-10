@@ -10,10 +10,9 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use optimus_ops::{
-    adapter_cycle, enqueue, list_ambiguous_sends, list_inbox, list_outbox_receipts,
-    list_transport_events, record_transport_event, spawn_adapter_worker, spawn_snapshot_writer,
-    AdapterCycleResult, AdapterState, RawInbound, SendOutcome, SupervisorState, TransportAdapter,
-    TransportId,
+    adapter_cycle, list_ambiguous_sends, list_inbox, list_outbox_receipts, list_transport_events,
+    record_transport_event, spawn_adapter_worker, spawn_snapshot_writer, AdapterState, RawInbound,
+    SendOutcome, SupervisorState, TransportAdapter, TransportId,
 };
 use tempfile::tempdir;
 

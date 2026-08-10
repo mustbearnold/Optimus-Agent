@@ -216,8 +216,9 @@ fn rest_outbound_shape_is_verified_on_a_real_socket() {
     let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();
     let server = Arc::new(tiny_http::Server::http(addr).unwrap());
     let base = format!("http://{}", server.server_addr());
-    let recorded: Arc<Mutex<Vec<(String, String, Vec<(String, String)>, String)>>> =
-        Arc::new(Mutex::new(Vec::new()));
+    // One recorded REST call: method, url, headers, body.
+    type Recorded = (String, String, Vec<(String, String)>, String);
+    let recorded: Arc<Mutex<Vec<Recorded>>> = Arc::new(Mutex::new(Vec::new()));
 
     let worker = Arc::clone(&server);
     let log = Arc::clone(&recorded);

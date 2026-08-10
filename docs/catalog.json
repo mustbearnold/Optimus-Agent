@@ -1287,7 +1287,7 @@
     },
     {
       "authority": "supporting",
-      "content_sha256": "4a411b32be6d6d69c84a86fade41a54a464d39fa67aae5f97de58946ed7c22f0",
+      "content_sha256": "9c42e714f4f564a3b57f87c1cf1452f497162b551be61230a3e20d73913f4aa9",
       "headings": [
         "Optimus vs Hermes — evidence-backed SOTA scorecard",
         "Current ledger summary",
@@ -1305,7 +1305,7 @@
       "review_by": "2026-10-31",
       "reviewed_on": "2026-07-31",
       "status": "current",
-      "summary": "Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
+      "summary": "Updated: 2026-08-11 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
       "title": "Optimus vs Hermes — evidence-backed SOTA scorecard",
       "type": "explanation"
     },
@@ -3769,6 +3769,35 @@
     },
     {
       "authority": "record",
+      "content_sha256": "cfc7a98f623e85e11ab0d2e6f70058ce08f2a7364b99346c74dfe5937ca49c55",
+      "headings": [
+        "ADR-0091: WhatsApp and Signal transport choice",
+        "Status",
+        "Context",
+        "Decision",
+        "Signal: signal-cli as a supervised child process",
+        "WhatsApp: Meta Cloud API behind an operator-provided HTTPS webhook",
+        "Consequences",
+        "Alternatives considered",
+        "Reasons",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0091-whatsapp-signal-transport-choice",
+      "path": "docs/decisions/0091-whatsapp-signal-transport-choice.md",
+      "plane": "decision",
+      "review_by": "2026-12-11",
+      "reviewed_on": "2026-08-11",
+      "status": "current",
+      "summary": "WhatsApp and Signal ride the spec-017 transport contract behind two operator-facing choices. Signal uses signal-cli as a supervised child process (official protocol, JSON-RPC over a local socket, no inbound ports). WhatsApp uses the Meta Cloud API with an operator-provided public HTTPS webhook (official API, phone allowlist + webhook secret, fail-closed). Unofficial client-side protocols are rejected for both: they reverse-engineer the platforms' private wire formats, which is an unverifiable security and stability boundary.",
+      "title": "ADR-0091: WhatsApp and Signal transport choice",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4268,7 +4297,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "60d3ffc1650decb5f4e39ce0b3110f507a3268c4cf0261f842622561af79dae8",
+      "content_sha256": "7d31bfa2e3eedaa089e60a1e8889563f6861f4d39beadb0a5e8efb519cdc2c07",
       "headings": [
         "Surface protocol — one wire contract for CLI, TUI, and desktop",
         "Revision table",
@@ -4325,7 +4354,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "f51edd7a3f27deb3d505f5ad899d37dab2db7995cb9ebe3d16c275310232f78e",
+      "content_sha256": "b18601da3c56b1f42fc01a5eaccebdb0067d6cc562a2058cab91eb82d792f079",
       "headings": [
         "Spec-017: Gateway breadth — live multi-transport messaging",
         "Revision table",
@@ -4733,7 +4762,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "5ee048e5c958a53c0df45103c03c2978886dac50866fabef4f28857b973b3319",
+  "documents_sha256": "d8e3ddacfc0ce061e8c1ae4f5b4fdfe2d1c6eb5aa60fe377a039c0920d4f8aa5",
   "routes": [
     {
       "id": "architecture.blueprint",

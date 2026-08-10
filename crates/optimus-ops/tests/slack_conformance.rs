@@ -5,7 +5,6 @@
 //! The mock is a mock of the transport, so the adapter, its allowlist, the
 //! inbound filter, and the cycle contract are what these tests exercise.
 
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use optimus_ops::adapters::slack::{

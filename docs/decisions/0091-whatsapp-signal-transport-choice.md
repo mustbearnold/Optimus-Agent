@@ -9,13 +9,12 @@ reviewed_on: 2026-08-11
 review_by: 2026-12-11
 knowledge_type: decision
 covers:
-  - crates/optimus-ops/src/adapters/signal.rs
-  - crates/optimus-ops/src/adapters/whatsapp.rs
   - apps/optimus-cli/src/gateway_supervisor.rs
+  - crates/optimus-ops/src/transport.rs
 depends_on:
   - specs/017-gateway-breadth/spec.md
-  - docs/decisions/0070-outbound-send-reconciliation.md
-  - docs/decisions/0081-inbound-authorization-before-agent-turns.md
+  - docs/decisions/0070-an-outbound-send-is-a-durable-obligation.md
+  - docs/decisions/0081-truthful-approval-resolution-and-session-consent.md
 ---
 
 # ADR-0091: WhatsApp and Signal transport choice
@@ -114,11 +113,69 @@ review. Do not adopt it before that review.
   visible in the status surface (spec-017 R7).
 - No change to the outbound ledger, the allowlist model, or SmartDeny.
 
-## Alternatives rejected
+## Alternatives considered
 
-- Unofficial client protocols for either platform (private wire formats;
-  unverifiable security; churn and ban risk).
-- Native libsignal binding for Signal now (high effort, high risk; the
-  revisit condition covers it).
-- WhatsApp Cloud API without a webhook (Cloud API has no long-poll mode;
-  the official path is push-only).
+- **Unofficial client protocols for either platform** (whatsmeow-style /
+  private wire formats): rejected — unverifiable security boundary,
+  protocol churn, account risk. Revisited only through a dedicated review
+  if a future operator deployment cannot provide a public endpoint
+  (WhatsApp) or if the JVM runtime becomes unacceptable (Signal).
+- **Native `libsignal-client` binding for Signal now**: rejected — high
+  effort and high risk for no user-visible gain; the supervised signal-cli
+  child already delivers the official protocol. Revisit condition covers
+  it.
+- **WhatsApp Cloud API without a public endpoint (polling)**: not offered
+  by Meta; webhook push is the only official inbound. Rejected by the
+  platform, not by us.
+
+## Reasons
+
+- The repo's laws (constitution) require security boundaries enforced by
+  code and permissions; official protocols keep the boundary in audited
+  platform code.
+- The supervised-child pattern is already proven in this repo
+  (self-development supervisor: build before replace, health probe,
+  emergency stop), so the Signal adapter reuses an established runtime
+  shape instead of inventing one.
+- The allowlist + SmartDeny posture (ADR-0081) is transport-agnostic and
+  unchanged: authorization to converse never authorizes effects.
+
+## Risks
+
+- signal-cli: JVM runtime dependency (install-time cost, documented in the
+  runbook); JSON-RPC surface of the child must be version-pinned.
+- WhatsApp webhook: a new public surface. Mitigations: one path, mandatory
+  TLS, secret header before parsing, allowlist before any turn, fail-closed
+  diagnostics, supervised lifecycle.
+- Both transports depend on platform API stability; the revisit conditions
+  name the triggers.
+
+## Evaluation evidence
+
+- Mock-first conformance per spec-017 R9: both adapters are ordinary
+  `TransportAdapter` implementations riding the same claim→turn→settle
+  spine already exercised by
+  `crates/optimus-ops/tests/adapter_conformance.rs`.
+- Live smoke is operator-initiated with a real account; no live evidence is
+  claimed in this ADR.
+
+## Conditions for reconsideration
+
+- Signal: if the JVM runtime becomes unacceptable → evaluate native
+  libsignal with a dedicated review.
+- WhatsApp: if no operator deployment can provide a public HTTPS endpoint →
+  re-evaluate a supervised unofficial-protocol child with a dedicated
+  review.
+
+## Relevant code
+
+- `crates/optimus-ops/src/transport.rs` — the contract both adapters
+  implement.
+- `apps/optimus-cli/src/gateway_supervisor.rs` — the supervisor that owns
+  the signal-cli child and the webhook lifecycle.
+
+## Relevant tests
+
+- `crates/optimus-ops/tests/adapter_conformance.rs` — contract spine.
+- `crates/optimus-ops/tests/supervisor_isolation.rs` — worker isolation
+  (A3) the signal-cli child inherits.

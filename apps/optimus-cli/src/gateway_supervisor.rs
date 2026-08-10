@@ -11,9 +11,13 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use optimus_kernel::{
-    discord_open_adapter, email_open_adapter, list_outbox_receipts, read_supervisor_snapshot,
-    slack_open_adapter, spawn_adapter_worker, spawn_snapshot_writer, telegram_open_adapter,
-    write_supervisor_snapshot, AdapterState, AdapterStatus, InboundMessage, SupervisorState,
+    adapters::{
+        discord::open_adapter as discord_open_adapter, email::open_adapter as email_open_adapter,
+        slack::open_adapter as slack_open_adapter,
+    },
+    list_outbox_receipts, read_supervisor_snapshot, spawn_adapter_worker, spawn_snapshot_writer,
+    telegram_open_adapter, write_supervisor_snapshot, AdapterState, AdapterStatus, InboundMessage,
+    SupervisorState,
 };
 
 /// How often the supervisor persists its snapshot (cross-process status face).
