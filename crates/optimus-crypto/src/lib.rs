@@ -71,6 +71,12 @@ impl PartialEq<&str> for Sha256Digest {
     }
 }
 
+impl PartialEq<String> for Sha256Digest {
+    fn eq(&self, other: &String) -> bool {
+        self.0.eq_ignore_ascii_case(other.as_str())
+    }
+}
+
 impl std::str::FromStr for Sha256Digest {
     type Err = &'static str;
 
@@ -223,6 +229,24 @@ mod tests {
         // `str` overload
         let reference: &str = &upper;
         assert_eq!(digest, reference);
+    }
+
+    #[test]
+    fn sha256_digest_comparison_against_string_owned() {
+        // Regression/coverage: `PartialEq<String>` lets callers compare a
+        // digest against an owned `String` (e.g. one read from config or a
+        // store) directly, mirroring the existing `&str`/`str` impls. Without
+        // it the comparison only compiles after a manual `.as_str()`, and an
+        // upper-case owned string must still compare equal (case-insensitive
+        // rule).
+        let digest = Sha256Digest::digest(b"optimus");
+        let owned = digest.as_str().to_string();
+
+        assert_eq!(digest, owned);
+        assert_eq!(digest, owned.to_ascii_uppercase());
+
+        let other = Sha256Digest::digest(b"other");
+        assert_ne!(other, owned);
     }
 
     #[test]
