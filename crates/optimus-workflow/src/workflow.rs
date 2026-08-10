@@ -95,9 +95,12 @@ pub struct WorkflowPort {
 
 impl WorkflowPort {
     fn validate(&self) -> Result<()> {
+        let type_name = self.schema.get("type").and_then(Value::as_str);
         if !valid_identifier(&self.name)
             || !self.schema.is_object()
-            || self.schema.get("type").and_then(Value::as_str).is_none()
+            // The JSON-schema `type` must be a non-empty string; an empty one
+            // (e.g. `{"type": ""}`) is meaningless and must be rejected.
+            || !type_name.is_some_and(|name| !name.is_empty())
             || serde_json::to_vec(&self.schema)?.len() > 64 * 1024
         {
             return Err(invalid("workflow port name or schema is invalid"));
@@ -643,4 +646,75 @@ fn valid_identifier(value: &str) -> bool {
 
 fn invalid(message: impl Into<String>) -> WorkflowError {
     WorkflowError::Msg(message.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn port(schema: serde_json::Value) -> WorkflowPort {
+        WorkflowPort {
+            name: "input".to_string(),
+            schema,
+        }
+    }
+
+    #[test]
+    fn workflow_port_rejects_empty_schema_type() {
+        // Regression: `{"type": ""}` used to pass validation because the check
+        // only required a *present* string, not a non-empty one. An empty JSON
+        // schema type is meaningless and must be rejected.
+        assert!(port(json!({"type": ""})).validate().is_err());
+        // Valid and still-rejected shapes are unaffected.
+        assert!(port(json!({"type": "string"})).validate().is_ok());
+        assert!(port(json!({})).validate().is_err());
+        assert!(port(json!({"type": 1})).validate().is_err());
+    }
+
+    #[test]
+    fn workflow_version_parse_requires_canonical_semver() {
+        assert!(WorkflowVersion::parse("1.2.3").is_ok());
+        assert!(WorkflowVersion::parse("0.0.0").is_ok());
+        assert!(WorkflowVersion::parse("1.2").is_err());
+        assert!(WorkflowVersion::parse("1.2.3.4").is_err());
+        assert!(WorkflowVersion::parse("1.02.3").is_err()); // leading zero
+        assert!(WorkflowVersion::parse("1.2.3a").is_err()); // non-digit
+    }
+
+    #[test]
+    fn workflow_id_parse_enforces_identifier_shape() {
+        assert!(WorkflowId::parse("build").is_ok());
+        assert!(WorkflowId::parse("a1_b-c").is_ok());
+        assert!(WorkflowId::parse("Build").is_err()); // leading upper-case
+        assert!(WorkflowId::parse("").is_err());
+        assert!(WorkflowId::parse(&"a".repeat(65)).is_err());
+    }
+
+    #[test]
+    fn cron_and_gateway_status_adaptation() {
+        assert_eq!(
+            adapt_cron_attempt_status("running").unwrap(),
+            AdapterLifecycleStatus::Running
+        );
+        assert_eq!(
+            adapt_cron_attempt_status("released").unwrap(),
+            AdapterLifecycleStatus::Ambiguous
+        );
+        assert!(adapt_cron_attempt_status("bogus").is_err());
+
+        assert_eq!(
+            adapt_gateway_status("claimed", None).unwrap(),
+            AdapterLifecycleStatus::Running
+        );
+        assert_eq!(
+            adapt_gateway_status("failed", Some("cancelled")).unwrap(),
+            AdapterLifecycleStatus::Cancelled
+        );
+        assert_eq!(
+            adapt_gateway_status("failed", None).unwrap(),
+            AdapterLifecycleStatus::Failed
+        );
+        assert!(adapt_gateway_status("bogus", None).is_err());
+    }
 }
