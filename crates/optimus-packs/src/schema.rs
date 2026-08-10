@@ -183,7 +183,11 @@ mod tests {
 
     #[test]
     fn rejects_a_duplicated_required_entry() {
-        let input = schema(json!({ "a": { "type": "string" } }), json!(["a", "a"]), false);
+        let input = schema(
+            json!({ "a": { "type": "string" } }),
+            json!(["a", "a"]),
+            false,
+        );
         let err = validate_input_schema(&input).unwrap_err();
         assert!(err.contains("duplicated"));
     }
@@ -234,7 +238,11 @@ mod tests {
 
     #[test]
     fn rejects_an_unsupported_property_keyword() {
-        let input = schema(json!({ "a": { "type": "string", "format": "uri" } }), json!([]), false);
+        let input = schema(
+            json!({ "a": { "type": "string", "format": "uri" } }),
+            json!([]),
+            false,
+        );
         let err = validate_input_schema(&input).unwrap_err();
         assert!(err.contains("unsupported keyword"));
     }
