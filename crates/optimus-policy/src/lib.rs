@@ -67,7 +67,9 @@ impl AutonomyProfile {
             // quietly receiving the whole machine. `yolo` is the CLI flag of
             // that name; it moved into this table when the graph copy was
             // collapsed (the graph crate now re-exports this type).
-            "unrestricted_host" | "unrestricted" | "yolo" => Some(Self::UnrestrictedHost),
+            "unrestricted_host" | "unrestricted-host" | "unrestricted" | "yolo" => {
+                Some(Self::UnrestrictedHost)
+            }
             _ => None,
         }
     }
@@ -1268,6 +1270,19 @@ mod tests {
         assert_eq!(
             AutonomyProfile::parse("REVIEW-CHANGES"),
             Some(AutonomyProfile::ReviewChanges)
+        );
+        // "unrestricted-host" is the hyphenated spelling of
+        // "unrestricted_host", symmetric with the other underscore profiles.
+        // It stays explicit break-glass (the word "unrestricted" cannot be
+        // misread as ordinary), so it must parse like the underscore form
+        // rather than silently failing closed.
+        assert_eq!(
+            AutonomyProfile::parse("unrestricted-host"),
+            Some(AutonomyProfile::UnrestrictedHost)
+        );
+        assert_eq!(
+            AutonomyProfile::parse("UNRESTRICTED-HOST"),
+            Some(AutonomyProfile::UnrestrictedHost)
         );
         assert_eq!(
             AutonomyProfile::parse("standard"),
