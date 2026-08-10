@@ -64,26 +64,50 @@ def parse_unavailable(packs_source: str) -> set[str]:
     return set(re.findall(r'unavailable\(\s*"([a-z_]+)"', packs_source))
 
 
-def parse_ledger(coverage_source: str, const_name: str) -> set[str]:
-    """String entries of one `const NAME: [&str; N] = [ … ];` ledger."""
+def parse_ledger(coverage_source: str, const_name: str) -> set[str] | None:
+    """String entries of one `const NAME: [&str; N] = [ … ];` ledger.
+
+    Returns the parsed set, or ``None`` when the const does not appear at all.
+    ``None`` must stay distinct from an empty set: an absent const means the
+    ledger lost its shape (renamed or deleted) — a parser-level break, not a
+    legitimately cleared ledger — and must be reported as such, never as a
+    green.
+    """
     match = re.search(
         rf"const {const_name}[^=]*=\s*\[(.*?)\];",
         coverage_source,
         re.DOTALL,
     )
     if match is None:
-        return set()
+        return None
     return set(re.findall(r'"([a-z_]+)"', match.group(1)))
 
 
 def evaluate(
     dispatchable: set[str],
     unavailable: set[str],
-    exercised: set[str],
-    refused: set[str],
+    exercised: set[str] | None,
+    refused: set[str] | None,
     ceiling: frozenset[str] = SCAFFOLDS_REMAINING,
 ) -> list[str]:
     failures: list[str] = []
+    # A missing ledger const is a parser-level break (renamed or deleted), not a
+    # legitimately cleared ledger. Call it out before the per-name diffs below,
+    # which would otherwise drown the real signal in many "no entry" rows.
+    if exercised is None:
+        failures.append(
+            "coverage ledger has no DISPATCHABLE_EXERCISED const — the const was "
+            "renamed or the ledger lost its shape; refusing to treat that as an "
+            "empty ledger"
+        )
+    if refused is None:
+        failures.append(
+            "coverage ledger has no UNAVAILABLE_REFUSED const — the const was "
+            "renamed or the ledger lost its shape; refusing to treat that as an "
+            "empty ledger"
+        )
+    exercised = exercised or set()
+    refused = refused or set()
     for name in sorted(dispatchable - exercised):
         failures.append(
             f"dispatchable tool {name!r} has no entry in DISPATCHABLE_EXERCISED — "

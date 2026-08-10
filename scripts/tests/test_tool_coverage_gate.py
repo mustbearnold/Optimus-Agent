@@ -80,6 +80,27 @@ def main() -> int:
     }:
         failures.append(f"ledger parse drifted: {exercised} / {refused}")
 
+    # A missing ledger const must stay None — distinct from a legitimately
+    # cleared (empty) ledger — so a renamed/deleted const is never read as a
+    # green.
+    if gate.parse_ledger(LEDGER, "NOT_A_REAL_CONST") is not None:
+        failures.append(
+            "parse_ledger must return None for a missing const, not an empty set"
+        )
+
+    # An absent const is a parser-level break and must be named on its own.
+    verdict = gate.evaluate(dispatchable, unavailable, None, None, CEILING)
+    if not any("DISPATCHABLE_EXERCISED" in line and "const" in line for line in verdict):
+        failures.append("a missing DISPATCHABLE_EXERCISED const must be named")
+    if not any("UNAVAILABLE_REFUSED" in line and "const" in line for line in verdict):
+        failures.append("a missing UNAVAILABLE_REFUSED const must be named")
+
+    # A present-but-empty ledger is NOT a missing const: only the ordinary
+    # untested-tool failures apply, never the missing-const message.
+    verdict = gate.evaluate(dispatchable, unavailable, set(), set(), CEILING)
+    if any("const" in line for line in verdict):
+        failures.append("an empty-but-present ledger must not be called a missing const")
+
     # A matched world has only the dispatchable-pin complaint (the miniature
     # registry is smaller than the real pin) and nothing about names.
     verdict = gate.evaluate(dispatchable, unavailable, exercised, refused, CEILING)
