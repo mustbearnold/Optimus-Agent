@@ -86,6 +86,10 @@ EXCLUDED_PARTS = {
     # made 65.8% of the tree agent scratch: every worktree touch marked the whole
     # subsystem stale, and the walk cost ~2.9x what the real source costs.
     ".claude",
+    # cargo-mutants scratch: gitignored (mutants.out/). Hashing it made the
+    # staleness gate unsatisfiable while a mutation run is live — the run
+    # rewrites outcomes.json as it progresses, re-staling EM every batch.
+    "mutants.out",
     ".engineering-memory",
     ".cache",
     ".pytest_cache",
