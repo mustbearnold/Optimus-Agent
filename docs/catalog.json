@@ -3749,6 +3749,26 @@
     },
     {
       "authority": "record",
+      "content_sha256": "1126c8283bc1e88860166f30cb789d4b7bc779afd5677a596719774c593ecfc1",
+      "headings": [
+        "ADR-0090: Renderer client as a deep module over the frozen wire surface",
+        "Status",
+        "Context",
+        "Decision",
+        "Consequences"
+      ],
+      "id": "decisions-0090-renderer-client-deep-module",
+      "path": "docs/decisions/0090-renderer-client-deep-module.md",
+      "plane": "decision",
+      "review_by": "2026-11-10",
+      "reviewed_on": "2026-08-10",
+      "status": "current",
+      "summary": "The renderer's flat 92-method `OptimusTransport` call surface is replaced by one typed deep module (`apps/optimus-ui/src/ipc/client/**`) — `createOptimusClient(transport)` exposing 19 typed domain objects plus a session-scoped `ChatSession` whose turns settle exactly once with a classified outcome, plus an ordered runtime observer. The frozen wire (spec-015) is untouched: transports, broker selection, and their pinned tests keep passing as-is; `conversationStore.apply` keeps consuming `StreamEvent` verbatim.",
+      "title": "ADR-0090: Renderer client as a deep module over the frozen wire surface",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -3905,7 +3925,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
+      "content_sha256": "dfd2acd9e2da515f9b9a0ef52516baca23b5364dc8e7aad7b93bf12704e86d42",
       "headings": [
         "001 — Desktop shell",
         "Purpose",
@@ -4713,7 +4733,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "a5aeebf0980600b918e30092219bff53b0e2677112d679bae664faebc430c956",
+  "documents_sha256": "5ee048e5c958a53c0df45103c03c2978886dac50866fabef4f28857b973b3319",
   "routes": [
     {
       "id": "architecture.blueprint",

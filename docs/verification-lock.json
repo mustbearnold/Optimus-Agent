@@ -259,28 +259,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "3213aa7617fa815744ba9293e6dd2ed5b71e26ea51e32b9818bbe62b18fe0b7a",
+      "binding_sha256": "b90c256bda59377fcebdeeb0bd4e6a38e169260f73ca115083dd566b72a0a22f",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 137
+      "resolved_files": 145
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "e1e4ae1199b55eb58809023f826e09a5ea70949d077b5a29ddb50060b5797b74",
+      "binding_sha256": "06e6d182b487964e05972225cbf2218e71be4923596e3854ebac17c2601d3c61",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 136
+      "resolved_files": 144
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "2b974a5c4772955580fed5b8cb405571b5c0dc6f4883010f3ef9f37abea36268",
+      "binding_sha256": "31ed9ded72daf3a71fdacc0e1763eeb89f1c6f3f10b91e622e039aeca6223b9e",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 106
+      "resolved_files": 114
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "f1edaf5a8515dca67fc4b076fb73e14e522b2844e9eae453b03fe529176a636d",
+      "binding_sha256": "73cd19a41717d8013b9191c4fef059aa18128964de6db8d67e3120829a5b01d9",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 138
+      "resolved_files": 146
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "d0418808cf6e0bf5a0f8d512b7a5cacd10492d0fd3fc02a089d35c304700061a",
@@ -355,7 +355,7 @@
       "resolved_files": 6
     },
     "decisions-0044-bounded-project-trust-and-capability-broker": {
-      "binding_sha256": "e317277948952ad6ed16503ef5d2e1cbb78c90c6a6188c71e10ab1a794cfe5bc",
+      "binding_sha256": "e8b79d276b6cc7b3650a4b0dd72a5d03bfadc98d5a1335f9111d7af9fef2e3fd",
       "document_sha256": "f3f6239edf51227785807adbb471ff77cf47a3f3f7013dcd347f8bbd7cf6b231",
       "path": "docs/decisions/0044-bounded-project-trust-and-capability-broker.md",
       "resolved_files": 18
@@ -409,7 +409,7 @@
       "resolved_files": 6
     },
     "decisions-0059-standard-autonomy-is-consequence-bounded": {
-      "binding_sha256": "e5bf8461f4f93cd5fcdca4e22bd2dc5a7dd46a1856f94277d2f5157210371648",
+      "binding_sha256": "a8e1295a22fcdcc2138566fa296631e41aaab21d34b12d6153f8ee71892dd09c",
       "document_sha256": "863740a9a132e639d213fabe070a30c57920638718307ee83884b4407b3ca7dc",
       "path": "docs/decisions/0059-standard-autonomy-is-consequence-bounded.md",
       "resolved_files": 6
@@ -559,7 +559,7 @@
       "resolved_files": 15
     },
     "decisions-0085-user-sovereignty-over-workflow-and-security-posture": {
-      "binding_sha256": "53fced5e0f50a18d8e5c218f783e74c6f96e260577c7fc2230b9f790b303c82d",
+      "binding_sha256": "92476000bfb9f3e77bacdb08c9744a3f7a3d3f10e1a4d59127d64ba0ad88e785",
       "document_sha256": "86339ffd9f9d48c8df9efba525e4c8f437c0b6d9309ce6d2ff12d62d167402d5",
       "path": "docs/decisions/0085-user-sovereignty-over-workflow-and-security-posture.md",
       "resolved_files": 5
@@ -588,11 +588,17 @@
       "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
       "resolved_files": 3
     },
+    "decisions-0090-renderer-client-deep-module": {
+      "binding_sha256": "786697480bcfaa60cacc4cc7c558b6debb9af2cb3e51de4a3a1f28495f925912",
+      "document_sha256": "1126c8283bc1e88860166f30cb789d4b7bc779afd5677a596719774c593ecfc1",
+      "path": "docs/decisions/0090-renderer-client-deep-module.md",
+      "resolved_files": 10
+    },
     "decisions-readme": {
-      "binding_sha256": "a810b9e4351428bf75b69cfb4635fd0d6170b3a9c6245107e24c1e1255632d25",
+      "binding_sha256": "ad6e6aa4bec195c932d1282572afb1ca51fb07b923805ddc260169b1cab0c207",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
-      "resolved_files": 94
+      "resolved_files": 95
     },
     "engineering-memory-readme": {
       "binding_sha256": "8721093f5e2431673c8fce40e2abf439f59a6f5e11aa07f7631017fdb1091b48",
@@ -613,16 +619,16 @@
       "resolved_files": 30
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "e88f76f142fe2b53531dc326f0b80e658066f7789fb6002dc76d7f0cb2f22122",
-      "document_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
+      "binding_sha256": "020f6a94d20397540769c032da6f729ccd42988fb2a9e4bb62ae6ae0dcc57cb9",
+      "document_sha256": "dfd2acd9e2da515f9b9a0ef52516baca23b5364dc8e7aad7b93bf12704e86d42",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 117
+      "resolved_files": 125
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "44d02d25a3dee359d579e5e4475202673160b1a3d0e773e5b679a2ed68a3ddcc",
+      "binding_sha256": "8a70007f335c5d6307528fec14427e0f8debf55c035af2248707ca78ccdbc80c",
       "document_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "path": "specs/002-host-ipc/spec.md",
-      "resolved_files": 56
+      "resolved_files": 64
     },
     "spec-003-kernel-turns": {
       "binding_sha256": "651110daa9b3f3af44c4a401a559e121efbf690df7d68c3ba2b44300d46aa45c",
@@ -679,25 +685,25 @@
       "resolved_files": 91
     },
     "spec-012-windows-tauri-packaging": {
-      "binding_sha256": "689f65c75f30ae401519c8fa276a2de0787c6964616a00422ed6b30e8a17a8f9",
+      "binding_sha256": "81a36cd99eb2d5c7664fe8148a79ef74bbe4e37d6e98b3b89475e4a3df13c11b",
       "document_sha256": "2fc932c467138d99d25c6741c5880ef84b36024c5d0b2fdbbb5803aca5925c50",
       "path": "specs/012-windows-tauri-packaging/spec.md",
       "resolved_files": 6
     },
     "spec-013-self-development": {
-      "binding_sha256": "b74c1cf59b023c57606258a7fe94edc294e69606479a41629c8947f41c7ac7a1",
+      "binding_sha256": "7e419ff5aa620d51be03745ab2a131c00629ffa0c90fdd2b75fb79645670ae19",
       "document_sha256": "fc6b85d488bd10838b2783bfa2d4a5c3a71529368f962e22d03cecfb741870aa",
       "path": "specs/013-self-development/spec.md",
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "8e530052185dded4ded489494fbeb341b01d6d897d57d8fcd394917c82424aea",
+      "binding_sha256": "5a974793f6b8aabddfb57395378424dddabf292968d8a60e8ae12f18e42d4a3d",
       "document_sha256": "8853bcd58f80e4bc71542f49781abc7a5ce2646ddeb3aa17c89e8bc203fc8a97",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "ae0ba73c152dafa3f03cc16f2e9824c2f353529045b17176d21f4d71320209d8",
+      "binding_sha256": "a5240022634cfb877d586a48a93732f990a13389e3891778d20c9fc84d4fe917",
       "document_sha256": "60d3ffc1650decb5f4e39ce0b3110f507a3268c4cf0261f842622561af79dae8",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 45
@@ -775,16 +781,16 @@
       "resolved_files": 18
     },
     "specs-backlog": {
-      "binding_sha256": "9bbecc0a83b4d5f1035f80aa17c7854f2ee418f49847e6c91ec6b63beacd8d27",
+      "binding_sha256": "25c4961541c1154be257b4dc0f1cbfcb5b35549166fc3872adeb14ab088f84b8",
       "document_sha256": "f1a25bc97aadfd8d642251411120e3447ad3548e39196310c63c96d5312199eb",
       "path": "specs/BACKLOG.md",
       "resolved_files": 39
     },
     "specs-constitution": {
-      "binding_sha256": "b6b018f7980f51e63315ab230616c6baf02fea4a437ac99833b0bfd04d961fd9",
+      "binding_sha256": "09e6fdbac40419f911cf9fcb5d77fc54a37fd1adcf0c8506ae8073524825707a",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
-      "resolved_files": 134
+      "resolved_files": 135
     },
     "specs-conventions": {
       "binding_sha256": "c79f28f174584c8549ce3385cbe58561068df3745c0ed85185899abe773a8884",

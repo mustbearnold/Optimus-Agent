@@ -11,6 +11,7 @@ knowledge_type: specification
 covers:
   - apps/optimus-tauri/src/**
   - apps/optimus-ui/src/**
+  - apps/optimus-ui/src/ipc/client/**
   - apps/optimus-desktop/src/main.rs
   - scripts/rebuild-install-relaunch.sh
 validated_by:
@@ -63,6 +64,15 @@ product is exclusively Tauri — no Electron, no Wry rollback shell.
   ticket) selects NO transport and surfaces the terminal affordance —
   never a silent fixture; the packaged-vs-dev discriminator is
   `window.__TAURI_INTERNALS__` presence. [inferred]
+- R9. The renderer MUST reach the host through one typed client module
+  (`apps/optimus-ui/src/ipc/client/**`) that is the sole consumer of
+  `OptimusTransport`. Chat MUST be a session-scoped `ChatSession` object
+  whose turns settle exactly once with a classified outcome
+  (`completed` / `failed` / `cancelled` / `awaiting-approval` /
+  `disconnected`). The client MUST wrap the frozen wire (spec-015) without
+  changing it: transports, broker selection, and their pinned tests stay
+  untouched; `conversationStore.apply` keeps consuming `StreamEvent`
+  verbatim. [inferred]
 
 ## Acceptance criteria
 - [x] A1. Given a clean checkout on main with the Tauri shell built, when `scripts/gates/check-tauri-launch.py` runs, then it exits 0 and prints `TAURI_LAUNCH_OK` with a windowed surface. (proven 2026-08-05: `TAURI_LAUNCH_OK version=0.1.0 window=yes`)
@@ -70,6 +80,7 @@ product is exclusively Tauri — no Electron, no Wry rollback shell.
 - [x] A3. Given an installed product, when `scripts/gates/check-product-complete-install.py` runs, then it reports `desktop_shell react-tauri` with no ElectronRollback action. (proven 2026-08-05: `PRODUCT_COMPLETE_INSTALL_OK desktop_shell=react-tauri`)
 - [x] A4. Given the desktop e2e suite, when Playwright drives the React workbench over the host, then all specs pass including a chat round-trip. (proven 2026-08-05: desktop e2e 62/62)
 - [x] A5. Given the installed desktop app with the broker up (renderer on the WS carrier), when the window control buttons are clicked and the window edges/corners are dragged, then minimize/maximize/close reach the shell bridge and resize starts a native compositor drag. (proven 2026-08-07: `windowBridge` + `window_action`/`window_resize_start` unit tests 11/11; installed-app verification via the WebKit inspector: DOM clicks on the three controls produced Iconic state, maximized 3440x1400, restored 1280x840, and process exit; `window_resize_start` answered `ok:true` and the hotspot pointerdown dispatched; live pointer-drag motion was not exercised because this host has no working pointer injection on Wayland)
+- [ ] A6. Given the UI vitest suite, when `npm test` runs in `apps/optimus-ui`, then the client seam tests pass, including R4/R5/R9 terminal folding, exactly-one-terminal enforcement, grant-before-resolve ordering, and `NoTransportError` semantics (ADR-0090).
 
 ## Out of scope
 
@@ -94,5 +105,5 @@ recorded; a WebKit driver would raise it (see BACKLOG).
 ## Links
 
 Code: apps/optimus-tauri, apps/optimus-ui, apps/optimus-desktop ·
-Tests: e2e + check-tauri-launch.py · ADRs: 0028, 0029, 0051 · Ontology:
-optimus-tauri (primary, exclusive)
+Tests: e2e + check-tauri-launch.py · ADRs: 0028, 0029, 0051, 0090 ·
+Ontology: optimus-tauri (primary, exclusive)
