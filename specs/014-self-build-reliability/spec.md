@@ -204,7 +204,7 @@ review record) is `Development/tmp/spec-self-build-reliability-draft.md`
       turn is not resumed, the second card renders, and approving it
       produces a provider-valid transcript (synthetic result claimed on the
       wire) and a terminal turn.
-- [ ] A5. Given session consent for (SystemModify, OpaqueShell) under a live
+- [x] A5. Given session consent for (SystemModify, OpaqueShell) under a live
       DFA grant, when a `bash -lc` effect runs in the same durable session
       (including immediately after an approval resolution), then it
       auto-grants with an exact-effect audit row; and after scope widening,
@@ -213,7 +213,9 @@ review record) is `Development/tmp/spec-self-build-reliability-draft.md`
       consent auto-grant fires only while the DFA grant is live and the
       scope matches, and revocation, expiry, DFA disable, and scope
       widening each flip the same effect back to `NeedsApproval`; the
-      exact-effect audit row is written on every auto-grant).
+      exact-effect audit row is written on every auto-grant; verified
+      2026-08-11: 9 store integration tests + 2 host route tests + 3 UI
+      surface tests green, closing #129).
 - [ ] A6. Given a tool-using turn, when model steps 2..n run, then effort is
       capped per the provider mapping (first step uncapped, terminal step
       capped, `off` never upgraded); and when a step exceeds the tool-call
