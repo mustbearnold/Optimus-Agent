@@ -658,9 +658,14 @@ function collect() {
   // 22. An essential surface collapsed to a sliver. Ripping one region out of
   //     the grid does not overlap anything — the tracks re-solve and the
   //     composer ends up 2px wide. Present-but-unusable is the failure mode.
+  //     The redesign moved the composer inside .surface-row, which is the
+  //     track that re-solves to a 1px sliver when the rail leaves the grid;
+  //     the composer itself collapses to 0 (skipped by the width > 0 guard),
+  //     so the row is the collapse target that stays measurable.
   if (document.documentElement.clientWidth >= 700) {
     for (const [selector, minWidth] of [
       [".composer-card", 240],
+      [".surface-row", 240],
       [".workbench-statusbar", 240],
       [".topbar", 400],
     ]) {
@@ -1181,9 +1186,10 @@ const DEFECTS = [
   },
   {
     name: "status-segments-squeezed-to-ellipses",
-    css: `.workbench-status-segment { flex: 0 1 auto !important; }
-          .workbench-statusbar { container-type: normal !important; }`,
-    // The bar only runs out of room once the evidence workspace takes width.
+    css: `.workbench-status-segment { flex: 0 1 auto !important; min-width: 0 !important; }
+          .workbench-statusbar { container-type: normal !important; width: 420px !important; }`,
+    // The bar only runs out of room once the evidence workspace takes width
+    // (or, post-redesign, when the app-wide footer is forced narrow).
     viewport: { name: "self-test:narrow-bar", width: 1280, height: 833, workspace: true },
     expect: ["squeezed-label"],
   },

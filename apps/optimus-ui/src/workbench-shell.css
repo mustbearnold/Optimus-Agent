@@ -1355,6 +1355,8 @@ select:focus-visible,
 .workbench-status-segment > .optimus-icon {
   min-width: 12px;
   min-height: 12px;
+  font-size: 12px;
+  line-height: 1.2;
   color: var(--faint);
   flex-shrink: 0;
 }
