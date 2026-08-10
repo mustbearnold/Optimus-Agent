@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **904 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **903 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -1074,7 +1074,6 @@ Optimus Agent/
 ├── README.md
 ├── SOUL.md — Mandatory persona for every AI agent working on Optimus in this repository.
 ├── bun.lock
-├── frend-overrides.css
 ├── index.md — Generated folder index (this file); refreshed every turn via `just orient`.
 ├── justfile — One memorable command per job; gate logic lives in scripts/verify.sh.
 ├── package.json

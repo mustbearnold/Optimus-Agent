@@ -30,3 +30,6 @@ coverage/
 # excluded from the repository and the component ontology).
 /.hermes/
 /.steploop/
+
+# Frend visual-editor scratch (generated override)
+frend-overrides.css
