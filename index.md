@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **903 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **904 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -766,7 +766,7 @@ Optimus Agent/
 │       │   ├── attribution.rs
 │       │   └── recursion.rs
 │       └── Cargo.toml
-├── docs/ (126 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
+├── docs/ (127 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
 │   ├── architecture/ (19 files)
 │   │   ├── hermes-baselines/ (1 files)
 │   │   │   └── hermes-0.19.0.json
@@ -883,10 +883,11 @@ Optimus Agent/
 │   │   ├── 0090-renderer-client-deep-module.md
 │   │   ├── 0091-whatsapp-signal-transport-choice.md
 │   │   └── README.md
-│   ├── runbooks/ (6 files)
+│   ├── runbooks/ (7 files)
 │   │   ├── agent-domain.md
 │   │   ├── architecture-marks.md
 │   │   ├── engineering-memory.md
+│   │   ├── gateway-transports.md
 │   │   ├── install-relaunch.md
 │   │   ├── project-hygiene.md
 │   │   └── self-development.md
@@ -1090,7 +1091,7 @@ Optimus Agent/
 | `apps/` | 55 | 260 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
 | `crates/` | 50 | 241 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
-| `docs/` | 5 | 126 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
+| `docs/` | 5 | 127 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 81 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |
