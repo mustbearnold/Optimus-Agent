@@ -370,6 +370,17 @@ fn is_attached_requirement_flag(arg: &str) -> bool {
 /// leading global flags) is skipped first; anything unrecognized falls back to
 /// `PackageAdd`, never a mis-grant.
 fn uv_pip_class(args: &[String]) -> CommandClass {
+    // A host-level install flag (`--system`/`--user`/`--global`) writes a
+    // host-wide Python environment, exactly like a bare `pip install --user`,
+    // which `classify_pip_args` already records as `HostInstall`. Short-circuit
+    // before the sync/add split so a host write is never downgraded into a
+    // project-scoped `PackageAdd` (or mis-sold as a lockfile `PackageSync`).
+    if args
+        .iter()
+        .any(|arg| HOST_INSTALL_FLAGS.contains(&arg.as_str()))
+    {
+        return CommandClass::HostInstall;
+    }
     let mut iter = args
         .iter()
         .map(String::as_str)
@@ -719,6 +730,45 @@ mod tests {
         );
         assert_eq!(
             class("uv", &["pip", "sync", "requirements.txt"]),
+            CommandClass::PackageSync
+        );
+    }
+
+    #[test]
+    fn uv_pip_host_flags_write_the_host_environment_not_the_project() {
+        // Regression: `uv pip install --system <pkg>` / `--user` / `--global`
+        // install into a host-wide Python environment, exactly like a bare
+        // `pip install --user` (HostInstall). The sync/add split used to run
+        // first, so these were recorded as a project-scoped `PackageAdd` (or,
+        // with `-r`, even as a `PackageSync`) and could ride on a project
+        // grant. They must leave the project lane and ask.
+        assert_eq!(
+            class("uv", &["pip", "install", "--system", "requests"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("uv", &["pip", "install", "--user", "black"]),
+            CommandClass::HostInstall
+        );
+        assert_eq!(
+            class("uv", &["pip", "install", "--global", "black"]),
+            CommandClass::HostInstall
+        );
+        // A host flag still wins even when a requirements file is named.
+        assert_eq!(
+            class(
+                "uv",
+                &["pip", "install", "-r", "requirements.txt", "--system"]
+            ),
+            CommandClass::HostInstall
+        );
+        // Without a host flag the sync/add split is unchanged.
+        assert_eq!(
+            class("uv", &["pip", "install", "requests"]),
+            CommandClass::PackageAdd
+        );
+        assert_eq!(
+            class("uv", &["pip", "install", "-r", "requirements.txt"]),
             CommandClass::PackageSync
         );
     }
