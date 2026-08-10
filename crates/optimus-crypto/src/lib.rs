@@ -50,6 +50,15 @@ impl std::fmt::Display for Sha256Digest {
     }
 }
 
+impl std::str::FromStr for Sha256Digest {
+    type Err = &'static str;
+
+    /// Parse via `"<hex>".parse::<Sha256Digest>()`, matching [`Sha256Digest::parse`].
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Sha256Digest::parse(value).ok_or("expected exactly 64 hex digits")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -103,6 +112,17 @@ mod tests {
     fn sha256_digest_normalizes_case() {
         let upper = Sha256Digest::parse(&"A".repeat(64)).expect("upper-case hex parses");
         assert_eq!(upper.as_str(), &"a".repeat(64));
+    }
+
+    #[test]
+    fn sha256_digest_from_str_parses_and_rejects() {
+        let digest = Sha256Digest::digest(b"optimus");
+        let parsed: Sha256Digest = digest.as_str().parse().expect("canonical form parses");
+        assert_eq!(parsed, digest);
+        // FromStr must reject the same inputs as parse().
+        assert!(&"g".repeat(64).parse::<Sha256Digest>().is_err());
+        assert!(&"a".repeat(63).parse::<Sha256Digest>().is_err());
+        assert!(&"".parse::<Sha256Digest>().is_err());
     }
 
     #[test]
