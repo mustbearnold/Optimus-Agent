@@ -52,6 +52,19 @@ impl std::fmt::Display for Sha256Digest {
     }
 }
 
+/// Compare a digest against a hex string literal (`digest == "abc…"`).
+impl PartialEq<str> for Sha256Digest {
+    fn eq(&self, other: &str) -> bool {
+        self.0 == other
+    }
+}
+
+impl PartialEq<&str> for Sha256Digest {
+    fn eq(&self, other: &&str) -> bool {
+        self.0 == *other
+    }
+}
+
 impl std::str::FromStr for Sha256Digest {
     type Err = &'static str;
 
@@ -174,6 +187,20 @@ mod tests {
         );
         assert!(Sha256Digest::try_from("a".repeat(63).as_str()).is_err());
         assert!(Sha256Digest::try_from("").is_err());
+    }
+
+    #[test]
+    fn sha256_digest_comparison_against_str_literals() {
+        let digest = Sha256Digest::digest(b"optimus");
+        let hex = digest.as_str().to_string();
+
+        // The canonical lower-case hex form compares equal to an `&str`
+        // literal and a `str`.
+        assert_eq!(digest, hex.as_str());
+
+        // A digest computed from different bytes must not compare equal.
+        let other = Sha256Digest::digest(b"other");
+        assert_ne!(other, hex.as_str());
     }
 
     #[test]
