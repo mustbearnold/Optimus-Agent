@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAlive } from '../../hooks/useAlive';
 import type { Project, ProjectRootSelection } from '../../ipc/contracts';
 import {
@@ -7,6 +13,13 @@ import {
   setPrimaryProjectRoot,
 } from '../../state/projectStore';
 import { Icon } from '../chrome/Icon';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '../ui/dialog';
 
 export function ProjectSourcesDialog({
   project,
@@ -27,7 +40,7 @@ export function ProjectSourcesDialog({
   onContinueWithoutProject?: () => void;
   onClose: () => void;
 }) {
-  const panel = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const [draft, setDraft] = useState<Project | null>(project);
   const [grantTokens, setGrantTokens] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
@@ -44,23 +57,14 @@ export function ProjectSourcesDialog({
     setGrantTokens({});
     setError('');
     setSaving(false);
-    if (!project) return;
-    requestAnimationFrame(() => panel.current?.focus());
   }, [project]);
 
-  // Capture Escape at the window level so dismiss works even if focus left the
-  // dialog (e.g. after the native picker or when the composer still holds focus).
-  useEffect(() => {
+  // Remember who opened us so closing returns focus to them (Radix modal
+  // focus management replaces the hand-rolled inert/trap machinery).
+  useLayoutEffect(() => {
     if (!project) return;
-    const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      event.stopPropagation();
-      onClose();
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [project, onClose]);
+    opener.current = document.activeElement as HTMLElement | null;
+  }, [project]);
 
   if (!project || !draft) return null;
 
@@ -92,39 +96,37 @@ export function ProjectSourcesDialog({
   }
 
   return (
-    <div
-      className="dialog-backdrop project-sources-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          onClose();
-          return;
-        }
-        trapFocus(event, panel.current);
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
       }}
     >
-      <div
+      <DialogContent
         className="project-sources-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="project-sources-title"
-        tabIndex={-1}
-        ref={panel}
+        showCloseButton={false}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          opener.current?.focus();
+        }}
       >
+        <DialogTitle className="sr-only">Project sources</DialogTitle>
+        <DialogDescription className="sr-only">
+          One project can group several folders without merging their permissions.
+        </DialogDescription>
         <header>
           <div>
             <span className="dialog-icon"><Icon name="project" /></span>
             <div>
-              <h2 id="project-sources-title">Project sources</h2>
+              <h2>Project sources</h2>
               <p>One project can group several folders without merging their permissions.</p>
             </div>
           </div>
-          <button type="button" aria-label="Close project sources" onClick={onClose}>
-            <Icon name="close" />
-          </button>
+          <DialogClose asChild>
+            <button type="button" aria-label="Close project sources">
+              <Icon name="close" />
+            </button>
+          </DialogClose>
         </header>
 
         <div className="project-sources-content">
@@ -278,8 +280,8 @@ export function ProjectSourcesDialog({
             {saving ? 'Authorizing…' : pendingRoots.length ? 'Re-select folders to authorize' : 'Save & authorize'}
           </button>
         </footer>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -300,27 +302,4 @@ export function formatAuthorizeError(error: unknown) {
 
 function basename(path: string) {
   return path.split(/[\\/]/).filter(Boolean).at(-1) || path;
-}
-
-function trapFocus(event: KeyboardEvent, container: HTMLElement | null) {
-  if (event.key !== 'Tab' || !container) return;
-  const focusable = Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex]:not([tabindex="-1"])'
-    )
-  );
-  if (!focusable.length) {
-    event.preventDefault();
-    container.focus();
-    return;
-  }
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
 }

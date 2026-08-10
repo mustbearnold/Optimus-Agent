@@ -219,7 +219,9 @@ describe('OptimusApp fixture contract', () => {
     await user.type(composer, 'Do not run this elsewhere');
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    // The alert lives behind the modal overlay: Radix hides the page from the
+    // accessibility tree while the dialog is open, so query it explicitly.
+    expect(await screen.findByRole('alert', { hidden: true })).toHaveTextContent(
       'Authorize this project folder before running its session.'
     );
     expect(screen.getByRole('dialog', { name: 'Project sources' })).toBeInTheDocument();

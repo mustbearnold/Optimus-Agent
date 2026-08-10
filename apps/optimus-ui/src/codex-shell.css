@@ -818,12 +818,6 @@ button:not(:disabled):active {
   background: var(--accent);
 }
 
-.dialog-backdrop {
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.38);
-  animation: none;
-}
-
 .settings-dialog {
   width: min(960px, calc(100vw - 48px));
   height: min(720px, calc(100vh - 48px));
@@ -1482,10 +1476,6 @@ button:not(:disabled):active {
 }
 
 @media (max-width: 400px) {
-  .dialog-backdrop {
-    padding: 0;
-  }
-
   .settings-dialog,
   .project-sources-dialog {
     width: 100%;

@@ -100,7 +100,9 @@ describe('ProjectSourcesDialog authorization gates', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Continue without project' })).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: 'Escape' });
+    // Radix handles Escape on the dialog content (modal scope) — the
+    // hand-rolled window-level listener is gone (ADR-0050).
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Project sources' }), { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
 });
