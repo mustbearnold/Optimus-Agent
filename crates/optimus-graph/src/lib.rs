@@ -238,6 +238,10 @@ pub struct RuntimeConfig {
     /// pause semantics for tests; product UI sets `standard`).
     #[serde(default)]
     pub autonomy_profile: AutonomyProfile,
+    /// Durable transcript session id (spec-014 R7, ADR-0081) that scopes
+    /// session consent. `None` disables session consent entirely.
+    #[serde(default)]
+    pub consent_session_id: Option<String>,
 }
 
 impl Default for RuntimeConfig {
@@ -246,6 +250,7 @@ impl Default for RuntimeConfig {
             policy: PolicyMode::SmartDeny,
             command_fs_envelope: CommandFsEnvelope::Confined,
             autonomy_profile: AutonomyProfile::ReviewChanges,
+            consent_session_id: None,
         }
     }
 }
@@ -896,5 +901,19 @@ mod tests {
         assert_eq!(CommandFsEnvelope::parse("confined_no_net"), None);
         assert_eq!(CommandFsEnvelope::parse("CONFINED"), None);
         assert_eq!(CommandFsEnvelope::parse(""), None);
+    }
+
+    #[test]
+    fn command_fs_envelope_linux_predicates_match_sandboxing() {
+        // The two confined modes keep writes inside the workspace on Linux and
+        // only ConfinedNoNetwork additionally unshares the network namespace.
+        assert!(CommandFsEnvelope::Confined.linux_workspace_only_writable());
+        assert!(!CommandFsEnvelope::Confined.linux_unshare_net());
+
+        assert!(CommandFsEnvelope::ConfinedNoNetwork.linux_workspace_only_writable());
+        assert!(CommandFsEnvelope::ConfinedNoNetwork.linux_unshare_net());
+
+        assert!(!CommandFsEnvelope::UnrestrictedHost.linux_workspace_only_writable());
+        assert!(!CommandFsEnvelope::UnrestrictedHost.linux_unshare_net());
     }
 }
