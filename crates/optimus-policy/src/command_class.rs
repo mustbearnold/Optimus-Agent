@@ -158,6 +158,7 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
 
     match tool.as_str() {
         "git" if git_sets_inline_alias(args) => CommandClass::OpaqueShell,
+        "git" if git_writes_host_config(args) => CommandClass::HostInstall,
         "git" => match git_subcommand(args) {
             "push" | "send-pack" | "http-push" => CommandClass::GitRemotePush,
             "fetch" | "pull" | "clone" | "ls-remote" | "fetch-pack" | "http-fetch"
@@ -439,6 +440,25 @@ fn is_config_env_inline_alias(arg: &str) -> bool {
             name.get(.."alias.".len())
                 .is_some_and(|prefix| prefix.eq_ignore_ascii_case("alias."))
         })
+}
+
+/// True when git is asked to write (or even just read) the user- or
+/// machine-wide git configuration (`--global`/`--system`), which lives
+/// outside the repository (`~/.gitconfig`, `/etc/gitconfig`).
+///
+/// A project-scoped grant must not cover those any more than it covers
+/// `npm install -g`: the target is the host's config store, not the tree. A
+/// bare `git config <key> <value>` (and `--local`) stays repo-scoped and
+/// remains `ProjectExecute`; only the explicitly host-wide flags move to
+/// `HostInstall`. Host-scope reads are conservatively gated too — the
+/// classifier falls closed rather than risk a project grant covering a host
+/// write.
+fn git_writes_host_config(args: &[String]) -> bool {
+    if git_subcommand(args) != "config" {
+        return false;
+    }
+    args.iter()
+        .any(|arg| matches!(arg.as_str(), "--global" | "--system"))
 }
 
 fn is_shell_command_flag(flag: &str) -> bool {
@@ -991,6 +1011,44 @@ mod tests {
             class("git", &["--config-env=core.editor=EDITOR", "status"]),
             CommandClass::ProjectExecute,
             "a non-alias --config-env key is not an opaque command string"
+        );
+    }
+
+    #[test]
+    fn host_scope_git_config_is_not_project_execution() {
+        // `git config --global` writes ~/.gitconfig and `--system` writes the
+        // machine-wide store — both outside the repository. A project-scoped
+        // grant must not cover them, exactly like `npm install -g`, or a
+        // project grant would quietly become a host-config write.
+        for flag in ["--global", "--system"] {
+            assert_eq!(
+                class("git", &["config", flag, "user.email", "me@example.test"]),
+                CommandClass::HostInstall,
+                "git config {flag} is a host-scope write"
+            );
+            assert_eq!(
+                class("git", &["config", flag, "--add", "remote.origin.url", "x"]),
+                CommandClass::HostInstall,
+                "git config {flag} --add stays host-scope"
+            );
+        }
+        // Repo-local config writes stay project execution.
+        assert_eq!(
+            class("git", &["config", "user.email", "me@example.test"]),
+            CommandClass::ProjectExecute
+        );
+        assert_eq!(
+            class(
+                "git",
+                &["config", "--local", "user.email", "me@example.test"]
+            ),
+            CommandClass::ProjectExecute
+        );
+        // Host-scope reads are conservatively gated too (fail-closed): the
+        // classifier must not let a project grant cover a host config target.
+        assert_eq!(
+            class("git", &["config", "--global", "--list"]),
+            CommandClass::HostInstall
         );
     }
 
