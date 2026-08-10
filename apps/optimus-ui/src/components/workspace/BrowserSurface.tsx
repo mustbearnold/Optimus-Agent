@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { BrowserAnnotation, BrowserState, OptimusTransport } from '../../ipc/contracts';
+import type { BrowserAnnotation, BrowserState } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { frameCoordinator } from '../../performance/frameCoordinator';
 import { Icon } from '../chrome/Icon';
 
@@ -22,11 +23,11 @@ export type PreviewNote = {
 };
 
 export function BrowserSurface({
-  transport,
+  client,
   active,
   onAddToPrompt,
 }: {
-  transport: OptimusTransport | null;
+  client: OptimusClient;
   active: boolean;
   /** Explicit user action only — never auto-inject on annotate (ADR-0040 / ADR-0029 §9). */
   onAddToPrompt: (text: string) => void;
@@ -43,39 +44,37 @@ export function BrowserSurface({
   useEffect(() => {
     let alive = true;
     let unsubscribe: () => void = () => undefined;
-    if (transport?.browser) {
-      transport.browser.state().then((next) => {
-        if (!alive) return;
-        setState(next);
-        setAddress(next.url || initialState.url);
-      }).catch(() => undefined);
-      unsubscribe = transport.browser.subscribe((next) => {
-        if (!alive) return;
-        setState(next);
-        if (next.url && !editingAddress.current) setAddress(next.url);
-      });
-    }
+    client.browser.state().then((next) => {
+      if (!alive) return;
+      setState(next);
+      setAddress(next.url || initialState.url);
+    }).catch(() => undefined);
+    unsubscribe = client.browser.subscribe((next) => {
+      if (!alive) return;
+      setState(next);
+      if (next.url && !editingAddress.current) setAddress(next.url);
+    });
     return () => {
       alive = false;
       unsubscribe();
     };
-  }, [transport]);
+  }, [client]);
 
   useEffect(() => () => {
     if (annotationMode && state.native) {
-      void transport?.browser?.cancelAnnotation();
+      void client.browser.cancelAnnotation();
     }
-  }, [annotationMode, state.native, transport]);
+  }, [annotationMode, state.native, client]);
 
   useEffect(() => {
     if (active || !annotationMode) return;
     setAnnotationMode(false);
-    if (state.native) void transport?.browser?.cancelAnnotation();
-  }, [active, annotationMode, state.native, transport]);
+    if (state.native) void client.browser.cancelAnnotation();
+  }, [active, annotationMode, state.native, client]);
 
   useLayoutEffect(() => {
     const node = hole.current;
-    if (!node || !transport?.browser || !active) return;
+    if (!node || !active) return;
     const sync = (reveal = false) => {
       frameCoordinator.schedule('native-geometry', () => {
         const rect = node.getBoundingClientRect();
@@ -88,9 +87,9 @@ export function BrowserSurface({
         const signature = `${bounds.x}:${bounds.y}:${bounds.width}:${bounds.height}`;
         if (signature !== lastBounds.current) {
           lastBounds.current = signature;
-          transport?.browser?.setBounds(bounds);
+          client.browser.setBounds(bounds);
         }
-        if (reveal) transport?.browser?.setVisible(true);
+        if (reveal) client.browser.setVisible(true);
       });
     };
     const observer = new ResizeObserver(() => sync());
@@ -104,13 +103,13 @@ export function BrowserSurface({
     syncGeometry.current = () => sync(true);
     sync(true);
     return () => {
-      transport?.browser?.setVisible(false);
+      client.browser.setVisible(false);
       observer.disconnect();
       window.removeEventListener('resize', onWindowResize);
       syncGeometry.current = null;
       lastBounds.current = '';
     };
-  }, [active, transport]);
+  }, [active, client]);
 
   useLayoutEffect(() => {
     if (active) syncGeometry.current?.();
@@ -132,23 +131,10 @@ export function BrowserSurface({
     let url = address.trim();
     if (!url) return;
     if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = `https://${url}`;
-    if (!transport) return;
     try {
-      if (transport.browser) {
-        const next = await transport.browser.navigate(url);
-        if (!alive()) return;
-        setState(next);
-      } else {
-        const result = await transport.invoke<Record<string, unknown>>('browser_navigate', { url });
-        if (!alive()) return;
-        setState({
-          ...state,
-          url: String(result.url || result.final_url || url),
-          title: String(result.title || 'Preview'),
-          loading: false,
-          native: false,
-        });
-      }
+      const next = await client.browser.navigate(url);
+      if (!alive()) return;
+      setState(next);
     } catch (error) {
       if (!alive()) return;
       setState({
@@ -162,13 +148,13 @@ export function BrowserSurface({
   const toggleAnnotation = async () => {
     if (annotationMode) {
       setAnnotationMode(false);
-      if (state.native) await transport?.browser?.cancelAnnotation();
+      if (state.native) await client.browser.cancelAnnotation();
       return;
     }
     setAnnotationMode(true);
-    if (!state.native || !transport?.browser) return;
+    if (!state.native) return;
     try {
-      const result = await transport.browser.annotate();
+      const result = await client.browser.annotate();
       if (!alive()) return;
       if (!result.cancelled) {
         // Gallery only — composer requires explicit Add to prompt.
@@ -186,7 +172,7 @@ export function BrowserSurface({
           type="button"
           aria-label="Back"
           disabled={!state.canGoBack}
-          onClick={() => transport?.browser?.back().then((next) => { if (alive()) setState(next); })}
+          onClick={() => client.browser.back().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="back" />
         </button>
@@ -194,14 +180,14 @@ export function BrowserSurface({
           type="button"
           aria-label="Forward"
           disabled={!state.canGoForward}
-          onClick={() => transport?.browser?.forward().then((next) => { if (alive()) setState(next); })}
+          onClick={() => client.browser.forward().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="forward" />
         </button>
         <button
           type="button"
           aria-label="Reload"
-          onClick={() => transport?.browser?.reload().then((next) => { if (alive()) setState(next); })}
+          onClick={() => client.browser.reload().then((next) => { if (alive()) setState(next); })}
         >
           <Icon name="reload" />
         </button>

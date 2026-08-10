@@ -213,7 +213,7 @@ export interface ArtifactsApi {
 export interface FsApi {
   roots(): Promise<{ roots?: string[] }>;
   list(path: string): Promise<FsEntry[]>;
-  read(path: string): Promise<{ path: string; content: string; truncated: boolean }>;
+  read(path: string, options?: { max_bytes?: number }): Promise<{ path: string; content: string; truncated: boolean }>;
 }
 
 export interface MemoryApi {
@@ -343,6 +343,55 @@ export interface BrowserApi {
   subscribe(listener: (state: BrowserState) => void): () => void;
 }
 
+/** Fixture-mode idle state — no native browser surface is attached. */
+const idleBrowserState: BrowserState = {
+  url: 'about:blank',
+  title: 'Preview',
+  loading: false,
+  canGoBack: false,
+  canGoForward: false,
+  visible: false,
+  native: false,
+};
+
+function browserApi(
+  transport: OptimusTransport | null,
+  get: <T>(method: DesktopMethod, params?: Record<string, unknown>) => Promise<T>
+): BrowserApi {
+  const native = transport?.browser ?? null;
+  return {
+    setBounds: (bounds) => {
+      native?.setBounds(bounds);
+    },
+    setVisible: (visible) => {
+      native?.setVisible(visible);
+    },
+    navigate: async (url) => {
+      if (native) return native.navigate(url);
+      // Fixture mode: no native surface, but the host still answers the
+      // browser_navigate RPC with a best-effort preview.
+      const result = await get<{ url?: string; final_url?: string; title?: string }>('browser_navigate', { url });
+      return {
+        url: result.url || result.final_url || url,
+        title: result.title || 'Preview',
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        visible: false,
+        native: false,
+      };
+    },
+    back: () => (native ? native.back() : Promise.resolve(idleBrowserState)),
+    forward: () => (native ? native.forward() : Promise.resolve(idleBrowserState)),
+    reload: () => (native ? native.reload() : Promise.resolve(idleBrowserState)),
+    state: () => (native ? native.state() : Promise.resolve(idleBrowserState)),
+    annotate: () => (native ? native.annotate() : Promise.resolve({ cancelled: true })),
+    cancelAnnotation: () =>
+      native ? native.cancelAnnotation() : Promise.resolve({ cancelled: true }),
+    subscribe: (listener) => (native ? native.subscribe(listener) : () => undefined),
+  };
+}
+
 export interface CampaignsApi {
   list(): Promise<Campaign[]>;
   create(input: Record<string, unknown>): Promise<unknown>;
@@ -413,8 +462,8 @@ export function createDomainApis(
       roots: () => get<{ roots?: string[] }>('fs_roots'),
       list: (path: string) =>
         get<{ entries?: FsEntry[] }>('fs_list', { path }).then((r) => r.entries ?? []),
-      read: (path: string) =>
-        get<{ path: string; content: string; truncated: boolean }>('fs_read', { path }),
+      read: (path: string, options?: { max_bytes?: number }) =>
+        get<{ path: string; content: string; truncated: boolean }>('fs_read', { path, ...options }),
     } satisfies FsApi,
     memory: {
       list: (input) =>
@@ -533,5 +582,6 @@ export function createDomainApis(
       run: (id: string) => get('campaign_run', { id }),
       status: (id: string) => get('campaign_status', { id }),
     } satisfies CampaignsApi,
+    browser: browserApi(transport, get),
   };
 }

@@ -749,9 +749,9 @@ export function OptimusApp() {
                       initialTab={consoleTab}
                     />
                   ) : state.layout.route === 'mail' ? (
-                    <MailPage transport={transport} />
+                    <MailPage client={client} />
                   ) : state.layout.route === 'artifacts' ? (
-                    <ArtifactsSurface transport={transport} active standalone />
+                    <ArtifactsSurface client={client} active standalone />
                   ) : null : null}
                 </section>
                 {state.layout.executionOpen ? <div className="execution-resizer" role="separator" tabIndex={0} aria-label="Resize execution dock" aria-orientation="horizontal" aria-valuemin={120} aria-valuemax={520} aria-valuenow={state.layout.executionHeight} aria-valuetext={`${state.layout.executionHeight} pixels`} onKeyDown={(event) => resizeWithKeyboard(event, 'execution')} onPointerDown={(event) => beginResize(event, 'execution')} /> : null}
@@ -772,7 +772,7 @@ export function OptimusApp() {
                   <div className={`workspace-shell surface-${state.layout.compactSurface}`}>
                     <WorkspacePane
                       tab={state.layout.workspaceTab}
-                      transport={transport}
+                      client={client}
                       suspended={browserSuspended}
                       onAddToPrompt={(text) => {
                         setAnnotation(text);
@@ -799,7 +799,6 @@ export function OptimusApp() {
 
         <SettingsDialog
           open={state.settingsOpen}
-          transport={transport!}
           client={client}
           theme={state.theme}
           projects={projects}
@@ -867,7 +866,7 @@ export function OptimusApp() {
         />
         <CommandPalette
           open={paletteOpen}
-          transport={transport!}
+          client={client}
           onClose={() => setPaletteOpen(false)}
           onRun={(commandId) => {
             if (

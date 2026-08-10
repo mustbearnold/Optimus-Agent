@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { ArtifactDetail, ArtifactRecord, OptimusTransport } from '../../ipc/contracts';
+import type { ArtifactDetail, ArtifactRecord } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 
 type TypeFilter = 'all' | 'image' | 'text' | 'binary';
@@ -13,11 +14,11 @@ function artifactKind(mediaType?: string): TypeFilter {
 }
 
 export function ArtifactsSurface({
-  transport,
+  client,
   active,
   standalone = false,
 }: {
-  transport: OptimusTransport | null;
+  client: OptimusClient;
   active: boolean;
   standalone?: boolean;
 }) {
@@ -39,17 +40,16 @@ export function ArtifactsSurface({
   const confirmDeleteButton = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async () => {
-    if (!transport) return;
     setError('');
     try {
-      const result = await transport.invoke<{ artifacts?: ArtifactRecord[] }>('artifacts_list');
+      const artifacts = await client.artifacts.list();
       if (!alive()) return;
-      setArtifacts(result.artifacts || []);
+      setArtifacts(artifacts);
     } catch (reason) {
       if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
 
   useEffect(() => {
     if (active) void load();
@@ -81,16 +81,14 @@ export function ArtifactsSurface({
 
   // Lazy-load image thumbnails for gallery mode.
   useEffect(() => {
-    if (!active || !gallery || !transport) return;
+    if (!active || !gallery) return;
     let cancelled = false;
     const images = filtered.filter((a) => artifactKind(a.media_type) === 'image').slice(0, 24);
     void (async () => {
       for (const artifact of images) {
         if (cancelled || thumbs[artifact.sha256]) continue;
         try {
-          const detail = await transport.invoke<ArtifactDetail>('artifacts_get', {
-            sha256: artifact.sha256,
-          });
+          const detail = await client.artifacts.get(artifact.sha256);
           if (cancelled) return;
           if (detail.kind === 'image' && detail.data_url) {
             setThumbs((current) => ({ ...current, [artifact.sha256]: detail.data_url! }));
@@ -103,12 +101,11 @@ export function ArtifactsSurface({
     return () => {
       cancelled = true;
     };
-  }, [active, gallery, filtered, thumbs, transport]);
+  }, [active, gallery, filtered, thumbs, client]);
 
   const open = async (artifact: ArtifactRecord) => {
-    if (!transport) return;
     try {
-      const next = await transport.invoke<ArtifactDetail>('artifacts_get', { sha256: artifact.sha256 });
+      const next = await client.artifacts.get(artifact.sha256);
       if (!alive()) return;
       setDetail(next);
     } catch (reason) {
@@ -118,8 +115,8 @@ export function ArtifactsSurface({
   };
 
   const removeMany = async (sha256s: string[]) => {
-    if (!sha256s.length || !transport) return;
-    await transport.invoke('artifacts_delete_many', { sha256s });
+    if (!sha256s.length) return;
+    await client.artifacts.deleteMany(sha256s);
     if (!alive()) return;
     setSelected([]);
     if (detail && sha256s.includes(detail.artifact.sha256)) setDetail(null);
@@ -158,15 +155,14 @@ export function ArtifactsSurface({
   };
 
   const exportOne = async (sha256: string) => {
-    if (!transport) return;
     setError('');
     setStatus('');
     try {
-      const result = await transport.invoke<{ path?: string }>('artifacts_export', { sha256 });
+      const result = await client.artifacts.export(sha256);
       if (!alive()) return;
       setStatus(`Exported to ${result.path || 'host path'}`);
-      if (result.path && transport.openPath) {
-        await transport.openPath(result.path);
+      if (result.path) {
+        await client.shell.openPath(result.path);
       }
     } catch (reason) {
       if (!alive()) return;
@@ -175,17 +171,15 @@ export function ArtifactsSurface({
   };
 
   const exportZip = async (sha256s: string[]) => {
-    if (!sha256s.length || !transport) return;
+    if (!sha256s.length) return;
     setError('');
     setStatus('');
     try {
-      const result = await transport.invoke<{ path?: string }>('artifacts_export_zip', {
-        sha256s,
-      });
+      const result = await client.artifacts.exportZip(sha256s);
       if (!alive()) return;
       setStatus(`Zip exported to ${result.path || 'host path'}`);
-      if (result.path && transport.openPath) {
-        await transport.openPath(result.path);
+      if (result.path) {
+        await client.shell.openPath(result.path);
       }
     } catch (reason) {
       if (!alive()) return;

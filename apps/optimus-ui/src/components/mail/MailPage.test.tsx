@@ -2,9 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient, type OptimusClient } from '../../ipc/client';
 import { MailPage } from './MailPage';
 
-function fixtureTransport(): OptimusTransport {
+function fixtureTransport(): OptimusClient {
   const invoke = vi.fn(async (method: DesktopMethod) => {
     switch (method) {
       case 'gateway_status':
@@ -60,7 +61,7 @@ function fixtureTransport(): OptimusTransport {
         throw new Error(String(method));
     }
   });
-  return {
+  return createOptimusClient({
     kind: 'fixture',
     invoke,
     chat: vi.fn(),
@@ -68,14 +69,14 @@ function fixtureTransport(): OptimusTransport {
     windowAction: vi.fn(),
     pickFolder: vi.fn(),
     openPath: vi.fn(),
-  } as unknown as OptimusTransport;
+  } as unknown as OptimusTransport);
 }
 
 describe('MailPage', () => {
   it('binds to gateway inbox/outbox without instructional filler copy', async () => {
     const user = userEvent.setup();
-    const transport = fixtureTransport();
-    render(<MailPage transport={transport} />);
+    const client = fixtureTransport();
+    render(<MailPage client={client} />);
     expect(await screen.findByRole('heading', { name: /Messaging/i })).toBeInTheDocument();
     expect(screen.getAllByText(/hello inbox/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Messages are stored|Local gateway|exactly-once|mock\/long-poll/i)).not.toBeInTheDocument();

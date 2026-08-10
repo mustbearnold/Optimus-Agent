@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { OptimusTransport } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 
 type InboxMessage = {
@@ -38,7 +38,7 @@ type GatewayStatus = {
 
 type Tab = 'inbox' | 'outbox' | 'ambiguous';
 
-export function MailPage({ transport }: { transport: OptimusTransport }) {
+export function MailPage({ client }: { client: OptimusClient }) {
   const [tab, setTab] = useState<Tab>('inbox');
   const [status, setStatus] = useState<GatewayStatus | null>(null);
   const [inbox, setInbox] = useState<InboxMessage[]>([]);
@@ -55,23 +55,23 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
     setError('');
     try {
       const [st, inb, out, amb, tg] = await Promise.all([
-        transport.invoke<{ status?: GatewayStatus }>('gateway_status'),
-        transport.invoke<{ messages?: InboxMessage[] }>('gateway_inbox'),
-        transport.invoke<{ messages?: OutboxReceipt[] }>('gateway_outbox', { limit: 50 }),
-        transport.invoke<{ messages?: OutboxReceipt[] }>('gateway_ambiguous'),
-        transport.invoke<Record<string, unknown>>('gateway_telegram_status'),
+        client.gateway.status(),
+        client.gateway.inbox(),
+        client.gateway.outbox(50),
+        client.gateway.ambiguous(),
+        client.gateway.telegramStatus(),
       ]);
       if (!alive()) return;
-      setStatus(st.status || null);
-      setInbox(inb.messages || []);
-      setOutbox(out.messages || []);
-      setAmbiguous(amb.messages || []);
+      setStatus(st);
+      setInbox(inb);
+      setOutbox(out);
+      setAmbiguous(amb);
       setTelegram(tg);
     } catch (e) {
       if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
 
   useEffect(() => {
     void load();
@@ -92,7 +92,7 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
     setBusy(true);
     setError('');
     try {
-      await transport.invoke('gateway_enqueue', { text, channel: 'local' });
+      await client.gateway.enqueue(text, 'local');
       if (!alive()) return;
       setDraft('');
       await load();
@@ -110,10 +110,7 @@ export function MailPage({ transport }: { transport: OptimusTransport }) {
     setBusy(true);
     setError('');
     try {
-      await transport.invoke('gateway_ack_delivery', {
-        message_id: row.message_id,
-        outbound_id: row.outbound.id,
-      });
+      await client.gateway.ackDelivery(row.message_id, row.outbound.id);
       await load();
     } catch (e) {
       if (!alive()) return;

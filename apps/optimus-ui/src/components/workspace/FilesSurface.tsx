@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { FsEntry, OptimusTransport } from '../../ipc/contracts';
+import type { FsEntry } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 
 export function FilesSurface({
-  transport,
+  client,
   active,
 }: {
-  transport: OptimusTransport | null;
+  client: OptimusClient;
   active: boolean;
 }) {
   const [path, setPath] = useState('');
@@ -18,13 +19,12 @@ export function FilesSurface({
   const alive = useAlive();
 
   const load = useCallback(async (nextPath: string) => {
-    if (!transport) return;
     setLoading(true);
     setError('');
     try {
-      const result = await transport.invoke<{ entries?: FsEntry[] }>('fs_list', { path: nextPath });
+      const entries = await client.fs.list(nextPath);
       if (!alive()) return;
-      setEntries(result.entries || []);
+      setEntries(entries);
       setPath(nextPath);
       setPreview(null);
     } catch (reason) {
@@ -33,14 +33,13 @@ export function FilesSurface({
     } finally {
       if (alive()) setLoading(false);
     }
-  }, [alive, transport]);
+  }, [alive, client]);
 
   useEffect(() => {
     if (active && !entries.length && !loading && !error) void load('');
   }, [active, entries.length, error, load, loading]);
 
   const openEntry = async (entry: FsEntry) => {
-    if (!transport) return;
     const isDirectory = entry.is_dir || /dir/i.test(entry.kind || '');
     if (isDirectory) {
       await load(entry.path);
@@ -49,10 +48,7 @@ export function FilesSurface({
     setLoading(true);
     setError('');
     try {
-      const result = await transport.invoke<{ path: string; content: string; truncated: boolean }>(
-        'fs_read',
-        { path: entry.path, max_bytes: 512_000 }
-      );
+      const result = await client.fs.read(entry.path, { max_bytes: 512_000 });
       if (!alive()) return;
       setPreview(result);
     } catch (reason) {

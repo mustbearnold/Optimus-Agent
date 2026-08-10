@@ -10,7 +10,6 @@ import { useAlive } from '../../hooks/useAlive';
 import type {
   CronJob,
   DeveloperAccess,
-  OptimusTransport,
   ProductSettings,
   Project,
 } from '../../ipc/contracts';
@@ -63,7 +62,6 @@ const sections: Array<{
 
 export function SettingsDialog({
   open,
-  transport,
   client,
   theme,
   projects,
@@ -75,7 +73,6 @@ export function SettingsDialog({
   onClose,
 }: {
   open: boolean;
-  transport: OptimusTransport;
   client: OptimusClient;
   theme: 'dark' | 'light';
   projects: Project[];
@@ -421,7 +418,7 @@ export function SettingsDialog({
             {active === 'advanced' ? (
               <SettingsGroup title="Runtime surface">
                 <SettingRow title="Transport" description="The active UI transport is reported here without exposing credentials.">
-                  <span className="state-chip">{transport.kind}</span>
+                  <span className="state-chip">{client.kind}</span>
                 </SettingRow>
                 <SettingRow title="Developer tools" description="No hidden production toggle is implemented.">
                   <button type="button" disabled>Not available</button>

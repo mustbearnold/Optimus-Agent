@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient } from '../../ipc/client';
 import { CommandPalette } from './CommandPalette';
 
 const CATALOG = [
@@ -16,14 +17,14 @@ function fixtureTransport(commands = CATALOG) {
     if (method === 'commands_list') return { commands };
     throw new Error(method);
   });
-  return {
+  return createOptimusClient({
     kind: 'fixture',
     invoke,
     chat: vi.fn(),
     windowAction: vi.fn(),
     pickFolder: vi.fn(),
     openPath: vi.fn(),
-  } as unknown as OptimusTransport;
+  } as unknown as OptimusTransport);
 }
 
 /**
@@ -42,7 +43,7 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     const onRun = vi.fn();
     render(
-      <CommandPalette open transport={fixtureTransport()} onClose={vi.fn()} onRun={onRun} />
+      <CommandPalette open client={fixtureTransport()} onClose={vi.fn()} onRun={onRun} />
     );
     expect(await screen.findByText('/skills')).toBeInTheDocument();
     await user.click(screen.getByText('/skills'));
@@ -53,7 +54,7 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     const onRun = vi.fn();
     render(
-      <CommandPalette open transport={fixtureTransport()} onClose={vi.fn()} onRun={onRun} />
+      <CommandPalette open client={fixtureTransport()} onClose={vi.fn()} onRun={onRun} />
     );
     await screen.findByText('/skills');
 
@@ -67,7 +68,7 @@ describe('CommandPalette', () => {
   it('exposes the list as a listbox with exactly one active option', async () => {
     const user = userEvent.setup();
     render(
-      <CommandPalette open transport={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
+      <CommandPalette open client={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
     );
     await screen.findByText('/skills');
 
@@ -93,7 +94,7 @@ describe('CommandPalette', () => {
   it('filters on id, name and description, the way it always did', async () => {
     const user = userEvent.setup();
     render(
-      <CommandPalette open transport={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
+      <CommandPalette open client={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
     );
     await screen.findByText('/skills');
 
@@ -107,7 +108,7 @@ describe('CommandPalette', () => {
   it('says so when nothing matches instead of showing an empty box', async () => {
     const user = userEvent.setup();
     render(
-      <CommandPalette open transport={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
+      <CommandPalette open client={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
     );
     await screen.findByText('/skills');
     await user.type(screen.getByLabelText('Filter commands'), 'zzzz');
@@ -126,7 +127,7 @@ describe('CommandPalette', () => {
           </button>
           <CommandPalette
             open={open}
-            transport={fixtureTransport()}
+            client={fixtureTransport()}
             onClose={() => setOpen(false)}
             onRun={vi.fn()}
           />
@@ -147,7 +148,7 @@ describe('CommandPalette', () => {
     render(
       <>
         <button type="button">behind the palette</button>
-        <CommandPalette open transport={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
+        <CommandPalette open client={fixtureTransport()} onClose={vi.fn()} onRun={vi.fn()} />
       </>
     );
     await screen.findByText('/skills');
@@ -159,7 +160,7 @@ describe('CommandPalette', () => {
   });
 
   it('surfaces a transport failure rather than showing an empty palette', async () => {
-    const transport = {
+    const client = createOptimusClient({
       kind: 'fixture',
       invoke: vi.fn(async () => {
         throw new Error('commands_list unavailable');
@@ -168,9 +169,9 @@ describe('CommandPalette', () => {
       windowAction: vi.fn(),
       pickFolder: vi.fn(),
       openPath: vi.fn(),
-    } as unknown as OptimusTransport;
+    } as unknown as OptimusTransport);
 
-    render(<CommandPalette open transport={transport} onClose={vi.fn()} onRun={vi.fn()} />);
+    render(<CommandPalette open client={client} onClose={vi.fn()} onRun={vi.fn()} />);
     expect(await screen.findByText('commands_list unavailable')).toBeInTheDocument();
   });
 });

@@ -28,8 +28,11 @@ export interface OptimusClient {
   settings: ReturnType<typeof createDomainApis>['settings'];
   shell: ReturnType<typeof createDomainApis>['shell'];
   campaigns: ReturnType<typeof createDomainApis>['campaigns'];
-  /** Present only when the underlying transport has a browser surface. */
-  browser: BrowserApi | null;
+  /** Preview browser — native surface when the transport has one, else the
+   *  fixture-mode RPC fallback (browser_navigate) with idle no-ops. */
+  browser: BrowserApi;
+  /** Transport kind ('tauri' | 'ws' | 'http' | 'fixture') for status chips. */
+  kind: OptimusTransport['kind'];
   /** Ordered observability log of every renderer→host interaction. */
   observer: RuntimeObserver;
 }
@@ -45,7 +48,7 @@ export function createOptimusClient(transport: OptimusTransport | null): Optimus
   return {
     chat: (sessionId) => new ChatSession(transport, sessionId, observer),
     ...apis,
-    browser: transport?.browser ?? null,
+    kind: transport?.kind ?? 'fixture',
     observer,
   };
 }

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { ArtifactRecord, DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient } from '../../ipc/client';
 import { ArtifactsSurface } from './ArtifactsSurface';
 
 const artifacts: ArtifactRecord[] = [
@@ -43,22 +44,22 @@ function createTransport() {
 
   return {
     invoke,
-    transport: {
+    client: createOptimusClient({
       kind: 'fixture',
       invoke,
       chat: vi.fn(),
       windowAction: vi.fn(),
       pickFolder: vi.fn(),
       openPath: vi.fn(),
-    } as unknown as OptimusTransport,
+    } as unknown as OptimusTransport),
   };
 }
 
 describe('ArtifactsSurface deletion', () => {
   it('requires confirmation, cancels safely, and deletes the exact selected hashes', async () => {
     const user = userEvent.setup();
-    const { invoke, transport } = createTransport();
-    render(<ArtifactsSurface transport={transport} active />);
+    const { invoke, client } = createTransport();
+    render(<ArtifactsSurface client={client} active />);
 
     await user.click(await screen.findByLabelText('Select First artifact'));
     await user.click(screen.getByLabelText('Select Second artifact'));
@@ -83,8 +84,8 @@ describe('ArtifactsSurface deletion', () => {
 
   it('filters by type chip and exports a zip of the selection', async () => {
     const user = userEvent.setup();
-    const { invoke, transport } = createTransport();
-    render(<ArtifactsSurface transport={transport} active />);
+    const { invoke, client } = createTransport();
+    render(<ArtifactsSurface client={client} active />);
 
     await screen.findByLabelText('Select First artifact');
     await user.click(screen.getByRole('button', { name: 'text', pressed: false }));
@@ -100,11 +101,11 @@ describe('ArtifactsSurface deletion', () => {
     );
   });
 
-  it('renders with a null transport without crashing (bootstrap window)', () => {
+  it('renders with a null-transport client without crashing (bootstrap window)', () => {
     // Regression: the packaged renderer mounts with transport=null while the
     // spec-015 A3 broker ticket is awaited; the mount-time artifacts_list
-    // load must not throw.
-    render(<ArtifactsSurface transport={null} active />);
+    // load must surface NoTransportError into the error slot, not throw.
+    render(<ArtifactsSurface client={createOptimusClient(null)} active />);
 
     expect(screen.getByRole('region', { name: 'Artifacts' })).toBeInTheDocument();
   });

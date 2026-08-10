@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-import type { OptimusTransport } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 
 export type PaletteCommand = {
   id: string;
@@ -38,12 +38,12 @@ export type PaletteCommand = {
  */
 export function CommandPalette({
   open,
-  transport,
+  client,
   onClose,
   onRun,
 }: {
   open: boolean;
-  transport: OptimusTransport;
+  client: OptimusClient;
   onClose: () => void;
   onRun: (commandId: string) => void;
 }) {
@@ -64,11 +64,11 @@ export function CommandPalette({
     if (!open) return;
     setQuery('');
     setError('');
-    void transport
-      .invoke<{ commands?: PaletteCommand[] }>('commands_list', { surface: 'desktop' })
-      .then((r) => setCommands(r.commands || []))
+    void client.system
+      .commandsList('desktop')
+      .then((commands) => setCommands(commands))
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-  }, [open, transport]);
+  }, [open, client]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

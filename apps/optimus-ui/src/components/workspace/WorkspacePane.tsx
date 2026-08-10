@@ -1,4 +1,4 @@
-import type { OptimusTransport } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import type { WorkspaceTab } from '../../state/layoutStore';
 import { ArtifactsSurface } from './ArtifactsSurface';
 import { BrowserSurface } from './BrowserSurface';
@@ -16,13 +16,13 @@ const TABS: { tab: WorkspaceTab; label: string }[] = [
 
 export function WorkspacePane({
   tab,
-  transport,
+  client,
   suspended,
   onAddToPrompt,
   onSelectTab,
 }: {
   tab: WorkspaceTab;
-  transport: OptimusTransport | null;
+  client: OptimusClient;
   suspended: boolean;
   onAddToPrompt: (text: string) => void;
   onSelectTab: (tab: WorkspaceTab) => void;
@@ -47,13 +47,13 @@ export function WorkspacePane({
       </div>
       <div className="workspace-body">
         <div id="workspace-panel-browser" aria-label="Preview browser" hidden={tab !== 'browser'} className={tab === 'browser' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
-          <BrowserSurface transport={transport} active={tab === 'browser' && !suspended} onAddToPrompt={onAddToPrompt} />
+          <BrowserSurface client={client} active={tab === 'browser' && !suspended} onAddToPrompt={onAddToPrompt} />
         </div>
         <div id="workspace-panel-files" aria-label="Files" hidden={tab !== 'files'} className={tab === 'files' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
-          <FilesSurface transport={transport} active={tab === 'files'} />
+          <FilesSurface client={client} active={tab === 'files'} />
         </div>
         <div id="workspace-panel-artifacts" aria-label="Artifacts" hidden={tab !== 'artifacts'} className={tab === 'artifacts' ? 'workspace-panel is-active' : 'workspace-panel'} role="tabpanel">
-          <ArtifactsSurface transport={transport} active={tab === 'artifacts'} />
+          <ArtifactsSurface client={client} active={tab === 'artifacts'} />
         </div>
       </div>
     </aside>
