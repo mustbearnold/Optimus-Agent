@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   formatAuthorizeError,
@@ -104,5 +105,29 @@ describe('ProjectSourcesDialog authorization gates', () => {
     // hand-rolled window-level listener is gone (ADR-0050).
     fireEvent.keyDown(screen.getByRole('dialog', { name: 'Project sources' }), { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('contains focus inside the Radix modal scope and wraps on Tab', async () => {
+    const user = userEvent.setup();
+    render(
+      <ProjectSourcesDialog
+        project={fixtureProject()}
+        authorizedRootPaths={[]}
+        onPickSource={vi.fn()}
+        onSave={vi.fn()}
+        onClose={() => {}}
+      />
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: 'Project sources' });
+    // Radix moves focus into the dialog on open (focus scope).
+    await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
+
+    // Tab cannot leave the dialog: from the last control it wraps to the
+    // first (Radix focus scope — same contract as the Settings dialog).
+    const controls = screen.getAllByRole('button');
+    controls[controls.length - 1].focus();
+    await user.keyboard('{Tab}');
+    await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
   });
 });
