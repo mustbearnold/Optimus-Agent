@@ -30,6 +30,10 @@ pub struct KernelConfig {
     pub autonomy_profile: optimus_graph::AutonomyProfile,
     /// Overrides product-settings command FS envelope; `None` → settings.json work_isolation.
     pub command_fs_envelope: Option<optimus_graph::CommandFsEnvelope>,
+    /// Durable transcript session id (spec-014 R7, ADR-0081) scoping session
+    /// consent. `None` disables session consent. Plumbed into the runtime at
+    /// BOTH kernel construction sites (turn and resolve paths).
+    pub consent_session_id: Option<String>,
     /// Optional in-memory override for the persisted Developer Full Access
     /// grant. None means load the product setting, not “allow everything”.
     pub developer_access: Option<optimus_policy::DeveloperAccessGrant>,
@@ -65,6 +69,7 @@ impl Default for KernelConfig {
             effect_policy: optimus_graph::PolicyMode::SmartDeny,
             autonomy_profile: optimus_graph::AutonomyProfile::ReviewChanges,
             command_fs_envelope: None,
+            consent_session_id: None,
             developer_access: None,
             self_development: None,
             children_max_depth: 1,

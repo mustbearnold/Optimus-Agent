@@ -56,6 +56,7 @@ fn valid_grant(root: &str, terminal: bool) -> DeveloperAccessGrant {
 
 fn confined_config() -> RuntimeConfig {
     RuntimeConfig {
+        consent_session_id: None,
         policy: PolicyMode::SmartDeny,
         command_fs_envelope: CommandFsEnvelope::Confined,
         autonomy_profile: optimus_graph::AutonomyProfile::DeveloperFullAccess,

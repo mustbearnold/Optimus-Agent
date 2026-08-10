@@ -7,6 +7,7 @@ mod effect_preflight;
 mod owned_localhost;
 mod process_ownership;
 mod secret_basename;
+mod session_consent;
 pub mod toolchain;
 mod workspace_identity;
 use process_ownership::*;

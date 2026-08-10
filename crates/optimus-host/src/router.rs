@@ -126,6 +126,26 @@ const METHOD_DOMAINS: &[(&str, Domain, Option<ScopePolicy>)] = &[
     ("approvals_list", Domain::Runtime, None),
     ("approvals_grant", Domain::Runtime, None),
     ("approvals_release_yolo", Domain::Runtime, None),
+    (
+        "session_consent_grant",
+        Domain::Runtime,
+        Some(ScopePolicy::Project),
+    ),
+    (
+        "session_consent_revoke",
+        Domain::Runtime,
+        Some(ScopePolicy::Project),
+    ),
+    (
+        "session_consent_revoke_all",
+        Domain::Runtime,
+        Some(ScopePolicy::Project),
+    ),
+    (
+        "session_consent_list",
+        Domain::Runtime,
+        Some(ScopePolicy::Project),
+    ),
     ("jobs_list", Domain::Runtime, None),
     ("campaign_list", Domain::Runtime, None),
     ("campaign_create", Domain::Runtime, None),
@@ -341,6 +361,26 @@ mod tests {
         ("approvals_list", Domain::Runtime, None),
         ("approvals_grant", Domain::Runtime, None),
         ("approvals_release_yolo", Domain::Runtime, None),
+        (
+            "session_consent_grant",
+            Domain::Runtime,
+            Some(ScopePolicy::Project),
+        ),
+        (
+            "session_consent_revoke",
+            Domain::Runtime,
+            Some(ScopePolicy::Project),
+        ),
+        (
+            "session_consent_revoke_all",
+            Domain::Runtime,
+            Some(ScopePolicy::Project),
+        ),
+        (
+            "session_consent_list",
+            Domain::Runtime,
+            Some(ScopePolicy::Project),
+        ),
         ("jobs_list", Domain::Runtime, None),
         ("campaign_list", Domain::Runtime, None),
         ("campaign_create", Domain::Runtime, None),

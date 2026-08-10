@@ -63,6 +63,28 @@ pub(crate) fn exact_action_summary(effect_json: &str) -> String {
     }
 }
 
+/// The `CommandClass` discriminator behind a pending command effect, when the
+/// exact effect is a command (spec-014 R7, ADR-0081).
+///
+/// The approval card labels "Always allow <class> in this project (this
+/// session)" from this value; it is derived here, from the exact effect the
+/// runtime settled, never from free text. Non-command effects yield `None` —
+/// session consent is command-class-scoped only.
+pub(crate) fn command_class_of_effect(effect_json: &str) -> Option<String> {
+    let effect = serde_json::from_str::<Effect>(effect_json).ok()?;
+    let (program, args) = match effect {
+        Effect::ProjectRunCommand { program, args, .. }
+        | Effect::RunCommand { program, args }
+        | Effect::ProjectServe { program, args, .. } => (program, args),
+        _ => return None,
+    };
+    Some(
+        optimus_policy::classify_command(&program, &args)
+            .as_str()
+            .to_string(),
+    )
+}
+
 pub(crate) fn timing_event(
     kind: TimingEventKind,
     turn_started: std::time::Instant,

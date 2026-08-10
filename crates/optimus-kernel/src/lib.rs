@@ -4,6 +4,7 @@
 //! crate). Operator gateway and cron storage live in `optimus-ops` and are
 //! re-exported here for surface convenience without growing the turn-loop waist.
 
+mod bindings;
 mod browser;
 mod browser_budget;
 mod browser_coord;
@@ -51,6 +52,8 @@ mod turn_loop;
 mod turn_recovery;
 mod vision;
 mod web_search;
+
+pub use bindings::ToolApprovalBinding;
 
 use optimus_graph::{Effect, JobSpec, NodeSpec};
 use optimus_packs::{
@@ -336,18 +339,6 @@ pub struct ToolLifecycleEvent {
     pub approval: Option<ToolApprovalBinding>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ToolApprovalBinding {
-    pub run_id: Uuid,
-    pub call_id: String,
-    pub tool_id: ToolId,
-    pub job_id: optimus_runtime::JobId,
-    pub node_id: Uuid,
-    pub node_index: u32,
-    pub effect_sha256: String,
-    pub summary: String,
-}
-
 pub trait ModelProvider {
     fn complete(&mut self, request: CompletionRequest) -> Result<CompletionResponse>;
 
@@ -503,6 +494,7 @@ impl Kernel {
             policy: config.effect_policy,
             command_fs_envelope,
             autonomy_profile: config.autonomy_profile,
+            consent_session_id: config.consent_session_id.clone(),
         };
         let runtime = Runtime::open_with_developer_access(
             &home.join("optimus.db"),
@@ -511,11 +503,16 @@ impl Kernel {
             developer_access,
             developer_roots,
         )?;
-        let memory = Memory::open(home.join("memory.db"))?;
-        let skills = SkillRegistry::open(home.join("skills.db"))?;
-        let sessions = SessionStore::open(home.join("sessions.db"))?;
-        let executions = ExecutionStore::open(home.join("execution.db"))?;
-        let message_plane = optimus_ops::MessageStore::open(&home)?;
+        let memory = Memory::open(home.join("memory.db"))
+            .map_err(|e| KernelError::Tool(format!("memory.db: {e}")))?;
+        let skills = SkillRegistry::open(home.join("skills.db"))
+            .map_err(|e| KernelError::Tool(format!("skills.db: {e}")))?;
+        let sessions = SessionStore::open(home.join("sessions.db"))
+            .map_err(|e| KernelError::Tool(format!("sessions.db: {e}")))?;
+        let executions = ExecutionStore::open(home.join("execution.db"))
+            .map_err(|e| KernelError::Tool(format!("execution.db: {e}")))?;
+        let message_plane = optimus_ops::MessageStore::open(&home)
+            .map_err(|e| KernelError::Tool(format!("messages.db: {e}")))?;
         // spec-025: this kernel instance is a live peer while it is open.
         let _ = message_plane.register_live(session_id.unwrap_or_else(Uuid::new_v4));
         let mut packs = CapabilitySession::new(config.pack_budget.clone())?;

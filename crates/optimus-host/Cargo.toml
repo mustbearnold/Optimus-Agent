@@ -13,6 +13,7 @@ optimus-packs.workspace = true
 optimus-runtime.workspace = true
 optimus-graph.workspace = true
 optimus-policy.workspace = true
+optimus-store.workspace = true
 optimus-workflow.workspace = true
 serde.workspace = true
 serde_json.workspace = true

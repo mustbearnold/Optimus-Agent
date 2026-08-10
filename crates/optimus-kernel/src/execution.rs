@@ -1107,6 +1107,7 @@ mod tests {
             node_index: 0,
             effect_sha256: "0".repeat(64),
             summary: "Write proof.txt (2 bytes)".into(),
+            command_class: None,
         };
         let event = ToolLifecycleEvent {
             schema_version: crate::TOOL_LIFECYCLE_SCHEMA_VERSION,

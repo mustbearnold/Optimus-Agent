@@ -410,6 +410,7 @@ impl Kernel {
                 node_index,
                 effect_sha256: next_effect_sha256,
                 summary: next_summary,
+                command_class: command_class_of_effect(&pending.effect_json),
             };
             let mut next_event = tool_lifecycle_event(
                 manifest_id,

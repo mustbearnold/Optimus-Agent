@@ -89,6 +89,7 @@ pub fn chat_approval_resolve_cancellable(
         effect_policy: access.policy,
         autonomy_profile: access.profile,
         command_fs_envelope: access.command_fs_envelope,
+        consent_session_id: Some(session_id.to_string()),
         self_development: self_development_handler(home, access.profile),
         max_steps: turn_max_steps(access.profile),
         ..KernelConfig::default()
@@ -533,6 +534,7 @@ pub(crate) fn chat_turn_inner(
         effect_policy,
         autonomy_profile: access.profile,
         command_fs_envelope,
+        consent_session_id: session.map(|sid| sid.to_string()),
         children_max_depth: if child_run {
             params
                 .get("children_max_depth")

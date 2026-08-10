@@ -22,6 +22,10 @@ pub(super) fn owns(method: &str) -> bool {
         "approvals_list"
             | "approvals_grant"
             | "approvals_release_yolo"
+            | "session_consent_grant"
+            | "session_consent_revoke"
+            | "session_consent_revoke_all"
+            | "session_consent_list"
             | "jobs_list"
             | "campaign_list"
             | "campaign_create"
@@ -69,6 +73,78 @@ pub(super) fn handle(
                 .release_open_approvals_under_yolo()
                 .map_err(|e| e.to_string())?;
             Ok(json!({ "released": released }))
+        }
+        "session_consent_grant" => {
+            // spec-014 R7 / ADR-0081: "Always allow <class> in this project
+            // (this session)". The class discriminator comes from the UI; the
+            // capability and scope are derived server-side so a consent can
+            // never name a capability the class does not imply.
+            let session_id = required_consent_session(&params)?;
+            let command_class = params
+                .get("command_class")
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .ok_or_else(|| "command_class required".to_string())?;
+            let ttl_secs = params
+                .get("ttl_secs")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(optimus_store::Store::CONSENT_TTL_DEFAULT_SECS);
+            let rt = open_runtime_for_consent(home, &params)?;
+            let grant = rt
+                .grant_session_consent(session_id, command_class, ttl_secs)
+                .map_err(|e| e.to_string())?;
+            Ok(json!({
+                "granted": true,
+                "session_id": grant.session_id,
+                "capability": grant.capability,
+                "command_class": grant.command_class,
+                "scope_sha256": grant.scope_sha256,
+                "created_unix": grant.created_unix,
+                "expires_unix": grant.expires_unix,
+            }))
+        }
+        "session_consent_revoke" => {
+            let session_id = required_consent_session(&params)?;
+            let command_class = params
+                .get("command_class")
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .ok_or_else(|| "command_class required".to_string())?;
+            let rt = open_runtime_for_consent(home, &params)?;
+            let revoked = rt
+                .revoke_session_consent(session_id, command_class)
+                .map_err(|e| e.to_string())?;
+            Ok(json!({ "revoked": revoked }))
+        }
+        "session_consent_revoke_all" => {
+            let session_id = required_consent_session(&params)?;
+            let rt = open_runtime_for_consent(home, &params)?;
+            let revoked = rt
+                .revoke_session_consents(session_id)
+                .map_err(|e| e.to_string())?;
+            Ok(json!({ "revoked": revoked }))
+        }
+        "session_consent_list" => {
+            let session_id = required_consent_session(&params)?;
+            let rt = open_runtime_for_consent(home, &params)?;
+            let rows: Vec<_> = rt
+                .list_session_consents(session_id)
+                .map_err(|e| e.to_string())?
+                .into_iter()
+                .map(|g| {
+                    json!({
+                        "session_id": g.session_id,
+                        "capability": g.capability,
+                        "command_class": g.command_class,
+                        "scope_sha256": g.scope_sha256,
+                        "created_unix": g.created_unix,
+                        "expires_unix": g.expires_unix,
+                        "revoked_unix": g.revoked_unix,
+                        "revoked_by": g.revoked_by,
+                    })
+                })
+                .collect();
+            Ok(json!({ "grants": rows }))
         }
         "approvals_grant" => {
             let id = params
@@ -410,6 +486,40 @@ fn open_runtime_for_job(
     ))
 }
 
+/// The durable transcript session id scoping a consent (spec-014 R7).
+fn required_consent_session(params: &serde_json::Value) -> Result<&str, String> {
+    params
+        .get("session_id")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "session_id required".to_string())
+}
+
+/// Open the runtime for a consent route, keying the grant at the workspace
+/// the session actually runs in.
+///
+/// `project_id` (optional) resolves the runtime-authorized primary root so
+/// the consent scope matches the kernel's project workspace; without it the
+/// consent is scoped to the default `home/workspace` session root.
+fn open_runtime_for_consent(
+    home: &Path,
+    params: &serde_json::Value,
+) -> Result<optimus_runtime::Runtime, String> {
+    let Some(project_id) = params
+        .get("project_id")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+    else {
+        return open_runtime(home);
+    };
+    let store = ProjectAuthorityStore::open(home).map_err(|error| error.to_string())?;
+    let scope = store
+        .scope(project_id)
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| format!("project {project_id} has no runtime-authorized root"))?;
+    open_runtime_at(home, &scope.primary_root)
+}
+
 /// IPC handler: navigate the browser to a URL and return page state.
 fn browser_navigate(home: &Path, params: serde_json::Value) -> Result<serde_json::Value, String> {
     let url = params
@@ -599,5 +709,133 @@ mod tests {
             "exact"
         );
         assert!(!home.path().join("workspace/approved.txt").exists());
+    }
+
+    #[test]
+    fn session_consent_grant_and_list_round_trip_and_revoke_all_clears() {
+        let home = tempdir().unwrap();
+        let session_id = "durable-session-abc";
+
+        let granted = handle(
+            home.path(),
+            "session_consent_grant",
+            serde_json::json!({
+                "session_id": session_id,
+                "command_class": "opaque_shell",
+            }),
+        )
+        .unwrap();
+        assert_eq!(granted["granted"], true);
+        assert_eq!(granted["capability"], "system.modify");
+        assert_eq!(granted["command_class"], "opaque_shell");
+        assert!(granted["scope_sha256"].as_str().unwrap().len() == 64);
+        let ttl =
+            granted["expires_unix"].as_u64().unwrap() - granted["created_unix"].as_u64().unwrap();
+        assert_eq!(ttl, optimus_store::Store::CONSENT_TTL_DEFAULT_SECS);
+
+        // A second grant of the same class renews rather than duplicating.
+        let renewed = handle(
+            home.path(),
+            "session_consent_grant",
+            serde_json::json!({
+                "session_id": session_id,
+                "command_class": "opaque_shell",
+                "ttl_secs": 999999, // clamped to 24 h
+            }),
+        )
+        .unwrap();
+        let clamped_ttl =
+            renewed["expires_unix"].as_u64().unwrap() - renewed["created_unix"].as_u64().unwrap();
+        assert_eq!(clamped_ttl, optimus_store::Store::CONSENT_TTL_MAX_SECS);
+
+        let listed = handle(
+            home.path(),
+            "session_consent_list",
+            serde_json::json!({ "session_id": session_id }),
+        )
+        .unwrap();
+        let grants = listed["grants"].as_array().unwrap();
+        assert_eq!(grants.len(), 1, "renewal must not duplicate the row");
+        assert_eq!(grants[0]["command_class"], "opaque_shell");
+
+        // Unknown class is rejected server-side.
+        let bad = handle(
+            home.path(),
+            "session_consent_grant",
+            serde_json::json!({
+                "session_id": session_id,
+                "command_class": "not_a_class",
+            }),
+        );
+        assert!(bad.is_err());
+
+        let revoked = handle(
+            home.path(),
+            "session_consent_revoke_all",
+            serde_json::json!({ "session_id": session_id }),
+        )
+        .unwrap();
+        assert_eq!(revoked["revoked"], 1);
+        let after = handle(
+            home.path(),
+            "session_consent_list",
+            serde_json::json!({ "session_id": session_id }),
+        )
+        .unwrap();
+        assert_eq!(
+            after["grants"].as_array().unwrap().len(),
+            1,
+            "soft revoke keeps the audit row"
+        );
+        assert!(
+            after["grants"][0]["revoked_unix"].as_u64().is_some(),
+            "revoked row carries the revocation stamp"
+        );
+    }
+
+    #[test]
+    fn session_consent_revoke_is_exact_per_class() {
+        let home = tempdir().unwrap();
+        let session_id = "durable-session-xyz";
+        for class in ["opaque_shell", "project_execute"] {
+            handle(
+                home.path(),
+                "session_consent_grant",
+                serde_json::json!({
+                    "session_id": session_id,
+                    "command_class": class,
+                }),
+            )
+            .unwrap();
+        }
+        let revoked = handle(
+            home.path(),
+            "session_consent_revoke",
+            serde_json::json!({
+                "session_id": session_id,
+                "command_class": "opaque_shell",
+            }),
+        )
+        .unwrap();
+        assert_eq!(revoked["revoked"], true);
+
+        let listed = handle(
+            home.path(),
+            "session_consent_list",
+            serde_json::json!({ "session_id": session_id }),
+        )
+        .unwrap();
+        let grants = listed["grants"].as_array().unwrap();
+        assert_eq!(grants.len(), 2);
+        let project_execute = grants
+            .iter()
+            .find(|g| g["command_class"] == "project_execute")
+            .unwrap();
+        assert!(project_execute["revoked_unix"].is_null());
+        let opaque = grants
+            .iter()
+            .find(|g| g["command_class"] == "opaque_shell")
+            .unwrap();
+        assert!(opaque["revoked_unix"].as_u64().is_some());
     }
 }

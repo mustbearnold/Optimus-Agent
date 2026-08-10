@@ -153,6 +153,7 @@ fn two_node_job_reparks_after_first_approval_and_synthesizes_node_binding() {
         node_index: 0,
         effect_sha256: sha0.clone(),
         summary: "Write src/proof.txt (4 bytes)".into(),
+        command_class: None,
     };
     let event = approve_required_event(manifest_id, &call, &binding);
     executions

@@ -601,6 +601,7 @@ impl Kernel {
                                         Sha256::digest(pending.effect_json.as_bytes())
                                     ),
                                     summary: summary.clone(),
+                                    command_class: command_class_of_effect(&pending.effect_json),
                                 };
                                 let mut finish_event = timing_event(
                                     TimingEventKind::ToolFinished,

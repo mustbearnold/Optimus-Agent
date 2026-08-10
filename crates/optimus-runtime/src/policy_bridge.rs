@@ -175,6 +175,23 @@ fn effect_command(effect: &Effect) -> Option<(&str, &[String])> {
     }
 }
 
+/// The workspace scope a command effect is bound to, if project-scoped.
+///
+/// Bare `RunCommand` effects carry no scope (they run in the runtime's own
+/// workspace root), so settlement falls back to the runtime workspace
+/// identity for the consent lookup.
+fn effect_workspace_scope(effect: &Effect) -> Option<String> {
+    match effect {
+        Effect::ProjectRunCommand {
+            workspace_sha256, ..
+        }
+        | Effect::ProjectServe {
+            workspace_sha256, ..
+        } => Some(workspace_sha256.clone()),
+        _ => None,
+    }
+}
+
 impl Runtime {
     /// Capability-broker decision for a high-risk effect under SmartDeny (ADR-0044).
     fn authorize_high_risk_effect(
@@ -287,6 +304,13 @@ impl Runtime {
                     .map_err(GraphError::from)?;
             }
             AuthorityDecision::Ask { .. } => {
+                // Session consent (spec-014 R7, ADR-0081): a live grant for
+                // this session's (capability, CommandClass) pair under a live
+                // Developer Full Access grant settles as an auto-grant with an
+                // exact-effect audit row instead of pausing.
+                if self.session_consent_auto_grants(job_id, node_id, effect, effect_hash)? {
+                    return Ok(());
+                }
                 mark_node_awaiting_approval(&self.store, job_id, node_id)?;
                 return Err(RuntimeError::NeedsApproval {
                     job_id,
@@ -306,6 +330,67 @@ impl Runtime {
             }
         }
         Ok(())
+    }
+
+    /// Whether a live session-consent grant covers `effect` (ADR-0081 R7).
+    ///
+    /// The class is re-derived via `classify_command` at settlement — never
+    /// trusted from a stored string. OpaqueShell only matches the explicit
+    /// (SystemModify, OpaqueShell) consent pair; every other class matches its
+    /// own class grant. Scope and Developer Full Access liveness are
+    /// revalidated at use time. When covered, the exact-effect audit row is
+    /// written before returning `true`.
+    fn session_consent_auto_grants(
+        &self,
+        job_id: JobId,
+        node_id: Uuid,
+        effect: &Effect,
+        effect_hash: &str,
+    ) -> Result<bool> {
+        let Some(session_id) = self.config.consent_session_id.as_deref() else {
+            return Ok(false);
+        };
+        // DFA liveness at use time (A5: DFA disable or terminal-execution
+        // loss → ask again). Mirrors developer_runtime.rs: a grant is live
+        // only while `enabled` AND `terminal_execution` both hold.
+        if !self
+            .developer
+            .grant
+            .as_ref()
+            .is_some_and(|grant| grant.enabled && grant.capabilities.terminal_execution)
+        {
+            return Ok(false);
+        }
+        let Some((program, args)) = effect_command(effect) else {
+            return Ok(false);
+        };
+        let class = optimus_policy::classify_command(program, args);
+        // `class.capability()` already maps OpaqueShell → SystemModify, so the
+        // explicit (SystemModify, OpaqueShell) pair is the natural key.
+        let capability = class.capability().as_str();
+        let scope = effect_workspace_scope(effect).unwrap_or_else(|| self.workspace_sha256());
+        let now = Self::now_unix()?;
+        if self
+            .store
+            .live_capability_grant(session_id, capability, class.as_str(), &scope, now)
+            .map_err(GraphError::from)?
+            .is_none()
+        {
+            return Ok(false);
+        }
+        // Auto-grant writes the exact-effect audit row, naming the consent.
+        self.store
+            .insert_action_approval(&NewActionApproval {
+                id: Uuid::new_v4(),
+                job_id: job_id.0,
+                node_id,
+                effect_hash: effect_hash.to_string(),
+                actor: format!("session_consent:{}", class.as_str()),
+                created_unix: now,
+                expires_unix: now.saturating_add(3600),
+            })
+            .map_err(GraphError::from)?;
+        Ok(true)
     }
 
     /// Release approvals that are open right now because the operator activated

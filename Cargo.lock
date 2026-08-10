@@ -3500,6 +3500,7 @@ dependencies = [
  "optimus-packs",
  "optimus-policy",
  "optimus-runtime",
+ "optimus-store",
  "optimus-workflow",
  "rfd",
  "rusqlite",
