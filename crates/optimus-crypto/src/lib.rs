@@ -61,6 +61,19 @@ impl std::str::FromStr for Sha256Digest {
     }
 }
 
+impl TryFrom<&str> for Sha256Digest {
+    type Error = &'static str;
+
+    /// Parse via `Sha256Digest::try_from("<hex>")?`, matching [`Sha256Digest::parse`].
+    ///
+    /// Provides the standard fallible construction path (`?`-compatible with
+    /// `Result<Sha256Digest, &'static str>`), symmetric with the existing
+    /// `FromStr` impl so callers don't have to destructure an `Option`.
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Sha256Digest::parse(value).ok_or("expected exactly 64 hex digits")
+    }
+}
+
 impl serde::Serialize for Sha256Digest {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.0)
@@ -146,6 +159,21 @@ mod tests {
         assert!(&"g".repeat(64).parse::<Sha256Digest>().is_err());
         assert!(&"a".repeat(63).parse::<Sha256Digest>().is_err());
         assert!(&"".parse::<Sha256Digest>().is_err());
+    }
+
+    #[test]
+    fn sha256_digest_try_from_parses_and_rejects() {
+        let digest = Sha256Digest::digest(b"optimus");
+        let parsed = Sha256Digest::try_from(digest.as_str()).expect("canonical form parses");
+        assert_eq!(parsed, digest);
+        // TryFrom must reject the same inputs as parse()/FromStr.
+        assert_eq!(
+            Sha256Digest::try_from("g".repeat(64).as_str())
+                .map_err(|_| "expected exactly 64 hex digits"),
+            Err("expected exactly 64 hex digits")
+        );
+        assert!(Sha256Digest::try_from("a".repeat(63).as_str()).is_err());
+        assert!(Sha256Digest::try_from("").is_err());
     }
 
     #[test]
