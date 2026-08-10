@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-07-28",
+ "updated_at": "2026-08-11",
  "scorecard_marker": "thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial",
  "authority": "Executable repository evidence outranks blueprint and historical phase prose.",
  "states": [
@@ -379,7 +379,8 @@
     "crates/optimus-ops/src/gateway.rs",
     "apps/optimus-cli/tests/gateway_http.rs",
     "crates/optimus-host/src/messaging.rs",
-    "_attic/architecture-records/product-complete-p28-verification.md"
+    "_attic/architecture-records/product-complete-p28-verification.md",
+    "crates/optimus-ops/src/transport.rs"
    ],
    "trajectory": null,
    "owner_ticket": "C-02"
@@ -403,11 +404,15 @@
    "thesis_axis": "one-core-many-faces",
    "state": "parity",
    "evidence": [
-    "crates/optimus-ops/src/channel_adapters.rs",
-    "_attic/architecture-records/s7-track-z-verification.md"
+    "crates/optimus-ops/src/adapters/discord.rs",
+    "crates/optimus-ops/src/adapters/slack.rs",
+    "crates/optimus-ops/tests/discord_conformance.rs",
+    "crates/optimus-ops/tests/slack_conformance.rs",
+    "crates/optimus-ops/src/transport.rs"
    ],
    "trajectory": null,
-   "owner_ticket": "C-05"
+   "owner_ticket": "C-05",
+   "notes": "Live Discord gateway-ws + Slack Socket-Mode adapters on the spec-017 transport contract (2026-08-11); previously claimed on mock enqueue only."
   },
   {
    "id": "gateway.ui",
@@ -666,6 +671,31 @@
    ],
    "trajectory": null,
    "owner_ticket": "E-11"
+  },
+  {
+   "id": "gateway.email",
+   "capability": "Email home-channel adapter (IMAP/SMTP)",
+   "thesis_axis": "one-core-many-faces",
+   "state": "parity",
+   "evidence": [
+    "crates/optimus-ops/src/adapters/email.rs",
+    "crates/optimus-ops/tests/email_conformance.rs"
+   ],
+   "trajectory": "cargo:optimus-ops/email_conformance",
+   "owner_ticket": "C-03",
+   "notes": "IMAP over rustls, SMTP via lettre, threading headers + artifact-store attachments (A7), 2026-08-11."
+  },
+  {
+   "id": "gateway.signal-whatsapp",
+   "capability": "Signal and WhatsApp live transports",
+   "thesis_axis": "one-core-many-faces",
+   "state": "missing",
+   "evidence": [
+    "docs/decisions/0091-whatsapp-signal-transport-choice.md"
+   ],
+   "trajectory": "cargo:optimus-ops/adapter_conformance",
+   "owner_ticket": "C-03",
+   "notes": "Transport choice ADR-0091 ratified; implementations pending (signal-cli supervised child; Cloud API webhook)."
   }
  ]
 }

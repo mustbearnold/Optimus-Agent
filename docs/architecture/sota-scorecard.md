@@ -4,7 +4,7 @@ doc_type: explanation
 plane: current
 status: current
 authority: supporting
-summary: Updated: 2026-07-28 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial
+summary: Updated: 2026-08-11 · thesis-axis re-key (north-star C-criteria); 13/50 runnable trajectories, unclassified pinned at 37 shrink-only; projects.scope+updater+pty+native-cua partial
 reviewed_on: 2026-07-31
 review_by: 2026-10-31
 ---
@@ -34,10 +34,10 @@ read them as the default install path.
 | State | Count | Meaning |
 |---|---:|---|
 | **win** | 4 | Current executable evidence demonstrates a structural advantage over Hermes |
-| **parity** | 41 | A bounded Hermes-equivalent capability has current executable evidence |
+| **parity** | 42 | A bounded Hermes-equivalent capability has current executable evidence |
 | **partial** | 4 | Useful implementation exists, but the Hermes behavior/surface is incomplete |
-| **missing** | 1 | No complete executable path exists yet |
-| **total** | 50 | Capability rows tracked by the executable ledger |
+| **missing** | 2 | No complete executable path exists yet |
+| **total** | 52 | Capability rows tracked by the executable ledger |
 
 ## Defensible wins
 
@@ -76,7 +76,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 - Provider catalog + ordered failover, pack-gated MCP mock, signed packs (program P27)
 - Product ship path: Tauri install default, doctor shell/isolation/gateway/packs, ADR-0043 no auto-updater (program P29)
 - S7: profile homes, leased child agents, CUA pack scaffold, Hermes importers
-- Track Z: offline comparative runner, surface/media/breadth scaffolds, Discord/Slack mock adapters
+- Track Z: offline comparative runner, surface/media/breadth scaffolds; Discord/Slack/Email live adapters landed 2026-08-11 (spec-017)
 
 ## Material partials
 
@@ -90,7 +90,6 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
 1. Hermes strict parity gate (2063 contracts + performance scenarios) still unverified
 2. Live multi-tab ConPTY I/O product UI
 3. Live computer-use effectors under heavy approval
-4. Live Discord/Slack bot transports (mock enqueue only)
 
 ## Current architecture truth
 
@@ -104,7 +103,7 @@ These are narrow evidence-backed wins, not a claim that the complete product is 
   is separate from the Tauri/React preview webview.
 - Artifacts: content-addressed store under `{home}/artifacts` with gallery/filters/export under `exports/` (program P25)
 - Campaigns: sequential WriteFile/RunCommand plus leased child-agent coordinator (S7)
-- Gateway: SQLite authority + config-gated live Telegram long-poll (`optimus gateway telegram run`) + Telegram mock + Discord/Slack mock enqueue (live Discord/Slack residual)
+- Gateway: SQLite authority + config-gated live Telegram long-poll + live Discord (gateway ws) + Slack (Socket Mode) + Email (IMAP/SMTP) adapters on the spec-017 transport contract, multi-adapter supervisor (`optimus gateway run`); WhatsApp/Signal pending ADR-0091 implementations
 - Retrieval: two SQLite FTS5 lexical indexes (`sessions_fts`, `claims_fts`); the claim index narrows only — every hit is re-authorized against `claims` and labelled with its bitemporal standing (ADR-0072). No vector, embedding, graph, reranking, or GPU index.
 - Capabilities: PRODUCT-COMPLETE + S7/Track Z scaffolds; Hermes gate not claimed
 - Architecture quality marks: [architecture-marks.md](../runbooks/architecture-marks.md) (S+++ program)

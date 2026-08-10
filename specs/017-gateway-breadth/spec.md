@@ -220,32 +220,32 @@ extends the existing queue, not a new one.
 
 ## Acceptance criteria
 
-- [ ] A1. Given a configured Discord bot token and an allowlisted
+- [x] A1. Given a configured Discord bot token and an allowlisted
   channel, when `optimus gateway discord run` starts against the mock
   transport, then a message inbound → agent turn → reply → receipt
   completes end-to-end in the conformance suite, and the reply is
   delivered exactly once (R1–R3, R9).
-- [ ] A2. Given the same setup with a permanently-rejecting transport,
+- [x] A2. Given the same setup with a permanently-rejecting transport,
   when the reply send fails, then the outbox marks the message
   failed-permanently with the named diagnostic and the status surface
   reports the failure — never a success receipt (R8).
-- [ ] A3. Given two running adapters (e.g. Discord mock + Slack mock)
+- [x] A3. Given two running adapters (e.g. Discord mock + Slack mock)
   under the supervisor, when one adapter is killed, then the other
   keeps serving and the supervisor restarts the dead one with backoff,
   with no claim double-dispatch (R7).
-- [ ] A4. Given a message from a chat not in the allowlist, when it
+- [x] A4. Given a message from a chat not in the allowlist, when it
   arrives at any adapter, then it is refused before any agent turn with
   the named diagnostic `transport_refused_unauthorized` and recorded as
   an ordered event (R6, R10).
-- [ ] A5. Given the post-refactor codebase, when `just verify` runs,
+- [x] A5. Given the post-refactor codebase, when `just verify` runs,
   then the Telegram conformance suite (mock + wire shape) passes with
   zero skips and no behaviour change vs the pre-refactor baseline
   (R1, R9).
-- [ ] A6. Given any adapter running under the supervisor, when
+- [x] A6. Given any adapter running under the supervisor, when
   `optimus gateway status` is queried, then per-adapter state
   (running / stopped / failed + last error + uptime) is reported
   (R7).
-- [ ] A7. Given a configured IMAP inbox + SMTP relay and a mock mail
+- [x] A7. Given a configured IMAP inbox + SMTP relay and a mock mail
   transport, when `optimus gateway email run` polls and an
   allowlisted sender's message arrives, then it converts to a
   canonical inbound message; when the agent replies, then the reply
@@ -257,18 +257,17 @@ extends the existing queue, not a new one.
 
 - Web/desktop dashboard for gateway administration (planned in a
   later interface spec; not this one).
-- WhatsApp and Signal live transports until their choice ADR is
-  ratified (R5).
+- WhatsApp and Signal live transports until their ADR-0091
+  implementations land (R5).
 - Auto-update / deployment of the gateway as a service (spec-018).
 - Spam filtering, moderation ML, multi-tenant org features.
 - Voice/video transport.
 
 ## Open questions
 
-- WhatsApp transport choice (Cloud API vs libsignal-based) — deferred
-  to an ADR per R5.
-- Signal external-process policy (signal-cli as a supervised child vs
-  native libsignal) — deferred to the same ADR.
+- WhatsApp/Signal transport choice — RESOLVED by ADR-0091 (2026-08-11):
+  Signal via a supervised signal-cli child (JSON-RPC); WhatsApp via the
+  Cloud API webhook behind an operator-provided public endpoint.
 - Should Email v1 support sending without a prior inbound thread
   (cold sends)? Default: no — replies only, until a use case mandates
   cold sends.
