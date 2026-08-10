@@ -1,31 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { Approval, Campaign, Doctor, OptimusTransport } from '../../ipc/contracts';
+import type { Approval, Campaign, Doctor } from '../../ipc/contracts';
+import type { OptimusClient, ProviderRow } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
-
-type ProviderRow = {
-  id: string;
-  connect?: string;
-  connect_detail?: string;
-  supports_tools?: boolean;
-  supports_vision?: boolean;
-  supports_streaming?: boolean;
-  default_model?: { 0?: string } | string;
-  remote?: boolean;
-};
 
 export function CapabilitiesPage({
   doctor,
   approvals,
   campaigns,
   onOpenExecution,
-  transport,
+  client,
 }: {
   doctor: Doctor | null;
   approvals: Approval[];
   campaigns: Campaign[];
   onOpenExecution: () => void;
-  transport?: OptimusTransport;
+  client: OptimusClient;
 }) {
   const packs = doctor?.pack_catalog || [];
   const toolCount = packs.reduce((count, pack) => count + (pack.tools?.length || 0), 0);
@@ -37,36 +27,25 @@ export function CapabilitiesPage({
   const alive = useAlive();
 
   const loadExt = useCallback(async () => {
-    if (!transport) return;
     setError('');
     try {
-      const cat = await transport.invoke<{ providers?: ProviderRow[] }>('providers_catalog');
+      setProviders(await client.providers.catalog());
       if (!alive()) return;
-      setProviders(cat.providers || []);
-      const mcp = await transport.invoke<{ tools?: Array<Record<string, unknown>> }>('mcp_tools', {
-        transport: 'stdio',
-      });
-      if (!alive()) return;
-      setMcpTools(mcp.tools || []);
+      setMcpTools(await client.system.mcpTools('stdio'));
     } catch (e) {
       if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
 
   useEffect(() => {
     void loadExt();
   }, [loadExt]);
 
   const previewFailover = async () => {
-    if (!transport) return;
     setError('');
     try {
-      const r = await transport.invoke<{
-        ok?: boolean;
-        decision?: { provider?: string; model?: string | { 0?: string }; fallback_from?: string };
-        error?: string;
-      }>('providers_route_preview', {
+      const r = await client.providers.routePreview({
         provider: 'codex',
         model: 'not-a-codex-model',
         allow_fallback: true,

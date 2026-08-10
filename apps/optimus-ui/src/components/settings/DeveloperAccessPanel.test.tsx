@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient, type OptimusClient } from '../../ipc/client';
 import { DeveloperAccessPanel } from './DeveloperAccessPanel';
 
 const access = {
@@ -23,8 +24,8 @@ const access = {
   checkpoint_on_mutation: true,
 };
 
-function transportFor(invoke: OptimusTransport['invoke']): OptimusTransport {
-  return {
+function transportFor(invoke: OptimusTransport['invoke']): OptimusClient {
+  return createOptimusClient({
     kind: 'fixture',
     invoke,
     chat: vi.fn(),
@@ -32,7 +33,7 @@ function transportFor(invoke: OptimusTransport['invoke']): OptimusTransport {
     windowAction: vi.fn(),
     pickFolder: vi.fn(),
     openPath: vi.fn(),
-  } as unknown as OptimusTransport;
+  } as unknown as OptimusTransport);
 }
 
 describe('DeveloperAccessPanel self-development controls', () => {
@@ -50,7 +51,7 @@ describe('DeveloperAccessPanel self-development controls', () => {
 
     render(
       <DeveloperAccessPanel
-        transport={transportFor(invoke)}
+        client={transportFor(invoke)}
         projects={[{ id: 'optimus', name: 'Optimus Agent', rootPaths: ['/workspace/optimus-agent'], primaryRoot: '/workspace/optimus-agent' }]}
         value={access}
         onValue={vi.fn()}
@@ -83,7 +84,7 @@ describe('DeveloperAccessPanel self-development controls', () => {
 
     render(
       <DeveloperAccessPanel
-        transport={transportFor(invoke)}
+        client={transportFor(invoke)}
         projects={[{ id: 'optimus', name: 'Optimus Agent', rootPaths: ['/workspace/optimus-agent'], primaryRoot: '/workspace/optimus-agent' }]}
         sessionId="session-42"
         value={access}

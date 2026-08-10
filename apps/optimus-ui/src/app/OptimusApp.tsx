@@ -739,7 +739,7 @@ export function OptimusApp() {
                       doctor={doctor}
                       approvals={approvals}
                       campaigns={campaigns}
-                      transport={transport}
+                      client={client}
                       onOpenExecution={() => dispatch({ type: 'patch-layout', patch: { executionOpen: true } })}
                     />
                   ) : state.layout.route === 'consoles' ? (

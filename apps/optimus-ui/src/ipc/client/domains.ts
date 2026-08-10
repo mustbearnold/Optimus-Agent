@@ -297,7 +297,10 @@ export interface SystemApi {
   ping(): Promise<unknown>;
   doctor(): Promise<Doctor>;
   developerAccess(): Promise<{ developer_access?: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>;
-  enableDeveloperAccess(): Promise<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>;
+  enableDeveloperAccess(input: {
+    confirmation: string;
+    grant: Record<string, unknown>;
+  }): Promise<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>;
   revokeDeveloperAccess(): Promise<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>;
   supervisorStatus(): Promise<DeveloperSupervisorStatus>;
   supervisorLaunch(params: Record<string, unknown>): Promise<DeveloperSupervisorStatus>;
@@ -485,7 +488,8 @@ export function createDomainApis(
       ping: () => get('ping'),
       doctor: () => get<Doctor>('doctor'),
       developerAccess: () => get<{ developer_access?: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>('developer_access_get'),
-      enableDeveloperAccess: () => get<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>('developer_access_enable'),
+      enableDeveloperAccess: (input) =>
+        get<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>('developer_access_enable', input),
       revokeDeveloperAccess: () => get<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>('developer_access_revoke'),
       supervisorStatus: () => get<DeveloperSupervisorStatus>('developer_supervisor_status'),
       supervisorLaunch: (params) => get<DeveloperSupervisorStatus>('developer_supervisor_launch', params),

@@ -1,20 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { OptimusTransport } from '../../ipc/contracts';
+import type { OptimusClient, ProviderKeyStatus } from '../../ipc/client';
 
-export type ProviderKeyStatus = {
-  provider: string;
-  label: string;
-  env_var: string;
-  present: boolean;
-  /** 'stored' | 'environment' | 'none' */
-  source: string;
-  hint?: string | null;
-  base_url?: string | null;
-  error?: string | null;
-};
+export type { ProviderKeyStatus } from '../../ipc/client';
 
 type Props = {
-  transport: OptimusTransport;
+  client: OptimusClient;
   active: boolean;
 };
 
@@ -36,7 +26,7 @@ function sourceNote(status: ProviderKeyStatus) {
  * The key is write-only from the interface. The host returns presence, origin,
  * and a masked tail, so a saved key can never be read back out of the window.
  */
-export function ProviderKeysPanel({ transport, active }: Props) {
+export function ProviderKeysPanel({ client, active }: Props) {
   const [providers, setProviders] = useState<ProviderKeyStatus[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState('');
@@ -45,15 +35,12 @@ export function ProviderKeysPanel({ transport, active }: Props) {
 
   const load = useCallback(async () => {
     try {
-      const result = await transport.invoke<{ providers?: ProviderKeyStatus[] }>(
-        'provider_keys_status'
-      );
-      setProviders(result.providers || []);
+      setProviders(await client.providers.keysStatus());
     } catch (error) {
       setFailed(true);
       setMessage(error instanceof Error ? error.message : String(error));
     }
-  }, [transport]);
+  }, [client]);
 
   useEffect(() => {
     if (!active) return;
@@ -70,11 +57,8 @@ export function ProviderKeysPanel({ transport, active }: Props) {
     setBusy(provider.provider);
     setFailed(false);
     try {
-      const result = await transport.invoke<{ providers?: ProviderKeyStatus[] }>(
-        'provider_key_set',
-        { provider: provider.provider, api_key: apiKey }
-      );
-      setProviders(result.providers || []);
+      const result = await client.providers.keySet(provider.provider, apiKey);
+      setProviders(result);
       // Drop the plaintext from component state as soon as the host has it.
       setDrafts((current) => ({ ...current, [provider.provider]: '' }));
       setMessage(`${provider.label} API key saved.`);
@@ -90,11 +74,8 @@ export function ProviderKeysPanel({ transport, active }: Props) {
     setBusy(provider.provider);
     setFailed(false);
     try {
-      const result = await transport.invoke<{ providers?: ProviderKeyStatus[] }>(
-        'provider_key_clear',
-        { provider: provider.provider }
-      );
-      setProviders(result.providers || []);
+      const result = await client.providers.keyClear(provider.provider);
+      setProviders(result);
       setMessage(`${provider.label} API key removed.`);
     } catch (error) {
       setFailed(true);

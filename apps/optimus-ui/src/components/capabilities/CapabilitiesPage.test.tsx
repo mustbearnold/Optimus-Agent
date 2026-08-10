@@ -2,9 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient, type OptimusClient } from '../../ipc/client';
 import { CapabilitiesPage } from './CapabilitiesPage';
 
-function transport(): OptimusTransport {
+function transport(): OptimusClient {
   const invoke = vi.fn(async (method: DesktopMethod) => {
     switch (method) {
       case 'providers_catalog':
@@ -35,7 +36,7 @@ function transport(): OptimusTransport {
         return {};
     }
   });
-  return {
+  return createOptimusClient({
     kind: 'fixture',
     invoke,
     chat: vi.fn(),
@@ -43,7 +44,7 @@ function transport(): OptimusTransport {
     windowAction: vi.fn(),
     pickFolder: vi.fn(),
     openPath: vi.fn(),
-  } as unknown as OptimusTransport;
+  } as unknown as OptimusTransport);
 }
 
 describe('CapabilitiesPage', () => {
@@ -55,7 +56,7 @@ describe('CapabilitiesPage', () => {
         doctor={null}
         approvals={[]}
         campaigns={[]}
-        transport={t}
+        client={t}
         onOpenExecution={() => undefined}
       />
     );

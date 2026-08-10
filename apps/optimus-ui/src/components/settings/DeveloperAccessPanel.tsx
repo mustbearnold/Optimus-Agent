@@ -4,9 +4,9 @@ import type {
   DeveloperCapabilities,
   DeveloperScope,
   DeveloperSupervisorStatus,
-  OptimusTransport,
   Project,
 } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 
 const CONFIRMATION = 'I understand Developer Full Access risks';
@@ -23,7 +23,7 @@ const capabilityLabels: Record<keyof DeveloperCapabilities, { label: string; des
 const capabilityKeys = Object.keys(capabilityLabels) as Array<keyof DeveloperCapabilities>;
 
 type Props = {
-  transport: OptimusTransport;
+  client: OptimusClient;
   projects: Project[];
   sessionId?: string | null;
   projectId?: string;
@@ -31,7 +31,7 @@ type Props = {
   onValue: (value: DeveloperAccess) => void;
 };
 
-export function DeveloperAccessPanel({ transport, projects, sessionId, projectId, value, onValue }: Props) {
+export function DeveloperAccessPanel({ client, projects, sessionId, projectId, value, onValue }: Props) {
   const [grant, setGrant] = useState<DeveloperAccess>(() => value || disabledAccess());
   const [supervisor, setSupervisor] = useState<DeveloperSupervisorStatus | null>(null);
   const [logs, setLogs] = useState('');
@@ -58,7 +58,7 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
 
   useEffect(() => {
     let live = true;
-    void transport.invoke<{ developer_access?: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>('developer_access_get')
+    void client.system.developerAccess()
       .then((result) => {
         if (!live) return;
         if (result.developer_access) {
@@ -71,7 +71,7 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
       })
       .catch(() => undefined);
     return () => { live = false; };
-  }, [transport]);
+  }, [client]);
 
   const selectedRoots = useMemo(() => scopeRoots(grant.scope), [grant.scope]);
   const updateGrant = (patch: Partial<DeveloperAccess>) => {
@@ -83,7 +83,7 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
     setMessage('');
   };
   const chooseFolder = async (multiple: boolean) => {
-    const picked = await transport.pickFolder();
+    const picked = await client.shell.pickFolder();
     if (!picked.ok || !picked.path) return;
     const next = multiple
       ? [...new Set([...scopeRoots(grant.scope), picked.path])]
@@ -117,10 +117,10 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
     setBusy(true);
     setMessage('');
     try {
-      const result = await transport.invoke<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>(
-        'developer_access_enable',
-        { confirmation: CONFIRMATION, grant: { ...grant, enabled: true } },
-      );
+      const result = await client.system.enableDeveloperAccess({
+        confirmation: CONFIRMATION,
+        grant: { ...grant, enabled: true },
+      });
       setGrant(result.developer_access);
       onValue(result.developer_access);
       if (result.supervisor) setSupervisor(result.supervisor);
@@ -135,7 +135,7 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
   const revoke = async () => {
     setBusy(true);
     try {
-      const result = await transport.invoke<{ developer_access: DeveloperAccess; supervisor?: DeveloperSupervisorStatus }>('developer_access_revoke');
+      const result = await client.system.revokeDeveloperAccess();
       setGrant(result.developer_access);
       onValue(result.developer_access);
       if (result.supervisor) setSupervisor(result.supervisor);
@@ -146,20 +146,28 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
       setBusy(false);
     }
   };
-  const supervisorAction = async (method: 'developer_supervisor_launch' | 'developer_supervisor_build_launch' | 'developer_supervisor_stop' | 'developer_supervisor_restart' | 'developer_supervisor_rollback' | 'developer_emergency_stop') => {
+  const supervisorAction = async (action: 'developer_supervisor_launch' | 'developer_supervisor_build_launch' | 'developer_supervisor_stop' | 'developer_supervisor_restart' | 'developer_supervisor_rollback' | 'developer_emergency_stop') => {
     setBusy(true);
     setMessage('');
     try {
-      const params = method === 'developer_supervisor_launch'
-        ? { binary, workspace: workspace || selectedRoots[0] || '', port: Number(port), ...(sessionId ? { session_id: sessionId } : {}) }
-        : method === 'developer_supervisor_build_launch'
-          ? { workspace: workspace || selectedRoots[0] || '', port: Number(port), surface: 'desktop', ...(sessionId ? { session_id: sessionId } : {}) }
-          : {};
-      const result = await transport.invoke<DeveloperSupervisorStatus>(method, params);
+      const launchParams = { binary, workspace: workspace || selectedRoots[0] || '', port: Number(port), ...(sessionId ? { session_id: sessionId } : {}) };
+      const buildParams = { workspace: workspace || selectedRoots[0] || '', port: Number(port), surface: 'desktop', ...(sessionId ? { session_id: sessionId } : {}) };
+      const result: DeveloperSupervisorStatus =
+        action === 'developer_supervisor_launch'
+          ? await client.system.supervisorLaunch(launchParams)
+          : action === 'developer_supervisor_build_launch'
+            ? await client.system.supervisorBuildLaunch(buildParams)
+            : action === 'developer_supervisor_stop'
+              ? await client.system.supervisorStop()
+              : action === 'developer_supervisor_restart'
+                ? await client.system.supervisorRestart()
+                : action === 'developer_supervisor_rollback'
+                  ? await client.system.supervisorRollback()
+                  : await client.system.supervisorEmergencyStop();
       setSupervisor(result);
-      setMessage(method === 'developer_emergency_stop'
+      setMessage(action === 'developer_emergency_stop'
         ? 'Emergency stop sent to the development instance.'
-        : method === 'developer_supervisor_build_launch'
+        : action === 'developer_supervisor_build_launch'
           ? `Development desktop build completed${sessionId ? '; selected session handed off' : ''}; supervisor ${result.status}.`
           : `Supervisor ${result.status}.`);
     } catch (error) {
@@ -169,7 +177,7 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
     }
   };
   const refreshLog = async () => {
-    const result = await transport.invoke<{ lines?: string; actions?: string; build?: string }>('developer_supervisor_log', { lines: 120 });
+    const result = await client.system.supervisorLog();
     setLogs(result.lines || '');
     setActionLogs(result.actions || '');
     setBuildLogs(result.build || '');
@@ -179,20 +187,13 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
   // the session, but the operator must be able to revoke them early.
   const refreshSessionConsents = async () => {
     if (!sessionId) return;
-    const result = await transport.invoke<{ grants?: Array<{
-      command_class: string;
-      capability: string;
-      created_unix: number;
-      expires_unix: number;
-      revoked_unix?: number | null;
-    }> }>('session_consent_list', { session_id: sessionId, ...(projectId ? { project_id: projectId } : {}) });
-    setSessionConsents(result.grants || []);
+    setSessionConsents(await client.consents.list(sessionId, projectId));
   };
   const revokeSessionConsents = async () => {
     if (!sessionId) return;
     setConsentBusy(true);
     try {
-      const result = await transport.invoke<{ revoked: number }>('session_consent_revoke_all', { session_id: sessionId, ...(projectId ? { project_id: projectId } : {}) });
+      const result = await client.consents.revokeAll(sessionId, projectId);
       await refreshSessionConsents();
       setMessage(result.revoked > 0
         ? `Revoked ${result.revoked} session grant${result.revoked === 1 ? '' : 's'}.`
@@ -207,7 +208,7 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, projectId
     if (!sessionId) return;
     void refreshSessionConsents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, transport]);
+  }, [sessionId, client]);
 
   return (
     <div className="developer-access-panel">

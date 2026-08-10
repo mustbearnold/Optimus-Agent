@@ -343,7 +343,7 @@ export function SettingsDialog({
                 </SettingsGroup>
                 <SettingsGroup title="Developer mode">
                   <DeveloperAccessPanel
-                    transport={transport}
+                    client={client}
                     projects={projects}
                     sessionId={sessionId}
                     projectId={projectId}
@@ -397,7 +397,7 @@ export function SettingsDialog({
                 </SettingsGroup>
                 <SettingsGroup title="Model provider keys">
                   <ProviderKeysPanel
-                    transport={transport}
+                    client={client}
                     active={open && active === 'authentication'}
                   />
                 </SettingsGroup>
