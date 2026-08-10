@@ -6,7 +6,6 @@
 //! of re-deriving the rule (previously ~14 hand-written copies across 10
 //! crates, one of which had already drifted in its error text).
 
-use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 /// Compute the lowercase hex SHA-256 digest of `bytes`.
@@ -22,9 +21,12 @@ pub fn is_sha256_hex(value: &str) -> bool {
 /// A validated SHA-256 hex digest.
 ///
 /// Construction normalizes to lowercase; `Display`/`as_str` return the
-/// canonical form. Serializes transparently as the plain hex string.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
+/// canonical form. Serializes transparently as the plain hex string, and
+/// deserialization re-runs [`Sha256Digest::parse`] so an invalid digest can
+/// never be constructed through serde (the `#[serde(transparent)]` derive
+/// would otherwise copy any string straight into the inner `String`, bypassing
+/// validation).
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Sha256Digest(String);
 
 impl Sha256Digest {
@@ -56,6 +58,27 @@ impl std::str::FromStr for Sha256Digest {
     /// Parse via `"<hex>".parse::<Sha256Digest>()`, matching [`Sha256Digest::parse`].
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         Sha256Digest::parse(value).ok_or("expected exactly 64 hex digits")
+    }
+}
+
+impl serde::Serialize for Sha256Digest {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Sha256Digest {
+    /// Deserialize a digest, re-running validation so an invalid string can
+    /// never smuggle itself into a `Sha256Digest` (the previous transparent
+    /// derive copied the raw string in without checking).
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = <String as serde::Deserialize>::deserialize(deserializer)?;
+        Sha256Digest::parse(&raw).ok_or_else(|| {
+            serde::de::Error::invalid_value(
+                serde::de::Unexpected::Str(&raw),
+                &"a 64-digit hex SHA-256 digest",
+            )
+        })
     }
 }
 
@@ -132,5 +155,29 @@ mod tests {
         assert_eq!(json, format!("\"{}\"", digest.as_str()));
         let back: Sha256Digest = serde_json::from_str(&json).expect("deserializes");
         assert_eq!(back, digest);
+    }
+
+    #[test]
+    fn sha256_digest_deserialization_rejects_invalid_digests() {
+        // The `#[serde(transparent)]` derive used to copy any string straight
+        // into the inner `String`, letting a non-hex or wrong-length value
+        // construct a `Sha256Digest` that violated the documented invariant.
+        // Deserialization must re-run validation and fail closed instead.
+        for bad in [
+            format!("\"{}\"", "g".repeat(64)), // 64 non-hex chars
+            format!("\"{}\"", "a".repeat(63)), // 63 hex chars
+            format!("\"{}\"", "a".repeat(65)), // 65 hex chars
+            "\"\"".to_string(),                // empty
+        ] {
+            let result: Result<Sha256Digest, _> = serde_json::from_str(&bad);
+            assert!(
+                result.is_err(),
+                "invalid digest must not deserialize: {bad}"
+            );
+        }
+        // A valid (upper-case) digest still round-trips and normalizes.
+        let upper = serde_json::from_str::<Sha256Digest>(&format!("\"{}\"", "A".repeat(64)))
+            .expect("upper-case hex parses");
+        assert_eq!(upper.as_str(), &"a".repeat(64));
     }
 }
