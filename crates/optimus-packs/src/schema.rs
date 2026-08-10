@@ -122,3 +122,120 @@ fn value_matches_type(value: &Value, expected: &str) -> bool {
         _ => false,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn schema(properties: Value, required: Value, additional_properties: bool) -> Value {
+        json!({
+            "type": "object",
+            "properties": properties,
+            "required": required,
+            "additionalProperties": additional_properties,
+        })
+    }
+
+    #[test]
+    fn accepts_a_closed_valid_schema() {
+        let input = schema(
+            json!({
+                "path": { "type": "string" },
+                "limit": { "type": "integer", "minimum": 1 },
+                "mode": { "type": "string", "enum": ["fast", "safe"] },
+                "tags": { "type": "array", "items": { "type": "string" } },
+                "enabled": { "type": "boolean" },
+                "meta": { "type": "object" },
+                "ratio": { "type": "number" },
+            }),
+            json!(["path"]),
+            false,
+        );
+        assert!(validate_input_schema(&input).is_ok());
+    }
+
+    #[test]
+    fn rejects_a_non_object_schema() {
+        assert!(validate_input_schema(&json!("string")).is_err());
+    }
+
+    #[test]
+    fn rejects_an_unsupported_top_level_keyword() {
+        // A keyword the runtime cannot enforce must not be advertised.
+        let input = json!({
+            "type": "object",
+            "properties": { "a": { "type": "string" } },
+            "required": [],
+            "additionalProperties": false,
+            "title": "extra",
+        });
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("unsupported top-level keyword"));
+    }
+
+    #[test]
+    fn rejects_required_that_is_not_declared() {
+        let input = schema(json!({ "a": { "type": "string" } }), json!(["b"]), false);
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("b") && err.contains("not declared"));
+    }
+
+    #[test]
+    fn rejects_a_duplicated_required_entry() {
+        let input = schema(json!({ "a": { "type": "string" } }), json!(["a", "a"]), false);
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("duplicated"));
+    }
+
+    #[test]
+    fn rejects_an_enum_value_of_the_wrong_type() {
+        let input = schema(
+            json!({ "mode": { "type": "string", "enum": ["a", 3] } }),
+            json!([]),
+            false,
+        );
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("enum value has wrong type"));
+    }
+
+    #[test]
+    fn rejects_minimum_on_a_non_integer_property() {
+        let input = schema(
+            json!({ "ratio": { "type": "number", "minimum": 0 } }),
+            json!([]),
+            false,
+        );
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("minimum"));
+    }
+
+    #[test]
+    fn rejects_non_string_array_items() {
+        let input = schema(
+            json!({ "tags": { "type": "array", "items": { "type": "integer" } } }),
+            json!([]),
+            false,
+        );
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("only string array items"));
+    }
+
+    #[test]
+    fn rejects_items_on_a_non_array_property() {
+        let input = schema(
+            json!({ "name": { "type": "string", "items": { "type": "string" } } }),
+            json!([]),
+            false,
+        );
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("items requires array type"));
+    }
+
+    #[test]
+    fn rejects_an_unsupported_property_keyword() {
+        let input = schema(json!({ "a": { "type": "string", "format": "uri" } }), json!([]), false);
+        let err = validate_input_schema(&input).unwrap_err();
+        assert!(err.contains("unsupported keyword"));
+    }
+}
