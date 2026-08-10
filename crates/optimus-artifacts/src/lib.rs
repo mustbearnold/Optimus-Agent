@@ -550,6 +550,10 @@ fn is_secret_export_basename(name: &str) -> bool {
         ".netrc",
         "id_rsa",
         "id_ed25519",
+        "id_ed25519_sk",
+        "id_dsa",
+        "id_ecdsa",
+        "id_ecdsa_sk",
         "secret",
         "secrets",
         "token",
@@ -1054,6 +1058,41 @@ mod tests {
         assert!(store.export_file(&a.sha256, Some(".env")).is_err());
         assert!(store.export_file(&a.sha256, Some("auth.json")).is_err());
         assert!(store.export_file(&a.sha256, Some("key.pem")).is_err());
+    }
+
+    #[test]
+    fn export_refuses_ssh_private_key_basenames() {
+        // Regression: the export secret-basename blocklist covered `id_rsa`
+        // and `id_ed25519` but not the other private keys OpenSSH writes into
+        // `~/.ssh/` (`id_dsa`, `id_ecdsa`, and the security-key `_sk`
+        // variants). Exporting an artifact under one of those names would put
+        // a secret-looking file in the exports directory; each must be
+        // refused exactly like `id_rsa`.
+        let dir = tempdir().unwrap();
+        let store = ArtifactStore::open(dir.path()).unwrap();
+        let record = store
+            .put_bytes(
+                b"ssh-key-ish",
+                "application/octet-stream",
+                "test",
+                "sk",
+                None,
+            )
+            .unwrap();
+        for name in [
+            "id_dsa",
+            "id_ecdsa",
+            "id_ecdsa_sk",
+            "id_ed25519",
+            "id_ed25519_sk",
+            "id_rsa",
+        ] {
+            let error = store.export_file(&record.sha256, Some(name)).unwrap_err();
+            assert!(
+                error.to_string().contains("looks secret"),
+                "{name} must be refused as a secret export basename"
+            );
+        }
     }
 
     #[test]
