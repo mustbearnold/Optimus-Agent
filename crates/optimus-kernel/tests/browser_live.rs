@@ -42,5 +42,13 @@ fn browser_navigate_example_com() {
             && (joined.contains("Example") || joined.contains("example") || joined.contains("200")),
         "trace={joined}"
     );
+    // Parity (optimus-agent #84): the navigate trace must headline the page's
+    // readable text — `body_text=` on the CDP effector (it is only included
+    // when non-empty), `text=` on the HTTP fallback. Text-only models browse
+    // blind without it.
+    assert!(
+        joined.contains("body_text=") || joined.contains("text=Example Domain"),
+        "trace must headline page body text: {joined}"
+    );
     assert_eq!(r.assistant_text, "saw example");
 }

@@ -333,6 +333,7 @@ impl BrowserEffector for CdpBrowserEffector {
             &state.title,
             &state.screenshot_b64,
             &state.elements,
+            &state.body_text,
         ))
     }
 
@@ -348,6 +349,7 @@ impl BrowserEffector for CdpBrowserEffector {
             &title,
             &cap.screenshot_b64,
             &cap.elements,
+            &cap.body_text,
         ))
     }
 
@@ -361,6 +363,7 @@ impl BrowserEffector for CdpBrowserEffector {
             &state.title,
             &state.screenshot_b64,
             &state.elements,
+            &state.body_text,
         ))
     }
 
@@ -376,13 +379,16 @@ impl BrowserEffector for CdpBrowserEffector {
 ///
 /// Tool traces truncate at 120 chars; BTreeMap key order would bury `url`/`title`
 /// after `screenshot_b64`, so we emit a compact `final_url` + `page_title` + `text`
-/// that sorts earlier and remains visible in traces.
+/// that sorts earlier and remains visible in traces. `body_text` carries the
+/// bounded readable page text for text-only models (#84) — the HTTP effector
+/// already returns body text, so the two effectors are parity on this surface.
 #[cfg(feature = "cdp")]
 fn cdp_page_tool_json(
     url: &str,
     title: &str,
     screenshot_b64: &str,
     elements: &[optimus_browser::DomElement],
+    body_text: &str,
 ) -> String {
     let text = if title.is_empty() {
         url.to_string()
@@ -395,6 +401,7 @@ fn cdp_page_tool_json(
         "final_url": url,
         "page_title": title,
         "text": text,
+        "body_text": body_text,
         "element_count": elements.len(),
         "elements": elements,
         "screenshot_b64": screenshot_b64,
@@ -726,6 +733,27 @@ mod cdp_memo_tests {
 
         assert!(effector.is_some());
         assert!(!ruled_out.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn cdp_page_tool_json_carries_body_text() {
+        // Regression for optimus-agent #84: text-only models browsed blind
+        // because the CDP tool payload held title/url/elements but never the
+        // page's readable text (the HTTP effector always returned it).
+        let json = cdp_page_tool_json(
+            "https://example.com/",
+            "Example Domain",
+            "c2NyZWVuc2hvdA==",
+            &[],
+            "Example Domain\nThis domain is for use in illustrative examples.",
+        );
+        let value: serde_json::Value = serde_json::from_str(&json).expect("tool json");
+        assert_eq!(
+            value["body_text"],
+            "Example Domain\nThis domain is for use in illustrative examples."
+        );
+        assert_eq!(value["text"], "Example Domain — https://example.com/");
+        assert_eq!(value["element_count"], 0);
     }
 }
 

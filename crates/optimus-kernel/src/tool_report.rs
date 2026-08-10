@@ -174,6 +174,7 @@ fn json_headline(s: &str) -> Option<String> {
         "found",
         "stdout",
         "text",
+        "body_text",
     ] {
         match object.get(key) {
             Some(Value::String(text)) if !text.is_empty() => {

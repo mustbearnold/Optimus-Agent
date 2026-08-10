@@ -29,6 +29,8 @@ use url::Url;
 pub enum BrowserError {
     #[error("CDP browser: {0}")]
     Cdp(String),
+    #[error("CDP body text: {0}")]
+    BodyText(String),
     #[error("launch failed: {0}")]
     Launch(String),
     #[error("navigation failed: {0}")]
@@ -116,12 +118,16 @@ pub struct Bounds {
     pub height: f64,
 }
 
-/// Output of a SOM capture: screenshot + element list.
+/// Output of a SOM capture: screenshot + element list + readable body text.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SomCapture {
     pub screenshot_b64: String,
     pub elements: Vec<DomElement>,
     pub element_count: usize,
+    /// Bounded `document.body.innerText` — text-only models browse blind
+    /// without it (optimus-agent #84).
+    #[serde(default)]
+    pub body_text: String,
 }
 
 /// Page state after navigation or click.
@@ -130,8 +136,11 @@ pub struct PageState {
     pub url: String,
     pub title: String,
     pub screenshot_b64: String,
-    pub elements: Vec<DomElement>,
     pub element_count: usize,
+    pub elements: Vec<DomElement>,
+    /// Bounded `document.body.innerText` (see `SomCapture::body_text`).
+    #[serde(default)]
+    pub body_text: String,
 }
 
 // ---------------------------------------------------------------------------
@@ -445,7 +454,7 @@ impl CdpBrowserSession {
             .map_err(|e| BrowserError::DomSnapshot(format!("snapshot parse: {e}")))
     }
 
-    /// Full SOM capture: screenshot + DOM elements.
+    /// Full SOM capture: screenshot + DOM elements + body text.
     pub fn som_capture(&self) -> Result<SomCapture> {
         let elements = self.dom_snapshot()?;
         let screenshot_b64 = self.screenshot()?;
@@ -455,7 +464,26 @@ impl CdpBrowserSession {
             screenshot_b64,
             elements,
             element_count: count,
+            body_text: Self::read_body_text(self.tab_ref()?).unwrap_or_default(),
         })
+    }
+
+    /// Readable page text (`document.body.innerText`), bounded to keep the
+    /// tool payload sane. Soft-failing: an exotic page that rejects the
+    /// evaluation must not fail the whole capture (#84).
+    fn read_body_text(tab: &Tab) -> Result<String> {
+        const MAX_TEXT_CHARS: usize = 24_000;
+        let remote_obj = tab
+            .evaluate("document.body ? document.body.innerText : ''", false)
+            .map_err(|e| BrowserError::BodyText(e.to_string()))?;
+        let mut text = remote_obj
+            .value
+            .and_then(|v| v.as_str().map(str::to_owned))
+            .unwrap_or_default();
+        if text.chars().count() > MAX_TEXT_CHARS {
+            text = text.chars().take(MAX_TEXT_CHARS).collect::<String>() + "\n…[truncated]";
+        }
+        Ok(text)
     }
 
     /// Click element by SOM index (0-based, matching the advertised tool contract).
@@ -530,6 +558,7 @@ impl CdpBrowserSession {
             screenshot_b64,
             element_count: elements.len(),
             elements,
+            body_text: Self::read_body_text(tab).unwrap_or_default(),
         })
     }
 }
@@ -686,10 +715,12 @@ mod tests {
             screenshot_b64: "iVBOR".into(),
             elements: vec![],
             element_count: 0,
+            body_text: String::new(),
         };
         let json = serde_json::to_string_pretty(&cap).unwrap();
         let back: SomCapture = serde_json::from_str(&json).unwrap();
         assert_eq!(back.element_count, 0);
+        assert_eq!(back.body_text, "");
     }
 
     #[test]
