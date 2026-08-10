@@ -269,6 +269,11 @@ pub fn classify_command(program: &str, args: &[String]) -> CommandClass {
 
         "uv" => match sub {
             "tool" => CommandClass::HostInstall,
+            // `uv sync --system` installs into the host Python environment, not
+            // the project venv; like `pip install --user`, it is a host-wide
+            // write that must not ride on a project (or lockfile-sync) grant.
+            // Mirror the short-circuit `uv_pip_class` applies for host flags.
+            "sync" if global => CommandClass::HostInstall,
             "sync" | "lock" => CommandClass::PackageSync,
             // `uv pip ...` subcommands draw the same sync/add split pip draws.
             "pip" => uv_pip_class(args),
@@ -791,6 +796,31 @@ mod tests {
             class("uv", &["pip", "install", "-r", "requirements.txt"]),
             CommandClass::PackageSync
         );
+    }
+
+    #[test]
+    fn uv_sync_host_flags_write_the_host_environment_not_the_project() {
+        // Regression: `uv sync --system` / `--user` / `--global` install the
+        // project's dependencies into the host Python environment rather than
+        // the project venv. The classifier used to map `uv sync` to
+        // `PackageSync` unconditionally, so a host-wide write rode on the same
+        // lockfile-sync grant that covers `uv sync` with no host flag. It must
+        // leave the project lane and map to `HostInstall`, like pip and
+        // `uv pip --system`.
+        for args in [
+            vec!["sync", "--system"],
+            vec!["sync", "--user"],
+            vec!["sync", "--global"],
+        ] {
+            assert_eq!(
+                class("uv", &args),
+                CommandClass::HostInstall,
+                "uv {args:?} must be a host install"
+            );
+        }
+        // Without a host flag the project-venv sync is unchanged.
+        assert_eq!(class("uv", &["sync"]), CommandClass::PackageSync);
+        assert_eq!(class("uv", &["lock"]), CommandClass::PackageSync);
     }
 
     #[test]

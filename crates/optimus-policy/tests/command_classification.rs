@@ -368,6 +368,32 @@ fn an_unclassifiable_command_keeps_the_legacy_project_execution_answer() {
 }
 
 #[test]
+fn uv_sync_with_a_host_flag_leaves_the_project_lane_and_asks() {
+    // Regression: `uv sync --system` installs into the host Python
+    // environment, so it must not ride on the project-scoped lockfile-sync
+    // grant that covers a plain `uv sync`. The classifier used to map every
+    // `uv sync` to `PackageSync` regardless of the host flag.
+    for args in [vec!["sync", "--system"], vec!["sync", "--user"]] {
+        let request = request("uv", &args);
+        assert_eq!(
+            request.capability,
+            CapabilityId::SystemModify,
+            "uv {args:?}"
+        );
+        assert_eq!(request.externality, Externality::HostSystem, "uv {args:?}");
+        assert!(
+            !allowed(&CapabilityBroker.decide(AutonomyProfile::Standard, &request)),
+            "Standard must ask for uv {args:?}"
+        );
+    }
+
+    // Without a host flag a project-venv sync stays in the project lane.
+    let sync = request("uv", &["sync"]);
+    assert_eq!(sync.capability, CapabilityId::PackageSync);
+    assert_eq!(sync.externality, Externality::PublicNetwork);
+}
+
+#[test]
 fn uncheckpointed_delete_effects_ask_in_standard() {
     for kind in ["DeletePath", "ProjectDeletePath"] {
         let request = build_effect_request(
