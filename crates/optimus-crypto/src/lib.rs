@@ -67,7 +67,9 @@ impl PartialEq<str> for Sha256Digest {
 
 impl PartialEq<&str> for Sha256Digest {
     fn eq(&self, other: &&str) -> bool {
-        self.0.eq_ignore_ascii_case(*other)
+        // Auto-deref resolves the double reference; an explicit deref would
+        // be redundant (clippy::explicit-auto-deref under -D warnings).
+        self.0.eq_ignore_ascii_case(other)
     }
 }
 
