@@ -336,6 +336,19 @@ fn validate_root(raw: &str, label: &str) -> Result<(), String> {
     {
         return Err(format!("{label} must not contain parent traversal"));
     }
+    // A bare filesystem root (`/` on Unix, a drive root on Windows) resolves to
+    // itself as a prefix of every path, so a selected scope whose root is `/`
+    // would grant the whole machine through `path_within`. That intent is what
+    // `EntireLocalMachine` exists for; refusing the root here keeps a selected
+    // scope from silently widening into a full-machine grant.
+    if !path
+        .components()
+        .any(|component| matches!(component, std::path::Component::Normal(_)))
+    {
+        return Err(format!(
+            "{label} must not be the filesystem root; select the directory instead"
+        ));
+    }
     Ok(())
 }
 
@@ -586,5 +599,44 @@ mod tests {
             Reversibility::Irreversible
         ));
         assert!(!grant.capabilities.allows(CapabilityId::ExternalDeploy));
+    }
+
+    #[test]
+    fn selected_scope_rejects_the_filesystem_root() {
+        // Regression: a selected scope with root `/` used to validate, and
+        // `path_within` then granted every path on the machine. The filesystem
+        // root is the job of `EntireLocalMachine`, not of a picked directory.
+        assert!(DeveloperScope::SelectedRepository {
+            root: "/".into(),
+            root_hash: None,
+        }
+        .validate()
+        .is_err());
+
+        assert!(DeveloperScope::SelectedDirectories {
+            roots: vec!["/".into()],
+        }
+        .validate()
+        .is_err());
+
+        let grant = DeveloperAccessGrant {
+            enabled: true,
+            confirmation_version: DEVELOPER_ACCESS_CONFIRMATION_VERSION,
+            issued_unix: 1,
+            scope: DeveloperScope::SelectedRepository {
+                root: "/".into(),
+                root_hash: None,
+            },
+            ..Default::default()
+        };
+        assert!(grant.validate().is_err());
+
+        // A normal subdirectory still validates.
+        assert!(DeveloperScope::SelectedRepository {
+            root: "/tmp/project".into(),
+            root_hash: None,
+        }
+        .validate()
+        .is_ok());
     }
 }
