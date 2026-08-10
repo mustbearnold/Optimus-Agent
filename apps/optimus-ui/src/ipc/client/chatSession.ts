@@ -64,10 +64,11 @@ export class ChatSession {
     };
     const handle = this.transport.chat(request, onEvent);
     this.observer?.record({ type: 'stream', method: 'chat_start' });
-    return this.arm(createTurn(handle, (message) => {
-      // Parity: a rejected start still reaches the transcript as an error
-      // event (previously the caller synthesized it in a catch).
-      onEvent({ type: 'error', error: message });
+    return this.arm(createTurn(handle, (event) => {
+      // Parity: a rejected start (or an AbortError) still reaches the
+      // transcript as a terminal event (previously the caller synthesized
+      // it in a catch).
+      onEvent(event);
     }));
   }
 

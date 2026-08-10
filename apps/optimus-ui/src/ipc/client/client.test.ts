@@ -85,13 +85,11 @@ function terminalHandle(
   };
 }
 
-function rejectingHandle(error: Error, onEvent: (event: StreamEvent) => void): ChatHandle {
+function rejectingHandle(error: Error): ChatHandle {
   return {
     streamId: 1,
     done: Promise.reject(error),
     cancel: async () => ({ requested: true }),
-    // eslint-disable-next-line no-console
-    ...{ __onEvent: onEvent },
   };
 }
 
@@ -179,8 +177,7 @@ describe('turn terminal classification (R4/R9)', () => {
   it('a rejected start is failed with the REAL cause and mirrored to the event stream', async () => {
     const transport = new FakeTransport();
     const events: StreamEvent[] = [];
-    transport.streamFactory = (_request, onEvent) =>
-      rejectingHandle(new Error('No DeepSeek API key configured'), onEvent);
+    transport.streamFactory = () => rejectingHandle(new Error('No DeepSeek API key configured'));
     const client = createOptimusClient(transport);
     const { outcome } = client.chat('s1').send(
       { message: 'hi', provider: 'deepseek' },
@@ -191,6 +188,26 @@ describe('turn terminal classification (R4/R9)', () => {
       message: 'No DeepSeek API key configured',
     });
     expect(events).toEqual([{ type: 'error', error: 'No DeepSeek API key configured' }]);
+  });
+
+  it('an AbortError rejection is a user cancel: cancelled outcome, cancelled event', async () => {
+    const transport = new FakeTransport();
+    const events: StreamEvent[] = [];
+    transport.streamFactory = () => ({
+      streamId: 1,
+      done: Promise.reject(new DOMException('aborted', 'AbortError')),
+      cancel: async () => ({ requested: true }),
+    });
+    const client = createOptimusClient(transport);
+    const { outcome } = client.chat('s1').send(
+      { message: 'hi', provider: 'offline' },
+      (event) => events.push(event)
+    );
+    await expect(outcomeOf(outcome)).resolves.toEqual({
+      kind: 'cancelled',
+      error: 'cancelled by user',
+    });
+    expect(events).toEqual([{ type: 'cancelled', error: 'cancelled by user' }]);
   });
 
   it('a turn without any terminal event is failed, not hung', async () => {
@@ -273,15 +290,36 @@ describe('ChatSession lifecycle', () => {
     await client.chat('s1').approve(binding, 'approve', 'p1').outcome;
     expect(resolveRequest).toEqual({
       session_id: 's1',
-      run_id: 'run-1',
-      call_id: 'call-1',
-      job_id: 'job-1',
-      node_id: 'node-1',
-      node_index: 3,
-      effect_sha256: 'a'.repeat(64),
+      run_id: binding.run_id,
+      call_id: binding.call_id,
+      job_id: binding.job_id,
+      node_id: binding.node_id,
+      node_index: binding.node_index,
+      effect_sha256: binding.effect_sha256,
       decision: 'approve',
       project_id: 'p1',
     });
+  });
+
+  it('approve never invents routing or project authority (deny, no project)', async () => {
+    const transport = new FakeTransport();
+    let resolveRequest: Parameters<OptimusTransport['chatApprovalResolve']>[0] | null = null;
+    transport.streamFactory = ((request: ChatRequest, _onEvent: (e: StreamEvent) => void) => {
+      resolveRequest = request as unknown as Parameters<OptimusTransport['chatApprovalResolve']>[0];
+      return terminalHandle({ type: 'done' });
+    }) as FakeTransport['streamFactory'];
+    const client = createOptimusClient(transport);
+    await client.chat('s1').approve(binding, 'deny').outcome;
+    expect(resolveRequest).toMatchObject({
+      session_id: 's1',
+      run_id: binding.run_id,
+      call_id: binding.call_id,
+      decision: 'deny',
+    });
+    expect(resolveRequest).not.toHaveProperty('provider');
+    expect(resolveRequest).not.toHaveProperty('model');
+    expect(resolveRequest).not.toHaveProperty('access');
+    expect(resolveRequest).not.toHaveProperty('project_id');
   });
 
   it('a second send while one is live throws TurnInFlightError; next send works after terminal', async () => {

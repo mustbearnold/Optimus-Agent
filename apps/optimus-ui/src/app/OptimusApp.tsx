@@ -16,17 +16,16 @@ import {
 import type {
   Approval,
   Campaign,
-  ChatHandle,
   OptimusTransport,
   DeveloperAccess,
   Doctor,
   Project,
   ProjectRuntimeScope,
-  SessionDetail,
   SessionMeta,
   ToolApprovalBinding,
 } from '../ipc/contracts';
 import { getTransport, initTransport, resetTransport } from '../ipc';
+import { createOptimusClient, type ChatSession } from '../ipc/client';
 import { useAlive } from '../hooks/useAlive';
 import { appReducer } from '../state/appReducer';
 import {
@@ -77,7 +76,6 @@ import { WorkbenchStatusBar } from '../components/workbench/WorkbenchStatusBar';
 import { ArtifactsSurface } from '../components/workspace/ArtifactsSurface';
 import { WorkspacePane } from '../components/workspace/WorkspacePane';
 import { composeSendMessage } from './composeSendMessage';
-import { approvalResolutionParams } from './approvalResolution';
 
 function projectFromRuntimeScope(scope: ProjectRuntimeScope): Project {
   const normalizedRoot = scope.primary_root.replace(/[\\/]+$/, '');
@@ -135,7 +133,9 @@ export function OptimusApp() {
   // before its await and again after: if it moved, the list it is holding was
   // taken before that session existed, and applying it would erase one.
   const sessionCreations = useRef(0);
-  const activeHandle = useRef<ChatHandle | null>(null);
+  const client = useMemo(() => createOptimusClient(transport), [transport]);
+
+  const activeChat = useRef<ChatSession | null>(null);
   const draggingLayout = useRef(false);
   const latestLayout = useRef(state.layout);
   latestLayout.current = state.layout;
@@ -166,7 +166,7 @@ export function OptimusApp() {
   useEffect(() => {
     if (!transport) return;
     let live = true;
-    void transport.invoke<{ developer_access?: DeveloperAccess }>('developer_access_get')
+    void client.system.developerAccess()
       .then((result) => {
         if (live && result.developer_access) setDeveloperAccess(result.developer_access);
       })
@@ -178,13 +178,13 @@ export function OptimusApp() {
     if (!transport) return;
     try {
       const [doctorResult, campaignResult] = await Promise.all([
-        transport.invoke<Doctor>('doctor'),
-        transport.invoke<{ campaigns?: Campaign[] }>('campaign_list'),
+        client.system.doctor(),
+        client.campaigns.list(),
       ]);
       if (!alive()) return;
       setDoctor(doctorResult);
       setDeveloperAccess(doctorResult.settings?.developer_access || doctorResult.developer_access || null);
-      setCampaigns(campaignResult.campaigns || []);
+      setCampaigns(campaignResult);
     } catch (error) {
       if (!alive()) return;
       setBootError(error instanceof Error ? error.message : String(error));
@@ -199,19 +199,18 @@ export function OptimusApp() {
       // refresh to the small, interactive set so New thread is not queued
       // behind diagnostics and campaign inventory on a busy machine.
       const startupContext = transport.kind === 'tauri'
-        ? transport.invoke<{ session_id?: string | null }>('startup_context')
+        ? client.sessions.startupContext()
         : Promise.resolve({ session_id: null });
-      const [sessionsResult, approvalResult, scopeResult, startupResult] = await Promise.all([
-        transport.invoke<{ sessions?: SessionMeta[] } | SessionMeta[]>('sessions'),
-        transport.invoke<{ pending?: Approval[] }>('approvals_list'),
-        transport.invoke<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list'),
+      const [nextSessions, approvalResult, scopeResult, startupResult] = await Promise.all([
+        client.sessions.list(),
+        client.approvals.list(),
+        client.projects.scopesList(),
         startupContext,
       ]);
       if (!alive()) return;
-      const nextSessions = Array.isArray(sessionsResult) ? sessionsResult : sessionsResult.sessions || [];
-      setApprovals(approvalResult.pending || []);
-      setProjectScopes(scopeResult.projects || []);
-      setAuthorizedProjects(new Set((scopeResult.projects || []).map((project) => project.project_id)));
+      setApprovals(approvalResult);
+      setProjectScopes(scopeResult);
+      setAuthorizedProjects(new Set(scopeResult.map((project) => project.project_id)));
       // A thread created while this refresh was in flight is newer than the
       // list it came back with. Overwriting would drop it and then re-select
       // from a list that never contained it, leaving the user staring at the
@@ -252,7 +251,7 @@ export function OptimusApp() {
     const id = state.selectedSessionId;
     if (!id || conversationStore.get(id).loaded) return;
     if (!transport) return;
-    transport.invoke<SessionDetail>('get_session', { id }).then((detail) => {
+    client.sessions.get(id).then((detail) => {
       conversationStore.load(detail);
     }).catch((error) => setBootError(error instanceof Error ? error.message : String(error)));
   }, [state.selectedSessionId, transport]);
@@ -303,7 +302,7 @@ export function OptimusApp() {
   const newSession = async (projectId?: string) => {
     if (!transport) return;
     try {
-      const created = await transport.invoke<SessionMeta>('new_session');
+      const created = await client.sessions.newSession();
       if (!alive()) return;
       sessionCreations.current += 1;
       setSessions((current) => [created, ...current.filter((session) => session.id !== created.id)]);
@@ -357,7 +356,7 @@ export function OptimusApp() {
     if (!transport) return;
     let sessionId = state.selectedSessionId;
     if (!sessionId) {
-      const created = await transport.invoke<SessionMeta>('new_session');
+      const created = await client.sessions.newSession();
       if (!alive()) return;
       sessionCreations.current += 1;
       setSessions((current) => [created, ...current]);
@@ -376,35 +375,27 @@ export function OptimusApp() {
     dispatch({ type: 'set-active-run', id: sessionId });
     const model = modelOverride(composer.model);
     if (!transport) return;
-    const handle = transport.chat(
-      {
-        session: sessionId,
-        message: text,
-        provider: composer.provider,
-        ...(model ? { model } : {}),
-        thinking_level: composer.thinking,
-        fast: composer.fast,
-        access: composer.access,
-        ...(projectId ? { project_id: projectId } : {}),
-      },
-      (event) => conversationStore.apply(sessionId, event)
-    );
-    activeHandle.current = handle;
+    const chat = client.chat(sessionId);
+    activeChat.current = chat;
     try {
-      await handle.done;
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        conversationStore.apply(sessionId, { type: 'cancelled', error: 'cancelled by user' });
-      } else {
-        // Surface the real cause (e.g. "No DeepSeek API key…") instead of a
-        // misleading "Connection lost" — a rejected chat start is a
-        // configuration error, not a transport loss.
-        const message = error instanceof Error ? error.message : String(error);
-        conversationStore.apply(sessionId, { type: 'error', error: message });
-      }
+      // The client classifies the terminal (R4/R9, ADR-0090) and mirrors a
+      // refused start into the transcript as an error event — a rejected chat
+      // start is a configuration error, not a transport loss.
+      await chat.send(
+        {
+          message: text,
+          provider: composer.provider,
+          ...(model ? { model } : {}),
+          thinkingLevel: composer.thinking,
+          fast: composer.fast,
+          access: composer.access,
+          ...(projectId ? { projectId } : {}),
+        },
+        (event) => conversationStore.apply(sessionId, event)
+      ).outcome;
     } finally {
-      if (activeHandle.current === handle) {
-        activeHandle.current = null;
+      if (activeChat.current === chat) {
+        activeChat.current = null;
         if (alive()) {
           dispatch({ type: 'set-active-run', id: null });
           void refreshRuntime();
@@ -415,11 +406,11 @@ export function OptimusApp() {
 
   const stop = async () => {
     const sessionId = state.activeRunSessionId;
-    const handle = activeHandle.current;
-    if (!sessionId || !handle) return;
+    const chat = activeChat.current;
+    if (!sessionId || !chat) return;
     conversationStore.markCancelling(sessionId);
     try {
-      await handle.cancel();
+      await chat.cancel();
     } catch {
       conversationStore.markDisconnected(sessionId);
     }
@@ -444,31 +435,26 @@ export function OptimusApp() {
       // the consent must exist BEFORE the resolve settles, so the resumed
       // turn's next same-class effect auto-grants instead of re-parking.
       if (decision === 'approve' && grantClass && transport) {
-        await transport.invoke('session_consent_grant', {
-          session_id: sessionId,
-          command_class: grantClass,
-          ...(projectId ? { project_id: projectId } : {}),
-        });
+        await client.consents.grant(sessionId, grantClass, projectId);
       }
       // Settling resumes the paused turn (ADR-0046), so this is a streaming
       // turn, not a request/response: the continuation's events must reach the
-      // transcript as they happen, and the handle must be cancellable. A
+      // transcript as they happen, and the turn must be cancellable. A
       // blocking resolve left the button on "Approving…" with no feedback for
       // the whole continuation and no way to stop it.
       if (!transport) return;
-      const handle = transport.chatApprovalResolve(
-        approvalResolutionParams(sessionId, binding, decision, projectId),
-        (event) => conversationStore.apply(sessionId, event)
-      );
-      activeHandle.current = handle;
+      const chat = client.chat(sessionId);
+      activeChat.current = chat;
       dispatch({ type: 'set-active-run', id: sessionId });
       try {
-        await handle.done;
+        await chat.approve(binding, decision, projectId, (event) =>
+          conversationStore.apply(sessionId, event)
+        ).outcome;
       } finally {
-        if (activeHandle.current === handle) activeHandle.current = null;
+        if (activeChat.current === chat) activeChat.current = null;
         if (alive()) dispatch({ type: 'set-active-run', id: null });
       }
-      const detail = await transport.invoke<SessionDetail>('get_session', { id: sessionId });
+      const detail = await client.sessions.get(sessionId);
       conversationStore.load(detail);
       await refreshRuntime();
     },
@@ -628,13 +614,9 @@ export function OptimusApp() {
                 }
                 try {
                   if (!transport) return;
-                  const result = await transport.invoke<{ sessions?: SessionMeta[] }>(
-                    'session_search',
-                    { q, include_archived: true }
-                  );
+                  const result = await client.sessions.search({ q, include_archived: true });
                   if (!alive()) return;
-                  const list = Array.isArray(result.sessions) ? result.sessions : [];
-                  setSessions(list);
+                  setSessions(result);
                 } catch {
                   // keep current list on search failure
                 }
@@ -644,11 +626,11 @@ export function OptimusApp() {
             onNewSession={(projectId) => void newSession(projectId)}
             onAddProject={async () => {
               if (!transport) return;
-              const result = await transport.pickFolder();
+              const result = await client.shell.pickFolder();
               if (!result.ok || !result.path || !result.grantToken) return;
               const parts = result.path.split(/[\\/]/).filter(Boolean);
               const project = createProject(parts.at(-1) || result.path, result.path);
-              await transport.invoke('project_scopes_authorize', {
+              await client.projects.authorize({
                 project_id: project.id,
                 root_paths: project.rootPaths,
                 primary_root: project.primaryRoot,
@@ -665,7 +647,7 @@ export function OptimusApp() {
             onTogglePin={async (session) => {
               if (!transport) return;
               const pinned = !session.pinned;
-              await transport.invoke('pin_session', { id: session.id, pinned });
+              await client.sessions.pin(session.id, pinned);
               if (!alive()) return;
               setSessions((current) =>
                 sortSessions(
@@ -676,7 +658,7 @@ export function OptimusApp() {
             onToggleArchive={async (session) => {
               if (!transport) return;
               const archived = !session.archived;
-              await transport.invoke('archive_session', { id: session.id, archived });
+              await client.sessions.archive(session.id, archived);
               if (!alive()) return;
               setSessions((current) =>
                 sortSessions(
@@ -694,7 +676,7 @@ export function OptimusApp() {
             onDelete={async (session) => {
               if (!transport) return;
               if (!window.confirm(`Delete “${session.title || session.id}”? This cannot be undone.`)) return;
-              await transport.invoke('delete_session', { id: session.id });
+              await client.sessions.delete(session.id);
               if (!alive()) return;
               const next = sessions.filter((item) => item.id !== session.id);
               setSessions(next);
@@ -840,25 +822,23 @@ export function OptimusApp() {
           )}
           onPickSource={async () => {
             if (!transport) return { ok: false, cancelled: true };
-            const result = await transport.pickFolder();
+            const result = await client.shell.pickFolder();
             return result;
           }}
           onSave={async (project, grantTokens) => {
             if (!transport) return;
-            const result = await transport.invoke<{ project?: ProjectRuntimeScope | null }>(
-              'project_scopes_authorize',
-              {
-                project_id: project.id,
-                root_paths: project.rootPaths,
-                primary_root: project.primaryRoot,
-                grant_tokens: grantTokens,
-              }
-            );
+            const result = await client.projects.authorize({
+              project_id: project.id,
+              root_paths: project.rootPaths,
+              primary_root: project.primaryRoot,
+              grant_tokens: grantTokens,
+            });
             if (!alive()) return;
             if (result.project) {
+              const scope = result.project;
               setProjectScopes((current) => {
-                const without = current.filter((scope) => scope.project_id !== project.id);
-                return [...without, result.project as ProjectRuntimeScope];
+                const without = current.filter((item) => item.project_id !== project.id);
+                return [...without, scope];
               });
               setAuthorizedProjects((current) => new Set(current).add(project.id));
               setBootError((current) =>

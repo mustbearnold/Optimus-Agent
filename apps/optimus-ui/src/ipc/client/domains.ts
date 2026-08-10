@@ -280,12 +280,15 @@ export interface ConsentsApi {
 
 export interface ProjectsApi {
   scopesList(): Promise<ProjectRuntimeScope[]>;
+  /** `project_id` and `primary_root` are `string | undefined` because the
+   *  app-side `Project` type declares them optional (contract type); the
+   *  runtime always sets both, and the host requires them. */
   authorize(input: {
-    project_id: string;
+    project_id?: string;
     root_paths: string[];
-    primary_root: string;
+    primary_root?: string;
     grant_tokens?: string[];
-  }): Promise<unknown>;
+  }): Promise<{ project?: ProjectRuntimeScope | null }>;
 }
 
 export interface SystemApi {
@@ -473,7 +476,7 @@ export function createDomainApis(
     projects: {
       scopesList: () =>
         get<{ projects?: ProjectRuntimeScope[] }>('project_scopes_list').then((r) => r.projects ?? []),
-      authorize: (input) => get('project_scopes_authorize', input),
+      authorize: (input) => get<{ project?: ProjectRuntimeScope | null }>('project_scopes_authorize', input),
     } satisfies ProjectsApi,
     system: {
       ping: () => get('ping'),

@@ -55,18 +55,25 @@ export interface Turn {
 
 /** Wrap a `ChatHandle` (or a refused start) into a classified Turn.
  *
- *  `onStartFailure` mirrors a rejected start into the caller's event
- *  stream as `{ type: 'error', error }` — parity with the previous
- *  caller-side catch in OptimusApp, kept inside the module. */
+ *  A rejected start is a configuration error, not a transport loss: the
+ *  REAL cause is surfaced as `failed` and mirrored into the caller's
+ *  event stream as `{ type: 'error' }` — parity with the previous
+ *  caller-side catch in OptimusApp. An `AbortError` rejection is the
+ *  user's cancel: classified `cancelled` and mirrored as such. */
 export function createTurn(
   handle: ChatHandle | null,
-  onStartFailure?: (message: string) => void
+  onStartFailure?: (event: StreamEvent) => void
 ): Turn {
   const outcome = (handle ? handle.done : Promise.resolve(undefined)).then(
     (event) => classifyTerminal(event),
     (error) => {
+      if (isAbortError(error)) {
+        const event: StreamEvent = { type: 'cancelled', error: 'cancelled by user' };
+        onStartFailure?.(event);
+        return { kind: 'cancelled', error: 'cancelled by user' } as const;
+      }
       const message = messageOf(error);
-      onStartFailure?.(message);
+      onStartFailure?.({ type: 'error', error: message });
       return classifyTerminal(undefined, error);
     }
   );
@@ -77,4 +84,10 @@ export function createTurn(
       if (handle) await handle.cancel();
     },
   };
+}
+
+export function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof DOMException && error.name === 'AbortError'
+  );
 }
