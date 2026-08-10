@@ -3835,23 +3835,14 @@ code {
   color: var(--muted);
 }
 
-.dialog-backdrop {
-  position: fixed;
-  z-index: 60;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(0, 0, 0, 0.48);
-  animation: fade-in 120ms linear;
-}
-
 .settings-dialog {
   width: min(660px, 100%);
   max-height: min(760px, calc(100vh - 36px));
   display: flex;
   flex-direction: column;
+  gap: 0;
   overflow: hidden;
+  padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: 0;
   background: var(--elevated);

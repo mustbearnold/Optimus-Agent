@@ -301,15 +301,26 @@ describe('OptimusApp fixture contract', () => {
     const settings = await screen.findByRole('button', { name: 'Settings' });
     await user.click(settings);
     const dialog = await screen.findByRole('dialog', { name: 'Settings' });
-    expect(document.querySelector('.topbar')).toHaveProperty('inert', true);
-    expect(dialog.closest('[inert]')).toBeNull();
+    // Radix modal: the page behind is hidden from the accessibility tree
+    // (and scroll-locked) while the dialog is open — the behaviour the
+    // hand-rolled version approximated with `inert` (ADR-0050).
+    expect(document.querySelector('.topbar')).toHaveAttribute('aria-hidden', 'true');
+    expect(dialog).not.toHaveAttribute('aria-hidden');
+    expect(document.body).toHaveStyle({ overflow: 'hidden' });
+    await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
+
+    // Tab cannot leave the dialog: from the last control it wraps to the
+    // first (Radix focus scope).
+    const done = screen.getByRole('button', { name: 'Done' });
+    done.focus();
+    await user.keyboard('{Tab}');
     await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
 
     document.body.focus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog', { name: 'Settings' })).not.toBeInTheDocument();
     expect(settings).toHaveFocus();
-    expect(document.querySelector('.topbar')).toHaveProperty('inert', false);
+    expect(document.querySelector('.topbar')).not.toHaveAttribute('aria-hidden');
   });
 
   it('exposes bounded keyboard controls for every workbench separator', async () => {

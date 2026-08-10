@@ -3,7 +3,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type KeyboardEvent,
   type ReactNode,
 } from 'react';
 import { useAlive } from '../../hooks/useAlive';
@@ -15,6 +14,13 @@ import type {
 } from '../../ipc/contracts';
 import type { OptimusClient } from '../../ipc/client';
 import { Icon, type IconName } from '../chrome/Icon';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '../ui/dialog';
 import { CronWorkbench } from '../cron/CronWorkbench';
 import { DeveloperAccessPanel } from './DeveloperAccessPanel';
 import { ProviderKeysPanel } from './ProviderKeysPanel';
@@ -83,8 +89,7 @@ export function SettingsDialog({
   onDeveloperAccess?: (value: DeveloperAccess) => void;
   onClose: () => void;
 }) {
-  const dialog = useRef<HTMLDivElement>(null);
-  const previousFocus = useRef<HTMLElement | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const [active, setActive] = useState<SettingsSection>('general');
@@ -118,33 +123,7 @@ export function SettingsDialog({
 
   useLayoutEffect(() => {
     if (!open) return;
-    previousFocus.current = document.activeElement as HTMLElement | null;
-    const application = document.querySelector<HTMLElement>('.optimus-app');
-    const background = application
-      ? Array.from(application.children).filter(
-          (child): child is HTMLElement =>
-            child instanceof HTMLElement && !child.contains(dialog.current)
-        )
-      : [];
-    const previousInert = background.map((element) => element.inert);
-    background.forEach((element) => { element.inert = true; });
-    const frame = requestAnimationFrame(() => {
-      dialog.current?.querySelector<HTMLElement>('[aria-label="Close settings"]')?.focus();
-    });
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      event.stopPropagation();
-      onCloseRef.current();
-    };
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('keydown', onKeyDown, true);
-      background.forEach((element, index) => { element.inert = previousInert[index] || false; });
-      previousFocus.current?.focus();
-      previousFocus.current = null;
-    };
+    opener.current = document.activeElement as HTMLElement | null;
   }, [open]);
 
   if (!open) return null;
@@ -161,34 +140,37 @@ export function SettingsDialog({
   const section = sections.find((item) => item.id === active) || sections[0];
 
   return (
-    <div
-      className="dialog-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      onKeyDown={(event) => {
-        trapFocus(event, dialog.current);
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
       }}
     >
-      <div
+      <DialogContent
         className="settings-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-title"
-        tabIndex={-1}
-        ref={dialog}
+        showCloseButton={false}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          opener.current?.focus();
+        }}
       >
+        <DialogTitle className="sr-only">Settings</DialogTitle>
+        <DialogDescription className="sr-only">
+          Optimus Agent application settings.
+        </DialogDescription>
         <header>
           <div>
             <span className="settings-mark"><Icon name="settings" /></span>
             <div>
-              <h2 id="settings-title">Settings</h2>
+              <h2>Settings</h2>
               <span>Optimus Agent</span>
             </div>
           </div>
-          <button type="button" aria-label="Close settings" onClick={onClose}>
-            <Icon name="close" />
-          </button>
+          <DialogClose asChild>
+            <button type="button" aria-label="Close settings">
+              <Icon name="close" />
+            </button>
+          </DialogClose>
         </header>
 
         <div className="settings-layout">
@@ -432,8 +414,8 @@ export function SettingsDialog({
           <span role="status">{saved}</span>
           <button type="button" onClick={onClose}>Done</button>
         </footer>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -492,27 +474,4 @@ function sectionDescription(section: SettingsSection) {
     advanced: 'Runtime diagnostics and intentionally unavailable controls.',
   };
   return descriptions[section];
-}
-
-function trapFocus(event: KeyboardEvent, container: HTMLElement | null) {
-  if (event.key !== 'Tab' || !container) return;
-  const focusable = Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex]:not([tabindex="-1"])'
-    )
-  );
-  if (!focusable.length) {
-    event.preventDefault();
-    container.focus();
-    return;
-  }
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
 }
