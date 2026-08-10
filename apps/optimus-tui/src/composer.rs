@@ -460,7 +460,43 @@ mod properties {
                     composer.text(),
                 );
                 prop_assert!(composer.cursor() <= composer.text().len());
+                let (line_start, line_end) = (composer.line_start(), composer.line_end());
+                prop_assert!(
+                    line_start <= composer.cursor() && composer.cursor() <= line_end,
+                    "{op:?} left the cursor outside its line: {line_start}..={line_end} vs {}",
+                    composer.cursor(),
+                );
             }
+        }
+
+        /// Insert-then-backspace is identity at the grapheme level: the two
+        /// primitive edits compose to nothing wherever the cursor sits. Both
+        /// the seed and the inserted char exclude the combining mark: a base
+        /// char typed before it fuses into one glyph (`á`), and `snap()` then
+        /// pulls the caret back to the cluster start — backspace at a cluster
+        /// start removes nothing, which is correct editor behaviour and a
+        /// different invariant (already pinned by the boundary property test,
+        /// which includes combining marks).
+        #[test]
+        fn insert_then_backspace_is_identity(
+            seed in prop::collection::vec(
+                prop_oneof![Just('a'), Just(' '), Just('-'), Just('é'), Just('中'), Just('👍')],
+                0..24,
+            ),
+            steps in 0..24usize,
+            ch in prop_oneof![Just('a'), Just(' '), Just('-'), Just('é'), Just('中'), Just('👍')],
+        ) {
+            let mut composer = Composer::new();
+            composer.set(seed.into_iter().collect::<String>());
+            let before = composer.text().to_string();
+            composer.home();
+            for _ in 0..steps {
+                composer.right(); // boundary-aware; extra moves are no-ops
+            }
+            composer.insert_char(ch);
+            composer.backspace();
+            prop_assert_eq!(composer.text(), before, "insert+backspace must be identity");
+            prop_assert!(on_a_boundary(composer.text(), composer.cursor()));
         }
 
         /// Submitting hands the whole draft over and leaves nothing behind —

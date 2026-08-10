@@ -153,6 +153,7 @@ impl Term {
         self.writer.flush().expect("flush the pty");
     }
 
+    /// The screen as a terminal would display it.
     fn screen(&self) -> String {
         self.parser.lock().expect("parser").screen().contents()
     }
@@ -164,6 +165,53 @@ impl Term {
             .expect("parser")
             .screen()
             .cursor_position()
+    }
+
+    /// Resize the terminal the way a real window manager does: the pty master
+    /// emits SIGWINCH to the child; the parser mirrors the new geometry so the
+    /// read-back screen matches what the terminal now shows.
+    fn resize(&mut self, rows: u16, cols: u16) {
+        self._master
+            .resize(PtySize {
+                rows,
+                cols,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .expect("resize the pty");
+        self.parser.lock().expect("parser").set_size(rows, cols);
+    }
+
+    /// Wait until `f` holds AND the screen has been identical across several
+    /// consecutive polls. A resize storm paints transient frames (the rail
+    /// re-layouts between events), and one satisfied poll is not the settled
+    /// state — the assertion must run against the FINAL frame.
+    fn wait_settled(&mut self, mut f: impl FnMut(&str) -> bool, msg: &str) {
+        const REQUIRED_STABLE_POLLS: u32 = 6;
+        let mut prev: Option<String> = None;
+        let mut stable = 0u32;
+        let deadline = Instant::now() + Duration::from_secs(20);
+        loop {
+            let s = self.screen();
+            if f(&s) {
+                if let Some(p) = &prev {
+                    if *p == s {
+                        stable += 1;
+                        if stable >= REQUIRED_STABLE_POLLS {
+                            return;
+                        }
+                    } else {
+                        stable = 0;
+                    }
+                }
+                prev = Some(s.clone());
+            } else {
+                prev = None;
+                stable = 0;
+            }
+            assert!(Instant::now() < deadline, "{msg}\nscreen:\n{s}");
+            thread::sleep(Duration::from_millis(30));
+        }
     }
 
     fn wait_for(&self, predicate: impl Fn(&str) -> bool, what: &str) -> String {
@@ -262,6 +310,52 @@ fn the_cursor_follows_a_wrapped_draft_and_the_first_row_stays_visible() {
         term.cursor(),
         (CURSOR_ROW, WORKBENCH_LEFT + 1 + 2 + 1),
         "left workbench gutter (2) + border (1) + prompt gutter (2) + the single grapheme on the second row"
+    );
+}
+
+#[test]
+fn a_resize_reflows_a_wrapped_draft_and_keeps_the_cursor_visible() {
+    // SIGWINCH is newly load-bearing: composer height became dynamic (#87)
+    // and nothing resized the terminal mid-session before. At 40 cols the
+    // draft wraps to two rows; widened to 80 the same draft must rejoin one
+    // row with the cursor back on the fixed composer row — no input needed.
+    let mut term = Term::launch();
+    let head = "a".repeat(TEXT_WIDTH);
+    let draft = format!("{head}Z");
+    term.send(draft.as_bytes());
+    term.wait_for(|s| s.contains('Z'), "the wrapped draft never painted");
+    assert_eq!(term.cursor().0, CURSOR_ROW, "cursor row before resize");
+    assert!(
+        !term.screen().contains(&draft),
+        "precondition: the draft must be wrapped across rows before the resize"
+    );
+
+    term.resize(ROWS, COLS + 40);
+
+    // The contiguous draft exists on the screen only once the wrap has
+    // rejoined — the reflow evidence. The settle-wait matters: the terminal
+    // can paint transient frames while draining the resize storm, and one
+    // of those can carry the draft at an intermediate position.
+    term.wait_settled(|s| s.contains(&draft), "the reflowed draft never settled");
+
+    // The workbench left edge is layout-derived and changes with width, so
+    // the expected column comes from the rendered row: where the draft sits
+    // in its line plus its length. The cursor must sit exactly there.
+    let screen = term.screen();
+    let composer_line = screen
+        .lines()
+        .nth(CURSOR_ROW as usize)
+        .expect("composer row");
+    let draft_col = composer_line
+        .find(&draft)
+        .expect("the draft must sit on the composer row");
+    // `find` yields a BYTE offset and the box glyphs are multi-byte, so the
+    // expected cursor column is the CHAR count of the prefix plus the draft.
+    let expected_col = composer_line[..draft_col].chars().count() + draft.chars().count();
+    assert_eq!(
+        term.cursor(),
+        (CURSOR_ROW, expected_col as u16),
+        "the cursor must follow the reflowed draft onto the fixed composer row\nscreen:\n{screen}"
     );
 }
 
