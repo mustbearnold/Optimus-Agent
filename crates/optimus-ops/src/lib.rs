@@ -3,6 +3,7 @@
 //! These are intentionally outside the turn-loop waist. Surfaces and the kernel
 //! may depend on them; they must not depend on `optimus-kernel`.
 
+pub mod adapters;
 mod channel_adapters;
 mod cron;
 mod gateway;
