@@ -26,11 +26,12 @@ type Props = {
   transport: OptimusTransport;
   projects: Project[];
   sessionId?: string | null;
+  projectId?: string;
   value?: DeveloperAccess;
   onValue: (value: DeveloperAccess) => void;
 };
 
-export function DeveloperAccessPanel({ transport, projects, sessionId, value, onValue }: Props) {
+export function DeveloperAccessPanel({ transport, projects, sessionId, projectId, value, onValue }: Props) {
   const [grant, setGrant] = useState<DeveloperAccess>(() => value || disabledAccess());
   const [supervisor, setSupervisor] = useState<DeveloperSupervisorStatus | null>(null);
   const [logs, setLogs] = useState('');
@@ -42,6 +43,14 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, value, on
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [buildLogs, setBuildLogs] = useState('');
+  const [sessionConsents, setSessionConsents] = useState<Array<{
+    command_class: string;
+    capability: string;
+    created_unix: number;
+    expires_unix: number;
+    revoked_unix?: number | null;
+  }>>([]);
+  const [consentBusy, setConsentBusy] = useState(false);
 
   useEffect(() => {
     if (value) setGrant(value);
@@ -165,6 +174,40 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, value, on
     setActionLogs(result.actions || '');
     setBuildLogs(result.build || '');
   };
+  // spec-014 R7: the settings affordance for session-scoped capability
+  // consent. Live grants expire by themselves (8 h, capped 24 h) and die with
+  // the session, but the operator must be able to revoke them early.
+  const refreshSessionConsents = async () => {
+    if (!sessionId) return;
+    const result = await transport.invoke<{ grants?: Array<{
+      command_class: string;
+      capability: string;
+      created_unix: number;
+      expires_unix: number;
+      revoked_unix?: number | null;
+    }> }>('session_consent_list', { session_id: sessionId, ...(projectId ? { project_id: projectId } : {}) });
+    setSessionConsents(result.grants || []);
+  };
+  const revokeSessionConsents = async () => {
+    if (!sessionId) return;
+    setConsentBusy(true);
+    try {
+      const result = await transport.invoke<{ revoked: number }>('session_consent_revoke_all', { session_id: sessionId, ...(projectId ? { project_id: projectId } : {}) });
+      await refreshSessionConsents();
+      setMessage(result.revoked > 0
+        ? `Revoked ${result.revoked} session grant${result.revoked === 1 ? '' : 's'}.`
+        : 'No live session grants to revoke.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setConsentBusy(false);
+    }
+  };
+  useEffect(() => {
+    if (!sessionId) return;
+    void refreshSessionConsents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, transport]);
 
   return (
     <div className="developer-access-panel">
@@ -231,6 +274,29 @@ export function DeveloperAccessPanel({ transport, projects, sessionId, value, on
         {grant.enabled ? <button type="button" className="developer-danger-action" disabled={busy} onClick={() => void revoke()}>Revoke access</button> : <button type="button" className="primary-action" disabled={busy} onClick={() => setConfirmOpen(true)}>Enable Developer Full Access</button>}
         {message ? <span className="developer-action-message" role="status">{message}</span> : null}
       </div>
+
+      {sessionId ? (
+        <fieldset className="developer-access-fieldset">
+          <legend>Session grants</legend>
+          <p className="panel-muted">"Always allow" consents for this session (spec-014 R7). They expire on their own after 8 h and are scoped to this project.</p>
+          {sessionConsents.length ? (
+            <ul className="developer-session-consents">
+              {sessionConsents.map((consent) => (
+                <li key={`${consent.capability}:${consent.command_class}`} className={consent.revoked_unix ? 'is-revoked' : ''}>
+                  <code>{consent.command_class}</code>
+                  <span>{consent.revoked_unix ? 'revoked' : 'live until ' + new Date(consent.expires_unix * 1000).toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="panel-muted">No session consent grants.</p>
+          )}
+          <div className="developer-supervisor-actions">
+            <button type="button" className="developer-secondary-action" disabled={consentBusy} onClick={() => void refreshSessionConsents()}>Refresh</button>
+            <button type="button" className="developer-danger-action" disabled={consentBusy || !sessionConsents.some((c) => !c.revoked_unix)} onClick={() => void revokeSessionConsents()}>Revoke session grants</button>
+          </div>
+        </fieldset>
+      ) : null}
 
       {grant.enabled ? (
         <section className="developer-supervisor" aria-labelledby="developer-supervisor-title">

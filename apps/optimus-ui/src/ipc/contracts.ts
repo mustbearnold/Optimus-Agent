@@ -41,6 +41,10 @@ export type DesktopMethod =
   | 'approvals_list'
   | 'approvals_grant'
   | 'approvals_release_yolo'
+  | 'session_consent_grant'
+  | 'session_consent_revoke'
+  | 'session_consent_revoke_all'
+  | 'session_consent_list'
   | 'jobs_list'
   | 'campaign_list'
   | 'campaign_create'
@@ -364,6 +368,8 @@ export type ToolApprovalBinding = {
   node_index: number;
   effect_sha256: string;
   summary: string;
+  /** CommandClass discriminator (spec-014 R7); absent for non-command effects. */
+  command_class?: string;
 };
 
 export type ToolLifecyclePhase =

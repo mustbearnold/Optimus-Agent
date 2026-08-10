@@ -7,7 +7,9 @@ export type ApprovalDecision = 'approve' | 'deny';
 export type ToolApprovalRequest = ToolApprovalBinding;
 export type ApprovalDecisionHandler = (
   approval: ToolApprovalRequest,
-  decision: ApprovalDecision
+  decision: ApprovalDecision,
+  /** When set, grant session consent for this CommandClass before resolving. */
+  grantClass?: string
 ) => void | Promise<void>;
 
 export function ActivityTimeline({
@@ -157,15 +159,24 @@ function ToolApprovalCard({
   if (!approval) return null;
   const pending = state?.pending;
   const disabled = Boolean(pending || !onDecision);
+  // Session consent (spec-014 R7) is offered for command effects only; the
+  // class discriminator arrives from the kernel, derived from the exact
+  // effect, never from free text.
+  const grantClass = approval.command_class;
+  const [alwaysAllow, setAlwaysAllow] = useState(false);
 
   const choose = async (decision: ApprovalDecision) => {
     if (!onDecision || disabled) return;
+    const grant = decision === 'approve' && alwaysAllow ? grantClass : undefined;
     onStateChange({ pending: decision });
     try {
-      await onDecision(
-        approval,
-        decision
-      );
+      // Only pass the consent class when it was actually chosen, so callers
+      // that branch on arity keep working (the handler signature is optional).
+      if (grant) {
+        await onDecision(approval, decision, grant);
+      } else {
+        await onDecision(approval, decision);
+      }
       onStateChange({ submitted: decision });
     } catch (error) {
       onStateChange({ error: errorMessage(error) });
@@ -177,6 +188,19 @@ function ToolApprovalCard({
       <strong>Approval required</strong>
       <p>{approval.summary}</p>
       <small>Optimus will only continue with this exact action after your choice.</small>
+      {grantClass ? (
+        <label className="activity-approval-consent">
+          <input
+            type="checkbox"
+            checked={alwaysAllow}
+            onChange={(event) => setAlwaysAllow(event.target.checked)}
+            disabled={disabled}
+          />
+          <span>
+            Always allow <code>{grantClass}</code> in this project (this session)
+          </span>
+        </label>
+      ) : null}
       <div className="activity-approval-actions" role="group" aria-label="Approval decision">
         <button
           type="button"

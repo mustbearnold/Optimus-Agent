@@ -15,6 +15,10 @@ type SessionProjection = {
   statusText: string;
   durationMs?: number;
   loaded: boolean;
+  /** Consecutive `approval_required` lifecycle events (spec-014 R12). */
+  consecutiveApprovals: number;
+  /** True once the profile-suggestion banner is due and not yet dismissed. */
+  suggestProfileBanner: boolean;
 };
 
 export type SessionIndicatorState = 'working' | 'attention' | 'error';
@@ -24,6 +28,8 @@ const emptyProjection = (): SessionProjection => ({
   status: 'idle',
   statusText: '',
   loaded: false,
+  consecutiveApprovals: 0,
+  suggestProfileBanner: false,
 });
 
 class ConversationStore {
@@ -35,7 +41,38 @@ class ConversationStore {
   private readonly toolEventIds = new Map<string, Set<string>>();
   private readonly sessionVersions = new Map<string, number>();
   private readonly indicatorSnapshots = new Map<string, SessionIndicatorState | null>();
+  private readonly approvalStreaks = new Map<string, number>();
+  private readonly bannerDismissed = new Set<string>();
   private allVersion = 0;
+
+  /** spec-014 R12: count consecutive `approval_required` events. */
+  private recordApprovalPhase(sessionId: string, phase: ToolLifecyclePhase) {
+    const streak = phase === 'approval_required'
+      ? (this.approvalStreaks.get(sessionId) || 0) + 1
+      : 0;
+    this.approvalStreaks.set(sessionId, streak);
+    return streak;
+  }
+
+  /** Dismiss the profile-suggestion banner for this session (once per session). */
+  dismissProfileBanner(sessionId: string) {
+    this.bannerDismissed.add(sessionId);
+    const current = this.sessions.get(sessionId);
+    if (current) {
+      // The component renders the projection field, so the stored projection
+      // must flip now — the dismissed-set alone only guards future rebuilds.
+      this.sessions.set(sessionId, { ...current, suggestProfileBanner: false });
+    }
+    this.emit(sessionId);
+  }
+
+  suggestProfileBanner(sessionId: string): boolean {
+    const projection = this.sessions.get(sessionId);
+    return Boolean(
+      projection?.suggestProfileBanner &&
+      !this.bannerDismissed.has(sessionId)
+    );
+  }
 
   get(sessionId: string | null): SessionProjection {
     if (!sessionId) return emptyProjection();
@@ -85,6 +122,8 @@ class ConversationStore {
       if (message.role === 'user') {
         lastLifecycle = undefined;
         lastSummary = '';
+        // A new turn starts a fresh approval streak (spec-014 R12).
+        this.approvalStreaks.set(detail.id, 0);
       }
       const tools = new Map<string, ToolActivity>();
       for (const event of message.tool_events || []) {
@@ -92,6 +131,7 @@ class ConversationStore {
         eventIds.add(event.event_id);
         lastLifecycle = event.phase;
         lastSummary = event.summary;
+        this.recordApprovalPhase(detail.id, event.phase);
         const current = tools.get(event.call_id);
         tools.set(event.call_id, { ...current, ...toolActivityFromEvent(event) });
       }
@@ -139,6 +179,10 @@ class ConversationStore {
       status,
       statusText: preservedFailure,
       loaded: true,
+      consecutiveApprovals: this.approvalStreaks.get(detail.id) || 0,
+      suggestProfileBanner:
+        (this.approvalStreaks.get(detail.id) || 0) >= 3 &&
+        !this.bannerDismissed.has(detail.id),
     });
     this.toolEventIds.set(detail.id, eventIds);
     this.emit(detail.id);
@@ -207,6 +251,8 @@ class ConversationStore {
     this.streamText.set(sessionId, '');
     this.streamThinking.set(sessionId, '');
     this.toolEventIds.set(sessionId, new Set());
+    this.approvalStreaks.set(sessionId, 0);
+    this.bannerDismissed.delete(sessionId);
     this.emit(sessionId);
   }
 
@@ -256,11 +302,14 @@ class ConversationStore {
         ...message,
         tools: tools.slice(-200),
       };
+      const streak = this.recordApprovalPhase(sessionId, event.phase);
       this.sessions.set(sessionId, {
         ...current,
         status: event.phase === 'approval_required' ? 'awaiting_approval' : 'working',
         statusText: event.summary || `${event.tool_id}…`,
         messages,
+        consecutiveApprovals: streak,
+        suggestProfileBanner: streak >= 3 && !this.bannerDismissed.has(sessionId),
       });
     } else if (event.type === 'status') {
       const needsAttention =

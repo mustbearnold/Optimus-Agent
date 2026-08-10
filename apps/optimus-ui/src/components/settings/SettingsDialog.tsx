@@ -66,6 +66,7 @@ export function SettingsDialog({
   theme,
   projects,
   sessionId,
+  projectId,
   onTheme,
   onManageProject,
   onDeveloperAccess,
@@ -76,6 +77,7 @@ export function SettingsDialog({
   theme: 'dark' | 'light';
   projects: Project[];
   sessionId?: string | null;
+  projectId?: string;
   onTheme: (theme: 'dark' | 'light') => void;
   onManageProject: (project: Project) => void;
   onDeveloperAccess?: (value: DeveloperAccess) => void;
@@ -341,6 +343,7 @@ export function SettingsDialog({
                     transport={transport}
                     projects={projects}
                     sessionId={sessionId}
+                    projectId={projectId}
                     value={settings.developer_access}
                     onValue={(value) => {
                       setSettings((current) => ({ ...current, developer_access: value }));

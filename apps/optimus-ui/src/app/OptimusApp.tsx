@@ -432,10 +432,24 @@ export function OptimusApp() {
   // state. Typing into a long chat was doing the work of rendering that chat
   // from scratch, per character.
   const resolveTranscriptApproval = useCallback(
-    async (binding: ToolApprovalBinding, decision: 'approve' | 'deny') => {
+    async (
+      binding: ToolApprovalBinding,
+      decision: 'approve' | 'deny',
+      grantClass?: string
+    ) => {
       const sessionId = state.selectedSessionId;
       if (!sessionId) throw new Error('Select the session that owns this approval.');
       const projectId = assignments[sessionId];
+      // "Always allow <class> in this project (this session)" (spec-014 R7):
+      // the consent must exist BEFORE the resolve settles, so the resumed
+      // turn's next same-class effect auto-grants instead of re-parking.
+      if (decision === 'approve' && grantClass && transport) {
+        await transport.invoke('session_consent_grant', {
+          session_id: sessionId,
+          command_class: grantClass,
+          ...(projectId ? { project_id: projectId } : {}),
+        });
+      }
       // Settling resumes the paused turn (ADR-0046), so this is a streaming
       // turn, not a request/response: the continuation's events must reach the
       // transcript as they happen, and the handle must be cancellable. A
@@ -692,6 +706,28 @@ export function OptimusApp() {
 
           <section className="app-stage">
             {bootError ? <div className="boot-error" role="alert"><Icon name="warning" /><span>{bootError}</span><button type="button" onClick={() => { resetTransport(); void initTransport().then(setTransport); }}>Retry</button></div> : null}
+            {statusConversation.suggestProfileBanner && state.selectedSessionId ? (
+              <div className="profile-suggestion-banner" role="status">
+                <Icon name="info" />
+                <span>
+                  <strong>Many approvals this session</strong> — Developer Full
+                  Access can auto-grant these command classes. Consider enabling
+                  it in Settings, or use “Always allow” on the approval card.
+                </span>
+                <button
+                  type="button"
+                  className="banner-dismiss"
+                  aria-label="Dismiss suggestion"
+                  onClick={() => {
+                    if (state.selectedSessionId) {
+                      conversationStore.dismissProfileBanner(state.selectedSessionId);
+                    }
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            ) : null}
             <div className={`surface-row${workspaceMaximized ? ' is-workspace-maximized' : ''}`}>
               <div className="work-column">
                 <section className={`work-surface${workVisible ? ' is-compact-active' : ''}`} aria-label="Agent work surface">
@@ -785,6 +821,7 @@ export function OptimusApp() {
           theme={state.theme}
           projects={projects}
           sessionId={state.selectedSessionId}
+          projectId={state.selectedSessionId ? (assignments[state.selectedSessionId] || undefined) : undefined}
           onTheme={(theme) => dispatch({ type: 'theme', theme })}
           onManageProject={(project) => setSourceProjectId(project.id)}
           onDeveloperAccess={setDeveloperAccess}

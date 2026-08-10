@@ -111,6 +111,7 @@ const details = new Map<string, SessionDetail>([
                 node_index: 0,
                 effect_sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 summary: 'Run the focused React verification command',
+                command_class: 'project_execute',
               },
             },
           ],
@@ -229,6 +230,18 @@ const doctor: Doctor = {
     },
   ],
 };
+
+// Session-scoped capability consents (spec-014 R7), keyed session:class.
+const sessionConsents = new Map<string, {
+  session_id: string;
+  command_class: string;
+  capability: string;
+  scope_sha256: string;
+  created_unix: number;
+  expires_unix: number;
+  revoked_unix: number | null;
+  revoked_by: string | null;
+}>();
 
 const approvals: Approval[] = [
   {
@@ -1060,6 +1073,42 @@ async function fixtureInvoke(method: DesktopMethod, params: Record<string, unkno
       };
     case 'browser_navigate':
       return { ok: true, url: params.url, title: hostLabel(String(params.url || '')) };
+    case 'session_consent_grant': {
+      const key = `${String(params.session_id)}:${String(params.command_class)}`;
+      sessionConsents.set(key, {
+        session_id: String(params.session_id),
+        command_class: String(params.command_class),
+        capability: 'system.modify',
+        scope_sha256: 'fixture-scope',
+        created_unix: Math.floor(Date.now() / 1000),
+        expires_unix: Math.floor(Date.now() / 1000) + 8 * 3600,
+        revoked_unix: null,
+        revoked_by: null,
+      });
+      return { granted: key };
+    }
+    case 'session_consent_revoke': {
+      const key = `${String(params.session_id)}:${String(params.command_class)}`;
+      const row = sessionConsents.get(key);
+      if (row) row.revoked_unix = Math.floor(Date.now() / 1000);
+      return { revoked: Boolean(row) };
+    }
+    case 'session_consent_revoke_all': {
+      let revoked = 0;
+      for (const row of sessionConsents.values()) {
+        if (row.session_id === params.session_id && row.revoked_unix === null) {
+          row.revoked_unix = Math.floor(Date.now() / 1000);
+          revoked += 1;
+        }
+      }
+      return { revoked };
+    }
+    case 'session_consent_list':
+      return {
+        grants: [...sessionConsents.values()].filter(
+          (row) => row.session_id === params.session_id
+        ),
+      };
     default:
       return {};
   }

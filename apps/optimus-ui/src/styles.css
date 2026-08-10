@@ -2524,6 +2524,125 @@ code {
   color: var(--danger) !important;
 }
 
+.activity-approval-consent {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 0;
+  color: var(--text-2);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.activity-approval-consent input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.activity-approval-consent code {
+  color: var(--text-1);
+  font-size: 11px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.profile-suggestion-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 14px 0;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.profile-suggestion-banner .banner-dismiss {
+  margin-left: auto;
+  min-height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-2);
+  background: var(--surface);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.profile-suggestion-banner .banner-dismiss:hover {
+  border-color: var(--accent);
+  color: var(--text-1);
+}
+
+.developer-session-consents {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.developer-session-consents li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.developer-session-consents li.is-revoked {
+  opacity: 0.55;
+}
+
+.developer-session-consents code {
+  color: var(--text-1);
+  font-size: 11px;
+}
+
+.developer-access-fieldset {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.developer-access-fieldset legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.developer-access-fieldset .panel-muted {
+  margin: 0 0 4px;
+}
+
+.developer-supervisor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.developer-secondary-action {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-2);
+  background: var(--surface);
+  cursor: pointer;
+}
+
 .show-earlier,
 .jump-latest {
   min-height: 28px;
