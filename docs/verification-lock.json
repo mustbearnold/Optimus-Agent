@@ -259,28 +259,28 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "063e8c2d853f6af7fa62b64e96c2c63795ee96b5b2380157592dfa2dad6028a9",
+      "binding_sha256": "f3ae4177c5f5e5be03f4c14d54c1d7d32bd18c07e4eaabad171ffe871148554e",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
-      "resolved_files": 143
+      "resolved_files": 144
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "3754bb381c6e67fa21d452399bc24fdf90c460e761ba05ffee0465fd9ea58b44",
+      "binding_sha256": "fc2babf2705d57936e8768692ca1556fce7c541f1c381ece602b7a51a9956121",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
-      "resolved_files": 142
+      "resolved_files": 143
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "b42a3d3748e071fd33a3aa55abbafc7addc01b2e69e1c52ee4f29a5b6da6705d",
+      "binding_sha256": "e9d9654df506734f08fe01c1e0f6d667e0ff7526ec80817e418300e0abee69aa",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
-      "resolved_files": 112
+      "resolved_files": 113
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "2685fddc480aa1032a1f2497bcebe93bba6dd82d7220ab6b0bac8c4691a21c9d",
+      "binding_sha256": "526e20f37b7b9a195d7793d90ae1b74aa2cca9fa7bde972179812fd3104af69f",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
-      "resolved_files": 144
+      "resolved_files": 145
     },
     "decisions-0032-engineering-memory-compact-lenses": {
       "binding_sha256": "d0418808cf6e0bf5a0f8d512b7a5cacd10492d0fd3fc02a089d35c304700061a",
@@ -295,7 +295,7 @@
       "resolved_files": 8
     },
     "decisions-0034-control-plane-crate-peels": {
-      "binding_sha256": "4a9d923afac222bc1dcff20c7a718e385181641d7b21dbd4fe89b63bda184e84",
+      "binding_sha256": "e03b0c2c37818b3fb2186b88fe0d4f728c77494410907dec69b3d28e3543487f",
       "document_sha256": "987ff029f454ed6d73e53ddb0851350733b0874092afd7116a1910813b38d90d",
       "path": "docs/decisions/0034-control-plane-crate-peels.md",
       "resolved_files": 25
@@ -583,7 +583,7 @@
       "resolved_files": 10
     },
     "decisions-0089-sha256-digest-leaf-crate": {
-      "binding_sha256": "d8528caaad5e8bbc76fb1f8010e4c91810e633aa09eb53354251da24bffdcbe2",
+      "binding_sha256": "3bf2237d5ada823aa871cb1a3d8964a65dadd59716d83aece6e74e147208460d",
       "document_sha256": "a868c0ba78dd44602f198370ac9fde0e26481e894513544243f3e34f8aadf327",
       "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
       "resolved_files": 3
@@ -631,10 +631,10 @@
       "resolved_files": 0
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "cb46dcaa40a5deba26675ff2d5da317eb68a391468d3ca2b97e704127a87ee37",
+      "binding_sha256": "8df7a3fb7a8b1d73681316aef1db101be149e24a62cd4b0d0d98244d59f87c91",
       "document_sha256": "dfd2acd9e2da515f9b9a0ef52516baca23b5364dc8e7aad7b93bf12704e86d42",
       "path": "specs/001-desktop-shell/spec.md",
-      "resolved_files": 123
+      "resolved_files": 124
     },
     "spec-002-host-ipc": {
       "binding_sha256": "7a560a522283812d832338d91f1cc0e04d5a8c1b9b9db2a34432590acfbb5e34",
@@ -655,7 +655,7 @@
       "resolved_files": 37
     },
     "spec-005-agents-workflows": {
-      "binding_sha256": "74bca67f824d3ac7c3093cc6edb63e9d5b1021dec8d3c5f6400daffca21b27ad",
+      "binding_sha256": "8726398e7a185136ba3a313a22221ac234aeb5318ea9bfb61808ed63bcb1364a",
       "document_sha256": "5e4b6de2b0d0b67056f3d0212a871e9d4be49625703e686eb9c89fab55c1f484",
       "path": "specs/005-agents-workflows/spec.md",
       "resolved_files": 10

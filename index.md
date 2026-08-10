@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **906 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **907 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -158,7 +158,7 @@ Optimus Agent/
 │   ├── MIGRATION_REPORT.md
 │   ├── claude-settings-local.json
 │   └── github-conventions.md
-├── apps/ (260 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
+├── apps/ (261 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
 │   ├── optimus-cli/ (22 files) — Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.
 │   │   ├── src/ (14 files)
 │   │   │   ├── chat.rs
@@ -339,8 +339,8 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── pty.rs
 │   │   └── Cargo.toml
-│   └── optimus-ui/ (110 files) — React workbench presentation with no filesystem, policy, or runtime authority.
-│       ├── src/ (105 files)
+│   └── optimus-ui/ (111 files) — React workbench presentation with no filesystem, policy, or runtime authority.
+│       ├── src/ (106 files)
 │       │   ├── app/ (6 files)
 │       │   │   ├── OptimusApp.test.tsx
 │       │   │   ├── OptimusApp.tsx
@@ -356,7 +356,7 @@ Optimus Agent/
 │       │   │       ├── 0xProtoNerdFontPropo-Italic.ttf
 │       │   │       ├── 0xProtoNerdFontPropo-Regular.ttf
 │       │   │       └── Atmosphere-Bold.ttf
-│       │   ├── components/ (49 files)
+│       │   ├── components/ (50 files)
 │       │   │   ├── capabilities/ (2 files)
 │       │   │   │   ├── CapabilitiesPage.test.tsx
 │       │   │   │   └── CapabilitiesPage.tsx
@@ -409,13 +409,14 @@ Optimus Agent/
 │       │   │   │   ├── Transcript.tsx
 │       │   │   │   ├── WorkbenchStatusBar.test.tsx
 │       │   │   │   └── WorkbenchStatusBar.tsx
-│       │   │   └── workspace/ (7 files)
+│       │   │   └── workspace/ (8 files)
 │       │   │       ├── ArtifactsSurface.test.tsx
 │       │   │       ├── ArtifactsSurface.tsx
 │       │   │       ├── BrowserSurface.test.tsx
 │       │   │       ├── BrowserSurface.tsx
 │       │   │       ├── FilesSurface.test.tsx
 │       │   │       ├── FilesSurface.tsx
+│       │   │       ├── WorkspacePane.test.tsx
 │       │   │       └── WorkspacePane.tsx
 │       │   ├── hooks/ (1 files)
 │       │   │   └── useAlive.ts
@@ -1090,7 +1091,7 @@ Optimus Agent/
 | `.config/` | 1 | 1 | Versioned nextest configuration used by repository verification. |
 | `.githooks/` | 1 | 3 | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. |
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
-| `apps/` | 55 | 260 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
+| `apps/` | 55 | 261 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
 | `crates/` | 50 | 241 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
 | `docs/` | 5 | 128 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
