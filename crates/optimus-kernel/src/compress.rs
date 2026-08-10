@@ -234,7 +234,13 @@ fn snippet(s: &str, max: usize) -> String {
     if flat.chars().count() <= max {
         return flat;
     }
+    // `max - 1` reserves a slot for the ellipsis inside the cap.
     let take: String = flat.chars().take(max.saturating_sub(1)).collect();
+    // At `max == 0` even the ellipsis has no room, so the result is empty
+    // rather than a lone ellipsis that overflows the promised cap.
+    if max == 0 {
+        return String::new();
+    }
     format!("{take}…")
 }
 
@@ -562,5 +568,31 @@ mod tests {
             Some("THE ASK"),
             "the ask must survive repeated compression"
         );
+    }
+
+    #[test]
+    fn snippet_never_exceeds_the_promised_cap() {
+        // The summary rows promise "length-capped" text, and the cap is the
+        // contract callers rely on. Regression: with `max == 0` the old
+        // implementation returned a lone ellipsis (1 char) — one over the
+        // promised 0 — because it always made room for the ellipsis and then
+        // had nothing left to show but the ellipsis itself.
+        let long = "a very long line that must be cut down";
+        for max in 0..=4 {
+            let out = snippet(long, max);
+            assert!(
+                out.chars().count() <= max,
+                "max = {max} produced {} chars: {out:?}",
+                out.chars().count()
+            );
+        }
+        // The ellipsis is dropped entirely at max == 0, not emitted alone.
+        assert_eq!(snippet(long, 0), "");
+        // At max == 1 there is exactly room for the ellipsis, nothing else.
+        assert_eq!(snippet(long, 1), "…");
+        // Truncation keeps the front of the line, as the doc comment promises.
+        assert_eq!(snippet(long, 3), "a …");
+        // A short line that fits is returned whole, whatever the cap.
+        assert_eq!(snippet("hi", 2), "hi");
     }
 }
