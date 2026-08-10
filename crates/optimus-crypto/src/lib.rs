@@ -67,6 +67,17 @@ mod tests {
     }
 
     #[test]
+    fn sha256_hex_matches_known_fips_vector() {
+        // FIPS 180-4 test vector for the ASCII string "abc"; pins the output
+        // to a hardcoded constant so a regression in the sha2 crate is caught
+        // even if the self-matching check above drifts.
+        assert_eq!(
+            sha256_hex(b"abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+    }
+
+    #[test]
     fn is_sha256_hex_accepts_only_64_hex_digits() {
         let ok = "a".repeat(64);
         assert!(is_sha256_hex(&ok));
