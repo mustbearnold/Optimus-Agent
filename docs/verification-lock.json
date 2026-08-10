@@ -259,25 +259,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "f67629f4a96a1cfd19d7d9b593bd8ea03efa716a32f0bf07371699f7e576b219",
+      "binding_sha256": "d67d17513ee63e8ecec0be75a0478f9fbd8034ff0aeac63f2ef731a2468d1974",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 136
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "6b824e0f7ba35f505ced0408de8f8d27800fff9568dd154ce384f5b852276d13",
+      "binding_sha256": "d1350e145a55274e168cfb54a28c519fb1387b4e41c12373566846966b17b73e",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 135
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "d710b2c975bd45749ab1488678a2341f5f8b53a4a364028b081c4aee265262e0",
+      "binding_sha256": "81bede8c86fd86ad0fdce7dff95447bc9642d58ede82711d2a1952f314be286a",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 105
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "394682ddaf5630aa627ff9dd9d5d37e283981eb3792e4145a50a79b43e9c51f9",
+      "binding_sha256": "904d41ef2c190450ca4bf0b3ead99afa6ec1f005b1a1bc6156accbb9ccb1fd01",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 137
@@ -613,7 +613,7 @@
       "resolved_files": 30
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "627efe3a054a4c1702b989e0ad81ff3475b09069d727cada87beb9f31d97a8cc",
+      "binding_sha256": "4efd45cb2018d330c8084cdfff98c6b6c1e77b83524cd661dfe72821dbbe2f35",
       "document_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 116

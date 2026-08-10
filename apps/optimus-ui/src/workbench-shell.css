@@ -883,10 +883,10 @@ select:focus-visible,
 
 .thinking-block .thinking-body {
   padding: 0 0 8px;          /* flush with the message text, no box indent */
-  color: var(--text-2);      /* match .message-body, not the label's --text */
+  color: var(--muted);       /* match the "thought for" label, not the body */
 }
 
-/* Hover interaction: the body brightens toward primary while pointed at. */
+/* Hover interaction: the body brightens to full text while pointed at. */
 .thinking-block .thinking-body:hover {
   color: var(--text);
 }
