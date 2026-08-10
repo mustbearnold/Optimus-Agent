@@ -208,7 +208,12 @@ review record) is `Development/tmp/spec-self-build-reliability-draft.md`
       DFA grant, when a `bash -lc` effect runs in the same durable session
       (including immediately after an approval resolution), then it
       auto-grants with an exact-effect audit row; and after scope widening,
-      DFA disable, expiry, or revocation, then it asks again.
+      DFA disable, expiry, or revocation, then it asks again. (proven
+      2026-08-10: `crates/optimus-runtime/tests/session_consent.rs` — the
+      consent auto-grant fires only while the DFA grant is live and the
+      scope matches, and revocation, expiry, DFA disable, and scope
+      widening each flip the same effect back to `NeedsApproval`; the
+      exact-effect audit row is written on every auto-grant).
 - [ ] A6. Given a tool-using turn, when model steps 2..n run, then effort is
       capped per the provider mapping (first step uncapped, terminal step
       capped, `off` never upgraded); and when a step exceeds the tool-call

@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **160 folders**, **876 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **160 folders**, **882 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -158,7 +158,7 @@ Optimus Agent/
 │   ├── MIGRATION_REPORT.md
 │   ├── claude-settings-local.json
 │   └── github-conventions.md
-├── apps/ (252 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
+├── apps/ (253 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
 │   ├── optimus-cli/ (21 files) — Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.
 │   │   ├── src/ (13 files)
 │   │   │   ├── chat.rs
@@ -338,15 +338,16 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── pty.rs
 │   │   └── Cargo.toml
-│   └── optimus-ui/ (103 files) — React workbench presentation with no filesystem, policy, or runtime authority.
-│       ├── src/ (98 files)
-│       │   ├── app/ (7 files)
+│   └── optimus-ui/ (104 files) — React workbench presentation with no filesystem, policy, or runtime authority.
+│       ├── src/ (99 files)
+│       │   ├── app/ (8 files)
 │       │   │   ├── OptimusApp.test.tsx
 │       │   │   ├── OptimusApp.tsx
 │       │   │   ├── approvalResolution.test.ts
 │       │   │   ├── approvalResolution.ts
 │       │   │   ├── composeSendMessage.test.ts
 │       │   │   ├── composeSendMessage.ts
+│       │   │   ├── sessionConsent.test.tsx
 │       │   │   └── sessionRefreshRace.test.tsx
 │       │   ├── assets/ (6 files)
 │       │   │   └── fonts/ (6 files)
@@ -466,7 +467,7 @@ Optimus Agent/
 │       └── vite.config.ts
 ├── assets/ (1 files) — Product icons and resources consumed by installers and installed surfaces.
 │   └── optimus-agent.svg
-├── crates/ (225 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
+├── crates/ (230 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
 │   ├── optimus-agent/ (2 files) — Typed specialist registry, invocation contracts, and durable invocation ledger.
 │   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
@@ -538,9 +539,9 @@ Optimus Agent/
 │   │   │   ├── recursion.rs
 │   │   │   └── serve_protocol.rs
 │   │   └── Cargo.toml
-│   ├── optimus-kernel/ (83 files) — Product turn loop, sessions, model routing, credentials, tool dispatch, and runtime composition.
-│   │   ├── src/ (56 files)
-│   │   │   ├── session/ (8 files)
+│   ├── optimus-kernel/ (85 files) — Product turn loop, sessions, model routing, credentials, tool dispatch, and runtime composition.
+│   │   ├── src/ (58 files)
+│   │   │   ├── session/ (9 files)
 │   │   │   │   ├── child_ops.rs
 │   │   │   │   ├── children.rs
 │   │   │   │   ├── goal_ops.rs
@@ -548,7 +549,9 @@ Optimus Agent/
 │   │   │   │   ├── latest.rs
 │   │   │   │   ├── messaging.rs
 │   │   │   │   ├── project.rs
-│   │   │   │   └── repair.rs
+│   │   │   │   ├── repair.rs
+│   │   │   │   └── session_fts.rs
+│   │   │   ├── bindings.rs
 │   │   │   ├── browser.rs
 │   │   │   ├── browser_budget.rs
 │   │   │   ├── browser_coord.rs
@@ -683,8 +686,8 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── command_classification.rs
 │   │   └── Cargo.toml
-│   ├── optimus-runtime/ (28 files) — Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.
-│   │   ├── src/ (14 files)
+│   ├── optimus-runtime/ (30 files) — Durable effect execution, SmartDeny, cancellation, process bounds, and campaigns.
+│   │   ├── src/ (15 files)
 │   │   │   ├── owned_localhost/ (3 files)
 │   │   │   │   ├── global.rs
 │   │   │   │   ├── listener_proof.rs
@@ -698,9 +701,10 @@ Optimus Agent/
 │   │   │   ├── policy_bridge.rs
 │   │   │   ├── process_ownership.rs
 │   │   │   ├── secret_basename.rs
+│   │   │   ├── session_consent.rs
 │   │   │   ├── toolchain.rs
 │   │   │   └── workspace_identity.rs
-│   │   ├── tests/ (13 files)
+│   │   ├── tests/ (14 files)
 │   │   │   ├── approvals_surface.rs
 │   │   │   ├── cancellation.rs
 │   │   │   ├── command_capture.rs
@@ -711,6 +715,7 @@ Optimus Agent/
 │   │   │   ├── path_confinement.rs
 │   │   │   ├── phase1_policy_budget.rs
 │   │   │   ├── project_trust_profile.rs
+│   │   │   ├── session_consent.rs
 │   │   │   ├── skill_bridge.rs
 │   │   │   ├── toolchain.rs
 │   │   │   └── toolchain_spawn.rs
@@ -721,8 +726,9 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── skills_lifecycle.rs
 │   │   └── Cargo.toml
-│   ├── optimus-store/ (3 files) — SQLite Work Graph, ordered events, approvals, and durable projections.
-│   │   ├── src/ (2 files)
+│   ├── optimus-store/ (4 files) — SQLite Work Graph, ordered events, approvals, and durable projections.
+│   │   ├── src/ (3 files)
+│   │   │   ├── capability_grants.rs
 │   │   │   ├── lib.rs
 │   │   │   └── migration.rs
 │   │   └── Cargo.toml
@@ -1058,9 +1064,9 @@ Optimus Agent/
 | `.config/` | 1 | 1 | Versioned nextest configuration used by repository verification. |
 | `.githooks/` | 1 | 3 | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. |
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
-| `apps/` | 54 | 252 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
+| `apps/` | 54 | 253 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
-| `crates/` | 49 | 225 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
+| `crates/` | 49 | 230 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
 | `docs/` | 5 | 124 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 81 | Deterministic repository gates, generation, installation, and diagnostics. |

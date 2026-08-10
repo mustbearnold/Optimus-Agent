@@ -3542,7 +3542,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
+      "content_sha256": "a896131441a175fa09287e2d8442f03343f8f85393233e048fefdfb7fdf7179e",
       "headings": [
         "ADR-0081: Truthful approval resolution and durable session consent",
         "Context",
@@ -4229,7 +4229,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
+      "content_sha256": "8853bcd58f80e4bc71542f49781abc7a5ce2646ddeb3aa17c89e8bc203fc8a97",
       "headings": [
         "Self-build reliability and responsiveness",
         "Purpose",
@@ -4713,7 +4713,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "75d7ba9502488f72fcdb5cd2a6436ebb5750eaf573ab620f26e62df72e6cbba6",
+  "documents_sha256": "a5aeebf0980600b918e30092219bff53b0e2677112d679bae664faebc430c956",
   "routes": [
     {
       "id": "architecture.blueprint",

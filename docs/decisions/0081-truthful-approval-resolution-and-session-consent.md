@@ -132,6 +132,17 @@ host call-id validator allows `- _ . :` but not `#`.
   `project_turn` → `load()` keyed by `event.call_id`) holds end-to-end;
   `has_pending_chat_approval` blocks a resumed turn while any card is pending
   (`kernel/lib.rs:769-776`), which the host still_pending skip relies on.
+- Session consent (proven 2026-08-10): `crates/optimus-runtime/tests/
+  session_consent.rs` drives the full A5 vertical against a real store —
+  consent auto-grants `sh -c` only while the DFA grant is live and the
+  scope matches (the exact-effect audit row is written on every auto-grant),
+  and revocation, expiry (backdated grant), DFA disable, and scope widening
+  each flip the same effect back to `NeedsApproval`; the wire surface
+  (grant/list/revoke/revoke-all, bogus class rejected server-side) is pinned
+  by `crates/optimus-host/src/runtime_ops.rs` tests and the
+  `09-self-build-reliability.spec.js` e2e; the UI checkbox → grant-before-
+  resolve and the ≥3-approval banner are pinned by
+  `apps/optimus-ui/src/app/sessionConsent.test.tsx`.
 
 ## Conditions for reconsideration
 
@@ -169,7 +180,9 @@ can grant while preserving per-exact-effect audit (law 6).
 
 - `crates/optimus-kernel/tests/kernel_turn.rs`, `approval_vertical.rs`,
   `tool_pairing_vertical.rs`
-- `crates/optimus-store/tests/session_consent.rs`
+- `crates/optimus-runtime/tests/session_consent.rs`,
+  `crates/optimus-store/src/lib.rs` (capability-grant module tests)
 - `apps/optimus-ui/src/state/conversationStore.test.ts`,
+  `apps/optimus-ui/src/app/sessionConsent.test.tsx`,
   `apps/optimus-ui/src/ipc/tauriTransport.test.ts`
 - `apps/optimus-desktop/e2e/09-self-build-reliability.spec.js`
