@@ -107,9 +107,11 @@ export type PaletteCommand = {
 
 export type CronAttempt = {
   attempt_id: string;
+  job_id: string;
   status: string;
   started_unix: number;
-  detail?: string;
+  completed_unix?: number | null;
+  detail?: string | null;
 };
 
 export type SessionConsent = {
@@ -215,7 +217,7 @@ export interface FsApi {
 }
 
 export interface MemoryApi {
-  list(limit?: number): Promise<{ claims?: Array<Record<string, unknown>>; fence?: string }>;
+  list(input?: { limit?: number }): Promise<{ claims?: Array<Record<string, unknown>>; fence?: string }>;
   recall(input: {
     purpose?: string;
     subject?: string;
@@ -228,7 +230,7 @@ export interface MemoryApi {
 }
 
 export interface SkillsApi {
-  list(limit?: number): Promise<Array<Record<string, unknown>>>;
+  list(input?: { include_deprecated?: boolean; limit?: number }): Promise<Array<Record<string, unknown>>>;
   pin(id: unknown): Promise<unknown>;
   deprecate(id: unknown): Promise<unknown>;
 }
@@ -306,7 +308,7 @@ export interface SystemApi {
   supervisorEmergencyStop(): Promise<DeveloperSupervisorStatus>;
   supervisorLog(): Promise<{ lines?: string; actions?: string; build?: string }>;
   commandsList(surface: string): Promise<PaletteCommand[]>;
-  logsTail(limit?: number): Promise<{ lines?: string[] }>;
+  logsTail(input?: { limit?: number }): Promise<{ lines?: string[] }>;
   mcpTools(transportName: string): Promise<Array<Record<string, unknown>>>;
 }
 
@@ -412,15 +414,16 @@ export function createDomainApis(
         get<{ path: string; content: string; truncated: boolean }>('fs_read', { path }),
     } satisfies FsApi,
     memory: {
-      list: (limit = 50) => get<{ claims?: Array<Record<string, unknown>>; fence?: string }>('memory_list', { limit }),
+      list: (input) =>
+        get<{ claims?: Array<Record<string, unknown>>; fence?: string }>('memory_list', input),
       recall: (input) => get<Record<string, unknown>>('memory_recall', input),
       search: (input) => get<Record<string, unknown>>('memory_search', input),
       correct: (id, object) => get('memory_correct', { id, object }),
       forget: (id) => get('memory_forget', { id }),
     } satisfies MemoryApi,
     skills: {
-      list: (limit = 50) =>
-        get<{ skills?: Array<Record<string, unknown>> }>('skills_list', { limit }).then((r) => r.skills ?? []),
+      list: (input) =>
+        get<{ skills?: Array<Record<string, unknown>> }>('skills_list', input).then((r) => r.skills ?? []),
       pin: (id) => get('skills_pin', { id }),
       deprecate: (id) => get('skills_deprecate', { id }),
     } satisfies SkillsApi,
@@ -494,7 +497,7 @@ export function createDomainApis(
       supervisorLog: () => get<{ lines?: string; actions?: string; build?: string }>('developer_supervisor_log', { lines: 120 }),
       commandsList: (surface: string) =>
         get<{ commands?: PaletteCommand[] }>('commands_list', { surface }).then((r) => r.commands ?? []),
-      logsTail: (limit = 100) => get<{ lines?: string[] }>('logs_tail', { limit }),
+      logsTail: (input) => get<{ lines?: string[] }>('logs_tail', input),
       mcpTools: (transportName: string) =>
         get<{ tools?: Array<Record<string, unknown>> }>('mcp_tools', { transport: transportName }).then((r) => r.tools ?? []),
     } satisfies SystemApi,

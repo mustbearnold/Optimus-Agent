@@ -1,22 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { CronJob, OptimusTransport } from '../../ipc/contracts';
+import type { CronJob } from '../../ipc/contracts';
+import type { CronAttempt, OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 
-export type CronAttempt = {
-  attempt_id: string;
-  job_id: string;
-  status: string;
-  started_unix: number;
-  completed_unix?: number | null;
-  detail?: string | null;
-};
+export type { CronAttempt } from '../../ipc/client';
 
 export function CronWorkbench({
-  transport,
+  client,
   active,
 }: {
-  transport: OptimusTransport;
+  client: OptimusClient;
   active: boolean;
 }) {
   const [jobs, setJobs] = useState<CronJob[]>([]);
@@ -33,30 +27,27 @@ export function CronWorkbench({
   const load = useCallback(async () => {
     setError('');
     try {
-      const result = await transport.invoke<{ jobs?: CronJob[] }>('cron_list');
+      const result = await client.cron.list();
       if (!alive()) return;
-      setJobs(result.jobs || []);
+      setJobs(result);
     } catch (reason) {
       if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
 
   const loadHistory = useCallback(
     async (id: string) => {
       try {
-        const result = await transport.invoke<{ attempts?: CronAttempt[] }>('cron_history', {
-          id,
-          limit: 20,
-        });
+        const result = await client.cron.history(id, 20);
         if (!alive()) return;
-        setHistory(result.attempts || []);
+        setHistory(result);
       } catch (reason) {
         if (!alive()) return;
         setError(reason instanceof Error ? reason.message : String(reason));
       }
     },
-    [alive, transport]
+    [alive, client]
   );
 
   useEffect(() => {
@@ -73,7 +64,9 @@ export function CronWorkbench({
     setError('');
     try {
       const every = Math.max(5, Number(everySecs) || 3600);
-      await transport.invoke('cron_add', {
+      // Fresh projection: the host's cron_add returns the job list (falling
+      // back to cron_list when it does not) — no reload round trip.
+      const jobs = await client.cron.add({
         name: name.trim() || 'schedule',
         every_secs: every,
         prompt: prompt.trim() || 'tick',
@@ -82,7 +75,7 @@ export function CronWorkbench({
       if (!alive()) return;
       setName('');
       setPrompt('');
-      await load();
+      setJobs(jobs);
     } catch (reason) {
       if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -94,8 +87,9 @@ export function CronWorkbench({
   const toggleEnabled = async (job: CronJob) => {
     setError('');
     try {
-      await transport.invoke('cron_set_enabled', { id: job.id, enabled: !job.enabled });
-      await load();
+      const jobs = await client.cron.setEnabled(job.id, !job.enabled);
+      if (!alive()) return;
+      setJobs(jobs);
     } catch (reason) {
       if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -106,10 +100,10 @@ export function CronWorkbench({
     if (!window.confirm(`Remove schedule “${job.name}”?`)) return;
     setError('');
     try {
-      await transport.invoke('cron_remove', { id: job.id });
+      const jobs = await client.cron.remove(job.id);
       if (!alive()) return;
       if (selected === job.id) setSelected(null);
-      await load();
+      setJobs(jobs);
     } catch (reason) {
       if (!alive()) return;
       setError(reason instanceof Error ? reason.message : String(reason));

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient } from '../../ipc/client';
 import { ConsolesPage } from './ConsolesPage';
 
 function transport(): OptimusTransport {
@@ -57,7 +58,7 @@ describe('ConsolesPage', () => {
   it('lists skills and can pin', async () => {
     const user = userEvent.setup();
     const t = transport();
-    render(<ConsolesPage transport={t} />);
+    render(<ConsolesPage client={createOptimusClient(t)} />);
     expect(await screen.findByText(/demo v1/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Pin' }));
     await waitFor(() => expect(t.invoke).toHaveBeenCalledWith('skills_pin', { id: 's1' }));
@@ -66,7 +67,7 @@ describe('ConsolesPage', () => {
   it('shows memory fence and claims', async () => {
     const user = userEvent.setup();
     const t = transport();
-    render(<ConsolesPage transport={t} />);
+    render(<ConsolesPage client={createOptimusClient(t)} />);
     await user.click(screen.getByRole('tab', { name: 'Memory' }));
     expect(await screen.findByText(/EVIDENCE_DATA/)).toBeInTheDocument();
     expect(screen.getByText(/user · likes/)).toBeInTheDocument();

@@ -745,7 +745,7 @@ export function OptimusApp() {
                   ) : state.layout.route === 'consoles' ? (
                     <ConsolesPage
                       key={consoleTab}
-                      transport={transport}
+                      client={client}
                       initialTab={consoleTab}
                     />
                   ) : state.layout.route === 'mail' ? (
@@ -759,7 +759,7 @@ export function OptimusApp() {
                   // Dialogs and the dock render only via post-boot user
                   // interaction; a null transport never reaches them (the
                   // boot-error banner is the terminal affordance instead).
-                  transport={transport!}
+                  client={client}
                   open={state.layout.executionOpen}
                   onClose={() => dispatch({ type: 'patch-layout', patch: { executionOpen: false, compactSurface: 'work' } })}
                   onState={updateExecutionState}
@@ -800,6 +800,7 @@ export function OptimusApp() {
         <SettingsDialog
           open={state.settingsOpen}
           transport={transport!}
+          client={client}
           theme={state.theme}
           projects={projects}
           sessionId={state.selectedSessionId}

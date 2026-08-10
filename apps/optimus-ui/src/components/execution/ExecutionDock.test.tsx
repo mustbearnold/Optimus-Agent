@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient } from '../../ipc/client';
 import { ExecutionDock } from './ExecutionDock';
 
 /**
@@ -27,9 +28,10 @@ describe('ExecutionDock after unmount', () => {
 
   it('drops a result that lands after unmount instead of committing it', async () => {
     const { transport, settlers } = controlledTransport();
+    const client = createOptimusClient(transport);
     const onState = vi.fn();
     const { unmount } = render(
-      <ExecutionDock transport={transport} open onClose={() => {}} onState={onState} />
+      <ExecutionDock client={client} open onClose={() => {}} onState={onState} />
     );
     await waitFor(() => expect(settlers).toHaveLength(2));
 
@@ -45,8 +47,9 @@ describe('ExecutionDock after unmount', () => {
 
   it('drops a rejection that lands after unmount instead of rendering it', async () => {
     const { transport, settlers } = controlledTransport();
+    const client = createOptimusClient(transport);
     const { unmount } = render(
-      <ExecutionDock transport={transport} open onClose={() => {}} onState={() => {}} />
+      <ExecutionDock client={client} open onClose={() => {}} onState={() => {}} />
     );
     await waitFor(() => expect(settlers).toHaveLength(2));
 
@@ -61,8 +64,9 @@ describe('ExecutionDock after unmount', () => {
 
   it('still commits results while mounted', async () => {
     const { transport, settlers } = controlledTransport();
+    const client = createOptimusClient(transport);
     const onState = vi.fn();
-    render(<ExecutionDock transport={transport} open onClose={() => {}} onState={onState} />);
+    render(<ExecutionDock client={client} open onClose={() => {}} onState={onState} />);
     await waitFor(() => expect(settlers).toHaveLength(2));
 
     settlers[0].resolve({ pending: [] });

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CronJob, DesktopMethod, OptimusTransport } from '../../ipc/contracts';
+import { createOptimusClient } from '../../ipc/client';
 import { CronWorkbench } from './CronWorkbench';
 
 const jobs: CronJob[] = [
@@ -75,7 +76,7 @@ describe('CronWorkbench', () => {
   it('lists schedules, pauses, and shows history', async () => {
     const user = userEvent.setup();
     const { invoke, transport } = createTransport();
-    render(<CronWorkbench transport={transport} active />);
+    render(<CronWorkbench client={createOptimusClient(transport)} active />);
 
     expect(await screen.findByText('Nightly')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Pause' }));
@@ -90,7 +91,7 @@ describe('CronWorkbench', () => {
   it('creates a schedule via the form', async () => {
     const user = userEvent.setup();
     const { invoke, transport } = createTransport();
-    render(<CronWorkbench transport={transport} active />);
+    render(<CronWorkbench client={createOptimusClient(transport)} active />);
 
     await screen.findByText('Nightly');
     const nameInput = screen.getByPlaceholderText('Nightly status');

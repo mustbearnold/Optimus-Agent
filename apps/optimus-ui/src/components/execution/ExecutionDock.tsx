@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { Approval, Job, OptimusTransport } from '../../ipc/contracts';
+import type { Approval, Job } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 
 type TerminalResult = {
@@ -11,12 +12,12 @@ type TerminalResult = {
 };
 
 export function ExecutionDock({
-  transport,
+  client,
   open,
   onClose,
   onState,
 }: {
-  transport: OptimusTransport;
+  client: OptimusClient;
   open: boolean;
   onClose: () => void;
   onState: (approvals: Approval[], jobs: Job[]) => void;
@@ -32,13 +33,11 @@ export function ExecutionDock({
 
   const refresh = useCallback(async () => {
     try {
-      const [approvalResult, jobResult] = await Promise.all([
-        transport.invoke<{ pending?: Approval[] }>('approvals_list'),
-        transport.invoke<{ jobs?: Job[] }>('jobs_list'),
+      const [nextApprovals, nextJobs] = await Promise.all([
+        client.approvals.list(),
+        client.jobs.list(),
       ]);
       if (!alive()) return;
-      const nextApprovals = approvalResult.pending || [];
-      const nextJobs = jobResult.jobs || [];
       setApprovals(nextApprovals);
       setJobs(nextJobs);
       onState(nextApprovals, nextJobs);
@@ -46,7 +45,7 @@ export function ExecutionDock({
       if (!alive()) return;
       setError(nextError instanceof Error ? nextError.message : String(nextError));
     }
-  }, [alive, onState, transport]);
+  }, [alive, onState, client]);
 
   useEffect(() => {
     if (open) void refresh();
@@ -58,7 +57,7 @@ export function ExecutionDock({
     setBusy(true);
     setError('');
     try {
-      const result = await transport.invoke<TerminalResult>('term_run', { line: value });
+      const result = await client.shell.run(value);
       if (!alive()) return;
       setTerminal(result);
       if (/approval/i.test(result.status || '')) setTab('approvals');
@@ -150,7 +149,7 @@ export function ExecutionDock({
                     onClick={async () => {
                       setBusy(true);
                       try {
-                        await transport.invoke('approvals_grant', {
+                        await client.approvals.grant({
                           job_id: approval.job_id,
                           node_index: approval.node_index,
                         });

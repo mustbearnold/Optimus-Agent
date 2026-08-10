@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAlive } from '../../hooks/useAlive';
-import type { OptimusTransport } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon } from '../chrome/Icon';
 import { TextPromptDialog } from '../chrome/TextPromptDialog';
 
 export type ConsoleTab = 'skills' | 'memory' | 'packs' | 'logs';
 
 export function ConsolesPage({
-  transport,
+  client,
   initialTab = 'skills',
 }: {
-  transport: OptimusTransport;
+  client: OptimusClient;
   initialTab?: ConsoleTab;
 }) {
   const [tab, setTab] = useState<ConsoleTab>(initialTab);
@@ -34,31 +34,29 @@ export function ConsolesPage({
           </button>
         ))}
       </div>
-      {tab === 'skills' ? <SkillsConsole transport={transport} /> : null}
-      {tab === 'memory' ? <MemoryConsole transport={transport} /> : null}
-      {tab === 'packs' ? <PacksConsole transport={transport} /> : null}
-      {tab === 'logs' ? <LogsConsole transport={transport} /> : null}
+      {tab === 'skills' ? <SkillsConsole client={client} /> : null}
+      {tab === 'memory' ? <MemoryConsole client={client} /> : null}
+      {tab === 'packs' ? <PacksConsole client={client} /> : null}
+      {tab === 'logs' ? <LogsConsole client={client} /> : null}
     </main>
   );
 }
 
-function SkillsConsole({ transport }: { transport: OptimusTransport }) {
+function SkillsConsole({ client }: { client: OptimusClient }) {
   const [skills, setSkills] = useState<Array<Record<string, unknown>>>([]);
   const [error, setError] = useState('');
   const alive = useAlive();
   const load = useCallback(async () => {
     setError('');
     try {
-      const r = await transport.invoke<{ skills?: Array<Record<string, unknown>> }>('skills_list', {
-        include_deprecated: true,
-      });
+      const r = await client.skills.list({ include_deprecated: true });
       if (!alive()) return;
-      setSkills(r.skills || []);
+      setSkills(r);
     } catch (e) {
       if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -87,14 +85,14 @@ function SkillsConsole({ transport }: { transport: OptimusTransport }) {
             <div className="console-row-actions">
               <button
                 type="button"
-                onClick={() => void transport.invoke('skills_pin', { id: s.id }).then(load)}
+                onClick={() => void client.skills.pin(s.id).then(load)}
               >
                 Pin
               </button>
               <button
                 type="button"
                 className="danger-text"
-                onClick={() => void transport.invoke('skills_deprecate', { id: s.id }).then(load)}
+                onClick={() => void client.skills.deprecate(s.id).then(load)}
               >
                 Deprecate
               </button>
@@ -108,7 +106,7 @@ function SkillsConsole({ transport }: { transport: OptimusTransport }) {
   );
 }
 
-function MemoryConsole({ transport }: { transport: OptimusTransport }) {
+function MemoryConsole({ client }: { client: OptimusClient }) {
   const [claims, setClaims] = useState<Array<Record<string, unknown>>>([]);
   const [fence, setFence] = useState('');
   const [error, setError] = useState('');
@@ -121,10 +119,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
   const load = useCallback(async () => {
     setError('');
     try {
-      const r = await transport.invoke<{
-        claims?: Array<Record<string, unknown>>;
-        fence?: string;
-      }>('memory_list', { limit: 50 });
+      const r = await client.memory.list({ limit: 50 });
       if (!alive()) return;
       setClaims(r.claims || []);
       setFence(String(r.fence || ''));
@@ -132,7 +127,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
       if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
 
   useEffect(() => {
     void load();
@@ -141,7 +136,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
   const runRecall = async () => {
     setError('');
     try {
-      const r = await transport.invoke<Record<string, unknown>>('memory_recall', {
+      const r = await client.memory.recall({
         purpose: 'inform',
         subject: subject || undefined,
         predicate: predicate || undefined,
@@ -210,7 +205,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
                   if (!window.confirm('Forget this claim? It will be tombstoned, not hard-deleted.')) {
                     return;
                   }
-                  await transport.invoke('memory_forget', { id: c.id });
+                  await client.memory.forget(c.id);
                   await load();
                 }}
               >
@@ -238,7 +233,7 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
         onCancel={() => setCorrecting(null)}
         onConfirm={async (next) => {
           if (!correcting) return;
-          await transport.invoke('memory_correct', { id: correcting.id, object: next });
+          await client.memory.correct(correcting.id, next);
           if (!alive()) return;
           setCorrecting(null);
           await load();
@@ -248,21 +243,21 @@ function MemoryConsole({ transport }: { transport: OptimusTransport }) {
   );
 }
 
-function PacksConsole({ transport }: { transport: OptimusTransport }) {
+function PacksConsole({ client }: { client: OptimusClient }) {
   const [state, setState] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState('');
   const alive = useAlive();
   const load = useCallback(async () => {
     setError('');
     try {
-      const next = await transport.invoke<Record<string, unknown>>('packs_state');
+      const next = await client.packs.state();
       if (!alive()) return;
       setState(next);
     } catch (e) {
       if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -304,14 +299,14 @@ function PacksConsole({ transport }: { transport: OptimusTransport }) {
                   <button
                     type="button"
                     disabled={isCore}
-                    onClick={() => void transport.invoke('packs_deactivate', { name: id }).then(load)}
+                    onClick={() => void client.packs.deactivate(id).then(load)}
                   >
                     Deactivate
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => void transport.invoke('packs_activate', { name: id }).then(load)}
+                    onClick={() => void client.packs.activate(id).then(load)}
                   >
                     Activate
                   </button>
@@ -329,21 +324,21 @@ function PacksConsole({ transport }: { transport: OptimusTransport }) {
   );
 }
 
-function LogsConsole({ transport }: { transport: OptimusTransport }) {
+function LogsConsole({ client }: { client: OptimusClient }) {
   const [lines, setLines] = useState<string[]>([]);
   const [error, setError] = useState('');
   const alive = useAlive();
   const load = useCallback(async () => {
     setError('');
     try {
-      const r = await transport.invoke<{ lines?: string[] }>('logs_tail', { limit: 100 });
+      const r = await client.system.logsTail({ limit: 100 });
       if (!alive()) return;
       setLines(r.lines || []);
     } catch (e) {
       if (!alive()) return;
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [alive, transport]);
+  }, [alive, client]);
   useEffect(() => {
     void load();
   }, [load]);

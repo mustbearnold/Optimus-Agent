@@ -14,6 +14,7 @@ import type {
   ProductSettings,
   Project,
 } from '../../ipc/contracts';
+import type { OptimusClient } from '../../ipc/client';
 import { Icon, type IconName } from '../chrome/Icon';
 import { CronWorkbench } from '../cron/CronWorkbench';
 import { DeveloperAccessPanel } from './DeveloperAccessPanel';
@@ -63,6 +64,7 @@ const sections: Array<{
 export function SettingsDialog({
   open,
   transport,
+  client,
   theme,
   projects,
   sessionId,
@@ -74,6 +76,7 @@ export function SettingsDialog({
 }: {
   open: boolean;
   transport: OptimusTransport;
+  client: OptimusClient;
   theme: 'dark' | 'light';
   projects: Project[];
   sessionId?: string | null;
@@ -105,16 +108,16 @@ export function SettingsDialog({
   useEffect(() => {
     if (!open) return;
     Promise.all([
-      transport.invoke<{ settings?: ProductSettings }>('settings_get'),
-      transport.invoke<{ jobs?: CronJob[] }>('cron_list'),
-      transport.invoke<Record<string, unknown>>('auth_status'),
+      client.settings.get(),
+      client.cron.list(),
+      client.settings.authStatus(),
     ]).then(([settingsResult, cronResult, authResult]) => {
       if (!alive()) return;
-      setSettings(settingsResult.settings || fallback);
-      setCron(cronResult.jobs || []);
+      setSettings(settingsResult || fallback);
+      setCron(cronResult);
       setAuth(authResult);
     }).catch(() => undefined);
-  }, [alive, open, transport]);
+  }, [alive, open, client]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -151,7 +154,7 @@ export function SettingsDialog({
 
   const persist = async (next: ProductSettings) => {
     setSettings(next);
-    await transport.invoke('settings_set', next as unknown as Record<string, unknown>);
+    await client.settings.set(next as unknown as Record<string, unknown>);
     if (!alive()) return;
     setSaved('Saved');
     window.setTimeout(() => {
@@ -378,7 +381,7 @@ export function SettingsDialog({
 
             {active === 'automations' ? (
               <SettingsGroup title="Schedules">
-                <CronWorkbench transport={transport} active={open && active === 'automations'} />
+                <CronWorkbench client={client} active={open && active === 'automations'} />
               </SettingsGroup>
             ) : null}
 
@@ -386,10 +389,10 @@ export function SettingsDialog({
               <>
                 <SettingsGroup title="Credentials">
                   <SettingRow title="Credential state" description={String(auth.mode || (auth.present ? 'Available' : 'Not configured'))}>
-                    <button type="button" onClick={() => void transport.invoke('auth_import_cli')}>Import CLI auth</button>
+                    <button type="button" onClick={() => void client.settings.authImportCli()}>Import CLI auth</button>
                   </SettingRow>
                   <SettingRow title="Hermes import" description="Imports compatible credentials only; Hermes files remain read-only.">
-                    <button type="button" onClick={() => void transport.invoke('auth_import_hermes')}>Import</button>
+                    <button type="button" onClick={() => void client.settings.authImportHermes()}>Import</button>
                   </SettingRow>
                 </SettingsGroup>
                 <SettingsGroup title="Model provider keys">
