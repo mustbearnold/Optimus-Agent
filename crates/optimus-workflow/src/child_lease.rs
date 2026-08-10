@@ -317,6 +317,39 @@ mod tests {
     }
 
     #[test]
+    fn a_terminal_lease_cannot_be_rerun_or_recompleted() {
+        // Fail-closed invariant: once a child settles, no owner can move it
+        // again. Re-running a completed child would double-execute its side
+        // effects, and re-completing it would let a stale attempt claim a
+        // fresh success (double-charging handoff artifacts downstream). Both
+        // must report `AlreadyTerminal`, never a silent Ok.
+        let coord = ChildLeaseCoordinator::with_defaults();
+        let (lease, _token) = coord
+            .lease_child("camp-t", "workspace_writer", "owner", 60)
+            .unwrap();
+        coord
+            .complete(lease.lease_id, "owner", lease.token, None)
+            .unwrap();
+
+        // A stale re-run is refused even though owner + token are still valid...
+        assert_eq!(
+            coord.mark_running(lease.lease_id, "owner", lease.token),
+            Err(ChildLeaseError::AlreadyTerminal)
+        );
+        // ...and so is a re-completion claiming another success.
+        assert_eq!(
+            coord.complete(lease.lease_id, "owner", lease.token, None),
+            Err(ChildLeaseError::AlreadyTerminal)
+        );
+        // The lease stays settled and the campaign frees its slot.
+        assert_eq!(
+            coord.get(lease.lease_id).unwrap().status,
+            ChildStatus::Succeeded
+        );
+        assert_eq!(coord.active_count("camp-t"), 0);
+    }
+
+    #[test]
     fn cancel_campaign_clears_all_active() {
         let coord = ChildLeaseCoordinator::new(4);
         let (a, ta) = coord.lease_child("c", "w", "o", 30).unwrap();
