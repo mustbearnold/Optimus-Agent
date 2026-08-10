@@ -640,4 +640,21 @@ mod tests {
             "and the chords keep their meanings"
         );
     }
+
+    #[test]
+    fn page_keys_scroll_in_every_surface() {
+        // cargo-mutants flagged the PageUp/PageDown arms as dead weight —
+        // nothing asserted them. The scroll surface is part of the key
+        // contract, so both the composer-focus and the inspect-focus paths
+        // are pinned here.
+        for code in [KeyCode::PageUp, KeyCode::PageDown] {
+            let expected = if code == KeyCode::PageUp {
+                Intent::Scroll(ScrollStep::PageUp)
+            } else {
+                Intent::Scroll(ScrollStep::PageDown)
+            };
+            assert_eq!(intent(&key(code), DRAFTING), expected, "while drafting");
+            assert_eq!(intent(&key(code), INSPECTING), expected, "while inspecting");
+        }
+    }
 }
