@@ -307,7 +307,7 @@
       "resolved_files": 15
     },
     "decisions-0036-domain-modularity-single-catalog": {
-      "binding_sha256": "7ff530f3da3a3d51e22f37b245ba8a0de0d7e68de47f91a88ea39ffa37d8bc38",
+      "binding_sha256": "4050b6b50a325986357b8cfd4ef861899f46af4567f589ca664bdb227619f735",
       "document_sha256": "7d039693e51ae3939ee368386d5cdeb03182e9758df7ae1eceb1ce3b87f75c61",
       "path": "docs/decisions/0036-domain-modularity-single-catalog.md",
       "resolved_files": 31
@@ -661,7 +661,7 @@
       "resolved_files": 10
     },
     "spec-006-memory-skills-packs": {
-      "binding_sha256": "324a9eba4e8361b77daf0414391d1a91d1ccfec481d57aa11a8e9fdf698fd27b",
+      "binding_sha256": "a683e2c1f931040cb1065966e6e755b0fc57da741f186111a86c5eb6e942d88b",
       "document_sha256": "5a4bc22699a5261cbe705dc8d10b134e3285656b79507741ae560ee62915aade",
       "path": "specs/006-memory-skills-packs/spec.md",
       "resolved_files": 17
