@@ -44,6 +44,15 @@ describe('FilesSurface parity (06-preview-browser.spec.js)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Home' }));
     await waitFor(() => expect(list).toHaveBeenCalledWith(''));
   });
+
+  it('renders with a null-transport client without crashing (bootstrap window)', () => {
+    // Regression: the packaged renderer mounts with transport=null while the
+    // spec-015 A3 broker ticket is awaited. The mount-time fs.list must not
+    // throw; the client's fs API returns idle no-ops instead.
+    render(<FilesSurface client={createOptimusClient(null)} active />);
+
+    expect(screen.getByLabelText('Files')).toBeInTheDocument();
+  });
 });
 
 function transportWithFs(

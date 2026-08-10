@@ -53,15 +53,21 @@ impl std::fmt::Display for Sha256Digest {
 }
 
 /// Compare a digest against a hex string literal (`digest == "abc…"`).
+///
+/// Digests are case-insensitive by the crate's documented rule ("Validation
+/// accepts either case"), and the canonical form is always lowercase. Comparing
+/// with `eq_ignore_ascii_case` means an upper-case hex literal compares equal to
+/// a lower-case digest instead of silently returning `false` (which contradicted
+/// `is_sha256_hex`'s acceptance of either case).
 impl PartialEq<str> for Sha256Digest {
     fn eq(&self, other: &str) -> bool {
-        self.0 == other
+        self.0.eq_ignore_ascii_case(other)
     }
 }
 
 impl PartialEq<&str> for Sha256Digest {
     fn eq(&self, other: &&str) -> bool {
-        self.0 == *other
+        self.0.eq_ignore_ascii_case(*other)
     }
 }
 
@@ -201,6 +207,22 @@ mod tests {
         // A digest computed from different bytes must not compare equal.
         let other = Sha256Digest::digest(b"other");
         assert_ne!(other, hex.as_str());
+    }
+
+    #[test]
+    fn sha256_digest_comparison_is_case_insensitive() {
+        // Regression: the documented rule says validation accepts either case,
+        // but the old `==` compared the canonical lower-case form against the
+        // literal case-sensitively. An upper-case hex literal equal to the same
+        // digest used to compare `false`; it must compare equal.
+        let digest = Sha256Digest::digest(b"optimus");
+        let upper = digest.as_str().to_ascii_uppercase();
+
+        // `&str` overload
+        assert_eq!(digest, upper.as_str());
+        // `str` overload
+        let reference: &str = &upper;
+        assert_eq!(digest, reference);
     }
 
     #[test]
