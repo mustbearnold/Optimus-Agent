@@ -367,6 +367,7 @@ tier_gates() {
   spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
   spawn "tool-coverage"              python3 scripts/gates/check-tool-coverage.py
+  spawn "impeccable-ratchet"         python3 scripts/gates/check-impeccable-ratchet.py
   spawn "observability"              python3 scripts/gates/check-observability-gate.py
   spawn "module-size"                python3 scripts/gates/check-module-size.py
   spawn "product-complete-install"   python3 scripts/gates/check-product-complete-install.py
@@ -638,6 +639,7 @@ tier_all() {
   spawn "project-scope"              python3 scripts/gates/check-project-scope-assertions.py
   spawn "project-bleed"              python3 scripts/gates/check-project-bleed.py
   spawn "tool-coverage"              python3 scripts/gates/check-tool-coverage.py
+  spawn "impeccable-ratchet"         python3 scripts/gates/check-impeccable-ratchet.py
   # The workspace test tier below runs both obs-gate suites again, so here the
   # gate enforces its static export surface only (OPTIMUS_OBS_COVERED_ELSEWHERE).
   spawn "observability"              env OPTIMUS_OBS_COVERED_ELSEWHERE=1 python3 scripts/gates/check-observability-gate.py

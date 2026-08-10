@@ -1,0 +1,10 @@
+{
+  "version": "3.5.0",
+  "findings": [
+    {
+      "file": "apps/optimus-ui/src/styles.css",
+      "antipattern": "overused-font",
+      "note": "Accepted by decision: the preview fixture page (.fixture-page) deliberately uses Arial as a neutral text-fidelity test surface, not an app style."
+    }
+  ]
+}
