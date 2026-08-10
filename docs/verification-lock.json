@@ -596,12 +596,12 @@
     },
     "decisions-0091-whatsapp-signal-transport-choice": {
       "binding_sha256": "dce85547af4b5782c5bbec5693d81701a8468fdedb074893b9c834b593c3c64d",
-      "document_sha256": "1c2d45df136ded54ac9a2a68fef79049e885ed53f8e5e49e14699e6d873bad64",
+      "document_sha256": "2a7329ce7ea6e4d84a1c2cf23a2dac0bf65613b9fe1dbfdb92a836f93d0db6a1",
       "path": "docs/decisions/0091-whatsapp-signal-transport-choice.md",
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "8dfa94ad14fceda6a1dfb013d0d234e9d9702e998a0e9f1315d39239d673b337",
+      "binding_sha256": "5683a217d0533b1d340275a9e7092864f6f8abf0fbfa36bb489533f0e62704ce",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 96
@@ -799,7 +799,7 @@
       "resolved_files": 39
     },
     "specs-constitution": {
-      "binding_sha256": "d6dcb182ae22cd98ab790dc4c5309e39c7831b8354f0fd8050fd09d46619d851",
+      "binding_sha256": "05110b127404e6fb8abad7c1889cd78e64664cadf19fd10565ebe09105e361b7",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 136

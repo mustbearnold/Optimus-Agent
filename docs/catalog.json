@@ -3769,7 +3769,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "1c2d45df136ded54ac9a2a68fef79049e885ed53f8e5e49e14699e6d873bad64",
+      "content_sha256": "2a7329ce7ea6e4d84a1c2cf23a2dac0bf65613b9fe1dbfdb92a836f93d0db6a1",
       "headings": [
         "ADR-0091: WhatsApp and Signal transport choice",
         "Status",
@@ -4778,7 +4778,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "630f2ceff464e950106f3f95d99b5230e5cf34e0efd1d24f5602d6521329258c",
+  "documents_sha256": "2622cdefcfc6ce1cab303fda0ba06be0caa845005005734ca2bf87632854d0b7",
   "routes": [
     {
       "id": "architecture.blueprint",

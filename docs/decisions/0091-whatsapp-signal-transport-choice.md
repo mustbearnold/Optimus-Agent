@@ -72,9 +72,7 @@ Rationale:
   ships as a documented system dependency (runbook
   `docs/runbooks/gateway-transports.md`, Planned).
 
-Revisit condition: if the JVM runtime becomes unacceptable, evaluate
-native `libsignal-client` binding with a dedicated review. Do not adopt
-unofficial client libraries at any point.
+See `## Conditions for reconsideration` — the triggers live there alone.
 
 ### WhatsApp: Meta Cloud API behind an operator-provided HTTPS webhook
 
@@ -102,9 +100,7 @@ Rationale:
 - No operator public endpoint means WhatsApp stays disabled with a
   documented status. That is a state, not a defect.
 
-Revisit condition: if a future operator deployment can provide no public
-endpoint, re-evaluate a supervised whatsmeow-style child with a dedicated
-review. Do not adopt it before that review.
+See `## Conditions for reconsideration`.
 
 ## Consequences
 
@@ -116,8 +112,8 @@ review. Do not adopt it before that review.
   stores its registration secrets in home config; it reads the operator's
   existing signal-cli data directory (registration/linking stays an
   operator out-of-band step).
-- The WhatsApp webhook adds a new public surface. It runs only under
-  `optimus gateway run`; the adapter remains runnable standalone as
+- The WhatsApp webhook adds a new public surface. The webhook listener
+  MUST be supervised when run; the adapter remains runnable standalone as
   `optimus gateway whatsapp run` per spec-017 R1 (standalone serves
   outbound + the operator-registered webhook listener), and under
   supervisor mode its lifecycle and status are owned by the supervisor
@@ -153,8 +149,9 @@ review. Do not adopt it before that review.
 
 ## Risks
 
-- signal-cli: JVM runtime dependency (install-time cost, documented in the
-  runbook); JSON-RPC surface of the child must be version-pinned.
+- signal-cli: JVM runtime process dependency of the supervised child
+  (memory footprint, startup latency), documented in the runbook; the
+  JSON-RPC surface of the child must be version-pinned.
 - WhatsApp webhook: a new public surface. Mitigations: one path, mandatory
   TLS, secret header before parsing, allowlist before any turn, fail-closed
   diagnostics, supervised lifecycle.
