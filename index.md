@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **160 folders**, **882 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **161 folders**, **889 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -158,7 +158,7 @@ Optimus Agent/
 │   ├── MIGRATION_REPORT.md
 │   ├── claude-settings-local.json
 │   └── github-conventions.md
-├── apps/ (253 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
+├── apps/ (259 files) — Product binaries, terminal surface, native host, desktop shell, and React interface.
 │   ├── optimus-cli/ (21 files) — Command and operator surface for auth, gateway, eval, cron, campaigns, and default TUI launch.
 │   │   ├── src/ (13 files)
 │   │   │   ├── chat.rs
@@ -338,13 +338,11 @@ Optimus Agent/
 │   │   ├── tests/ (1 files)
 │   │   │   └── pty.rs
 │   │   └── Cargo.toml
-│   └── optimus-ui/ (104 files) — React workbench presentation with no filesystem, policy, or runtime authority.
-│       ├── src/ (99 files)
-│       │   ├── app/ (8 files)
+│   └── optimus-ui/ (110 files) — React workbench presentation with no filesystem, policy, or runtime authority.
+│       ├── src/ (105 files)
+│       │   ├── app/ (6 files)
 │       │   │   ├── OptimusApp.test.tsx
 │       │   │   ├── OptimusApp.tsx
-│       │   │   ├── approvalResolution.test.ts
-│       │   │   ├── approvalResolution.ts
 │       │   │   ├── composeSendMessage.test.ts
 │       │   │   ├── composeSendMessage.ts
 │       │   │   ├── sessionConsent.test.tsx
@@ -420,7 +418,16 @@ Optimus Agent/
 │       │   │       └── WorkspacePane.tsx
 │       │   ├── hooks/ (1 files)
 │       │   │   └── useAlive.ts
-│       │   ├── ipc/ (12 files)
+│       │   ├── ipc/ (20 files)
+│       │   │   ├── client/ (8 files)
+│       │   │   │   ├── chatSession.ts
+│       │   │   │   ├── client.test.ts
+│       │   │   │   ├── client.ts
+│       │   │   │   ├── domains.ts
+│       │   │   │   ├── index.ts
+│       │   │   │   ├── runtime.ts
+│       │   │   │   ├── turn.ts
+│       │   │   │   └── types.ts
 │       │   │   ├── contracts.schema.test.ts
 │       │   │   ├── contracts.ts
 │       │   │   ├── fixtureTransport.ts
@@ -746,7 +753,7 @@ Optimus Agent/
 │       │   ├── attribution.rs
 │       │   └── recursion.rs
 │       └── Cargo.toml
-├── docs/ (124 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
+├── docs/ (125 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
 │   ├── architecture/ (19 files)
 │   │   ├── hermes-baselines/ (1 files)
 │   │   │   └── hermes-0.19.0.json
@@ -768,7 +775,7 @@ Optimus Agent/
 │   │   ├── token-budget-baseline.json
 │   │   ├── tools-and-modularity.md
 │   │   └── versioning-and-parity.md
-│   ├── decisions/ (92 files)
+│   ├── decisions/ (93 files)
 │   │   ├── 0000-locked-defaults.md
 │   │   ├── 0001-kernel-and-work-graph.md
 │   │   ├── 0002-memory-invariants.md
@@ -860,6 +867,7 @@ Optimus Agent/
 │   │   ├── 0087-the-session-message-plane-is-a-durable-ops-store.md
 │   │   ├── 0088-recursive-children-are-durable-session-hierarchy.md
 │   │   ├── 0089-sha256-digest-leaf-crate.md
+│   │   ├── 0090-renderer-client-deep-module.md
 │   │   └── README.md
 │   ├── runbooks/ (6 files)
 │   │   ├── agent-domain.md
@@ -1064,10 +1072,10 @@ Optimus Agent/
 | `.config/` | 1 | 1 | Versioned nextest configuration used by repository verification. |
 | `.githooks/` | 1 | 3 | Git hooks enforcing the main-only development law: off-main commits blocked, forced returns to main, branch creation and movement refused. |
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
-| `apps/` | 54 | 253 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
+| `apps/` | 55 | 259 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
 | `crates/` | 49 | 230 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
-| `docs/` | 5 | 124 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
+| `docs/` | 5 | 125 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 81 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |
