@@ -1075,4 +1075,41 @@ mod tests {
         // Multi-byte characters are capped on char boundaries, not bytes.
         assert_eq!(sanitize_field("日本語のラベル", 3, "artifact"), "日本語");
     }
+
+    #[test]
+    fn media_ext_maps_known_types_case_insensitively_and_defaults() {
+        assert_eq!(media_ext("image/png"), ".png");
+        assert_eq!(media_ext("Image/PNG"), ".png");
+        assert_eq!(media_ext("image/jpeg"), ".jpg");
+        assert_eq!(media_ext("image/jpg"), ".jpg");
+        assert_eq!(media_ext("image/gif"), ".gif");
+        assert_eq!(media_ext("image/webp"), ".webp");
+        assert_eq!(media_ext("text/markdown"), ".txt");
+        assert_eq!(media_ext("application/json"), ".txt");
+        assert_eq!(media_ext("application/octet-stream"), ".bin");
+    }
+
+    #[test]
+    fn safe_export_basename_sanitizes_and_stays_unique_per_media_type() {
+        let sha = "a".repeat(64);
+        // Extension follows media type; base is sanitized and stripped of
+        // trailing separators.
+        let name = safe_export_basename("My Note!", &sha, "text/markdown");
+        assert!(name.ends_with(".txt"));
+        assert!(!name.contains('!'));
+        assert_eq!(name, format!("My-Note-{}.txt", &sha[..8]));
+
+        // Whitespace-only / empty labels collapse to the "artifact" fallback.
+        assert_eq!(
+            safe_export_basename("  ", &sha, "application/octet-stream"),
+            format!("artifact-{}.bin", &sha[..8])
+        );
+        assert!(safe_export_basename("", &sha, "image/png").starts_with("artifact-"));
+
+        // Same label + sha but different media types must not collide.
+        assert_ne!(
+            safe_export_basename("pic", &sha, "image/png"),
+            safe_export_basename("pic", &sha, "image/jpeg")
+        );
+    }
 }
