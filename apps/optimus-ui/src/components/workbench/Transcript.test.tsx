@@ -180,6 +180,42 @@ describe('Transcript', () => {
     expect(screen.queryByText('**compute race**')).not.toBeInTheDocument();
   });
 
+  it('cannot synthesise event-handler attributes or script from markdown (ADR-0028 parity)', () => {
+    // The Wry surface's formatRich got this asserted end-to-end; the React
+    // surface renders through RichText (pure parser + createElement, no
+    // dangerouslySetInnerHTML anywhere), so the property holds by
+    // construction — this test locks it against a future raw-HTML path.
+    const payload = [
+      '![x](https://example.com/x.png)',
+      '[click me](javascript:alert(1))',
+      '[hover me](https://example.com/" onmouseover="alert(1))',
+      '<img src=x onerror=alert(1)>',
+      '<script>alert(1)</script>',
+    ].join('\n\n');
+    const { container } = render(
+      <Transcript
+        messages={[{
+          id: 'assistant-xss',
+          role: 'assistant',
+          content: payload,
+          status: 'completed',
+        }]}
+        status="completed"
+        statusText="Completed"
+        onStarter={vi.fn()}
+      />
+    );
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.querySelector('[onclick], [onerror], [onmouseover]')).toBeNull();
+    // The javascript: link is not a link at all — the inline tokeniser only
+    // admits https? URLs — it degrades to inert text (also mirrored into the
+    // sr-only live region, hence getAllByText).
+    expect(screen.queryByRole('link', { name: 'click me' })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/javascript:alert\(1\)/).length).toBeGreaterThan(0);
+  });
+
   it('keeps tool calls collapsed on their owning assistant turn until clicked', () => {
     const { container } = render(
       <Transcript
