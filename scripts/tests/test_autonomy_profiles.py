@@ -275,7 +275,7 @@ class AutonomyGateTests(unittest.TestCase):
     def write(
         self,
         *,
-        policy_break_glass: str = '"unrestricted_host" | "unrestricted" | "yolo"',
+        policy_break_glass: str = '"unrestricted_host" | "unrestricted" | "unrestricted-host" | "yolo"',
         graph_source: str = GRAPH_STUB,
         menu: str = FIVE_ITEMS,
         tiers: str = DEFAULT_TIERS,

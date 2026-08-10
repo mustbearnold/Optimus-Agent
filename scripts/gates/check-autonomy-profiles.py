@@ -68,8 +68,10 @@ CLI_PARSERS = ROOT / "apps/optimus-cli/src/parsers.rs"
 # to `UnrestrictedHost` fails, including words nobody here thought of — which
 # is the point. `yolo` is the CLI's own flag; it was graph-only until the
 # collapse merged it into the canonical table (it is unmistakable, and #118's
-# "full"/"host" remain gone).
-BREAK_GLASS = frozenset({"unrestricted_host", "unrestricted", "yolo"})
+# "full"/"host" remain gone). `unrestricted-host` is the hyphenated spelling
+# deliberately accepted by the policy table (commit 5af44c1, with its own
+# regression test in optimus-policy); the allowlist tracks the canonical table.
+BREAK_GLASS = frozenset({"unrestricted_host", "unrestricted", "unrestricted-host", "yolo"})
 EXPECTED_ALIASES = {
     "standard": "standard",
     "review_changes": "review_changes",
