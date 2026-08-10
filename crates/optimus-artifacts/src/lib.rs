@@ -603,7 +603,12 @@ fn media_ext(media_type: &str) -> &'static str {
         ".gif"
     } else if m.starts_with("image/webp") {
         ".webp"
-    } else if m.starts_with("text/") || m.contains("json") {
+    } else if m.contains("json") {
+        // JSON payloads (application/json, application/ld+json, ...) export
+        // with a `.json` extension so editors and download handlers recognize
+        // the format; a `.txt` extension previously hid it as plain text.
+        ".json"
+    } else if m.starts_with("text/") {
         ".txt"
     } else {
         ".bin"
@@ -1124,7 +1129,23 @@ mod tests {
         assert_eq!(media_ext("image/gif"), ".gif");
         assert_eq!(media_ext("image/webp"), ".webp");
         assert_eq!(media_ext("text/markdown"), ".txt");
-        assert_eq!(media_ext("application/json"), ".txt");
+        assert_eq!(media_ext("application/json"), ".json");
+        assert_eq!(media_ext("application/octet-stream"), ".bin");
+    }
+
+    #[test]
+    fn media_ext_maps_json_types_to_json_extension() {
+        // Regression: JSON payloads used to export with a `.txt` extension,
+        // hiding the structured format from editors and download handlers.
+        // Every JSON media type must carry a `.json` extension, while plain
+        // text stays `.txt`.
+        assert_eq!(media_ext("application/json"), ".json");
+        assert_eq!(media_ext("Application/JSON"), ".json");
+        assert_eq!(media_ext("application/ld+json"), ".json");
+        assert_eq!(media_ext("application/problem+json"), ".json");
+        assert_eq!(media_ext("application/vnd.api+json"), ".json");
+        // Non-JSON types are unaffected.
+        assert_eq!(media_ext("text/plain"), ".txt");
         assert_eq!(media_ext("application/octet-stream"), ".bin");
     }
 
