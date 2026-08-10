@@ -661,7 +661,7 @@
       "resolved_files": 17
     },
     "spec-007-ops": {
-      "binding_sha256": "f84baf2349e4956fbe1c654f0bf576c923a256af076dd5e4f4c9ac25957f0637",
+      "binding_sha256": "259d8405d7c22ffa88df540a4f3565ace4f55c0bed54a8e4dc3484aeb85dbf07",
       "document_sha256": "87f8b52f571cd8ea1201c90de4e39e41ee74a740a3879287ac7cfc84006bab93",
       "path": "specs/007-ops/spec.md",
       "resolved_files": 58
