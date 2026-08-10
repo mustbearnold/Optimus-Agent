@@ -8,19 +8,21 @@ rust-version.workspace = true
 
 [dependencies]
 # spec-017 transports: websocket (Discord gateway, Slack Socket Mode), IMAP
-# inbound, SMTP outbound. HTTP + websockets ride rustls (ureq/tungstenite);
-# IMAP is a documented exception — the `imap` crate's only TLS feature is
-# native-tls, and a hand-rolled IMAP client over rustls would trade an
-# audited protocol implementation for a smaller TLS surface. Revisit if the
-# `imap` crate gains rustls support.
-imap = { version = "2", default-features = false, features = ["tls"] }
+# inbound, SMTP outbound. One TLS configuration: rustls everywhere — IMAP via
+# the `imap` crate's generic client over a rustls socket (adapters/email.rs),
+# never its native-tls feature. rustls-pemfile parses the CA bundle;
+# mailparse extracts MIME parts for the artifact store (A7).
+imap = { version = "2", default-features = false }
 lettre = { version = "0.11", default-features = false, features = ["rustls-tls", "smtp-transport", "builder"] }
+mailparse = "0.15"
+optimus-artifacts.workspace = true
 optimus-packs.workspace = true
 rusqlite.workspace = true
+rustls-pemfile = "2"
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-tungstenite = { version = "0.26", default-features = false, features = ["rustls-tls-webpki-roots"] }
+tungstenite = { version = "0.26", default-features = false, features = ["rustls-tls-webpki-roots", "handshake"] }
 # Matches the pin `optimus-kernel` already carries. First-party HTTP stays on
 # one client API and one TLS configuration; see
 # `docs/evidence/telegram-transport-practice-2026-08-01.md`.
