@@ -139,4 +139,58 @@ mod tests {
         .unwrap();
         assert!(t.audio_ref.contains("offline-audio"));
     }
+
+    #[test]
+    fn media_fixtures_reject_missing_required_fields() {
+        // Every offline fixture validates its required field; an empty or
+        // whitespace-only value must fail closed rather than produce a stub.
+        let v = vision_analyze_offline(&VisionAnalyzeRequest {
+            image_ref: "".into(),
+            prompt: "p".into(),
+        });
+        assert_eq!(v, Err(MediaError::Msg("image_ref required".into())));
+
+        let v = vision_analyze_offline(&VisionAnalyzeRequest {
+            image_ref: "   ".into(),
+            prompt: "p".into(),
+        });
+        assert_eq!(v, Err(MediaError::Msg("image_ref required".into())));
+
+        let i = image_generate_offline(&ImageGenerateRequest {
+            prompt: "  ".into(),
+            size: "512x512".into(),
+        });
+        assert_eq!(i, Err(MediaError::Msg("prompt required".into())));
+
+        let s = stt_offline(&SttRequest {
+            audio_ref: "".into(),
+        });
+        assert_eq!(s, Err(MediaError::Msg("audio_ref required".into())));
+
+        let t = tts_offline(&TtsRequest { text: "".into() });
+        assert_eq!(t, Err(MediaError::Msg("text required".into())));
+    }
+
+    #[test]
+    fn vision_summary_truncates_long_prompts_to_120_chars() {
+        // The offline vision summary caps the echoed prompt at 120 characters
+        // so a huge prompt cannot blow up the reported summary. Pin both the
+        // boundary and the count (chars, not bytes) so multi-byte input stays
+        // bounded as well.
+        let long = "x".repeat(500);
+        let v = vision_analyze_offline(&VisionAnalyzeRequest {
+            image_ref: "file:x.png".into(),
+            prompt: long,
+        })
+        .unwrap();
+        assert_eq!(v.summary.len(), "offline vision: ".len() + 120);
+
+        let multi = "é".repeat(200); // 2-byte chars
+        let v = vision_analyze_offline(&VisionAnalyzeRequest {
+            image_ref: "file:x.png".into(),
+            prompt: multi,
+        })
+        .unwrap();
+        assert_eq!(v.summary.chars().count(), "offline vision: ".len() + 120);
+    }
 }
