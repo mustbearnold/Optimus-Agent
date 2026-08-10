@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **903 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **906 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -766,8 +766,8 @@ Optimus Agent/
 │       │   ├── attribution.rs
 │       │   └── recursion.rs
 │       └── Cargo.toml
-├── docs/ (127 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
-│   ├── architecture/ (19 files)
+├── docs/ (128 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
+│   ├── architecture/ (20 files)
 │   │   ├── hermes-baselines/ (1 files)
 │   │   │   └── hermes-0.19.0.json
 │   │   ├── control-plane-and-workflows.md
@@ -776,6 +776,7 @@ Optimus Agent/
 │   │   ├── hermes-feature-evidence.json
 │   │   ├── hermes-manual-capabilities.json
 │   │   ├── hermes-performance-evidence.json
+│   │   ├── impeccable-baseline.json
 │   │   ├── module-size-baseline.json
 │   │   ├── optimus-version.json
 │   │   ├── parity-capability-ledger.json
@@ -905,12 +906,13 @@ Optimus Agent/
 │   │   └── questions-v1.json
 │   └── synthetic-user-lab/ (1 files) — Versioned personas, journeys, and scoring definitions for general-purpose Optimus testing.
 │       └── cohort-v1.json
-├── scripts/ (81 files) — Deterministic repository gates, generation, installation, and diagnostics.
-│   ├── gates/ (17 files)
+├── scripts/ (83 files) — Deterministic repository gates, generation, installation, and diagnostics.
+│   ├── gates/ (18 files)
 │   │   ├── check-architecture-marks.py
 │   │   ├── check-autonomy-profiles.py
 │   │   ├── check-crate-layers.py
 │   │   ├── check-domain-modularity.py
+│   │   ├── check-impeccable-ratchet.py
 │   │   ├── check-instruction-planes.py
 │   │   ├── check-lockfile-discipline.py
 │   │   ├── check-module-size.py
@@ -924,7 +926,7 @@ Optimus Agent/
 │   │   ├── check-surface-contract.py
 │   │   ├── check-tauri-launch.py
 │   │   └── check-tool-coverage.py
-│   ├── tests/ (33 files)
+│   ├── tests/ (34 files)
 │   │   ├── playwright_dom_click_audit.cjs
 │   │   ├── test_architecture_marks.py
 │   │   ├── test_autonomy_profiles.py
@@ -934,6 +936,7 @@ Optimus Agent/
 │   │   ├── test_docs_system.py
 │   │   ├── test_engineering_memory.py
 │   │   ├── test_impact_select.py
+│   │   ├── test_impeccable_ratchet.py
 │   │   ├── test_instruction_planes.py
 │   │   ├── test_live_smoke.py
 │   │   ├── test_lockfile_discipline.py
@@ -1090,9 +1093,9 @@ Optimus Agent/
 | `apps/` | 55 | 260 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
 | `crates/` | 50 | 241 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
-| `docs/` | 5 | 127 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
+| `docs/` | 5 | 128 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
-| `scripts/` | 4 | 81 | Deterministic repository gates, generation, installation, and diagnostics. |
+| `scripts/` | 4 | 83 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |
 | `specs/` | 30 | 39 | SDD capability specs: one directory per capability with a living spec.md (requirements + acceptance criteria), transient plan.md/tasks.md while work is active, and the BACKLOG of unspecced gaps. |
 
