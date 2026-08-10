@@ -33,3 +33,6 @@ coverage/
 
 # Frend visual-editor scratch (generated override)
 frend-overrides.css
+
+# cargo-mutants output (mutation-testing scratch, regenerated per run)
+/mutants.out/
