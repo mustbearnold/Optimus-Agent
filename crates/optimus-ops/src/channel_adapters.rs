@@ -64,4 +64,36 @@ mod tests {
         let inbox = list_inbox(dir.path()).unwrap();
         assert_eq!(inbox.len(), 2);
     }
+
+    #[test]
+    fn enqueue_rejects_blank_text() {
+        let dir = tempdir().unwrap();
+        for blank in ["", "   ", "\t\n"] {
+            assert!(
+                matches!(
+                    discord_enqueue(dir.path(), blank, "ch1"),
+                    Err(AdapterError::Msg(_))
+                ),
+                "discord should reject {blank:?}"
+            );
+            assert!(
+                matches!(
+                    slack_enqueue(dir.path(), blank, "ch2"),
+                    Err(AdapterError::Msg(_))
+                ),
+                "slack should reject {blank:?}"
+            );
+        }
+        // Rejection must not leave anything in the inbox.
+        assert_eq!(list_inbox(dir.path()).unwrap().len(), 0);
+    }
+
+    #[test]
+    fn enqueue_sets_provider_session_ids() {
+        let dir = tempdir().unwrap();
+        let d = discord_enqueue(dir.path(), "hi", "ext-1").unwrap();
+        assert_eq!(d.session_id.as_deref(), Some("discord:ext-1"));
+        let s = slack_enqueue(dir.path(), "hi", "ext-2").unwrap();
+        assert_eq!(s.session_id.as_deref(), Some("slack:ext-2"));
+    }
 }
