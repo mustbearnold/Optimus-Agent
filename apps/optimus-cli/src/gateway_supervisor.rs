@@ -13,7 +13,7 @@ use std::time::Duration;
 use optimus_kernel::{
     discord_open_adapter, email_open_adapter, list_outbox_receipts, read_supervisor_snapshot,
     slack_open_adapter, spawn_adapter_worker, spawn_snapshot_writer, telegram_open_adapter,
-    AdapterState, AdapterStatus, InboundMessage, SupervisorState,
+    write_supervisor_snapshot, AdapterState, AdapterStatus, InboundMessage, SupervisorState,
 };
 
 /// How often the supervisor persists its snapshot (cross-process status face).
@@ -89,6 +89,9 @@ pub fn run(home: PathBuf) -> Result<(), String> {
         let _ = handle.join();
     }
     drop(writer);
+    // Publish the final state even for short runs (e.g. every adapter
+    // disabled): the status surface must answer, not guess.
+    write_supervisor_snapshot(&home, &*registry.lock().map_err(|e| e.to_string())?)?;
     Ok(())
 }
 
