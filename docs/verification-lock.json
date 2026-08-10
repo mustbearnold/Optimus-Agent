@@ -259,25 +259,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "609d493f2829a9f9b1681f61f01713f6ecf5844763ebe20fdd5a7eb584164289",
+      "binding_sha256": "336072a3bf5ddbe145e9a28761405cbe3190546b4b4d82e133bc1254e06e164c",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 136
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "fd1cdb8df96f88dcc2c7fd0709ca4fe821d57f95e261dfcba14e6c5f56cb3ea9",
+      "binding_sha256": "3c3c8188b8e503d64085173ab1e576e8e82e0a70f2fa1326e7eff2cfb8ec3772",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 135
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "44e21393d58cb37f311ceee582ddcceaa4c9ea103391a127d3a600102d5a07f4",
+      "binding_sha256": "2df06a141ae45a098a25f81dc0896b7612f263d2cf81e2311963cd198da27bb6",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 105
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "dc794e75d2a6c59ee4555263bd14b3b5bba739c33a6e9df4062aae6fcb980a51",
+      "binding_sha256": "569f1473781cf7dc601af70f86996652dba60396f1a0239a6d789795598229c2",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 137
@@ -319,7 +319,7 @@
       "resolved_files": 6
     },
     "decisions-0038-ui-ipc-architecture": {
-      "binding_sha256": "378d52b26c03d7c14bbbc6ecba5c3af04aacdaaf74ad41cf24cfa9d691761ad3",
+      "binding_sha256": "870b9d8c562262047d79e45a1107dfeb017e7acfc1f63cac41fa2d22d657e3f5",
       "document_sha256": "efc4ff5b0b63afbb7d35ea0eacd5d7c1dfc4cc3476de237c3344588ade231b70",
       "path": "docs/decisions/0038-ui-ipc-architecture.md",
       "resolved_files": 8
@@ -535,13 +535,13 @@
       "resolved_files": 5
     },
     "decisions-0081-truthful-approval-resolution-and-session-consent": {
-      "binding_sha256": "062e4714837b8adc4a18dd3169f2aa96ac459587b7824d481d59d8a9cc261db7",
+      "binding_sha256": "e7ba51aabaa5b8d7b664b9da1a1dc2545840fa7673bba4fb0f003378b4758428",
       "document_sha256": "545fe555c6acc472ee4c9a39ad64b13ce9cadf47d118bcfada2245bd0a712518",
       "path": "docs/decisions/0081-truthful-approval-resolution-and-session-consent.md",
       "resolved_files": 14
     },
     "decisions-0082-latency-shaping-for-the-tool-loop": {
-      "binding_sha256": "1910c3cc16c72c1b5519b90bc8559220334054e83045c33ae8ad60f0f25c8840",
+      "binding_sha256": "542208d8baa6ebe2d3091047cc9f104c471aa5a3a94eeaf4f812e0014f2456a4",
       "document_sha256": "677acdf35f2be47f461b25e5304f5ca22593d0a16b904adb5d9fb3f1bc17d769",
       "path": "docs/decisions/0082-latency-shaping-for-the-tool-loop.md",
       "resolved_files": 11
@@ -613,13 +613,13 @@
       "resolved_files": 30
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "feb603e3283c21ba008e8b0efc59ddfe003151b3ad053e9e045c178c8044264f",
+      "binding_sha256": "41b8b2d1d13e75717f51e3c0372d3736b3ac27ecc2b23db13fe1eeae6a7272f1",
       "document_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 116
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "37e427e3c857298daad71a8e606a3f1167e527792e70dff63af4441d70e20f8e",
+      "binding_sha256": "f521b2845a8f3fc26260d13891ea063f4fb2d0c081df9fe7721da725c6ac0b6b",
       "document_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "path": "specs/002-host-ipc/spec.md",
       "resolved_files": 56
@@ -691,13 +691,13 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "1c5fdf3bc8beb102df97cef5e3e4b778ab57b65de9de346a81607473cebb1449",
+      "binding_sha256": "1dfc141c75871cae6136a66692018e3e9e80382f2ba3da5945bf594b22b5b845",
       "document_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46
     },
     "spec-015-surface-protocol": {
-      "binding_sha256": "2bedffaf7e005e086ca60fe355356e5686eeb7c0fb580f2d30d7c96f0c60bf5b",
+      "binding_sha256": "8f00431575d3361ae4f53be4a1cdd8ffbaff6eeb097a581e03e565519d032b5a",
       "document_sha256": "60d3ffc1650decb5f4e39ce0b3110f507a3268c4cf0261f842622561af79dae8",
       "path": "specs/015-surface-protocol/spec.md",
       "resolved_files": 45

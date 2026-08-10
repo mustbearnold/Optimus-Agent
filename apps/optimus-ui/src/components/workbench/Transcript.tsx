@@ -36,7 +36,7 @@ const MessageRow = memo(function MessageRow({
           className="thinking-block"
           open={message.status === 'working' ? true : undefined}
         >
-          <summary>Thinking</summary>
+          <summary>{thinkingLabel(message)}</summary>
           <pre className="thinking-body">{message.thinking}</pre>
         </details>
       ) : null}
@@ -246,4 +246,14 @@ function statusLabel(status: RunStatus) {
 function formatDuration(durationMs: number) {
   const seconds = Math.max(0, Math.round(durationMs / 1000));
   return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
+}
+
+/** "thought for 3s" — the model-phase duration drives the label; the whole
+ *  turn duration is the fallback (resumed sessions). Sub-second rounds to
+ *  "<1s" rather than lying with "0s". */
+function thinkingLabel(message: Message) {
+  const ms = message.thinkingMs ?? message.durationMs;
+  if (typeof ms !== 'number') return 'Thought';
+  const seconds = Math.round(ms / 1000);
+  return seconds < 1 ? 'thought for <1s' : `thought for ${seconds}s`;
 }

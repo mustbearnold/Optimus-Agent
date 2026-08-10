@@ -35,9 +35,32 @@ describe('Transcript', () => {
         onStarter={vi.fn()}
       />
     );
-    expect(screen.getByText('Thinking')).toBeInTheDocument();
+    expect(screen.getByText('Thought')).toBeInTheDocument();
     expect(screen.getByText('Consider the hitchhiker path.')).toBeInTheDocument();
     expect(screen.getByText('The answer is 42.')).toBeInTheDocument();
+  });
+
+  it('labels the thinking block with the model-phase duration', () => {
+    render(
+      <Transcript
+        messages={[
+          {
+            id: 'assistant-think-timed',
+            role: 'assistant',
+            content: 'The answer is 42.',
+            thinking: 'Consider the hitchhiker path.',
+            thinkingMs: 3_200,
+            status: 'completed',
+          },
+        ]}
+        status="completed"
+        statusText="Completed"
+        onStarter={vi.fn()}
+      />
+    );
+    expect(screen.getByText('thought for 3s')).toBeInTheDocument();
+    expect(screen.queryByText('Thinking')).not.toBeInTheDocument();
+    expect(screen.getByText('Consider the hitchhiker path.')).toBeInTheDocument();
   });
 
   it('auto-opens the thinking block while the assistant is working', () => {

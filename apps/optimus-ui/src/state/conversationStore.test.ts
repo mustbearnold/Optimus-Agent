@@ -185,6 +185,22 @@ describe('ConversationStore', () => {
     );
   });
 
+  it('stamps the model-phase duration onto the step message from model_finished', () => {
+    const id = `model-ms-${Date.now()}`;
+    conversationStore.load({ id, messages: [] });
+    conversationStore.begin(id, 'think about it');
+    conversationStore.apply(id, {
+      type: 'timing',
+      kind: 'model_finished',
+      duration_ms: 3_200,
+      elapsed_ms: 3_200,
+    });
+
+    expect(conversationStore.get(id).messages.at(-1)).toEqual(
+      expect.objectContaining({ role: 'assistant', thinkingMs: 3_200 })
+    );
+  });
+
   it('keeps an exact-action tool awaiting approval when the resolve stays pending (R5)', () => {
     const id = `tool-approval-${Date.now()}`;
     conversationStore.load({ id, messages: [] });

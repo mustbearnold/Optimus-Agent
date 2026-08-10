@@ -291,6 +291,24 @@ class ConversationStore {
       ) {
         this.attachToolTime(sessionId, event.call_id, event.kind, event.elapsed_ms);
       }
+      // "Thought for Xs": stamp the model-phase duration onto the step's
+      // assistant message. Order-independent like tool times: the message
+      // commit (flushText) merges, never replaces, so a stamp that lands
+      // after the final flush still survives.
+      if (event.kind === 'model_finished' && typeof event.duration_ms === 'number') {
+        const session = this.sessions.get(sessionId);
+        if (session) {
+          const messages = session.messages.slice();
+          const messageIndex = findLastAssistantIndex(messages);
+          if (messageIndex >= 0) {
+            messages[messageIndex] = {
+              ...messages[messageIndex]!,
+              thinkingMs: event.duration_ms,
+            };
+            this.sessions.set(sessionId, { ...session, messages });
+          }
+        }
+      }
     } else if (event.type === 'done') {
       this.flushText(sessionId);
       this.flushThinking(sessionId);

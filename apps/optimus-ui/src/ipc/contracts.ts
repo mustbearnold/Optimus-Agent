@@ -105,6 +105,9 @@ export type Message = {
   content: string;
   /** Reasoning/thinking block — never mixed into `content` (program P24). */
   thinking?: string;
+  /** Total model-phase duration for this message's step (ms), from the
+   *  kernel's model_finished timing event. Drives the "thought for Xs" label. */
+  thinkingMs?: number;
   status?: RunStatus;
   durationMs?: number;
   createdAt?: string;
