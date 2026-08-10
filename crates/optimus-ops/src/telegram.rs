@@ -29,7 +29,7 @@ pub use live::LiveTelegramTransport;
 
 mod adapter;
 
-pub use adapter::TelegramAdapter;
+pub use adapter::{open_adapter as telegram_open_adapter, TelegramAdapter};
 
 /// How long one outbound send may hold its obligation before the sweep calls it
 /// unknown. A Bot API call that has not returned in two minutes has already

@@ -11,8 +11,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use optimus_kernel::{
-    list_outbox_receipts, read_supervisor_snapshot, spawn_adapter_worker, spawn_snapshot_writer,
-    AdapterState, AdapterStatus, InboundMessage, SupervisorState, TelegramAdapter,
+    discord_open_adapter, email_open_adapter, list_outbox_receipts, read_supervisor_snapshot,
+    slack_open_adapter, spawn_adapter_worker, spawn_snapshot_writer, telegram_open_adapter,
+    AdapterState, AdapterStatus, InboundMessage, SupervisorState,
 };
 
 /// How often the supervisor persists its snapshot (cross-process status face).
@@ -23,11 +24,17 @@ const SNAPSHOT_INTERVAL: Duration = Duration::from_secs(5);
 /// simply absent from the snapshot until configured).
 fn build_adapters(home: &std::path::Path) -> Vec<Box<dyn optimus_kernel::TransportAdapter>> {
     let mut adapters: Vec<Box<dyn optimus_kernel::TransportAdapter>> = Vec::new();
-    if let Ok(Some(adapter)) = TelegramAdapter::open(home) {
-        adapters.push(adapter);
+    for open in [
+        telegram_open_adapter,
+        discord_open_adapter,
+        slack_open_adapter,
+        email_open_adapter,
+    ] {
+        if let Ok(Some(adapter)) = open(home) {
+            adapters.push(adapter);
+        }
     }
-    // Discord, Slack, Email, Signal and WhatsApp adapters plug in here as
-    // their transports land (spec-017 A-criteria, ADR-0091).
+    // Signal and WhatsApp plug in here as their ADR-0091 transports land.
     adapters
 }
 

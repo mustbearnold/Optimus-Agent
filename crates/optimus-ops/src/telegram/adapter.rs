@@ -145,6 +145,13 @@ impl TransportAdapter for TelegramAdapter {
     }
 }
 
+/// spec-017 adapter convention: Ok(None) when {home}/gateway/telegram.json
+/// is absent, Ok(Some(adapter)) when present (disabled or not), Err on
+/// malformed config.
+pub fn open_adapter(home: &Path) -> Result<Option<Box<dyn TransportAdapter>>, String> {
+    TelegramAdapter::open(home)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

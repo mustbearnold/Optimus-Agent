@@ -139,6 +139,18 @@ pub use optimus_artifacts::{
     ArtifactError, ArtifactRecord, ArtifactStore, BulkDeleteFailure, BulkDeleteResult,
 };
 pub use optimus_graph::PolicyMode;
+pub use optimus_ops::adapters::discord::{
+    open_adapter as discord_open_adapter, DiscordAdapter, DiscordConfig, DiscordTransport,
+    LiveDiscordTransport, MockDiscordTransport,
+};
+pub use optimus_ops::adapters::email::{
+    open_adapter as email_open_adapter, EmailAdapter, EmailConfig, MailTransport, MockMailTransport,
+};
+pub use optimus_ops::adapters::slack::{
+    open_adapter as slack_open_adapter, LiveSlackTransport, MockSlackTransport, SlackAdapter,
+    SlackConfig, SlackTransport,
+};
+pub use optimus_ops::telegram_open_adapter;
 /// Operator gateway + cron store (owned by `optimus-ops`).
 pub use optimus_ops::{
     acknowledge_delivery, adapter_cycle, assert_public_mcp_url, builtin_surface_commands,
