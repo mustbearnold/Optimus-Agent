@@ -1,16 +1,27 @@
 import type { ChatHandle, StreamEvent } from '../contracts';
+import { CONNECTION_LOSS_CODES, IpcError } from './types';
 import type { TurnOutcome } from './types';
 
 /** The single documented place where a stream terminal is classified
  *  (ADR-0090). R4: a failed continuation is `failed`, a re-parked approval
- *  is `awaiting-approval`. R9: connection loss is not a model failure. */
+ *  is `awaiting-approval`. R9: connection loss is not a model failure —
+ *  a structured `IpcError.code` (`connection_lost` / `closed_unexpectedly`,
+ *  attached by the ws transport, #147) classifies FIRST; the text sniff
+ *  remains the documented fallback for message-only rejections and the
+ *  frozen wire terminal payload (fixture/tauri paths). */
 export function classifyTerminal(
   event: StreamEvent | undefined,
   startError?: unknown
 ): TurnOutcome {
   if (startError !== undefined) {
-    // A rejected chat start is a configuration error, not a transport loss:
-    // surface the real cause (e.g. "No DeepSeek API key…") as `failed`.
+    // A rejected chat start is usually a configuration error, not a
+    // transport loss: surface the real cause (e.g. "No DeepSeek API
+    // key…") as `failed`. The R9 exception is a structured
+    // connection-loss code — or its sniffable text when the code is
+    // absent (#147).
+    if (isConnectionLoss(startError)) {
+      return { kind: 'disconnected' };
+    }
     return { kind: 'failed', message: messageOf(startError) };
   }
   if (!event) {
@@ -41,6 +52,19 @@ export function classifyTerminal(
 
 export function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** R9 connection-loss detection (ADR-0090, #147). A structured
+ *  `IpcError.code` — when present — is authoritative: `connection_lost`
+ *  (socket errored) and `closed_unexpectedly` (socket closed with
+ *  requests/streams pending) classify as connection loss, and an
+ *  unrelated code (`auth_failed`, …) NEVER does, whatever its message
+ *  says. Message-only errors fall back to the documented text sniff. */
+export function isConnectionLoss(error: unknown): boolean {
+  if (error instanceof IpcError && error.code !== undefined) {
+    return (CONNECTION_LOSS_CODES as readonly string[]).includes(error.code);
+  }
+  return /connection lost|closed unexpectedly/i.test(messageOf(error));
 }
 
 /** One user request carried to exactly one terminal outcome (law 10). */

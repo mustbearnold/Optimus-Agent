@@ -16,9 +16,22 @@ export type TurnOutcome =
   | { kind: 'awaiting-approval' }
   | { kind: 'disconnected' };
 
+/** Known connection-loss codes (ADR-0090 follow-up, #147). `code` is an
+ *  open string — a future wire or server frame may carry an unrelated
+ *  code and must NOT classify as connection loss — and the classifier
+ *  only matches these two. */
+export type IpcErrorCode = 'connection_lost' | 'closed_unexpectedly';
+
+/** The codes the R9 classifier treats as connection loss. */
+export const CONNECTION_LOSS_CODES: readonly IpcErrorCode[] = [
+  'connection_lost',
+  'closed_unexpectedly',
+];
+
 /** A transport-level failure surfaced as a typed error (ADR-0090).
- *  The wire flattens JSON-RPC codes to text, so `code` is undefined today;
- *  a future additive transport change may attach a structured cause. */
+ *  The wire flattens JSON-RPC codes to text, so `code` is undefined for
+ *  server-side failures; the ws transport attaches a structured
+ *  connection-loss cause when the socket itself failed (additive, #147). */
 export class IpcError extends Error {
   readonly code?: string;
   constructor(message: string, code?: string) {

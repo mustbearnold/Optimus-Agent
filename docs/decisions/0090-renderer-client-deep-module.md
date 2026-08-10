@@ -57,8 +57,10 @@ renderer's single consumer of `OptimusTransport`:
   once, classified as `completed | failed | cancelled |
   awaiting-approval | disconnected`. R4 folding (`resume_error` →
   `failed`, `still_pending` → `awaiting-approval`), R7 grant-before-
-  resolve ordering, and R9 interpretation (text-sniff
-  `connection lost|closed unexpectedly`, kept in one documented place)
+  resolve ordering, and R9 interpretation (structured `IpcError.code`
+  first — `connection_lost` | `closed_unexpectedly`, #147 — with the
+  text-sniff `connection lost|closed unexpectedly` as the documented
+  fallback for message-only transports, kept in one documented place)
   live inside the module.
 - A minimal ordered `RuntimeObserver` logs every call and stream event in
   arrival order (law 11).

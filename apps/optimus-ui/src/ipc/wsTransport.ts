@@ -7,6 +7,7 @@ import type {
   ProjectRootSelection,
   StreamEvent,
 } from './contracts';
+import { IpcError } from './client/types';
 import { windowAction as bridgeWindowAction } from './windowBridge';
 
 /**
@@ -82,13 +83,18 @@ class WsTransport {
       };
       socket.onerror = () => {
         if (!this.closed) {
-          this.failEverything(new Error('web socket connection failed'));
-          rejectReady(new Error('web socket connection failed'));
+          // Structured R9 cause (#147): the socket errored — the
+          // client classifies `connection_lost` without sniffing text.
+          const error = new IpcError('web socket connection failed', 'connection_lost');
+          this.failEverything(error);
+          rejectReady(error);
         }
       };
       socket.onclose = () => {
         if (!this.closed) {
-          this.failEverything(new Error('web socket closed unexpectedly'));
+          // Structured R9 cause (#147): the socket closed with
+          // requests or streams pending — `closed_unexpectedly`.
+          this.failEverything(new IpcError('web socket closed unexpectedly', 'closed_unexpectedly'));
         }
       };
       // The hello result (id 1) resolves readiness; the host.ready

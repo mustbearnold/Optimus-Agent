@@ -174,6 +174,44 @@ describe('turn terminal classification (R4/R9)', () => {
     await expect(outcomeOf(outcome)).resolves.toEqual({ kind: 'disconnected' });
   });
 
+  it('R9: a structured closed_unexpectedly code classifies as disconnected (#147)', async () => {
+    const transport = new FakeTransport();
+    transport.streamFactory = () =>
+      rejectingHandle(new IpcError('web socket closed unexpectedly', 'closed_unexpectedly'));
+    const client = createOptimusClient(transport);
+    const { outcome } = client.chat('s1').send({ message: 'hi', provider: 'offline' }, () => undefined);
+    await expect(outcomeOf(outcome)).resolves.toEqual({ kind: 'disconnected' });
+  });
+
+  it('R9: a structured connection_lost code classifies as disconnected (#147)', async () => {
+    const transport = new FakeTransport();
+    transport.streamFactory = () =>
+      rejectingHandle(new IpcError('web socket connection failed', 'connection_lost'));
+    const client = createOptimusClient(transport);
+    const { outcome } = client.chat('s1').send({ message: 'hi', provider: 'offline' }, () => undefined);
+    await expect(outcomeOf(outcome)).resolves.toEqual({ kind: 'disconnected' });
+  });
+
+  it('R9: a message-only rejection falls back to the text sniff (#147)', async () => {
+    const transport = new FakeTransport();
+    transport.streamFactory = () => rejectingHandle(new Error('connection lost'));
+    const client = createOptimusClient(transport);
+    const { outcome } = client.chat('s1').send({ message: 'hi', provider: 'offline' }, () => undefined);
+    await expect(outcomeOf(outcome)).resolves.toEqual({ kind: 'disconnected' });
+  });
+
+  it('R9: an unrelated structured code is not misclassified as connection loss (#147)', async () => {
+    const transport = new FakeTransport();
+    transport.streamFactory = () =>
+      rejectingHandle(new IpcError('authentication failed', 'auth_failed'));
+    const client = createOptimusClient(transport);
+    const { outcome } = client.chat('s1').send({ message: 'hi', provider: 'offline' }, () => undefined);
+    await expect(outcomeOf(outcome)).resolves.toEqual({
+      kind: 'failed',
+      message: 'authentication failed',
+    });
+  });
+
   it('a rejected start is failed with the REAL cause and mirrored to the event stream', async () => {
     const transport = new FakeTransport();
     const events: StreamEvent[] = [];

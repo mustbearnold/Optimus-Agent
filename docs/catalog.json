@@ -3749,7 +3749,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "1126c8283bc1e88860166f30cb789d4b7bc779afd5677a596719774c593ecfc1",
+      "content_sha256": "81d02924e27e173a4a2c5047ea26fe34874e204fb5489565ff49800bc4831b32",
       "headings": [
         "ADR-0090: Renderer client as a deep module over the frozen wire surface",
         "Status",
@@ -4778,7 +4778,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "2622cdefcfc6ce1cab303fda0ba06be0caa845005005734ca2bf87632854d0b7",
+  "documents_sha256": "a2949292d15747b712403fd61b3ece945292d868f57e6714969602f6706c0cc4",
   "routes": [
     {
       "id": "architecture.blueprint",
