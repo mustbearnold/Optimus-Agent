@@ -688,7 +688,7 @@ mod tests {
         assert!(WorkflowId::parse("a1_b-c").is_ok());
         assert!(WorkflowId::parse("Build").is_err()); // leading upper-case
         assert!(WorkflowId::parse("").is_err());
-        assert!(WorkflowId::parse(&"a".repeat(65)).is_err());
+        assert!(WorkflowId::parse("a".repeat(65).as_str()).is_err());
     }
 
     #[test]
