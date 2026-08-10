@@ -312,6 +312,14 @@ class AppSession:
         env.update({
             "DISPLAY": self.display,
             "WEBKIT_INSPECTOR_HTTP_SERVER": f"127.0.0.1:{self.inspector_port}",
+            # Port isolation: the host serve defaults to 17865, so a second
+            # app instance on the same machine (the operator's own desktop
+            # app, a sibling test, a prior crashed instance) would collide.
+            # The TUI harness learned this in b2ebfba; the desktop harness
+            # gets the same fix. `0` asks the OS for an ephemeral port, but
+            # the serve must be reachable from outside, so bind an explicit
+            # free port instead.
+            "OPTIMUS_SERVE_PORT": str(free_port()),
             "GDK_BACKEND": "x11",
             "WINIT_UNIX_BACKEND": "x11",
             "WEBKIT_DISABLE_COMPOSITING_MODE": "1",
