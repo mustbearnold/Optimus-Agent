@@ -38,6 +38,22 @@ describe('OptimusApp fixture contract', () => {
     }
   });
 
+  it('resizes the evidence workspace from the separator keyboard path', async () => {
+    // Wry-surface parity (06-preview-browser.spec.js): ArrowRight narrows
+    // the evidence workspace (the lane grows), ArrowLeft restores it.
+    const user = userEvent.setup();
+    render(<OptimusApp />);
+    await user.click(await screen.findByRole('button', { name: 'Workspace' }));
+    const separator = await screen.findByRole('separator', { name: 'Resize evidence workspace' });
+    const before = Number(separator.getAttribute('aria-valuenow'));
+    separator.focus();
+    await user.keyboard('{ArrowRight}');
+    const after = Number(separator.getAttribute('aria-valuenow'));
+    expect(after).toBeLessThan(before);
+    await user.keyboard('{ArrowLeft}');
+    expect(Number(separator.getAttribute('aria-valuenow'))).toBe(before);
+  });
+
   it('sends Auto chat and the fixture resolves it offline on first run', async () => {
     const user = userEvent.setup();
     render(<OptimusApp />);
