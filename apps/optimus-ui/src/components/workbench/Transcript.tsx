@@ -26,11 +26,6 @@ const MessageRow = memo(function MessageRow({
           <span className="message-status">{statusLabel(message.status!)}</span>
         </div>
       ) : null}
-      {message.role === 'assistant' && message.status === 'completed' && typeof message.durationMs === 'number' ? (
-        <div className="message-worked" aria-label={`Worked for ${formatDuration(message.durationMs)}`}>
-          Worked for {formatDuration(message.durationMs)} <span aria-hidden="true">›</span>
-        </div>
-      ) : null}
       {message.role === 'assistant' && message.thinking ? (
         <details
           className="thinking-block"
@@ -241,11 +236,6 @@ function statusLabel(status: RunStatus) {
     default:
       return '';
   }
-}
-
-function formatDuration(durationMs: number) {
-  const seconds = Math.max(0, Math.round(durationMs / 1000));
-  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
 }
 
 /** "thought for 3s" — the model-phase duration drives the label; the whole

@@ -259,25 +259,25 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "336072a3bf5ddbe145e9a28761405cbe3190546b4b4d82e133bc1254e06e164c",
+      "binding_sha256": "f67629f4a96a1cfd19d7d9b593bd8ea03efa716a32f0bf07371699f7e576b219",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 136
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "3c3c8188b8e503d64085173ab1e576e8e82e0a70f2fa1326e7eff2cfb8ec3772",
+      "binding_sha256": "6b824e0f7ba35f505ced0408de8f8d27800fff9568dd154ce384f5b852276d13",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 135
     },
     "decisions-0030-codex-measured-shell-and-multi-folder-projects": {
-      "binding_sha256": "2df06a141ae45a098a25f81dc0896b7612f263d2cf81e2311963cd198da27bb6",
+      "binding_sha256": "d710b2c975bd45749ab1488678a2341f5f8b53a4a364028b081c4aee265262e0",
       "document_sha256": "e04960807b683622b0c55bd5018df4592be56448dead0c40167991b3c3ea0d3c",
       "path": "docs/decisions/0030-codex-measured-shell-and-multi-folder-projects.md",
       "resolved_files": 105
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "569f1473781cf7dc601af70f86996652dba60396f1a0239a6d789795598229c2",
+      "binding_sha256": "394682ddaf5630aa627ff9dd9d5d37e283981eb3792e4145a50a79b43e9c51f9",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 137
@@ -613,7 +613,7 @@
       "resolved_files": 30
     },
     "spec-001-desktop-shell": {
-      "binding_sha256": "41b8b2d1d13e75717f51e3c0372d3736b3ac27ecc2b23db13fe1eeae6a7272f1",
+      "binding_sha256": "627efe3a054a4c1702b989e0ad81ff3475b09069d727cada87beb9f31d97a8cc",
       "document_sha256": "66612238066eeed7c7d8da359140a8b828726c40a81dbb79f258dd24fe99c10f",
       "path": "specs/001-desktop-shell/spec.md",
       "resolved_files": 116
@@ -691,7 +691,7 @@
       "resolved_files": 20
     },
     "spec-014-self-build-reliability": {
-      "binding_sha256": "1dfc141c75871cae6136a66692018e3e9e80382f2ba3da5945bf594b22b5b845",
+      "binding_sha256": "59cad4b093d4a112e35bef005df0bc199a2745b9e62b86ccccd38127d7109a1e",
       "document_sha256": "77e9681e035fb798d034ad8e328abc2360b49d5f5c93bea73d6c8d040aee080f",
       "path": "specs/014-self-build-reliability/spec.md",
       "resolved_files": 46

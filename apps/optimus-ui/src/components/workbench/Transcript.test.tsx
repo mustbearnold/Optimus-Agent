@@ -14,7 +14,6 @@ describe('Transcript', () => {
     );
 
     expect(screen.getByText('The answer is ready.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Worked for 1m 05s')).toBeInTheDocument();
     expect(screen.queryByText('Optimus')).not.toBeInTheDocument();
   });
 
@@ -154,7 +153,6 @@ describe('Transcript', () => {
     );
     // Completed turns snap to full text immediately (no fake post-stream typewriter).
     expect(screen.getByText('ABC')).toBeInTheDocument();
-    expect(screen.getByLabelText('Worked for 0m 01s')).toBeInTheDocument();
   });
 
   it('renders common assistant Markdown as rich text without exposing raw markers', () => {

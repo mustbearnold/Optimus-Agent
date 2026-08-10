@@ -855,7 +855,6 @@ select:focus-visible,
   cursor: default;
 }
 
-.message-worked,
 .message-meta {
   color: var(--faint);
   font-size: 11px;
