@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::execution_support::with_schema_lock;
-use crate::{KernelError, Message, Result, Role};
+use crate::{KernelError, Message, Result};
 
 pub mod child_ops;
 pub use child_ops::{ChildCoordinator, ChildSpawnRequest};
@@ -21,6 +21,7 @@ mod project;
 mod repair;
 
 pub use goals::{Goal, GoalBudgetReason, GoalStatus, GOALS_SCHEMA_VERSION};
+mod session_fts;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionMeta {
@@ -254,26 +255,7 @@ impl SessionStore {
         if n > 0 {
             return Ok(());
         }
-        let mut stmt = self
-            .conn
-            .prepare("SELECT id, title, messages_json FROM sessions")?;
-        let rows = stmt.query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-            ))
-        })?;
-        let tx = self.conn.unchecked_transaction()?;
-        for row in rows {
-            let (id_s, title, messages_json) =
-                row.map_err(|e| KernelError::Model(e.to_string()))?;
-            let id = Uuid::parse_str(&id_s).map_err(|e| KernelError::Model(e.to_string()))?;
-            let messages: Vec<Message> = serde_json::from_str(&messages_json).unwrap_or_default();
-            Self::reindex_fts_tx(&tx, id, &title, &messages)?;
-        }
-        tx.commit()?;
-        Ok(())
+        session_fts::backfill_if_empty(&self.conn)
     }
 
     pub fn create(&self, title: &str) -> Result<Uuid> {
@@ -321,7 +303,7 @@ impl SessionStore {
                 params![id.to_string(), title, now, now, packs_json, messages_json],
             )?;
         }
-        Self::reindex_fts_tx(&transaction, id, title, messages)?;
+        session_fts::reindex(&transaction, id, title, messages)?;
         for link in links {
             Self::persist_effect_link_tx(&transaction, id, link, &now)?;
         }
@@ -421,7 +403,7 @@ impl SessionStore {
             "INSERT INTO session_turn_events(turn_id,event_type,recorded_at) VALUES(?1,'accepted',?2)",
             params![id.to_string(), now],
         )?;
-        Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
+        session_fts::reindex(&transaction, session_id, title, messages)?;
         transaction.commit()?;
         Ok(id)
     }
@@ -487,7 +469,7 @@ impl SessionStore {
             "INSERT INTO session_turn_events(turn_id,event_type,recorded_at) VALUES(?1,?2,?3)",
             params![turn_id.to_string(), status.as_str(), now],
         )?;
-        Self::reindex_fts_tx(&transaction, session_id, title, messages)?;
+        session_fts::reindex(&transaction, session_id, title, messages)?;
         // R9 (ADR-0082): flush the accumulated effect-link batch on every
         // mid-step exit — finish_turn is the mandatory choke point for all
         // exits other than the inline step-boundary save and the approval
@@ -670,29 +652,6 @@ impl SessionStore {
         })
     }
 
-    fn reindex_fts_tx(
-        tx: &rusqlite::Transaction<'_>,
-        id: Uuid,
-        title: &str,
-        messages: &[Message],
-    ) -> Result<()> {
-        let body = messages
-            .iter()
-            .filter(|m| matches!(m.role, Role::User | Role::Assistant))
-            .map(|m| m.content.as_str())
-            .collect::<Vec<_>>()
-            .join("\n");
-        tx.execute(
-            "DELETE FROM sessions_fts WHERE session_id = ?1",
-            params![id.to_string()],
-        )?;
-        tx.execute(
-            "INSERT INTO sessions_fts(title, body, session_id) VALUES (?1, ?2, ?3)",
-            params![title, body, id.to_string()],
-        )?;
-        Ok(())
-    }
-
     pub fn exists(&self, id: Uuid) -> Result<bool> {
         let n: Option<i64> = self
             .conn
@@ -731,7 +690,7 @@ impl SessionStore {
                 |row| row.get(0),
             )?;
             let messages: Vec<Message> = serde_json::from_str(&messages_json).unwrap_or_default();
-            Self::reindex_fts_tx(&tx, id, title, &messages)?;
+            session_fts::reindex(&tx, id, title, &messages)?;
         }
         tx.commit()?;
         Ok(n > 0)
