@@ -190,6 +190,10 @@ def percentile(values: list[float], quantile: float) -> float:
     """Return a linearly interpolated percentile for a non-empty sample."""
     if not values:
         raise ValueError("percentile requires at least one value")
+    if not isinstance(quantile, (int, float)) or isinstance(quantile, bool) or not math.isfinite(quantile):
+        raise ValueError(f"quantile must be a finite number, got {quantile!r}")
+    if not 0.0 <= quantile <= 1.0:
+        raise ValueError(f"quantile must be in [0, 1], got {quantile!r}")
     ordered = sorted(values)
     if len(ordered) == 1:
         return ordered[0]

@@ -78,6 +78,18 @@ class VersioningHelpersTest(unittest.TestCase):
         self.assertEqual(versioning.option_id("--q"), "long-q")
         self.assertNotEqual(versioning.option_id("-q"), versioning.option_id("--q"))
 
+    def test_percentile_interpolates_within_valid_range(self) -> None:
+        self.assertEqual(versioning.percentile([1.0, 2.0, 3.0, 4.0], 0.0), 1.0)
+        self.assertEqual(versioning.percentile([1.0, 2.0, 3.0, 4.0], 1.0), 4.0)
+        self.assertEqual(versioning.percentile([1.0, 2.0, 3.0, 4.0], 0.5), 2.5)
+
+    def test_percentile_rejects_out_of_range_or_invalid_quantiles(self) -> None:
+        for quantile in (-0.1, 1.1, float("nan"), float("inf"), "0.5", True):
+            with self.subTest(quantile=quantile):
+                with self.assertRaises(ValueError):
+                    versioning.percentile([1.0, 2.0, 3.0], quantile)
+
+
     def test_normalized_feature_collisions_are_preserved(self) -> None:
         rows, warnings = versioning.deduplicate_features(
             [
