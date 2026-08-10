@@ -30,7 +30,26 @@ CATALOG_MD = DOCS / "CATALOG.md"
 LOCK = DOCS / "verification-lock.json"
 COMPONENTS_MD = DOCS / "COMPONENTS.md"
 BENCHMARK = ROOT / "evals" / "docs-authority" / "questions-v1.json"
-GENERATED = {CATALOG_JSON.resolve(), CATALOG_MD.resolve(), LOCK.resolve(), COMPONENTS_MD.resolve()}
+GENERATED = {
+    CATALOG_JSON.resolve(),
+    CATALOG_MD.resolve(),
+    LOCK.resolve(),
+    COMPONENTS_MD.resolve(),
+    # repository_ontology.py writes the component database on every
+    # docs-generate; it is not a document, so it is excluded from the
+    # catalog AND from binding digests.
+    (DOCS / "repository-components.json").resolve(),
+}
+
+# Binding digests must never cover files that docs-generate rewrites:
+# any binding over them re-stales the lock on every regeneration (the
+# whack-a-mole: refresh → generate → stale again). The human view of the
+# component database (specs/011-developer-tooling/repository-components.md)
+# IS a cataloged document with frontmatter and routes, so it stays in the
+# document set — but other documents' globs must not bind to it.
+BINDING_EXCLUDED = GENERATED | {
+    (SPECS / "011-developer-tooling" / "repository-components.md").resolve(),
+}
 
 REQUIRED = {
     "doc_id", "doc_type", "plane", "status", "authority", "summary",
@@ -470,7 +489,7 @@ def binding_digest(document: Document) -> tuple[str, int] | None:
             # Generated catalog and lock files are outputs of this system. A
             # lock that hashes itself can never converge, and generated views
             # are already checked byte-for-byte against their source inputs.
-            if path.resolve() in GENERATED:
+            if path.resolve() in BINDING_EXCLUDED:
                 continue
             files[path.relative_to(ROOT).as_posix()] = path
     if not files:
@@ -508,13 +527,24 @@ def load_lock() -> dict[str, Any]:
     return payload
 
 
-def validate_lock(documents: list[Document]) -> None:
+def lock_deltas(documents: list[Document]) -> tuple[list[str], list[str], list[str]]:
+    """(missing, extra, changed) doc ids vs the durable lock — the structured
+    staleness signal. `validate_lock` renders it into the error message;
+    `heal` consumes it directly, so convergence never depends on parsing a
+    message (the message text is free to change)."""
     expected = expected_lock(documents)
     actual = load_lock()["documents"]
-    if expected != actual:
-        missing = sorted(set(expected) - set(actual))
-        extra = sorted(set(actual) - set(expected))
-        changed = sorted(key for key in set(expected) & set(actual) if expected[key] != actual[key])
+    missing = sorted(set(expected) - set(actual))
+    extra = sorted(set(actual) - set(expected))
+    changed = sorted(
+        key for key in set(expected) & set(actual) if expected[key] != actual[key]
+    )
+    return missing, extra, changed
+
+
+def validate_lock(documents: list[Document]) -> None:
+    missing, extra, changed = lock_deltas(documents)
+    if missing or extra or changed:
         raise DocsError(
             "documentation source-binding lock is stale; run explicit docs-refresh. "
             f"missing={missing} extra={extra} changed={changed}"
@@ -744,25 +774,21 @@ def main() -> int:
             refresh(documents, args.doc_id)
             print(f"DOCS_REFRESHED ids={','.join(args.doc_id)}")
         elif args.command == "heal":
-            healed = 0
+            healed: list[str] = []
             for _ in range(5):
-                try:
-                    validate_lock(documents)
+                _, _, changed = lock_deltas(documents)
+                if not changed:
                     break
-                except DocsError as error:
-                    match = re.search(r"changed=\[([^\]]*)\]", str(error))
-                    if not match:
-                        raise
-                    ids = [item.strip().strip("'") for item in match.group(1).split(",")]
-                    refresh(documents, ids)
-                    generate(documents, routes)
-                    healed += 1
+                refresh(documents, changed)
+                healed.extend(changed)
+                generate(documents, routes)
             else:
                 raise DocsError("docs-heal did not converge after 5 iterations")
             result = validate_all(documents, routes)
             print(
                 "DOCS_HEALED "
-                f"iterations={healed} documents={result['documents']} "
+                f"iterations={len(healed)} ids={','.join(sorted(set(healed)))} "
+                f"documents={result['documents']} "
                 f"routes={result['routes']} benchmark={result['benchmark_top_one']:.1%}"
             )
         elif args.command == "search":

@@ -185,13 +185,19 @@ section() { printf '\n%s\n' "${B}$1${X}"; }
 UI_STAMP="$ROOT/Development/ui-build.stamp"
 
 ui_source_key() {
-  (cd "$ROOT/apps/optimus-ui" && git ls-files -z --cached --others --exclude-standard       -- src index.html index.css package.json vite.config.* tsconfig*.json public     | LC_ALL=C sort -z     | xargs -0 -r sha256sum 2>/dev/null     | sha256sum | cut -d' ' -f1)
+  # Every input to the bundle: the UI sources PLUS the workspace lockfile
+  # (dependency resolution) and the shadcn config — a dep-only bump must
+  # invalidate the stamp too.
+  (cd "$ROOT/apps/optimus-ui" && git ls-files -z --cached --others --exclude-standard       -- src index.html index.css package.json vite.config.* tsconfig*.json public components.json ../../bun.lock     | LC_ALL=C sort -z     | xargs -0 -r sha256sum 2>/dev/null     | sha256sum | cut -d' ' -f1)
 }
 
 ui_bundle_current() {
   local key stamp
   [ -f "$ROOT/apps/optimus-ui/dist/index.html" ] || return 1
   [ -z "${OPTIMUS_VERIFY_NO_CACHE:-}" ] || return 1
+  # Managed land never reads the cache (same invariant as the main verify
+  # cache): a stamp hit must not silently skip the UI build.
+  [ -z "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ] || return 1
   key="$(ui_source_key)"
   [ -n "$key" ] || return 1
   stamp="$(cat "$UI_STAMP" 2>/dev/null)"
@@ -206,9 +212,14 @@ build_react_ui() {
     printf '  %scontent-addressed hit%s: bundle matches UI sources (force with OPTIMUS_VERIFY_NO_CACHE=1)\n' "$G" "$X"
     return 0
   fi
-  run "build react ui" bun run --cwd apps/optimus-ui build
-  mkdir -p "$(dirname "$UI_STAMP")"
-  ui_source_key > "$UI_STAMP"
+  # The stamp is written ONLY on a successful build (a failed bun build
+  # must not record a green stamp — the next run would skip the build and
+  # serve the stale bundle) and never on managed land (forbid-skips never
+  # reads or writes caches).
+  if run "build react ui" bun run --cwd apps/optimus-ui build && [ -z "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ]; then
+    mkdir -p "$(dirname "$UI_STAMP")"
+    ui_source_key > "$UI_STAMP"
+  fi
 }
 
 # --- content-addressed verification cache ------------------------------------

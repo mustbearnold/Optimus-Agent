@@ -821,7 +821,9 @@ def main() -> int:
             "re-export optimus_policy::AutonomyProfile so one table owns the "
             "vocabulary (ADR-0044)"
         )
-    if not re.search(r"pub use optimus_policy::AutonomyProfile", graph_source):
+    # Whitespace-collapsed match: a rustfmt-wrapped `pub use\n  optimus_policy::AutonomyProfile` is the SAME re-export; only the exact
+    # canonical path must survive (one table owns the vocabulary).
+    if not re.search(r"pub\s+use\s+optimus_policy::AutonomyProfile", graph_source):
         fail(
             "optimus-graph must re-export optimus_policy::AutonomyProfile; "
             "a second parse table is drift"

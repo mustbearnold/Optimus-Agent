@@ -1,23 +1,10 @@
 #!/bin/sh
 # ENFORCED POLICY: all development happens on `main`. Zero worktrees, zero branches.
+# (VCS safety only — gates live in scripts/verify.sh, the single source of
+# truth; AGENTS.md rule 0 forbids adding gates to hooks.)
 branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
 if [ "$branch" != "main" ]; then
     echo "BLOCKED: commits are only allowed on 'main' (current: ${branch:-detached HEAD})." >&2
     echo "Policy: main-only development, zero worktrees. Run: git checkout main" >&2
     exit 1
-fi
-
-# Formatting gate: reject unformatted Rust before it lands. Cheap (~1-2s) and
-# universal — every committer (human or agent session) pays it, so the verify
-# run can never be invalidated by an unformatted concurrent commit again.
-# Skip with OPTIMUS_SKIP_FMT=1 on hosts without the toolchain.
-if [ -z "${OPTIMUS_SKIP_FMT:-}" ] && command -v cargo >/dev/null 2>&1; then
-  fmt_log="$(mktemp)"
-  if ! cargo fmt --all -- --check >"$fmt_log" 2>&1; then
-    echo "BLOCKED: rustfmt check failed (run: cargo fmt --all)" >&2
-    sed -n '1,24p' "$fmt_log" >&2
-    rm -f "$fmt_log"
-    exit 1
-  fi
-  rm -f "$fmt_log"
 fi

@@ -4294,7 +4294,7 @@
     },
     {
       "authority": "canonical",
-      "content_sha256": "8853bcd58f80e4bc71542f49781abc7a5ce2646ddeb3aa17c89e8bc203fc8a97",
+      "content_sha256": "0727ab551ea7d1078b6fd127e101a91608efafb9cc98f16e62f8e515c47656a3",
       "headings": [
         "Self-build reliability and responsiveness",
         "Purpose",
@@ -4778,7 +4778,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "a2949292d15747b712403fd61b3ece945292d868f57e6714969602f6706c0cc4",
+  "documents_sha256": "f817d9ffb00481a0664b39f7746db5d7796e9d5b8ec57b5b3063c02ead460bf9",
   "routes": [
     {
       "id": "architecture.blueprint",

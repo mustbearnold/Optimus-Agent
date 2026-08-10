@@ -173,6 +173,24 @@ class DocsSystemTests(unittest.TestCase):
         self.assertIsNone(locked["binding_sha256"])
         self.assertEqual(locked["resolved_files"], 0)
 
+    def test_generated_artifacts_are_excluded_from_binding_digests(self) -> None:
+        # repository_ontology.py writes docs/repository-components.json and
+        # its human view (specs/011-developer-tooling/repository-components.md)
+        # on EVERY docs-generate. Before they joined the binding exclusions,
+        # any document whose globs covered them re-staled the lock on every
+        # regeneration (refresh → generate → stale again), and docs-check
+        # failed until someone refreshed the affected ids a second time.
+        json_db = (docs.DOCS / "repository-components.json").resolve()
+        human_view = (docs.SPECS / "011-developer-tooling" / "repository-components.md").resolve()
+        self.assertIn(json_db, docs.GENERATED)
+        self.assertIn(json_db, docs.BINDING_EXCLUDED)
+        # The human view IS a cataloged document (frontmatter + routes), so
+        # it must stay in the document set — only bindings exclude it.
+        self.assertNotIn(human_view, docs.GENERATED)
+        self.assertIn(human_view, docs.BINDING_EXCLUDED)
+        for generated in (docs.CATALOG_JSON, docs.CATALOG_MD, docs.LOCK, docs.COMPONENTS_MD):
+            self.assertIn(generated.resolve(), docs.BINDING_EXCLUDED)
+
     def test_binding_globs_exclude_files_outside_git_candidate_universe(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
