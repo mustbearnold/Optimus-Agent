@@ -7,6 +7,7 @@ mod chat;
 mod children;
 mod doctor;
 mod gateway_http;
+mod gateway_supervisor;
 mod goal;
 mod parsers;
 mod read_only;
@@ -22,9 +23,9 @@ use optimus_eval::{
 };
 use optimus_kernel::{
     acknowledge_delivery, enqueue, gateway_status, list_ambiguous_sends, list_inbox, list_outbox,
-    list_outbox_receipts, list_recent_causal_turns, list_sessions, load_causal_turn, open_cron,
-    parse_causal_query, tick_cron, write_causal_export, BrowserSession, CodexAuthStore,
-    CompletionResponse, Kernel, KernelConfig, ScriptedModel, ToolCall,
+    list_recent_causal_turns, list_sessions, load_causal_turn, open_cron, parse_causal_query,
+    tick_cron, write_causal_export, BrowserSession, CodexAuthStore, CompletionResponse, Kernel,
+    KernelConfig, ScriptedModel, ToolCall,
 };
 use optimus_packs::{builtin_catalog, CapabilitySession, PackId};
 use optimus_runtime::{CampaignStepSpec, CampaignStore, Effect, JobSpec, NodeSpec, StepKind};
@@ -333,6 +334,8 @@ enum GatewayCmd {
     },
     /// Show gateway inbox/outbox/ambiguous counts (doctor-friendly)
     Status,
+    /// Multi-adapter supervisor (spec-017 R7): one worker per configured transport
+    Run,
     /// Telegram adapter (config-gated; no secrets printed)
     Telegram {
         #[command(subcommand)]
@@ -1042,22 +1045,11 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     status.ambiguous_sends
                 );
                 println!("{}", status.note);
-                // Also show recent outbox receipt flags for operator visibility.
-                for row in list_outbox_receipts(&cli.home, 5)? {
-                    let receipt = row
-                        .delivered_unix
-                        .map(|t| format!("delivered={t}"))
-                        .unwrap_or_else(|| {
-                            if row.ambiguous_send {
-                                "AMBIGUOUS".into()
-                            } else {
-                                "no-receipt".into()
-                            }
-                        });
-                    println!("  {}  {}  {}", row.message_id, row.outbound.status, receipt);
-                }
+                gateway_supervisor::status(&cli.home);
                 Ok(())
             }
+            GatewayCmd::Run => gateway_supervisor::run(cli.home.clone())
+                .map_err(|e| -> Box<dyn std::error::Error> { e.into() }),
             GatewayCmd::Telegram { cmd } => telegram_cmd::run(&cli.home, cmd.as_ref()),
         },
         Commands::Eval { cmd } => match cmd {

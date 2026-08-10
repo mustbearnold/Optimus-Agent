@@ -14,6 +14,7 @@ mod pty_session;
 mod surface_commands;
 mod surfaces;
 mod telegram;
+mod transport;
 
 pub use channel_adapters::{discord_enqueue, slack_enqueue, AdapterError, ChannelInbound};
 pub use cron::{CronAttemptView, CronClaim, CronError, CronJob, CronStore};
@@ -62,5 +63,12 @@ pub use surfaces::{
 pub use telegram::{
     load_telegram_config, poll_once as telegram_poll_once, process_inbound_reply_path,
     save_telegram_config, LiveTelegramTransport, MockTelegramTransport, SendOutcome,
-    TelegramConfig, TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate,
+    TelegramAdapter, TelegramConfig, TelegramError, TelegramPollResult, TelegramTransport,
+    TelegramUpdate,
+};
+pub use transport::{
+    adapter_cycle, cycle_once, list_transport_events, read_supervisor_snapshot,
+    record_transport_event, settlement_for_outcome, spawn_adapter_worker, spawn_snapshot_writer,
+    write_supervisor_snapshot, AdapterBuilder, AdapterCycleResult, AdapterState, AdapterStatus,
+    RawInbound, SupervisorState, TransportAdapter, TransportEvent, TransportId,
 };

@@ -27,12 +27,16 @@ mod live;
 
 pub use live::LiveTelegramTransport;
 
+mod adapter;
+
+pub use adapter::TelegramAdapter;
+
 /// How long one outbound send may hold its obligation before the sweep calls it
 /// unknown. A Bot API call that has not returned in two minutes has already
 /// stopped being a question this process can answer.
 const SEND_LEASE_SECS: u64 = 120;
 
-fn now_unix() -> u64 {
+pub(crate) fn now_unix() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs())
@@ -49,16 +53,9 @@ pub enum TelegramError {
 
 pub type Result<T> = std::result::Result<T, TelegramError>;
 
-/// Outcome of an outbound Bot API style send.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SendOutcome {
-    /// Adapter confirmed the platform accepted the message (local receipt only).
-    Confirmed { provider_message_id: String },
-    /// Network/timeout left delivery unknown — operator must recover.
-    Ambiguous { detail: String },
-    /// Definite failure (bad chat, auth, etc.).
-    Failed { detail: String },
-}
+/// Outcome of an outbound Bot API style send. Defined once on the spec-017
+/// transport contract so every adapter shares the same terminal outcomes.
+pub use crate::transport::SendOutcome;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TelegramUpdate {
@@ -369,24 +366,17 @@ fn deliver_owed_sends<T: TelegramTransport>(
         };
 
         let confirmed = matches!(outcome, SendOutcome::Confirmed { .. });
-        settle(home, &claim, settlement_for(outcome), step)?;
+        settle(
+            home,
+            &claim,
+            crate::transport::settlement_for_outcome(outcome),
+            step,
+        )?;
         if !confirmed {
             break;
         }
     }
     Ok(())
-}
-
-fn settlement_for(outcome: SendOutcome) -> OutboundSettlement {
-    match outcome {
-        SendOutcome::Confirmed {
-            provider_message_id,
-        } => OutboundSettlement::Delivered {
-            provider_message_id,
-        },
-        SendOutcome::Ambiguous { detail } => OutboundSettlement::Ambiguous { detail },
-        SendOutcome::Failed { detail } => OutboundSettlement::Failed { detail },
-    }
 }
 
 /// Record the settlement and report it in the adapter's per-cycle accounting.

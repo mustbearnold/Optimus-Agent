@@ -141,18 +141,21 @@ pub use optimus_artifacts::{
 pub use optimus_graph::PolicyMode;
 /// Operator gateway + cron store (owned by `optimus-ops`).
 pub use optimus_ops::{
-    acknowledge_delivery, assert_public_mcp_url, builtin_surface_commands, builtin_tool_id_set,
-    cancel_claim, claim_one, commands_for_surface, complete_claim, default_mock_session,
-    delivery_state, drain_one, enqueue, fail_claim, gateway_status, http_mock_bind,
-    list_ambiguous_sends, list_inbox, list_outbox, list_outbox_receipts, load_mcp_session,
-    load_telegram_config, map_mcp_offers, mark_external_send_failed, mock_http_list_tools,
-    mock_stdio_list_tools, reconcile, release_claim, renew_claim, save_telegram_config,
-    stdio_mock_bind, telegram_poll_once, CommandSurface, CronAttemptView, CronClaim, CronError,
-    CronJob, CronStore, DrainResult, GatewayClaim, GatewayError, GatewayPaths, GatewayStatus,
-    InboundMessage, MappedMcpTool, McpError, McpSessionConfig, McpToolOffer, McpTransportKind,
-    MessageClassification, MessageKind, MessageMode, MessageState, MockTelegramTransport,
-    OutboundMessage, OutboxReceipt, SessionMessage, SurfaceCommand, TelegramConfig, TelegramError,
-    TelegramPollResult, TelegramTransport, TelegramUpdate,
+    acknowledge_delivery, adapter_cycle, assert_public_mcp_url, builtin_surface_commands,
+    builtin_tool_id_set, cancel_claim, claim_one, commands_for_surface, complete_claim,
+    default_mock_session, delivery_state, drain_one, enqueue, fail_claim, gateway_status,
+    http_mock_bind, list_ambiguous_sends, list_inbox, list_outbox, list_outbox_receipts,
+    list_transport_events, load_mcp_session, load_telegram_config, map_mcp_offers,
+    mark_external_send_failed, mock_http_list_tools, mock_stdio_list_tools,
+    read_supervisor_snapshot, reconcile, record_transport_event, release_claim, renew_claim,
+    save_telegram_config, spawn_adapter_worker, spawn_snapshot_writer, stdio_mock_bind,
+    telegram_poll_once, write_supervisor_snapshot, AdapterState, AdapterStatus, CommandSurface,
+    CronAttemptView, CronClaim, CronError, CronJob, CronStore, DrainResult, GatewayClaim,
+    GatewayError, GatewayPaths, GatewayStatus, InboundMessage, MappedMcpTool, McpError,
+    McpSessionConfig, McpToolOffer, McpTransportKind, MessageClassification, MessageKind,
+    MessageMode, MessageState, MockTelegramTransport, OutboundMessage, OutboxReceipt,
+    SessionMessage, SupervisorState, SurfaceCommand, TelegramAdapter, TelegramConfig,
+    TelegramError, TelegramPollResult, TelegramTransport, TelegramUpdate, TransportAdapter,
 };
 pub use optimus_packs::ToolDesc as ToolSchema;
 pub use optimus_workflow::{
