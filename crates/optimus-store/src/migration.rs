@@ -27,7 +27,7 @@ pub(crate) fn migrate(connection: &Connection) -> Result<()> {
     let v: u32 = version.parse().map_err(|_| {
         crate::StoreError::Invariant(format!("invalid Work Graph schema version {version:?}"))
     })?;
-    if v > 7 {
+    if v > 8 {
         return Err(crate::StoreError::Invariant(format!(
             "unsupported future Work Graph schema version {v}"
         )));
@@ -229,6 +229,34 @@ pub(crate) fn migrate(connection: &Connection) -> Result<()> {
              CREATE INDEX IF NOT EXISTS idx_action_approvals_exact
              ON action_approvals(job_id,node_id,effect_hash,decision,expires_unix);
              INSERT INTO meta(key, value) VALUES ('schema_version', '7')
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
+        )?;
+        connection.execute_batch("COMMIT")?;
+    }
+    if v < 8 {
+        // R7 (spec-014, ADR-0081): durable session-scoped capability consent.
+        // Keyed (durable transcript session id, capability, CommandClass
+        // discriminator, scope_sha256, expiry). Revocation is soft (revoked_*
+        // columns) so the audit trail survives; a re-grant clears the
+        // revocation and renews the expiry.
+        connection.execute_batch("BEGIN IMMEDIATE")?;
+        connection.execute_batch(
+            "CREATE TABLE IF NOT EXISTS capability_grants (
+                id TEXT PRIMARY KEY NOT NULL,
+                session_id TEXT NOT NULL CHECK(length(session_id) > 0),
+                capability TEXT NOT NULL CHECK(length(capability) > 0),
+                command_class TEXT NOT NULL CHECK(length(command_class) > 0),
+                scope_sha256 TEXT NOT NULL CHECK(length(scope_sha256) = 64),
+                created_unix INTEGER NOT NULL CHECK(created_unix >= 0),
+                expires_unix INTEGER NOT NULL CHECK(expires_unix > created_unix),
+                revoked_unix INTEGER,
+                revoked_by TEXT,
+                reason TEXT,
+                UNIQUE(session_id, capability, command_class, scope_sha256)
+             );
+             CREATE INDEX IF NOT EXISTS idx_capability_grants_live
+             ON capability_grants(session_id, capability, command_class, scope_sha256);
+             INSERT INTO meta(key, value) VALUES ('schema_version', '8')
              ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
         )?;
         connection.execute_batch("COMMIT")?;

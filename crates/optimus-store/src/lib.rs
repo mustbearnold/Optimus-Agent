@@ -22,8 +22,9 @@ pub enum StoreError {
 
 pub type Result<T> = std::result::Result<T, StoreError>;
 
+mod capability_grants;
 mod migration;
-
+pub use capability_grants::{ActionApprovalRow, CapabilityGrantRow};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum JobStatus {
@@ -179,7 +180,7 @@ impl Store {
             let version: u32 = advertised.parse().map_err(|_| {
                 StoreError::Invariant(format!("invalid Work Graph schema version {advertised:?}"))
             })?;
-            if version > 7 {
+            if version > 8 {
                 return Err(StoreError::Invariant(format!(
                     "unsupported future Work Graph schema version {version}"
                 )));
@@ -1495,7 +1496,7 @@ mod tests {
     fn opens_and_reports_schema_version() {
         let dir = tempdir().unwrap();
         let store = Store::open(&dir.path().join("t.db")).unwrap();
-        assert_eq!(store.schema_version().unwrap(), "7");
+        assert_eq!(store.schema_version().unwrap(), "8");
     }
 
     #[test]
@@ -1766,5 +1767,190 @@ mod tests {
             .collect::<std::result::Result<_, _>>()
             .unwrap();
         assert_eq!(tables, vec!["meta"]);
+    }
+
+    const SESSION: &str = "sess-test-1";
+    const CAP: &str = "shell";
+    const CLASS: &str = "OpaqueShell";
+    fn scope_of(suffix: &str) -> String {
+        format!("{suffix:0<64}")
+    }
+
+    fn grant(store: &Store, scope: &str, now: u64) -> CapabilityGrantRow {
+        store
+            .grant_capability(SESSION, CAP, CLASS, scope, 0, now)
+            .unwrap()
+    }
+
+    #[test]
+    fn capability_grant_defaults_to_8h_ttl_and_is_live() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope = scope_of("a");
+        let row = grant(&store, &scope, 1_000);
+        assert_eq!(row.expires_unix - row.created_unix, 8 * 3600);
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope, 1_000)
+            .unwrap()
+            .is_some());
+    }
+
+    #[test]
+    fn capability_grant_ttl_is_clamped_to_24h_cap() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope = scope_of("b");
+        let row = store
+            .grant_capability(SESSION, CAP, CLASS, &scope, 7 * 24 * 3600, 1_000)
+            .unwrap();
+        assert_eq!(row.expires_unix - row.created_unix, 24 * 3600);
+    }
+
+    #[test]
+    fn capability_grant_expires() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope = scope_of("c");
+        grant(&store, &scope, 1_000);
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope, 1_000 + 8 * 3600)
+            .unwrap()
+            .is_none());
+    }
+
+    #[test]
+    fn capability_grant_scope_mismatch_is_not_live() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        grant(&store, &scope_of("d"), 1_000);
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope_of("different"), 1_000)
+            .unwrap()
+            .is_none());
+    }
+
+    #[test]
+    fn capability_grant_revocation_invalidates_and_survives_for_audit() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope = scope_of("e");
+        grant(&store, &scope, 1_000);
+        assert!(store
+            .revoke_capability(SESSION, CAP, CLASS, &scope, "user", 2_000, "revoke one")
+            .unwrap());
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope, 2_000)
+            .unwrap()
+            .is_none());
+        // Second revoke of the same key is a no-op.
+        assert!(!store
+            .revoke_capability(SESSION, CAP, CLASS, &scope, "user", 2_001, "again")
+            .unwrap());
+        // Row survives for the audit trail, marked revoked.
+        let listed = store.list_capability_grants(SESSION).unwrap();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].revoked_unix, Some(2_000));
+        assert_eq!(listed[0].revoked_by.as_deref(), Some("user"));
+    }
+
+    #[test]
+    fn capability_grant_regrant_renews_after_revocation() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope = scope_of("f");
+        grant(&store, &scope, 1_000);
+        store
+            .revoke_capability(SESSION, CAP, CLASS, &scope, "user", 2_000, "revoke")
+            .unwrap();
+        // Re-grant clears the soft revocation and renews the expiry.
+        let row = store
+            .grant_capability(SESSION, CAP, CLASS, &scope, 0, 3_000)
+            .unwrap();
+        assert_eq!(row.created_unix, 3_000);
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope, 3_000)
+            .unwrap()
+            .is_some());
+        // Still one durable row — the key is unique.
+        assert_eq!(store.list_capability_grants(SESSION).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn capability_grants_are_orthogonal_across_sessions_classes_and_scopes() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope = scope_of("10");
+        store
+            .grant_capability("sess-other", CAP, CLASS, &scope, 0, 1_000)
+            .unwrap();
+        store
+            .grant_capability(SESSION, "fs", CLASS, &scope, 0, 1_000)
+            .unwrap();
+        grant(&store, &scope, 1_000);
+        // A grant in another session does not leak into this one.
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope, 1_000)
+            .unwrap()
+            .is_some());
+        assert!(store
+            .live_capability_grant("sess-other", "fs", CLASS, &scope, 1_000)
+            .unwrap()
+            .is_none());
+        assert!(store
+            .live_capability_grant(SESSION, CAP, "SystemModify", &scope, 1_000)
+            .unwrap()
+            .is_none());
+        assert_eq!(store.list_capability_grants(SESSION).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn revoke_session_capabilities_invalidates_every_live_grant_for_session() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        let scope_a = scope_of("20");
+        let scope_b = scope_of("30");
+        grant(&store, &scope_a, 1_000);
+        grant(&store, &scope_b, 1_000);
+        store
+            .grant_capability("sess-other", CAP, CLASS, &scope_a, 0, 1_000)
+            .unwrap();
+        let revoked = store
+            .revoke_session_capabilities(SESSION, "user", 2_000, "revoke all")
+            .unwrap();
+        assert_eq!(revoked, 2);
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope_a, 2_000)
+            .unwrap()
+            .is_none());
+        assert!(store
+            .live_capability_grant(SESSION, CAP, CLASS, &scope_b, 2_000)
+            .unwrap()
+            .is_none());
+        // The other session's grant is untouched.
+        assert!(store
+            .live_capability_grant("sess-other", CAP, CLASS, &scope_a, 2_000)
+            .unwrap()
+            .is_some());
+        let listed = store.list_capability_grants(SESSION).unwrap();
+        assert_eq!(listed.len(), 2);
+        assert!(listed.iter().all(|row| row.revoked_unix.is_some()));
+    }
+
+    #[test]
+    fn capability_grant_rejects_invalid_identity_and_scope() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("t.db")).unwrap();
+        assert!(matches!(
+            store.grant_capability("", CAP, CLASS, &scope_of("40"), 0, 1_000),
+            Err(StoreError::Invariant(_))
+        ));
+        assert!(matches!(
+            store.grant_capability(SESSION, "", CLASS, &scope_of("40"), 0, 1_000),
+            Err(StoreError::Invariant(_))
+        ));
+        assert!(matches!(
+            store.grant_capability(SESSION, CAP, CLASS, "not-a-sha", 0, 1_000),
+            Err(StoreError::Invariant(_))
+        ));
     }
 }
