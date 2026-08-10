@@ -30,12 +30,14 @@ messaging channels the operator may use for remote control, and both must
 ride the same claim→turn→settle spine as Telegram, Discord, Slack, and
 Email, with the same security posture:
 
-- Inbound authorization (ADR-0081): the allowlist authorizes a
-  conversation, never a permission. High-risk effects still pause for
-  SmartDeny approval.
+- Inbound authorization (AGENTS.md law 7, ADR-0081, per spec-017 R6): the
+  allowlist authorizes a conversation, never a permission. High-risk
+  effects still pause for SmartDeny approval.
 - The durable outbound ledger (ADR-0070) stays the delivery authority.
 - No adapter may require inbound TCP ports on the operator's machine,
-  unless the transport is explicitly supervised and documented.
+  unless the transport is explicitly supervised and documented (derived
+  from spec-017 R3's Socket Mode precedent and the spec-013 supervisor
+  pattern; no constitution article states it outright).
 
 The platforms differ in what they officially offer:
 
@@ -65,8 +67,10 @@ Rationale:
 - Official protocol. Security boundaries stay in platform code.
 - No inbound ports. The child talks to the platform over its own outbound
   connection; Rust talks to the child over a local unix socket.
-- The JVM dependency is an install-time cost, documented in the runbook,
-  not a runtime architecture change.
+- The JVM is a runtime process dependency of the supervised child (memory
+  footprint, startup latency), not a change to the Rust architecture; it
+  ships as a documented system dependency (runbook
+  `docs/runbooks/gateway-transports.md`, Planned).
 
 Revisit condition: if the JVM runtime becomes unacceptable, evaluate
 native `libsignal-client` binding with a dedicated review. Do not adopt
@@ -78,7 +82,9 @@ The adapter registers a webhook endpoint and validates every inbound
 request before any processing:
 
 1. The endpoint requires TLS (the operator terminates TLS at their chosen
-   reverse proxy or tunnel).
+   reverse proxy or tunnel — the operator owns that component's
+   availability and security; Optimus supervises only the adapter's
+   webhook listener).
 2. A webhook secret header must match before the payload is parsed.
 3. The sender phone number must pass the allowlist (ADR-0081).
 4. Fail-closed: any missing or invalid check refuses the inbound with the
@@ -105,12 +111,17 @@ review. Do not adopt it before that review.
 - Both adapters are ordinary `TransportAdapter` implementations with
   mock-first conformance (spec-017 R9). Live smoke requires a real account
   and is operator-initiated.
-- `signal-cli` becomes a documented system dependency (see runbook). The
-  adapter never stores its registration secrets in home config; it reads
-  the operator's existing signal-cli data directory.
-- The WhatsApp webhook adds a new public surface. It must be supervised
-  (running only under `optimus gateway run`) and its status must be
-  visible in the status surface (spec-017 R7).
+- `signal-cli` becomes a documented system dependency (runbook
+  `docs/runbooks/gateway-transports.md`, Planned). The adapter never
+  stores its registration secrets in home config; it reads the operator's
+  existing signal-cli data directory (registration/linking stays an
+  operator out-of-band step).
+- The WhatsApp webhook adds a new public surface. It runs only under
+  `optimus gateway run`; the adapter remains runnable standalone as
+  `optimus gateway whatsapp run` per spec-017 R1 (standalone serves
+  outbound + the operator-registered webhook listener), and under
+  supervisor mode its lifecycle and status are owned by the supervisor
+  (R7). Its status is visible in the status surface.
 - No change to the outbound ledger, the allowlist model, or SmartDeny.
 
 ## Alternatives considered

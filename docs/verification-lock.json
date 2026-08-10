@@ -596,12 +596,12 @@
     },
     "decisions-0091-whatsapp-signal-transport-choice": {
       "binding_sha256": "dce85547af4b5782c5bbec5693d81701a8468fdedb074893b9c834b593c3c64d",
-      "document_sha256": "cfc7a98f623e85e11ab0d2e6f70058ce08f2a7364b99346c74dfe5937ca49c55",
+      "document_sha256": "1c2d45df136ded54ac9a2a68fef79049e885ed53f8e5e49e14699e6d873bad64",
       "path": "docs/decisions/0091-whatsapp-signal-transport-choice.md",
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "d573b76614716e85941e6bd47330a29afa512f486c0a9c7435603c72a9175739",
+      "binding_sha256": "8dfa94ad14fceda6a1dfb013d0d234e9d9702e998a0e9f1315d39239d673b337",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 96
@@ -623,6 +623,12 @@
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 30
+    },
+    "runbook-gateway-transports": {
+      "binding_sha256": null,
+      "document_sha256": "815751e7864115da79100730c36b15d5523593e37a8f02017072e58ac4b27fcc",
+      "path": "docs/runbooks/gateway-transports.md",
+      "resolved_files": 0
     },
     "spec-001-desktop-shell": {
       "binding_sha256": "690fdabbb48940b105d8ccc542dd413d79df051f727a924864fce018e9a3cfa2",
@@ -793,7 +799,7 @@
       "resolved_files": 39
     },
     "specs-constitution": {
-      "binding_sha256": "2d2ae9cdf951f594fd52861e12ea175f5010176c069bbf53151fe3236ec91145",
+      "binding_sha256": "d6dcb182ae22cd98ab790dc4c5309e39c7831b8354f0fd8050fd09d46619d851",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 136
