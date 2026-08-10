@@ -4,11 +4,12 @@
 //! `spawn_decision` (optimus-host) owns the branch matrix and the
 //! 3/60 s + 15 s budget arithmetic; this module only performs the
 //! lifecycle around it: attach-first → spawn (capability probe ONLY when
-//! a spawn is needed) → ready wait (15 s from spawn, epoch pinned
-//! spawn→record-visible-or-diagnostic) → quit termination → bounded
-//! crash relaunch (3/60 s; pre-bind readiness timeouts never consume an
-//! attempt) with the single recovery affordance. The broker command
-//! answers the renderer's WS attach from the live record.
+//! a spawn is needed; an occupied desired port becomes an EPHEMERAL
+//! spawn, `serve --port 0`, #148) → ready wait (15 s from spawn, epoch
+//! pinned spawn→record-visible-or-diagnostic) → quit termination →
+//! bounded crash relaunch (3/60 s; pre-bind readiness timeouts never
+//! consume an attempt) with the single recovery affordance. The broker
+//! command answers the renderer's WS attach from the live record.
 
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
@@ -167,7 +168,7 @@ impl ServeLifecycle {
         let snapshot = ProbeSnapshot {
             record,
             record_healthy,
-            desired_port_state: PortState::Free,
+            desired_port_state: port_state(inner.port),
             capability: CapabilityProbe::Capable,
             spawn_exit: None,
             relaunch_attempts_used: 0,
@@ -179,11 +180,12 @@ impl ServeLifecycle {
             Decision::Diagnose(diagnostic) => {
                 *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(named(diagnostic));
             }
-            Decision::Spawn => self.spawn_and_wait(),
+            Decision::Spawn => self.spawn_and_wait(inner.port),
+            Decision::SpawnEphemeral => self.spawn_and_wait(0),
         }
     }
 
-    fn spawn_and_wait(&self) {
+    fn spawn_and_wait(&self, port: u16) {
         let inner = &self.0;
         let cli = match discover_cli() {
             Some(cli) => cli,
@@ -204,13 +206,15 @@ impl ServeLifecycle {
 
         // Spawn with the process secret delivered via env (ADR-0084).
         // The dial ticket is serve's own: it mints one and writes it to
-        // the record (the attach contract, R7).
+        // the record (the attach contract, R7). `port` 0 = ephemeral
+        // (#148): the record carries the real bound port, so the ready
+        // wait and attach-after-spawn below are unchanged.
         let child = Command::new(&cli)
             .arg("serve")
             .arg("--home")
             .arg(&inner.home)
             .arg("--port")
-            .arg(inner.port.to_string())
+            .arg(port.to_string())
             .env(optimus_host::PROCESS_SECRET_ENV, &inner.secret)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -235,7 +239,7 @@ impl ServeLifecycle {
             // budget and relaunch if still within it.
             if let Ok(Some(status)) = child.try_wait() {
                 let code = status.code();
-                self.on_child_exit(code);
+                self.on_child_exit(code, port);
                 return;
             }
             if let Some(record) = read_record(&inner.home) {
@@ -269,18 +273,31 @@ impl ServeLifecycle {
     /// A spawned child exited. Exit 2/3: bounded re-probe (5 s, 250 ms)
     /// → attach to a race winner, else the honest diagnostic. Any other
     /// exit before readiness: crash — consume the budget, relaunch within
-    /// 3/60 s.
-    fn on_child_exit(&self, code: Option<i32>) {
+    /// 3/60 s. `port` is the port the child was spawned on: for an
+    /// ephemeral spawn (port 0) the settle is ALWAYS the generic
+    /// diagnostic — a bind failure on `--port 0` means no port at all is
+    /// available, so naming a port would be a lie (#148).
+    fn on_child_exit(&self, code: Option<i32>, port: u16) {
         let inner = &self.0;
         *inner.child.lock().unwrap() = None;
         match code {
             Some(code) if code == optimus_host::EXIT_BIND_OR_SECURITY || code == EXIT_REFUSED => {
                 // Race recovery: the winner writes the record only after
-                // bind. Re-probe for REPROBE_WINDOW, then settle.
+                // bind. Re-probe for REPROBE_WINDOW, then settle. The
+                // port-state settle names the spawn's port — an
+                // ephemeral spawn (port 0) never settles "check port 0":
+                // its bind failure means no port at all is available,
+                // which is the generic diagnostic (#148).
                 let reprobed = re_probe(
                     &inner.home,
                     read_record,
-                    || port_state(inner.port),
+                    || {
+                        if port == 0 {
+                            PortState::Free
+                        } else {
+                            port_state(port)
+                        }
+                    },
                     record_is_healthy,
                 );
                 match reprobed {
@@ -290,7 +307,7 @@ impl ServeLifecycle {
                     Reprobed::Settled(PortState::Occupied) => {
                         *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(format!(
                             "serve failed to start: check port {}",
-                            inner.port
+                            port
                         ));
                     }
                     Reprobed::Settled(PortState::Free) => {
@@ -308,7 +325,7 @@ impl ServeLifecycle {
                     eprintln!(
                         "[optimus-tauri] serve crashed; relaunching within the 3/60 s budget"
                     );
-                    self.spawn_and_wait();
+                    self.spawn_and_wait(port);
                 } else {
                     *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(
                         "serve keeps failing to start — check the Optimus install".into(),
@@ -368,12 +385,17 @@ impl ServeLifecycle {
                     *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(named(diagnostic));
                     return;
                 }
-                Decision::Spawn => {
+                Decision::Spawn | Decision::SpawnEphemeral => {
                     let mut budget = inner.budget.lock().unwrap();
                     if budget.can_relaunch(Instant::now()) {
                         budget.record_crash(Instant::now());
                         drop(budget);
-                        lifecycle.spawn_and_wait();
+                        let port = if decision == Decision::SpawnEphemeral {
+                            0
+                        } else {
+                            inner.port
+                        };
+                        lifecycle.spawn_and_wait(port);
                     } else {
                         *inner.outcome.lock().unwrap() = ServeOutcome::Diagnostic(
                             "serve keeps failing to start — check the Optimus install".into(),

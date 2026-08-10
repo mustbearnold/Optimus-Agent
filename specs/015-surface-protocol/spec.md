@@ -547,9 +547,21 @@ and ADR-0051 (`0051-electron-now-tauri-when-the-preview-leaves-the-shell.md:22`)
   loop). TUI-side: the WS-attach fallback encountering a healthy http
   holder MUST surface the same named diagnostic terminal state (Phase B).
   Port policy: 17865 (`DEFAULT_HOST_PORT` precedent,
-  `apps/optimus-desktop/src/main.rs:34`); bind failure after a negative
-  probe exits with code 2 (spawn-race loser; ADR-0045:137-139 documented
-  the race — fail closed, never a second port). Spawn lifecycle (all
+  `apps/optimus-desktop/src/main.rs:34`); the desired port is a
+  MACHINE-GLOBAL resource but the host-runtime record is PER-HOME
+  (#148), so when the spawn decision finds the desired port OCCUPIED
+  and no record for this home exists, the spawn MUST fall back to an
+  EPHEMERAL port — `optimus serve --port 0` binds a free loopback port
+  and the record carries the real port, so attach-after-spawn and the
+  ready wait are unchanged, and two homes coexist on one machine. One
+  core per home is RECORD-based (the refusal check runs before bind),
+  so the ephemeral child still refuses exit 3 on a healthy holder of
+  ANY version/transport — the ephemeral fallback never widens the
+  same-home race, which still fails closed on the desired-port bind
+  (bind failure after a negative probe exits with code 2; the spawn
+  decision only attempts the desired port when it probed FREE).
+  ADR-0045:137-139 documented the original race — fail closed, never a
+  second port for one home. Spawn lifecycle (all
   exit codes defined): BEFORE spawning, the shell runs a capability probe
   — `cli_binary serve --help`; exit 0 = the `serve` subcommand exists =
   capable, ANY non-zero exit = stale CLI (clap's unknown-subcommand
@@ -580,30 +592,37 @@ and ADR-0051 (`0051-electron-now-tauri-when-the-preview-leaves-the-shell.md:22`)
   the 3/60 s budget into the terminal affordance). On spawn
   exit 2 or 3: re-probe (250 ms probes) for 5 s, then attach if a v2/ws
   record appears (race recovery — the winner writes the record only
-  after bind, `record.rs:68-80`); if the port is occupied and no
- record exists, surface the honest diagnostic "serve failed to start:
- check port 17865" (NOT "reinstall" — a bind failure is not a stale
- CLI); if after the 5 s re-probe NO record appears AND the port is
- free, surface the generic diagnostic "serve failed to start" (no
- port hint — exit 2 covers bind OR security-validation failure
- (`main.rs:173-178`, `server.rs:110-130`); a security failure leaves
- the port free, and it is deterministic, so the diagnostic is a
- terminal state through the single recovery affordance — no relaunch
- loop). The branch list is exhaustive over record-state × port-state
- × probe-health (probe = TCP connect + 200 + `ok:true`,
- `record.rs:104-115`): a HEALTHY holder of ANY record
- version/transport ends in its named holder diagnostic (v1/http
- holder → "a host is already serving this home in HTTP mode"; v2/ws
- holder → attach); an occupied port whose probe is UNHEALTHY — an
- unrelated occupier of 17865, or a dead holder's port reused —
- resolves to the "check port 17865"-class diagnostic, never the
- false serving-home diagnostic; "check port 17865" also applies when
- no record at all exists; a STALE record of ANY version (v1 or v2,
- ws or http) with a free port (holder died mid-window) resolves to
- the generic terminal diagnostic — the re-probe window is never a
- fresh-spawn point (the stale-fall-through rule governs the pre-spawn
- attach decision only; spawning again inside the window would need a
- relaunch budget and contradict the no-relaunch-loop design). On any other exit (0, 1, 101/panic): the bounded crash-relaunch
+  after bind, `record.rs:68-80`); if the spawn was on the DESIRED port
+  and the port is occupied with no record after the re-probe, surface
+  the honest diagnostic "serve failed to start: check port 17865"
+  (NOT "reinstall" — a bind failure is not a stale CLI); if after the
+  5 s re-probe NO record appears AND the port is free — or the spawn
+  was EPHEMERAL (an ephemeral bind failure means no port at all is
+  available, so naming a port would be a lie) — surface the generic
+  diagnostic "serve failed to start" (no
+  port hint — exit 2 covers bind OR security-validation failure
+  (`main.rs:173-178`, `server.rs:110-130`); a security failure leaves
+  the port free, and it is deterministic, so the diagnostic is a
+  terminal state through the single recovery affordance — no relaunch
+  loop). The branch list is exhaustive over record-state × port-state
+  × probe-health (probe = TCP connect + 200 + `ok:true`,
+  `record.rs:104-115`): a HEALTHY holder of ANY record
+  version/transport ends in its named holder diagnostic (v1/http
+  holder → "a host is already serving this home in HTTP mode"; v2/ws
+  holder → attach); a healthy holder of the SAME home blocks the
+  ephemeral fallback too — the child refuses (exit 3) regardless of
+  the port it was asked to bind (one core per home is record-based);
+  an occupied desired port with no record for this home — an
+  unrelated occupier of 17865, or a dead holder's port reused —
+  resolves to the EPHEMERAL spawn (never the false serving-home
+  diagnostic, never the pre-spawn "check port" class); "check port
+  17865" is exclusively the POST-spawn settle of a desired-port spawn
+  that raced into a bind failure; a STALE record of ANY version (v1 or
+  v2, ws or http) with a free port (holder died mid-window) resolves
+  to the generic terminal diagnostic — the re-probe window is never a
+  fresh-spawn point (the stale-fall-through rule governs the pre-spawn
+  attach decision only; spawning again inside the window would need a
+  relaunch budget and contradict the no-relaunch-loop design). On any other exit (0, 1, 101/panic): the bounded crash-relaunch
   path applies (3 attempts / 60 s), then the terminal affordance. The
   app MUST terminate the spawned backend on quit, and on backend crash
   MUST surface exactly one recovery affordance (a single named shell
@@ -892,14 +911,16 @@ Phase A (milestone: desktop is a pure protocol client):
   bounded (15 s from spawn, R8) to the same affordance WITHOUT
   consuming a crash-relaunch attempt; a capability-probe failure
   (`serve --help` exit-code probe, R8) surfaces the reinstall
-  diagnostic; a port-occupied-no-record exit 2 surfaces "check port
-  17865"; an exit-2-with-free-port (security-validation failure)
-  surfaces the generic "serve failed to start" diagnostic as a
-  terminal state (R8). The shell-level SURFACING of the named
+  diagnostic; a desired-port spawn whose bind raced into rejection —
+  exit 2 with the port still occupied after the re-probe — surfaces
+  "check port 17865"; an ephemeral-spawn failure (no port at all
+  available) and an exit-2-with-free-port (security-validation
+  failure) surface the generic "serve failed to start" diagnostic as a
+  terminal state (R8, #148). The shell-level SURFACING of the named
   diagnostics is proven by launch-gate + manual verification per the
   spec-001 evidence ceiling (the packaged shell's UI is not
   scriptable); the DECISION logic behind the surfacing is fully
-  unit-tested (`spawn_decision.rs`, A4/A5). (proven 2026-08-07: spawn_decision.rs branch-matrix unit tests — relaunch budget 3/60 s, pre-bind 15 s bound without consuming an attempt, capability-probe failure diagnostic, port-occupied-no-record exit 2, exit-2-with-free-port generic diagnostic)
+  unit-tested (`spawn_decision.rs`, A4/A5). (proven 2026-08-07: spawn_decision.rs branch-matrix unit tests — relaunch budget 3/60 s, pre-bind 15 s bound without consuming an attempt, capability-probe failure diagnostic, port-occupied-no-record exit 2, exit-2-with-free-port generic diagnostic; 2026-08-10: ++ occupied-desired-port → SpawnEphemeral branch, stale-CLI-beats-fallback priority, #148)
 - [x] A8. Given the surface-contract gate, when it runs, then it exits 0
   with the wire surface exactly equal to the pinned wire set (R2), the
   shell-gated staging bucket reconciled (R12), the event vocabulary and
@@ -951,6 +972,18 @@ Phase B (one protocol boundary complete — follow-on issues at landing):
   HTTP mode MUST either move its chat surface to the streaming trio or be
   explicitly exempted from R2's supersession (recorded in the gate), and
   stays green under the matrix gate.
+- [x] A15. Given two homes on one machine with the desired port (17865)
+  held by the first home's serve, when a second surface (TUI, CLI, or
+  desktop shell) launches for a fresh home, then the second instance
+  spawns on an EPHEMERAL port (`serve --port 0`; the record carries the
+  real port) and reaches ready; a healthy holder of the SAME home still
+  refuses (exit 3, unchanged — one core per home); when no port at all
+  is available the named diagnostics (B1) are unchanged. (proven
+  2026-08-10: branch-table test `occupied_port_without_record_spawns_ephemeral`
+  + `stale_cli_beats_the_ephemeral_fallback` in `spawn_decision.rs`; the
+  real-binary two-home test `second_home_spawns_ephemerally_when_the_desired_port_is_held`
+  in `client.rs` — B spawns on a free port, hello round-trips (the TUI's
+  "· ready" state), stdio EOF exits 0; #148)
 
 ## Implementation phases
 
@@ -966,7 +999,10 @@ Phase A (the milestone's core — desktop is a protocol client):
   diagnostic for http transport at A1; the ws-mode diagnostic joins from
   A2 — R1/R8 mandate both transports); exit codes pinned 2/3 (bind-failure 2
   is a CHANGE recorded in ADR-0083 — today's HTTP mode exits 1);
-  port policy 17865 with fail-closed bind-failure exit 2; `--stdio` opens
+  port policy 17865 with fail-closed bind-failure exit 2; `--port 0`
+  (ephemeral) already binds a free loopback port and writes the record
+  with the real port — `serve` itself needs NO change for the spawn-side
+  ephemeral fallback (#148); `--stdio` opens
   the record + WS listener additively and is the ONLY mode that reads
   stdin; ticket + process secret always written to serve's env by the
   spawning shell (secret minted per launch, CSPRNG >= 32); manual-start
@@ -1052,12 +1088,16 @@ Phase A (the milestone's core — desktop is a protocol client):
   (a healthy backend is ipso facto capable; probing before attach could
   surface a spurious reinstall diagnostic while a healthy record exists)
   → spawn only when attach fails (the R8 capability probe runs ONLY
-  when a spawn is needed) → ready wait (15 s from spawn, R8) → quit
+  when a spawn is needed; a spawn whose desired port probes OCCUPIED
+  falls back to an EPHEMERAL port — `serve --port 0`, the record
+  carries the real port, #148) → ready wait (15 s from spawn, R8) → quit
   termination → bounded crash relaunch (3/60 s; a pre-bind readiness
   timeout does NOT consume an attempt, R8) with the single recovery
   affordance; healthy-v1/http holder → named
   diagnostic terminal state; spawn exit 2/3 → bounded re-probe (5 s,
-  250 ms probes) → attach or "check port 17865" diagnostic; capability-
+  250 ms probes) → attach, "check port 17865" (desired-port spawn only;
+  an ephemeral spawn settles generic — no port hint when no port at all
+  is available), or the generic diagnostic; capability-
   probe failure → reinstall diagnostic (R8).
 - A5. Gates + tests: `check-surface-contract.py` owns the full formula
   (registry − non-wire channels − SUPERSEDED + trio + protocol-method
@@ -1233,7 +1273,10 @@ Phase B (one protocol boundary complete):
 - B1. TUI over stdio: `optimus-tui` spawns `optimus serve --stdio` and
   speaks the protocol instead of in-process `handle_ipc`; on exit 2 or 3,
   or no record after the bounded wait (5 s, 250 ms probes), the TUI
-  attaches over WS using the record token (the R11 fallback); a healthy
+  attaches over WS using the record token (the R11 fallback); when the
+  desired port is held by another home's serve, the spawn falls back to
+  an EPHEMERAL port (`--port 0`; the record carries the real port, so
+  attach-after-spawn and the named diagnostics are unchanged — #148); a healthy
   http holder → named diagnostic terminal state; the offline provider env
   (`OPTIMUS_OFFLINE_LATENCY_MS`) passes through to the serve child so the
   tmux gates keep working (spec-010).

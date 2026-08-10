@@ -12,11 +12,20 @@
 //! Lifecycle (R8): attach-first — a healthy backend is ipso facto
 //! capable, so probing capability before attach could surface a spurious
 //! reinstall diagnostic while a healthy record exists; the capability
-//! probe runs ONLY when a spawn is needed. After spawn: ready wait
-//! (15 s from spawn, epoch pinned spawn→record-visible-or-diagnostic) →
-//! quit termination → bounded crash relaunch (3/60 s; a pre-bind
-//! readiness timeout does NOT consume an attempt) → spawn exit 2/3 →
-//! bounded re-probe (5 s, 250 ms probes) → attach or diagnostic.
+//! probe runs ONLY when a spawn is needed. Port policy (#148): the
+//! desired port (17865) is a machine-global resource but the record is
+//! per-home — when the desired port is OCCUPIED at decision time and no
+//! record for THIS home exists, the decision is an EPHEMERAL spawn
+//! (`serve --port 0`; the record carries the real port, so
+//! attach-after-spawn is unchanged and two homes coexist on one
+//! machine). One core per home is record-based, not port-based, so the
+//! ephemeral child still refuses (exit 3) on a healthy holder. The
+//! "check port" diagnostic survives ONLY for the post-spawn settle: a
+//! desired-port spawn that raced into a bind failure. After spawn:
+//! ready wait (15 s from spawn, epoch pinned spawn→record-visible-or-
+//! diagnostic) → quit termination → bounded crash relaunch (3/60 s; a
+//! pre-bind readiness timeout does NOT consume an attempt) → spawn exit
+//! 2/3 → bounded re-probe (5 s, 250 ms probes) → attach or diagnostic.
 
 use std::path::Path;
 use std::time::Duration;
@@ -64,7 +73,9 @@ pub struct ProbeSnapshot {
     /// Health of the record's port (Bearer-gated GET /api/health).
     pub record_healthy: bool,
     /// State of the desired port (17865) — meaningful when a spawn is
-    /// being considered.
+    /// being considered: FREE → spawn on the desired port; OCCUPIED →
+    /// spawn on an ephemeral port (the desired port is a machine-global
+    /// resource and another home may hold it; #148).
     pub desired_port_state: PortState,
     /// `cli_binary serve --help` result. Only consulted when attach
     /// failed and a spawn is needed (R8: probe only when needed).
@@ -81,8 +92,14 @@ pub struct ProbeSnapshot {
 pub enum Decision {
     /// Attach to the healthy v2/ws holder (attach-first, R8).
     Attach { port: u16, token: String },
-    /// Spawn `optimus serve` now (the capability probe already passed).
+    /// Spawn `optimus serve` now (the capability probe already passed)
+    /// on the DESIRED port (17865).
     Spawn,
+    /// Spawn `optimus serve --port 0` now: the desired port is held by
+    /// another home's serve (the port is machine-global, the record is
+    /// per-home; #148). The record carries the real bound port, so
+    /// attach-after-spawn and the ready wait are unchanged.
+    SpawnEphemeral,
     /// Terminal named diagnostic — the single recovery affordance, no
     /// relaunch loop.
     Diagnose(Diagnostic),
@@ -98,8 +115,10 @@ pub enum Diagnostic {
     /// C3). Named diagnostic terminal state.
     HttpHolder { port: u16, message: String },
     /// Port occupied and no record appeared after the bounded re-probe:
-    /// an honest bind diagnostic, NOT "reinstall" (a bind failure is not
-    /// a stale CLI).
+    /// the post-spawn settle of a DESIRED-port spawn that raced into a
+    /// bind failure — an honest bind diagnostic, NOT "reinstall" (a bind
+    /// failure is not a stale CLI). Pre-spawn, an occupied desired port
+    /// is an ephemeral spawn, not this diagnostic (#148).
     PortOccupiedNoRecord { port: u16 },
     /// Port free and no record appeared after the bounded re-probe.
     SpawnFailedGeneric,
@@ -158,9 +177,13 @@ pub fn decide(snapshot: &ProbeSnapshot) -> Decision {
         return Decision::Diagnose(Diagnostic::StaleCli);
     }
     if snapshot.desired_port_state == PortState::Occupied {
-        return Decision::Diagnose(Diagnostic::PortOccupiedNoRecord {
-            port: crate::serve::DEFAULT_HOST_PORT,
-        });
+        // The desired port is a machine-global resource and another home
+        // (or an unrelated process) holds it: spawn on an EPHEMERAL port
+        // instead of a terminal diagnostic (#148). The record carries
+        // the real port, so attach-after-spawn keeps working; one core
+        // per home is record-based, so the ephemeral child still refuses
+        // (exit 3) on a healthy holder.
+        return Decision::SpawnEphemeral;
     }
     Decision::Spawn
 }
@@ -426,7 +449,12 @@ mod tests {
     }
 
     #[test]
-    fn occupied_port_without_record_diagnoses_check_port() {
+    fn occupied_port_without_record_spawns_ephemeral() {
+        // The desired port is machine-global but the record is per-home:
+        // another home's serve may hold 17865. Pre-spawn, an occupied
+        // desired port is an EPHEMERAL spawn (`serve --port 0`), not the
+        // check-port diagnostic (#148) — the record carries the real
+        // port, so attach-after-spawn keeps working.
         let decision = decide(&snapshot(
             None,
             false,
@@ -434,16 +462,30 @@ mod tests {
             CapabilityProbe::Capable,
             None,
         ));
-        assert_eq!(
-            decision,
-            Decision::Diagnose(Diagnostic::PortOccupiedNoRecord { port: 17865 })
-        );
+        assert_eq!(decision, Decision::SpawnEphemeral);
+    }
+
+    #[test]
+    fn stale_cli_beats_the_ephemeral_fallback() {
+        // A stale CLI is diagnosed even when the desired port is held:
+        // the fallback assumes `serve --port 0` exists.
+        let decision = decide(&snapshot(
+            None,
+            false,
+            PortState::Occupied,
+            CapabilityProbe::StaleCli,
+            None,
+        ));
+        assert_eq!(decision, Decision::Diagnose(Diagnostic::StaleCli));
     }
 
     #[test]
     fn spawn_exit_2_with_occupied_port_is_check_port_not_reinstall() {
         // A bind failure is not a stale CLI: the honest diagnostic names
-        // the port (NOT "reinstall").
+        // the port (NOT "reinstall"). This is the POST-spawn settle of a
+        // desired-port spawn that raced into a bind failure — the
+        // pre-spawn occupied state (no spawn_exit) is the ephemeral
+        // fallback instead (see occupied_port_without_record_spawns_ephemeral).
         let decision = decide(&snapshot(
             None,
             false,

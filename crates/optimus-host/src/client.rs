@@ -6,7 +6,12 @@
 //! - [`connect`]: spawn-or-attach (spec-015 B1, R11). Spawn
 //!   `optimus serve --stdio`; on exit 2/3 or no record after the bounded
 //!   wait, attach over WebSocket with the record token; a healthy HTTP
-//!   holder is a named diagnostic.
+//!   holder is a named diagnostic. Port policy (#148): the desired port
+//!   is machine-global but the record is per-home, so when the desired
+//!   port is held by another home's serve, the spawn falls back to an
+//!   EPHEMERAL port (`serve --port 0`) — the record carries the real
+//!   port, so the attach-after-spawn fallback and the named diagnostics
+//!   are unchanged when no port at all is available.
 //! - [`HostClient`]: newline-delimited JSON-RPC 2.0 over the child's pipes
 //!   or the same values in WebSocket text frames.
 //!
@@ -34,6 +39,7 @@ use serde_json::{json, Value};
 use crate::contract::PROTOCOL_VERSION;
 use crate::record::{healthy_record, HostRuntimeRecord};
 use crate::serve::{EXIT_BIND_OR_SECURITY, EXIT_REFUSED};
+use crate::spawn_decision::PortState;
 
 /// Bounded wait for the child's record: 5 s at 250 ms probes (spec-015 B1).
 pub const RECORD_WAIT: Duration = Duration::from_secs(5);
@@ -117,10 +123,25 @@ pub fn resolve_serve_binary() -> Option<PathBuf> {
     })
 }
 
+/// Is the desired port bindable? (A bind check, not a health probe.)
+fn port_state(port: u16) -> PortState {
+    match std::net::TcpListener::bind(("127.0.0.1", port)) {
+        Ok(listener) => {
+            drop(listener);
+            PortState::Free
+        }
+        Err(_) => PortState::Occupied,
+    }
+}
+
 /// Spawn-or-attach (spec-015 B1, R11).
 ///
 /// 1. Spawn `optimus serve --stdio --home <home> --port <port>` with the
-///    parent environment (the offline latency env passes through).
+///    parent environment (the offline latency env passes through). When
+///    the desired port is held by another home's serve (the port is
+///    machine-global, the record is per-home; #148), spawn with
+///    `--port 0` instead — the record carries the real port, so the
+///    rest of this flow is unchanged.
 /// 2. Probe the record for [`RECORD_WAIT`] at [`RECORD_PROBE`] intervals.
 /// 3. On a record + live child, speak stdio.
 /// 4. On exit 2/3 or no record in time, read the record: a healthy WS
@@ -130,6 +151,16 @@ pub fn connect(home: &Path, port: u16) -> ConnectOutcome {
         return ConnectOutcome::Diagnostic(ConnectDiagnostic::BinaryNotFound);
     };
 
+    // Port fallback (#148): an ephemeral bind (`--port 0`) keeps the
+    // one-core-per-home rule intact (the child still refuses exit 3 on
+    // a healthy holder — refusal is record-based) while letting two
+    // homes coexist on one machine.
+    let spawn_port = if port_state(port) == PortState::Occupied {
+        0
+    } else {
+        port
+    };
+
     let mut child = match Command::new(&binary)
         .args([
             "serve",
@@ -137,7 +168,7 @@ pub fn connect(home: &Path, port: u16) -> ConnectOutcome {
             "--home",
             &home.to_string_lossy(),
             "--port",
-            &port.to_string(),
+            &spawn_port.to_string(),
         ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -671,6 +702,68 @@ mod tests {
         let home = tempfile::tempdir().expect("temp home");
         let path = record_path(home.path());
         assert!(path.starts_with(home.path()));
+    }
+
+    #[test]
+    fn port_state_reflects_a_bind_probe() {
+        // A held port probes Occupied; a free one probes Free (bind port
+        // 0, take the port, drop the listener — the state the probe sees
+        // is the state at probe time).
+        let holder = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let held = holder.local_addr().unwrap().port();
+        assert_eq!(port_state(held), PortState::Occupied);
+        let free = std::net::TcpListener::bind("127.0.0.1:0")
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port();
+        assert_eq!(port_state(free), PortState::Free);
+    }
+
+    #[test]
+    fn second_home_spawns_ephemerally_when_the_desired_port_is_held() {
+        // #148: the desired port is machine-global but the record is
+        // per-home. Home A's serve holds the port (here: a plain
+        // listener — port state is what matters); connecting a fresh
+        // home must spawn on an EPHEMERAL port, reach the record, and
+        // speak the wire — not die at launch.
+        let _guard = ENV_LOCK.lock().unwrap();
+        let Some(binary) = serve_binary() else {
+            eprintln!("skipping: optimus binary not built");
+            return;
+        };
+        std::env::set_var("OPTIMUS_SERVE_BIN", &binary);
+        let holder = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let desired = holder.local_addr().unwrap().port();
+        let home = tempfile::tempdir().expect("temp home");
+
+        let mut client = match connect(home.path(), desired) {
+            ConnectOutcome::Spawned(client) => client,
+            ConnectOutcome::Attached(_) => {
+                panic!("nothing held the home; must spawn")
+            }
+            ConnectOutcome::Diagnostic(diagnostic) => {
+                panic!("connect failed: {diagnostic}")
+            }
+        };
+
+        let record = healthy_record(home.path()).expect("record after spawn");
+        assert_ne!(
+            record.port, desired,
+            "the spawn must land on a free port, not the held desired one"
+        );
+        assert!(record.port > 0);
+
+        // The carrier is ready: hello round-trips and a registry call
+        // proves the same dispatch path (the TUI's "· ready" state).
+        let reply = client.hello().expect("hello reply");
+        assert_eq!(reply["protocol_version"], PROTOCOL_VERSION);
+        let doctor = client.call("doctor", json!({})).expect("doctor reply");
+        assert!(doctor.is_object());
+
+        client.close(); // Drop stdin; the child must exit 0 (R9).
+        let code = client.wait().expect("reap serve");
+        assert_eq!(code, 0, "stdio EOF must exit 0 (R9)");
     }
 
     #[test]
