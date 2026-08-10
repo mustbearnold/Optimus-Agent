@@ -120,7 +120,11 @@ fn match_expression(raw: &str) -> String {
                 return None;
             }
             let term = format!("\"{cleaned}\"*");
-            seen.insert(term.clone()).then_some(term)
+            // FTS5's unicode61 tokenizer folds case, so `Key key KEY` are the
+            // same term to the index. Dedup on the folded form rather than the
+            // literal spelling so differently-cased repeats collapse too.
+            let key = cleaned.to_ascii_lowercase();
+            seen.insert(key).then_some(term)
         })
         .collect::<Vec<_>>()
         .join(" ")
@@ -393,6 +397,18 @@ mod tests {
         assert_eq!(
             match_expression("deploy key deploy"),
             "\"deploy\"* \"key\"*"
+        );
+    }
+
+    #[test]
+    fn repeated_words_collapse_regardless_of_case() {
+        // unicode61 folds case, so `Key key KEY` are one term to the index.
+        // Dedup must use the folded form, not the literal spelling, or the
+        // same word spelled differently would produce redundant ANDed terms.
+        assert_eq!(match_expression("Key key KEY"), "\"Key\"*");
+        assert_eq!(
+            match_expression("Deploy key deploy KEY"),
+            "\"Deploy\"* \"key\"*"
         );
     }
 }
