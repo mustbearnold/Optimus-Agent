@@ -109,6 +109,27 @@ impl CommandClass {
             Self::ProjectExecute => "project_execute",
         }
     }
+
+    /// Parse a `CommandClass` from its canonical `as_str()` name.
+    ///
+    /// The session-consent host routes accept the class discriminator from
+    /// the UI and re-derive the capability server-side (ADR-0081); the class
+    /// is never trusted to carry its own capability.
+    #[must_use]
+    pub fn parse(name: &str) -> Option<Self> {
+        match name {
+            "package_sync" => Some(Self::PackageSync),
+            "package_add" => Some(Self::PackageAdd),
+            "host_install" => Some(Self::HostInstall),
+            "git_remote_push" => Some(Self::GitRemotePush),
+            "remote_read" => Some(Self::RemoteRead),
+            "remote_transfer" => Some(Self::RemoteTransfer),
+            "github_remote" => Some(Self::GitHubRemote),
+            "opaque_shell" => Some(Self::OpaqueShell),
+            "project_execute" => Some(Self::ProjectExecute),
+            _ => None,
+        }
+    }
 }
 
 /// Flags that turn a project-local install into a host-wide one.
@@ -465,6 +486,7 @@ fn normalized_tool_name(program: &str) -> String {
         .to_ascii_lowercase()
         .trim_end_matches(".exe")
         .trim_end_matches(".cmd")
+        .trim_end_matches(".bat")
         .to_string()
 }
 
@@ -966,6 +988,30 @@ mod tests {
         assert_eq!(
             class("fish", &["scripts/check.fish"]),
             CommandClass::ProjectExecute
+        );
+    }
+
+    #[test]
+    fn a_bat_batch_file_is_not_hidden_from_the_classifier() {
+        // Regression: `normalized_tool_name` strips the `.exe` and `.cmd`
+        // Windows extensions but not `.bat`, so a batch launcher like
+        // `npm.bat install lodash` fell through to ProjectExecute — a
+        // project-scoped grant would have covered a registry write. A `.bat`
+        // wrapper must draw the same classification as the `.cmd` and bare
+        // forms it merely re-serves.
+        assert_eq!(
+            class("npm.bat", &["install", "lodash"]),
+            CommandClass::PackageAdd,
+            "npm.bat names a new dependency and must be recorded as one"
+        );
+        assert_eq!(class("npm.bat", &["ci"]), CommandClass::PackageSync);
+        assert_eq!(
+            class("GIT.BAT", &["push", "origin", "main"]),
+            CommandClass::GitRemotePush
+        );
+        assert_eq!(
+            class("CMD.BAT", &["/C", "cargo test"]),
+            CommandClass::OpaqueShell
         );
     }
 
