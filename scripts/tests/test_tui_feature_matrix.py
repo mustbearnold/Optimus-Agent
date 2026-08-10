@@ -71,5 +71,50 @@ class ComposerTextTests(unittest.TestCase):
         self.assertIn("draft text", text)
 
 
+class SubmitAcceptanceTests(unittest.TestCase):
+    """Decision table for the submit accept-loop (tui feature matrix)."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.mod = load_matrix()
+
+    def test_cleared_draft_is_always_accepted(self) -> None:
+        for expect_exit in (False, True):
+            self.assertEqual(
+                self.mod.submit_acceptance(False, True, expect_exit=expect_exit),
+                "accepted",
+            )
+            self.assertEqual(
+                self.mod.submit_acceptance(False, False, expect_exit=expect_exit),
+                "accepted",
+            )
+
+    def test_live_app_with_parked_draft_keeps_polling(self) -> None:
+        self.assertEqual(
+            self.mod.submit_acceptance(True, True, expect_exit=False), "poll"
+        )
+        self.assertEqual(
+            self.mod.submit_acceptance(True, True, expect_exit=True), "poll"
+        )
+
+    def test_death_with_parked_draft_is_an_unexpected_exit_for_commands(self) -> None:
+        # Regression: the app crashed mid-submit; the accept-loop must raise,
+        # not swallow the crash as acceptance.
+        self.assertEqual(
+            self.mod.submit_acceptance(True, False, expect_exit=False),
+            "unexpected-exit",
+        )
+
+    def test_death_with_parked_draft_is_acceptance_for_exit_routes(self) -> None:
+        # Regression (verify flake): /quit is consumed, and the app exits
+        # without repainting a cleared draft, so the last frame legitimately
+        # still shows the draft while the pane tears down. Under host load the
+        # death can land between the draft frame and the aliveness probe; the
+        # accept-loop must treat it as the intended exit, never as a crash.
+        self.assertEqual(
+            self.mod.submit_acceptance(True, False, expect_exit=True), "accepted"
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

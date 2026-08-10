@@ -432,6 +432,25 @@ def composer_text(lines: list[str]) -> str:
     return normalized(parts)
 
 
+def submit_acceptance(draft_visible: bool, alive: bool, *, expect_exit: bool) -> str:
+    """Decision for one submit accept-loop poll.
+
+    Returns ``'accepted'``, ``'poll'``, or ``'unexpected-exit'``.
+
+    A cleared draft is always acceptance. A dead process is acceptance only
+    for exit-route submissions (``expect_exit``): the app consumes the Enter
+    and exits without repainting the cleared draft, so the last frame can
+    legitimately still show it while the pane tears down. For every other
+    command, process death with the draft still parked is an unexpected TUI
+    exit — the crash the accept-loop exists to catch.
+    """
+    if not draft_visible:
+        return "accepted"
+    if not alive:
+        return "accepted" if expect_exit else "unexpected-exit"
+    return "poll"
+
+
 def busy_visible(lines: list[str]) -> bool:
     """The busy state, identified by the status-rail marker, not a phase label.
 
@@ -519,10 +538,36 @@ class Case:
         self.home = home
         self.cols = cols
         self.rows = rows
-        self.environment = environment or {}
+        # Every case gets its own serve port. The host's default (17865,
+        # spec-015 R8) is a machine-global resource: any concurrent Optimus
+        # instance (desktop host, another suite, another matrix run) holding
+        # it makes a fresh home's serve die at bind, and the TUI exits before
+        # "launch ready". The matrix must not race the machine for the port —
+        # isolate instead. The pid factor keeps concurrent matrix processes
+        # from colliding.
+        self.port = 21000 + (os.getpid() * 2 + Case._serial) % 40000
+        self.environment = dict(environment or {})
+        self.environment["OPTIMUS_SERVE_PORT"] = str(self.port)
         self.session = f"optimus-tui-matrix-{os.getpid()}-{Case._serial}"
 
     def launch(self, *, allow_approval: bool = False) -> None:
+        # One bounded retry. Under host load the serve child can exceed the
+        # spec-015 B1 record wait (the TUI exits before "launch ready"), and
+        # the tmux server can race its own teardown between cases ("server
+        # exited unexpectedly"). Both are transient; a genuinely broken app
+        # still fails both attempts loudly.
+        for attempt in range(2):
+            try:
+                self._launch(allow_approval=allow_approval)
+                return
+            except FeatureFailure:
+                self.close()
+                if attempt == 0:
+                    time.sleep(1.0)
+                    continue
+                raise
+
+    def _launch(self, *, allow_approval: bool = False) -> None:
         assignments = [
             f"{key}={shlex.quote(value)}"
             for key, value in sorted(self.environment.items())
@@ -643,10 +688,12 @@ class Case:
         if result.returncode != 0:
             raise FeatureFailure(result.stderr.strip() or "tmux key send failed")
 
-    def submit_draft(self, expected: str, *, expect_accept: bool = True) -> None:
+    def submit_draft(
+        self, expected: str, *, expect_accept: bool = True, expect_exit: bool = False
+    ) -> None:
         self.wait(
             lambda lines: expected in composer_text(lines),
-            5,
+            10,
             f"complete draft {expected!r}",
         )
         self.keys("Enter")
@@ -662,9 +709,14 @@ class Case:
         deadline = time.monotonic() + 1.0
         while time.monotonic() < deadline:
             frame = self.capture()
-            if expected not in composer_text(frame):
+            decision = submit_acceptance(
+                expected in composer_text(frame),
+                self.alive(),
+                expect_exit=expect_exit,
+            )
+            if decision == "accepted":
                 return
-            if not self.alive():
+            if decision == "unexpected-exit":
                 raise FeatureFailure(
                     f"submit {expected!r}: TUI exited unexpectedly"
                 )
@@ -673,16 +725,30 @@ class Case:
         # The offline provider is paced at OPTIMUS_OFFLINE_LATENCY_MS (3000ms)
         # so busy states are visible; under host load a synthetic Enter can sit
         # unconsumed for several seconds before the pane accepts it. 15s keeps
-        # the acceptance proof while absorbing the injected latency.
-        self.wait(
-            lambda lines: expected not in composer_text(lines),
-            15,
-            f"submit accepted {expected!r}",
-        )
+        # the acceptance proof while absorbing the injected latency. Exit
+        # routes never repaint a cleared draft — the app quits straight after
+        # consuming the Enter — so for them the same loop accepts process
+        # death as the proof (submit_acceptance with expect_exit).
+        deadline = time.monotonic() + 15.0
+        while time.monotonic() < deadline:
+            frame = self.capture()
+            decision = submit_acceptance(
+                expected in composer_text(frame),
+                self.alive(),
+                expect_exit=expect_exit,
+            )
+            if decision == "accepted":
+                return
+            if decision == "unexpected-exit":
+                raise FeatureFailure(
+                    f"submit {expected!r}: TUI exited unexpectedly"
+                )
+            time.sleep(0.06)
+        raise FeatureFailure(f"submit accepted {expected!r}")
 
-    def type_submit(self, text: str) -> None:
+    def type_submit(self, text: str, *, expect_exit: bool = False) -> None:
         self.literal(text)
-        self.submit_draft(text)
+        self.submit_draft(text, expect_exit=expect_exit)
 
     def command(self, command: str, expected: str, timeout: float = 12) -> list[str]:
         self.type_submit(command)
@@ -1056,7 +1122,7 @@ def approval_resolution_journey(
             # the human is considering it. Escaping the picker leaves the
             # pending job untouched; /quit simulates an ordinary app exit.
             approve.keys("Escape")
-            approve.type_submit("/quit")
+            approve.type_submit("/quit", expect_exit=True)
             approve.wait_exit()
         finally:
             approve.close()
@@ -1347,7 +1413,7 @@ def reused_call_id_relaunch_journey(audit: Audit, binary: Path, home: Path) -> N
             first.type_submit("read the beta file")
             first.wait_text("The beta file was read", 30)
             first.keys("Escape")
-            first.type_submit("/quit")
+            first.type_submit("/quit", expect_exit=True)
             first.wait_exit()
         finally:
             first.close()
@@ -1418,7 +1484,7 @@ def pending_repeated_call_relaunch_journey(
             first.type_submit("write the pending proof")
             first.wait_text("Approval required", 30)
             first.keys("Escape")
-            first.type_submit("/quit")
+            first.type_submit("/quit", expect_exit=True)
             first.wait_exit()
         finally:
             first.close()
@@ -2092,7 +2158,7 @@ def sidebar_and_persistence(audit: Audit, case: Case) -> None:
         case.command("/model offline-scripted", "model is now offline-scripted")
         case.command("/thinking ultra", "thinking is now ultra")
         case.prompt("persistence-session")
-        case.type_submit("/quit")
+        case.type_submit("/quit", expect_exit=True)
         case.wait_exit()
 
         case.launch()
@@ -2199,8 +2265,8 @@ def compact_sidebar_at_low_height(audit: Audit, case: Case) -> None:
 def exit_routes(audit: Audit, binary: Path, root: Path) -> None:
     audit.begin("all-exit-routes")
     routes: tuple[tuple[str, Callable[[Case], None]], ...] = (
-        ("slash-quit", lambda case: case.type_submit("/quit")),
-        ("slash-exit-alias", lambda case: case.type_submit("/exit")),
+        ("slash-quit", lambda case: case.type_submit("/quit", expect_exit=True)),
+        ("slash-exit-alias", lambda case: case.type_submit("/exit", expect_exit=True)),
         ("ctrl-d-empty", lambda case: case.keys("C-d")),
         ("ctrl-c-idle", lambda case: case.keys("C-c")),
     )
