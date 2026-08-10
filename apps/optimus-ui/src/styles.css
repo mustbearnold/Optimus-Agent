@@ -453,11 +453,15 @@ code {
   overflow: visible;
   background: var(--rail);
   border-right: 1px solid var(--border);
-  transition: width 150ms var(--ease-out);
+  /* Width is a layout property: animating it thrash-reflows the whole
+     workbench every frame (impeccable layout-transition). The rail snaps;
+     the content fades instead. */
 }
 
 .rail-primary {
   padding: 8px 8px 7px;
+  opacity: 1;
+  transition: opacity 150ms var(--ease-out);
 }
 
 .rail-product-mark {
@@ -1595,6 +1599,10 @@ code {
   background: var(--elevated);
 }
 
+/* The preview fixture: a deliberately plain page the CDP browser renders to
+   test text fidelity. Arial is intentional — a neutral baseline face, and the
+   fixture must not inherit app styling (impeccable overused-font is accepted
+   here by decision). */
 .fixture-page {
   height: 100%;
   display: flex;
