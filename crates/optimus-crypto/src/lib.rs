@@ -169,10 +169,7 @@ mod tests {
         // not just printable ASCII strings. Pin a known digest for a byte
         // sequence that is not valid UTF-8 (0x00..=0xFF with no 7-bit ASCII).
         let bytes: Vec<u8> = (0u8..=255).collect();
-        assert_eq!(
-            sha256_hex(&bytes),
-            format!("{:x}", Sha256::digest(&bytes))
-        );
+        assert_eq!(sha256_hex(&bytes), format!("{:x}", Sha256::digest(&bytes)));
         // Deterministic across calls and stable for a mixed binary payload.
         let mixed = [0x00, 0xff, 0x10, 0xfe, 0x7f];
         assert_eq!(sha256_hex(&mixed), sha256_hex(&mixed));
