@@ -3722,7 +3722,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "eca474e4e2385aa882a752680120605e8e7639d913364bf696e3b7b9e7210351",
+      "content_sha256": "2e2737e9a0389d8d0fae38ee5209c935a854fb78ee748191dc24924bfeb063ad",
       "headings": [
         "ADR-0089: SHA-256 digest validation and computation in a leaf crate",
         "Status",
@@ -4778,7 +4778,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "ec040c4213bcc9f9edda886483b5f4afe5ad5d186ac4503ea94046f3956e7b64",
+  "documents_sha256": "ae55f236b1ad62d9474cb0261fc47122ecd7533cc74ff18688ce862a7a4fddf7",
   "routes": [
     {
       "id": "architecture.blueprint",
