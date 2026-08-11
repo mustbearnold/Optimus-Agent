@@ -619,7 +619,7 @@
       "resolved_files": 11
     },
     "repository-components": {
-      "binding_sha256": "e5a2387ee960d67996a7af10128844ff666b2fed42f39b5ee0074c82a9c6c9bc",
+      "binding_sha256": "a2fc21d02a33d3a0777d0b6b4ed96d6dba10d31d4dd9ee16dcbc6c1bc7e7ea59",
       "document_sha256": "7ca50777a6486d2dd8d688dc23ff197712c36f4ee8d71a13c30c664225e0b7ca",
       "path": "specs/011-developer-tooling/repository-components.md",
       "resolved_files": 29

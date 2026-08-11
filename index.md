@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **909 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **910 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -476,7 +476,7 @@ Optimus Agent/
 │       └── vite.config.ts
 ├── assets/ (1 files) — Product icons and resources consumed by installers and installed surfaces.
 │   └── optimus-agent.svg
-├── crates/ (241 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
+├── crates/ (242 files) — Typed product-runtime libraries, every one of them reached by a shipped binary.
 │   ├── optimus-agent/ (2 files) — Typed specialist registry, invocation contracts, and durable invocation ledger.
 │   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
@@ -485,9 +485,10 @@ Optimus Agent/
 │   │   ├── src/ (1 files)
 │   │   │   └── lib.rs
 │   │   └── Cargo.toml
-│   ├── optimus-browser/ (4 files) — Optional CDP browser backend enabled by the kernel default feature.
-│   │   ├── examples/ (1 files)
-│   │   │   └── screencast_spike.rs
+│   ├── optimus-browser/ (5 files) — Optional CDP browser backend enabled by the kernel default feature.
+│   │   ├── examples/ (2 files)
+│   │   │   ├── screencast_spike.rs
+│   │   │   └── shell_paint_spike.rs
 │   │   ├── src/ (2 files)
 │   │   │   ├── dom_snapshot.js
 │   │   │   └── lib.rs
@@ -1095,7 +1096,7 @@ Optimus Agent/
 | `_attic/` | 8 | 131 | SDD migration quarantine: documents and records awaiting a human fate decision. Nothing here is deleted by tooling; emptying the attic is a human decision. |
 | `apps/` | 55 | 261 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
-| `crates/` | 50 | 241 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
+| `crates/` | 50 | 242 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
 | `docs/` | 5 | 128 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 85 | Deterministic repository gates, generation, installation, and diagnostics. |
