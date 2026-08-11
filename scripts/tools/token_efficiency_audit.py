@@ -65,6 +65,20 @@ def diff_sets(before: dict, after: dict) -> list[str]:
     return missing
 
 
+def read_source(path: str) -> str:
+    """Read a UTF-8 source file, converting a missing or unreadable file into
+    a clear audit failure instead of a raw traceback.
+
+    A failed diff should say *what* could not be read and exit 1, not dump a
+    FileNotFoundError stack — the gate's failure must name the missing file so
+    the author can fix it in one step.
+    """
+    try:
+        return Path(path).read_text(encoding="utf-8")
+    except OSError as error:
+        raise SystemExit(f"AUDIT FAILED — cannot read {path}: {error}") from error
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--extract", metavar="FILE")
@@ -72,13 +86,12 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.extract:
-        text = Path(args.extract).read_text(encoding="utf-8")
-        print(json.dumps(extract(text), indent=2))
+        print(json.dumps(extract(read_source(args.extract)), indent=2))
         return 0
 
     if args.diff:
-        before = extract(Path(args.diff[0]).read_text(encoding="utf-8"))
-        after = extract(Path(args.diff[1]).read_text(encoding="utf-8"))
+        before = extract(read_source(args.diff[0]))
+        after = extract(read_source(args.diff[1]))
         missing = diff_sets(before, after)
         if missing:
             print("AUDIT FAILED — dropped from the before-set:", file=sys.stderr)
