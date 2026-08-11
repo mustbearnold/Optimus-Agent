@@ -46,6 +46,17 @@ impl Sha256Digest {
     }
 }
 
+/// Borrow the canonical lowercase hex form as a `str`.
+///
+/// Standard convenience mirroring [`Sha256Digest::as_str`] so callers can pass
+/// a digest anywhere a `&str` (or `&[u8]`) is expected via a single implicit
+/// borrow, e.g. `&digest as &dyn AsRef<str>` or generic `fn f<S: AsRef<str>>`.
+impl AsRef<str> for Sha256Digest {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 impl std::fmt::Display for Sha256Digest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
@@ -313,6 +324,21 @@ mod tests {
         let other = Sha256Digest::digest(b"other");
         assert_ne!(hex, other);
         assert_ne!(other.as_str(), digest);
+    }
+
+    #[test]
+    fn sha256_digest_as_ref_str_borrows_canonical_form() {
+        // `AsRef<str>` must borrow the canonical lowercase hex form so a digest
+        // can be passed where a `&str` is expected through an `AsRef` bound,
+        // matching `as_str()` and the case-normalization invariant.
+        let digest = Sha256Digest::digest(b"optimus");
+        assert_eq!(digest.as_ref(), digest.as_str());
+        // Works through a generic `AsRef<str>` bound and an explicit reference.
+        let generic: &dyn AsRef<str> = &digest;
+        assert_eq!(generic.as_ref(), digest.as_str());
+        // Still borrows the normalized lower-case form, not the source bytes.
+        let upper = Sha256Digest::parse(&"A".repeat(64)).expect("upper-case hex parses");
+        assert_eq!(upper.as_ref(), &"a".repeat(64));
     }
 
     #[test]
