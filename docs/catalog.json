@@ -2330,7 +2330,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "7d039693e51ae3939ee368386d5cdeb03182e9758df7ae1eceb1ce3b87f75c61",
+      "content_sha256": "9c84f1d43373e7eb705e6e049fd1217e5bb149144e0e7a223cc51b694190e1c8",
       "headings": [
         "ADR-0036: Domain modularity — single catalog and memory planes (P13)",
         "Context",
@@ -4778,7 +4778,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "83593480e582bf8420d8b1d97a26d883fa8ef5bc4fa8eb78d322ceec831902ff",
+  "documents_sha256": "62069b331960714bb2891617550f4fa03dc2269d78ae0838b84f41a27d022456",
   "routes": [
     {
       "id": "architecture.blueprint",

@@ -307,8 +307,8 @@
       "resolved_files": 15
     },
     "decisions-0036-domain-modularity-single-catalog": {
-      "binding_sha256": "4050b6b50a325986357b8cfd4ef861899f46af4567f589ca664bdb227619f735",
-      "document_sha256": "7d039693e51ae3939ee368386d5cdeb03182e9758df7ae1eceb1ce3b87f75c61",
+      "binding_sha256": "d60691488325cf6d5a082adad7b2255d2ccb3e41358c6da08db4a10f0cb43df9",
+      "document_sha256": "9c84f1d43373e7eb705e6e049fd1217e5bb149144e0e7a223cc51b694190e1c8",
       "path": "docs/decisions/0036-domain-modularity-single-catalog.md",
       "resolved_files": 31
     },
@@ -325,7 +325,7 @@
       "resolved_files": 8
     },
     "decisions-0039-files-mutate-effect-taxonomy": {
-      "binding_sha256": "5865b217d53199ae785450738d0531c43cd63e760495e620a013d4f9ed51377e",
+      "binding_sha256": "8af111f420f553709c649c756ff883953c743606703946c0436514c9eb495d91",
       "document_sha256": "776ed3073eccdf904ae89db6bd0622c553525b606e4785a3595d87ad0f0d258c",
       "path": "docs/decisions/0039-files-mutate-effect-taxonomy.md",
       "resolved_files": 12
@@ -337,7 +337,7 @@
       "resolved_files": 8
     },
     "decisions-0041-mcp-ingress-pack-gated": {
-      "binding_sha256": "c94140aec3aa7e5a07a1c3df76cb2ffc66a1a27701c24d710bba979e7f8b6704",
+      "binding_sha256": "bd6989d4be557299dc8a77b8b9454aa1b404ff82d2904b86558d5b73ee601414",
       "document_sha256": "ca3017cc0cf03f3a263c3e1b18e1ca71fe6c0e397fca144c9e092a5cf8225205",
       "path": "docs/decisions/0041-mcp-ingress-pack-gated.md",
       "resolved_files": 4
@@ -457,7 +457,7 @@
       "resolved_files": 6
     },
     "decisions-0068-a-catalog-row-must-dispatch-or-not-exist": {
-      "binding_sha256": "8e2e679691d66b6f6f718d805f1e89a6e657e68ba2d5302789e1415029e9b9d9",
+      "binding_sha256": "7294024e4fc7a4977cdd9c907298e06465c91f114cb23b526916f3339f865ee3",
       "document_sha256": "a73def8d3bbfa25834930b88633203897b16b80e8c1419f300f027d71dc36ed6",
       "path": "docs/decisions/0068-a-catalog-row-must-dispatch-or-not-exist.md",
       "resolved_files": 7
@@ -601,7 +601,7 @@
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "85cf03f1fe877f91fb5720e29b96ecb27a7cb2beb26840a8ecb7f80e87b7e197",
+      "binding_sha256": "df2a53be19484367408af9a7224d9f5c80615a7a1fbb9d593da9334eb0e8ea5d",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 96
@@ -649,7 +649,7 @@
       "resolved_files": 92
     },
     "spec-004-runtime-effects": {
-      "binding_sha256": "e0c430080de040402c0b205baecaa9098ac24e3f45b889c64c24902965317aa4",
+      "binding_sha256": "8a3aff4f9aa7d68bc5373f71fa7e194b998829fc694b8e004d82905bdefd5171",
       "document_sha256": "f58986c0460b1769463b6b01fc22ec5c7a4cb1a1ef0594fb2c610c7d12114544",
       "path": "specs/004-runtime-effects/spec.md",
       "resolved_files": 37
@@ -799,7 +799,7 @@
       "resolved_files": 38
     },
     "specs-constitution": {
-      "binding_sha256": "a7873e154ed2a2929021878794990ece037e9442ed9e72289e629a73f79369a4",
+      "binding_sha256": "8fb1437e672c35a55ae418f435a87a66bd0a386e4f278d76a48ad51bcd4dbcbc",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 135

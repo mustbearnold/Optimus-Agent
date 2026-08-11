@@ -115,4 +115,7 @@ The decision makes the invariant in the Decision section explicit and testable. 
 - `crates/optimus-skills/tests/skills_lifecycle.rs`
 - `crates/optimus-memory/tests/metamemory_mvp.rs`
 - `crates/optimus-runtime/tests/skill_bridge.rs`
+- `crates/optimus-store/src/capability_grants.rs` — unit tests for
+  capability-grant TTL clamping ([8 h, 24 h] window), key/scope validation,
+  and the revoke/renew/live lifecycle (2026-08-11).
 - `scripts/gates/check-domain-modularity.py`
