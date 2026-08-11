@@ -62,6 +62,11 @@ pub enum ConnectDiagnostic {
     HttpHolder,
     /// No record and no live child after the bounded wait.
     NoRecord,
+    /// The child exited 2/3, no healthy record appeared after the bounded
+    /// re-probe, and the desired port is still occupied by another process
+    /// (spec-015 R8: the honest post-spawn settle — a bind failure is not
+    /// a stale CLI and not "no record").
+    PortOccupied { port: u16 },
 }
 
 impl std::fmt::Display for ConnectDiagnostic {
@@ -82,6 +87,9 @@ impl std::fmt::Display for ConnectDiagnostic {
             ),
             ConnectDiagnostic::NoRecord => {
                 write!(f, "optimus serve produced no record within the wait")
+            }
+            ConnectDiagnostic::PortOccupied { port } => {
+                write!(f, "serve failed to start: check port {port}")
             }
         }
     }
@@ -194,7 +202,9 @@ pub fn connect(home: &Path, port: u16) -> ConnectOutcome {
             Ok(Some(status)) => {
                 let code = status.code().unwrap_or(-1);
                 if code == EXIT_BIND_OR_SECURITY || code == EXIT_REFUSED {
-                    return fallback_to_ws(home, code);
+                    // Spec-015 R8 post-spawn settle: bounded record
+                    // re-probe (race recovery), then the branch matrix.
+                    return settle_spawn_exit(home, port, spawn_port, code);
                 }
                 return ConnectOutcome::Diagnostic(ConnectDiagnostic::SpawnFailed(code));
             }
@@ -220,6 +230,49 @@ pub fn connect(home: &Path, port: u16) -> ConnectOutcome {
     let _ = child.kill();
     let _ = child.wait();
     fallback_to_ws(home, -1)
+}
+
+/// Spec-015 R8 post-spawn settle for a child that exited 2/3 (bind OR
+/// security-validation failure, or holder refusal): re-probe the record
+/// for the race-recovery window first (the winner writes its record only
+/// after bind), attaching if a healthy v2/ws record appears; otherwise
+/// settle per the branch matrix — a DESIRED-port spawn whose port is
+/// still occupied gets the honest "check port" diagnostic, and everything
+/// else (free port, ephemeral spawn) gets the generic spawn-failed state.
+fn settle_spawn_exit(
+    home: &Path,
+    desired_port: u16,
+    spawn_port: u16,
+    exit_code: i32,
+) -> ConnectOutcome {
+    let home_for_probe = home.to_path_buf();
+    match crate::spawn_decision::re_probe(
+        home,
+        crate::record::read_record,
+        || port_state(desired_port),
+        move |record| {
+            crate::record::healthy_record(&home_for_probe)
+                .is_some_and(|healthy| healthy.pid == record.pid)
+        },
+    ) {
+        crate::spawn_decision::Reprobed::Attach { .. } => {
+            // The race resolved: another spawn won and wrote a healthy
+            // record — attach over WS with its token.
+            match crate::record::healthy_record(home)
+                .and_then(|record| HostClient::ws_attach(&record).ok())
+            {
+                Some(client) => ConnectOutcome::Attached(client),
+                None => ConnectOutcome::Diagnostic(ConnectDiagnostic::SpawnFailed(exit_code)),
+            }
+        }
+        crate::spawn_decision::Reprobed::Settled(state) => {
+            if spawn_port == desired_port && state == PortState::Occupied {
+                ConnectOutcome::Diagnostic(ConnectDiagnostic::PortOccupied { port: desired_port })
+            } else {
+                ConnectOutcome::Diagnostic(ConnectDiagnostic::SpawnFailed(exit_code))
+            }
+        }
+    }
 }
 
 fn fallback_to_ws(home: &Path, exit_code: i32) -> ConnectOutcome {
@@ -854,5 +907,85 @@ mod tests {
             params["ticket"] = json!(ticket);
         }
         params
+    }
+
+    #[test]
+    fn check_port_diagnostic_display_names_the_port() {
+        // Spec-015 R8: the post-spawn settle message must name the port,
+        // not hint at a stale CLI or "no record".
+        let text = ConnectDiagnostic::PortOccupied { port: 17865 }.to_string();
+        assert!(text.contains("check port 17865"), "message: {text}");
+        assert!(text.contains("serve failed to start"), "message: {text}");
+        assert!(!text.contains("no record"), "message: {text}");
+    }
+
+    /// Write an executable fake `optimus serve` (shebang script) that
+    /// behaves per `script_body` (exit-2 bind-failure stand-in).
+    fn fake_serve_binary(dir: &std::path::Path, script_body: &str) -> std::path::PathBuf {
+        use std::os::unix::fs::PermissionsExt;
+        let path = dir.join("fake-optimus");
+        std::fs::write(&path, script_body).expect("write fake binary");
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
+            .expect("chmod fake binary");
+        path
+    }
+
+    #[test]
+    fn exit_two_with_occupied_desired_port_surfaces_check_port_diagnostic() {
+        // Spec-015 R8: a DESIRED-port spawn that raced into a bind
+        // failure (child exit 2) with the port still occupied after the
+        // bounded re-probe must settle as "check port N" — never
+        // "produced no record within the wait".
+        let _guard = ENV_LOCK.lock().unwrap();
+        let dir = tempfile::tempdir().expect("temp dir");
+        let fake = fake_serve_binary(dir.path(), "#!/bin/sh\nsleep 0.5\nexit 2\n");
+        std::env::set_var("OPTIMUS_SERVE_BIN", &fake);
+
+        // A free port now; the test binds it ~250ms after the spawn (after
+        // the client's pre-spawn free-check, before the settle's probe) to
+        // reproduce the check-vs-bind race.
+        let desired = {
+            let probe = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            probe.local_addr().unwrap().port()
+        };
+        let home = tempfile::tempdir().expect("temp home");
+        let holder = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            let listener = std::net::TcpListener::bind(("127.0.0.1", desired)).unwrap();
+            std::thread::sleep(std::time::Duration::from_secs(7));
+            drop(listener);
+        });
+
+        let outcome = connect(home.path(), desired);
+        holder.join().unwrap();
+        match outcome {
+            ConnectOutcome::Diagnostic(ConnectDiagnostic::PortOccupied { port }) => {
+                assert_eq!(port, desired, "the diagnostic names the desired port");
+            }
+            other => panic!("expected PortOccupied settle, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn exit_two_with_free_port_is_generic_spawn_failure() {
+        // Spec-015 R8: exit 2 with a free port (e.g. security-validation
+        // failure) settles as the generic spawn-failed state — no port
+        // hint, no "no record".
+        let _guard = ENV_LOCK.lock().unwrap();
+        let dir = tempfile::tempdir().expect("temp dir");
+        let fake = fake_serve_binary(dir.path(), "#!/bin/sh\nexit 2\n");
+        std::env::set_var("OPTIMUS_SERVE_BIN", &fake);
+        let desired = {
+            let probe = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            probe.local_addr().unwrap().port()
+        };
+        let home = tempfile::tempdir().expect("temp home");
+
+        match connect(home.path(), desired) {
+            ConnectOutcome::Diagnostic(ConnectDiagnostic::SpawnFailed(code)) => {
+                assert_eq!(code, 2);
+            }
+            other => panic!("expected generic SpawnFailed(2), got {other:?}"),
+        }
     }
 }
