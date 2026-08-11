@@ -11,8 +11,11 @@
 pub fn is_secret_basename(name: &str) -> bool {
     let lower = name.to_ascii_lowercase();
     // `.env`, `.env.local`, `.env.production`, ... — environment-scoped env
-    // files carry the same credentials as the bare `.env`.
-    lower.starts_with(".env")
+    // files carry the same credentials as the bare `.env`. A basename is an
+    // env file only when `.env` is followed by a scope separator (`.`/`-`) or
+    // ends right there; merely sharing the `.env` prefix (`.environment`,
+    // `.envelopes`, `.envrc`) is not a credential file and must not be denied.
+    is_env_scoped_basename(&lower)
         || matches!(
             lower.as_str(),
             // Config credentials and SSH private keys. The `id_*` set covers
@@ -30,6 +33,17 @@ pub fn is_secret_basename(name: &str) -> bool {
                 | ".netrc"
         )
         || lower.ends_with(".pem")
+}
+
+/// True only for the env-file basenames that carry credentials: the bare
+/// `.env` and the scoped forms (`.env.local`, `.env-production`, ...). A name
+/// that merely starts with `.env` (`.environment`, `.envelopes`) is a regular
+/// file, not a secret.
+fn is_env_scoped_basename(lower: &str) -> bool {
+    lower == ".env"
+        || lower
+            .strip_prefix(".env")
+            .is_some_and(|rest| rest.starts_with('.') || rest.starts_with('-'))
 }
 
 #[cfg(test)]
@@ -68,6 +82,35 @@ mod tests {
     fn denies_pem_suffix_case_insensitively() {
         assert!(is_secret_basename("key.pem"));
         assert!(is_secret_basename("CERT.PEM"));
+    }
+
+    #[test]
+    fn env_prefix_requires_a_scope_separator() {
+        // Regression: the old `starts_with(".env")` check denied any basename
+        // that merely shared the `.env` prefix, so ordinary files like
+        // `.environment.yaml`, `.envelopes`, and the direnv marker `.envrc`
+        // were treated as secrets. Only the bare `.env` and its scoped forms
+        // (`.`/`-` separator) are credential files; these must be allowed.
+        for name in [".environment.yaml", ".envelopes", ".envrc", ".envtest"] {
+            assert!(
+                !is_secret_basename(name),
+                "{name} is not a credential file and should be allowed"
+            );
+        }
+        // The scoped env forms stay denied, including the hyphenated spelling
+        // and case variants.
+        for name in [
+            ".env.local",
+            ".env.production",
+            ".ENV.PROD",
+            ".env-production",
+            ".env-test",
+        ] {
+            assert!(
+                is_secret_basename(name),
+                "{name} is an env-scoped credential file and should be denied"
+            );
+        }
     }
 
     #[test]
