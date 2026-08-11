@@ -139,6 +139,22 @@ mod tests {
     }
 
     #[test]
+    fn sha256_hex_handles_arbitrary_binary_bytes() {
+        // `sha256_hex` takes `&[u8]` and must digest arbitrary binary inputs,
+        // not just printable ASCII strings. Pin a known digest for a byte
+        // sequence that is not valid UTF-8 (0x00..=0xFF with no 7-bit ASCII).
+        let bytes: Vec<u8> = (0u8..=255).collect();
+        assert_eq!(
+            sha256_hex(&bytes),
+            format!("{:x}", Sha256::digest(&bytes))
+        );
+        // Deterministic across calls and stable for a mixed binary payload.
+        let mixed = [0x00, 0xff, 0x10, 0xfe, 0x7f];
+        assert_eq!(sha256_hex(&mixed), sha256_hex(&mixed));
+        assert_ne!(sha256_hex(&mixed), sha256_hex(b""));
+    }
+
+    #[test]
     fn sha256_hex_matches_known_fips_vector() {
         // FIPS 180-4 test vector for the ASCII string "abc"; pins the output
         // to a hardcoded constant so a regression in the sha2 crate is caught
