@@ -134,3 +134,6 @@ existing ops/eval extraction pattern.
 - `crates/optimus-kernel/tests/workflow_contracts.rs`
 - `crates/optimus-kernel/tests/workflow_dag.rs`
 - `crates/optimus-kernel/tests/specialist_vertical.rs`
+- `crates/optimus-artifacts/src/lib.rs` — unit tests incl.
+  `media_ext_maps_svg_to_svg_extension`: `image/svg+xml` exports as `.svg`
+  (case-insensitive) instead of the `.bin` default (2026-08-11).

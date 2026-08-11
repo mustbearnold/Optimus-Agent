@@ -295,8 +295,8 @@
       "resolved_files": 8
     },
     "decisions-0034-control-plane-crate-peels": {
-      "binding_sha256": "e03b0c2c37818b3fb2186b88fe0d4f728c77494410907dec69b3d28e3543487f",
-      "document_sha256": "987ff029f454ed6d73e53ddb0851350733b0874092afd7116a1910813b38d90d",
+      "binding_sha256": "9693995ecb1b9a6a680251c5ff5ab437a88e28a95ffbd054d6f1bdb6009fda55",
+      "document_sha256": "b5027943e7811ab8494667586187d6c82654a0fc8c5aa9f6bc9292224c03057a",
       "path": "docs/decisions/0034-control-plane-crate-peels.md",
       "resolved_files": 25
     },
@@ -583,7 +583,7 @@
       "resolved_files": 10
     },
     "decisions-0089-sha256-digest-leaf-crate": {
-      "binding_sha256": "d4ad5a169e4db95e412a575545ed1876029c6d96e69cca8735e49e895f346a39",
+      "binding_sha256": "94354ba3029a41761b38f3065e8a43fe92afbbc4a0d813e50cb566a8301831ce",
       "document_sha256": "eca474e4e2385aa882a752680120605e8e7639d913364bf696e3b7b9e7210351",
       "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
       "resolved_files": 3
@@ -601,7 +601,7 @@
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "df2a53be19484367408af9a7224d9f5c80615a7a1fbb9d593da9334eb0e8ea5d",
+      "binding_sha256": "d7e976ca621d49fd0e5c36b59ea6f37648c437f3d04a0bb3c2fd4cfcfb262840",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 96
@@ -655,7 +655,7 @@
       "resolved_files": 37
     },
     "spec-005-agents-workflows": {
-      "binding_sha256": "8726398e7a185136ba3a313a22221ac234aeb5318ea9bfb61808ed63bcb1364a",
+      "binding_sha256": "a1eee6e38fa492922818a5e50898d88a1bd185a2e5ba74dacfdc1de53f4cbafb",
       "document_sha256": "5e4b6de2b0d0b67056f3d0212a871e9d4be49625703e686eb9c89fab55c1f484",
       "path": "specs/005-agents-workflows/spec.md",
       "resolved_files": 10
@@ -799,7 +799,7 @@
       "resolved_files": 38
     },
     "specs-constitution": {
-      "binding_sha256": "8fb1437e672c35a55ae418f435a87a66bd0a386e4f278d76a48ad51bcd4dbcbc",
+      "binding_sha256": "0b9082260e856e93b8d92a384ab14c4a0537a85628618b48e5f3fcc2618df16b",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 135

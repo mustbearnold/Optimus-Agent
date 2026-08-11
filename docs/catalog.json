@@ -2276,7 +2276,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "987ff029f454ed6d73e53ddb0851350733b0874092afd7116a1910813b38d90d",
+      "content_sha256": "b5027943e7811ab8494667586187d6c82654a0fc8c5aa9f6bc9292224c03057a",
       "headings": [
         "ADR-0034: Control-plane crate peels (P11)",
         "Context",
@@ -4778,7 +4778,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "62069b331960714bb2891617550f4fa03dc2269d78ae0838b84f41a27d022456",
+  "documents_sha256": "ec040c4213bcc9f9edda886483b5f4afe5ad5d186ac4503ea94046f3956e7b64",
   "routes": [
     {
       "id": "architecture.blueprint",
