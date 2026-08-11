@@ -253,3 +253,107 @@ fn capability_grant_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Capabi
         revoked_by: row.get(7)?,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn scope() -> String {
+        // Fixed valid 64-hex sha256 so the WHERE on scope matches across
+        // grants within a single test.
+        "a".repeat(64)
+    }
+
+    #[test]
+    fn grant_ttl_is_clamped_to_default_and_max() {
+        // Regression: the [8 h, 24 h] window must be enforced on both ends
+        // (`0` meaning "use the default") so a misconfigured TTL can never
+        // mint a consent that expires immediately or lives beyond the cap.
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(&dir.path().join("c.db")).unwrap();
+
+        let default = store
+            .grant_capability("s", "cap", "write", &scope(), 0, 1_000)
+            .unwrap();
+        assert_eq!(default.expires_unix - default.created_unix, 8 * 3600);
+
+        let clamped_low = store
+            .grant_capability("s", "cap", "write", &scope(), 60, 2_000)
+            .unwrap();
+        assert_eq!(clamped_low.expires_unix - clamped_low.created_unix, 8 * 3600);
+
+        let clamped_high = store
+            .grant_capability("s", "cap", "write", &scope(), 48 * 3600, 3_000)
+            .unwrap();
+        assert_eq!(clamped_high.expires_unix - clamped_high.created_unix, 24 * 3600);
+    }
+
+    #[test]
+    fn grant_rejects_blank_key_parts_and_bad_scope() {
+        // Regression: consent key parts must be non-empty and the scope must
+        // be a real sha256 hex digest, so an invalid grant can never be
+        // persisted (and later silently pass a `live_capability_grant` lookup).
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(&dir.path().join("c.db")).unwrap();
+
+        assert!(matches!(
+            store.grant_capability("", "cap", "write", &scope(), 0, 1),
+            Err(StoreError::Invariant(_))
+        ));
+        assert!(matches!(
+            store.grant_capability("s", "", "write", &scope(), 0, 1),
+            Err(StoreError::Invariant(_))
+        ));
+        assert!(matches!(
+            store.grant_capability("s", "cap", "write", &"g".repeat(64), 0, 1),
+            Err(StoreError::Invariant(_))
+        ));
+
+        // No invalid row was persisted.
+        assert!(store.list_capability_grants("s").unwrap().is_empty());
+    }
+
+    #[test]
+    fn grant_revoke_renew_and_live_visibility() {
+        // Regression/coverage for the full consent lifecycle: an unexpired,
+        // unrevoked grant is live; soft revocation hides it from
+        // `live_capability_grant` while the audit row survives; renewing the
+        // same key un-revokes it and restores liveness.
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(&dir.path().join("c.db")).unwrap();
+
+        let row = store
+            .grant_capability("s", "cap", "write", &scope(), 0, 1_000)
+            .unwrap();
+        assert!(store
+            .live_capability_grant("s", "cap", "write", &scope(), 1_001)
+            .unwrap()
+            .is_some());
+
+        assert!(store
+            .revoke_capability("s", "cap", "write", &scope(), "user", 1_002, "no thanks")
+            .unwrap());
+        assert!(store
+            .live_capability_grant("s", "cap", "write", &scope(), 1_003)
+            .unwrap()
+            .is_none());
+        // Row survives revocation for the audit trail.
+        assert_eq!(store.list_capability_grants("s").unwrap().len(), 1);
+
+        // Renewing the same key un-revokes it.
+        store
+            .grant_capability("s", "cap", "write", &scope(), 0, 1_004)
+            .unwrap();
+        assert!(store
+            .live_capability_grant("s", "cap", "write", &scope(), 1_005)
+            .unwrap()
+            .is_some());
+
+        // An expired consent is not live.
+        assert!(store
+            .live_capability_grant("s", "cap", "write", &scope(), 1_006 + 24 * 3600)
+            .unwrap()
+            .is_none());
+        let _ = row;
+    }
+}
