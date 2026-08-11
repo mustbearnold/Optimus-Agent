@@ -583,7 +583,7 @@
       "resolved_files": 10
     },
     "decisions-0089-sha256-digest-leaf-crate": {
-      "binding_sha256": "3bf2237d5ada823aa871cb1a3d8964a65dadd59716d83aece6e74e147208460d",
+      "binding_sha256": "168b8244da99102f19b72c53c2446de53b407ccf1182bc64221fd4c6e49ec703",
       "document_sha256": "a868c0ba78dd44602f198370ac9fde0e26481e894513544243f3e34f8aadf327",
       "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
       "resolved_files": 3
