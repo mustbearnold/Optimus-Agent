@@ -79,7 +79,7 @@
       "resolved_files": 3
     },
     "contributing-project-hygiene": {
-      "binding_sha256": "8439d8a2ec87055866078ab19d70c2f523182b15c4143885302011f952cd121b",
+      "binding_sha256": "43b0d1e26c2c645927c2b1faec91cea7dd3e7641f1dff19a124158fa4ae20551",
       "document_sha256": "45b13ab7c0ad537149ed3d1212c6ff8fea5360702352d4bea2752457894c9541",
       "path": "docs/runbooks/project-hygiene.md",
       "resolved_files": 3
@@ -403,7 +403,7 @@
       "resolved_files": 10
     },
     "decisions-0054-a-selector-may-only-over-select": {
-      "binding_sha256": "4b60ea1ab2b29d532c69aa5dbc908f9685006020e7d6b886a7df88cb6617ccd3",
+      "binding_sha256": "7d7c93cc07747cecfc5ea53050a779eca7cea488a494261e1b7aa6e8b16a0070",
       "document_sha256": "312a8d2082506b419af27a8fa4d99f21c89cdce0eee0a605f14f5ea528610c89",
       "path": "docs/decisions/0054-a-selector-may-only-over-select.md",
       "resolved_files": 6
@@ -523,7 +523,7 @@
       "resolved_files": 12
     },
     "decisions-0079-keep-bun-as-the-js-package-manager": {
-      "binding_sha256": "8c53bc9417abf979ea9bd5cd1df87b35ea554a7170cf33875adec3bfb6fd6f1c",
+      "binding_sha256": "55f19f604d156b166251c5427986996c3ff4db4a8d8bd423576e40884302c801",
       "document_sha256": "a63634cf6d597c8369a736b5a3fe058f146965910ae0e742d209f6f7be49d176",
       "path": "docs/decisions/0079-keep-bun-as-the-js-package-manager.md",
       "resolved_files": 7
@@ -649,7 +649,7 @@
       "resolved_files": 92
     },
     "spec-004-runtime-effects": {
-      "binding_sha256": "f88c0ea103f164a8e095c8c847e0f930cc03b90cd72093be7a776545353a9454",
+      "binding_sha256": "e0c430080de040402c0b205baecaa9098ac24e3f45b889c64c24902965317aa4",
       "document_sha256": "f58986c0460b1769463b6b01fc22ec5c7a4cb1a1ef0594fb2c610c7d12114544",
       "path": "specs/004-runtime-effects/spec.md",
       "resolved_files": 37
@@ -691,7 +691,7 @@
       "resolved_files": 50
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "3e2774c2cd456294931bd3b8ba532d22dc9668fc41abcf7905ce241b75304e64",
+      "binding_sha256": "26f3c2df12ee04de5338c8014beef062dfe7123a828d28f9baa1829031dc6e32",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
       "resolved_files": 93
@@ -721,7 +721,7 @@
       "resolved_files": 45
     },
     "spec-016-staleness-prevention": {
-      "binding_sha256": "2d212981a28dda71ab03d896c4d6ecfb5f9280a766842fc2f4ea8a3ea4b03a98",
+      "binding_sha256": "d67a61dad827393b4629022ce9a78d903453da1bdab89876404f22060a807323",
       "document_sha256": "7fc3f19713816c5eca81af1f4abfc4664423b613e20c986cd3cdd5b0d0d57a53",
       "path": "specs/016-staleness-prevention/spec.md",
       "resolved_files": 10
@@ -805,7 +805,7 @@
       "resolved_files": 135
     },
     "specs-conventions": {
-      "binding_sha256": "55615508ba1124ddbfb2af35a51f211a03cd2382ea784e9b9201299dbd058ed6",
+      "binding_sha256": "902a9b1ea0189b21b1d80871138cd3de5a65e217814e87d73ea85572cddb0c82",
       "document_sha256": "c816724ffcfb8379ed6edda866cfe407b0ed05ba0f7d59b39819b17b2e53d81f",
       "path": "specs/conventions.md",
       "resolved_files": 6

@@ -258,6 +258,15 @@ em-generate:
     python3 scripts/tools/project_knowledge.py generate
     python3 scripts/tools/engineering_memory.py validate --quick
 
+# Full derived-state cascade in the documented order (docs -> project index ->
+# EM; ADR-0063 binding). One deep interface: the ordering constraint lives in
+# the chain, not in prose, and the terminal checks fail loud.
+heal:
+    @just docs-heal
+    @just em-generate
+    @just docs-check
+    @just em-check
+
 # Engineering Memory: budgeted context pack for agent prompts. Pass the
 # owning spec path (e.g. `just em-context specs/014-self-build-reliability/spec.md`)
 # to read that spec's EM instead of the generic orientation view.
