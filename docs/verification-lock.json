@@ -259,13 +259,13 @@
       "resolved_files": 6
     },
     "decisions-0028-electron-react-shell-rust-host": {
-      "binding_sha256": "f3ae4177c5f5e5be03f4c14d54c1d7d32bd18c07e4eaabad171ffe871148554e",
+      "binding_sha256": "54251da84a3938a721f41a5b8bd28b58332c22f448498dd423454b4cce5fbe26",
       "document_sha256": "be69e2f15c92efa2c391ffdff9a9c7cff6bf3452ed609fe3d648ebbb4c06d8e9",
       "path": "docs/decisions/0028-electron-react-shell-rust-host.md",
       "resolved_files": 144
     },
     "decisions-0029-react-workbench-and-electron-preview-view": {
-      "binding_sha256": "fc2babf2705d57936e8768692ca1556fce7c541f1c381ece602b7a51a9956121",
+      "binding_sha256": "1ccac0a5ae6fe04452d90a506b99553ba30994c32807a02d5a8921875d10aa06",
       "document_sha256": "d79817e46b05632f2ea9237eb36542ce43835cb644c49a10fef0ee52ed89b0d2",
       "path": "docs/decisions/0029-react-workbench-and-electron-preview-view.md",
       "resolved_files": 143
@@ -277,7 +277,7 @@
       "resolved_files": 113
     },
     "decisions-0031-safe-project-work-loop": {
-      "binding_sha256": "526e20f37b7b9a195d7793d90ae1b74aa2cca9fa7bde972179812fd3104af69f",
+      "binding_sha256": "010e4b4390185c5a3d6ed716b7b488090956dd5ceaf589f23303fb07d7993967",
       "document_sha256": "5105674d75cae7d76e596fc2b96ea0ce95193ddeabe259d237537ded5fa8d595",
       "path": "docs/decisions/0031-safe-project-work-loop.md",
       "resolved_files": 145
@@ -583,8 +583,8 @@
       "resolved_files": 10
     },
     "decisions-0089-sha256-digest-leaf-crate": {
-      "binding_sha256": "94354ba3029a41761b38f3065e8a43fe92afbbc4a0d813e50cb566a8301831ce",
-      "document_sha256": "eca474e4e2385aa882a752680120605e8e7639d913364bf696e3b7b9e7210351",
+      "binding_sha256": "b6c28c0aae8e559363416747ebd8991ea46e040e1c967dc35ef001dbb04dbfd4",
+      "document_sha256": "2e2737e9a0389d8d0fae38ee5209c935a854fb78ee748191dc24924bfeb063ad",
       "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
       "resolved_files": 3
     },
@@ -601,7 +601,7 @@
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "d7e976ca621d49fd0e5c36b59ea6f37648c437f3d04a0bb3c2fd4cfcfb262840",
+      "binding_sha256": "04235524b33e12f46c16c825d43475f3dd241de96caa3988b0e91b833952daff",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 96
@@ -637,7 +637,7 @@
       "resolved_files": 124
     },
     "spec-002-host-ipc": {
-      "binding_sha256": "7a560a522283812d832338d91f1cc0e04d5a8c1b9b9db2a34432590acfbb5e34",
+      "binding_sha256": "ded164933d451a37c9262ef7b03b9115b4b51077fff6da8ea323d69519a451d9",
       "document_sha256": "f3fcd116e0899a0fec9b00ce9ae87d2543b0a723987898e22c342749f34c24ca",
       "path": "specs/002-host-ipc/spec.md",
       "resolved_files": 64
@@ -799,7 +799,7 @@
       "resolved_files": 38
     },
     "specs-constitution": {
-      "binding_sha256": "0b9082260e856e93b8d92a384ab14c4a0537a85628618b48e5f3fcc2618df16b",
+      "binding_sha256": "95abdee706aeef7638fabc5a2f96852ce82c02fee8cf4d31057ae5e8e4003a03",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 135

@@ -131,5 +131,7 @@ is possible.
   `sha256_hex_handles_arbitrary_binary_bytes`,
   `is_sha256_hex_accepts_only_64_hex_digits`, `sha256_digest_parse_round_trips`,
   `sha256_digest_normalizes_case`, `sha256_digest_serializes_transparently`,
-  `sha256_digest_symmetric_comparison_with_str_literals`.
+  `sha256_digest_symmetric_comparison_with_str_literals`,
+  `sha256_digest_as_ref_str_borrows_canonical_form` (`AsRef<str>` for the
+  canonical lowercase hex form, 2026-08-11).
 - All pre-existing consumer-crate tests (unchanged, passing).
