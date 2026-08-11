@@ -47,7 +47,10 @@ only), owning:
 
 - `Sha256Digest` — validated newtype; `parse(&str)`, `digest(&[u8])`,
   `as_str()`, `Display`; `#[serde(transparent)]` so serialized digests are
-  byte-identical to the previous plain strings.
+  byte-identical to the previous plain strings. Comparisons are symmetric:
+  `PartialEq` impls for `str`/`&str`/`String` mirror the digest-first
+  direction, so `literal == digest` compiles and both directions are
+  case-insensitive and equivalent (confirmed by tests, 2026-08-11).
 - `is_sha256_hex(&str) -> bool` — the single definition of "64 ASCII hex
   digits" (any case; computed digests are lowercase).
 - `sha256_hex(&[u8]) -> String` — the single digest computation.
@@ -125,6 +128,8 @@ is possible.
 ## Relevant tests
 
 - `crates/optimus-crypto/src/lib.rs` — `sha256_hex_matches_sha2_direct`,
+  `sha256_hex_handles_arbitrary_binary_bytes`,
   `is_sha256_hex_accepts_only_64_hex_digits`, `sha256_digest_parse_round_trips`,
-  `sha256_digest_normalizes_case`, `sha256_digest_serializes_transparently`.
+  `sha256_digest_normalizes_case`, `sha256_digest_serializes_transparently`,
+  `sha256_digest_symmetric_comparison_with_str_literals`.
 - All pre-existing consumer-crate tests (unchanged, passing).

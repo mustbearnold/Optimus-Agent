@@ -583,8 +583,8 @@
       "resolved_files": 10
     },
     "decisions-0089-sha256-digest-leaf-crate": {
-      "binding_sha256": "168b8244da99102f19b72c53c2446de53b407ccf1182bc64221fd4c6e49ec703",
-      "document_sha256": "a868c0ba78dd44602f198370ac9fde0e26481e894513544243f3e34f8aadf327",
+      "binding_sha256": "d4ad5a169e4db95e412a575545ed1876029c6d96e69cca8735e49e895f346a39",
+      "document_sha256": "eca474e4e2385aa882a752680120605e8e7639d913364bf696e3b7b9e7210351",
       "path": "docs/decisions/0089-sha256-digest-leaf-crate.md",
       "resolved_files": 3
     },
@@ -601,7 +601,7 @@
       "resolved_files": 5
     },
     "decisions-readme": {
-      "binding_sha256": "d60899996f19d46bfc5d3a1d8ce3c03a64e723e14787015fdcf0c24d20b5f795",
+      "binding_sha256": "85cf03f1fe877f91fb5720e29b96ecb27a7cb2beb26840a8ecb7f80e87b7e197",
       "document_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "path": "docs/decisions/README.md",
       "resolved_files": 96
@@ -691,10 +691,10 @@
       "resolved_files": 50
     },
     "spec-011-developer-tooling": {
-      "binding_sha256": "e38104fe38040527e4173c6f6bde3b989e11d82db704ea63f253df94c84a25f8",
+      "binding_sha256": "f2a920333744f3fcdacd0c8693394f685ec18525a6c7833b6ccc198603d639db",
       "document_sha256": "a44196271e5169ce0154d5957a13aca0d1be9cc713d80eedc7cf261733abe06d",
       "path": "specs/011-developer-tooling/spec.md",
-      "resolved_files": 94
+      "resolved_files": 95
     },
     "spec-012-windows-tauri-packaging": {
       "binding_sha256": "81a36cd99eb2d5c7664fe8148a79ef74bbe4e37d6e98b3b89475e4a3df13c11b",
@@ -799,7 +799,7 @@
       "resolved_files": 38
     },
     "specs-constitution": {
-      "binding_sha256": "d1291107d9e31638856196eff7cdf2bd4d44a3b0b201de4e756af8b312b01439",
+      "binding_sha256": "a7873e154ed2a2929021878794990ece037e9442ed9e72289e629a73f79369a4",
       "document_sha256": "d40b82db1cb0f00c7253b66380a88222f13dc78941e602242f244fddceb43c15",
       "path": "specs/constitution.md",
       "resolved_files": 135

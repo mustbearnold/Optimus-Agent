@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **907 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **909 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -907,7 +907,7 @@ Optimus Agent/
 │   │   └── questions-v1.json
 │   └── synthetic-user-lab/ (1 files) — Versioned personas, journeys, and scoring definitions for general-purpose Optimus testing.
 │       └── cohort-v1.json
-├── scripts/ (83 files) — Deterministic repository gates, generation, installation, and diagnostics.
+├── scripts/ (85 files) — Deterministic repository gates, generation, installation, and diagnostics.
 │   ├── gates/ (18 files)
 │   │   ├── check-architecture-marks.py
 │   │   ├── check-autonomy-profiles.py
@@ -927,7 +927,7 @@ Optimus Agent/
 │   │   ├── check-surface-contract.py
 │   │   ├── check-tauri-launch.py
 │   │   └── check-tool-coverage.py
-│   ├── tests/ (34 files)
+│   ├── tests/ (36 files)
 │   │   ├── playwright_dom_click_audit.cjs
 │   │   ├── test_architecture_marks.py
 │   │   ├── test_autonomy_profiles.py
@@ -956,8 +956,10 @@ Optimus Agent/
 │   │   ├── test_surface_contract.py
 │   │   ├── test_synthetic_user_lab.py
 │   │   ├── test_synthetic_user_simulator.py
+│   │   ├── test_token_efficiency_audit.py
 │   │   ├── test_tool_coverage_gate.py
 │   │   ├── test_tui_feature_matrix.py
+│   │   ├── test_verify_cache_key.py
 │   │   ├── test_verify_gate_parity.py
 │   │   ├── test_verify_skip_report.py
 │   │   ├── tui_layout_playwright.cjs
@@ -1096,7 +1098,7 @@ Optimus Agent/
 | `crates/` | 50 | 241 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
 | `docs/` | 5 | 128 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
-| `scripts/` | 4 | 83 | Deterministic repository gates, generation, installation, and diagnostics. |
+| `scripts/` | 4 | 85 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |
 | `specs/` | 30 | 39 | SDD capability specs: one directory per capability with a living spec.md (requirements + acceptance criteria), transient plan.md/tasks.md while work is active, and the BACKLOG of unspecced gaps. |
 
