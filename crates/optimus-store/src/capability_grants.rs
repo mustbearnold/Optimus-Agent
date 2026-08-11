@@ -280,12 +280,18 @@ mod tests {
         let clamped_low = store
             .grant_capability("s", "cap", "write", &scope(), 60, 2_000)
             .unwrap();
-        assert_eq!(clamped_low.expires_unix - clamped_low.created_unix, 8 * 3600);
+        assert_eq!(
+            clamped_low.expires_unix - clamped_low.created_unix,
+            8 * 3600
+        );
 
         let clamped_high = store
             .grant_capability("s", "cap", "write", &scope(), 48 * 3600, 3_000)
             .unwrap();
-        assert_eq!(clamped_high.expires_unix - clamped_high.created_unix, 24 * 3600);
+        assert_eq!(
+            clamped_high.expires_unix - clamped_high.created_unix,
+            24 * 3600
+        );
     }
 
     #[test]
