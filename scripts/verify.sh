@@ -16,11 +16,15 @@
 #           it is the gate for releases and for changes to live surfaces.
 #           Missing creds/tmux FAIL — a live tier must never quietly skip.
 #
-# `all` is content-addressed: a fully green run records the tree's content key
-# in Development/verify-cache.json (machine-local, git-excluded), and a later
-# run on a byte-identical tree reuses that evidence in ~1s. Any file change
-# invalidates the cache. OPTIMUS_VERIFY_NO_CACHE=1 forces a fresh run; managed
-# land (OPTIMUS_VERIFY_FORBID_SKIPS=1) never reads or writes the cache.
+# `all` is content-addressed: a fully green run records the state key — the
+# tree's content key plus an environment fingerprint (compiler versions,
+# suite prerequisites) — in Development/verify-cache.json (machine-local,
+# git-excluded), and a later run with the same key reuses that evidence in
+# ~1s. Any file change, toolchain change, or prerequisite change invalidates
+# the cache, so a hit is only reused while the recorded evidence could be
+# reproduced. OPTIMUS_VERIFY_NO_CACHE=1 forces a fresh run; managed land
+# (OPTIMUS_VERIFY_FORBID_SKIPS=1) never reads or writes the cache.
+# `scripts/verify.sh cache-key` prints the current state key for debugging.
 #
 # Exits non-zero if any gate fails. All gates run to completion first so one
 # invocation reports the whole picture rather than only the first failure.
@@ -226,14 +230,31 @@ build_react_ui() {
 VERIFY_CACHE="$ROOT/Development/verify-cache.json"
 STATE_KEY=""
 
+# env_fingerprint — the environment inputs that change what `verify all`
+# would compile and which suites it would run. Without these, a cache hit
+# could reuse evidence the current environment could not reproduce: a
+# different bun, a missing node_modules, or a missing tmux/xvfb each change
+# the run's outcome.
+env_fingerprint() {
+  printf 'rustc\t%s\n' "$(rustc -V 2>/dev/null || printf 'missing')"
+  printf 'bun\t%s\n' "$(bun --version 2>/dev/null || printf 'missing')"
+  printf 'tmux\t%s\n' "$(command -v tmux >/dev/null 2>&1 && printf 'present' || printf 'missing')"
+  printf 'xvfb-run\t%s\n' "$(command -v xvfb-run >/dev/null 2>&1 && printf 'present' || printf 'missing')"
+  printf 'node_modules\t%s\n' "$([ -d "$ROOT/node_modules" ] && printf 'present' || printf 'missing')"
+  printf 'ui-node_modules\t%s\n' "$([ -d "$ROOT/apps/optimus-ui/node_modules" ] && printf 'present' || printf 'missing')"
+  printf 'desktop-node_modules\t%s\n' "$([ -d "$ROOT/apps/optimus-desktop/node_modules" ] && printf 'present' || printf 'missing')"
+}
+
 # repo_state_key — sha256 over the sha256 of every repository file (tracked
-# plus untracked-not-ignored), in stable path order. A pure function of tree
-# content: no mtimes, no HEAD sha, so an unchanged tree always hashes equal.
+# plus untracked-not-ignored) in stable path order, plus the environment
+# fingerprint. No mtimes, no HEAD sha: an unchanged tree with an unchanged
+# environment always hashes equal.
 repo_state_key() {
-  git ls-files -z --cached --others --exclude-standard \
+  ( git ls-files -z --cached --others --exclude-standard \
     | LC_ALL=C sort -z \
-    | xargs -0 -r sha256sum 2>/dev/null \
-    | sha256sum | cut -d' ' -f1
+    | xargs -0 -r sha256sum 2>/dev/null
+    env_fingerprint
+  ) | sha256sum | cut -d' ' -f1
 }
 
 if [ "$TIER" = "all" ] && [ -z "${OPTIMUS_VERIFY_NO_CACHE:-}" ] && [ -z "${OPTIMUS_VERIFY_FORBID_SKIPS:-}" ]; then
@@ -410,6 +431,7 @@ tier_gates() {
   spawn "test_verify_skip_report"    python3 scripts/tests/test_verify_skip_report.py
   spawn "test_tui_feature_matrix"    python3 scripts/tests/test_tui_feature_matrix.py
   spawn "test_verify_gate_parity"    python3 scripts/tests/test_verify_gate_parity.py
+  spawn "test_verify_cache_key"      python3 scripts/tests/test_verify_cache_key.py
   spawn "test_lockfile_discipline"   python3 scripts/tests/test_lockfile_discipline.py
   spawn "test_repo_token_budget"     python3 scripts/tests/test_repo_token_budget.py
   reap
@@ -684,6 +706,7 @@ tier_all() {
   spawn "test_verify_skip_report"    python3 scripts/tests/test_verify_skip_report.py
   spawn "test_tui_feature_matrix"    python3 scripts/tests/test_tui_feature_matrix.py
   spawn "test_verify_gate_parity"    python3 scripts/tests/test_verify_gate_parity.py
+  spawn "test_verify_cache_key"      python3 scripts/tests/test_verify_cache_key.py
   spawn "test_lockfile_discipline"   python3 scripts/tests/test_lockfile_discipline.py
   spawn "test_repo_token_budget"     python3 scripts/tests/test_repo_token_budget.py
 
@@ -813,9 +836,12 @@ case "$TIER" in
   ui)    tier_ui ;;
   live)  tier_live ;;
   all)   tier_all ;;
+  cache-key) repo_state_key
+    exit $?
+    ;;
   *)
     printf 'unknown tier: %s\n' "$TIER" >&2
-    printf 'expected one of: gates check test ui live all\n' >&2
+    printf 'expected one of: gates check test ui live all cache-key\n' >&2
     exit 2
     ;;
 esac
