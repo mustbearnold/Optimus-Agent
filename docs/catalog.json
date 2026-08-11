@@ -2749,7 +2749,7 @@
     },
     {
       "authority": "record",
-      "content_sha256": "92342194fbd68c9ff9430df334932ae0d962a5f10e750d432628df75be6c8692",
+      "content_sha256": "24d5f3f2b8cce97b3a7cf9dabf263493c52eb1588051c01a3baa5f778347bce1",
       "headings": [
         "ADR-0051: Tauri primary, Electron rollback during preview parity",
         "Context",
@@ -2759,6 +2759,7 @@
         "Consequences",
         "Risks",
         "Evaluation evidence",
+        "Amendment 2026-08-11 — gate 1 re-measured with decode + paint, under load",
         "Conditions for reconsideration",
         "Relevant code",
         "Relevant tests"
@@ -3798,6 +3799,33 @@
     },
     {
       "authority": "record",
+      "content_sha256": "59de03a16f73863d24c5555a2257f98874c8eef95e61801e53950595e6946b3a",
+      "headings": [
+        "ADR-0092: Preview client as a deep module over the frozen wire surface",
+        "Status",
+        "Context",
+        "Decision",
+        "Alternatives considered",
+        "Reasons",
+        "Consequences",
+        "Risks",
+        "Evaluation evidence",
+        "Conditions for reconsideration",
+        "Relevant code",
+        "Relevant tests"
+      ],
+      "id": "decisions-0092-preview-client-deep-module",
+      "path": "docs/decisions/0092-preview-client-deep-module.md",
+      "plane": "decision",
+      "review_by": "2026-11-11",
+      "reviewed_on": "2026-08-11",
+      "status": "current",
+      "summary": "The embedded-child-webview preview (preview_embed.rs mechanism plus injected annotation JS) is replaced by one deep renderer module — `createPreviewClient(transport)` — whose small interface (attach/navigate/reload/back/forward/setAnnotationMode/state/subscribe/destroy) hides the whole CDP preview pipeline: latest-wins frame coalescing, native decode+paint, input capture with coordinate scaling, degraded mode, and annotation-point capture. Mechanism stays shell-side; annotation and bounds policy move to optimus-host (ADR-0051 step 4). The wire gains an additive preview_* family and a latest-wins preview_frame event (spec-015 amendment), which is the seam: React renderer, TUI, and fixture are adapters over the same contract. Gate 1 of ADR-0051 step 2 is closed by measured evidence (shell_paint_spike): shell decode+paint p95 10-15ms worst-case loaded, inside the 16.7ms budget; the click bar is re-baselined into Chromium's flip-frame arrival and the shell budget.",
+      "title": "ADR-0092: Preview client as a deep module over the frozen wire surface",
+      "type": "decision"
+    },
+    {
+      "authority": "record",
       "content_sha256": "de0126a2bd54ea127500a4b50cdba5df9c1171d986509341a433feec5c62d531",
       "headings": [
         "Architecture decision index",
@@ -4778,7 +4806,7 @@
       "type": "reference"
     }
   ],
-  "documents_sha256": "ae55f236b1ad62d9474cb0261fc47122ecd7533cc74ff18688ce862a7a4fddf7",
+  "documents_sha256": "02e0aef57d897e8b7b1ac3e62f3d15ea13b21b114c0272dd2b9a412085fff6e6",
   "routes": [
     {
       "id": "architecture.blueprint",

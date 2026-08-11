@@ -5,7 +5,7 @@
 
 # Optimus Agent — Folder Index
 
-Complete map of every folder in this repository: **162 folders**, **910 files**. Generated from the tracked file tree, so git-excluded
+Complete map of every folder in this repository: **162 folders**, **911 files**. Generated from the tracked file tree, so git-excluded
 state (`target/`, `node_modules/`, `Development/`, `.engineering-memory/`, `.optimus/`,
 `.hermes/`, `.steploop/`) is deliberately absent.
 
@@ -768,7 +768,7 @@ Optimus Agent/
 │       │   ├── attribution.rs
 │       │   └── recursion.rs
 │       └── Cargo.toml
-├── docs/ (128 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
+├── docs/ (129 files) — Governed architecture, decisions, plans, contracts, current truth, and generated indexes.
 │   ├── architecture/ (20 files)
 │   │   ├── hermes-baselines/ (1 files)
 │   │   │   └── hermes-0.19.0.json
@@ -791,7 +791,7 @@ Optimus Agent/
 │   │   ├── token-budget-baseline.json
 │   │   ├── tools-and-modularity.md
 │   │   └── versioning-and-parity.md
-│   ├── decisions/ (94 files)
+│   ├── decisions/ (95 files)
 │   │   ├── 0000-locked-defaults.md
 │   │   ├── 0001-kernel-and-work-graph.md
 │   │   ├── 0002-memory-invariants.md
@@ -885,6 +885,7 @@ Optimus Agent/
 │   │   ├── 0089-sha256-digest-leaf-crate.md
 │   │   ├── 0090-renderer-client-deep-module.md
 │   │   ├── 0091-whatsapp-signal-transport-choice.md
+│   │   ├── 0092-preview-client-deep-module.md
 │   │   └── README.md
 │   ├── runbooks/ (7 files)
 │   │   ├── agent-domain.md
@@ -1097,7 +1098,7 @@ Optimus Agent/
 | `apps/` | 55 | 261 | Product binaries, terminal surface, native host, desktop shell, and React interface. |
 | `assets/` | 1 | 1 | Product icons and resources consumed by installers and installed surfaces. |
 | `crates/` | 50 | 242 | Typed product-runtime libraries, every one of them reached by a shipped binary. |
-| `docs/` | 5 | 128 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
+| `docs/` | 5 | 129 | Governed architecture, decisions, plans, contracts, current truth, and generated indexes. |
 | `evals/` | 4 | 3 | Versioned evaluation inputs, questions, rubrics, and expected facts. |
 | `scripts/` | 4 | 85 | Deterministic repository gates, generation, installation, and diagnostics. |
 | `skills/` | 3 | 2 | Focused procedures for coding agents developing and verifying Optimus Agent. |

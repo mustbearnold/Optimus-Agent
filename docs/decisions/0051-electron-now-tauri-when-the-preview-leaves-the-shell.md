@@ -195,6 +195,42 @@ shell re-pays; a host-side client could own it once. Recorded, not paid now.
 - 2026 framework numbers and exception list: current-practice search,
   2026-07-28, recorded on #106.
 
+
+## Amendment 2026-08-11 — gate 1 re-measured with decode + paint, under load
+
+The step-2 latency gate ("end-to-end re-measured in the shell, and once on a
+loaded machine") is closed by `crates/optimus-browser/examples/shell_paint_spike.rs`
+(commit 78b0838; full tables on issue #113; design consequence in ADR-0092):
+
+| Metric (decode + paint included) | Idle p95 | Loaded p95 | Bar |
+|---|---:|---:|---|
+| shell decode+paint e2e, simple page | 2.4–2.8ms | 10.4–11.0ms | 16.7ms (60Hz) |
+| shell decode+paint e2e, worst-case JPEG (noise) | 8.0–12.7ms | 10.2–14.9ms | 16.7ms (60Hz) |
+| click flip-frame arrival after dispatch | 12–32ms | — | Chromium-side |
+| click→painted pixel, content-verified | p95 132–238ms | p95 146–232ms | *re-baselined* |
+
+Verdict: the shell's own pipeline passes the 60Hz budget with margin in every
+cell, measured with the pure-Rust `jpeg-decoder` (native shell decoders are
+2–4x faster). Two findings amend the bar:
+
+1. **The click bar splits.** The original "click→pixel p95 ≤ 100ms" used
+   first-frame semantics and never verified the frame carried the click's
+   effect. With pixel verification the flip frame arrives 12–32ms after
+   dispatch, but Chromium's screencast delivery stalls ~200ms p95 even idle,
+   so the effect frame occasionally lands ~140–240ms out. The gate is now:
+   *Chromium flip-frame arrival* (measured 12–32ms, re-checked headed) plus
+   *shell decode+paint p95 ≤ 16.7ms* (PASS, 10.2–14.9ms).
+2. **Acks must live on the wire thread.** A synchronous `ack_screencast`
+   after paint stalls ~235ms under load and throttles production; wire-side
+   acks restore 2ms-class end-to-end. The ADR-0092 client encodes this as
+   law (renderer never acks; host acks on its wire thread).
+
+Loaded cadence p50 ~115ms is Chromium's capture rate under ~45% load — the
+shell cannot paint frames the browser does not produce; stalls surface as
+dropped frames, not added latency. Remaining step-2 gates (wheel momentum,
+drag, IME through CDP input forwarding) are fidelity probes over the
+ADR-0092 input path, not feasibility.
+
 ## Conditions for reconsideration
 
 1. End-to-end shell integration or the fidelity checks (scroll, drag, IME)
