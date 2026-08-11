@@ -79,6 +79,31 @@ impl PartialEq<String> for Sha256Digest {
     }
 }
 
+// Symmetric comparisons (`literal == digest`). `PartialEq` is not
+// automatically reversed for foreign types like `str`/`String`, so without
+// these impls a caller could write `digest == literal` but not
+// `literal == digest` — a one-sided rule that also silently differs from the
+// documented case-insensitivity. Mirroring the forward impls keeps both
+// directions case-insensitive and equivalent.
+
+impl PartialEq<Sha256Digest> for str {
+    fn eq(&self, other: &Sha256Digest) -> bool {
+        self.eq_ignore_ascii_case(&other.0)
+    }
+}
+
+impl PartialEq<Sha256Digest> for &str {
+    fn eq(&self, other: &Sha256Digest) -> bool {
+        self.eq_ignore_ascii_case(&other.0)
+    }
+}
+
+impl PartialEq<Sha256Digest> for String {
+    fn eq(&self, other: &Sha256Digest) -> bool {
+        self.as_str().eq_ignore_ascii_case(&other.0)
+    }
+}
+
 impl std::str::FromStr for Sha256Digest {
     type Err = &'static str;
 
@@ -265,6 +290,32 @@ mod tests {
 
         let other = Sha256Digest::digest(b"other");
         assert_ne!(other, owned);
+    }
+
+    #[test]
+    fn sha256_digest_symmetric_comparison_with_str_literals() {
+        // Regression: `PartialEq` is not reversed for foreign `str`/`String`
+        // types, so `literal == digest` used to fail to compile (and, when it
+        // did, was a separate hand-rolled comparison that could drift from the
+        // documented case-insensitive rule). The literal-first direction must
+        // compare equal for lower- and upper-case hex, and reject a different
+        // digest — mirroring the digest-first direction.
+        let digest = Sha256Digest::digest(b"optimus");
+        let hex = digest.as_str().to_string();
+        let upper = hex.to_ascii_uppercase();
+
+        // `&str` literal first
+        assert_eq!(hex.as_str(), digest);
+        // `str` (unsized) first via a reference
+        let reference: &str = &hex;
+        assert_eq!(reference, digest);
+        // owned `String` first
+        assert_eq!(hex, digest);
+        assert_eq!(upper, digest);
+
+        let other = Sha256Digest::digest(b"other");
+        assert_ne!(hex, other);
+        assert_ne!(other.as_str(), digest);
     }
 
     #[test]
