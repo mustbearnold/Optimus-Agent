@@ -603,6 +603,9 @@ fn media_ext(media_type: &str) -> &'static str {
         ".gif"
     } else if m.starts_with("image/webp") {
         ".webp"
+    } else if m.starts_with("image/svg+xml") {
+        // SVG is XML but is an image; `.bin` hid it from browsers and editors.
+        ".svg"
     } else if m.contains("json") {
         // JSON payloads (application/json, application/ld+json, ...) export
         // with a `.json` extension so editors and download handlers recognize
@@ -1146,6 +1149,20 @@ mod tests {
         assert_eq!(media_ext("application/vnd.api+json"), ".json");
         // Non-JSON types are unaffected.
         assert_eq!(media_ext("text/plain"), ".txt");
+        assert_eq!(media_ext("application/octet-stream"), ".bin");
+    }
+
+    #[test]
+    fn media_ext_maps_svg_to_svg_extension() {
+        // Regression: `image/svg+xml` is an image but not a raster type and
+        // used to fall through to the `.bin` default, so exported SVG artifacts
+        // were invisible to browsers and image editors. It must map to `.svg`
+        // (case-insensitively), independent of its XML media type.
+        assert_eq!(media_ext("image/svg+xml"), ".svg");
+        assert_eq!(media_ext("Image/SVG+XML"), ".svg");
+        // XML-ish text types must not be affected by the SVG branch.
+        assert_eq!(media_ext("image/png"), ".png");
+        assert_eq!(media_ext("application/xml"), ".bin");
         assert_eq!(media_ext("application/octet-stream"), ".bin");
     }
 
